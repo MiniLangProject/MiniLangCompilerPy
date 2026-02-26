@@ -1,0 +1,1947 @@
+#!/usr/bin/env python3
+"""MiniLang unified test suite.
+
+Runs (in one command):
+  - language_suite.ml (full language suite)
+  - aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)
+  - namespace/import tests (existing framework if present)
+  - negative import tests (cycle + "declaration-only" enforcement)
+
+Default backend: native Win64 compiler + run produced .exe.
+
+Usage:
+  python run_tests.py
+
+Options:
+  --allow-skip   Exit 0 even if some tests were skipped (e.g. cannot run .exe).
+  --verbose      Print full stdout/stderr for each test.
+  --only PAT     Only run tests whose name contains PAT.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Optional
+
+# -----------------------------
+# Console colors (PASS/FAIL)
+# -----------------------------
+
+
+ANSI_RESET = "\x1b[0m"
+ANSI_RED = "\x1b[31m"
+ANSI_GREEN = "\x1b[32m"
+ANSI_YELLOW = "\x1b[33m"
+
+
+def _enable_windows_vt_mode() -> None:
+    """Enable ANSI escape sequences on Windows consoles (best-effort)."""
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+        STD_OUTPUT_HANDLE = -11
+        STD_ERROR_HANDLE = -12
+
+        for h in (STD_OUTPUT_HANDLE, STD_ERROR_HANDLE):
+            handle = kernel32.GetStdHandle(h)
+            mode = ctypes.c_uint32()
+            if kernel32.GetConsoleMode(handle, ctypes.byref(mode)) == 0:
+                continue
+            kernel32.SetConsoleMode(handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    except Exception:
+        # If anything goes wrong, we just fall back to plain output.
+        return
+
+
+def _use_color() -> bool:
+    """Return True if colored console output should be used.
+
+    Color is disabled when output is not a TTY or when NO_COLOR is set.
+    """
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    # When output is redirected, don't emit control characters.
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+        return False
+    return True
+
+
+def _c(text: str, color: str, enabled: bool) -> str:
+    """Wrap a string with an ANSI color sequence (if enabled).
+
+    Args:
+        text: Text to colorize.
+        color: ANSI color escape sequence.
+        enabled: Whether coloring is enabled.
+
+    Returns:
+        The colored text, or the original text if coloring is disabled."""
+    if not enabled:
+        return text
+    return f"{color}{text}{ANSI_RESET}"
+
+
+# -----------------------------
+# Small runner utilities
+# -----------------------------
+
+
+@dataclass
+class CmdResult:
+    """Result of executing a command in the test harness.
+
+    Attributes:
+        cmd: Full command (argv) that was executed.
+        returncode: Process exit code.
+        stdout: Captured stdout.
+        stderr: Captured stderr.
+    """
+    cmd: list[str]
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+def run_cmd(cmd: list[str], *, cwd: Optional[Path] = None, timeout_s: int = 120) -> CmdResult:
+    """Run a subprocess command and capture its output.
+
+    Args:
+        cmd: Command and arguments.
+        cwd: Optional working directory.
+        timeout_s: Optional timeout in seconds.
+
+    Returns:
+        CmdResult containing exit code, stdout and stderr."""
+    p = subprocess.run(cmd, cwd=str(cwd) if cwd is not None else None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       text=True, encoding="utf-8", errors="replace", timeout=timeout_s, )
+    return CmdResult(cmd=cmd, returncode=p.returncode, stdout=p.stdout, stderr=p.stderr)
+
+
+def is_windows() -> bool:
+    """Return True if running on Windows."""
+    return os.name == "nt"
+
+
+def find_wine() -> Optional[str]:
+    """Locate a wine executable on non-Windows systems (if available).
+
+    Returns:
+        Path to wine executable or None if not found."""
+    return shutil.which("wine")
+
+
+def can_run_windows_exe() -> tuple[bool, str]:
+    """Return True if the current system can execute Windows .exe files.
+
+    On Windows this is always True. On non-Windows, checks for Wine."""
+    if is_windows():
+        return True, "native"
+    w = find_wine()
+    if w:
+        return True, "wine"
+    return False, ""
+
+
+def tail(s: str, max_lines: int = 80) -> str:
+    """Return the last N lines of a text blob.
+
+    Args:
+        text: Input text.
+        n: Number of lines.
+
+    Returns:
+        Tail of the text (joined by newlines)."""
+    lines = s.splitlines()
+    if len(lines) <= max_lines:
+        return s
+    return "\n".join(lines[-max_lines:])
+
+
+def normalize_out(s: str) -> str:
+    """Normalize command output for stable comparisons.
+
+    Converts line endings and may trim volatile parts (paths) to keep tests deterministic."""
+    # Normalize newlines across Windows/Linux.
+    return s.replace("\r\n", "\n").replace("\r", "\n")
+
+
+# -----------------------------
+# Test abstractions
+# -----------------------------
+
+
+@dataclass
+class TestResult:
+    """Result of a single test.
+
+    Attributes:
+        name: Display name.
+        ok: True if PASS.
+        skipped: True if skipped.
+        message: Short summary.
+        details: Optional verbose output (e.g. tail of stdout/stderr)."""
+    name: str
+    status: str  # PASS | FAIL | SKIP
+    details: str = ""
+    stdout: str = ""
+    stderr: str = ""
+
+
+def find_file_by_name(root: Path, filename: str) -> Optional[Path]:
+    """Search recursively for a file with a given name.
+
+    Args:
+        root: Root directory to search.
+        filename: File name to match.
+
+    Returns:
+        Path to the first matching file.
+
+    Raises:
+        FileNotFoundError: If no file is found."""
+    # Prefer direct hit.
+    direct = root / filename
+    if direct.exists():
+        return direct
+    # Otherwise, search.
+    hits = list(root.rglob(filename))
+    if len(hits) == 1:
+        return hits[0]
+    # If multiple, pick the shortest path (closest to root).
+    if hits:
+        hits.sort(key=lambda p: len(p.parts))
+        return hits[0]
+    return None
+
+
+def find_ml_containing(root: Path, needle: str) -> Optional[Path]:
+    """Find a .ml file containing a given substring.
+
+    Args:
+        root: Root directory to search.
+        needle: Substring to look for.
+
+    Returns:
+        Path to the first matching .ml file, or None if no match is found."""
+    for p in root.rglob("*.ml"):
+        try:
+            txt = p.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        if needle in txt:
+            return p
+    return None
+
+
+def locate_mlc_runner(root: Path) -> Optional[Path]:
+    """Locate the MiniLang compiler runner script (mlc_win64.py).
+
+    Args:
+        root: Project root directory.
+
+    Returns:
+        Path to the runner script, or None if it cannot be found."""
+    # Default project entrypoint.
+    cand = root / "mlc_win64.py"
+    if cand.exists():
+        return cand
+    # Some repos put tools in subfolders.
+    cand2 = root / "tools" / "mlc_win64.py"
+    if cand2.exists():
+        return cand2
+    return None
+
+
+# -----------------------------
+# Native compiler helpers
+# -----------------------------
+
+
+def compile_native(mlc_runner: Path, input_ml: Path, output_exe: Path, *, extra_args: Optional[list[str]] = None,
+                   timeout_s: int = 180) -> CmdResult:
+    """Compile a MiniLang source file to a native Windows x64 executable.
+
+    Args:
+        mlc_runner: Path to the compiler runner script (mlc_win64.py).
+        input_ml: Path to the input .ml file.
+        output_exe: Output executable path.
+        extra_args: Optional extra CLI args forwarded to the compiler.
+        timeout_s: Timeout in seconds for the compile step.
+
+    Returns:
+        CmdResult from the compiler invocation.
+    """
+    extra = extra_args or []
+    # Always include project root as an import path so tests can `import std.*` from anywhere.
+    root_inc = str(mlc_runner.parent.resolve())
+    extra = ["-I", root_inc] + extra
+    cmd = [sys.executable, str(mlc_runner), str(input_ml), str(output_exe)] + extra
+    return run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=timeout_s)
+
+
+def run_exe(exe_path: Path, *, exe_args: Optional[list[str]] = None, timeout_s: int = 180) -> CmdResult:
+    """Run a compiled executable and capture its output.
+
+    Args:
+        exe_path: Path to the executable.
+        exe_args: Optional list of command-line arguments.
+        timeout_s: Timeout in seconds for the run step.
+
+    Returns:
+        CmdResult containing exit code, stdout and stderr.
+    """
+    ok, mode = can_run_windows_exe()
+    if not ok:
+        return CmdResult(cmd=[str(exe_path)], returncode=999, stdout="",
+                         stderr="Cannot run Windows .exe (not Windows, and wine not found).")
+
+    args = exe_args or []
+    if mode == "native":
+        cmd = [str(exe_path)] + args
+    else:
+        cmd = [find_wine() or "wine", str(exe_path)] + args
+    return run_cmd(cmd, cwd=exe_path.parent, timeout_s=timeout_s)
+
+
+# -----------------------------
+# Individual tests
+# -----------------------------
+
+
+def test_program_no_fail(*, name: str, mlc_runner: Path, ml_path: Path, must_contain: list[str],
+                         timeout_compile_s: int = 240, timeout_run_s: int = 240, extra_args: Optional[list[str]] = None, ) -> TestResult:
+    """Compile and run the full language suite program.
+
+    Returns:
+        TestResult indicating PASS/FAIL/SKIP."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        exe = td_path / (ml_path.stem + ".exe")
+
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=timeout_compile_s, extra_args=extra_args)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, timeout_s=timeout_run_s)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+
+        for m in must_contain:
+            if m not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr, )
+
+        # Sanity: ensure tests actually executed.
+        if "[OK]" not in out:
+            return TestResult(name=name, status="FAIL", details="no [OK] markers found (did the test program run?)",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_program_expect_exit(*, name: str, mlc_runner: Path, ml_path: Path, expected_exit: int, must_contain: list[str],
+                             timeout_compile_s: int = 240, timeout_run_s: int = 240,
+                             extra_args: Optional[list[str]] = None, ) -> TestResult:
+    """Compile & run a program and assert a specific process exit code and output markers.
+
+    Args:
+        extra_args: Optional extra CLI args forwarded to the compiler.
+    """
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        exe = td_path / (ml_path.stem + ".exe")
+
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=timeout_compile_s, extra_args=extra_args)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, timeout_s=timeout_run_s)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if rr.returncode != int(expected_exit):
+            return TestResult(name=name, status="FAIL", details=f"expected exit {expected_exit}, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        for m in must_contain:
+            if m not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_aes_kat(*, name: str, mlc_runner: Path, aes_ml: Path) -> TestResult:
+    """Compile and run the AES-128 ECB NIST KAT program.
+
+    Returns:
+        TestResult indicating PASS/FAIL/SKIP."""
+    expected_pt = "00112233445566778899aabbccddeeff"
+    expected_ct = "69c4e0d86a7b0430d8cdb78070b4c55a"
+
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        exe = td_path / "aes.exe"
+
+        cr = compile_native(mlc_runner, aes_ml, exe, timeout_s=240)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=240)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+
+        # Extract ct/dt lines.
+        m_ct = re.search(r"^ct\s*=\s*([0-9a-fA-F]+)\s*$", out, flags=re.MULTILINE)
+        m_dt = re.search(r"^dt\s*=\s*([0-9a-fA-F]+)\s*$", out, flags=re.MULTILINE)
+        if not m_ct:
+            return TestResult(name=name, status="FAIL", details="missing 'ct = ...' line", stdout=rr.stdout,
+                              stderr=rr.stderr)
+        if not m_dt:
+            return TestResult(name=name, status="FAIL", details="missing 'dt = ...' line", stdout=rr.stdout,
+                              stderr=rr.stderr)
+
+        ct = m_ct.group(1).lower()
+        dt = m_dt.group(1).lower()
+
+        if ct != expected_ct:
+            return TestResult(name=name, status="FAIL",
+                              details=f"ciphertext mismatch\n  expected: {expected_ct}\n  got:      {ct}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+        if dt != expected_pt:
+            return TestResult(name=name, status="FAIL",
+                              details=f"decrypt mismatch\n  expected: {expected_pt}\n  got:      {dt}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_unhandled_error_top_level(*, name: str, mlc_runner: Path) -> TestResult:
+    """Unhandled error at top-level should abort with exit code 1 and print the error."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "unhandled_top.ml"
+        ml_path.write_text("\n".join(
+            ['print "=== UNHANDLED ERROR TOP ==="', 'function boom()', '  return error(7, "boom")', 'end function',
+             'boom()', 'print "SHOULD NOT REACH"', ]) + "\n", encoding="utf-8", )
+        return test_program_expect_exit(name=name, mlc_runner=mlc_runner, ml_path=ml_path, expected_exit=1,
+                                        must_contain=["=== UNHANDLED ERROR TOP ===",
+                                                      "Error occured: no=7 message=boom", ], timeout_compile_s=180,
+                                        timeout_run_s=180, )
+
+
+def test_unhandled_error_main_return(*, name: str, mlc_runner: Path) -> TestResult:
+    """If main(args) returns an error, it should be treated as unhandled and abort."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "unhandled_main.ml"
+        ml_path.write_text("\n".join(
+            ['print "=== UNHANDLED ERROR MAIN ==="', 'function main(args)', '  return error(9, "boom main")',
+             'end function', ]) + "\n", encoding="utf-8", )
+        return test_program_expect_exit(name=name, mlc_runner=mlc_runner, ml_path=ml_path, expected_exit=1,
+                                        must_contain=["=== UNHANDLED ERROR MAIN ===",
+                                                      "Error occured: no=9 message=boom main", ], timeout_compile_s=180,
+                                        timeout_run_s=180, )
+
+
+def test_unhandled_error_origin_top_level(*, name: str, mlc_runner: Path) -> TestResult:
+    """Unhandled error should include callsite origin: script/line/func."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "unhandled_origin_top.ml"
+        # Keep the error call on a stable, known line for the assertion below.
+        lines = [
+            'print "=== UNHANDLED ORIGIN TOP ==="',
+            'function boom()',
+            '  x = 123',
+            '  return error(7, "boom")',
+            'end function',
+            'boom()',
+        ]
+        ml_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        exe = td_path / "unhandled_origin_top.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if rr.returncode != 1:
+            return TestResult(name=name, status="FAIL", details=f"expected exit 1, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        # Must include the base error line.
+        for m in ["=== UNHANDLED ORIGIN TOP ===", "Error occured: no=7 message=boom"]:
+            if m not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr)
+
+        # And must include an origin line. The script can be absolute, so match by basename.
+        expected_line = 4  # 'return error(...)' line above (1-based)
+        pat = rf"^\s*at .*unhandled_origin_top\.ml:{expected_line} in boom\s*$"
+        if not re.search(pat, out, flags=re.MULTILINE):
+            return TestResult(name=name, status="FAIL",
+                              details=f"missing/invalid origin line (expected pattern: {pat})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_unhandled_error_origin_main_return(*, name: str, mlc_runner: Path) -> TestResult:
+    """If main(args) returns an error, the origin should point at the return site inside main."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "unhandled_origin_main.ml"
+        lines = [
+            'print "=== UNHANDLED ORIGIN MAIN ==="',
+            'function main(args)',
+            '  a = 1',
+            '  return error(9, "boom main")',
+            'end function',
+        ]
+        ml_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        exe = td_path / "unhandled_origin_main.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if rr.returncode != 1:
+            return TestResult(name=name, status="FAIL", details=f"expected exit 1, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        for m in ["=== UNHANDLED ORIGIN MAIN ===", "Error occured: no=9 message=boom main"]:
+            if m not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr)
+
+        expected_line = 4  # 'return error(...)' line above (1-based)
+        pat = rf"^\s*at .*unhandled_origin_main\.ml:{expected_line} in main\s*$"
+        if not re.search(pat, out, flags=re.MULTILINE):
+            return TestResult(name=name, status="FAIL",
+                              details=f"missing/invalid origin line (expected pattern: {pat})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_unhandled_error_origin_omitted_when_cleared(*, name: str, mlc_runner: Path) -> TestResult:
+    """If user code clears origin fields, the runtime must not print an empty/partial 'at' line."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "unhandled_origin_cleared.ml"
+        lines = [
+            'print "=== UNHANDLED ORIGIN CLEARED ==="',
+            'function boom()',
+            '  e = error(11, "boom cleared")',
+            '  e.script = ""',
+            '  e.func = ""',
+            '  e.line = 0',
+            '  return e',
+            'end function',
+            'boom()',
+        ]
+        ml_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        exe = td_path / "unhandled_origin_cleared.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if rr.returncode != 1:
+            return TestResult(name=name, status="FAIL", details=f"expected exit 1, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        for m in ["=== UNHANDLED ORIGIN CLEARED ===", "Error occured: no=11 message=boom cleared"]:
+            if m not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr)
+
+        # Ensure we do NOT print a dangling/empty location line.
+        if re.search(r"^\s*at\s*$", out, flags=re.MULTILINE) or "  at " in out:
+            return TestResult(name=name, status="FAIL", details="unexpected origin line printed", stdout=rr.stdout,
+                              stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_reserved_identifiers(*, name: str, mlc_runner: Path) -> TestResult:
+    """Identifiers 'try' and 'error' must be reserved across declarations and bindings."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        bad = td_path / "reserved_ident.ml"
+        bad.write_text("\n".join([  # function name
+            'function try(a)', '  return a', 'end function', '', 'function main(args)', '  x = 1', '  error = 2',
+            '  return 0', 'end function', ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "reserved_ident.exe"
+        cr = compile_native(mlc_runner, bad, exe, timeout_s=180)
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        out = (cr.stdout or "") + "\n" + (cr.stderr or "")
+        if "reserved" not in out.lower():
+            return TestResult(name=name, status="FAIL",
+                              details="compile failed, but message did not mention 'reserved'", stdout=cr.stdout,
+                              stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_package_basic(*, name: str, mlc_runner: Path) -> TestResult:
+    """Basic `package X` smoke test (compile-time qualification in native compiler)."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "geom_pkg.ml"
+        lib.write_text("\n".join(["package geom", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+                       encoding="utf-8", )
+
+        main_ml = td_path / "main_pkg.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE BASIC ===\"",
+             "assertEq(geom.add(2, 3), 5, \"geom.add\")", "print \"=== DONE ===\"", ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "main_pkg.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+        if "=== PACKAGE BASIC ===" not in out or "=== DONE ===" not in out or "[OK]" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output markers", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_package_dotted(*, name: str, mlc_runner: Path) -> TestResult:
+    """`package a.b` qualifies declarations as `a.b.*`."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "geom_vec_pkg.ml"
+        lib.write_text(
+            "\n".join(["package geom.vec", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_pkg_dotted.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE DOTTED ===\"",
+             "assertEq(geom.vec.add(2, 3), 5, \"geom.vec.add\")", "print \"=== DONE ===\"", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "main_pkg_dotted.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+        if "=== PACKAGE DOTTED ===" not in out or "=== DONE ===" not in out or "[OK]" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output markers", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_import_as_alias(*, name: str, mlc_runner: Path) -> TestResult:
+    """`import "file.ml" as alias` should allow using alias.* for the imported package."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "geom_alias.ml"
+        lib.write_text(
+            "\n".join(["package geom.vec", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_import_as.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}" as g', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== IMPORT AS ===\"",
+             "assertEq(g.add(2, 3), 5, \"g.add\")", "print \"=== DONE ===\"", ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "main_import_as.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+        if "=== IMPORT AS ===" not in out or "=== DONE ===" not in out or "[OK]" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output markers", stdout=rr.stdout,
+                              stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_import_module_package_mismatch(*, name: str, mlc_runner: Path) -> TestResult:
+    """`import foo.bar` should reject a file that declares a different `package`. (compile-time only)"""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        pkg_dir = td_path / "foo"
+        pkg_dir.mkdir(parents=True, exist_ok=True)
+
+        lib = pkg_dir / "bar.ml"
+        lib.write_text(
+            "\n".join(["package other", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_import_mod.ml"
+        main_ml.write_text(
+            "\n".join(["import foo.bar", "", "function main(args)", "  return 0", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        exe = td_path / "main_import_mod.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile to fail, but it succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        out = (cr.stdout or "") + "\n" + (cr.stderr or "")
+        if "declaring package" not in out and "package" not in out:
+            return TestResult(name=name, status="FAIL",
+                              details="compile failed, but error message did not mention package mismatch",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_package_path_mismatch(*, name: str, mlc_runner: Path) -> TestResult:
+    """If a file declares `package foo.bar`, it must live at foo/bar.ml relative to its import root."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        libroot = td_path / "libroot"
+        (libroot / "foo").mkdir(parents=True, exist_ok=True)
+
+        # NOTE: file path implies package foo.qux, but it declares foo.bar
+        lib = libroot / "foo" / "qux.ml"
+        lib.write_text(
+            "\n".join(["package foo.bar", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_import_path_pkg_mismatch.ml"
+        main_ml.write_text("\n".join(
+            ['import "foo/qux.ml"', "", "function main(args)", "  return foo.bar.add(2, 3)", "end function", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "main_import_path_pkg_mismatch.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, extra_args=["-I", str(libroot)], timeout_s=180)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="expected compile to fail due to package/path mismatch, but it succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        if ("declares package" not in out) and ("was found as" not in out):
+            return TestResult(name=name, status="FAIL",
+                              details="compile failed, but error message did not mention package/path mismatch",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_ambiguous_include_paths(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure ambiguous include paths are rejected with a clear error message."""
+    # If both the importing directory and an include root provide the same module, the compiler should reject it as ambiguous.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        # Local copy next to main (base_dir/foo/bar.ml)
+        local_pkg_dir = td_path / "foo"
+        local_pkg_dir.mkdir(parents=True, exist_ok=True)
+        local_lib = local_pkg_dir / "bar.ml"
+        local_lib.write_text(
+            "\n".join(["package foo.bar", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        # Second copy via -I include root (libroot/foo/bar.ml)
+        libroot = td_path / "libroot"
+        inc_pkg_dir = libroot / "foo"
+        inc_pkg_dir.mkdir(parents=True, exist_ok=True)
+        inc_lib = inc_pkg_dir / "bar.ml"
+        inc_lib.write_text(
+            "\n".join(["package foo.bar", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_import_ambig.ml"
+        main_ml.write_text("\n".join(
+            ["import foo.bar", "", "function main(args)", "  return foo.bar.add(2, 3)", "end function", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "main_import_ambig.exe"
+
+        # Without -I it should succeed (resolves to local file).
+        cr0 = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr0.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed without -I (exit {cr0.returncode})",
+                              stdout=cr0.stdout, stderr=cr0.stderr, )
+
+        # With -I it should fail due to ambiguity.
+        cr = compile_native(mlc_runner, main_ml, exe, extra_args=["-I", str(libroot)], timeout_s=180)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="expected compile to fail with -I due to ambiguous import, but it succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        if "Ambiguous import" not in out:
+            return TestResult(name=name, status="FAIL",
+                              details="compile failed, but error message did not mention ambiguous import",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_include_paths(*, name: str, mlc_runner: Path) -> TestResult:
+    """Verify include path search order and successful imports."""
+    # `-I/--import-path` should allow resolving module imports outside the main file's directory. (compile-time only)
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        libroot = td_path / "libroot"
+        pkg_dir = libroot / "foo"
+        pkg_dir.mkdir(parents=True, exist_ok=True)
+
+        lib = pkg_dir / "bar.ml"
+        lib.write_text(
+            "\n".join(["package foo.bar", "", "function add(a, b)", "  return a + b", "end function", ]) + "\n",
+            encoding="utf-8", )
+
+        main_ml = td_path / "main_import_I.ml"
+        main_ml.write_text("\n".join(
+            ["import foo.bar", "", "function main(args)", "  // Reference imported symbol so resolution is required.",
+             "  return foo.bar.add(2, 3)", "end function", ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "main_import_I.exe"
+
+        # Without -I this should fail (foo/bar.ml not next to main).
+        cr0 = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr0.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile to fail without -I, but it succeeded",
+                              stdout=cr0.stdout, stderr=cr0.stderr, )
+
+        # With -I it should succeed.
+        cr = compile_native(mlc_runner, main_ml, exe, extra_args=["-I", str(libroot)], timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed even with -I (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_package_not_first(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure a 'package' statement must be the first statement in a file."""
+    # package must be the first statement in a file (before imports/decls).
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        bad = td_path / "pkg_not_first.ml"
+        bad.write_text("\n".join(["function foo()", "  return 1", "end function", "", "package nope", ]) + "\n",
+                       encoding="utf-8", )
+
+        exe = td_path / "pkg_not_first.exe"
+        cr = compile_native(mlc_runner, bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "'package' must be the first statement in the file"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_package_duplicate(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure duplicate 'package' statements are rejected."""
+    # Only one package directive per file.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        bad = td_path / "pkg_dup.ml"
+        bad.write_text("\n".join(["package a", "package b", "function foo()", "  return 1", "end function", ]) + "\n",
+                       encoding="utf-8", )
+
+        exe = td_path / "pkg_dup.exe"
+        cr = compile_native(mlc_runner, bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "'package' may only appear once per file"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_main_in_package(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure 'main' can be resolved correctly when a package is present."""
+    # main(args) must not be qualified by a package prefix.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        bad = td_path / "main_in_pkg.ml"
+        bad.write_text("\n".join(["package p", "function main(args)", "  return 0", "end function", ]) + "\n",
+                       encoding="utf-8", )
+
+        exe = td_path / "main_in_pkg.exe"
+        cr = compile_native(mlc_runner, bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "main(args) must be declared at top-level"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_namespace_dotted(*, name: str, mlc_runner: Path) -> TestResult:
+    """`namespace a.b` qualifies declarations as `a.b.*`."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "geom_vec_ns.ml"
+        lib.write_text("\n".join(
+            ["namespace geom.vec", "function add(a, b)", "  return a + b", "end function", "end namespace", ]) + "\n",
+                       encoding="utf-8", )
+
+        main_ml = td_path / "main_ns_dotted.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE DOTTED ==="',
+             'assertEq(geom.vec.add(2, 3), 5, "geom.vec.add")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== NAMESPACE DOTTED ===", "geom.vec.add [OK]", "=== DONE ==="],
+                                    timeout_compile_s=180, timeout_run_s=180, )
+
+
+def test_namespace_nested(*, name: str, mlc_runner: Path) -> TestResult:
+    """Nested namespaces should work: namespace a ... namespace b ..."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "geom_vec_nested_ns.ml"
+        lib.write_text("\n".join(
+            ["namespace geom", "namespace vec", "function add(a, b)", "  return a + b", "end function", "end namespace",
+             "end namespace", ]) + "\n", encoding="utf-8", )
+
+        main_ml = td_path / "main_ns_nested.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE NESTED ==="',
+             'assertEq(geom.vec.add(2, 3), 5, "geom.vec.add")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== NAMESPACE NESTED ===", "geom.vec.add [OK]", "=== DONE ==="],
+                                    timeout_compile_s=180, timeout_run_s=180, )
+
+
+def test_compile_expected_fail(*, name: str, mlc_runner: Path, entry_ml: Path, must_contain_err: str,
+                               timeout_compile_s: int = 120, ) -> TestResult:
+    """Compile a snippet that is expected to fail and validate the error marker."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        exe = Path(td) / (entry_ml.stem + ".exe")
+        cr = compile_native(mlc_runner, entry_ml, exe, timeout_s=timeout_compile_s)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+        if must_contain_err not in out:
+            return TestResult(name=name, status="FAIL",
+                              details=f"compile failed, but error output did not contain expected marker: {must_contain_err!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_decl_only_violation(*, name: str, mlc_runner: Path, lib_bad: Path) -> TestResult:
+    """Ensure 'declaration-only' imports cannot be used at runtime."""
+    # Write a tiny main that imports lib_bad.ml (which contains a top-level print).
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "main_bad.ml"
+
+        # Use absolute import path so it works no matter where the test is run from.
+        lib_bad_abs = str(lib_bad.resolve()).replace("\\", "\\\\")  # keep Windows paths safe in string literal
+
+        main_bad.write_text("\n".join([f'import "{lib_bad_abs}"', "print \"should not reach\"", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "main_bad.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "Imported module must be declaration-only"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_call_arity_mismatch(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure calling a function with wrong arity produces a compile-time error."""
+    # Ensure calling a user function with the wrong number of arguments is a compile-time error.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "arity_bad.ml"
+        main_bad.write_text("\n".join(["function foo()", "  return 1", "end function", "", "print foo(1, 2)", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "arity_bad.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "Function foo expects"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_enum_unknown_variant(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure referencing an unknown enum variant is rejected."""
+    # Ensure referencing an unknown enum variant is a compile-time error.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "enum_unknown_variant.ml"
+        main_bad.write_text("\n".join(["enum Color are", "  Red", "end enum", "", "print Color.Nope", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "enum_unknown_variant.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        marker = "has no variant"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_enum_duplicate_variant(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure duplicate enum variants are rejected."""
+    # Ensure duplicate enum variants are rejected at compile time.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "enum_duplicate_variant.ml"
+        main_bad.write_text("\n".join(["enum Color are", "  Red", "  Red", "end enum", "", "print 1", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "enum_duplicate_variant.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        marker = "duplicate variant"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+        exe = td_path / "arity_bad.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "Function foo expects"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+# -----------------------------
+# regression tests: const / value-enum / constexpr imports
+# -----------------------------
+
+
+def test_const_reassign_rejected(*, name: str, mlc_runner: Path) -> TestResult:
+    """Assigning to a `const` binding must be a compile-time error."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "const_reassign.ml"
+        ml_path.write_text(
+            "\n".join(['print "=== CONST REASSIGN ==="', 'const a = 1', 'a = 2', 'print "SHOULD NOT REACH"', ]) + "\n",
+            encoding="utf-8", )
+
+        exe = td_path / "const_reassign.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        marker = "Cannot assign to const"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL",
+                              details=f"compile failed, but error output did not contain expected marker: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_enum_autoinc_after_string_rejected(*, name: str, mlc_runner: Path) -> TestResult:
+    """Value-enum auto-fill must fail if previous value is not an int."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "enum_autoinc_bad.ml"
+        ml_path.write_text("\n".join(['enum E are', '  A = "x"', '  B', 'end enum', 'print E.A', ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "enum_autoinc_bad.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        marker = "cannot auto-increment after non-int"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL",
+                              details=f"compile failed, but error output did not contain expected marker: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_constexpr_initializer_rejected(*, name: str, mlc_runner: Path, kind: str) -> TestResult:
+    """Imported-module initializers must be constexpr (const + globals)."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "lib_ce_bad.ml"
+        if kind == "const":
+            lib.write_text("\n".join(
+                ["package ce.bad", "function foo()", "  return 1", "end function", "const A = foo()", ]) + "\n",
+                           encoding="utf-8", )
+            marker = "Imported module const initializer must be constexpr"
+        elif kind == "global":
+            lib.write_text(
+                "\n".join(["package ce.bad", "function foo()", "  return 1", "end function", "x = foo()", ]) + "\n",
+                encoding="utf-8", )
+            marker = "Imported module global initializer must be constexpr"
+        else:
+            return TestResult(name=name, status="FAIL", details=f"internal: unknown kind {kind!r}")
+
+        main_ml = td_path / "main_ce_bad.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join([f'import "{lib_abs}"', 'print "should not reach"', ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "main_ce_bad.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        if marker not in out:
+            return TestResult(name=name, status="FAIL",
+                              details=f"compile failed, but error output did not contain expected marker: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_constexpr_ok(*, name: str, mlc_runner: Path) -> TestResult:
+    """Imported-module constexpr initializers should be accepted (const + globals + enum values)."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib = td_path / "lib_ce_ok.ml"
+        lib.write_text("\n".join(
+            ["package ce.ok", "const A = 1 + 2", "x = 0x10 + 1", "enum Flags are", "  Read = 1", "  Write = 2",
+             "  All = 3", "end enum", ]) + "\n", encoding="utf-8", )
+
+        main_ml = td_path / "main_ce_ok.ml"
+        lib_abs = str(lib.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join(
+            [f'import "{lib_abs}"', "import std.assert as a", "function assertEq(actual, expected, label)",
+             "  return a.assertEq(actual, expected, label)", "end function", 'print "=== IMPORT CONSTEXPR OK ==="',
+             'assertEq(ce.ok.A, 3, "ce.ok.A")', 'assertEq(ce.ok.x, 17, "ce.ok.x")',
+             'assertEq(ce.ok.Flags.All, 3, "ce.ok.Flags.All")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== IMPORT CONSTEXPR OK ===", "=== DONE ==="], timeout_compile_s=180,
+                                    timeout_run_s=180, )
+
+
+def test_main_args_and_exitcode(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure main(args: string[]) can read args and return an exit code."""
+    # Ensure main(args) is called after top-level code, args = argv[1..], and return value sets process exit code.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "main_args.ml"
+        main_ml.write_text("\n".join(
+            ['print "TOP"', "", "function main(args)", '  print "MAIN"', '  print "argc=" + len(args)',
+             "  if len(args) > 0 then print args[0] end if", "  if len(args) > 1 then print args[1] end if",
+             "  if len(args) > 2 then print args[2] end if", "  return 7", "end function", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "main_args.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=120)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, exe_args=["a", "b c", "d"], timeout_s=120)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+
+        # return code from main()
+        if rr.returncode != 7:
+            return TestResult(name=name, status="FAIL", details=f"expected exit code 7, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        for marker in ["TOP", "MAIN", "argc=3", "a", "b c", "d"]:
+            if marker not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {marker!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_main_void_exit0(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure void main() returns exit code 0 by default."""
+    # Ensure main(args) with no return exits with code 0.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "main_void.ml"
+        main_ml.write_text("\n".join(["function main(args)", '  print "ok"', "end function", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "main_void.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=120)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, exe_args=[], timeout_s=120)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"expected exit code 0, got {rr.returncode}",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if "ok" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output marker: 'ok'",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_main_bad_arity0(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure main() with unexpected params is rejected."""
+    # main(args) expects exactly 1 parameter.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "main_arity0.ml"
+        main_bad.write_text("\n".join(["function main()", "  return 0", "end function", ]) + "\n", encoding="utf-8", )
+
+        exe = td_path / "main_arity0.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "main(args) expects exactly 1 parameter"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_main_bad_arity2(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure main with wrong arity is rejected."""
+    # main(args) expects exactly 1 parameter.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "main_arity2.ml"
+        main_bad.write_text("\n".join(["function main(a, b)", "  return 0", "end function", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "main_arity2.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "main(args) expects exactly 1 parameter"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_main_in_namespace(*, name: str, mlc_runner: Path) -> TestResult:
+    """Ensure main function resolution works with namespaces."""
+    # main(args) must be top-level (not inside namespace).
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_bad = td_path / "main_in_ns.ml"
+        main_bad.write_text("\n".join(
+            ["namespace n", "  function main(args)", "    return 0", "  end function", "end namespace", ]) + "\n",
+                            encoding="utf-8", )
+
+        exe = td_path / "main_in_ns.exe"
+        cr = compile_native(mlc_runner, main_bad, exe, timeout_s=120)
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        marker = "main(args) must be declared at top-level"
+        if marker not in out:
+            return TestResult(name=name, status="FAIL", details=f"expected error marker not found: {marker!r}",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_heap_cli_config_applied(*, name: str, mlc_runner: Path) -> TestResult:
+    """Test case: test heap cli config applied."""
+    # Ensure --heap-reserve/--heap-commit are parsed and applied to the runtime heap.
+    reserve_arg = "48m"
+    commit_arg = "24m"
+    expected_reserve = 48 * 1024 * 1024
+    expected_commit = 24 * 1024 * 1024
+
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "heap_cfg.ml"
+        main_ml.write_text("\n".join(["print heap_bytes_reserved()", "print heap_bytes_committed()", ]) + "\n",
+                           encoding="utf-8", )
+
+        exe = td_path / "heap_cfg.exe"
+        cr = compile_native(mlc_runner, main_ml, exe,
+                            extra_args=["--heap-reserve", reserve_arg, "--heap-commit", commit_arg], timeout_s=120, )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        rr = run_exe(exe, exe_args=[], timeout_s=120)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        nums = [int(x) for x in re.findall(r"\b\d+\b", out)]
+        if len(nums) < 2:
+            return TestResult(name=name, status="FAIL",
+                              details=f"expected 2 integers in output (reserved, committed), got: {out!r}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        reserved, committed = nums[0], nums[1]
+
+        # reserve aligned up to 64KiB, commit aligned up to 4KiB
+        if not (expected_reserve <= reserved <= expected_reserve + 0x10000):
+            return TestResult(name=name, status="FAIL",
+                              details=f"reserved bytes not in expected range: got {reserved}, expected ~{expected_reserve}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+        if not (expected_commit <= committed <= expected_commit + 0x1000):
+            return TestResult(name=name, status="FAIL",
+                              details=f"committed bytes not in expected range: got {committed}, expected ~{expected_commit}",
+                              stdout=rr.stdout, stderr=rr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_heap_cli_invalid_size(*, name: str, mlc_runner: Path) -> TestResult:
+    """Test case: test heap cli invalid size."""
+    # Ensure invalid size strings are rejected by the CLI parser.
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "heap_bad.ml"
+        main_ml.write_text("print 1\n", encoding="utf-8")
+        exe = td_path / "heap_bad.exe"
+
+        cr = compile_native(mlc_runner, main_ml, exe, extra_args=["--heap-reserve", "1z"], timeout_s=120, )
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        if ("invalid size" not in out) and ("invalid size suffix" not in out):
+            return TestResult(name=name, status="FAIL", details="expected invalid size error marker not found",
+                              stdout=cr.stdout, stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_ns_struct_optional(*, name: str, mlc_runner: Path, geom_ml: Optional[Path],
+                            testlib_ml: Optional[Path]) -> TestResult:
+    """Test case: test ns struct optional."""
+    if geom_ml is None or testlib_ml is None:
+        return TestResult(name=name, status="SKIP", details="geom.ml or testlib.ml not found")
+
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_geom = td_path / "main_geom.ml"
+
+        geom_abs = str(geom_ml.resolve()).replace("\\", "\\\\")
+        testlib_abs = str(testlib_ml.resolve()).replace("\\", "\\\\")
+
+        main_geom.write_text("\n".join(
+            [f'import "{testlib_abs}"', f'import "{geom_abs}"', 'print "=== NS/IMPORT STRUCT ==="',
+             'p = geom.Point(1, 2)', 'assertEq(p.x, 1, "geom.Point.x")', 'assertEq(p.y, 2, "geom.Point.y")',
+             'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        # Reuse the generic checker
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_geom,
+                                    must_contain=["=== NS/IMPORT STRUCT ===", "=== DONE ===", "geom.Point.x [OK]",
+                                                  "geom.Point.y [OK]"], timeout_compile_s=120, timeout_run_s=120, )
+
+
+def test_extern_namespaced(*, name: str, mlc_runner: Path) -> TestResult:
+    """Verify externs work with namespace qualification and import-as aliasing."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        winapi_ml = td_path / "winapi.ml"
+        main_ml = td_path / "extern_ns.ml"
+
+        # Module providing an extern via a package name (for import-as aliasing).
+        winapi_ml.write_text(
+            "\n".join(["package winapi", 'extern function GetTickCount() from "kernel32.dll" returns u32', ]) + "\n",
+            encoding="utf-8", )
+
+        winapi_abs = str(winapi_ml.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join([f'import "{winapi_abs}" as w', "", 'function ok(cond, label)', '  if cond then',
+                                      '    print label + " [OK]"', '  else', '    print label + " [FAIL]"', '  end if',
+                                      'end function', "", 'print "=== EXTERN NAMESPACED ==="', "namespace win32",
+                                      '  extern function GetCurrentProcessId() from "kernel32.dll" returns u32',
+                                      "end namespace", "", "pid = win32.GetCurrentProcessId()",
+                                      'ok(pid > 0, "win32.GetCurrentProcessId > 0")', "", "a = w.GetTickCount()",
+                                      "b = w.GetTickCount()", 'ok(b >= a, "w.GetTickCount monotonic")',
+                                      'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== EXTERN NAMESPACED ===", "win32.GetCurrentProcessId > 0 [OK]",
+                                                  "w.GetTickCount monotonic [OK]", "=== DONE ===", ],
+                                    timeout_compile_s=120, timeout_run_s=120, )
+
+
+def test_extern_value_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime smoke test: extern stubs are first-class values (store/pass/return/call + survive GC)."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "extern_value_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['extern function GetTickCount() from "kernel32.dll" returns u32', '', 'function ok(cond, label)',
+             '  if cond then', '    print label + " [OK]"', '  else', '    print label + " [FAIL]"', '  end if',
+             'end function', '', 'function call0(f)', '  return f()', 'end function', '', 'function make(f)',
+             '  return f', 'end function', '', 'struct Box', '  fn', 'end struct', '',
+             'print "=== EXTERN VALUE RUNTIME ==="', '', '// capture extern as value', 'f = GetTickCount', 'a = f()',
+             'b = f()', 'ok(b >= a, "direct value call")', '', '// store in array and call via index-expression callee',
+             'arr = [f]', 'c = arr[0]()', 'd = arr[0]()', 'ok(d >= c, "array element call")', '',
+             '// store in struct field (note: bx.fn() is parsed as namespace call; use temp)', 'bx = Box(f)',
+             'h = bx.fn', 'e = h()', 'ok(e >= a, "struct field call")', '',
+             '// pass as argument / return from function', 'ok(call0(f) >= a, "passed as arg")', 'g = make(f)',
+             'ok(g() >= a, "returned value")', '',
+             '// allocate many ephemeral objects and run GC repeatedly, then call again', 'for i = 0 to 20000',
+             '  tmp = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + i', '  tmp2 = [tmp, i, [i, tmp]]',
+             '  if (i % 200) == 0 then', '    gc_collect()', '  end if', 'end for', 'gc_collect()',
+             'ok(arr[0]() >= a, "after gc_collect")', '', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== EXTERN VALUE RUNTIME ===", "direct value call [OK]",
+                                                  "array element call [OK]", "struct field call [OK]",
+                                                  "passed as arg [OK]", "returned value [OK]", "after gc_collect [OK]",
+                                                  "=== DONE ===", ], timeout_compile_s=180, timeout_run_s=180, )
+
+
+def test_callable_values_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime smoke test: first-class callables for user functions, struct ctors, and selected builtins, incl. GC."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "callable_values_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['function ok(cond, label)', '  if cond then', '    print label + " [OK]"', '  else',
+             '    print label + " [FAIL]"', '  end if', 'end function', '', 'function add1(x)', '  return x + 1',
+             'end function', '', 'function apply1(f, x)', '  return f(x)', 'end function', '', 'function ident(x)',
+             '  return x', 'end function', '', 'struct Pair', '  a', '  b', 'end struct', '',
+             'print "=== CALLABLE VALUES RUNTIME ==="', '', '// user function as value', 'f = add1',
+             'ok(f(41) == 42, "user fn direct value call")', 'arr = [f]',
+             'ok(arr[0](5) == 6, "user fn array element call")', 'ok(apply1(f, 9) == 10, "user fn passed as arg")',
+             'g = ident(f)', 'ok(g(7) == 8, "user fn returned value")', '', '// struct constructor as value',
+             'ctor = Pair', 'p = ctor(1, 2)', 'ok(p.a == 1, "struct ctor via value (a)")',
+             'ok(p.b == 2, "struct ctor via value (b)")', 'arrc = [ctor]', 'q = arrc[0](3, 4)',
+             'ok(q.a == 3, "struct ctor array call")', '', '// builtin as value', 'l = len',
+             'ok(l([1,2,3]) == 3, "builtin len via value (array)")',
+             'ok(l("abc") == 3, "builtin len via value (string)")', 'arrl = [l]',
+             'ok(arrl[0]([0,1,2,3]) == 4, "builtin len in array")', '',
+             '// GC stress: allocate many temporaries, collect, and re-call values', 'for i = 0 to 20000',
+             '  tmp = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + i', '  tmp2 = [tmp, i, [i, tmp]]',
+             '  if (i % 200) == 0 then', '    gc_collect()', '  end if', 'end for', 'gc_collect()',
+             'ok(arr[0](41) == 42, "user fn after gc_collect")', 't = arrc[0](7, 8)',
+             'ok(t.a == 7, "struct ctor after gc_collect")', 'ok(arrl[0]("abcd") == 4, "builtin len after gc_collect")',
+             '', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
+                                    must_contain=["=== CALLABLE VALUES RUNTIME ===", "user fn direct value call [OK]",
+                                                  "user fn array element call [OK]", "user fn passed as arg [OK]",
+                                                  "user fn returned value [OK]", "struct ctor via value (a) [OK]",
+                                                  "struct ctor via value (b) [OK]", "struct ctor array call [OK]",
+                                                  "builtin len via value (array) [OK]",
+                                                  "builtin len via value (string) [OK]", "builtin len in array [OK]",
+                                                  "user fn after gc_collect [OK]", "struct ctor after gc_collect [OK]",
+                                                  "builtin len after gc_collect [OK]", "=== DONE ===", ],
+                                    timeout_compile_s=180, timeout_run_s=180, )
+
+
+
+
+def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime test: --profile-calls instruments user functions and exposes callStats()."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "call_profile_counts.ml"
+
+        main_ml.write_text("\n".join([
+            'import std.assert as a',
+            '',
+            'function cp_f()',
+            '  return 1',
+            'end function',
+            '',
+            'function cp_g()',
+            '  // cp_f called twice per cp_g call',
+            '  return cp_f() + cp_f()',
+            'end function',
+            '',
+            'print "=== CALL PROFILE ==="',
+            'cp_g()',
+            'cp_g()',
+            '',
+            'stats = callStats()',
+            'f_calls = 0',
+            'g_calls = 0',
+            'for each s in stats',
+            '  if s.name == "cp_f" then f_calls = s.calls end if',
+            '  if s.name == "cp_g" then g_calls = s.calls end if',
+            'end for',
+            '',
+            'a.assertEq(f_calls, 4, "callprof: cp_f calls")',
+            'a.assertEq(g_calls, 2, "callprof: cp_g calls")',
+            'print "=== DONE ==="',
+        ]) + '\n', encoding='utf-8')
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=["=== CALL PROFILE ===", "callprof: cp_f calls [OK]", "callprof: cp_g calls [OK]", "=== DONE ==="],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+            extra_args=['--profile-calls'],
+        )
+# -----------------------------
+# Main
+# -----------------------------
+
+
+def main() -> int:
+    """main helper."""
+    ap = argparse.ArgumentParser(description="MiniLang unified test suite")
+    ap.add_argument("--allow-skip", action="store_true", help="Exit 0 even if some tests are skipped")
+    ap.add_argument("--verbose", action="store_true", help="Print full output for each test")
+    ap.add_argument("--only", default=None, help="Only run tests whose name contains this substring")
+    args = ap.parse_args()
+
+    # Enable ANSI colors (best-effort) and decide whether we should emit them.
+    _enable_windows_vt_mode()
+    color_enabled = _use_color()
+
+    tests_root = Path(__file__).resolve().parent
+    project_root = tests_root.parent
+
+    mlc_runner = locate_mlc_runner(project_root)
+    if mlc_runner is None:
+        print("[FATAL] Could not find mlc_win64.py (native compiler entrypoint).")
+        return 2
+
+    # Locate main test programs
+    language_suite_ml = (find_file_by_name(tests_root, "language_suite.ml") or find_ml_containing(tests_root,
+                                                                                                  "=== BASIC (INT/BOOL) ==="))
+    aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
+    std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
+    gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
+    ns_main = find_file_by_name(tests_root, "main.ml")
+    # Prefer the ns/import main if multiple main.ml exist.
+    ns_main = find_ml_containing(tests_root, "=== NS/IMPORT BASIC ===") or ns_main
+
+    # Optional helpers for generated tests
+    lib_bad = find_file_by_name(tests_root, "lib_bad.ml")
+    geom_ml = find_file_by_name(tests_root, "geom.ml")
+    testlib_ml = find_file_by_name(tests_root, "testlib.ml")
+    cycle_a = find_file_by_name(tests_root, "a.ml")
+
+    tests: list[Callable[[], TestResult]] = []
+
+    if language_suite_ml is not None:
+        tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,
+                                                  ml_path=language_suite_ml,
+                                                  must_contain=["=== BASIC (INT/BOOL) ===", "=== DONE ==="], ))
+    else:
+        tests.append(lambda: TestResult(name="language_suite.ml (full language suite)", status="SKIP",
+                                        details="language_suite.ml not found"))
+
+    # Stdlib unit tests (std.core/std.assert/std.result)
+    if std_test_ml is not None:
+        tests.append(lambda: test_program_no_fail(name="stdlib_unit_tests.ml (stdlib unit)", mlc_runner=mlc_runner,
+                                                  ml_path=std_test_ml,
+                                                  must_contain=["=== STD (UNIT) ===", "=== DONE ==="],
+                                                  timeout_compile_s=120, timeout_run_s=120, ))
+    else:
+        tests.append(lambda: TestResult(name="stdlib_unit_tests.ml (stdlib unit)", status="SKIP",
+                                        details="stdlib_unit_tests.ml not found"))
+
+    # Periodic GC smoke test (allocation-pressure trigger)
+    if gc_periodic_ml is not None:
+        tests.append(lambda: test_program_no_fail(name="gc_periodic_test.ml (gc periodic)", mlc_runner=mlc_runner,
+                                                  ml_path=gc_periodic_ml,
+                                                  must_contain=["=== GC PERIODIC ===", "=== DONE ==="],
+                                                  timeout_compile_s=120, timeout_run_s=120, ))
+    else:
+        tests.append(lambda: TestResult(name="gc_periodic_test.ml (gc periodic)", status="SKIP",
+                                        details="gc_periodic_test.ml not found"))
+
+    # New error/try semantics (unhandled errors + reserved identifiers)
+    tests.append(lambda: test_unhandled_error_top_level(name="unhandled error: top-level abort", mlc_runner=mlc_runner))
+    tests.append(lambda: test_unhandled_error_main_return(name="unhandled error: main(args) return abort",
+                                                          mlc_runner=mlc_runner))
+    tests.append(lambda: test_unhandled_error_origin_top_level(name="unhandled error: origin (top-level)",
+                                                               mlc_runner=mlc_runner))
+    tests.append(lambda: test_unhandled_error_origin_main_return(name="unhandled error: origin (main return)",
+                                                                 mlc_runner=mlc_runner))
+    tests.append(lambda: test_unhandled_error_origin_omitted_when_cleared(name="unhandled error: origin omitted",
+                                                                          mlc_runner=mlc_runner))
+    tests.append(lambda: test_reserved_identifiers(name="reserved identifiers: try/error", mlc_runner=mlc_runner))
+
+    if aes_ml is not None:
+        tests.append(lambda: test_aes_kat(name="aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)", mlc_runner=mlc_runner,
+                                          aes_ml=aes_ml))
+    else:
+        tests.append(lambda: TestResult(name="aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)", status="SKIP",
+                                        details="aes128_ecb_nist_kat.ml not found"))
+
+    if ns_main is not None:
+        tests.append(
+            lambda: test_program_no_fail(name="ns/import framework (basic)", mlc_runner=mlc_runner, ml_path=ns_main,
+                                         must_contain=["=== NS/IMPORT BASIC ===", "fubar.a() [OK]", "fubar.b() [OK]",
+                                                       "=== DONE ==="], timeout_compile_s=120, timeout_run_s=120, ))
+    else:
+        # Fallback: generate a minimal ns/import test if we can find fubar.ml + testlib.ml
+        fubar = find_file_by_name(tests_root, "fubar.ml")
+        if fubar is not None and testlib_ml is not None:
+            def _gen_ns_basic() -> TestResult:
+                with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+                    td_path = Path(td)
+                    main_gen = td_path / "ns_basic.ml"
+                    fubar_abs = str(fubar.resolve()).replace("\\", "\\\\")
+                    testlib_abs = str(testlib_ml.resolve()).replace("\\", "\\\\")
+                    main_gen.write_text("\n".join(
+                        [f'import "{testlib_abs}"', f'import "{fubar_abs}"', 'print "=== NS/IMPORT BASIC ==="',
+                         'assertEq(fubar.a(), 1, "fubar.a()")', 'assertEq(fubar.b(), 2, "fubar.b()")',
+                         'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+                    return test_program_no_fail(name="ns/import framework (generated basic)", mlc_runner=mlc_runner,
+                                                ml_path=main_gen,
+                                                must_contain=["=== NS/IMPORT BASIC ===", "fubar.a() [OK]",
+                                                              "fubar.b() [OK]", "=== DONE ==="], timeout_compile_s=120,
+                                                timeout_run_s=120, )
+
+            tests.append(_gen_ns_basic)
+        else:
+            tests.append(lambda: TestResult(name="ns/import framework (basic)", status="SKIP",
+                                            details="ns import main.ml not found"))
+
+    # package directive (compile-time qualification)
+    tests.append(lambda: test_package_basic(name="package directive (basic)", mlc_runner=mlc_runner))
+    tests.append(lambda: test_package_dotted(name="package directive (dotted)", mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_as_alias(name="import: as alias", mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_module_package_mismatch(name="import: module/package mismatch rejected",
+                                                             mlc_runner=mlc_runner))
+    tests.append(
+        lambda: test_import_package_path_mismatch(name="import: package/path mismatch rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_include_paths(name="import: include paths (-I)", mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_ambiguous_include_paths(name="import: ambiguous include paths rejected",
+                                                             mlc_runner=mlc_runner))
+    tests.append(lambda: test_package_not_first(name="package: must be first", mlc_runner=mlc_runner))
+    tests.append(lambda: test_package_duplicate(name="package: duplicate rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_main_in_package(name="package: main(args) forbidden", mlc_runner=mlc_runner))
+
+    # namespace improvements
+    tests.append(lambda: test_namespace_dotted(name="namespace: dotted", mlc_runner=mlc_runner))
+    tests.append(lambda: test_namespace_nested(name="namespace: nested", mlc_runner=mlc_runner))
+
+    # Negative: import cycle
+    if cycle_a is not None:
+        tests.append(
+            lambda: test_compile_expected_fail(name="import cycle detection (a.ml <-> b.ml)", mlc_runner=mlc_runner,
+                                               entry_ml=cycle_a, must_contain_err="Import cycle detected", ))
+    else:
+        tests.append(
+            lambda: TestResult(name="import cycle detection (a.ml <-> b.ml)", status="SKIP", details="a.ml not found"))
+
+    # Negative: imported module must be declaration-only
+    if lib_bad is not None:
+        tests.append(
+            lambda: test_import_decl_only_violation(name="imported module must be declaration-only (lib_bad.ml)",
+                                                    mlc_runner=mlc_runner, lib_bad=lib_bad))
+    else:
+        tests.append(lambda: TestResult(name="imported module must be declaration-only (lib_bad.ml)", status="SKIP",
+                                        details="lib_bad.ml not found"))
+
+    # Negative: user function call must match parameter arity
+    tests.append(
+        lambda: test_call_arity_mismatch(name="function call arity mismatch (foo expects 0)", mlc_runner=mlc_runner))
+
+    # Negative: unknown enum variant should be a compile-time error
+    tests.append(lambda: test_enum_unknown_variant(name="enum: unknown variant (Color.Nope)", mlc_runner=mlc_runner))
+
+    # Negative: duplicate enum variants should be rejected
+    tests.append(
+        lambda: test_enum_duplicate_variant(name="enum: duplicate variant (Color.Red twice)", mlc_runner=mlc_runner))
+
+    # Const / value-enum / constexpr import regressions
+    tests.append(
+        lambda: test_import_constexpr_ok(name="import: constexpr initializers accepted", mlc_runner=mlc_runner))
+    tests.append(lambda: test_const_reassign_rejected(name="const: reassign rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_enum_autoinc_after_string_rejected(name="enum: auto-increment after string rejected",
+                                                                 mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_constexpr_initializer_rejected(name="import: constexpr const initializer required",
+                                                                    mlc_runner=mlc_runner, kind="const"))
+    tests.append(
+        lambda: test_import_constexpr_initializer_rejected(name="import: constexpr global initializer required",
+                                                           mlc_runner=mlc_runner, kind="global"))
+
+    # main(args) entrypoint tests
+    tests.append(
+        lambda: test_main_args_and_exitcode(name="main(args): argv -> array<string> + exitcode", mlc_runner=mlc_runner))
+    tests.append(lambda: test_main_void_exit0(name="main(args): void return exits 0", mlc_runner=mlc_runner))
+
+    # Negative: main signature / placement checks
+    tests.append(lambda: test_main_bad_arity0(name="main(args): arity 0 rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_main_bad_arity2(name="main(args): arity 2 rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_main_in_namespace(name="main(args): must be top-level", mlc_runner=mlc_runner))
+
+    # Heap CLI config tests (reserve/commit flags)
+    tests.append(lambda: test_heap_cli_config_applied(name="heap CLI: reserve/commit applied", mlc_runner=mlc_runner))
+    tests.append(lambda: test_heap_cli_invalid_size(name="heap CLI: invalid size rejected", mlc_runner=mlc_runner))
+
+    # Optional: namespace struct constructor
+    tests.append(
+        lambda: test_ns_struct_optional(name="ns/import struct constructor (geom.Point)", mlc_runner=mlc_runner,
+                                        geom_ml=geom_ml, testlib_ml=testlib_ml))
+
+    tests.append(lambda: test_extern_namespaced(name="extern: namespaced + import-as alias", mlc_runner=mlc_runner))
+
+    # Runtime: callable values (user/builtin/struct) + GC
+    tests.append(
+        lambda: test_callable_values_runtime(name="callables: user+builtin+struct values + GC", mlc_runner=mlc_runner))
+
+    # Runtime: call profiling (--profile-calls)
+    tests.append(lambda: test_call_profile_counts(name="call profile: callStats() + counters", mlc_runner=mlc_runner))
+
+    # Runtime: extern stubs are first-class values
+    tests.append(lambda: test_extern_value_runtime(name="extern: value semantics + GC", mlc_runner=mlc_runner))
+
+    # Run
+    only = (args.only or "").lower() if args.only else None
+    results: list[TestResult] = []
+    for t in tests:
+        r = t()
+        if only and only not in r.name.lower():
+            continue
+        results.append(r)
+
+    # Report
+    passed = [r for r in results if r.status == "PASS"]
+    failed = [r for r in results if r.status == "FAIL"]
+    skipped = [r for r in results if r.status == "SKIP"]
+
+    def print_one(r: TestResult) -> None:
+        if r.status == "PASS":
+            st = _c(r.status, ANSI_GREEN, color_enabled)
+        elif r.status == "FAIL":
+            st = _c(r.status, ANSI_RED, color_enabled)
+        elif r.status == "SKIP":
+            st = _c(r.status, ANSI_YELLOW, color_enabled)
+        else:
+            st = r.status
+
+        print(f"[{st}] {r.name}")
+        if r.details:
+            print("  " + r.details.replace("\n", "\n  "))
+        if args.verbose and (r.stdout or r.stderr):
+            if r.stdout:
+                print("  --- stdout ---")
+                print("\n".join("  " + ln for ln in normalize_out(r.stdout).splitlines()))
+            if r.stderr:
+                print("  --- stderr ---")
+                print("\n".join("  " + ln for ln in normalize_out(r.stderr).splitlines()))
+        elif r.status == "FAIL":
+            # Show tail to keep it readable
+            blob = normalize_out((r.stdout or "") + "\n" + (r.stderr or ""))
+            blob = blob.strip("\n")
+            if blob:
+                print("  --- output (tail) ---")
+                print("\n".join("  " + ln for ln in tail(blob).splitlines()))
+
+    for r in results:
+        print_one(r)
+
+    print("\n=== SUMMARY ===")
+    print(f"{_c('PASS', ANSI_GREEN, color_enabled)}: {len(passed)}")
+    print(f"{_c('FAIL', ANSI_RED, color_enabled)}: {len(failed)}")
+    print(f"{_c('SKIP', ANSI_YELLOW, color_enabled)}: {len(skipped)}")
+
+    if failed:
+        print("\n" + _c("NOT OK", ANSI_RED, color_enabled))
+        return 1
+    if skipped and not args.allow_skip:
+        print("\n" + _c("NOT OK", ANSI_RED, color_enabled) + " (some tests were skipped; use --allow-skip to ignore)")
+        return 1
+
+    print("\n" + _c("OK", ANSI_GREEN, color_enabled))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

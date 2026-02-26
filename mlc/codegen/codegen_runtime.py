@@ -1,0 +1,1517 @@
+"""Runtime/builtins codegen mixin.
+
+This module emits small helper routines and language builtins that are shared across
+programs (e.g. typeof(), toNumber(), value/string equality helpers, argv init, and
+an unhandled-error abort helper).
+"""
+
+from __future__ import annotations
+
+from ..constants import (ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, OBJ_ARRAY, OBJ_BUILTIN, OBJ_BYTES, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING,
+                         OBJ_STRUCT, OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_INT, TAG_PTR, TAG_VOID, )
+from ..tools import enc_bool, enc_int, enc_void
+
+
+class CodegenRuntime:
+    """Codegen mixin for small runtime helpers and builtins.
+
+    This mixin is composed into :class:`mlc.codegen.codegen.Codegen`. It assumes
+    helpers/fields provided by other mixins (notably CodegenCore), such as:
+
+    - ``self.asm``: instruction emitter
+    - ``self.new_label_id()``: unique label generator
+    - ``self.rdata`` / ``self.data``: constant & global builders
+    - helper emitters like ``emit_writefile`` / ``emit_writefile_ptr_len``
+    """
+
+    def emit_int_to_dec_function(self) -> None:
+        """Emit an internal function:
+
+        int_to_dec:
+          input: RCX = tagged int
+          output: RAX = ptr (into intbuf), EDX = length
+
+        Uses only volatile regs, preserves RDI.
+        """
+        a = self.asm
+        a.mark('fn_int_to_dec')
+
+        # push rdi (nonvolatile)
+        a.push_reg("rdi")
+
+        # rax = rcx
+        a.mov_r64_r64("rax", "rcx")
+        # decode: sar rax,3
+        a.sar_rax_imm8(3)
+
+        # r9 = &intbuf_end
+        a.lea_r9_rip('intbuf_end')
+        # rdi = r9
+        a.mov_r64_r64("rdi", "r9")
+
+        # if rax == 0 -> write '0'
+        a.test_r64_r64("rax", "rax")  # test rax,rax
+        a.jcc('nz', 'itd_nonzero')
+
+        # dec rdi
+        a.dec_r64("rdi")
+        # mov byte [rdi], '0'
+        a.mov_membase_disp_imm8("rdi", 0, 0x30)
+        # mov rax, rdi
+        a.mov_r64_r64("rax", "rdi")
+        # mov edx, 1
+        a.mov_r32_imm32("edx", 1)
+        # pop rdi ; ret
+        a.pop_reg("rdi")
+        a.ret()
+
+        a.mark('itd_nonzero')
+
+        # r10d = 0 (sign flag)
+        a.xor_r32_r32("r10d", "r10d")  # xor r10d,r10d
+
+        # if rax < 0: neg rax; sign=1
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ge', 'itd_pos')
+        a.neg_r64("rax")  # neg rax
+        a.mov_r32_imm32("r10d", 1)  # mov r10d,1
+        a.mark('itd_pos')
+
+        a.mark('itd_loop')
+        # edx = 0
+        a.xor_r32_r32("edx", "edx")
+        # r11d = 10
+        a.mov_r32_imm32("r11d", 10)
+        # div r11  (rdx:rax / r11)
+        a.div_r64("r11")
+        # dl += '0'
+        a.add_r8_imm8("dl", 48)
+        # dec rdi
+        a.dec_r64("rdi")
+        # mov [rdi], dl
+        a.mov_membase_disp_r8("rdi", 0, "dl")
+        # test rax,rax
+        a.test_r64_r64("rax", "rax")
+        a.jcc('nz', 'itd_loop')
+
+        # if sign flag == 0 -> done
+        a.cmp_r32_imm("r10d", 0)  # cmp r10d,0
+        a.jcc('e', 'itd_done')
+        # dec rdi; mov byte [rdi], '-'
+        a.dec_r64("rdi")
+        a.mov_membase_disp_imm8("rdi", 0, 0x2D)
+
+        a.mark('itd_done')
+
+        # rax = rdi (ptr)
+        a.mov_r64_r64("rax", "rdi")
+
+        # r11 = r9; r11 -= rdi; edx = r11d
+        a.mov_r64_r64("r11", "r9")  # mov r11,r9
+        a.sub_r64_r64("r11", "rdi")  # sub r11,rdi
+        a.mov_r32_r32("edx", "r11d")  # mov edx,r11d
+
+        # pop rdi; ret
+        a.pop_reg("rdi")
+        a.ret()
+
+    def emit_toNumber_function(self) -> None:
+        r"""Builtin: toNumber(x) -> int or float
+
+        Supported inputs:
+        - int: returned unchanged
+        - boxed float: normalized (10.0 -> 10) else unchanged
+        - string: trims ASCII whitespace, parses:
+            - -?\d+   -> int
+            - -?\d+\.\d+ -> float (normalized if exact int)
+
+        On unsupported inputs, returns VOID (native compiler currently has no exceptions).
+
+        ABI:
+          RCX = value
+          RAX = result
+        """
+        a = self.asm
+        a.mark('fn_toNumber')
+
+        # Align stack + provide shadow space for internal calls (fn_box_float)
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_ptr = f"ton_ptr_{lid}"
+        l_float = f"ton_float_{lid}"
+        l_str = f"ton_str_{lid}"
+        l_fail = f"ton_fail_{lid}"
+        l_done = f"ton_done_{lid}"
+
+        # rax = rcx
+        a.mov_r64_r64("rax", "rcx")
+
+        # rdx = tag = rax & 7
+        a.mov_r64_r64("rdx", "rax")
+        a.and_r64_imm("rdx", 7)
+
+        # if tag == TAG_INT -> return input
+        a.cmp_r64_imm("rdx", 1)
+        a.jcc('e', l_done)
+
+        # if tag == TAG_PTR -> inspect object type
+        a.cmp_r64_imm("rdx", 0)
+        a.jcc('e', l_ptr)
+
+        # else fail
+        a.jmp(l_fail)
+
+        # --- ptr case ---
+        a.mark(l_ptr)
+        # edx = [rax] (obj type)
+        a.mov_r32_membase_disp("edx", "rax", 0)
+        # if OBJ_FLOAT
+        a.cmp_r32_imm("edx", OBJ_FLOAT)
+        a.jcc('e', l_float)
+        # if OBJ_STRING
+        a.cmp_r32_imm("edx", OBJ_STRING)
+        a.jcc('e', l_str)
+        a.jmp(l_fail)
+
+        # --- boxed float: normalize ---
+        a.mark(l_float)
+        # r9 = ptr (preserve)
+        a.mov_r64_r64("r9", "rax")  # mov r9, rax
+        # xmm0 = [rax+8]
+        a.movsd_xmm_membase_disp("xmm0", "rax", 8)
+        # rax = trunc(xmm0)
+        a.cvttsd2si_r64_xmm("rax", "xmm0")
+        # xmm1 = float(rax)
+        a.cvtsi2sd_xmm_r64("xmm1", "rax")
+        # compare
+        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
+        l_keepf = f"ton_keepf_{lid}"
+        a.jcc('ne', l_keepf)
+        # exact int => tagged int
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.jmp(l_done)
+        a.mark(l_keepf)
+        # keep original float ptr
+        a.mov_r64_r64("rax", "r9")  # mov rax,r9
+        a.jmp(l_done)
+
+        # --- string parse ---
+        a.mark(l_str)
+        # edx = len
+        a.mov_r32_membase_disp("edx", "rax", 4)
+        # r8 = start = &bytes
+        a.lea_r64_membase_disp("r8", "rax", 8)
+        # r9 = end = start + len
+        a.mov_r64_r64("r9", "r8")  # mov r9,r8
+        a.add_r64_r64("r9", "rdx")  # add r9,rdx
+
+        # trim left: while r8<r9 and *r8 <= 32
+        l_tl = f"ton_tl_{lid}"
+        l_tl_done = f"ton_tl_done_{lid}"
+        a.mark(l_tl)
+        a.cmp_r64_r64("r8", "r9")  # cmp r8,r9
+        a.jcc('ge', l_tl_done)
+        a.mov_r8_membase_disp("al", "r8", 0)  # mov al,[r8]
+        a.cmp_r8_imm8("al", 32)  # cmp al,32
+        a.jcc('g', l_tl_done)
+        a.inc_r64("r8")  # inc r8
+        a.jmp(l_tl)
+        a.mark(l_tl_done)
+
+        # trim right: while r9>r8 and *(r9-1) <= 32: r9--
+        l_tr = f"ton_tr_{lid}"
+        l_tr_done = f"ton_tr_done_{lid}"
+        a.mark(l_tr)
+        a.cmp_r64_r64("r9", "r8")  # cmp r9,r8
+        a.jcc('le', l_tr_done)
+        a.mov_r8_membase_disp("al", "r9", -1)  # mov al,[r9-1]
+        a.cmp_r8_imm8("al", 32)
+        a.jcc('g', l_tr_done)
+        a.dec_r64("r9")  # dec r9
+        a.jmp(l_tr)
+        a.mark(l_tr_done)
+
+        # if empty -> fail
+        a.cmp_r64_r64("r8", "r9")  # cmp r8,r9
+        a.jcc('e', l_fail)
+
+        # sign flag r10d = 0
+        a.xor_r32_r32("r10d", "r10d")  # xor r10d,r10d
+        # if *r8 == '-'
+        a.mov_r8_membase_disp("al", "r8", 0)  # mov al,[r8]
+        a.cmp_r8_imm8("al", 45)  # cmp al,'-'
+        l_nosign = f"ton_nosign_{lid}"
+        a.jcc('ne', l_nosign)
+        a.mov_r32_imm32("r10d", 1)  # mov r10d,1
+        a.inc_r64("r8")  # inc r8
+        a.mark(l_nosign)
+
+        # parse integer digits: rax=0, edx=digitcount
+        a.xor_r32_r32("eax", "eax")  # xor eax,eax
+        a.xor_r32_r32("edx", "edx")  # xor edx,edx
+
+        l_dig = f"ton_dig_{lid}"
+        l_dig_done = f"ton_dig_done_{lid}"
+        a.mark(l_dig)
+        a.cmp_r64_r64("r8", "r9")  # cmp r8,r9
+        a.jcc('ge', l_dig_done)
+        a.movzx_r32_membase_disp("ecx", "r8", 0)  # movzx ecx, byte [r8]
+        a.cmp_r8_imm8("cl", 48)  # cmp cl,'0'
+        a.jcc('l', l_dig_done)
+        a.cmp_r8_imm8("cl", 57)  # cmp cl,'9'
+        a.jcc('g', l_dig_done)
+        # rax = rax*10 + digit
+        a.imul_r64_r64_imm("rax", "rax", 10)  # imul rax,rax,10
+        a.sub_r32_imm("ecx", 48)  # sub ecx,'0'
+        a.add_r64_r64("rax", "rcx")  # add rax,rcx
+        a.inc_r64("r8")  # inc r8
+        a.inc_r32("edx")  # inc edx
+        a.jmp(l_dig)
+        a.mark(l_dig_done)
+
+        # require at least 1 digit
+        a.test_r32_r32("edx", "edx")  # test edx,edx
+        a.jcc('z', l_fail)
+
+        # if r8==r9 => integer
+        l_make_int = f"ton_make_int_{lid}"
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc('e', l_make_int)
+
+        # else must be '.' for float
+        a.cmp_membase_disp_imm8("r8", 0, 46)  # cmp byte [r8],'.'
+        a.jcc('ne', l_fail)
+        a.inc_r64("r8")  # inc r8
+
+        # parse frac digits: r11=frac_accum, edx=frac_count
+        a.xor_r32_r32("r11d", "r11d")  # xor r11d,r11d
+        a.xor_r32_r32("edx", "edx")  # xor edx,edx
+
+        l_fd = f"ton_fd_{lid}"
+        l_fd_done = f"ton_fd_done_{lid}"
+        a.mark(l_fd)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc('ge', l_fd_done)
+        a.movzx_r32_membase_disp("ecx", "r8", 0)  # movzx ecx, byte [r8]
+        a.cmp_r8_imm8("cl", 48)  # cmp cl,'0'
+        a.jcc('l', l_fd_done)
+        a.cmp_r8_imm8("cl", 57)  # cmp cl,'9'
+        a.jcc('g', l_fd_done)
+        a.imul_r64_r64_imm("r11", "r11", 10)  # imul r11,r11,10
+        a.sub_r32_imm("ecx", 48)  # sub ecx,'0'
+        a.add_r64_r64("r11", "rcx")  # add r11,rcx
+        a.inc_r64("r8")  # inc r8
+        a.inc_r32("edx")  # inc edx
+        a.jmp(l_fd)
+        a.mark(l_fd_done)
+
+        # need at least 1 frac digit and no trailing
+        a.test_r32_r32("edx", "edx")
+        a.jcc('z', l_fail)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc('ne', l_fail)
+
+        # --- build double in xmm0 ---
+        # xmm0 = float(int_accum)
+        a.cvtsi2sd_xmm_r64("xmm0", "rax")
+        # xmm1 = float(frac_accum)
+        a.cvtsi2sd_xmm_r64("xmm1", "r11")
+        # xmm2 = 1.0
+        a.mov_rax_imm64(0x3FF0000000000000)
+        a.movq_xmm_r64("xmm2", "rax")  # movq xmm2,rax
+        # xmm3 = 10.0
+        a.mov_rax_imm64(0x4024000000000000)
+        a.movq_xmm_r64("xmm3", "rax")  # movq xmm3,rax
+
+        # ecx = frac_count
+        a.mov_r32_r32("ecx", "edx")
+        l_pow = f"ton_pow_{lid}"
+        l_pow_done = f"ton_pow_done_{lid}"
+        a.mark(l_pow)
+        a.test_r32_r32("ecx", "ecx")
+        a.jcc('z', l_pow_done)
+        a.mulsd_xmm_xmm("xmm2", "xmm3")  # mulsd xmm2,xmm3
+        a.dec_r32("ecx")  # dec ecx
+        a.jmp(l_pow)
+        a.mark(l_pow_done)
+
+        # xmm1 /= xmm2; xmm0 += xmm1
+        a.divsd_xmm_xmm("xmm1", "xmm2")  # divsd xmm1,xmm2
+        a.addsd_xmm_xmm("xmm0", "xmm1")  # addsd xmm0,xmm1
+
+        # if signflag: xmm0 *= -1.0
+        a.cmp_r32_imm("r10d", 0)  # cmp r10d,0
+        l_pos = f"ton_pos_{lid}"
+        a.jcc('e', l_pos)
+        a.mov_rax_imm64(0xBFF0000000000000)  # -1.0
+        a.movq_xmm_r64("xmm3", "rax")  # movq xmm3,rax
+        a.mulsd_xmm_xmm("xmm0", "xmm3")  # mulsd xmm0,xmm3
+        a.mark(l_pos)
+
+        # normalize: if exact int -> tagged int else box float
+        a.cvttsd2si_r64_xmm("rax", "xmm0")  # cvttsd2si rax,xmm0
+        a.cvtsi2sd_xmm_r64("xmm1", "rax")  # cvtsi2sd xmm1,rax
+        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
+        l_box = f"ton_box_{lid}"
+        a.jcc('ne', l_box)
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.jmp(l_done)
+        a.mark(l_box)
+        a.call('fn_box_float')
+        a.jmp(l_done)
+
+        # --- make integer return from parsed digits ---
+        a.mark(l_make_int)
+        # if signflag: neg rax
+        a.cmp_r32_imm("r10d", 0)
+        l_mi_pos = f"ton_mi_pos_{lid}"
+        a.jcc('e', l_mi_pos)
+        a.neg_r64("rax")  # neg rax
+        a.mark(l_mi_pos)
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.jmp(l_done)
+
+        # --- fail: return void ---
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        # --- epilogue ---
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_typeof_function(self) -> None:
+        """Builtin: typeof(x) -> boxed string (from .rdata)
+
+        ABI:
+          RCX = value
+          RAX = pointer to boxed string object (TAG_PTR)
+        """
+        a = self.asm
+        a.mark('fn_typeof')
+
+        lid = self.new_label_id()
+        l_int = f"tof_int_{lid}"
+        l_bool = f"tof_bool_{lid}"
+        l_void = f"tof_void_{lid}"
+        l_enum = f"tof_enum_{lid}"
+        l_ptr = f"tof_ptr_{lid}"
+        l_str = f"tof_str_{lid}"
+        l_arr = f"tof_arr_{lid}"
+        l_flt = f"tof_flt_{lid}"
+        l_bytes = f"tof_bytes_{lid}"
+        l_fun = f"tof_fun_{lid}"
+        l_sti = f"tof_sti_{lid}"
+        l_stt = f"tof_stt_{lid}"
+        l_unk = f"tof_unk_{lid}"
+
+        # rax = rcx
+        a.mov_r64_r64("rax", "rcx")  # mov rax,rcx
+
+        # rdx = tag(rax) = rax & 7
+        a.mov_r64_r64("rdx", "rax")  # mov rdx,rax
+        a.and_r64_imm("rdx", 7)  # and rdx,7
+
+        # tag dispatch
+        a.cmp_r64_imm("rdx", TAG_INT)
+        a.jcc('e', l_int)
+        a.cmp_r64_imm("rdx", TAG_BOOL)
+        a.jcc('e', l_bool)
+        a.cmp_r64_imm("rdx", TAG_VOID)
+        a.jcc('e', l_void)
+        a.cmp_r64_imm("rdx", TAG_ENUM)
+        a.jcc('e', l_enum)
+        a.cmp_r64_imm("rdx", TAG_PTR)
+        a.jcc('e', l_ptr)
+        a.jmp(l_unk)
+
+        a.mark(l_int)
+        a.lea_rax_rip('obj_type_int')
+        a.ret()
+
+        a.mark(l_bool)
+        a.lea_rax_rip('obj_type_bool')
+        a.ret()
+
+        a.mark(l_void)
+        a.lea_rax_rip('obj_type_void')
+        a.ret()
+
+        a.mark(l_enum)
+        a.lea_rax_rip('obj_type_enum')
+        a.ret()
+
+        a.mark(l_ptr)
+        # edx = [rax] (object type)
+        a.mov_r32_membase_disp("edx", "rax", 0)
+
+        a.cmp_r32_imm("edx", OBJ_STRING)
+        a.jcc('e', l_str)
+        a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_arr)
+        a.cmp_r32_imm("edx", OBJ_BYTES)
+        a.jcc('e', l_bytes)
+        a.cmp_r32_imm("edx", OBJ_FLOAT)
+        a.jcc('e', l_flt)
+        a.cmp_r32_imm("edx", OBJ_FUNCTION)
+        a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_BUILTIN)
+        a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_STRUCT)
+        a.jcc('e', l_sti)
+
+        a.cmp_r32_imm("edx", OBJ_STRUCTTYPE)
+        a.jcc('e', l_stt)
+        a.jmp(l_unk)
+
+        a.mark(l_str)
+        a.lea_rax_rip('obj_type_string')
+        a.ret()
+
+        a.mark(l_arr)
+        a.lea_rax_rip('obj_type_array')
+        a.ret()
+
+        a.mark(l_bytes)
+        a.lea_rax_rip('obj_type_bytes')
+        a.ret()
+
+        a.mark(l_flt)
+        a.lea_rax_rip('obj_type_float')
+        a.ret()
+
+        a.mark(l_fun)
+        a.lea_rax_rip('obj_type_function')
+        a.ret()
+
+        a.mark(l_sti)
+        # Special-case: built-in error struct instance => typeof(x) == "error"
+        l_err = f"tof_err_{lid}"
+        a.mov_r32_membase_disp("edx", "rax", 8)  # struct_id (u32)
+        a.cmp_r32_imm("edx", ERROR_STRUCT_ID)
+        a.jcc('e', l_err)
+        a.lea_rax_rip('obj_type_struct')
+        a.ret()
+        a.mark(l_err)
+        a.lea_rax_rip('obj_type_error')
+        a.ret()
+
+        a.mark(l_stt)
+        a.lea_rax_rip('obj_type_struct')
+        a.ret()
+
+        a.mark(l_unk)
+        a.lea_rax_rip('obj_type_unknown')
+        a.ret()
+
+    def emit_unhandled_error_exit_function(self) -> None:
+        """Internal helper: abort on an unhandled MiniLang `error` value.
+
+        ABI:
+          RCX = value (expected: TAG_PTR to OBJ_STRUCT with struct_id == ERROR_STRUCT_ID)
+          Does not return (calls ExitProcess).
+
+        Prints:
+          Error occured: no=<code> message=<message>
+        """
+        a = self.asm
+        a.mark('fn_unhandled_error_exit')
+
+        # Stack: shadow space + locals (keep 16B alignment for Win64 calls).
+        # Locals used: [rsp+0x30..0x50] (code/message/script/func/line)
+        a.sub_rsp_imm8(0x68)
+
+        # Save error fields into locals.
+        a.mov_r64_r64('r11', 'rcx')
+        a.mov_r64_membase_disp('rax', 'r11', 16)  # code
+        a.mov_membase_disp_r64('rsp', 0x30, 'rax')
+        a.mov_r64_membase_disp('rax', 'r11', 24)  # message
+        a.mov_membase_disp_r64('rsp', 0x38, 'rax')
+
+        # The error struct historically had only 2 fields (code, message).
+        # Newer compilers may emit 5 fields (code, message, script, func, line).
+        # We *must* guard reads past the declared field count to avoid crashes.
+        lid_nf = self.new_label_id()
+        l_nf_old = f"unh_nf_old_{lid_nf}"
+        l_nf_done = f"unh_nf_done_{lid_nf}"
+
+        a.mov_r32_membase_disp('edx', 'r11', 4)  # nfields
+        a.cmp_r32_imm('edx', 5)
+        a.jcc('l', l_nf_old)
+
+        # nfields >= 5 -> load origin fields
+        a.mov_r64_membase_disp('rax', 'r11', 32)  # script
+        a.mov_membase_disp_r64('rsp', 0x40, 'rax')
+        a.mov_r64_membase_disp('rax', 'r11', 40)  # func
+        a.mov_membase_disp_r64('rsp', 0x48, 'rax')
+        a.mov_r64_membase_disp('rax', 'r11', 48)  # line
+        a.mov_membase_disp_r64('rsp', 0x50, 'rax')
+        a.jmp(l_nf_done)
+
+        # nfields < 5 -> set origin locals to void
+        a.mark(l_nf_old)
+        a.mov_rax_imm64(enc_void())
+        a.mov_membase_disp_r64('rsp', 0x40, 'rax')
+        a.mov_membase_disp_r64('rsp', 0x48, 'rax')
+        a.mov_membase_disp_r64('rsp', 0x50, 'rax')
+
+        a.mark(l_nf_done)
+
+        # "Error occured: no="
+        self.emit_writefile('err_occ_prefix', 18)
+
+        # Print code as decimal
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x30)
+        a.call('fn_int_to_dec')  # RAX=ptr, EDX=len
+        a.mov_r32_r32('r8d', 'edx')
+        a.mov_r64_r64('rdx', 'rax')
+        self.emit_writefile_ptr_len()
+
+        # " message="
+        self.emit_writefile('err_occ_mid', 9)
+
+        # Print message via value_to_string
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x38)
+        a.call('fn_value_to_string')
+        # r8d=len, rdx=ptr
+        a.mov_r32_membase_disp('r8d', 'rax', 4)
+        a.lea_r64_membase_disp('rdx', 'rax', 8)
+        self.emit_writefile_ptr_len()
+
+        # Newline
+        self.emit_writefile('nl', 1)
+
+        # Optional origin line: "  at <script>:<line> in <func>"
+        lid = self.new_label_id()
+        l_skip = f"unh_loc_skip_{lid}"
+        l_exit = f"unh_loc_exit_{lid}"
+
+        # script must be a non-empty string
+        a.mov_r64_membase_disp('r11', 'rsp', 0x40)
+        a.mov_r64_r64('r10', 'r11')
+        a.and_r64_imm('r10', 7)
+        a.cmp_r64_imm('r10', TAG_PTR)
+        a.jcc('ne', l_skip)
+        a.mov_r32_membase_disp('edx', 'r11', 0)
+        a.cmp_r32_imm('edx', OBJ_STRING)
+        a.jcc('ne', l_skip)
+
+        # script length must be > 0
+        a.mov_r32_membase_disp('edx', 'r11', 4)
+        a.cmp_r32_imm('edx', 0)
+        a.jcc('e', l_skip)
+
+        # line must be a positive tagged int
+        a.mov_r64_membase_disp('r10', 'rsp', 0x50)
+        a.mov_r64_r64('r9', 'r10')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_INT)
+        a.jcc('ne', l_skip)
+        a.cmp_r64_imm('r10', enc_int(0))
+        a.jcc('le', l_skip)
+
+        # "  at "
+        self.emit_writefile('err_occ_at', 5)
+
+        # NOTE: emit_writefile() performs Win64 calls and clobbers volatile regs.
+        # Reload script ptr from locals before using it.
+        a.mov_r64_membase_disp('r11', 'rsp', 0x40)
+
+        # print script
+        a.mov_r32_membase_disp('r8d', 'r11', 4)
+        a.lea_r64_membase_disp('rdx', 'r11', 8)
+        self.emit_writefile_ptr_len()
+
+        # ':'
+        self.emit_writefile('err_occ_colon', 1)
+
+        # print line as decimal (tagged int)
+        # Reload line value from locals (previous calls may clobber r10).
+        a.mov_r64_membase_disp('r10', 'rsp', 0x50)
+        a.mov_r64_r64('rcx', 'r10')
+        a.call('fn_int_to_dec')
+        a.mov_r32_r32('r8d', 'edx')
+        a.mov_r64_r64('rdx', 'rax')
+        self.emit_writefile_ptr_len()
+
+        # func must be a string
+        a.mov_r64_membase_disp('r11', 'rsp', 0x48)
+        a.mov_r64_r64('r10', 'r11')
+        a.and_r64_imm('r10', 7)
+        a.cmp_r64_imm('r10', TAG_PTR)
+        a.jcc('ne', l_exit)
+        a.mov_r32_membase_disp('edx', 'r11', 0)
+        a.cmp_r32_imm('edx', OBJ_STRING)
+        a.jcc('ne', l_exit)
+
+        # " in "
+        self.emit_writefile('err_occ_in', 4)
+        # Reload func ptr from locals (emit_writefile clobbers volatile regs).
+        a.mov_r64_membase_disp('r11', 'rsp', 0x48)
+        a.mov_r32_membase_disp('r8d', 'r11', 4)
+        a.lea_r64_membase_disp('rdx', 'r11', 8)
+        self.emit_writefile_ptr_len()
+
+        self.emit_writefile('nl', 1)
+        a.jmp(l_exit)
+
+        a.mark(l_skip)
+        a.jmp(l_exit)
+
+        a.mark(l_exit)
+
+        # Exit code for unhandled MiniLang error is always 1 (even if error.code is different).
+        a.mov_rcx_imm32(1)
+        a.mov_rax_rip_qword('iat_ExitProcess')
+        a.call_rax()
+
+        # Should never return
+        a.add_rsp_imm8(0x68)
+        a.ret()
+
+    def emit_strlen_function(self) -> None:
+        """Helper: strlen for NUL-terminated ascii/utf8. RCX=ptr, returns EDX=len."""
+        a = self.asm
+        a.mark('fn_strlen')
+        a.mov_r64_r64("rax", "rcx")  # mov rax,rcx
+        a.xor_r32_r32("edx", "edx")  # xor edx,edx
+        l_top = f"strlen_top_{a.pos}"
+        l_done = f"strlen_done_{a.pos}"
+        a.mark(l_top)
+        a.cmp_membase_disp_imm8("rax", 0, 0)  # cmp byte [rax],0
+        a.jcc('e', l_done)
+        a.inc_r64("rax")  # inc rax
+        a.inc_r32("edx")  # inc edx
+        a.jmp(l_top)
+        a.mark(l_done)
+        a.ret()
+
+    def emit_string_eq_function(self) -> None:
+        """Internal helper: fn_str_eq(s1, s2) -> bool (content equality)
+
+        Input : RCX = ptr to OBJ_STRING
+                RDX = ptr to OBJ_STRING
+        Output: RAX = encoded bool (TAG_BOOL)
+
+        Semantics:
+        - Returns true iff the strings have the same length and identical bytes.
+        - This is required for MiniLang semantics (`==` compares string contents).
+        """
+        a = self.asm
+        a.mark('fn_str_eq')
+
+        # 32B shadow space (alignment) - no calls, but keep ABI-consistent.
+        a.sub_rsp_imm8(0x28)
+
+        # r8d = len1, r9d = len2
+        a.mov_r32_membase_disp("r8d", "rcx", 4)  # mov r8d,[rcx+4]
+        a.mov_r32_membase_disp("r9d", "rdx", 4)  # mov r9d,[rdx+4]
+        # if len1 != len2 -> false
+        a.cmp_r32_r32("r8d", "r9d")  # cmp r8d,r9d
+        lid = self.new_label_id()
+        l_false0 = f"streq_false0_{lid}"
+        l_false1 = f"streq_false1_{lid}"
+        l_true = f"streq_true_{lid}"
+        l_loop = f"streq_loop_{lid}"
+        l_done = f"streq_done_{lid}"
+        a.jcc('ne', l_false0)
+
+        # if len == 0 -> true
+        a.test_r32_r32("r8d", "r8d")  # test r8d,r8d
+        a.jcc('e', l_true)
+
+        # compare bytes
+        a.push_reg("rsi")  # push rsi
+        a.push_reg("rdi")  # push rdi
+        a.lea_r64_membase_disp("rsi", "rcx", 8)  # lea rsi,[rcx+8]
+        a.lea_r64_membase_disp("rdi", "rdx", 8)  # lea rdi,[rdx+8]
+        a.mov_r32_r32("ecx", "r8d")  # mov ecx,r8d
+
+        a.mark(l_loop)
+        a.mov_r8_membase_disp("al", "rsi", 0)  # mov al,[rsi]
+        a.cmp_r8_membase_disp("al", "rdi", 0)  # cmp al,[rdi]
+        a.jcc('ne', l_false1)
+        a.inc_r64("rsi")  # inc rsi
+        a.inc_r64("rdi")  # inc rdi
+        a.dec_r32("ecx")  # dec ecx
+        a.jcc('ne', l_loop)
+
+        a.pop_reg("rdi")  # pop rdi
+        a.pop_reg("rsi")  # pop rsi
+        a.jmp(l_true)
+
+        # failure before any pushes
+        a.mark(l_false0)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        # failure after pushing rsi/rdi inside the loop
+        a.mark(l_false1)
+        a.pop_reg("rdi")  # pop rdi
+        a.pop_reg("rsi")  # pop rsi
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_value_eq_function(self) -> None:
+        """Internal helper: fn_val_eq(v1, v2) -> bool (value equality)
+
+        Input : RCX = tagged Value v1
+                RDX = tagged Value v2
+        Output: RAX = encoded bool (TAG_BOOL)
+
+        Semantics:
+        - ints/bools compare by numeric value (bool behaves as 0/1)
+        - floats compare numerically against ints/bools (mixed numeric ok)
+        - strings compare by content
+        - arrays compare by length and element-wise equality (deep, supports nesting)
+        - other heap objects fall back to identity (already handled by fast-path)
+
+        Implementation note:
+        We implement deep array equality *iteratively* using an explicit pair-stack in the
+        function's stack frame to avoid recursion pitfalls and to be robust for nested arrays.
+        """
+        a = self.asm
+        a.mark('fn_val_eq')
+
+        # Save non-volatile regs (Windows x64 ABI)
+        a.push_rbx()
+        a.push_reg("rsi")  # push rsi
+        a.push_reg("rdi")  # push rdi
+        a.push_r12()
+        a.push_r13()
+        a.push_r14()
+        a.push_r15()
+
+        # Frame: shadow(0x20) + align(0x8) + pair stack (0x1000)
+        PAIR_STACK_BYTES = 0x1000
+        FRAME_BYTES = 0x28 + PAIR_STACK_BYTES
+        a.sub_rsp_imm32(FRAME_BYTES)
+
+        # r14 = pair_stack_base = rsp + 0x28
+        a.lea_r64_membase_disp("r14", "rsp", 40)  # lea r14,[rsp+0x28]
+        # r13 = pair_stack_top = r14
+        a.mov_r64_r64("r13", "r14")  # mov r13,r14
+        # r15 = pair_stack_end = r14 + PAIR_STACK_BYTES
+        a.mov_r64_r64("r15", "r14")  # mov r15,r14
+        a.add_r64_imm("r15", PAIR_STACK_BYTES)  # add r15, imm32
+
+        # push initial pair (RCX, RDX) onto stack
+        a.mov_membase_disp_r64("r13", 0, "rcx")  # mov [r13+0],rcx
+        a.mov_membase_disp_r64("r13", 8, "rdx")  # mov [r13+8],rdx
+        a.add_r64_imm("r13", 16)  # add r13,16
+
+        lid = self.new_label_id()
+        l_loop = f"vale_it_loop_{lid}"
+        l_pop = f"vale_it_pop_{lid}"
+        l_false = f"vale_it_false_{lid}"
+        l_true = f"vale_it_true_{lid}"
+        l_done = f"vale_it_done_{lid}"
+        l_ptr = f"vale_it_ptr_{lid}"
+        l_num = f"vale_it_num_{lid}"
+        l_arr_push = f"vale_it_arr_push_{lid}"
+        l_cont = f"vale_it_cont_{lid}"
+        l_enum = f"vale_it_enum_{lid}"
+
+        a.mark(l_loop)
+        # while top != base
+        a.cmp_r64_r64("r13", "r14")  # cmp r13,r14
+        a.jcc('e', l_true)
+
+        a.mark(l_pop)
+        a.sub_r64_imm("r13", 16)  # sub r13,16
+        # r10 = v1, r11 = v2
+        a.mov_r64_membase_disp("r10", "r13", 0)  # mov r10,[r13+0]
+        a.mov_r64_membase_disp("r11", "r13", 8)  # mov r11,[r13+8]
+
+        # Fast path: identical tagged values -> continue
+        a.cmp_r64_r64("r10", "r11")  # cmp r10,r11
+        a.jcc('e', l_loop)
+
+        # tag1 -> r8, tag2 -> r9
+        a.mov_r64_r64("rax", "r10")  # mov rax,r10
+        a.and_rax_imm8(7)
+        a.mov_r64_r64("r8", "rax")  # mov r8,rax
+        a.mov_r64_r64("rax", "r11")  # mov rax,r11
+        a.and_rax_imm8(7)
+        a.mov_r64_r64("r9", "rax")  # mov r9,rax
+
+        # Enums are not numeric: enum == enum only by identity (handled by fast-path)
+        # If either operand is TAG_ENUM here, values differ -> not equal.
+        a.cmp_r64_imm("r8", TAG_ENUM)
+        a.jcc('e', l_enum)
+        a.cmp_r64_imm("r9", TAG_ENUM)
+        a.jcc('e', l_enum)
+
+        # If both pointers -> pointer path else numeric path
+        a.cmp_r64_imm("r8", 0)  # cmp r8,0
+        a.jcc('ne', l_num)
+        a.cmp_r64_imm("r9", 0)  # cmp r9,0
+        a.jcc('e', l_ptr)
+        a.jmp(l_num)
+
+        # ---- pointer path ----
+        a.mark(l_ptr)
+        # type1 in eax, type2 in edx
+        a.mov_r32_membase_disp("eax", "r10", 0)  # mov eax,[r10]
+        a.mov_r32_membase_disp("edx", "r11", 0)  # mov edx,[r11]
+        a.cmp_r32_r32("eax", "edx")  # cmp eax,edx
+        a.jcc('ne', l_false)
+
+        # if type == OBJ_STRING
+        a.cmp_r32_imm("eax", OBJ_STRING)  # cmp eax,imm8
+        l_is_arr = f"vale_it_is_arr_{lid}"
+        l_is_flt = f"vale_it_is_flt_{lid}"
+        l_is_other = f"vale_it_is_other_{lid}"
+        a.jcc('ne', l_is_arr)
+        # call fn_str_eq(r10,r11) -> bool in rax
+        a.mov_r64_r64("rcx", "r10")  # mov rcx,r10
+        a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
+        a.call('fn_str_eq')
+        a.cmp_rax_imm32(enc_bool(True))
+        a.jcc('ne', l_false)
+        a.jmp(l_loop)
+
+        # if type == OBJ_ARRAY
+        a.mark(l_is_arr)
+        a.cmp_r32_imm("eax", OBJ_ARRAY)
+        a.jcc('ne', l_is_flt)
+        # Compare lengths
+        a.mov_r32_membase_disp("ebx", "r10", 4)  # mov ebx,[r10+4]
+        a.mov_r32_membase_disp("ecx", "r11", 4)  # mov ecx,[r11+4]
+        a.cmp_r32_r32("ebx", "ecx")  # cmp ebx,ecx
+        a.jcc('ne', l_false)
+        # if len==0 -> continue
+        a.test_r32_r32("ebx", "ebx")  # test ebx,ebx
+        a.jcc('e', l_loop)
+
+        # rsi = base1, rdi = base2
+        a.lea_r64_membase_disp("rsi", "r10", 8)  # lea rsi,[r10+8]
+        a.lea_r64_membase_disp("rdi", "r11", 8)  # lea rdi,[r11+8]
+        # r9d = i = 0
+        # NOTE: rsp/r12 cannot be used as SIB index (index field == 4 encodes "no index").
+        # Use r9 for the loop index to allow base+index*8 addressing.
+        a.xor_r32_r32("r9d", "r9d")  # xor r9d,r9d
+
+        l_ap_loop = f"vale_it_ap_loop_{lid}"
+        l_ap_done = f"vale_it_ap_done_{lid}"
+        a.mark(l_ap_loop)
+        a.cmp_r32_r32("r9d", "ebx")  # cmp r9d,ebx
+        a.jcc('ge', l_ap_done)
+
+        # Check stack capacity: if top+16 > end -> false
+        a.mov_r64_r64("rax", "r13")  # mov rax,r13
+        a.add_r64_imm("rax", 16)  # add rax,16
+        a.cmp_r64_r64("rax", "r15")  # cmp rax,r15
+        # Addresses should be compared as *unsigned*.
+        a.jcc('a', l_false)
+
+        # load elements into rax (v1) and rdx (v2)
+        # NOTE: must use SIB addressing (base + index*scale) for array element access.
+        a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)  # mov rax,[rsi+r9*8]
+        a.mov_r64_mem_bis("rdx", "rdi", "r9", 8, 0)  # mov rdx,[rdi+r9*8]
+
+        # push pair (rax, rdx)
+        a.mov_membase_disp_r64("r13", 0, "rax")  # mov [r13+0],rax
+        a.mov_membase_disp_r64("r13", 8, "rdx")  # mov [r13+8],rdx
+        a.add_r64_imm("r13", 16)  # add r13,16
+
+        a.inc_r32("r9d")  # inc r9d
+        a.jmp(l_ap_loop)
+
+        a.mark(l_ap_done)
+        a.jmp(l_loop)
+
+        # if type == OBJ_FLOAT
+        a.mark(l_is_flt)
+        a.cmp_r32_imm("eax", OBJ_FLOAT)
+        a.jcc('ne', l_is_other)
+        # Compare doubles: NaN => false
+        a.movsd_xmm_membase_disp("xmm0", "r10", 8)  # movsd xmm0,[r10+8]
+        a.movsd_xmm_membase_disp("xmm1", "r11", 8)  # movsd xmm1,[r11+8]
+        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
+        a.jcc('p', l_false)  # unordered
+        a.jcc('ne', l_false)  # not equal
+        a.jmp(l_loop)
+
+        # unknown ptr types -> false (identity already handled)
+        a.mark(l_is_other)
+        a.jmp(l_false)
+
+        # ---- numeric path (int/bool/float mix) ----
+        a.mark(l_num)
+        # If both immediates (non-pointer) -> compare raw integers
+        a.cmp_r64_imm("r8", 0)  # cmp r8,0
+        l_num_mix = f"vale_it_num_mix_{lid}"
+        a.jcc('e', l_num_mix)
+        a.cmp_r64_imm("r9", 0)  # cmp r9,0
+        a.jcc('e', l_num_mix)
+        # rax = v1>>3, rdx = v2>>3
+        a.mov_r64_r64("rax", "r10")  # mov rax,r10
+        a.sar_r64_imm8("rax", 3)  # sar rax,3
+        a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
+        a.sar_r64_imm8("rdx", 3)  # sar rdx,3
+        a.cmp_r64_r64("rax", "rdx")  # cmp rax,rdx
+        a.jcc('ne', l_false)
+        a.jmp(l_loop)
+
+        # Mixed numeric or float: convert both to double and compare
+        a.mark(l_num_mix)
+        # v1 -> xmm0
+        l_v1_imm = f"vale_it_v1_imm_{lid}"
+        l_v1_done = f"vale_it_v1_done_{lid}"
+        a.cmp_r64_imm("r8", 0)  # cmp r8,0
+        a.jcc('ne', l_v1_imm)
+        # pointer: must be float
+        a.mov_r32_membase_disp("eax", "r10", 0)  # mov eax,[r10]
+        a.cmp_r32_imm("eax", OBJ_FLOAT)
+        a.jcc('ne', l_false)
+        a.movsd_xmm_membase_disp("xmm0", "r10", 8)  # movsd xmm0,[r10+8]
+        a.jmp(l_v1_done)
+
+        a.mark(l_v1_imm)
+        a.mov_r64_r64("rax", "r10")  # mov rax,r10
+        a.sar_r64_imm8("rax", 3)  # sar rax,3
+        a.cvtsi2sd_xmm_r64("xmm0", "rax")  # cvtsi2sd xmm0,rax
+
+        a.mark(l_v1_done)
+
+        # v2 -> xmm1
+        l_v2_imm = f"vale_it_v2_imm_{lid}"
+        l_v2_done = f"vale_it_v2_done_{lid}"
+        a.cmp_r64_imm("r9", 0)  # cmp r9,0
+        a.jcc('ne', l_v2_imm)
+        a.mov_r32_membase_disp("edx", "r11", 0)  # mov edx,[r11]
+        a.cmp_r32_imm("edx", OBJ_FLOAT)
+        a.jcc('ne', l_false)
+        a.movsd_xmm_membase_disp("xmm1", "r11", 8)  # movsd xmm1,[r11+8]
+        a.jmp(l_v2_done)
+
+        a.mark(l_v2_imm)
+        a.mov_r64_r64("rax", "r11")  # mov rax,r11
+        a.sar_r64_imm8("rax", 3)  # sar rax,3
+        a.cvtsi2sd_xmm_r64("xmm1", "rax")  # cvtsi2sd xmm1,rax
+
+        a.mark(l_v2_done)
+        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
+        a.jcc('p', l_false)
+        a.jcc('ne', l_false)
+        a.jmp(l_loop)
+
+        # ---- return paths ----
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+        a.jmp(l_done)
+
+        a.mark(l_enum)
+        a.jmp(l_false)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+
+        a.mark(l_done)
+        a.add_rsp_imm32(FRAME_BYTES)
+        a.pop_r15()
+        a.pop_r14()
+        a.pop_r13()
+        a.pop_r12()
+        a.pop_reg("rdi")  # pop rdi
+        a.pop_reg("rsi")  # pop rsi
+        a.pop_rbx()
+        a.ret()
+
+    # ------------------------------------------------------------------
+    # Program arguments (main(args))
+    # ------------------------------------------------------------------
+
+    def emit_init_argvw_function(self) -> None:
+        """Internal helper: initialize argv/argc globals for main(args).
+
+        Calls Windows APIs:
+          - GetCommandLineW()
+          - CommandLineToArgvW(cmdline, &ml_argc)  -> argvW
+        Stores:
+          - ml_argc (u32)
+          - ml_argvw (u64 pointer to LPWSTR*)
+        Note: argvW must be freed with LocalFree.
+        """
+        a = self.asm
+        a.mark('fn_init_argvw')
+
+        # Windows x64 ABI: keep 16-byte alignment at CALLs + 32-byte shadow space.
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_ok = f"argvw_ok_{lid}"
+        l_done = f"argvw_done_{lid}"
+
+        # cmd = GetCommandLineW()
+        a.mov_rax_rip_qword('iat_GetCommandLineW')
+        a.call_rax()
+
+        # argvw = CommandLineToArgvW(cmd, &ml_argc)
+        a.mov_r64_r64("rcx", "rax")  # rcx = cmdline
+        a.lea_rdx_rip('ml_argc')  # rdx = &argc (int*)
+        a.mov_rax_rip_qword('iat_CommandLineToArgvW')
+        a.call_rax()
+
+        # if argvw == NULL: argc=0; ml_argvw=0
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ne', l_ok)
+        a.xor_r32_r32("eax", "eax")
+        a.mov_rip_dword_eax('ml_argc')
+        a.xor_r64_r64("rax", "rax")
+        a.mov_rip_qword_rax('ml_argvw')
+        a.jmp(l_done)
+
+        a.mark(l_ok)
+        # store argvw ptr
+        a.mov_rip_qword_rax('ml_argvw')
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_build_args_function(self) -> None:
+        """Internal helper: build MiniLang args array (array<string>) from Windows argv.
+
+        - Calls fn_init_argvw() internally to populate ml_argc/ml_argvw.
+        - Builds a heap OBJ_ARRAY of heap OBJ_STRING items (UTF-8).
+        - Uses argv[1..] (skips program path).
+        - Frees argvw buffer via LocalFree and clears ml_argc/ml_argvw.
+        - Returns: RAX = tagged pointer to OBJ_ARRAY.
+        """
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark('fn_build_args')
+
+        # Stack frame:
+        #  - keep 32B shadow space for calls
+        #  - keep 0x20..0x38 available for extra call args (WideCharToMultiByte has 8 params)
+        # Locals:
+        #   [rsp+0x40] array_base (qword)
+        #   [rsp+0x48] n (dword)
+        #   [rsp+0x4C] i (dword)
+        #   [rsp+0x50] argvw (qword)
+        #   [rsp+0x58] wide_ptr (qword)
+        #   [rsp+0x60] tmp (dword)
+        #   [rsp+0x64] len (dword)
+        a.sub_rsp_imm32(0x88)
+
+        lid = self.new_label_id()
+        l_n0 = f"args_n0_{lid}"
+        l_loop = f"args_loop_{lid}"
+        l_done = f"args_done_{lid}"
+        l_len0 = f"args_len0_{lid}"
+        l_free = f"args_free_{lid}"
+
+        # init argv/argc globals (ml_argc, ml_argvw)
+        a.call('fn_init_argvw')
+
+        # n = max(ml_argc - 1, 0)
+        a.mov_eax_rip_dword('ml_argc')
+        a.cmp_r32_imm('eax', 1)
+        a.jcc('le', l_n0)
+        a.sub_r32_imm('eax', 1)
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+        a.jmp(l_done + "_alloc")
+
+        a.mark(l_n0)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+
+        a.mark(l_done + "_alloc")
+        # argvw ptr
+        a.mov_rax_rip_qword('ml_argvw')
+        a.mov_membase_disp_r64('rsp', 0x50, 'rax')
+
+        # i = 0
+        a.mov_membase_disp_imm32('rsp', 0x4C, 0, qword=False)
+
+        # Allocate OBJ_ARRAY: size = 8 + n*8
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x48)
+        a.shl_r32_imm8('ecx', 3)
+        a.add_r32_imm('ecx', 8)
+        a.call('fn_alloc')
+
+        a.mov_r11_rax()
+        # header: [base]=OBJ_ARRAY, [base+4]=n
+        a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.mov_membase_disp_r32('r11', 4, 'eax')
+
+        # store + root array
+        a.mov_membase_disp_r64('rsp', 0x40, 'r11')
+        a.mov_rip_qword_r11('gc_tmp0')
+
+        # if n == 0 => skip loop
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_free)
+
+        # loop i=0..n-1
+        a.mark(l_loop)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x4C)  # eax=i
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x48)  # ecx=n
+        a.cmp_r32_r32('eax', 'ecx')
+        a.jcc('ge', l_free)
+
+        # wide_ptr = argvw[i+1]
+        a.mov_r32_r32('edx', 'eax')  # edx=i
+        a.add_r32_imm('edx', 1)  # edx=i+1
+        a.mov_r64_membase_disp('r10', 'rsp', 0x50)  # r10=argvw
+        a.shl_r64_imm8('rdx', 3)  # rdx=(i+1)*8
+        a.mov_r64_r64('rax', 'r10')
+        a.add_r64_r64('rax', 'rdx')
+        a.mov_r64_membase_disp('r8', 'rax', 0)  # r8 = wide_ptr
+        a.mov_membase_disp_r64('rsp', 0x58, 'r8')
+
+        # bytes_with_nul = WideCharToMultiByte(CP_UTF8,0,wide_ptr,-1,NULL,0,NULL,NULL)
+        a.mov_r32_imm32('ecx', 65001)  # CP_UTF8
+        a.xor_r32_r32('edx', 'edx')  # flags=0
+        a.mov_r32_imm32('r9d', 0xFFFFFFFF)  # -1 (include NUL)
+        a.mov_membase_disp_imm32('rsp', 0x20, 0, qword=True)  # lpMultiByteStr=NULL
+        a.mov_membase_disp_imm32('rsp', 0x28, 0, qword=True)  # cbMultiByte=0
+        a.mov_membase_disp_imm32('rsp', 0x30, 0, qword=True)  # defaultChar=NULL
+        a.mov_membase_disp_imm32('rsp', 0x38, 0, qword=True)  # usedDefaultChar=NULL
+        a.mov_rax_rip_qword('iat_WideCharToMultiByte')
+        a.call_rax()
+        a.mov_membase_disp_r32('rsp', 0x60, 'eax')
+
+        # len = max(bytes_with_nul - 1, 0)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_len0)
+        a.sub_r32_imm('eax', 1)
+        a.mov_membase_disp_r32('rsp', 0x64, 'eax')
+        a.jmp(l_len0 + "_done")
+
+        a.mark(l_len0)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_membase_disp_r32('rsp', 0x64, 'eax')
+
+        a.mark(l_len0 + "_done")
+
+        # Allocate OBJ_STRING: size = 9 + len
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x64)
+        a.add_r32_imm('ecx', 9)
+        a.call('fn_alloc')
+
+        a.mov_r11_rax()
+
+        # header: [base]=OBJ_STRING, [base+4]=len
+        a.mov_membase_disp_imm32('r11', 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x64)
+        a.mov_membase_disp_r32('r11', 4, 'eax')
+
+        # save string base across API call (r11 is volatile)
+        a.mov_membase_disp_r64('rsp', 0x68, 'r11')
+
+        # dest_ptr = base+8
+        a.lea_r64_membase_disp('r10', 'r11', 8)
+        a.mov_membase_disp_r64('rsp', 0x70, 'r10')  # save dest_ptr across API call (r10 is volatile)
+
+        # WideCharToMultiByte(CP_UTF8,0,wide_ptr,-1,dest,len+1,NULL,NULL)
+        a.mov_r32_imm32('ecx', 65001)
+        a.xor_r32_r32('edx', 'edx')
+        a.mov_r64_membase_disp('r8', 'rsp', 0x58)  # wide_ptr
+        a.mov_r32_imm32('r9d', 0xFFFFFFFF)
+        a.mov_membase_disp_r64('rsp', 0x20, 'r10')  # dest
+        a.mov_membase_disp_imm32('rsp', 0x28, 0, qword=True)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x64)
+        a.add_r32_imm('eax', 1)
+        a.mov_membase_disp_r32('rsp', 0x28, 'eax')  # len+1
+        a.mov_membase_disp_imm32('rsp', 0x30, 0, qword=True)
+        a.mov_membase_disp_imm32('rsp', 0x38, 0, qword=True)
+        a.mov_rax_rip_qword('iat_WideCharToMultiByte')
+        a.call_rax()
+
+        # ensure NUL at dest[len]
+        a.mov_r64_membase_disp('r10', 'rsp', 0x70)  # restore dest_ptr (r10 is volatile across call)
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x64)
+        a.add_r64_r64('rax', 'rcx')
+        a.mov_membase_disp_imm8('rax', 0, 0)
+
+        # store element: array_base[ i ] = string_ptr
+        a.mov_r64_membase_disp('r10', 'rsp', 0x40)  # array_base
+        a.lea_r64_membase_disp('rax', 'r10', 8)  # elems base
+        a.mov_r32_membase_disp('edx', 'rsp', 0x4C)  # i
+        a.shl_r64_imm8('rdx', 3)
+        a.add_r64_r64('rax', 'rdx')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x68)  # restore string_base (r11 is volatile across call)
+        a.mov_membase_disp_r64('rax', 0, 'r11')
+
+        # i++
+        a.mov_r32_membase_disp('eax', 'rsp', 0x4C)
+        a.add_r32_imm('eax', 1)
+        a.mov_membase_disp_r32('rsp', 0x4C, 'eax')
+        a.jmp(l_loop)
+
+        # free argvw buffer if present
+        a.mark(l_free)
+        a.mov_rax_rip_qword('ml_argvw')
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', l_free + "_skip")
+
+        a.mov_r64_r64('rcx', 'rax')
+        a.mov_rax_rip_qword('iat_LocalFree')
+        a.call_rax()
+
+        a.mark(l_free + "_skip")
+        # clear argc/argv globals
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_rip_dword_eax('ml_argc')
+        a.xor_r64_r64('rax', 'rax')
+        a.mov_rip_qword_rax('ml_argvw')
+
+        # return array_base
+        a.mov_r64_membase_disp('rax', 'rsp', 0x40)
+        a.add_rsp_imm32(0x88)
+        a.ret()
+
+    # ============================================================
+    # First-class builtin function values (OBJ_BUILTIN)
+    # ============================================================
+
+    def emit_builtin_len_function(self) -> None:
+        """Emit fn_builtin_len(x):
+
+        RCX = tagged value (expects array/string)
+        RAX = tagged int length (0 if unsupported)
+
+        Note: This is used as the code_ptr of the OBJ_BUILTIN for `len`.
+        """
+        a = self.asm
+        a.mark('fn_builtin_len')
+        lid = self.new_label_id()
+        l_ok = f"bl_ok_{lid}"
+        l_ret0 = f"bl_ret0_{lid}"
+
+        # rax = rcx
+        a.mov_r64_r64('rax', 'rcx')
+
+        # tag check: (rax & 7) == TAG_PTR
+        a.mov_r64_r64('r10', 'rax')
+        a.and_r64_imm('r10', 7)
+        a.cmp_r64_imm('r10', TAG_PTR)
+        a.jcc('ne', l_ret0)
+
+        # edx = [rax] (object type)
+        a.mov_r32_membase_disp('edx', 'rax', 0)
+        a.cmp_r32_imm('edx', OBJ_STRING)
+        a.jcc('e', l_ok)
+        a.cmp_r32_imm('edx', OBJ_ARRAY)
+        a.jcc('e', l_ok)
+        a.cmp_r32_imm('edx', OBJ_BYTES)
+        a.jcc('e', l_ok)
+        a.jmp(l_ret0)
+
+        a.mark(l_ok)
+        # edx = dword [rax+4] (len)
+        a.mov_r32_membase_disp('edx', 'rax', 4)
+        a.mov_r32_r32('eax', 'edx')
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.ret()
+
+        a.mark(l_ret0)
+        a.mov_rax_imm64(TAG_INT)  # enc_int(0)
+        a.ret()
+
+    def emit_builtin_input_function(self) -> None:
+        """Emit fn_builtin_input(...):
+
+        Calling convention:
+        - Args are in RCX/RDX/R8/R9 like normal.
+        - Additionally, R10D contains nargs (set by the indirect-call dispatcher).
+
+        For now we accept 0 or 1 args and ignore the prompt argument.
+        """
+        a = self.asm
+        a.mark('fn_builtin_input')
+        lid = self.new_label_id()
+        l_call = f"bi_call_{lid}"
+        l_ret_void = f"bi_ret_void_{lid}"
+
+        a.cmp_r32_imm('r10d', 0)
+        a.jcc('e', l_call)
+        a.cmp_r32_imm('r10d', 1)
+        a.jcc('e', l_call)
+        a.jmp(l_ret_void)
+
+        a.mark(l_call)
+        a.call('fn_input')
+        a.ret()
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_builtin_gc_collect_function(self) -> None:
+        """Emit fn_builtin_gc_collect():
+
+        Calls the GC and returns VOID.
+        """
+        a = self.asm
+        a.mark('fn_builtin_gc_collect')
+        a.call('fn_gc_collect')
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_builtin_gc_set_limit_function(self) -> None:
+        """Emit fn_builtin_gc_set_limit(limit_bytes):
+
+        - Accepts exactly 1 argument (R10D = nargs).
+        - Argument must be an int (TAG_INT). Non-int disables periodic GC.
+        - If limit_bytes <= 0: disables periodic GC by setting a very large limit.
+
+        Side effects:
+        - Updates gc_bytes_limit
+        - Resets gc_bytes_since to 0
+        - Returns VOID
+        """
+        a = self.asm
+        a.mark('fn_builtin_gc_set_limit')
+        lid = self.new_label_id()
+        l_call = f"bgsl_call_{lid}"
+        l_ret_void = f"bgsl_ret_void_{lid}"
+        l_disable = f"bgsl_disable_{lid}"
+        l_done = f"bgsl_done_{lid}"
+        l_not_int = f"bgsl_not_int_{lid}"
+
+        # Require exactly 1 arg
+        a.cmp_r32_imm('r10d', 1)
+        a.jcc('e', l_call)
+        a.jmp(l_ret_void)
+
+        a.mark(l_call)
+
+        # Check tag == TAG_INT
+        a.mov_r64_r64('rax', 'rcx')
+        a.mov_r64_r64('rdx', 'rax')
+        a.and_r64_imm('rdx', 7)
+        a.cmp_r64_imm('rdx', TAG_INT)
+        a.jcc('ne', l_not_int)
+
+        # decode: sar rax,3
+        a.sar_rax_imm8(3)
+
+        # if rax <= 0 -> disable
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('le', l_disable)
+
+        # gc_bytes_limit = rax
+        a.mov_rip_qword_rax('gc_bytes_limit')
+        # gc_bytes_since = 0
+        a.mov_rax_imm64(0)
+        a.mov_rip_qword_rax('gc_bytes_since')
+        a.jmp(l_done)
+
+        a.mark(l_not_int)
+        # fallthrough to disable
+        a.jmp(l_disable)
+
+        a.mark(l_disable)
+        # gc_bytes_limit = very large (effectively disables periodic GC)
+        a.mov_rax_imm64(0x7FFFFFFFFFFFFFFF)
+        a.mov_rip_qword_rax('gc_bytes_limit')
+        # gc_bytes_since = 0
+        a.mov_rax_imm64(0)
+        a.mov_rip_qword_rax('gc_bytes_since')
+
+        a.mark(l_done)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+
+    def emit_callStats_function(self) -> None:
+        """Internal helper for call profiling: callStats() -> array<callStat>.
+
+        Only meaningful when compiling with --profile-calls / call_profile=True.
+        When disabled, this helper returns void (callStats() should not be reachable).
+        """
+        a = self.asm
+
+        a.mark('fn_callStats')
+
+        if not bool(getattr(self, 'call_profile', False)):
+            a.mov_rax_imm64(enc_void())
+            a.ret()
+            return
+
+        n = int(getattr(self, '_callprof_n', 0) or 0)
+        name_labels = list(getattr(self, '_callprof_name_labels', []) or [])
+
+        # Win64 ABI: 32B shadow space + 8B local (keep 16B alignment for calls)
+        a.sub_rsp_imm8(0x28)
+
+        # Allocate OBJ_ARRAY: size = 8 + n*8
+        a.mov_r32_imm32('ecx', n)
+        a.shl_r32_imm8('ecx', 3)
+        a.add_r32_imm('ecx', 8)
+        a.call('fn_alloc')
+
+        a.mov_r11_rax()
+
+        # header: [base]=OBJ_ARRAY, [base+4]=n
+        a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+        a.mov_membase_disp_imm32('r11', 4, n, qword=False)
+
+        # Save array pointer to local slot and root it across allocations.
+        a.mov_membase_disp_r64('rsp', 0x20, 'r11')
+        a.mov_rip_qword_r11('gc_tmp0')
+
+        # Build entries (unrolled; n is compile-time known in the compiler output).
+        for i in range(n):
+            # Allocate callStat struct (2 fields): size = 16 + 2*8 = 32
+            a.mov_rcx_imm32(32)
+            a.call('fn_alloc')
+            a.mov_r64_r64('r10', 'rax')  # r10 = struct
+
+            # header: type / nfields / struct_id / pad
+            a.mov_membase_disp_imm32('r10', 0, OBJ_STRUCT, qword=False)
+            a.mov_membase_disp_imm32('r10', 4, 2, qword=False)
+            a.mov_membase_disp_imm32('r10', 8, CALLSTAT_STRUCT_ID, qword=False)
+            a.mov_membase_disp_imm32('r10', 12, 0, qword=False)
+
+            # field0: name (boxed string constant in .rdata)
+            if i < len(name_labels) and name_labels[i]:
+                a.lea_rax_rip(str(name_labels[i]))
+                a.mov_membase_disp_r64('r10', 16, 'rax')
+            else:
+                a.mov_membase_disp_imm32('r10', 16, enc_void(), qword=True)
+
+            # field1: calls (load u64 counter, tag as int)
+            a.lea_r11_rip('callprof_counts')
+            a.mov_r64_membase_disp('rax', 'r11', i * 8)
+            a.shl_r64_imm8('rax', 3)
+            a.or_rax_imm8(TAG_INT)
+            a.mov_membase_disp_r64('r10', 24, 'rax')
+
+            # store struct into array element slot
+            a.mov_r64_membase_disp('r11', 'rsp', 0x20)  # arr ptr
+            a.mov_membase_disp_r64('r11', 8 + i * 8, 'r10')
+
+        # Unroot temp
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax('gc_tmp0')
+
+        # Return array pointer
+        a.mov_r64_membase_disp('rax', 'rsp', 0x20)
+
+        a.add_rsp_imm8(0x28)
+        a.ret()
