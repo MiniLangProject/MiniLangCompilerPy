@@ -2,16 +2,9 @@
 
 MiniLang (`.ml`) is a small, dynamically typed language that compiles to a native Windows x64 console executable (PE32+) via the Win64 compiler tool (`mlc_win64.py`).
 
----
+It is completely developed with the help of generative AI (ChatGPT version >= 5.2)
 
-> **Recent changes (2026-02)**  
-> - `function inline ...` for **top-level functions** and **struct methods** (full body inlining for *direct* calls).  
-> - **Constant pooling** in `.rdata`: identical strings/bytes and boxed constants are deduplicated (smaller exe, fewer duplicates).  
-> - Conservative **peephole optimizer** in the asm emitter (removes self-moves, cancels push/pop pairs, etc.).  
-> - **Internal helper pruning**: only required `fn_*` runtime helpers are emitted into the final binary.  
-> - Optional **call profiling**: compile with `--profile-calls` and query counters via `callStats()`.  
-> - More runtime tuning flags: `--gc-limit`, `--no-gc-periodic`, `--heap-shrink`, `--heap-shrink-min`.  
-> - Tooling: `tools/mlfmt.ml` (MiniLang auto-formatter, supports `--help`, `--inplace`, `--indent`, `--max-blank`).  
+---
 
 ## Contents
 
