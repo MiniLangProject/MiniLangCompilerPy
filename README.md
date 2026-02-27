@@ -2,6 +2,8 @@
 
 MiniLang (`.ml`) is a small, dynamically typed language that compiles to a native Windows x64 console executable (PE32+) via the Win64 compiler tool (`mlc_win64.py`).
 
+It is completely developed with the help of generative AI (ChatGPT version >= 5.2)
+
 ---
 
 ## Contents
