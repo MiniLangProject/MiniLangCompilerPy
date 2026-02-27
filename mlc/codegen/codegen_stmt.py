@@ -3071,6 +3071,10 @@ class CodegenStmt:
         # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.
         self.emit_heap_init()
 
+        # Apply GC init / tuning from heap_config (gc limit, --no-gc-periodic, etc.)
+        # and clear root/free-list heads.
+        self.emit_gc_init_globals()
+
         # Initialize function values for all top-level (and namespaced) user functions.
         # Layout (24 bytes):
         #   +0  u32 type    = OBJ_FUNCTION

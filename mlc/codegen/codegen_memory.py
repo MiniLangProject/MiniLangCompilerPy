@@ -29,18 +29,18 @@ MEM_RESERVE_GRANULARITY = 0x10000  # 64 KiB (VirtualAlloc allocation granularity
 HEAP_SIZE_DEFAULT = 0x02000000  # 32 MiB fixed heap (reserved+committed)
 # Backward-compatible aliases (some code paths may still reference these names)
 HEAP_COMMIT_DEFAULT = HEAP_SIZE_DEFAULT
-HEAP_RESERVE_DEFAULT = HEAP_SIZE_DEFAULT
+HEAP_RESERVE_DEFAULT = 0x80000000  # 2 GiB default reserve (cheap on 64-bit)
 HEAP_RESERVE_MIN = HEAP_SIZE_DEFAULT
 
 # Heap growth (commits are page-based; min step avoids too many VirtualAlloc calls)
-HEAP_GROW_MIN = 0x00100000  # 1 MiB
+HEAP_GROW_MIN = 0x01000000  # 16 MiB
 
 # Allocator / free-list
 ALLOC_MIN_SPLIT = 32  # smallest remainder block when splitting free blocks (bytes)
 
 # GC
-GC_MARK_STACK_QWORDS = 8192  # 8192*8 = 64 KiB mark stack
-GC_DEFAULT_BYTES_LIMIT = 1 << 20  # 1 MiB periodic GC trigger (if enabled)
+GC_MARK_STACK_QWORDS = 1048576  # 1048576*8 = 8 MiB mark stack (prevents overflow on large graphs)
+GC_DEFAULT_BYTES_LIMIT = 64 << 20  # 64 MiB periodic GC trigger (if enabled)
 GC_DISABLE_PERIODIC_LIMIT = 0x7FFFFFFFFFFFFFFF
 
 # NOTE on refcount helpers:
@@ -670,17 +670,36 @@ class CodegenMemory:
         a.cmp_r64_r64("r10", "r11")
         a.jcc("be", l_ok)
 
-        # Need to grow committed heap: fn_heap_grow(required_end=new_ptr)
+        # ------------------------------------------------------------
+        # Need to grow committed heap OR run GC
+        # ------------------------------------------------------------
         a.mark(l_grow)
+
+        # NEUE LOGIK: Zuerst Garbage Collector, DANN wachsen!
+        # 1. Prüfen, ob wir in diesem Alloc-Aufruf schon GC probiert haben
+        a.mov_r64_membase_disp("rax", "rsp", 0x30)
+        a.test_r64_r64("rax", "rax")
+        a.jcc("nz", f"alloc_do_grow_{lid0}")  # Ja, GC hat nicht geholfen -> Wir müssen wachsen!
+
+        # 2. Nein, noch kein GC probiert. Wir merken uns das (tried_gc = 1)
+        a.mov_rax_imm64(1)
+        a.mov_rsp_disp32_rax(0x30)
+
+        # 3. Garbage Collector aufrufen!
+        a.call("fn_gc_collect")
+        a.jmp(l_retry)  # Nach dem Aufräumen: Nochmal von vorne probieren (Free-List checken)
+
+        # ------------------------------------------------------------
+        # GC hat nicht genug gebracht -> Wir MÜSSEN den Heap vergrößern
+        # ------------------------------------------------------------
+        a.mark(f"alloc_do_grow_{lid0}")
         a.mov_r64_r64("rcx", "r10")
         a.call("fn_heap_grow")
         a.test_r64_r64("rax", "rax")
-        a.jcc("nz", l_retry)  # grew successfully -> retry bump (heap_end updated)
+        a.jcc("nz", l_retry)  # Wachstum erfolgreich -> Nochmal versuchen zu allozieren
 
-        # Grow failed: try GC once, then retry
-        a.mov_r64_membase_disp("rax", "rsp", 0x30)
-        a.test_r64_r64("rax", "rax")
-        a.jcc("nz", l_oom)  # already tried GC -> OOM
+        # Wachstum auch fehlgeschlagen (2 GB Reserve erschöpft) -> Out of Memory
+        a.jmp(l_oom)
 
         # tried_gc = 1
         a.mov_rax_imm64(1)
@@ -701,16 +720,16 @@ class CodegenMemory:
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_hdr")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         off, ln = self.rdata.labels["oom_requested"]
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_requested")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         a.mov_r64_membase_disp("rax", "rsp", 0x38)  # raw requested bytes
@@ -722,7 +741,7 @@ class CodegenMemory:
         a.mov_r8d_edx()
         a.mov_r64_r64("rdx", "rax")
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
-        a.mov_r64_imm64("r9", 0)
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
         a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
@@ -730,16 +749,16 @@ class CodegenMemory:
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_nl")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         off, ln = self.rdata.labels["oom_reserved"]
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_reserved")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         a.call("fn_heap_bytes_reserved")
@@ -749,7 +768,7 @@ class CodegenMemory:
         a.mov_r8d_edx()
         a.mov_r64_r64("rdx", "rax")
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
-        a.mov_r64_imm64("r9", 0)
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
         a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
@@ -757,16 +776,16 @@ class CodegenMemory:
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_nl")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         off, ln = self.rdata.labels["oom_committed"]
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_committed")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         a.call("fn_heap_bytes_committed")
@@ -776,7 +795,7 @@ class CodegenMemory:
         a.mov_r8d_edx()
         a.mov_r64_r64("rdx", "rax")
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
-        a.mov_r64_imm64("r9", 0)
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
         a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
@@ -784,16 +803,16 @@ class CodegenMemory:
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_nl")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         off, ln = self.rdata.labels["oom_used"]
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_used")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         a.call("fn_heap_bytes_used")
@@ -803,7 +822,7 @@ class CodegenMemory:
         a.mov_r8d_edx()
         a.mov_r64_r64("rdx", "rax")
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
-        a.mov_r64_imm64("r9", 0)
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
         a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
@@ -811,8 +830,8 @@ class CodegenMemory:
         a.mov_r64_membase_disp("rcx", "rsp", 0x40)  # handle
         a.lea_rdx_rip("oom_nl")
         a.mov_r8d_imm32(ln)
-        a.mov_r64_imm64("r9", 0)
-        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpNumberOfBytesWritten = NULL
+        a.lea_r64_membase_disp("r9", "rsp", 0x30)  # FIX: Valid stack pointer for lpNumberOfBytesWritten
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
         a.mov_rax_rip_qword("iat_WriteFile")
         a.call_rax()
         # --- end OOM diagnostics ---
@@ -931,6 +950,12 @@ class CodegenMemory:
         """
         self.ensure_gc_data()
         a = self.asm
+        # GC diagnostic strings (rdata)
+        if hasattr(self, "rdata"):
+            r = self.rdata
+            if "gc_ms_overflow" not in r.labels:
+                r.add_str("gc_ms_overflow", "ERROR: GC mark stack overflow\n", add_newline=False)
+
         # Heap config (optional, provided by CLI via CodegenCore)
         cfg = getattr(self, 'heap_config', None) or {}
         shrink_enabled = bool(cfg.get('shrink_enabled'))
@@ -982,6 +1007,7 @@ class CodegenMemory:
         L_REBUILD_NEXT = f"gc_rebuild_free_next_{lid}"
         L_TRIM_SKIP = f"gc_trim_skip_{lid}"
         L_TRIM_DONE = f"gc_trim_done_{lid}"
+        L_MS_OVERFLOW = f"gc_mark_stack_overflow_{lid}"
 
         # r12 = &gc_mark_stack
         a.lea_rax_rip('gc_mark_stack')
@@ -1032,15 +1058,16 @@ class CodegenMemory:
         a.jcc('ne', L_MARK_VALUE_RET)
 
         # [rdx+8] = 1 (mark)
-        a.mov_membase_disp_imm32("rdx", 8, 1, qword=True)  # mov qword [rdx+8], 1
-
-        # r10 = gc_mark_top
+        a.mov_membase_disp_imm32("rdx", 8, 1, qword=True)  # mov qword [rdx+8], 1        # r10 = gc_mark_top
         a.mov_rax_rip_qword('gc_mark_top')
         a.mov_r10_rax()
 
+        # Guard against mark stack overflow (otherwise it will corrupt .data)
+        a.cmp_r64_imm("r10", GC_MARK_STACK_QWORDS)
+        a.jcc('ae', L_MS_OVERFLOW)
+
         # mark_stack[r10] = r11
         a.mov_mem_bis_r64("r12", "r10", 8, 0, "r11")  # mov [r12 + r10*8], r11
-
         # r10++
         a.inc_r64("r10")  # inc r10
 
@@ -1050,6 +1077,28 @@ class CodegenMemory:
 
         a.mark(L_MARK_VALUE_RET)
         a.ret()
+
+        # ------------------------------------------------------------
+        # Mark stack overflow handler (fatal): print to stderr and exit
+        # ------------------------------------------------------------
+        a.mark(L_MS_OVERFLOW)
+        if hasattr(self, "rdata"):
+            off, ln = self.rdata.labels["gc_ms_overflow"]
+            a.mov_rcx_imm32(-12)  # STDERR
+            a.mov_rax_rip_qword("iat_GetStdHandle")
+            a.call_rax()
+            a.mov_r64_r64("rcx", "rax")  # handle
+            a.lea_rdx_rip("gc_ms_overflow")
+            a.mov_r8d_imm32(ln)
+
+            a.lea_r64_membase_disp("r9", "rsp", 0x28)
+            a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
+
+            a.mov_rax_rip_qword("iat_WriteFile")
+            a.call_rax()
+        a.mov_rcx_imm32(1)
+        a.mov_rax_rip_qword("iat_ExitProcess")
+        a.call_rax()
 
         a.mark(L_BODY)
 
@@ -1330,6 +1379,7 @@ class CodegenMemory:
 
         # ------------------------------------------------------------
         # Sweep pass 2: rebuild free list in [heap_base, heap_ptr)
+        # NEU: Mit Block-Coalescing (verhindert das "Hängen" durch O(N^2))
         # ------------------------------------------------------------
 
         a.mov_rax_imm64(0)
@@ -1354,9 +1404,37 @@ class CodegenMemory:
         a.lea_r64_membase_disp("rdx", "rbx", GC_HEADER_SIZE)
         a.mov_r32_membase_disp("ecx", "rdx", 0)
         a.test_r32_r32("ecx", "ecx")
-        a.jcc('ne', L_REBUILD_NEXT)
+        a.jcc('ne', L_REBUILD_NEXT)  # Block ist am Leben -> überspringen
 
-        # free block: next_free = gc_free_head
+        # --- COALESCING START (Benachbarte tote Blöcke verschmelzen) ---
+        l_coal_loop = f"gc_coal_loop_{lid}"
+        l_coal_done = f"gc_coal_done_{lid}"
+
+        a.mark(l_coal_loop)
+        # r11 = next_block = rbx + block_size (r10)
+        a.mov_r64_r64("r11", "rbx")
+        a.add_r64_r64("r11", "r10")
+
+        # if next_block >= heap_ptr -> wir sind am Ende, stoppen
+        a.cmp_r64_r64("r11", "r14")
+        a.jcc('ae', l_coal_done)
+
+        # Ist der nächste Block auch frei (tot)?
+        a.lea_r64_membase_disp("rdx", "r11", GC_HEADER_SIZE)
+        a.mov_r32_membase_disp("ecx", "rdx", 0)
+        a.test_r32_r32("ecx", "ecx")
+        a.jcc('ne', l_coal_done)  # Nein, live -> Coalescing beenden
+
+        # Ja, frei! Größe des nächsten Blocks addieren
+        a.mov_r64_membase_disp("rcx", "r11", 0)  # rcx = next_block.size
+        a.add_r64_r64("r10", "rcx")  # r10 += rcx
+        a.mov_membase_disp_r64("rbx", 0, "r10")  # Aktuelle Header-Größe im RAM updaten
+        a.jmp(l_coal_loop)  # Weiter schauen, ob der übernächste auch frei ist!
+
+        a.mark(l_coal_done)
+        # --- COALESCING ENDE ---
+
+        # Den (nun riesigen) zusammengefassten Block in die Free-List einhängen
         a.mov_rax_rip_qword('gc_free_head')
         a.mov_membase_disp_r64("rbx", 16, "rax")
 
@@ -1365,7 +1443,7 @@ class CodegenMemory:
         a.mov_rip_qword_rax('gc_free_head')
 
         a.mark(L_REBUILD_NEXT)
-        a.add_r64_r64("rbx", "r10")
+        a.add_r64_r64("rbx", "r10")  # Springt jetzt direkt über ALLE verschmolzenen Blöcke!
         a.jmp(L_REBUILD_LOOP)
 
         a.mark(L_REBUILD_DONE)
@@ -1412,13 +1490,15 @@ class CodegenMemory:
             a.jcc('b', L_TRIM_SKIP)
 
             # VirtualFree(target_end, bytes_to_decommit, MEM_DECOMMIT)
+            # NOTE: VirtualFree may clobber volatile regs; preserve target_end in r13 (non-volatile).
+            a.mov_r64_r64("r13", "r10")
             a.mov_r64_r64("rcx", "r10")
             a.mov_r8d_imm32(0x4000)  # MEM_DECOMMIT
             a.mov_rax_rip_qword('iat_VirtualFree')
             a.call_rax()
 
             # heap_end = target_end
-            a.mov_r64_r64("rax", "r10")
+            a.mov_r64_r64("rax", "r13")
             a.mov_rip_qword_rax('heap_end')
 
             a.mark(L_TRIM_SKIP)
@@ -1805,23 +1885,6 @@ class CodegenMemory:
         a.ret()
 
     def emit_heap_grow_function(self) -> None:
-        """Emit fn_heap_grow(required_end) -> int (0/1).
-
-        Calling convention:
-          RCX = required_end (absolute address, i.e. header_base + total_bytes)
-        Returns:
-          RAX = 1 on success (heap_end advanced / already sufficient), 0 on failure.
-
-        Behavior:
-        - If required_end <= heap_end: succeed.
-        - Otherwise commit more pages starting at heap_end using VirtualAlloc(MEM_COMMIT).
-        - Grows by at least grow_min_bytes (default: HEAP_GROW_MIN).
-        - New heap_end is capped at heap_reserve_end; if exceeded or commit fails -> return 0.
-
-        Notes:
-        - This function commits only; it never reserves new address space.
-        - required_end and heap_end are treated as absolute addresses.
-        """
         self.ensure_gc_data()
         a = self.asm
         a.mark("fn_heap_grow")
@@ -1829,8 +1892,9 @@ class CodegenMemory:
         cfg = getattr(self, 'heap_config', None) or {}
         grow_min = int(cfg.get('grow_min_bytes') or HEAP_GROW_MIN)
 
-        # Win64 ABI: reserve shadow space + keep stack aligned for calls
-        a.sub_rsp_imm8(0x28)
+        # Win64 ABI: rbx sichern und Shadow Space reservieren
+        a.push_rbx()
+        a.sub_rsp_imm8(0x20)
 
         lid = self.new_label_id()
         l_ok = f"hg_ok_{lid}"
@@ -1839,65 +1903,56 @@ class CodegenMemory:
         l_done = f"hg_done_{lid}"
         l_use_min = f"hg_use_min_{lid}"
 
-        # r11 = old_end = heap_end
+        # r11 = old_end
         a.mov_rax_rip_qword("heap_end")
         a.mov_r64_r64("r11", "rax")
 
-        # if required_end <= old_end -> ok
         a.cmp_r64_r64("rcx", "r11")
         a.jcc("be", l_ok)
 
-        # rdx = needed = required_end - old_end
+        # Wachstum berechnen
         a.mov_r64_r64("rdx", "rcx")
         a.sub_r64_r64("rdx", "r11")
-
-        # needed = align_up(needed, 4096)
         a.add_r64_imm("rdx", 4095)
-        a.and_r64_imm("rdx", -4096)  # 0xFFFFFFFFFFFFF000
+        a.and_r64_imm("rdx", -4096)
 
-        # ensure minimum grow step
         a.cmp_r64_imm("rdx", grow_min)
         a.jcc("ae", l_use_min)
         a.mov_r64_imm64("rdx", grow_min)
         a.mark(l_use_min)
 
-        # r10 = new_end = old_end + grow
-        a.mov_r64_r64("r10", "r11")
-        a.add_r64_r64("r10", "rdx")
+        # rbx = new_end (sicher vor API-Clobbering)
+        a.mov_r64_r64("rbx", "r11")
+        a.add_r64_r64("rbx", "rdx")
 
-        # if new_end > heap_reserve_end -> fail
         a.mov_rax_rip_qword("heap_reserve_end")
-        a.cmp_r64_r64("r10", "rax")
+        a.cmp_r64_r64("rbx", "rax")
         a.jcc("be", l_call)
         a.jmp(l_fail)
 
         a.mark(l_call)
-        # VirtualAlloc(old_end, grow, MEM_COMMIT, PAGE_READWRITE)
-        a.mov_r64_r64("rcx", "r11")  # lpAddress
-        # rdx already grow size
+        a.mov_r64_r64("rcx", "r11")
         a.mov_r8d_imm32(0x1000)  # MEM_COMMIT
-        a.mov_r9d_imm32(0x04)  # PAGE_READWRITE
+        a.mov_r9d_imm32(0x04)    # PAGE_READWRITE
         a.mov_rax_rip_qword("iat_VirtualAlloc")
         a.call_rax()
 
-        # if rax == 0 -> fail
         a.test_r64_r64("rax", "rax")
         a.jcc("e", l_fail)
 
-        # heap_end = new_end
-        a.mov_r64_r64("rax", "r10")
+        # heap_end aus rbx aktualisieren
+        a.mov_r64_r64("rax", "rbx")
         a.mov_rip_qword_rax("heap_end")
 
         a.mark(l_ok)
-        # return 1
         a.xor_eax_eax()
         a.add_rax_imm8(1)
         a.jmp(l_done)
 
         a.mark(l_fail)
-        # return 0
         a.xor_eax_eax()
 
         a.mark(l_done)
-        a.add_rsp_imm8(0x28)
+        a.add_rsp_imm8(0x20)
+        a.pop_rbx()
         a.ret()
