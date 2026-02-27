@@ -458,6 +458,47 @@ class CodegenScope:
         self._add_binding_to_current_scope(b)
         return b
 
+    def declare_global_binding_root(self, name: object, *, node: Any = None) -> VarBinding:
+        """Declare (or reuse) a global binding in the *root/global* scope (depth 0).
+
+        This is used for features like `global x` inside functions, where we want to
+        ensure a global slot exists even if we're currently in function mode (where
+        scope depth is > 0 due to the function-local root scope).
+
+        If a root binding with the same name already exists, it is returned.
+        """
+
+        name_s = self._coerce_name(name)
+        self._check_reserved_ident(name_s, node)
+
+        # Reuse existing root/global binding if present.
+        try:
+            b0 = self._scope_stack[0].get(name_s)
+        except Exception:
+            b0 = None
+        if b0 is not None and getattr(b0, 'kind', None) == 'global' and getattr(b0, 'depth', 0) == 0:
+            return b0
+
+        bid = self._next_binding_id()
+        label = f"g_{_sanitize_ident(name_s)}_{bid}"
+        # host provides self.data.add_u64
+        self.data.add_u64(label, enc_void())
+
+        b = VarBinding(id=bid, name=name_s, kind="global", label=label, offset=None, depth=0, decl_node=node)
+
+        # Register in root scope + tracking (mirror _add_binding_to_current_scope for depth 0).
+        if not hasattr(self, "_scope_stack") or not self._scope_stack:
+            raise self.error("Internal error: scope stack not initialized", node)
+        self._scope_stack[0][name_s] = b
+        if hasattr(self, "_scope_declared") and self._scope_declared:
+            self._scope_declared[0].append(b)
+
+        if b.label:
+            self._global_slots.append(b.label)
+        self._globals[name_s] = b
+
+        return b
+
     def declare_local_binding(self, name: object, *, node: Any = None, offset: Optional[int] = None) -> VarBinding:
         """
         Declare a new local binding in the current scope.
@@ -559,7 +600,9 @@ class CodegenScope:
                     except Exception:
                         b = None
                 if b is None or getattr(b, 'kind', None) != 'global' or getattr(b, 'depth', 0) != 0:
-                    raise self.error(f"global '{name_s}' requires an existing global variable", node)
+                    # Step 7.1b: `global x` can declare a package/file-global even
+                    # if it wasn't written at top-level.
+                    b = self.declare_global_binding_root(gname, node=node)
                 return b
 
         existing = self.resolve_binding_for_write(name_s)
@@ -844,7 +887,8 @@ class CodegenScope:
 
         Notes:
         - This is a compile-time directive only; it emits no runtime code.
-        - A global must already exist (written at top-level).
+        - If the referenced global does not exist yet, it is created in the root
+          scope (default-initialized to VOID).
         """
         name_s = self._coerce_name(name)
         self._check_reserved_ident(name_s, node)
@@ -895,8 +939,48 @@ class CodegenScope:
             b = None
 
         if b is None:
-            tried = ', '.join(candidates)
-            raise self.error(f"global '{name_s}' requires an existing global variable (tried: {tried})", node)
+            # Step 7.1b: allow `global x` to *declare* a global variable for this
+            # package/file even if there was no prior top-level write.
+            #
+            # Heuristic for creation target:
+            #   - If the function prefix looks like a struct-method prefix (e.g. Point.),
+            #     prefer the file/package prefix (if any).
+            #   - Otherwise prefer the most specific prefix (function/namespace), then file/package,
+            #     then root.
+            create_name = None
+            if '.' in name_s:
+                create_name = name_s
+            else:
+                qpref0 = getattr(self, 'current_qname_prefix', '') or ''
+                fpref0 = getattr(self, 'current_file_prefix', '') or ''
+
+                # Detect struct-method prefixes (avoid creating Point.x by default).
+                is_method_prefix = False
+                try:
+                    qn0 = qpref0[:-1] if isinstance(qpref0, str) and qpref0.endswith('.') else str(qpref0)
+                    if isinstance(qn0, str) and qn0:
+                        if '.__static__' in qn0:
+                            is_method_prefix = True
+                        else:
+                            sf = getattr(self, 'struct_fields', {}) or {}
+                            if isinstance(sf, dict) and qn0 in sf:
+                                is_method_prefix = True
+                except Exception:
+                    is_method_prefix = False
+
+                if (not is_method_prefix) and isinstance(qpref0, str) and qpref0:
+                    if not qpref0.endswith('.'):
+                        qpref0 = qpref0 + '.'
+                    create_name = qpref0 + name_s
+                elif isinstance(fpref0, str) and fpref0:
+                    if not fpref0.endswith('.'):
+                        fpref0 = fpref0 + '.'
+                    create_name = fpref0 + name_s
+                else:
+                    create_name = name_s
+
+            b = self.declare_global_binding_root(create_name, node=node)
+            chosen = create_name
 
         # Mark as writable from this function.
         fg = getattr(self, '_func_globals', None)

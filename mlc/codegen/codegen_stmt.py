@@ -3173,6 +3173,148 @@ class CodegenStmt:
             a.mov_membase_disp_r64('r11', 16, 'rax')
             a.mov_rip_qword_r11(lbl)
 
+        # ------------------------------------------------------------
+        # Step 7.1b: predeclare globals referenced via `global ...` inside functions.
+        #
+        # Rationale:
+        # - User functions are emitted in sorted order, not source order.
+        # - A `global x` statement should be able to introduce a new global slot even
+        #   if there was no top-level initializer.
+        # - Other functions (or top-level code) may reference that global before the
+        #   defining function is emitted; predeclaring makes this robust.
+        # ------------------------------------------------------------
+        def _is_stmt(obj: Any) -> bool:
+            try:
+                st_cls = getattr(self.ml, 'Stmt', None)
+                return st_cls is not None and isinstance(obj, st_cls)
+            except Exception:
+                return False
+
+        def _walk_stmt(node: Any) -> List[Any]:
+            """Return child statements for a statement-like node."""
+            out: List[Any] = []
+            if node is None:
+                return out
+
+            # Switch cases carry nested bodies.
+            if type(node).__name__ == 'SwitchCase':
+                body = getattr(node, 'body', None)
+                if isinstance(body, list):
+                    out.extend(body)
+                return out
+
+            # Generic walk: collect any list-valued fields that contain Stmt/SwitchCase.
+            d = getattr(node, '__dict__', None)
+            if isinstance(d, dict):
+                for v in d.values():
+                    if isinstance(v, list):
+                        for it in v:
+                            if _is_stmt(it) or type(it).__name__ == 'SwitchCase':
+                                out.append(it)
+                    else:
+                        if _is_stmt(v) or type(v).__name__ == 'SwitchCase':
+                            out.append(v)
+            return out
+
+        def _pref_is_method_prefix(qpref: str) -> bool:
+            try:
+                qn0 = qpref[:-1] if qpref.endswith('.') else qpref
+                if not qn0:
+                    return False
+                if '.__static__' in qn0:
+                    return True
+                sf = getattr(self, 'struct_fields', {}) or {}
+                if isinstance(sf, dict) and qn0 in sf:
+                    return True
+            except Exception:
+                return False
+            return False
+
+        def _resolve_global_target(raw: str, *, qpref: str, fpref: str) -> str:
+            raw = str(raw)
+            if '.' in raw:
+                return raw
+
+            cands: List[str] = []
+            if qpref:
+                cands.append((qpref if qpref.endswith('.') else (qpref + '.')) + raw)
+            if fpref:
+                cands.append((fpref if fpref.endswith('.') else (fpref + '.')) + raw)
+            cands.append(raw)
+
+            # If any candidate already exists as a root global, prefer it.
+            for cand in cands:
+                try:
+                    b = self._scope_stack[0].get(cand)
+                except Exception:
+                    b = None
+                if b is not None and getattr(b, 'kind', None) == 'global' and getattr(b, 'depth', 0) == 0:
+                    return cand
+
+            # Otherwise, choose a creation target.
+            if qpref and not _pref_is_method_prefix(qpref):
+                return (qpref if qpref.endswith('.') else (qpref + '.')) + raw
+            if fpref:
+                return (fpref if fpref.endswith('.') else (fpref + '.')) + raw
+            return raw
+
+        def _scan_function_for_global_decls(fn: Any) -> None:
+            if fn is None:
+                return
+            if not hasattr(self.ml, 'FunctionDef') or not isinstance(fn, self.ml.FunctionDef):
+                return
+
+            fn_qn = getattr(fn, 'name', '')
+            qpref = ''
+            if isinstance(fn_qn, str) and '.' in fn_qn:
+                qpref = fn_qn.rsplit('.', 1)[0] + '.'
+
+            fn_file = getattr(fn, '_filename', None)
+            if not (isinstance(fn_file, str) and fn_file):
+                # nested functions may inherit file from parent
+                p = getattr(fn, '_ml_parent_fn', None)
+                fn_file = getattr(p, '_filename', None) if p is not None else None
+            fpref = ''
+            try:
+                mp = getattr(self, 'file_prefix_map', None) or {}
+                if isinstance(mp, dict) and isinstance(fn_file, str):
+                    fpref = mp.get(fn_file, '') or ''
+            except Exception:
+                fpref = ''
+
+            stack: List[Any] = list(getattr(fn, 'body', []) or [])
+            seen: set[int] = set()
+
+            while stack:
+                st = stack.pop()
+                if st is None:
+                    continue
+                sid = id(st)
+                if sid in seen:
+                    continue
+                seen.add(sid)
+
+                if hasattr(self.ml, 'GlobalDecl') and isinstance(st, self.ml.GlobalDecl):
+                    for nm in getattr(st, 'names', []) or []:
+                        tgt = _resolve_global_target(str(nm), qpref=qpref, fpref=fpref)
+                        try:
+                            self.declare_global_binding_root(tgt, node=st)
+                        except Exception:
+                            # If the slot already exists or cannot be declared here,
+                            # let normal compilation surface the real diagnostic.
+                            pass
+                    continue
+
+                # Recurse
+                for ch in _walk_stmt(st):
+                    stack.append(ch)
+
+        # Scan all user functions (and nested functions, if any).
+        for _fn in (getattr(self, 'user_functions', {}) or {}).values():
+            _scan_function_for_global_decls(_fn)
+        for _fn in (getattr(self, 'nested_user_functions', {}) or {}).values():
+            _scan_function_for_global_decls(_fn)
+
         # Compile top-level statements
         for st in program:
             self.emit_stmt(st)
