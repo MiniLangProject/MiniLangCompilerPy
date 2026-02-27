@@ -1398,31 +1398,11 @@ class Parser:
 
                 self.advance()
 
-                # Special-case: typeof(<qualified.name>) should treat the argument as a qualified symbol,
-                # not as runtime member access. However, if the qualified name is followed by further
-                # postfix operators (e.g. typeof(ns.func(...))), we fall back to normal expression parsing.
-                if isinstance(expr, Var) and expr.name == "typeof":
-                    self.skip_newlines()
-                    args: List[Expr] = []
-
-                    if self.peek().kind == "IDENT" and self.peek2().kind == "DOT":
-                        save_i = self.i
-                        arg_pos = self.peek().pos
-                        qn = self.parse_dotted_name()
-                        self.skip_newlines()
-
-                        # Only accept the qualified-symbol form if the argument ends right here.
-                        if self.peek().kind == "RPAREN":
-                            self.advance()
-                            args.append(self._attach_pos(Var(qn), arg_pos))
-                        else:
-                            # Rewind and parse a regular expression list.
-                            self.i = save_i
-                            args = self.parse_delimited_list("RPAREN", self.parse_expr)
-                    else:
-                        args = self.parse_delimited_list("RPAREN", self.parse_expr)
-                else:
-                    args = self.parse_delimited_list("RPAREN", self.parse_expr)
+                # typeof(...) arguments are parsed as normal expressions.
+                # Qualified-name handling (e.g. typeof(ns.Struct) / typeof(ns.Enum.Variant)) is
+                # resolved later during codegen. This avoids incorrectly treating runtime member
+                # access like typeof(t.value) as a qualified symbol "t.value".
+                args = self.parse_delimited_list("RPAREN", self.parse_expr)
 
                 expr = self._attach_pos(Call(expr, args), call_start)
                 continue

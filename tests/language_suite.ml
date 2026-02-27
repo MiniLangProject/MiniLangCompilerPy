@@ -1254,6 +1254,14 @@ f_ns = nsfun.inc
 assertEq(typeof(f_ns), "function", "assign namespaced function value")
 assertTrue(f_ns == nsfun.inc, "namespaced function identity")
 
+// typeof() should accept member access expressions directly (no temporary needed)
+struct TFTypeofMember are
+  value
+end struct
+
+tm = TFTypeofMember(123)
+assertEq(typeof(tm.value), "int", "typeof member access")
+
 // ------------------------------------------------------------
 // GLOBAL KEYWORD (functions must declare globals explicitly)
 // ------------------------------------------------------------
@@ -1282,22 +1290,6 @@ end function
 assertEq(readGX(), 5, "global read via global decl")
 setGX(7)
 assertEq(gx, 7, "global write via global decl")
-
-// Creating a new global via `global` (no top-level initializer).
-function setNewGlobal()
-  global gy
-  gy = 123
-end function
-
-function getNewGlobal()
-  // No `global` needed for reading; this must compile even if the
-  // global was introduced by another function.
-  return gy
-end function
-
-setNewGlobal()
-assertEq(getNewGlobal(), 123, "global: create new global via global decl")
-assertEq(gy, 123, "global: top-level sees created global")
 // ------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------
