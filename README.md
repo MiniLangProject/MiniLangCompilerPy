@@ -12,6 +12,7 @@ MiniLang (`.ml`) is a small, dynamically typed language that compiles to a nativ
 > - Optional **call profiling**: compile with `--profile-calls` and query counters via `callStats()`.  
 > - More runtime tuning flags: `--gc-limit`, `--no-gc-periodic`, `--heap-shrink`, `--heap-shrink-min`.  
 > - Tooling: `tools/mlfmt.ml` (MiniLang auto-formatter, supports `--help`, `--inplace`, `--indent`, `--max-blank`).  
+> - Scoping: `global` now reliably targets package-level globals in the same file (auto-creates missing globals as `void` and pre-declares them to avoid ordering issues).
 
 ## Contents
 
@@ -813,6 +814,8 @@ print fact(5)
 ### Scoping
 
 
+
+
 Native compiler:
 - Lexical block scopes inside functions (variables are introduced on first assignment in the current block; shadowing is allowed).
 - Functions are first-class values (you can store them in variables, pass them around, and call indirectly).
@@ -820,13 +823,32 @@ Native compiler:
   - Current limitation: shadowing of a **captured** name is rejected by the compiler.
 - Reading a name that has never been assigned in any visible scope is a compile error (“undefined variable”).
 - Writing to a global from inside a function requires an explicit `global` declaration.
+  - Unqualified names resolve to the active `package` / `namespace` context of the file.
+  - If the global does not exist yet (no prior top-level initialization), the compiler creates it automatically and initializes it to `void`.
+  - Globals are keyed by fully-qualified name, so `package Bar` + `Fu` is different from `package Bar2` + `Fu`.
 
 `global` inside functions:
 
 ```ml
-function f()
+package demo
+
+function inc()
   global counter
+  if typeof(counter) == "void" then counter = 0 end if
   counter = counter + 1
+end function
+
+inc()
+inc()
+print counter // 2
+```
+
+You can also declare a qualified global explicitly:
+
+```ml
+function setOther()
+  global other.pkg.counter
+  other.pkg.counter = 123
 end function
 ```
 
@@ -835,10 +857,9 @@ Robust syntax: trailing commas are allowed in `global` declarations:
 ```ml
 function f()
   global counter, total,
-  counter = counter + 1
+  counter = 1
 end function
 ```
-
 
 ---
 
@@ -1499,7 +1520,7 @@ Statements are separated by newlines or `;`.
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
 - (native) optional entrypoint: `function main(args) ... end function`
 - `return` / `return <expr>` / `return;` (and bare `return` directly before `end/else/case` in inline blocks)
-- `global x, y, z` (inside functions; native compiler only; trailing comma optional)
+- `global x, y, z` (inside functions; native compiler only; trailing comma optional; names may be qualified like `foo.bar.x`)
 - `if <expr> then ... end if` (block or inline)
 - `while <expr> ... end while`
 - `loop ... while <expr> end loop` (legacy: `loop ... end loop while <expr>`)
@@ -1606,7 +1627,7 @@ What works:
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
 - `main(args)` entrypoint (argv[1..] as `array<string>`, `return int` -> process exit code)
-- `global` declarations inside functions (required for *writing* globals from a function)
+- `global` declarations inside functions (required for accessing globals from a function; resolves to package/namespace-qualified globals; missing globals are auto-created as `void`)
 - `struct` (constructors + field read/write)
 - `enum` (values like `Color.Red`, comparisons, printing, `switch`)
 - `namespace` blocks (compile-time name qualification)
