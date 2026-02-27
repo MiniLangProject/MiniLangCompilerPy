@@ -4,16 +4,6 @@ MiniLang (`.ml`) is a small, dynamically typed language that compiles to a nativ
 
 ---
 
-> **Recent changes (2026-02)**  
-> - `function inline ...` for **top-level functions** and **struct methods** (full body inlining for *direct* calls).  
-> - **Constant pooling** in `.rdata`: identical strings/bytes and boxed constants are deduplicated (smaller exe, fewer duplicates).  
-> - Conservative **peephole optimizer** in the asm emitter (removes self-moves, cancels push/pop pairs, etc.).  
-> - **Internal helper pruning**: only required `fn_*` runtime helpers are emitted into the final binary.  
-> - Optional **call profiling**: compile with `--profile-calls` and query counters via `callStats()`.  
-> - More runtime tuning flags: `--gc-limit`, `--no-gc-periodic`, `--heap-shrink`, `--heap-shrink-min`.  
-> - Tooling: `tools/mlfmt.ml` (MiniLang auto-formatter, supports `--help`, `--inplace`, `--indent`, `--max-blank`).  
-> - Scoping: `global` now reliably targets package-level globals in the same file (auto-creates missing globals as `void` and pre-declares them to avoid ordering issues).
-
 ## Contents
 
 - [1. Quickstart](#1-quickstart)
