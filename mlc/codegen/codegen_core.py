@@ -30,21 +30,129 @@ class CodegenCore:
         except Exception:
             self.entry_root = ""
 
-        def _pretty_script(p: str) -> str:
-            """Prefer a short, stable display path (relative to entry root when possible)."""
+        def _is_abs_like(p: str) -> bool:
+            # os.path.isabs doesn't treat 'C:\\x' as absolute on POSIX.
             try:
+                if os.path.isabs(p):
+                    return True
+            except Exception:
+                pass
+            try:
+                # Windows drive letter
+                if len(p) >= 3 and p[1] == ':' and (p[2] == '\\' or p[2] == '/'):
+                    return True
+                # UNC paths
+                if p.startswith('\\\\') or p.startswith('//'):
+                    return True
+            except Exception:
+                pass
+            return False
+
+        def _pretty_script(p: str) -> str:
+            """Return a *non-absolute* script path for embedding into the executable.
+
+            Priority:
+              1) If the file has a `package ...` directive, derive canonical path
+                 from the module namespace (e.g. std.math -> std/math.ml).
+              2) Else, prefer a relative path to entry_root / CWD.
+              3) Else, basename.
+
+            This avoids leaking local build paths (e.g. C:\\Users\\...).
+            """
+
+            def _try_namespace_path(path0: str) -> Optional[str]:
+                """Derive script path from declared module namespace (package directive)."""
+                try:
+                    mp = (getattr(self, '_file_prefix_map', None) or
+                          getattr(self, 'file_prefix_map', None) or {})
+                    if not isinstance(mp, dict) or not mp:
+                        return None
+
+                    # Try multiple normalizations because keys may differ in slash style.
+                    cands = []
+                    try:
+                        cands.append(path0)
+                    except Exception:
+                        pass
+                    try:
+                        cands.append(str(path0).replace('\\', '/'))
+                        cands.append(str(path0).replace('/', '\\'))
+                    except Exception:
+                        pass
+                    try:
+                        rp0 = os.path.realpath(os.path.abspath(str(path0)))
+                        cands.append(rp0)
+                        cands.append(rp0.replace('\\', '/'))
+                        cands.append(rp0.replace('/', '\\'))
+                    except Exception:
+                        pass
+
+                    pref = None
+                    for k in cands:
+                        if isinstance(k, str) and k in mp:
+                            pref = mp.get(k)
+                            if pref:
+                                break
+                    if not isinstance(pref, str) or not pref:
+                        return None
+
+                    # file_prefix_map stores package prefixes with trailing dot ("std.math.").
+                    mod = pref[:-1] if pref.endswith('.') else pref
+                    mod = str(mod).strip('.')
+                    if not mod:
+                        return None
+
+                    # Canonical namespace -> path mapping: std.math -> std/math.ml
+                    out = mod.replace('.', '/') + '.ml'
+
+                    # Ensure this can never be absolute.
+                    if out and not _is_abs_like(out):
+                        return out
+                except Exception:
+                    return None
+                return None
+
+            try:
+                # (1) Namespace-based canonical path (best UX, stable across machines)
+                ns = _try_namespace_path(p)
+                if isinstance(ns, str) and ns:
+                    return ns
+
+                # (2) Relativize by entry root / cwd
                 rp = os.path.realpath(os.path.abspath(p))
                 rr = os.path.realpath(os.path.abspath(self.entry_root)) if self.entry_root else ""
                 if rr:
-                    rel = os.path.relpath(rp, rr)
-                    if not rel.startswith('..' + os.sep) and rel != '..':
-                        return rel.replace('\\', '/')
-                return rp.replace('\\', '/')
+                    try:
+                        # Always prefer a relative path (even when it starts with "../").
+                        rel = os.path.relpath(rp, rr)
+                        rel_s = rel.replace('\\', '/')
+                        if rel_s and not _is_abs_like(rel_s):
+                            return rel_s
+                    except Exception:
+                        pass
+
+                # Fallback: relative to current working directory if possible.
+                try:
+                    rel2 = os.path.relpath(rp, os.getcwd())
+                    rel2_s = rel2.replace('\\', '/')
+                    if rel2_s and not _is_abs_like(rel2_s):
+                        return rel2_s
+                except Exception:
+                    pass
+
+                # (3) Last resort: basename only (still non-absolute).
+                return os.path.basename(rp).replace('\\', '/')
             except Exception:
-                return str(p).replace('\\', '/')
+                return os.path.basename(str(p)).replace('\\', '/')
 
         # Expose helper for other mixins.
         self._pretty_script = _pretty_script
+
+        # Ensure the stored entry filename is also non-absolute when used as a fallback.
+        try:
+            self.filename = _pretty_script(filename)
+        except Exception:
+            self.filename = os.path.basename(str(filename))
 
         self.call_profile = bool(call_profile)
         self.profile_calls = self.call_profile

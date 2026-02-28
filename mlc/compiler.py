@@ -659,13 +659,23 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
+                # Prefer the imported file's declared `package`.
+                #
+                # Compatibility: allow module-style imports to be aliased even if the
+                # target file doesn't declare `package ...`. In that case we can still
+                # use the module name (e.g. `import foo.bar as x`) as the alias target,
+                # which works well when the imported file uses `namespace foo.bar`.
                 target_pkg = packages.get(child)
                 if not target_pkg:
-                    raise CompileError(
-                        f"import ... as {alias} requires imported file to declare `package`: {child}",
-                        pos=_node_pos(st),
-                        filename=_node_filename(st) or ap,
-                    )
+                    expected_mod0 = getattr(st, "module", None)
+                    if isinstance(expected_mod0, str) and expected_mod0:
+                        target_pkg = expected_mod0
+                    else:
+                        raise CompileError(
+                            f"import ... as {alias} requires imported file to declare `package` (or use module-style import): {child}",
+                            pos=_node_pos(st),
+                            filename=_node_filename(st) or ap,
+                        )
                 prev = import_aliases.get(alias)
                 if prev is not None and prev != target_pkg:
                     raise CompileError(
