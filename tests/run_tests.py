@@ -129,6 +129,18 @@ def run_cmd(cmd: list[str], *, cwd: Optional[Path] = None, timeout_s: int = 120)
     return CmdResult(cmd=cmd, returncode=p.returncode, stdout=p.stdout, stderr=p.stderr)
 
 
+def test_python_script(*, name: str, script: Path, timeout_s: int = 120) -> TestResult:
+    """Run a Python script as part of the unified test suite."""
+    if not script.exists():
+        return TestResult(name=name, status="FAIL", details=f"missing script: {script}")
+
+    rr = run_cmd([sys.executable, str(script)], cwd=script.parent, timeout_s=timeout_s)
+    if rr.returncode != 0:
+        return TestResult(name=name, status="FAIL", details=f"python script failed (exit {rr.returncode})",
+                          stdout=rr.stdout, stderr=rr.stderr)
+    return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
 def is_windows() -> bool:
     """Return True if running on Windows."""
     return os.name == "nt"
@@ -1713,6 +1725,10 @@ def main() -> int:
     cycle_a = find_file_by_name(tests_root, "a.ml")
 
     tests: list[Callable[[], TestResult]] = []
+
+    # Python unit test: Asm opcode emitter golden vectors
+    tests.append(lambda: test_python_script(name="python: asm opcode vectors", script=tests_root / "test_asm_opcodes.py",
+                                            timeout_s=120))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,
