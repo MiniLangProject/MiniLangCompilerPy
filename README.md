@@ -94,13 +94,17 @@ end function
 ### Compile to native Windows x64
 
 ```bash
-python mlc_win64.py [options] input.ml output.exe
+python mlc_win64.py input.ml output.exe [options]
+
+Notes:
+- Flags can appear before or after the positional arguments.
+- On non-Windows hosts you can still compile, but running the resulting `.exe` requires Wine.
 ```
 
 Common options:
 
 **Import / modules**
-- `-I <dir>` / `--import-path <dir>` add an import search path (repeatable).
+- `-I <dir>` / `--import-path <dir>` add an import search path (repeatable). The directory of `input.ml` is always an implicit import root.
 
 **Listings / diagnostics**
 - `--asm` write a combined `.asm` listing (default: off)
@@ -143,16 +147,31 @@ Compile it once:
 python mlc_win64.py tools/mlfmt.ml mlfmt.exe -I .
 ```
 
-Use it:
+Format a single file:
 
 ```bash
-mlfmt.exe --help
 mlfmt.exe src.ml --inplace
 mlfmt.exe src.ml out.ml --indent 2 --max-blank 2
 ```
 
+Format a whole tree (recursive, **in-place**):
+
+```bash
+mlfmt.exe .
+```
+
+Insert an Apache 2.0 header (only if missing):
+
+```bash
+mlfmt.exe . --apache "Authorname"
+# or:
+mlfmt.exe . --author "Authorname"
+```
+
 Notes:
 - `--max-blank -1` allows unlimited blank lines.
+- When `<path>` is a directory, `mlfmt` formats all `*.ml` files recursively **in-place** (the optional `output.ml` argument is only valid for single-file formatting).
+- `--apache/--author` uses the local year (via `std.time.win32.GetLocalTime()` in the compiled binary).
 - The formatter is intentionally conservative (it does not change program semantics).
 
 
@@ -163,8 +182,19 @@ Notes:
 ```
 
 Running tests:
-- `python tests/run_tests.py` compiles the test programs to a Windows `.exe` and runs them.
-- On non-Windows, you need `wine` installed to run the produced `.exe`.
+
+```bash
+python tests/run_tests.py
+python tests/run_tests.py --verbose
+python tests/run_tests.py --only import
+python tests/run_tests.py --allow-skip
+```
+
+Notes:
+- The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
+- On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
+- `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
+
 
 ---
 
@@ -984,27 +1014,31 @@ import foo.bar   // resolves to "foo/bar.ml"
 Example with an include root:
 
 ```bash
-python mlc_win64.py -I src main.ml out.exe
+python mlc_win64.py main.ml out.exe -I src
 ```
 
-You can add multiple search roots by repeating the flag, or by passing a path list:
+You can add multiple search roots by repeating the flag. The compiler also always treats the **directory of the entry file** as an implicit import root.
 
 ```bash
-# repeat -I (recommended)
-python mlc_win64.py -I src -I std -I vendor main.ml out.exe
-
-# or pass a platform path list in a single argument (Windows: ';', POSIX: ':')
-python mlc_win64.py -I "src;std;vendor" main.ml out.exe
-
-# -L/--lib-dir is an alias for -I/--import-path
-python mlc_win64.py -L std -L vendor main.ml out.exe
+# repeat -I / --import-path (recommended)
+python mlc_win64.py main.ml out.exe -I src -I std -I vendor
 ```
+
+Notes:
+- `-I` is repeatable. The current CLI does **not** split platform path lists like `src;std;vendor` automatically.
 
 Rules:
 - Paths are resolved relative to the importing file’s directory (absolute paths are also allowed).
-- If the file is not found there, the compiler also searches any include roots passed via `-I DIR` / `--import-path DIR` (in the order provided).
+- If the file is not found there, the compiler also searches the include roots in order: **entry file directory (implicit)** first, then the `-I/--import-path` directories (in the order provided).
 - If an import matches multiple files across the search paths, compilation fails with an **ambiguous import** error listing the matches.
-- Imported modules must be **declaration-only** (no top-level executable statements like `print` or plain assignments).
+- Diagnostics prefer short, stable paths (relative to the entry file directory) when possible.
+- Imported modules must be **declaration-only** (libraries). At top-level (and inside `namespace` blocks) only declarations are allowed:
+  - `package`, `import`, `namespace`
+  - `function`, `struct`, `enum`
+  - `extern function` / `extern struct`
+  - global `const` and global assignments **only with `constexpr` initializers** (side-effect free; literals, simple arithmetic/bitwise ops, references to other `const`s/enum values, …)
+  - enum variants with explicit `= <value>` must also be `constexpr`
+  Anything that would execute code at import-time (e.g. `print`, function calls, `if/while/for`, non-constexpr initializers) is rejected.
 - Import cycles are detected and rejected.
 - `import ... as <alias>` is supported: it creates a compile-time alias for the imported module’s `package` name, so you can write e.g. `g.add()` instead of `geom.vec.add()`. The imported file must declare `package ...`.
 - Alias names must be valid identifiers and must not be reserved (`try`, `error`).
@@ -1050,7 +1084,7 @@ Common modules (subset; evolves over time):
 - **std.bytes**: bytes helpers (`concat`, `equals`, `ctEquals`, …)
 - **std.encoding.hex**, **std.encoding.base64**: encoding helpers
 - **std.array**, **std.sort**, **std.random**, **std.math**, **std.fmt**
-- **std.time**: ticks/sleep + `Date/Time/DateTime` helpers
+- **std.time**: monotonic `ticks()` / `sleep(ms)`, Win32 wall-clock wrappers `std.time.win32.GetLocalTime()` / `GetSystemTime()` (returns `SystemTime`), plus `Date/Time/DateTime` helpers
 - **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io))
 - **std.net**: TCP/UDP networking
 - **std.ds.\***: stack/queue/hashmap/set
