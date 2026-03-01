@@ -659,23 +659,13 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
-                # Prefer the imported file's declared `package`.
-                #
-                # Compatibility: allow module-style imports to be aliased even if the
-                # target file doesn't declare `package ...`. In that case we can still
-                # use the module name (e.g. `import foo.bar as x`) as the alias target,
-                # which works well when the imported file uses `namespace foo.bar`.
                 target_pkg = packages.get(child)
                 if not target_pkg:
-                    expected_mod0 = getattr(st, "module", None)
-                    if isinstance(expected_mod0, str) and expected_mod0:
-                        target_pkg = expected_mod0
-                    else:
-                        raise CompileError(
-                            f"import ... as {alias} requires imported file to declare `package` (or use module-style import): {child}",
-                            pos=_node_pos(st),
-                            filename=_node_filename(st) or ap,
-                        )
+                    raise CompileError(
+                        f"import ... as {alias} requires imported file to declare `package`: {child}",
+                        pos=_node_pos(st),
+                        filename=_node_filename(st) or ap,
+                    )
                 prev = import_aliases.get(alias)
                 if prev is not None and prev != target_pkg:
                     raise CompileError(
@@ -1241,6 +1231,7 @@ def compile_to_exe(
     asm_dump_pe: bool = False,
     heap_config: Optional[Dict[str, Any]] = None,
     call_profile: bool = False,
+    trace_calls: bool = False,
 ) -> None:
     ml = load_minilang_frontend(input_ml)
     source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs)
@@ -1252,7 +1243,17 @@ def compile_to_exe(
     # Step 3: validate extern declarations early (friendly diagnostics)
     validate_extern_sigs(extern_sigs, extern_structs=extern_structs, output_exe=output_exe, input_ml=input_ml, include_dirs=include_dirs)
 
-    cg = Codegen(ml, source, input_ml, heap_config=heap_config, import_aliases=import_aliases, extern_sigs=extern_sigs, extern_structs=extern_structs, call_profile=bool(call_profile))
+    cg = Codegen(
+        ml,
+        source,
+        input_ml,
+        heap_config=heap_config,
+        import_aliases=import_aliases,
+        extern_sigs=extern_sigs,
+        extern_structs=extern_structs,
+        call_profile=bool(call_profile),
+        trace_calls=bool(trace_calls),
+    )
 
     asm_listing_path: Optional[str] = None
     if asm_listing:
@@ -1662,6 +1663,9 @@ def main(argv: List[str]) -> int:
     # Call profiling (optional)
     parser.add_argument('--profile-calls', action='store_true', help='instrument user functions with call counters; enable callStats() builtin')
 
+    # Call tracing (optional)
+    parser.add_argument('--trace-calls', action='store_true', help='print function name on entry for every user function call')
+
     args = parser.parse_args(argv[1:])
 
     inp = args.input
@@ -1731,6 +1735,7 @@ def main(argv: List[str]) -> int:
             asm_dump_pe=bool(args.asm_pe),
             heap_config=heap_config,
             call_profile=bool(getattr(args, "profile_calls", False)),
+            trace_calls=bool(getattr(args, "trace_calls", False)),
         )
 
     except CompileError as e:

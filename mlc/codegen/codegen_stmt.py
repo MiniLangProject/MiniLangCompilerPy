@@ -3061,6 +3061,7 @@ class CodegenStmt:
         a.mov_rax_rip_qword('iat_GetStdHandle')
         a.call_rax()
         a.mov_rbx_rax()
+        a.mov_rip_qword_rax('stdout_handle')
 
         # SetConsoleOutputCP(CP_UTF8=65001) so UTF-8 bytes are displayed correctly if we fall back to WriteFile
         a.mov_rcx_imm32(65001)
@@ -3070,10 +3071,6 @@ class CodegenStmt:
         # Initialize heap + GC globals (implemented in CodegenMemory).
         # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.
         self.emit_heap_init()
-
-        # Apply GC init / tuning from heap_config (gc limit, --no-gc-periodic, etc.)
-        # and clear root/free-list heads.
-        self.emit_gc_init_globals()
 
         # Initialize function values for all top-level (and namespaced) user functions.
         # Layout (24 bytes):
@@ -3978,6 +3975,10 @@ class CodegenStmt:
         # Reserve stack space (shadow + locals + temps). Must stay 16-byte aligned here.
         a.sub_rsp_imm32(frame_size)
 
+        # Save incoming closure environment (passed in r10) in a nonvolatile register.
+        # IMPORTANT: do this *before* any WinAPI calls (e.g. tracing), since r10 is volatile.
+        a.mov_r64_r64("r14", "r10")
+
         # Call profiling counter increment (enabled only with --profile-calls)
         if bool(getattr(self, 'call_profile', False)):
             try:
@@ -3987,6 +3988,35 @@ class CodegenStmt:
             if idx_cp is not None:
                 a.lea_r11_rip('callprof_counts')
                 a.inc_membase_disp_qword('r11', int(idx_cp) * 8)
+
+        # Call tracing (enabled only with --trace-calls)
+        # NOTE: We intentionally trace *only* user functions. Tracing runtime helpers would be
+        # extremely noisy and can easily recurse (printing calls helpers).
+        if bool(getattr(self, 'trace_calls', False)):
+
+            # secure registers
+            a.push_reg("rcx")
+            a.push_reg("rdx")
+            a.push_reg("r8")
+            a.push_reg("r9")
+
+            try:
+                trace_name = str(getattr(fn, 'name', None) or code_name)
+            except Exception:
+                trace_name = str(code_name)
+            lbl_tr = f"trace_call_{len(self.rdata.labels)}"
+            self.rdata.add_str(lbl_tr, trace_name, add_newline=True)
+            try:
+                tr_len = int(self.rdata.labels[lbl_tr][1])
+            except Exception:
+                tr_len = len((trace_name + "\n").encode("utf-8"))
+            self.emit_writefile(lbl_tr, tr_len)
+
+            # restore registers
+            a.pop_reg("r9")
+            a.pop_reg("r8")
+            a.pop_reg("rdx")
+            a.pop_reg("rcx")
 
         # ---- debug script/function context ----
         # Store current script + function name into global debug-loc slots.
@@ -4029,8 +4059,7 @@ class CodegenStmt:
         # Push function root-frame record at [rsp+root_rec_off] and link it into gc_roots_head.
         self.emit_gc_push_root_frame(root_rec_off, root_base, root_top)
 
-        # Save incoming closure environment (passed in r10) in a nonvolatile register.
-        a.mov_r64_r64("r14", "r10")
+        # Incoming env already captured in r14 above.
 
         # ---- set function context ----
         old_in = self.in_function

@@ -19,7 +19,8 @@ from ..tools import align_up, enc_int, enc_void
 class CodegenCore:
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
-                 extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False):
+                 extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False,
+                 trace_calls: bool = False):
         self.ml = minilang_mod
         self.source = source
         self.filename = filename
@@ -30,132 +31,27 @@ class CodegenCore:
         except Exception:
             self.entry_root = ""
 
-        def _is_abs_like(p: str) -> bool:
-            # os.path.isabs doesn't treat 'C:\\x' as absolute on POSIX.
-            try:
-                if os.path.isabs(p):
-                    return True
-            except Exception:
-                pass
-            try:
-                # Windows drive letter
-                if len(p) >= 3 and p[1] == ':' and (p[2] == '\\' or p[2] == '/'):
-                    return True
-                # UNC paths
-                if p.startswith('\\\\') or p.startswith('//'):
-                    return True
-            except Exception:
-                pass
-            return False
-
         def _pretty_script(p: str) -> str:
-            """Return a *non-absolute* script path for embedding into the executable.
-
-            Priority:
-              1) If the file has a `package ...` directive, derive canonical path
-                 from the module namespace (e.g. std.math -> std/math.ml).
-              2) Else, prefer a relative path to entry_root / CWD.
-              3) Else, basename.
-
-            This avoids leaking local build paths (e.g. C:\\Users\\...).
-            """
-
-            def _try_namespace_path(path0: str) -> Optional[str]:
-                """Derive script path from declared module namespace (package directive)."""
-                try:
-                    mp = (getattr(self, '_file_prefix_map', None) or
-                          getattr(self, 'file_prefix_map', None) or {})
-                    if not isinstance(mp, dict) or not mp:
-                        return None
-
-                    # Try multiple normalizations because keys may differ in slash style.
-                    cands = []
-                    try:
-                        cands.append(path0)
-                    except Exception:
-                        pass
-                    try:
-                        cands.append(str(path0).replace('\\', '/'))
-                        cands.append(str(path0).replace('/', '\\'))
-                    except Exception:
-                        pass
-                    try:
-                        rp0 = os.path.realpath(os.path.abspath(str(path0)))
-                        cands.append(rp0)
-                        cands.append(rp0.replace('\\', '/'))
-                        cands.append(rp0.replace('/', '\\'))
-                    except Exception:
-                        pass
-
-                    pref = None
-                    for k in cands:
-                        if isinstance(k, str) and k in mp:
-                            pref = mp.get(k)
-                            if pref:
-                                break
-                    if not isinstance(pref, str) or not pref:
-                        return None
-
-                    # file_prefix_map stores package prefixes with trailing dot ("std.math.").
-                    mod = pref[:-1] if pref.endswith('.') else pref
-                    mod = str(mod).strip('.')
-                    if not mod:
-                        return None
-
-                    # Canonical namespace -> path mapping: std.math -> std/math.ml
-                    out = mod.replace('.', '/') + '.ml'
-
-                    # Ensure this can never be absolute.
-                    if out and not _is_abs_like(out):
-                        return out
-                except Exception:
-                    return None
-                return None
-
+            """Prefer a short, stable display path (relative to entry root when possible)."""
             try:
-                # (1) Namespace-based canonical path (best UX, stable across machines)
-                ns = _try_namespace_path(p)
-                if isinstance(ns, str) and ns:
-                    return ns
-
-                # (2) Relativize by entry root / cwd
                 rp = os.path.realpath(os.path.abspath(p))
                 rr = os.path.realpath(os.path.abspath(self.entry_root)) if self.entry_root else ""
                 if rr:
-                    try:
-                        # Always prefer a relative path (even when it starts with "../").
-                        rel = os.path.relpath(rp, rr)
-                        rel_s = rel.replace('\\', '/')
-                        if rel_s and not _is_abs_like(rel_s):
-                            return rel_s
-                    except Exception:
-                        pass
-
-                # Fallback: relative to current working directory if possible.
-                try:
-                    rel2 = os.path.relpath(rp, os.getcwd())
-                    rel2_s = rel2.replace('\\', '/')
-                    if rel2_s and not _is_abs_like(rel2_s):
-                        return rel2_s
-                except Exception:
-                    pass
-
-                # (3) Last resort: basename only (still non-absolute).
-                return os.path.basename(rp).replace('\\', '/')
+                    rel = os.path.relpath(rp, rr)
+                    if not rel.startswith('..' + os.sep) and rel != '..':
+                        return rel.replace('\\', '/')
+                return rp.replace('\\', '/')
             except Exception:
-                return os.path.basename(str(p)).replace('\\', '/')
+                return str(p).replace('\\', '/')
 
         # Expose helper for other mixins.
         self._pretty_script = _pretty_script
 
-        # Ensure the stored entry filename is also non-absolute when used as a fallback.
-        try:
-            self.filename = _pretty_script(filename)
-        except Exception:
-            self.filename = os.path.basename(str(filename))
-
         self.call_profile = bool(call_profile)
         self.profile_calls = self.call_profile
+
+        # Debugging: print user function name on entry (very verbose).
+        self.trace_calls = bool(trace_calls)
 
         # `import ... as alias` maps alias -> package name (compile-time only)
         self.import_aliases: Dict[str, str] = dict(import_aliases or {})
@@ -295,6 +191,11 @@ class CodegenCore:
         #   later scratch space instead of the allocator's control words.
         if hasattr(self, 'ensure_gc_data'):
             self.ensure_gc_data()
+
+        # Console handles (set by the entry stub in codegen_stmt).
+        # NOTE: Do *not* rely on a particular register (like RBX) to keep these alive.
+        # User code and runtime helpers are free to use/carry RBX across calls.
+        self.data.add_u64('stdout_handle', 0)
 
         self.data.add_u32('bytesWritten', 0)
         self.data.add_u32('bytesRead', 0)
@@ -851,12 +752,27 @@ class CodegenCore:
         """
         a = self.asm
 
-        # WriteFile(h=rbx, buf=rdx, nbytes=r8d, &written, NULL)
-        a.mov_rcx_rbx()
-        a.lea_r9_rip('bytesWritten')
+        # Robust Win64 ABI handling:
+        # Always allocate our own call frame so we never rely on the *caller*
+        # having reserved shadow space / stack-arg slots at [rsp+0x20].
+        #
+        # Layout after SUB RSP,0x30:
+        #   [rsp+0x00..0x1F] 32B shadow space
+        #   [rsp+0x20..0x27] arg5 (lpOverlapped = NULL)
+        #   [rsp+0x28..0x2F] padding (keeps 16B alignment)
+        a.sub_rsp_imm8(0x30)
+
+        # WriteFile(h=stdout_handle, buf=rdx, nbytes=r8d, &written, NULL)
+        # IMPORTANT: We load the handle from .data every time.
+        # RBX is nonvolatile but *not* reserved; many helpers use it as scratch.
         a.mov_qword_ptr_rsp20_rax_zero()
+        a.mov_rax_rip_qword('stdout_handle')
+        a.mov_r64_r64('rcx', 'rax')
+        a.lea_r9_rip('bytesWritten')
         a.mov_rax_rip_qword('iat_WriteFile')
         a.call_rax()
+
+        a.add_rsp_imm8(0x30)
 
     def emit_normalize_xmm0_to_value(self) -> None:
         """Normalize XMM0 numeric result: if it is an exact int64, return tagged int, else boxed float."""
