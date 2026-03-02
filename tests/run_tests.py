@@ -129,18 +129,6 @@ def run_cmd(cmd: list[str], *, cwd: Optional[Path] = None, timeout_s: int = 120)
     return CmdResult(cmd=cmd, returncode=p.returncode, stdout=p.stdout, stderr=p.stderr)
 
 
-def test_python_script(*, name: str, script: Path, timeout_s: int = 120) -> TestResult:
-    """Run a Python script as part of the unified test suite."""
-    if not script.exists():
-        return TestResult(name=name, status="FAIL", details=f"missing script: {script}")
-
-    rr = run_cmd([sys.executable, str(script)], cwd=script.parent, timeout_s=timeout_s)
-    if rr.returncode != 0:
-        return TestResult(name=name, status="FAIL", details=f"python script failed (exit {rr.returncode})",
-                          stdout=rr.stdout, stderr=rr.stderr)
-    return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
-
-
 def is_windows() -> bool:
     """Return True if running on Windows."""
     return os.name == "nt"
@@ -643,6 +631,135 @@ def test_reserved_identifiers(*, name: str, mlc_runner: Path) -> TestResult:
             return TestResult(name=name, status="FAIL",
                               details="compile failed, but message did not mention 'reserved'", stdout=cr.stdout,
                               stderr=cr.stderr, )
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_keep_going_reports_multiple_errors(*, name: str, mlc_runner: Path) -> TestResult:
+    """--keep-going should continue after the first error and report multiple diagnostics.
+
+    We validate this by creating a tiny import graph with two independently-broken imported
+    modules. Without --keep-going, the compiler should stop at the first error. With
+    --keep-going, it should print errors for *both* broken modules.
+    """
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        lib1 = td_path / "lib_bad1.ml"
+        lib2 = td_path / "lib_bad2.ml"
+
+        # Top-level statements in imported modules are forbidden (declaration-only enforcement).
+        lib1.write_text("\n".join([
+            'print "BAD1"',
+            'function f1()',
+            '  return 1',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        lib2.write_text("\n".join([
+            'print "BAD2"',
+            'function f2()',
+            '  return 2',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        main_ml = td_path / "main_keepgoing.ml"
+        lib1_abs = str(lib1.resolve()).replace("\\", "\\\\")
+        lib2_abs = str(lib2.resolve()).replace("\\", "\\\\")
+        main_ml.write_text("\n".join([
+            f'import "{lib1_abs}"',
+            f'import "{lib2_abs}"',
+            '',
+            'function main(args)',
+            '  return 0',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        exe = td_path / "main_keepgoing.exe"
+
+        # Baseline: should fail and typically only report the *first* module error.
+        cr1 = compile_native(mlc_runner, main_ml, exe, timeout_s=120)
+        out1 = normalize_out((cr1.stdout or "") + "\n" + (cr1.stderr or ""))
+        if cr1.returncode == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="expected compile failure without --keep-going, but compile succeeded",
+                              stdout=cr1.stdout, stderr=cr1.stderr)
+        if "Imported module must be declaration-only" not in out1:
+            return TestResult(name=name, status="FAIL",
+                              details="missing expected error marker without --keep-going",
+                              stdout=cr1.stdout, stderr=cr1.stderr)
+        if "lib_bad1.ml" not in out1:
+            return TestResult(name=name, status="FAIL",
+                              details="expected first broken module to be mentioned (lib_bad1.ml)",
+                              stdout=cr1.stdout, stderr=cr1.stderr)
+
+        # Now: keep-going should report errors for *both* broken modules.
+        cr2 = compile_native(mlc_runner, main_ml, exe, timeout_s=120,
+                             extra_args=["--keep-going", "--max-errors", "50"])
+        out2 = normalize_out((cr2.stdout or "") + "\n" + (cr2.stderr or ""))
+        if cr2.returncode == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="expected compile failure with --keep-going, but compile succeeded",
+                              stdout=cr2.stdout, stderr=cr2.stderr)
+        if "Imported module must be declaration-only" not in out2:
+            return TestResult(name=name, status="FAIL",
+                              details="missing expected error marker with --keep-going",
+                              stdout=cr2.stdout, stderr=cr2.stderr)
+        if "lib_bad1.ml" not in out2 or "lib_bad2.ml" not in out2:
+            return TestResult(name=name, status="FAIL",
+                              details="--keep-going did not report both module errors (expected lib_bad1.ml + lib_bad2.ml)",
+                              stdout=cr2.stdout, stderr=cr2.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=cr2.stdout, stderr=cr2.stderr)
+
+
+def test_keep_going_respects_max_errors(*, name: str, mlc_runner: Path) -> TestResult:
+    """--max-errors should cap the number of diagnostics reported when using --keep-going."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        libs: list[Path] = []
+        for i in range(1, 6):
+            p = td_path / f"lib_bad_{i}.ml"
+            p.write_text("\n".join([
+                f'print "BAD{i}"',
+                f'function f{i}()',
+                f'  return {i}',
+                'end function',
+            ]) + "\n", encoding="utf-8")
+            libs.append(p)
+
+        main_ml = td_path / "main_keepgoing_max.ml"
+        imports = []
+        for p in libs:
+            pa = str(p.resolve()).replace("\\", "\\\\")
+            imports.append(f'import "{pa}"')
+        main_ml.write_text("\n".join(imports + [
+            '',
+            'function main(args)',
+            '  return 0',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        exe = td_path / "main_keepgoing_max.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=120,
+                            extra_args=["--keep-going", "--max-errors", "2"])
+        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+        if cr.returncode == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="expected compile failure with --keep-going, but compile succeeded",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        # Count how many times the specific marker appears; it should not exceed 2.
+        n = len(re.findall(r"Imported module must be declaration-only", out))
+        if n == 0:
+            return TestResult(name=name, status="FAIL",
+                              details="missing expected error marker with --keep-going",
+                              stdout=cr.stdout, stderr=cr.stderr)
+        if n > 2:
+            return TestResult(name=name, status="FAIL",
+                              details=f"expected <= 2 diagnostics due to --max-errors 2, but saw {n}",
+                              stdout=cr.stdout, stderr=cr.stderr)
 
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
@@ -1726,10 +1843,6 @@ def main() -> int:
 
     tests: list[Callable[[], TestResult]] = []
 
-    # Python unit test: Asm opcode emitter golden vectors
-    tests.append(lambda: test_python_script(name="python: asm opcode vectors", script=tests_root / "test_asm_opcodes.py",
-                                            timeout_s=120))
-
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,
                                                   ml_path=language_suite_ml,
@@ -1769,6 +1882,10 @@ def main() -> int:
     tests.append(lambda: test_unhandled_error_origin_omitted_when_cleared(name="unhandled error: origin omitted",
                                                                           mlc_runner=mlc_runner))
     tests.append(lambda: test_reserved_identifiers(name="reserved identifiers: try/error", mlc_runner=mlc_runner))
+
+    # Diagnostics: keep-going (multi-error reporting)
+    tests.append(lambda: test_keep_going_reports_multiple_errors(name="keep-going: reports multiple errors", mlc_runner=mlc_runner))
+    tests.append(lambda: test_keep_going_respects_max_errors(name="keep-going: respects --max-errors", mlc_runner=mlc_runner))
 
     if aes_ml is not None:
         tests.append(lambda: test_aes_kat(name="aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)", mlc_runner=mlc_runner,

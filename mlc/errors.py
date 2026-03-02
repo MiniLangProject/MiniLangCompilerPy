@@ -6,7 +6,8 @@ associate diagnostics with an optional source location.
 
 from __future__ import annotations
 
-from typing import Optional
+from dataclasses import dataclass
+from typing import List, Optional
 
 
 class CompileError(Exception):
@@ -29,3 +30,26 @@ class CompileError(Exception):
         super().__init__(message)
         self.pos: Optional[int] = pos
         self.filename: Optional[str] = filename
+
+
+@dataclass(frozen=True)
+class Diagnostic:
+    """A single compiler diagnostic (syntax or compilation)."""
+
+    kind: str
+    message: str
+    filename: Optional[str] = None
+    pos: Optional[int] = None
+    source: Optional[str] = None
+
+
+class MultiCompileError(Exception):
+    """A collection of multiple diagnostics.
+
+    Raised when the compiler runs in "keep going" mode and wants to report
+    *all* found errors at once.
+    """
+
+    def __init__(self, diags: List[Diagnostic]):
+        super().__init__(f"{len(diags)} error(s)")
+        self.diags: List[Diagnostic] = list(diags)

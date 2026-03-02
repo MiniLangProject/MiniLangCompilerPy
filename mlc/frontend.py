@@ -24,7 +24,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
-from typing import Any
+from typing import Any, List, Tuple
 
 # Cache loaded frontend modules by their absolute file path.
 _CACHE: dict[str, Any] = {}
@@ -237,3 +237,80 @@ def parse_program(minilang_mod: Any, input_path: str) -> tuple[str, Any]:
         raise
 
     return code, program
+
+
+def parse_program_keepgoing(
+    minilang_mod: Any,
+    input_path: str,
+    *,
+    max_errors: int = 50,
+) -> Tuple[str, Any, List[BaseException]]:
+    """Parse a file but keep going on syntax errors.
+
+    Returns (normalized_source, program_ast, errors).
+    """
+
+    with open(input_path, "r", encoding="utf-8") as f:
+        code = f.read()
+
+    code = normalize_code_for_tokenizer(code)
+
+    # Tokenizer errors can't be recovered from in a meaningful way; report and return.
+    try:
+        toks = minilang_mod.tokenize(code)
+    except Exception as e:
+        if getattr(e, "pos", None) is not None and type(e).__name__ in ("ParseError",):
+            try:
+                setattr(e, "filename", input_path)
+            except Exception:
+                pass
+            try:
+                setattr(e, "source", code)
+            except Exception:
+                pass
+        return code, [], [e]
+
+    # Current signature: Parser(tokens, source, filename, collect_errors=?, max_errors=?)
+    parser = None
+    try:
+        try:
+            parser = minilang_mod.Parser(toks, code, input_path, collect_errors=True, max_errors=int(max_errors))
+        except TypeError:
+            # Legacy signature: Parser(tokens, source, filename)
+            parser = minilang_mod.Parser(toks, code, input_path)
+            # No recovery mode available in legacy frontends.
+    except Exception as e:
+        return code, [], [e]
+
+    try:
+        program = parser.parse_program()
+    except Exception as e:
+        # If the parser itself explodes, treat it as one error.
+        if getattr(e, "pos", None) is not None and type(e).__name__ in ("ParseError",):
+            try:
+                setattr(e, "filename", input_path)
+            except Exception:
+                pass
+            try:
+                setattr(e, "source", code)
+            except Exception:
+                pass
+        return code, [], [e]
+
+    errs = list(getattr(parser, "errors", []) or [])
+    # Attach filename + normalized source for consistent formatting.
+    for e in errs:
+        if getattr(e, "pos", None) is None:
+            continue
+        if getattr(e, "filename", None) is None:
+            try:
+                setattr(e, "filename", input_path)
+            except Exception:
+                pass
+        if getattr(e, "source", None) is None:
+            try:
+                setattr(e, "source", code)
+            except Exception:
+                pass
+
+    return code, program, errs

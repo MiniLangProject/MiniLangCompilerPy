@@ -19,8 +19,7 @@ from ..tools import align_up, enc_int, enc_void
 class CodegenCore:
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
-                 extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False,
-                 trace_calls: bool = False):
+                 extern_structs: Optional[Dict[str, Any]] = None, trace_calls: bool = False, call_profile: bool = False):
         self.ml = minilang_mod
         self.source = source
         self.filename = filename
@@ -47,11 +46,12 @@ class CodegenCore:
         # Expose helper for other mixins.
         self._pretty_script = _pretty_script
 
+        self.trace_calls = bool(trace_calls)
         self.call_profile = bool(call_profile)
         self.profile_calls = self.call_profile
 
-        # Debugging: print user function name on entry (very verbose).
-        self.trace_calls = bool(trace_calls)
+        # Runtime call trace string cache: qname -> (rdata_label, byte_len)
+        self._trace_str_labels: Dict[str, tuple[str, int]] = {}
 
         # `import ... as alias` maps alias -> package name (compile-time only)
         self.import_aliases: Dict[str, str] = dict(import_aliases or {})
@@ -191,11 +191,6 @@ class CodegenCore:
         #   later scratch space instead of the allocator's control words.
         if hasattr(self, 'ensure_gc_data'):
             self.ensure_gc_data()
-
-        # Console handles (set by the entry stub in codegen_stmt).
-        # NOTE: Do *not* rely on a particular register (like RBX) to keep these alive.
-        # User code and runtime helpers are free to use/carry RBX across calls.
-        self.data.add_u64('stdout_handle', 0)
 
         self.data.add_u32('bytesWritten', 0)
         self.data.add_u32('bytesRead', 0)
@@ -455,6 +450,57 @@ class CodegenCore:
         self.expr_temp_top -= size
         if self.expr_temp_top < 0:
             self.expr_temp_top = 0
+
+    # ---------- call tracing (debug) ----------
+
+    def _trace_label_for(self, name: str) -> tuple[str, int]:
+        """Return (rdata_label, byte_len) for a newline-terminated UTF-8 trace string."""
+        s = str(name)
+        cache = getattr(self, '_trace_str_labels', None)
+        if cache is None:
+            cache = {}
+            self._trace_str_labels = cache
+        hit = cache.get(s)
+        if hit is not None:
+            return hit
+
+        lbl = f"trace_call_{len(cache)}"
+        self.rdata.add_str(lbl, s, add_newline=True)
+        try:
+            ln = int(self.rdata.labels[lbl][1])
+        except Exception:
+            ln = len((s + "\n").encode("utf-8"))
+        cache[s] = (lbl, ln)
+        return cache[s]
+
+    def emit_trace_call(self, name: str) -> None:
+        """Emit runtime trace output for a callsite (if enabled)."""
+        if not bool(getattr(self, 'trace_calls', False)):
+            return
+
+        # Spill volatile arg registers into the expr-temp arena.
+        # This avoids corrupting the Win64 shadow space (which callees may freely clobber).
+        try:
+            off = self.alloc_expr_temps(32)
+        except Exception:
+            off = None
+        if off is None:
+            return
+
+        a = self.asm
+        a.mov_membase_disp_r64('rsp', off + 0, 'rcx')
+        a.mov_membase_disp_r64('rsp', off + 8, 'rdx')
+        a.mov_membase_disp_r64('rsp', off + 16, 'r8')
+        a.mov_membase_disp_r64('rsp', off + 24, 'r9')
+
+        lbl, ln = self._trace_label_for(name)
+        self.emit_writefile(lbl, int(ln))
+
+        a.mov_r64_membase_disp('rcx', 'rsp', off + 0)
+        a.mov_r64_membase_disp('rdx', 'rsp', off + 8)
+        a.mov_r64_membase_disp('r8', 'rsp', off + 16)
+        a.mov_r64_membase_disp('r9', 'rsp', off + 24)
+        self.free_expr_temps(32)
 
     def ensure_var(self, name: str) -> str:
         if name in self.var_slots:
@@ -752,27 +798,12 @@ class CodegenCore:
         """
         a = self.asm
 
-        # Robust Win64 ABI handling:
-        # Always allocate our own call frame so we never rely on the *caller*
-        # having reserved shadow space / stack-arg slots at [rsp+0x20].
-        #
-        # Layout after SUB RSP,0x30:
-        #   [rsp+0x00..0x1F] 32B shadow space
-        #   [rsp+0x20..0x27] arg5 (lpOverlapped = NULL)
-        #   [rsp+0x28..0x2F] padding (keeps 16B alignment)
-        a.sub_rsp_imm8(0x30)
-
-        # WriteFile(h=stdout_handle, buf=rdx, nbytes=r8d, &written, NULL)
-        # IMPORTANT: We load the handle from .data every time.
-        # RBX is nonvolatile but *not* reserved; many helpers use it as scratch.
-        a.mov_qword_ptr_rsp20_rax_zero()
-        a.mov_rax_rip_qword('stdout_handle')
-        a.mov_r64_r64('rcx', 'rax')
+        # WriteFile(h=rbx, buf=rdx, nbytes=r8d, &written, NULL)
+        a.mov_rcx_rbx()
         a.lea_r9_rip('bytesWritten')
+        a.mov_qword_ptr_rsp20_rax_zero()
         a.mov_rax_rip_qword('iat_WriteFile')
         a.call_rax()
-
-        a.add_rsp_imm8(0x30)
 
     def emit_normalize_xmm0_to_value(self) -> None:
         """Normalize XMM0 numeric result: if it is an exact int64, return tagged int, else boxed float."""

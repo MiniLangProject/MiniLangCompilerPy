@@ -2547,21 +2547,6 @@ class CodegenExpr:
                             self.emit_expr(aa)
                             a.mov_rsp_disp32_rax(base + (i + 1) * 8)
 
-                        # Marshal args (rcx, rdx, r8, r9, then stack at rsp+0x20).
-                        if total >= 1:
-                            a.mov_r64_membase_disp("rcx", "rsp", base + 0 * 8)
-                        if total >= 2:
-                            a.mov_r64_membase_disp("rdx", "rsp", base + 1 * 8)
-                        if total >= 3:
-                            a.mov_r64_membase_disp("r8", "rsp", base + 2 * 8)
-                        if total >= 4:
-                            a.mov_r64_membase_disp("r9", "rsp", base + 3 * 8)
-                        if total > 4:
-                            for i in range(4, total):
-                                a.mov_r64_membase_disp("r10", "rsp", base + i * 8)
-                                disp = 0x20 + (i - 4) * 8
-                                a.mov_membase_disp_r64("rsp", disp, "r10")
-
                         # Load receiver into r11 and validate it's a struct; load struct_id into r10d.
                         a.mov_r64_membase_disp("r11", "rsp", base)
                         a.mov_r64_r64("r10", "r11")
@@ -2585,6 +2570,26 @@ class CodegenExpr:
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
                             a.mark(l_case)
+
+                            # Optional call trace (emit before marshalling stack args).
+                            if bool(getattr(self, 'trace_calls', False)):
+                                self.emit_trace_call(str(fn_qn))
+
+                            # Marshal args (rcx, rdx, r8, r9, then stack at rsp+0x20).
+                            if total >= 1:
+                                a.mov_r64_membase_disp("rcx", "rsp", base + 0 * 8)
+                            if total >= 2:
+                                a.mov_r64_membase_disp("rdx", "rsp", base + 1 * 8)
+                            if total >= 3:
+                                a.mov_r64_membase_disp("r8", "rsp", base + 2 * 8)
+                            if total >= 4:
+                                a.mov_r64_membase_disp("r9", "rsp", base + 3 * 8)
+                            if total > 4:
+                                for i in range(4, total):
+                                    a.mov_r64_membase_disp("r10", "rsp", base + i * 8)
+                                    disp = 0x20 + (i - 4) * 8
+                                    a.mov_membase_disp_r64("rsp", disp, "r10")
+
                             a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
                             a.call(f"fn_user_{fn_qn}")
                             a.jmp(l_done)
@@ -3387,6 +3392,11 @@ class CodegenExpr:
                     expected = len(list(sig.get("params", []) or []))
                     if len(e.args) != expected:
                         raise self.error(f"Extern {callee_name} expects {expected} args, got {len(e.args)}", e)
+
+            # Optional call trace for direct-named calls (ident / qualified ident).
+            # We emit this *before* marshalling stack args to avoid clobbering [rsp+0x20]...
+            if bool(getattr(self, 'trace_calls', False)) and callee_name is not None:
+                self.emit_trace_call(str(callee_name))
 
             # Indirect call: evaluate callee expression to a function value and call via code_ptr.
             #

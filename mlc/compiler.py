@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from mlc.codegen import Codegen
-from .errors import CompileError
-from .frontend import load_minilang_frontend, parse_program, normalize_code_for_tokenizer
+from .errors import CompileError, Diagnostic, MultiCompileError
+from .frontend import load_minilang_frontend, parse_program, parse_program_keepgoing, normalize_code_for_tokenizer
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
 from .tools import u32
 
@@ -386,7 +386,14 @@ def _check_decl_only_recursive(ml: Any, st: Any, *, module_path: str) -> None:
     )
 
 
-def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[List[str]] = None) -> tuple[str, List[Any], Dict[str, str], Dict[str, Optional[str]]]:
+def load_modules_recursive(
+    ml: Any,
+    entry_path: str,
+    *,
+    include_dirs: Optional[List[str]] = None,
+    keep_going: bool = False,
+    max_errors: int = 50,
+) -> tuple[str, List[Any], Dict[str, str], Dict[str, Optional[str]], List[Diagnostic]]:
     """Load entry file + all transitive imports, with cycle detection.
 
     - Imports resolved relative to importing file's directory.
@@ -399,6 +406,8 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
     """
     cache: Dict[str, List[Any]] = {}
     sources: Dict[str, str] = {}
+    diags: List[Diagnostic] = []
+    diag_keys: set[tuple[str, str, Optional[str], Optional[int]]] = set()
 
     entry_abs = os.path.realpath(os.path.abspath(entry_path))
     entry_root = os.path.dirname(entry_abs)
@@ -423,6 +432,27 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
     order: List[str] = []
     packages: Dict[str, Optional[str]] = {}
     import_aliases: Dict[str, str] = {}
+
+    def _add_diag(kind: str, message: str, *, filename: Optional[str], pos: Optional[int] = None, source: Optional[str] = None) -> None:
+        if len(diags) >= int(max_errors):
+            return
+        key = (str(kind), str(message), filename, int(pos) if pos is not None else None)
+        if key in diag_keys:
+            return
+        diag_keys.add(key)
+        src0 = source
+        if src0 is None and filename is not None:
+            src0 = sources.get(filename)
+        diags.append(Diagnostic(kind=kind, message=str(message), filename=filename, pos=pos, source=src0))
+
+    def _add_compile_error(e: CompileError) -> None:
+        _add_diag(
+            "CompileError",
+            str(e),
+            filename=getattr(e, "filename", None),
+            pos=getattr(e, "pos", None),
+            source=sources.get(getattr(e, "filename", None) or ""),
+        )
 
     def _attach_filename_recursive(node: Any, filename: str, code0: str, *, _seen: Optional[set[int]] = None) -> None:
         """Attach origin metadata to AST nodes.
@@ -550,17 +580,55 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
 
             pos = edge.pos if edge is not None else None
             fn = edge.filename if edge is not None else ap
-            raise CompileError("\n".join(msg_lines), pos=pos, filename=fn)
+            ce = CompileError("\n".join(msg_lines), pos=pos, filename=fn)
+            if not keep_going:
+                raise ce
+            _add_compile_error(ce)
+            # Skip loading this module further.
+            cache.setdefault(ap, [])
+            return
 
         if not os.path.exists(ap):
-            raise CompileError(f"Import file not found: {ap}", filename=ap)
+            ce = CompileError(f"Import file not found: {ap}", filename=ap)
+            if not keep_going:
+                raise ce
+            _add_compile_error(ce)
+            cache.setdefault(ap, [])
+            return
 
         visiting.append(ap)
         visiting_edges.append(edge)
 
-        code, prog = parse_program(ml, ap)
-        sources[ap] = code
-        stmts = _flatten_program(prog)
+        try:
+            if keep_going:
+                code, prog, perrs = parse_program_keepgoing(ml, ap, max_errors=max_errors)
+                sources[ap] = code
+                for pe in perrs:
+                    kind = type(pe).__name__
+                    pos = getattr(pe, "pos", None)
+                    fn = getattr(pe, "filename", None) or ap
+                    src = getattr(pe, "source", None)
+                    _add_diag(kind, str(pe), filename=fn, pos=pos, source=src if isinstance(src, str) else code)
+                stmts = _flatten_program(prog)
+            else:
+                code, prog = parse_program(ml, ap)
+                sources[ap] = code
+                stmts = _flatten_program(prog)
+        except CompileError as e:
+            if not keep_going:
+                raise
+            _add_compile_error(e)
+            sources.setdefault(ap, sources.get(ap, ""))
+            stmts = []
+        except Exception as e:
+            if not keep_going:
+                raise
+            kind = type(e).__name__
+            pos = getattr(e, "pos", None)
+            fn = getattr(e, "filename", None) or ap
+            src = getattr(e, "source", None)
+            _add_diag(kind, str(e), filename=fn, pos=pos, source=src if isinstance(src, str) else sources.get(ap))
+            stmts = []
 
         # Ensure every node in this module carries its origin filename.
         for st_ in stmts:
@@ -581,7 +649,12 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
         # non-entry file as an imported module.
         if ap != entry_abs:
             for st in stmts:
-                _check_decl_only_recursive(ml, st, module_path=ap)
+                try:
+                    _check_decl_only_recursive(ml, st, module_path=ap)
+                except CompileError as e:
+                    if not keep_going:
+                        raise
+                    _add_compile_error(e)
 
         # Recurse into imports for ALL modules (needed for cycle detection)
         base_dir = os.path.dirname(ap)
@@ -598,20 +671,28 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
 
             if not resolved:
                 tried_s = "\n".join("  - " + t for t in tried)
-                raise CompileError(
+                ce = CompileError(
                     f"Import file not found: {rel}\nSearched:\n{tried_s}",
                     pos=_node_pos(st),
                     filename=_node_filename(st) or ap,
                 )
+                if not keep_going:
+                    raise ce
+                _add_compile_error(ce)
+                continue
 
             if len(matches) > 1:
                 matches_s = "\n".join("  - " + p for p in matches)
                 tried_s = "\n".join("  - " + t for t in tried)
-                raise CompileError(
+                ce = CompileError(
                     f"Ambiguous import: {rel}\nMatches:\n{matches_s}\nSearched:\n{tried_s}",
                     pos=_node_pos(st),
                     filename=_node_filename(st) or ap,
                 )
+                if not keep_going:
+                    raise ce
+                _add_compile_error(ce)
+                continue
 
             child = resolved
             edge2 = _ImportEdge(
@@ -632,11 +713,14 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
             expected_pkg = _expected_package_for_file(child, resolved_kind=res_kind, resolved_root=res_root)
             if declared_pkg and expected_pkg and declared_pkg != expected_pkg:
                 root_disp = _pretty_path(res_root, entry_root) if res_root else str(res_root)
-                raise CompileError(
+                ce = CompileError(
                     f"File declares package {declared_pkg}, but was found as {expected_pkg} (root: {root_disp}): {child}",
                     pos=_node_pos(st),
                     filename=_node_filename(st) or ap,
                 )
+                if not keep_going:
+                    raise ce
+                _add_compile_error(ce)
 
             # If this was a module-style import (`import foo.bar`), and the imported file declares
             # a package, enforce that it matches the module name.
@@ -644,35 +728,50 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
             if isinstance(expected_mod, str) and expected_mod:
                 declared_pkg2 = packages.get(child)
                 if declared_pkg2 and declared_pkg2 != expected_mod:
-                    raise CompileError(
+                    ce = CompileError(
                         f"Module import {expected_mod} points to file declaring package {declared_pkg2}: {child}",
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
+                    if not keep_going:
+                        raise ce
+                    _add_compile_error(ce)
 
             # Handle optional import alias: `import ... as <alias>`
             alias = getattr(st, "alias", None)
             if isinstance(alias, str) and alias:
                 if alias in _RESERVED_IDENTIFIERS:
-                    raise CompileError(
+                    ce = CompileError(
                         f"import alias '{alias}' is reserved",
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
+                    if not keep_going:
+                        raise ce
+                    _add_compile_error(ce)
+                    continue
                 target_pkg = packages.get(child)
                 if not target_pkg:
-                    raise CompileError(
+                    ce = CompileError(
                         f"import ... as {alias} requires imported file to declare `package`: {child}",
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
+                    if not keep_going:
+                        raise ce
+                    _add_compile_error(ce)
+                    continue
                 prev = import_aliases.get(alias)
                 if prev is not None and prev != target_pkg:
-                    raise CompileError(
+                    ce = CompileError(
                         f"import alias {alias} refers to multiple packages: {prev} and {target_pkg}",
                         pos=_node_pos(st),
                         filename=_node_filename(st) or ap,
                     )
+                    if not keep_going:
+                        raise ce
+                    _add_compile_error(ce)
+                    continue
                 import_aliases[alias] = target_pkg
 
             # Implicit aliasing (quality-of-life):
@@ -696,12 +795,15 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
                         if prev is None:
                             import_aliases[implicit] = target_pkg
                         elif prev != target_pkg:
-                            raise CompileError(
+                            ce = CompileError(
                                 f"Implicit import alias '{implicit}' is ambiguous between packages {prev} and {target_pkg}. "
                                 f"Use 'import ... as <alias>' to disambiguate.",
                                 pos=_node_pos(st),
                                 filename=_node_filename(st) or ap,
                             )
+                            if not keep_going:
+                                raise ce
+                            _add_compile_error(ce)
 
         visiting.pop()
         visiting_edges.pop()
@@ -716,7 +818,7 @@ def load_modules_recursive(ml: Any, entry_path: str, *, include_dirs: Optional[L
     for ap in order:
         merged.extend(cache[ap])
 
-    return sources.get(entry_abs, ""), merged, import_aliases, packages
+    return sources.get(entry_abs, ""), merged, import_aliases, packages, diags
 
 @dataclass(frozen=True)
 class ExternSig:
@@ -1230,11 +1332,22 @@ def compile_to_exe(
     asm_dump_data: bool = False,
     asm_dump_pe: bool = False,
     heap_config: Optional[Dict[str, Any]] = None,
-    call_profile: bool = False,
     trace_calls: bool = False,
+    call_profile: bool = False,
+    keep_going: bool = False,
+    max_errors: int = 50,
 ) -> None:
     ml = load_minilang_frontend(input_ml)
-    source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs)
+    source, program, import_aliases, packages_by_file, diags = load_modules_recursive(
+        ml,
+        input_ml,
+        include_dirs=include_dirs,
+        keep_going=bool(keep_going),
+        max_errors=int(max_errors) if max_errors is not None else 50,
+    )
+
+    if diags:
+        raise MultiCompileError(diags)
 
     extern_sigs = collect_extern_sigs(ml, program, packages_by_file)
 
@@ -1251,8 +1364,8 @@ def compile_to_exe(
         import_aliases=import_aliases,
         extern_sigs=extern_sigs,
         extern_structs=extern_structs,
-        call_profile=bool(call_profile),
         trace_calls=bool(trace_calls),
+        call_profile=bool(call_profile),
     )
 
     asm_listing_path: Optional[str] = None
@@ -1661,10 +1774,12 @@ def main(argv: List[str]) -> int:
 
 
     # Call profiling (optional)
+    parser.add_argument('--trace-calls', action='store_true', help='print function call trace at runtime (debug)')
     parser.add_argument('--profile-calls', action='store_true', help='instrument user functions with call counters; enable callStats() builtin')
 
-    # Call tracing (optional)
-    parser.add_argument('--trace-calls', action='store_true', help='print function name on entry for every user function call')
+    # Diagnostics
+    parser.add_argument('--keep-going', action='store_true', help='try to continue after errors and report all found diagnostics')
+    parser.add_argument('--max-errors', type=int, default=50, help='stop after N errors when using --keep-going (default: 50)')
 
     args = parser.parse_args(argv[1:])
 
@@ -1734,9 +1849,37 @@ def main(argv: List[str]) -> int:
             asm_dump_data=bool(args.asm_data),
             asm_dump_pe=bool(args.asm_pe),
             heap_config=heap_config,
-            call_profile=bool(getattr(args, "profile_calls", False)),
             trace_calls=bool(getattr(args, "trace_calls", False)),
+            call_profile=bool(getattr(args, "profile_calls", False)),
+            keep_going=bool(getattr(args, "keep_going", False)),
+            max_errors=int(getattr(args, "max_errors", 50) or 50),
         )
+
+    except MultiCompileError as e:
+        # Print all diagnostics in a stable order.
+        try:
+            ml = load_minilang_frontend(inp)
+            fmt = getattr(ml, "format_error", None)
+        except Exception:
+            ml = None
+            fmt = None
+
+        for d in (getattr(e, "diags", None) or []):
+            kind = getattr(d, "kind", None) or "Error"
+            msg = getattr(d, "message", None) or str(d)
+            fn = getattr(d, "filename", None) or inp
+            pos = getattr(d, "pos", None)
+            src = getattr(d, "source", None)
+
+            if callable(fmt) and isinstance(src, str) and pos is not None:
+                print(fmt(src, fn, int(pos), msg, kind))
+            else:
+                if pos is not None:
+                    print(f"{kind}: {msg}\n  at {fn} pos={pos}")
+                else:
+                    print(f"{kind}: {msg}\n  at {fn}")
+            print()
+        return 2
 
     except CompileError as e:
         try:

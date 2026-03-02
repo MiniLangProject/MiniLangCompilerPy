@@ -432,11 +432,26 @@ class Parser:
 
 """
 
-    def __init__(self, tokens: List[Token], source: str, filename: str):
+    def __init__(
+        self,
+        tokens: List[Token],
+        source: str,
+        filename: str,
+        collect_errors: bool = False,
+        max_errors: int = 50,
+    ):
         self.tokens = tokens
         self.i = 0
         self.source = source
         self.filename = filename
+        # Error recovery / collection
+        self.collect_errors = bool(collect_errors)
+        self.max_errors = int(max_errors) if max_errors is not None else 50
+        self.errors: List[ParseError] = []
+        # Deduplicate repeated diagnostics. With recovery enabled, the parser
+        # may sync at boundary tokens (e.g. `else`, `end`) and otherwise
+        # re-emit the same error at the same position on the next loop.
+        self._error_keys: set[tuple[Optional[str], Optional[int], str]] = set()
         # Track whether we're currently parsing inside a function body
         self._func_depth = 0
         # Track whether we're inside a namespace block
@@ -541,6 +556,88 @@ class Parser:
             if self.match("SEMI"):
                 continue
             break
+
+    def _record_error(self, e: ParseError) -> None:
+        if not self.collect_errors:
+            raise e
+        if len(self.errors) >= self.max_errors:
+            return
+        try:
+            # Attach filename for nicer multi-file output.
+            setattr(e, "filename", getattr(self, "filename", None))
+        except Exception:
+            pass
+        key = (getattr(self, "filename", None), getattr(e, "pos", None), str(e))
+        if key in self._error_keys:
+            return
+        self._error_keys.add(key)
+        self.errors.append(e)
+
+    def _sync_stmt(
+        self,
+        *,
+        stop_keywords: Optional[set[str]] = None,
+        end_type: Optional[str] = None,
+    ) -> None:
+        """Best-effort statement recovery.
+
+        Advance until we reach a likely statement boundary:
+          - newline or ';'
+          - block boundary keywords (end/else/case/default)
+          - explicit stop_keywords (used by parse_block_until)
+
+        We intentionally do not consume block-boundary keywords so the caller
+        can observe them.
+        """
+        if stop_keywords is None:
+            stop_keywords = set()
+
+        start_i = self.i
+        while True:
+            t = self.peek()
+            if t.kind == "EOF":
+                return
+
+            # Statement separators: consume them and stop.
+            if t.kind in ("NL", "SEMI"):
+                self.skip_stmt_seps()
+                return
+
+            if t.kind == "KW":
+                if t.value in stop_keywords:
+                    return
+                if t.value in ("end", "else", "case", "default"):
+                    return
+                if end_type is not None and self.is_end_of(end_type):
+                    return
+
+            self.advance()
+
+            # Ensure progress even on pathological inputs.
+            if self.i == start_i:
+                self.advance()
+
+    def _parse_stmt_recover(
+        self,
+        *,
+        stop_keywords: Optional[set[str]] = None,
+        end_type: Optional[str] = None,
+    ) -> Optional[Stmt]:
+        """Parse a statement, recording errors and synchronizing on failure."""
+        start_i = self.i
+        try:
+            return self.parse_stmt()
+        except ParseError as e:
+            self._record_error(e)
+            self._sync_stmt(stop_keywords=stop_keywords, end_type=end_type)
+            # Ensure progress. At the top-level, boundary keywords like `else`
+            # or `end` are not consumed by _sync_stmt (by design), which can
+            # otherwise cause the same error to be emitted repeatedly.
+            if self.i == start_i:
+                if self.peek().kind != "EOF":
+                    self.advance()
+                self.skip_stmt_seps()
+            return None
 
     def expect_block_nl(self) -> None:
         # Historically this required a physical newline after block headers.
@@ -723,30 +820,43 @@ class Parser:
                 if self.peek().kind == "EOF":
                     raise ParseError("namespace ends unexpectedly (missing ‘end namespace’?)", self.peek().pos)
 
-                t = self.peek()
+                try:
+                    t = self.peek()
 
-                # Imports are still forbidden inside namespaces.
-                if t.kind == "KW" and t.value == "import":
-                    raise ParseError("'import' is not allowed inside a namespace", t.pos)
+                    # Imports are still forbidden inside namespaces.
+                    if t.kind == "KW" and t.value == "import":
+                        raise ParseError("'import' is not allowed inside a namespace", t.pos)
 
-                # Allowed at namespace top-level: declarations + const + simple global assignments.
-                if t.kind == "KW" and t.value in ("function", "struct", "enum", "namespace", "extern", "const"):
-                    body.append(self.parse_stmt())
-                    self.skip_stmt_seps()
-                    continue
-
-                if t.kind == "IDENT":
-                    st = self.parse_stmt()
-                    if isinstance(st, Assign):
-                        body.append(st)
+                    # Allowed at namespace top-level: declarations + const + simple global assignments.
+                    if t.kind == "KW" and t.value in ("function", "struct", "enum", "namespace", "extern", "const"):
+                        st2 = self.parse_stmt() if not self.collect_errors else self._parse_stmt_recover(end_type="namespace")
+                        if st2 is not None:
+                            body.append(st2)
                         self.skip_stmt_seps()
                         continue
-                    pos = getattr(st, 'pos', None) or t.pos
-                    raise ParseError("Inside a namespace, only declarations/globals are allowed (e.g. 'x = ...')", pos)
 
-                raise ParseError(
-                    "Inside a namespace, only declarations are allowed (function/struct/enum/namespace/extern/const)",
-                    t.pos)
+                    if t.kind == "IDENT":
+                        st = self.parse_stmt() if not self.collect_errors else self._parse_stmt_recover(end_type="namespace")
+                        if st is None:
+                            self.skip_stmt_seps()
+                            continue
+                        if isinstance(st, Assign):
+                            body.append(st)
+                            self.skip_stmt_seps()
+                            continue
+                        pos = getattr(st, 'pos', None) or t.pos
+                        raise ParseError("Inside a namespace, only declarations/globals are allowed (e.g. 'x = ...')", pos)
+
+                    raise ParseError(
+                        "Inside a namespace, only declarations are allowed (function/struct/enum/namespace/extern/const)",
+                        t.pos)
+                except ParseError as e:
+                    if not self.collect_errors:
+                        raise
+                    self._record_error(e)
+                    self._sync_stmt(end_type="namespace")
+                    if len(self.errors) >= self.max_errors:
+                        break
         finally:
             self._ns_depth -= 1
 
@@ -757,7 +867,15 @@ class Parser:
         stmts: List[Stmt] = []
         self.skip_stmt_seps()
         while self.peek().kind != "EOF":
-            st = self.parse_stmt()
+            if self.collect_errors:
+                st = self._parse_stmt_recover()
+                if st is None:
+                    if len(self.errors) >= self.max_errors:
+                        break
+                    continue
+            else:
+                st = self.parse_stmt()
+
             stmts.append(st)
             # `package` must be the first statement in the file (before imports/decls).
             if self._func_depth == 0 and self._ns_depth == 0:
@@ -1295,7 +1413,15 @@ class Parser:
                 break
             if self.peek().kind == "EOF":
                 raise ParseError(f"Block ended unexpectedly (missing 'end {end_type}'?)", self.peek().pos)
-            stmts.append(self.parse_stmt())
+            if self.collect_errors:
+                st = self._parse_stmt_recover(end_type=end_type)
+                if st is not None:
+                    stmts.append(st)
+                else:
+                    if len(self.errors) >= self.max_errors:
+                        break
+            else:
+                stmts.append(self.parse_stmt())
             self.skip_stmt_seps()
         return stmts
 
@@ -1315,7 +1441,15 @@ class Parser:
                 wanted = f"end {end_type}" if end_type else "end <...>"
                 raise ParseError(f"Block ended unexpectedly (missing '{wanted}'?)", t.pos)
 
-            stmts.append(self.parse_stmt())
+            if self.collect_errors:
+                st = self._parse_stmt_recover(stop_keywords=set(stop_keywords), end_type=end_type)
+                if st is not None:
+                    stmts.append(st)
+                else:
+                    if len(self.errors) >= self.max_errors:
+                        break
+            else:
+                stmts.append(self.parse_stmt())
             self.skip_stmt_seps()
         return stmts
 
