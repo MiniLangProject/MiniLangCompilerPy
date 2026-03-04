@@ -91,3 +91,6 @@ ERR_EXTERN_RET_WSTR_CONVERSION = 1002
 # Calling / method dispatch errors
 ERR_CALL_NOT_CALLABLE = 1100
 ERR_METHOD_NOT_FOUND = 1101
+
+# Strict void handling
+ERR_VOID_OP = 1200

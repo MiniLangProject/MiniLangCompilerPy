@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .codegen_scope import VarBinding
 from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
-                         OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, ERROR_STRUCT_ID, )
+                         OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, ERROR_STRUCT_ID,
+                         ERR_VOID_OP, )
 from ..context import BreakableCtx
 from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod
 
@@ -1573,6 +1574,20 @@ class CodegenStmt:
 
                 next_lbl = f"if_next_{lid}_{i}"
                 self.emit_expr(cond)
+
+                # Strict-void: using `void` as condition must raise an error.
+                # (We intentionally keep `emit_jmp_if_false_rax` permissive for other call sites.)
+                l_cond_ok = f"if_cond_ok_{lid}_{i}"
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_VOID)
+                a.jcc('ne', l_cond_ok)
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                self._emit_auto_errprop()
+                # If not propagated (top-level), still treat as false to continue control-flow safely.
+                a.jmp(next_lbl)
+                a.mark(l_cond_ok)
+
                 self.emit_jmp_if_false_rax(next_lbl)
                 self.push_scope()
                 self._emit_stmt_list(body)
@@ -1764,6 +1779,19 @@ class CodegenStmt:
             # while true -> skip condition evaluation
             if tv is not True:
                 self.emit_expr(s.cond)
+
+                # Strict-void: using `void` as condition must raise an error.
+                l_wcond_ok = f"while_cond_ok_{a.pos}"
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_VOID)
+                a.jcc('ne', l_wcond_ok)
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                self._emit_auto_errprop()
+                # If not propagated, exit the loop.
+                a.jmp(end)
+                a.mark(l_wcond_ok)
+
                 self.emit_jmp_if_false_rax(end)
 
             self.push_scope()
@@ -1803,6 +1831,19 @@ class CodegenStmt:
                 a.jmp(end)
             else:
                 self.emit_expr(s.cond)
+
+                # Strict-void: using `void` as condition must raise an error.
+                l_dwcond_ok = f"dowhile_cond_ok_{a.pos}"
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_VOID)
+                a.jcc('ne', l_dwcond_ok)
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                self._emit_auto_errprop()
+                # If not propagated, exit the loop.
+                a.jmp(end)
+                a.mark(l_dwcond_ok)
+
                 self.emit_jmp_if_false_rax(end)
                 a.jmp(top)
 
@@ -3927,7 +3968,15 @@ class CodegenStmt:
         # [rsp+0x00..0x1F] shadow space for calls (Windows x64)
         # [rsp+0x20..] outgoing stack args for calls (arg5+) + scratch (WriteFile overlapped)
         out_stack_args = max(0, max_call_args - 4)
-        out_reserve = max(8, out_stack_args * 8)  # keep at least 8 bytes at [rsp+0x20]
+        out_scratch = 8  # at least 8 bytes at [rsp+0x20] for misc scratch
+
+        # Save/restore debug-loc globals across calls (script/func/line).
+        # This must NOT overlap with outgoing stack args or scratch (it must survive the whole function).
+        dbg_save_size = 24
+        dbg_save_base = 0x20 + max(out_scratch, out_stack_args * 8)
+
+        # outgoing stack args for calls (arg5+) + scratch + debug-loc save area
+        out_reserve = max(out_scratch, out_stack_args * 8) + dbg_save_size
 
         # locals start after outgoing-args area, aligned to 16 bytes
         local_base = align_up(0x20 + out_reserve, 16)
@@ -4012,6 +4061,15 @@ class CodegenStmt:
                 a.inc_membase_disp_qword('r11', int(idx_cp) * 8)
 
         # ---- debug script/function context ----
+
+        # Save previous debug-loc globals so the caller context is restored on return.
+        # (Prevents errors after a nested call from reporting the wrong function.)
+        a.mov_rax_rip_qword('dbg_loc_script')
+        a.mov_membase_disp_r64('rsp', dbg_save_base + 0, 'rax')
+        a.mov_rax_rip_qword('dbg_loc_func')
+        a.mov_membase_disp_r64('rsp', dbg_save_base + 8, 'rax')
+        a.mov_rax_rip_qword('dbg_loc_line')
+        a.mov_membase_disp_r64('rsp', dbg_save_base + 16, 'rax')
         # Store current script + function name into global debug-loc slots.
         # This lets builtins attach callsite information when they construct an `error`.
         try:
@@ -4248,6 +4306,14 @@ class CodegenStmt:
         a.mark(ret_label)
         # Pop GC root-frame record (must not clobber RAX return value)
         self.emit_gc_pop_root_frame(root_rec_off)
+
+        # Restore previous debug-loc globals (do not clobber RAX return value).
+        a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 0)
+        a.mov_rip_qword_r11('dbg_loc_script')
+        a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 8)
+        a.mov_rip_qword_r11('dbg_loc_func')
+        a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 16)
+        a.mov_rip_qword_r11('dbg_loc_line')
 
         # restore scope stack
         if saved_emit_stack is not None:

@@ -526,35 +526,45 @@ function readU32BE(b, off)
 end function
 
 function xor(a, b)
-  if not typeof(a) == "bytes" then
+  if typeof(a) != "bytes" then
     return
   end if
-  if not typeof(b) == "bytes" then
+  if typeof(b) != "bytes" then
     return
   end if
-  if not len(a) == len(b) then
+  if len(a) != len(b) then
     return
   end if
-  c = bytes(len(a))
-  for i = 0 to len(a)
+
+  n = len(a)
+  c = bytes(n)
+  i = 0
+  while i < n
     c[i] = a[i] ^ b[i]
-  end for
+    i = i + 1
+  end while
   return c
 end function
 
+
 function xorInPlace(a, b)
-  if not typeof(a) == "bytes" then
+  if typeof(a) != "bytes" then
     return
   end if
-  if not typeof(b) == "bytes" then
+  if typeof(b) != "bytes" then
     return
   end if
-  if not len(a) == len(b) then
+  if len(a) != len(b) then
     return
   end if
-  for i = 0 to len(a)
+
+  n = len(a)
+  i = 0
+  while i < n
     a[i] = a[i] ^ b[i]
-  end for
+    i = i + 1
+  end while
   return a
 end function
+
 

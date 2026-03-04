@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
-                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
+                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
 
@@ -333,6 +333,37 @@ class CodegenExpr:
 
         a.mov_rax_r11()
 
+
+    def _emit_auto_errprop(self) -> None:
+        """If RAX is an `error(...)` and we're not inside try(), propagate it."""
+        a = self.asm
+        if int(getattr(self, '_errprop_suppression', 0) or 0) != 0:
+            return
+    
+        lidp = self.new_label_id()
+        l_noerr = f"errprop_noerr_{lidp}"
+    
+        # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_noerr)
+        a.mov_r32_membase_disp("r10d", "rax", 0)
+        a.cmp_r32_imm("r10d", OBJ_STRUCT)
+        a.jcc("ne", l_noerr)
+        a.mov_r32_membase_disp("r10d", "rax", 8)
+        a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
+        a.jcc("ne", l_noerr)
+    
+        if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
+            a.jmp(self.func_ret_label)
+        else:
+            a.mov_r64_r64("rcx", "rax")
+            a.call('fn_unhandled_error_exit')
+    
+        a.mark(l_noerr)
+    
+    
     def _extern_dll_base(self, dll: str) -> str:
         # Must match compiler._dll_base() used for IAT label generation.
         base = os.path.basename(dll).lower()
@@ -1246,6 +1277,10 @@ class CodegenExpr:
             a.mov_rax_imm64(enc_bool(e.value))
             return
 
+        if hasattr(ml, 'VoidLit') and isinstance(e, ml.VoidLit):
+            a.mov_rax_imm64(enc_void())
+            return
+
         if isinstance(e, ml.Var):
             # Inline-param override (used by `function inline ...` expansion).
             nm0 = str(getattr(e, 'name', ''))
@@ -1480,6 +1515,25 @@ class CodegenExpr:
             a.jmp(l_done)
 
             a.mark(l_fail)
+            # Strict void: member access on void is a runtime error.
+            vid = self.new_label_id()
+            l_nvoid = f"memb_nvoid_{vid}"
+            a.mov_r64_r64("r10", "rax")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_VOID)
+            a.jcc("ne", l_nvoid)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            mname = getattr(e, 'name', None)
+            if mname is None:
+                mname = getattr(e, 'field', None)
+            self._emit_make_error_const(ERR_VOID_OP, f"Cannot access member '{mname}' on void")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+            a.mark(l_nvoid)
             a.mov_rax_imm64(enc_void())
 
             a.mark(l_done)
@@ -1521,6 +1575,22 @@ class CodegenExpr:
                 a.jmp(l_end)
 
                 a.mark(l_fail)
+                # Strict void: unary '-' on void is a runtime error.
+                vid = self.new_label_id()
+                l_nvoid = f"uminus_nvoid_{vid}"
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply unary '-' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_end)
+                a.mark(l_nvoid)
                 a.mov_rax_imm64(enc_void())
 
                 a.mark(l_end)
@@ -1535,6 +1605,23 @@ class CodegenExpr:
                 # We'll branch based on truthy:
                 # if cond false -> result true
                 # else -> result false
+
+                # Strict void: unary 'not' on void is a runtime error.
+                vid = self.new_label_id()
+                l_nvoid = f"not_nvoid_{vid}"
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply unary 'not' to void")
+                self._emit_auto_errprop()
+                a.jmp(lbl_end)
+                a.mark(l_nvoid)
 
                 # Jump if false to lbl_false
                 self.emit_jmp_if_false_rax(lbl_false)
@@ -1572,6 +1659,22 @@ class CodegenExpr:
                 a.jmp(l_end)
 
                 a.mark(l_fail)
+                # Strict void: unary '~' on void is a runtime error.
+                vid = self.new_label_id()
+                l_nvoid = f"bnot_nvoid_{vid}"
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply unary '~' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_end)
+                a.mark(l_nvoid)
                 a.mov_rax_imm64(enc_void())
 
                 a.mark(l_end)
@@ -1587,8 +1690,39 @@ class CodegenExpr:
                     lbl_false = f"and_false_{lid}"
                     lbl_end = f"and_end_{lid}"
                     self.emit_expr(e.left)
+                    # Strict void: boolean ops on void are runtime errors.
+                    vid = self.new_label_id()
+                    l_nvoid = f"and_nvoid_{vid}"
+                    a.mov_r64_r64("rdx", "rax")
+                    a.and_r64_imm("rdx", 7)
+                    a.cmp_r64_imm("rdx", TAG_VOID)
+                    a.jcc('ne', l_nvoid)
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot apply 'and' to void")
+                    self._emit_auto_errprop()
+                    a.jmp(lbl_end)
+                    a.mark(l_nvoid)
                     self.emit_jmp_if_false_rax(lbl_false)
                     self.emit_expr(e.right)
+                    vidr = self.new_label_id()
+                    l_rnvoid = f"and_rnvoid_{vidr}"
+                    a.mov_r64_r64("rdx", "rax")
+                    a.and_r64_imm("rdx", 7)
+                    a.cmp_r64_imm("rdx", TAG_VOID)
+                    a.jcc('ne', l_rnvoid)
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot apply 'and' to void")
+                    self._emit_auto_errprop()
+                    a.jmp(lbl_end)
+                    a.mark(l_rnvoid)
                     # result = truthy(right)
                     lbl_rfalse = f"and_rfalse_{lid}"
                     self.emit_jmp_if_false_rax(lbl_rfalse)
@@ -1606,6 +1740,21 @@ class CodegenExpr:
                     lid = self.new_label_id()
                     lbl_end = f"or_end_{lid}"
                     self.emit_expr(e.left)
+                    vid = self.new_label_id()
+                    l_nvoid = f"or_nvoid_{vid}"
+                    a.mov_r64_r64("rdx", "rax")
+                    a.and_r64_imm("rdx", 7)
+                    a.cmp_r64_imm("rdx", TAG_VOID)
+                    a.jcc('ne', l_nvoid)
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot apply 'or' to void")
+                    self._emit_auto_errprop()
+                    a.jmp(lbl_end)
+                    a.mark(l_nvoid)
                     # if truthy -> result true
                     lbl_eval_right = f"or_eval_{lid}"
                     self.emit_jmp_if_false_rax(lbl_eval_right)
@@ -1613,6 +1762,21 @@ class CodegenExpr:
                     a.jmp(lbl_end)
                     a.mark(lbl_eval_right)
                     self.emit_expr(e.right)
+                    vidr = self.new_label_id()
+                    l_rnvoid = f"or_rnvoid_{vidr}"
+                    a.mov_r64_r64("rdx", "rax")
+                    a.and_r64_imm("rdx", 7)
+                    a.cmp_r64_imm("rdx", TAG_VOID)
+                    a.jcc('ne', l_rnvoid)
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot apply 'or' to void")
+                    self._emit_auto_errprop()
+                    a.jmp(lbl_end)
+                    a.mark(l_rnvoid)
                     lbl_rfalse = f"or_rfalse_{lid}"
                     self.emit_jmp_if_false_rax(lbl_rfalse)
                     a.mov_rax_imm64(enc_bool(True))
@@ -1671,6 +1835,28 @@ class CodegenExpr:
                 a.jmp(l_done)
 
                 a.mark(l_fail)
+                # Strict void: bitwise ops on void are runtime errors.
+                vid = self.new_label_id()
+                l_nvoid = f"bit_nvoid_{vid}"
+                l_isvoid = f"bit_isvoid_{vid}"
+                a.mov_r64_r64("rax", "r10")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('e', l_isvoid)
+                a.mov_r64_r64("rax", "r11")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                a.mark(l_isvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, f"Cannot apply '{e.op}' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_done)
+                a.mark(l_nvoid)
                 a.mov_rax_imm64(enc_void())
                 a.mark(l_done)
                 return
@@ -1717,6 +1903,28 @@ class CodegenExpr:
                 a.jmp(l_done)
 
                 a.mark(l_fail)
+                                # Strict void: shift ops on void are runtime errors.
+                vid = self.new_label_id()
+                l_nvoid = f"sh_nvoid_{vid}"
+                l_isvoid = f"sh_isvoid_{vid}"
+                a.mov_r64_r64("rax", "r10")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('e', l_isvoid)
+                a.mov_r64_r64("rax", "r11")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                a.mark(l_isvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, f"Cannot apply '{e.op}' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_done)
+                a.mark(l_nvoid)
                 a.mov_rax_imm64(enc_void())
                 a.mark(l_done)
                 return
@@ -1757,6 +1965,29 @@ class CodegenExpr:
                 l_fail = f"div_fail_{lid}"
                 l_done = f"div_done_{lid}"
 
+                # Strict void: division on void is a runtime error.
+                vidv = self.new_label_id()
+                l_nvoid = f"div_nvoid_{vidv}"
+                l_isvoid = f"div_isvoid_{vidv}"
+                a.mov_r64_r64("rax", "r10")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('e', l_isvoid)
+                a.mov_r64_r64("rax", "r11")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                a.mark(l_isvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply '/' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_done)
+                a.mark(l_nvoid)
+
                 a.mov_rax_r10()
                 self.emit_to_double_xmm(0, l_fail)
                 a.mov_rax_r11()
@@ -1790,6 +2021,29 @@ class CodegenExpr:
                 l_str = f"add_str_{lid}"
                 l_done = f"add_done_{lid}"
                 l_arrcheck = f"add_arrcheck_{lid}"
+
+                # Strict void: '+' on void is a runtime error.
+                vidv = self.new_label_id()
+                l_nvoid = f"add_nvoid_{vidv}"
+                l_isvoid = f"add_isvoid_{vidv}"
+                a.mov_r64_r64("rax", "r10")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('e', l_isvoid)
+                a.mov_r64_r64("rax", "r11")
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_VOID)
+                a.jcc('ne', l_nvoid)
+                a.mark(l_isvoid)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply '+' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_done)
+                a.mark(l_nvoid)
 
                 # ---- int fast path (both TAG_INT) ----
                 a.mov_rax_r10()
@@ -2174,6 +2428,28 @@ class CodegenExpr:
 
                     a.mark(l_done_eq)
                 else:
+                    # Strict void: ordered comparisons on void are runtime errors.
+                    vidv = self.new_label_id()
+                    l_nvoid = f"cmp_nvoid_{vidv}"
+                    l_isvoid = f"cmp_isvoid_{vidv}"
+                    a.mov_r64_r64("rax", "r10")
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_VOID)
+                    a.jcc('e', l_isvoid)
+                    a.mov_r64_r64("rax", "r11")
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_VOID)
+                    a.jcc('ne', l_nvoid)
+                    a.mark(l_isvoid)
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, f"Cannot apply '{e.op}' to void")
+                    self._emit_auto_errprop()
+                    a.jmp(l_done)
+                    a.mark(l_nvoid)
                     a.mov_rax_imm64(enc_void())
 
                 a.mark(l_done)
@@ -2232,12 +2508,79 @@ class CodegenExpr:
             # eval target
             self.emit_expr(e.target)
 
+            # Strict void: indexing void is a runtime error.
+            vid = self.new_label_id()
+            l_nvoid = f"idx_nvoid_{vid}"
+            a.mov_r64_r64("r10", "rax")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_VOID)
+            a.jcc("ne", l_nvoid)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_VOID_OP, "Cannot index void")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+            a.mark(l_nvoid)
+
             # spill target (rax) into expr temp so index eval can't clobber it
             base_off = self.alloc_expr_temps(8)
+            # NOTE: Some nested emitters (notably inline expansion cleanup)
+            # may temporarily restore expr_temp_top to an earlier checkpoint.
+            # That can break LIFO freeing here and cause us to clear the *wrong*
+            # slot (e.g. clobbering an outer binary-op spill). We compute the
+            # expected top *from the returned offset* and pin expr_temp_top to
+            # at least that value before/after emitting the index expression.
+            try:
+                need_top = int(base_off - int(getattr(self, 'expr_temp_base', 0) or 0) + 8)
+            except Exception:
+                need_top = None
+            try:
+                if isinstance(need_top, int):
+                    cur_top0 = int(getattr(self, 'expr_temp_top', 0) or 0)
+                    if cur_top0 < need_top:
+                        self.expr_temp_top = need_top
+            except Exception:
+                pass
             a.mov_rsp_disp32_rax(base_off)
 
             # eval index
             self.emit_expr(e.index)
+
+            # Pin expr_temp_top so freeing `base_off` cannot underflow into
+            # outer allocations.
+            try:
+                if isinstance(need_top, int):
+                    cur_top1 = int(getattr(self, 'expr_temp_top', 0) or 0)
+                    if cur_top1 < need_top:
+                        self.expr_temp_top = need_top
+            except Exception:
+                pass
+
+            # Strict void: using void as index is a runtime error.
+            vid2 = self.new_label_id()
+            l_iok = f"idx_iok_{vid2}"
+            a.mov_r64_r64("r10", "rax")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_VOID)
+            a.jcc("ne", l_iok)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as index")
+            self._emit_auto_errprop()
+            # IMPORTANT: Do not call free_expr_temps() here.
+            # Codegen is linear and will also emit the non-void path below,
+            # which frees the same spill slot. Freeing in both branches causes
+            # compile-time expr_temp underflow and corrupts outer allocations
+            # (e.g. a[i] ^ b[i]). We only clear the spill slot at runtime.
+            a.mov_membase_disp_imm32("rsp", base_off, enc_void(), qword=True)
+            a.jmp(l_done)
+            a.mark(l_iok)
 
             # rcx = decoded index
             a.mov_r64_r64("rcx", "rax")
@@ -2706,8 +3049,24 @@ class CodegenExpr:
             # Builtin len(x)
             if callee_name == 'len' and len(e.args) == 1:
                 self.emit_expr(e.args[0])
+
+                # Strict-void: len(void) must raise an error, not silently return 0.
+                lid = self.new_label_id()
+                l_ok = f"len_ok_{lid}"
+                l_done = f"len_done_{lid}"
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_VOID)
+                a.jcc('ne', l_ok)
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot apply 'len' to void")
+                self._emit_auto_errprop()
+                a.jmp(l_done)
+
+                a.mark(l_ok)
                 a.mov_r64_r64("rcx", "rax")  # arg
                 a.call('fn_builtin_len')
+
+                a.mark(l_done)
 
                 return
 
@@ -2877,6 +3236,7 @@ class CodegenExpr:
                 l_ptr = f"bytes1_ptr_{lid}"
                 l_str = f"bytes1_str_{lid}"
                 l_bcopy = f"bytes1_bcopy_{lid}"
+                l_arr = f"bytes1_arr_{lid}"
 
                 # rax = arg0
                 a.mov_r64_membase_disp("rax", "rsp", tmp_off)
@@ -2909,6 +3269,8 @@ class CodegenExpr:
                 a.jcc("e", l_str)
                 a.cmp_r32_imm("edx", OBJ_BYTES)
                 a.jcc("e", l_bcopy)
+                a.cmp_r32_imm("edx", OBJ_ARRAY)
+                a.jcc("e", l_arr)
                 a.jmp(l_fail)
 
                 a.mark(l_str)
@@ -2933,6 +3295,64 @@ class CodegenExpr:
                 a.pop_reg("rdi")
                 a.pop_reg("rsi")
 
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
+                a.jmp(l_done)
+
+                a.mark(l_arr)
+                # bytes(array<int>) -> copy elements to bytes payload.
+                # - requires every element to be a TAG_INT in range 0..255
+                # - otherwise returns void (keeps legacy behavior: "soft" failure)
+
+                # len = [arr+4]
+                a.mov_r32_membase_disp("ecx", "rax", 4)
+                a.xor_r32_r32("edx", "edx")
+                a.call('fn_bytes_alloc')  # rax = dest bytes
+                a.mov_membase_disp_r64("rsp", tmp_off + 8, "rax")
+
+                # src -> r11, dest -> r10
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
+                a.mov_r64_membase_disp("r10", "rsp", tmp_off + 8)
+
+                # r8d = len, r9d = i
+                a.mov_r32_membase_disp("r8d", "r11", 4)
+                a.xor_r32_r32("r9d", "r9d")
+
+                l_loop_arr = f"bytes1_arr_loop_{lid}"
+                l_done_arr = f"bytes1_arr_done_{lid}"
+                l_fail_arr = f"bytes1_arr_fail_{lid}"
+
+                a.mark(l_loop_arr)
+                a.cmp_r32_r32("r9d", "r8d")
+                a.jcc('ge', l_done_arr)
+
+                # load element: rax = [src + 8 + i*8]
+                a.mov_r64_mem_bis("rax", "r11", "r9", 8, 8)
+
+                # element must be TAG_INT
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_INT)
+                a.jcc('ne', l_fail_arr)
+
+                # decode and range check 0..255
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc('l', l_fail_arr)
+                a.cmp_r64_imm("rax", 255)
+                a.jcc('g', l_fail_arr)
+
+                # store low byte to dest payload: [dest + 8 + i]
+                a.lea_r64_mem_bis("rdx", "r10", "r9", 1, 8)
+                a.mov_membase_disp_r8("rdx", 0, "al")
+
+                a.inc_r32("r9d")
+                a.jmp(l_loop_arr)
+
+                a.mark(l_fail_arr)
+                a.mov_rax_imm64(enc_void())
+                a.jmp(l_done)
+
+                a.mark(l_done_arr)
                 a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
                 a.jmp(l_done)
 
@@ -3628,6 +4048,31 @@ class CodegenExpr:
 
             a.jmp(l_done)
             a.mark(l_fail)
+            # Strict void:
+            # - calling void() must raise an error
+            # - calling a missing member (member lookup returned void) should report "no such function"
+            # Keep legacy behavior for other non-callables (return void) for non-member calls.
+            lidv = self.new_label_id()
+            l_not_void = f"icall_not_void_{lidv}"
+            a.mov_r64_r64("r10", "r11")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_VOID)
+            a.jcc("ne", l_not_void)
+
+            if callee_is_member:
+                recv = callee_desc or "receiver"
+                meth = None
+                if isinstance(callee_desc, str) and "." in callee_desc:
+                    recv, meth = callee_desc.rsplit(".", 1)
+                if not meth:
+                    meth = callee_desc or "member"
+                self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, f"'{recv}' has no function '{meth}'")
+            else:
+                self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, "Cannot call void")
+
+            a.jmp(l_done)
+
+            a.mark(l_not_void)
             if callee_is_member:
                 msg = f"Cannot call '{callee_desc or 'member'}' with {nargs} args"
                 self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, msg)

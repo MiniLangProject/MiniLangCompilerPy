@@ -113,6 +113,17 @@ assertEq(6 * 7, 42, "multiplication")
 assertEq(20 / 4, 5, "division (exact int)")
 assertEq(17 % 5, 2, "modulo")
 
+// bitwise / shift ops (ints)
+assertEq(5 & 3, 1, "bitwise and")
+assertEq(5 | 2, 7, "bitwise or")
+assertEq(5 ^ 3, 6, "bitwise xor")
+assertEq(1 ^ 1, 0, "bitwise xor (1^1)")
+assertEq(1 << 3, 8, "shift left")
+assertEq(8 >> 1, 4, "shift right")
+assertEq(-8 >> 1, -4, "shift right negative (arith)")
+assertEq(~0, -1, "bitwise not (~0)")
+assertEq(~1, -2, "bitwise not (~1)")
+
 assertEq(-8, -8, "unary minus")
 assertEq(not false, true, "unary not")
 
@@ -1714,6 +1725,26 @@ cc = C(0)
 badm3 = try(cc.who())
 assertEq(typeof(badm3), "error", "call: missing struct method dispatch (caught)")
 assertEq(badm3.code, 1101, "call: missing struct method dispatch code")
+
+// strict-void: void used as condition / in len() must raise error
+function void_as_condition()
+  if void then
+    return 1
+  end if
+  return 0
+end function
+
+vcond = try(void_as_condition())
+assertEq(typeof(vcond), "error", "void: condition raises error")
+assertEq(vcond.code, 1200, "void: condition code")
+
+function len_of_void()
+  return len(void)
+end function
+
+vlen = try(len_of_void())
+assertEq(typeof(vlen), "error", "void: len(void) raises error")
+assertEq(vlen.code, 1200, "void: len(void) code")
 
 print "=== INLINE FUNCTIONS ==="
 

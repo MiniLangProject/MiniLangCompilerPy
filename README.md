@@ -336,25 +336,49 @@ arr = [1, 2, 3]
 
 See [13.3](#133-bytes--encoding--file-io) for details and file / encoding examples.
 
-### void (internal)
-Functions can end without returning a value -> the result is `void` (not directly writable).
+### void
+`void` is the “no value” literal.
 
-As a language rule, `void` must not be:
-- assigned to a variable
-- printed
-- used as a condition (`if`, `while`)
-- used with operators (`+`, `-`, ...)
-
-Example (invalid):
+You get `void` when a function ends without `return`, or explicitly via `return void`. It is a real runtime value, so it can be assigned:
 
 ```ml
-function foo()
-  print "hi"
+function maybeGetName()
+  if input() == "" then
+    return void
+  end if
+  return "Nina"
 end function
 
-x = foo()      // invalid (void)
-print foo()    // invalid (void)
+x = maybeGetName()
+if x is void then
+  print "no name"
+else
+  print x
+end if
 ```
+
+**Strict void handling (runtime):** using `void` in most operations produces a runtime `error(...)`:
+
+- calling it: `void()` or `x()` when `x` is `void`
+- member access: `void.field`
+- indexing: `void[i]` or `a[void]`
+- arithmetic / bitwise ops: `+ - * / % & | ^ ~ << >>`
+- ordered comparisons: `< <= > >=`
+- boolean ops: `and` / `or` / `not` (if an operand is `void`)
+- as a condition in `if` / `while` / `loop ... while`
+- `len(void)`
+
+For type checks, prefer:
+
+- `x is void` / `x is not void`
+- `x is int`, `x is string`, etc. (syntax sugar for `typeof(x) == "..."`)
+
+Equality/inequality (`==`, `!=`) still works with `void` (e.g. `void == void`).
+
+> Note: `print void` is not useful; it prints `<unsupported>` (it is not treated as an error by `print`).
+
+#### Legacy note
+Older MiniLang versions treated `void` as an internal-only value that was not directly writable (e.g. assignment and printing were rejected). With strict void handling, `void` is writable, but *using it as a real value in operations* now fails loudly as described above.
 
 ---
 
@@ -433,6 +457,8 @@ Important:
 | `<` |
 | `>=` |
 | `<=` |
+| `is <type>` | (syntax sugar) type check via `typeof(...)` |
+| `is not <type>` | negated type check |
 
 ### Logic
 - `and`, `or` (short-circuit)
@@ -457,7 +483,7 @@ end if
 3. `|`
 4. `^`
 5. `&`
-6. `==`, `!=`
+6. `==`, `!=`, `is`
 7. `>`, `<`, `>=`, `<=`
 8. `<<`, `>>`
 9. `+`, `-`

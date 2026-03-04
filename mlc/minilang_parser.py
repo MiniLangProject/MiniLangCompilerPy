@@ -94,7 +94,7 @@ class Token:
 KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "false", "and", "or", "not", "function",
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
-            "out", "static", "inline", }
+            "out", "static", "inline", "void", "is",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
@@ -183,6 +183,12 @@ class Str(Expr):
 @dataclass
 class Bool(Expr):
     value: bool
+
+
+@dataclass
+class VoidLit(Expr):
+    """The `void` literal."""
+    pass
 
 
 @dataclass
@@ -420,7 +426,7 @@ class ExternFunctionDef(Stmt):
 # Parser
 # ============================================================
 
-PRECEDENCE = {"or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
+PRECEDENCE = {"or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, "is": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
               ">>": 8, "+": 9, "-": 9, "*": 10, "/": 10, "%": 10, }
 
 
@@ -1472,7 +1478,7 @@ class Parser:
 
             if tok.kind == "OP":
                 op = tok.value
-            elif tok.kind == "KW" and tok.value in ("and", "or"):
+            elif tok.kind == "KW" and tok.value in ("and", "or", "is"):
                 op = tok.value
 
             if op is None or op not in PRECEDENCE:
@@ -1487,6 +1493,41 @@ class Parser:
             # Example:
             #   x = 1 +\n    2
             self.skip_newlines()
+
+            # Syntactic sugar: `x is <type>` / `x is not <type>` -> `typeof(x) == "<type>"` (optionally negated)
+            if op == "is":
+                is_start = tok.pos
+                is_not = False
+                if self.peek().kind == "KW" and self.peek().value == "not":
+                    is_not = True
+                    self.advance()
+                    self.skip_newlines()
+                ty_tok = self.peek()
+                if ty_tok.kind not in ("IDENT", "KW"):
+                    raise ParseError("Expected type name after 'is'", ty_tok.pos)
+                self.advance()
+                ty = str(ty_tok.value)
+                ty_l = ty.lower()
+                _aliases = {"integer": "int", "boolean": "bool", "str": "string"}
+                ty_canon = _aliases.get(ty_l, ty_l)
+                _allowed = {"int", "float", "bool", "string", "array", "bytes", "function", "struct", "enum", "error", "void", "unknown"}
+                if ty_canon not in _allowed:
+                    raise ParseError(f"Unknown type '{ty}' in 'is' expression", ty_tok.pos)
+
+                start_pos = getattr(left, "_pos", None)
+                if start_pos is None:
+                    start_pos = is_start
+
+                # typeof(left)
+                typeof_call = self._attach_pos(Call(self._attach_pos(Var("typeof"), is_start), [left]), start_pos)
+                rhs = self._attach_pos(Str(ty_canon), ty_tok.pos)
+                cmp_expr = self._attach_pos(Bin(typeof_call, "==", rhs), start_pos)
+                if is_not:
+                    left = self._attach_pos(Unary("not", cmp_expr), start_pos)
+                else:
+                    left = cmp_expr
+                continue
+
             right = self.parse_expr(prec + 1)
 
             start_pos = getattr(left, "_pos", None)
@@ -1610,6 +1651,13 @@ class Parser:
             start_pos = t.pos
             self.advance()
             return self._attach_pos(Bool(t.value == "true"), start_pos)
+
+        
+
+        if t.kind == "KW" and t.value == "void":
+            start_pos = t.pos
+            self.advance()
+            return self._attach_pos(VoidLit(), start_pos)
 
         if t.kind == "IDENT":
             start_pos = t.pos
