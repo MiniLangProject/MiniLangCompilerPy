@@ -123,7 +123,8 @@ function test_string_hex_bytes()
   cc = b.concat(fromHex("0011"), fromHex("2233"))
   chk(a.assertEq(hex(cc), "00112233", "bytes: concat"))
   chk(a.assertTrue(b.equals(fromHex("0011"), fromHex("00 11")), "bytes: equals"))
-  chk(a.assertTrue(b.equals(fromHex("deadbeef"), fromHex("DE AD BE EF")), "bytes: ctEquals"))
+  chk(a.assertTrue(b.ctEquals(fromHex("deadbeef"), fromHex("DE AD BE EF")), "bytes: ctEquals"))
+  chk(a.assertFalse(b.ctEquals(fromHex("00"), fromHex("00 00")), "bytes: ctEquals len mismatch"))
 
   // bytes base64 helpers
   b64s = b64.toBase64(bytes("Hello"))
@@ -381,14 +382,15 @@ function _tcpListenAny(backlog)
   p = base
   i = 0
   while i < 200
-    rr = net.tcpListen(p, backlog)
-    if rr.isOk() then
-      return r.Result.Ok([rr, p])
+    // std.net now returns either a value or an error(...) value.
+    rr = try(net.tcpListen(p, backlog))
+    if typeof(rr) != "error" then
+      return [rr, p]
     end if
     p = p + 1
     i = i + 1
   end while
-  return r.Result.Err("no free TCP port")
+  return error(200, "no free TCP port")
 end function
 
 function _udpBindAny(sock)
@@ -396,38 +398,37 @@ function _udpBindAny(sock)
   p = base
   i = 0
   while i < 200
-    rr = net.udpBind(sock, p)
-    if rr.isOk() then
-      return r.Result.Ok(p)
+    rr = try(net.udpBind(sock, p))
+    if typeof(rr) != "error" then
+      return p
     end if
     p = p + 1
     i = i + 1
   end while
-  return r.Result.Err("no free UDP port")
+  return error(200, "no free UDP port")
 end function
 
 function test_net_tcp_udp()
   // TCP roundtrip on localhost
-  lp = _tcpListenAny(8)
+  lp = try(_tcpListenAny(8))
   chk(_assertNotError(lp, "net: tcpListenAny"))
-  if lp.isErr() then
+  if typeof(lp) == "error" then
     return
   end if
 
   srv = lp[0]
   port = lp[1]
 
-  cr = net.tcpConnect("127.0.0.1", port)
-  chk(_assertNotError(cr, "net: tcpConnect"))
-  if cr.isErr() then
+  cli = try(net.tcpConnect("127.0.0.1", port))
+  chk(_assertNotError(cli, "net: tcpConnect"))
+  if typeof(cli) == "error" then
     net.close(srv)
     return
   end if
-  cli = cr
 
-  ar = net.tcpAcceptPeer(srv)
+  ar = try(net.tcpAcceptPeer(srv))
   chk(_assertNotError(ar, "net: tcpAcceptPeer"))
-  if ar.isErr() then
+  if typeof(ar) == "error" then
     net.close(cli)
     net.close(srv)
     return
@@ -438,25 +439,33 @@ function test_net_tcp_udp()
   chk(a.assertEq(peerIp, "127.0.0.1", "net: peerIp"))
 
   msg = "ping"
-  sr = net.tcpSendAll(cli, msg)
+  sr = try(net.tcpSendAll(cli, msg))
   chk(_assertNotError(sr, "net: tcpSendAll"))
-  if sr.isErr() then
+  if typeof(sr) == "error" then
     net.close(cli)
     net.close(acc)
     net.close(srv)
     return
   end if
 
-  rr = net.tcpRecv(acc, 16)
+  rr = try(net.tcpRecv(acc, 16))
   chk(_assertNotError(rr, "net: tcpRecv"))
-  if rr.isOk() then
+  if typeof(rr) != "error" then
     chk(a.assertEq(decode(rr), "ping", "net: tcp payload"))
   end if
 
-  net.tcpSendAll(acc, "pong")
-  rr2 = net.tcpRecv(cli, 16)
+  sr2 = try(net.tcpSendAll(acc, "pong"))
+  chk(_assertNotError(sr2, "net: tcpSendAll reply"))
+  if typeof(sr2) == "error" then
+    net.close(cli)
+    net.close(acc)
+    net.close(srv)
+    return
+  end if
+
+  rr2 = try(net.tcpRecv(cli, 16))
   chk(_assertNotError(rr2, "net: tcpRecv client"))
-  if rr2.isOk() then
+  if typeof(rr2) != "error" then
     chk(a.assertEq(decode(rr2), "pong", "net: tcp reply"))
   end if
 
@@ -467,38 +476,34 @@ function test_net_tcp_udp()
   net.close(srv)
 
   // UDP datagram
-  u1r = net.udpOpen()
-  u2r = net.udpOpen()
-  chk(_assertNotError(u1r, "net: udpOpen 1"))
-  chk(_assertNotError(u2r, "net: udpOpen 2"))
-  if u1r.isErr() or u2r.isErr() then
+  u1 = try(net.udpOpen())
+  u2 = try(net.udpOpen())
+  chk(_assertNotError(u1, "net: udpOpen 1"))
+  chk(_assertNotError(u2, "net: udpOpen 2"))
+  if typeof(u1) == "error" or typeof(u2) == "error" then
     return
   end if
 
-  u1 = u1r
-  u2 = u2r
-
-  pr = _udpBindAny(u2)
-  chk(_assertNotError(pr, "net: udpBindAny"))
-  if pr.isErr() then
+  up = try(_udpBindAny(u2))
+  chk(_assertNotError(up, "net: udpBindAny"))
+  if typeof(up) == "error" then
     net.close(u1)
     net.close(u2)
     return
   end if
 
-  up = pr
-  ur = net.udpSendTo(u1, "127.0.0.1", up, "hi")
+  ur = try(net.udpSendTo(u1, "127.0.0.1", up, "hi"))
   chk(_assertNotError(ur, "net: udpSendTo"))
-  if ur.isErr() then
+  if typeof(ur) == "error" then
     net.close(u1)
     net.close(u2)
     net.cleanup()
     return
   end if
 
-  gr = net.udpRecvFrom(u2, 16)
+  gr = try(net.udpRecvFrom(u2, 16))
   chk(_assertNotError(gr, "net: udpRecvFrom"))
-  if gr.isOk() then
+  if typeof(gr) != "error" then
     chk(a.assertEq(decode(gr[0]), "hi", "net: udp payload"))
     chk(a.assertEq(gr[1], "127.0.0.1", "net: udp peerIp"))
   end if

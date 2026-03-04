@@ -1038,7 +1038,7 @@ end function
 function _formatOneFile(path, outPath, indentSize, maxBlankLines, addApache, author, year)
   src = fs.readAllText(path)
   if typeof(src) == "error" then
-    print "readAllText failed: " + path + " error: " + src.msg
+    print "readAllText failed: " + path + " error: " + src.message
     return false
   end if
   formatted = format_source(src, indentSize, maxBlankLines)
@@ -1054,7 +1054,11 @@ function _formatOneFile(path, outPath, indentSize, maxBlankLines, addApache, aut
   end if
 
   w = fs.writeAllText(outPath, formatted)
-  if w.isErr() then
+  if typeof(w) == "error" then
+    print "writeAllText failed: " + outPath + " error: " + w.message
+    return false
+  end if
+  if w == false then
     print "writeAllText failed: " + outPath
     return false
   end if

@@ -883,6 +883,7 @@ class CodegenMemory:
           otherwise the PE patcher will error with "Unknown patch target".
         """
         d = self.data
+        bss = getattr(self, 'bss', None)
 
         # Shadow stack + free list
         if 'gc_roots_head' not in d.labels:
@@ -924,9 +925,14 @@ class CodegenMemory:
         if 'heap_reserve_bytes' not in d.labels:
             d.add_u64('heap_reserve_bytes', 0)
 
-        if 'gc_mark_stack' not in d.labels:
-            # 8192 entries * 8 bytes = 64 KiB
-            d.add_bytes('gc_mark_stack', b'\x00' * (GC_MARK_STACK_QWORDS * 8))
+        # Mark stack: keep it out of the on-disk image (otherwise every EXE gets huge).
+        # We allocate it as uninitialized (zero-filled) memory in a dedicated .bss section.
+        if (('gc_mark_stack' not in d.labels) and (bss is None or 'gc_mark_stack' not in bss.labels)):
+            if bss is None:
+                # Fallback (should not happen): keep old behaviour.
+                d.add_bytes('gc_mark_stack', b'\x00' * (GC_MARK_STACK_QWORDS * 8))
+            else:
+                bss.reserve('gc_mark_stack', GC_MARK_STACK_QWORDS * 8, align=8)
 
     def emit_gc_collect_function(self) -> None:
         """

@@ -1,17 +1,17 @@
 /*
-   Copyright 2026 Nils Kopal
+Copyright 2026 Nils Kopal
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 package std.fs
@@ -116,6 +116,15 @@ extern function DeleteFileW(path as wstr) from "kernel32.dll" returns bool
 extern function CopyFileW(existingPath as wstr, newPath as wstr, failIfExists as bool) from "kernel32.dll" returns bool
 extern function MoveFileW(existingPath as wstr, newPath as wstr) from "kernel32.dll" returns bool
 extern function GetFileAttributesW(path as wstr) from "kernel32.dll" returns u32
+
+// Directory enumeration (FindFirstFileW/FindNextFileW)
+const FIND_DATA_SIZE = 592
+const FIND_NAME_OFF = 44
+const FIND_NAME_LEN = 520
+
+extern function FindFirstFileW(pattern as wstr, data as bytes) from "kernel32.dll" returns ptr
+extern function FindNextFileW(h as ptr, data as bytes) from "kernel32.dll" returns bool
+extern function FindClose(h as ptr) from "kernel32.dll" returns bool
 extern function GetFileSizeEx(h as ptr, sizeBuf as bytes) from "kernel32.dll" returns bool
 extern function Sleep(ms as int) from "kernel32.dll" returns int
 
@@ -149,6 +158,108 @@ function exists(path)
     return false
   end if
   return true
+end function
+
+/*
+check whether a path is a directory
+input: string path
+returns: bool is_dir
+*/
+function isDir(path)
+  if typeof(path) != "string" then
+    return false
+  end if
+  a = GetFileAttributesW(path)
+  if a == std.fs.INVALID_FILE_ATTRIBUTES then
+    return false
+  end if
+  return (a & std.fs.FileAttr.FILE_ATTRIBUTE_DIRECTORY) != 0
+end function
+
+/*
+check whether a path is a regular file
+input: string path
+returns: bool is_file
+*/
+function isFile(path)
+  if exists(path) == false then
+    return false
+  end if
+  return isDir(path) == false
+end function
+
+/*
+join two path components using \ (Win32)
+input: string base, string name
+returns: string full
+*/
+function joinPath(base, name)
+  if typeof(base) != "string" or typeof(name) != "string" then
+    return
+  end if
+  if base == "" then
+    return name
+  end if
+  if s.endsWith(base, "\\") or s.endsWith(base, "/") then
+    return base + name
+  end if
+  return base + "\\" + name
+end function
+
+function _findDataName(buf)
+  if typeof(buf) != "bytes" then
+    return
+  end if
+  if len(buf) <(std.fs.FIND_NAME_OFF + std.fs.FIND_NAME_LEN) then
+    return
+  end if
+  nameBuf = slice(buf, std.fs.FIND_NAME_OFF, std.fs.FIND_NAME_LEN)
+  return decode16Z(nameBuf)
+end function
+
+/*
+list directory entries (names only, without '.' and '..')
+input: string path
+returns: array<string> names OR error(code=1)
+*/
+function listDir(path)
+  if typeof(path) != "string" then
+    return _fsErr("listDir: invalid args")
+  end if
+  if isDir(path) == false then
+    return _fsErr("listDir: not a directory")
+  end if
+
+  patt = path
+  if s.endsWith(patt, "\\") or s.endsWith(patt, "/") then
+    patt = patt + "*"
+  else
+    patt = patt + "\\*"
+  end if
+
+  data = bytes(std.fs.FIND_DATA_SIZE, 0)
+  h = FindFirstFileW(patt, data)
+  if h == std.fs.INVALID_HANDLE_VALUE then
+    return _fsErr("listDir: FindFirstFileW failed")
+  end if
+
+  names =[]
+  while true
+    nm = std.fs._findDataName(data)
+    if typeof(nm) == "string" then
+      if nm != "." and nm != ".." then
+        names = names +[nm]
+      end if
+    end if
+
+    ok = FindNextFileW(h, data)
+    if ok == false then
+      break
+    end if
+  end while
+
+  FindClose(h)
+  return names
 end function
 
 /*
@@ -566,4 +677,5 @@ function readAllLines(path)
 
   return lines
 end function
+
 

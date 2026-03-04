@@ -114,6 +114,10 @@ Common options:
 - `--asm-data` include `.rdata/.data/.idata` dumps (**constants and imports**)
 - `--asm-pe` include a PE32+ header + section table dump in the listing
 
+**Diagnostics**
+- `--keep-going` continue after the first error and report multiple diagnostics
+- `--max-errors <n>` cap the number of diagnostics when using `--keep-going` (default: 20)
+
 **Heap / GC tuning (native runtime)**
 - `--heap-reserve <size>` reserve heap address space (e.g. `256m`)
 - `--heap-commit <size>` initial committed heap bytes (e.g. `16m`)
@@ -123,8 +127,9 @@ Common options:
 - `--gc-limit <size>` bytes allocated between periodic GC runs (default: backend constant)
 - `--no-gc-periodic` disable periodic GC trigger (collect only on OOM)
 
-**Profiling**
+**Profiling / tracing**
 - `--profile-calls` instrument user functions with call counters; enables `callStats()`
+- `--trace-calls` print each entered function name to stderr (runtime trace)
 
 Tip: `python mlc_win64.py --help` prints the full option list.
 
@@ -170,6 +175,7 @@ mlfmt.exe . --author "Authorname"
 
 Notes:
 - `--max-blank -1` allows unlimited blank lines.
+- Directory formatting uses Win32 directory enumeration (so it is meant to run on Windows / Wine).
 - When `<path>` is a directory, `mlfmt` formats all `*.ml` files recursively **in-place** (the optional `output.ml` argument is only valid for single-file formatting).
 - `--apache/--author` uses the local year (via `std.time.win32.GetLocalTime()` in the compiled binary).
 - The formatter is intentionally conservative (it does not change program semantics).
@@ -1081,11 +1087,11 @@ Common modules (subset; evolves over time):
 - **std.assert**: assertions for tests and small programs
 - **std.result**: `Option` and `Result` (methods like `isOk/isErr`, `isSome/isNone`, `map`, `unwrapOr`, `unwrapOrElse`, …)
 - **std.string**: string utilities (`trim`, `split`, `join`, `replaceAll`, …)
-- **std.bytes**: bytes helpers (`concat`, `equals`, `ctEquals`, …)
+- **std.bytes**: bytes helpers (`concat`, `equals`, `ctEquals` (constant-time-ish), …)
 - **std.encoding.hex**, **std.encoding.base64**: encoding helpers
 - **std.array**, **std.sort**, **std.random**, **std.math**, **std.fmt**
 - **std.time**: monotonic `ticks()` / `sleep(ms)`, Win32 wall-clock wrappers `std.time.win32.GetLocalTime()` / `GetSystemTime()` (returns `SystemTime`), plus `Date/Time/DateTime` helpers
-- **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io))
+- **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io)); plus basic directory helpers (`isDir/isFile/listDir/joinPath`)
 - **std.net**: TCP/UDP networking
 - **std.ds.\***: stack/queue/hashmap/set
 

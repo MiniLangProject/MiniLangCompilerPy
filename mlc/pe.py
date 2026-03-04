@@ -72,7 +72,9 @@ class PEBuilder:
 
         for s in self.sections:
             s.virt_addr = rva
-            s.virt_size = len(s.data)
+            # Allow callers to override virt_size (e.g. .bss / uninitialized data).
+            if not s.virt_size:
+                s.virt_size = len(s.data)
             s.raw_addr = raw
             s.raw_size = align_up(len(s.data), self.file_alignment)
 
@@ -109,13 +111,22 @@ class PEBuilder:
         major_linker = 14
         minor_linker = 0
 
+        # Optional header size fields are defined by section characteristics.
+        IMAGE_SCN_CNT_CODE = 0x00000020
+        IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
+        IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080
+
         size_code = 0
         size_init_data = 0
+        size_uninit_data = 0
         for s in self.sections:
-            if s.name == '.text':
-                size_code = align_up(s.virt_size, self.section_alignment)
-            elif s.name in ('.rdata', '.idata', '.data'):
-                size_init_data += align_up(s.virt_size, self.section_alignment)
+            vs = align_up(s.virt_size, self.section_alignment)
+            if s.characteristics & IMAGE_SCN_CNT_CODE:
+                size_code += vs
+            if s.characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA:
+                size_init_data += vs
+            if s.characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA:
+                size_uninit_data += vs
 
         addr_entry = self.entry_rva
         base_of_code = next((s.virt_addr for s in self.sections if s.name == '.text'), 0)
@@ -134,7 +145,7 @@ class PEBuilder:
         opt += struct.pack('<HBB', magic, major_linker, minor_linker)
         opt += u32(size_code)
         opt += u32(size_init_data)
-        opt += u32(0)
+        opt += u32(size_uninit_data)
         opt += u32(addr_entry)
         opt += u32(base_of_code)
         opt += u64(image_base)

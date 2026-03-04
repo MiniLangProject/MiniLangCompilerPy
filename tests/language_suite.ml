@@ -1696,6 +1696,25 @@ p = try(wrapper_propagates())
 assertEq(typeof(p), "error", "propagation without try (caught at callsite)")
 assertEq(p.code, 5, "propagated code")
 
+// method calls: missing / non-callable members should raise error values
+badm1 = try(aa.nope())
+assertEq(typeof(badm1), "error", "call: missing member method (caught)")
+assertEq(badm1.code, 1100, "call: missing member code")
+
+badm2 = try(aa.x())
+assertEq(typeof(badm2), "error", "call: non-callable member (caught)")
+assertEq(badm2.code, 1100, "call: non-callable member code")
+
+// struct-method dispatch: method exists elsewhere, but not on receiver
+struct C
+  z
+end struct
+
+cc = C(0)
+badm3 = try(cc.who())
+assertEq(typeof(badm3), "error", "call: missing struct method dispatch (caught)")
+assertEq(badm3.code, 1101, "call: missing struct method dispatch code")
+
 print "=== INLINE FUNCTIONS ==="
 
 function inline add2(a, b)

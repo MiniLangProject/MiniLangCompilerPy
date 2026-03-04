@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
-                         OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
+                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
 
@@ -1414,12 +1414,23 @@ class CodegenExpr:
                     if has_q:
                         full_qname_m = full_qname_q
                     base0 = parts[0]
+                    b0 = None
                     base_bound = False
                     if hasattr(self, "resolve_binding") and callable(getattr(self, "resolve_binding")):
                         try:
-                            base_bound = self.resolve_binding(base0) is not None
+                            b0 = self.resolve_binding(base0)
                         except Exception:
+                            b0 = None
+                    base_bound = b0 is not None
+                    aliases0 = getattr(self, "import_aliases", None) or {}
+                    if base0 in aliases0:
+                        # Import-alias bases behave like compile-time namespaces unless shadowed.
+                        if b0 is None:
                             base_bound = False
+                        else:
+                            k0 = getattr(b0, "kind", None)
+                            if k0 is None or k0 == "global":
+                                base_bound = False
                     if (not base_bound) or (base0 in self.struct_fields and (
                             full_qname_m in self.user_functions or full_qname_m in externs)):
                         self.emit_load_var(full_qname_m, e)
@@ -2369,15 +2380,63 @@ class CodegenExpr:
             # Support qualified-name calls like fubar.a() and fubar.Point(...).
             # The frontend may encode these either as Var('fubar.a') or as a Member-chain
             # (Member(Var('fubar'), 'a')). We flatten Member-chains here.
+            def _qname_exists(qn: str) -> bool:
+                if not isinstance(qn, str) or not qn:
+                    return False
+                try:
+                    if qn in (getattr(self, 'user_functions', {}) or {}):
+                        return True
+                    if qn in (getattr(self, 'extern_sigs', {}) or {}):
+                        return True
+                    if qn in (getattr(self, 'struct_fields', {}) or {}):
+                        return True
+                    if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+                        return self.resolve_binding(qn) is not None
+                except Exception:
+                    return False
+                return False
+
+            def _qname_with_prefixes(qn: str) -> List[str]:
+                # Try exact, then current function prefix, then current file package prefix.
+                cands: List[str] = [qn]
+                try:
+                    qpref = str(getattr(self, 'current_qname_prefix', '') or '')
+                except Exception:
+                    qpref = ''
+                try:
+                    fpref = str(getattr(self, 'current_file_prefix', '') or '')
+                except Exception:
+                    fpref = ''
+                if qpref and not qpref.endswith('.'):
+                    qpref += '.'
+                if fpref and not fpref.endswith('.'):
+                    fpref += '.'
+                if qpref and not qn.startswith(qpref):
+                    cands.append(qpref + qn)
+                if fpref and not qn.startswith(fpref):
+                    cands.append(fpref + qn)
+                return cands
+
             def _qname_of(expr: Any) -> Optional[str]:
+                """Resolve compile-time qualified-name calls (Var or Member-chain).
+
+                Returns a qualified name only when it can be resolved to a known
+                callable/decl (function/extern/struct/const binding). This avoids
+                misclassifying real runtime member calls as namespace calls when
+                an identifier collides with an import alias.
+                """
+                if expr is None:
+                    return None
+
                 if isinstance(expr, ml.Var):
                     return self._qualify_identifier(str(expr.name), expr)
 
-                # Flatten Member-chains like geom.add, but ONLY if the base identifier
-                # is NOT a visible runtime binding (namespaces are compile-time only).
+                if not (hasattr(ml, 'Member') and isinstance(expr, ml.Member)):
+                    return None
+
                 def _qname_parts(expr2: Any) -> Optional[List[str]]:
                     if isinstance(expr2, ml.Var):
-                        nm2 = str(expr2.name)
+                        nm2 = str(getattr(expr2, 'name', ''))
                         return nm2.split('.') if '.' in nm2 else [nm2]
                     if hasattr(ml, 'Member') and isinstance(expr2, ml.Member):
                         tgt2 = getattr(expr2, 'target', None)
@@ -2394,61 +2453,71 @@ class CodegenExpr:
                         return base2 + [str(nm2)]
                     return None
 
-                if hasattr(ml, 'Member') and isinstance(expr, ml.Member):
-                    parts2 = _qname_parts(expr)
-                    if parts2 is None:
-                        return None
-                    full = ".".join(parts2)
-                    full_m = self._apply_import_alias(full)
-                    struct_qn = ".".join(parts2[:-1])
-                    struct_qn_m = self._apply_import_alias(struct_qn)
-                    meth = parts2[-1]
-                    # If this is a static struct method reference, map to the hoisted static function.
-                    smap = getattr(self, 'struct_static_methods', {}) or {}
-                    if struct_qn_m in smap and meth in (smap.get(struct_qn_m) or {}):
-                        fn_qn = (smap.get(struct_qn_m) or {}).get(meth)
-                        if fn_qn:
-                            return str(fn_qn)
-                    # If the member chain denotes a compile-time struct type, allow qualified calls even if bound.
-                    is_struct_type_ref = False
-                    try:
-                        if struct_qn_m in self.struct_fields:
-                            b_struct = self.resolve_binding(struct_qn_m) if hasattr(self, 'resolve_binding') else None
-                            if b_struct is not None and getattr(b_struct, 'kind', None) == 'global':
-                                is_struct_type_ref = True
-                    except Exception:
-                        is_struct_type_ref = False
-                    # Decide whether this Member-chain should be treated as a compile-time qualified name.
-                    #
-                    # We only treat it as qualified when:
-                    #   - the base is an import alias (module-style), OR
-                    #   - the base is a known compile-time namespace prefix (some global symbol starts with "<base>."), OR
-                    #   - it is a struct-type reference (StructName.method) for static dispatch.
-                    #
-                    # Otherwise, keep it dynamic (runtime member access), so locals like `t.isErr()` work even if
-                    # scope info is incomplete during codegen.
-                    base0 = parts2[0]
-                    aliases0 = getattr(self, 'import_aliases', None) or {}
-
-                    b0 = None
-                    if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
-                        try:
-                            b0 = self.resolve_binding(base0)
-                        except Exception:
-                            b0 = None
-
-                    # Local/param shadowing wins: if `base0` is a visible runtime binding, do NOT treat it as namespace.
-                    if b0 is not None and not is_struct_type_ref:
-                        return None
-
-                    if base0 in aliases0:
-                        return full_m
-                    if is_struct_type_ref:
-                        return full_m
-                    if _has_global_prefix(base0):
-                        return full_m
-
+                parts2 = _qname_parts(expr)
+                if not parts2:
                     return None
+
+                full = ".".join(parts2)
+                full_m = self._apply_import_alias(full)
+
+                # Binding/shadowing check on the left-most identifier.
+                base0 = parts2[0]
+                b0 = None
+                if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+                    try:
+                        b0 = self.resolve_binding(base0)
+                    except Exception:
+                        b0 = None
+                kind0 = getattr(b0, 'kind', None)
+                base_localish = (b0 is not None) and (kind0 is not None) and (kind0 != 'global')
+
+                # Static struct method reference: StructName.method -> hoisted static function
+                struct_qn = ".".join(parts2[:-1])
+                meth = parts2[-1]
+                struct_qn_m = self._apply_import_alias(struct_qn)
+                smap = getattr(self, 'struct_static_methods', {}) or {}
+                for sq in _qname_with_prefixes(struct_qn_m):
+                    md = smap.get(sq) or {}
+                    fn_qn = md.get(meth)
+                    if fn_qn:
+                        return str(fn_qn)
+
+                # If this Member-chain denotes a compile-time struct type ref (StructName.method),
+                # allow it even if `StructName` is a visible *global* binding. But if it is shadowed
+                # by a local/param, treat it as a runtime value.
+                is_struct_type_ref = False
+                try:
+                    for sq in _qname_with_prefixes(struct_qn_m):
+                        if sq in (getattr(self, 'struct_fields', {}) or {}):
+                            if not base_localish:
+                                is_struct_type_ref = True
+                            break
+                except Exception:
+                    is_struct_type_ref = False
+
+                # Import-alias base: treat as namespace unless shadowed by local/param.
+                aliases0 = getattr(self, 'import_aliases', None) or {}
+                if base0 in aliases0 and not base_localish:
+                    for cand in _qname_with_prefixes(full_m):
+                        if _qname_exists(cand):
+                            return cand
+                    return None
+
+                # Struct type ref: only if it resolves.
+                if is_struct_type_ref:
+                    for cand in _qname_with_prefixes(full_m):
+                        if _qname_exists(cand):
+                            return cand
+                    return None
+
+                # Otherwise: if base is a visible runtime binding, keep it dynamic.
+                if b0 is not None:
+                    return None
+
+                # Unbound base: treat as qualified only if it resolves.
+                for cand in _qname_with_prefixes(full_m):
+                    if _qname_exists(cand):
+                        return cand
 
                 return None
 
@@ -2458,7 +2527,7 @@ class CodegenExpr:
 
             # --- OOP-style struct methods: obj.method(args...)  (implicit `this`) ---
             # Compiled as dynamic dispatch on receiver.struct_id -> direct call of the hoisted method function.
-            if isinstance(callee_expr, ml.Member):
+            if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
                 mname = getattr(callee_expr, 'name', None)
                 if mname is None:
                     mname = getattr(callee_expr, 'field', None)
@@ -2468,49 +2537,7 @@ class CodegenExpr:
                 if tgt is None:
                     tgt = getattr(callee_expr, 'obj', None)
 
-                # Avoid stealing namespace-qualified calls like `geom.add(...)`.
-                # If the receiver's base is a compile-time namespace, let the normal qualified-name call logic handle it.
-                ns_like = False
-                try:
-                    qn = self._flatten_member_chain_as_qualname(tgt)
-                    if qn is None and isinstance(tgt, ml.Var):
-                        qn = str(tgt.name)
-                    if isinstance(qn, str) and qn:
-                        base0 = qn.split('.')[0]
-                        aliases0 = getattr(self, 'import_aliases', None) or {}
-                        b0 = None
-                        if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
-                            try:
-                                b0 = self.resolve_binding(base0)
-                            except Exception:
-                                b0 = None
-
-                        # If `base0` is a visible runtime binding (local/param/global), it is NOT a namespace.
-                        if b0 is not None:
-                            ns_like = False
-                        else:
-                            # Treat as namespace-like only if it's an import alias or a known global qualified prefix.
-                            ns_like = (base0 in aliases0) or _has_global_prefix(base0)
-                except Exception:
-                    ns_like = False
-
-                # Avoid treating `StructName.method(...)` as an instance-method call.
-                # Struct identifiers are hoisted as globals (constructors), but they are not struct instances.
-                is_struct_type_ref = False
-                try:
-                    qn2 = self._flatten_member_chain_as_qualname(tgt)
-                    if qn2 is None and isinstance(tgt, ml.Var):
-                        qn2 = str(tgt.name)
-                    if isinstance(qn2, str) and qn2:
-                        qn2_m = self._apply_import_alias(qn2)
-                        if qn2_m in self.struct_fields:
-                            b2 = self.resolve_binding(qn2_m) if hasattr(self, 'resolve_binding') else None
-                            if b2 is not None and getattr(b2, 'kind', None) == 'global':
-                                is_struct_type_ref = True
-                except Exception:
-                    is_struct_type_ref = False
-
-                if (not ns_like) and (not is_struct_type_ref) and mname and (getattr(self, 'struct_methods', {}) or {}):
+                if mname and (getattr(self, 'struct_methods', {}) or {}):
                     args = list(getattr(e, 'args', []) or [])
                     total = 1 + len(args)  # receiver + explicit args
 
@@ -2547,6 +2574,21 @@ class CodegenExpr:
                             self.emit_expr(aa)
                             a.mov_rsp_disp32_rax(base + (i + 1) * 8)
 
+                        # Marshal args (rcx, rdx, r8, r9, then stack at rsp+0x20).
+                        if total >= 1:
+                            a.mov_r64_membase_disp("rcx", "rsp", base + 0 * 8)
+                        if total >= 2:
+                            a.mov_r64_membase_disp("rdx", "rsp", base + 1 * 8)
+                        if total >= 3:
+                            a.mov_r64_membase_disp("r8", "rsp", base + 2 * 8)
+                        if total >= 4:
+                            a.mov_r64_membase_disp("r9", "rsp", base + 3 * 8)
+                        if total > 4:
+                            for i in range(4, total):
+                                a.mov_r64_membase_disp("r10", "rsp", base + i * 8)
+                                disp = 0x20 + (i - 4) * 8
+                                a.mov_membase_disp_r64("rsp", disp, "r10")
+
                         # Load receiver into r11 and validate it's a struct; load struct_id into r10d.
                         a.mov_r64_membase_disp("r11", "rsp", base)
                         a.mov_r64_r64("r10", "r11")
@@ -2570,32 +2612,13 @@ class CodegenExpr:
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
                             a.mark(l_case)
-
-                            # Optional call trace (emit before marshalling stack args).
-                            if bool(getattr(self, 'trace_calls', False)):
-                                self.emit_trace_call(str(fn_qn))
-
-                            # Marshal args (rcx, rdx, r8, r9, then stack at rsp+0x20).
-                            if total >= 1:
-                                a.mov_r64_membase_disp("rcx", "rsp", base + 0 * 8)
-                            if total >= 2:
-                                a.mov_r64_membase_disp("rdx", "rsp", base + 1 * 8)
-                            if total >= 3:
-                                a.mov_r64_membase_disp("r8", "rsp", base + 2 * 8)
-                            if total >= 4:
-                                a.mov_r64_membase_disp("r9", "rsp", base + 3 * 8)
-                            if total > 4:
-                                for i in range(4, total):
-                                    a.mov_r64_membase_disp("r10", "rsp", base + i * 8)
-                                    disp = 0x20 + (i - 4) * 8
-                                    a.mov_membase_disp_r64("rsp", disp, "r10")
-
                             a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
                             a.call(f"fn_user_{fn_qn}")
                             a.jmp(l_done)
 
                         a.mark(l_fail)
-                        a.mov_rax_imm64(enc_void())
+                        self._emit_make_error_const(ERR_METHOD_NOT_FOUND,
+                                                    f"No matching method '{mname}' for receiver")
 
                         a.mark(l_done)
 
@@ -3393,11 +3416,6 @@ class CodegenExpr:
                     if len(e.args) != expected:
                         raise self.error(f"Extern {callee_name} expects {expected} args, got {len(e.args)}", e)
 
-            # Optional call trace for direct-named calls (ident / qualified ident).
-            # We emit this *before* marshalling stack args to avoid clobbering [rsp+0x20]...
-            if bool(getattr(self, 'trace_calls', False)) and callee_name is not None:
-                self.emit_trace_call(str(callee_name))
-
             # Indirect call: evaluate callee expression to a function value and call via code_ptr.
             #
             # This implements first-class functions:
@@ -3407,6 +3425,47 @@ class CodegenExpr:
                 raise self.error("Invalid call node (missing callee)", e)
 
             nargs = len(e.args)
+
+            # Only method-style calls (obj.member(...)) should produce a runtime error when
+            # the member is missing / not callable. Plain indirect calls keep the historical
+            # behavior of evaluating to void on type mismatch.
+            callee_is_member = hasattr(ml, 'Member') and isinstance(callee_expr, ml.Member)
+            callee_desc = None
+            if callee_is_member:
+                def _qname_parts_any(x: Any) -> Optional[List[str]]:
+                    if isinstance(x, ml.Var):
+                        nm = str(getattr(x, 'name', ''))
+                        return nm.split('.') if nm else None
+                    if hasattr(ml, 'Member') and isinstance(x, ml.Member):
+                        tgt2 = getattr(x, 'target', None)
+                        if tgt2 is None:
+                            tgt2 = getattr(x, 'obj', None)
+                        base2 = _qname_parts_any(tgt2)
+                        if base2 is None:
+                            return None
+                        nm2 = getattr(x, 'name', None)
+                        if nm2 is None:
+                            nm2 = getattr(x, 'field', None)
+                        if nm2 is None:
+                            return None
+                        return base2 + [str(nm2)]
+                    return None
+
+                try:
+                    p = _qname_parts_any(callee_expr)
+                    if p is not None and len(p) > 0:
+                        callee_desc = ".".join(p)
+                except Exception:
+                    callee_desc = None
+                if not callee_desc:
+                    # fall back to the immediate member name
+                    try:
+                        nm = getattr(callee_expr, 'name', None)
+                        if nm is None:
+                            nm = getattr(callee_expr, 'field', None)
+                        callee_desc = str(nm) if nm is not None else None
+                    except Exception:
+                        callee_desc = None
 
             # Evaluate callee + args into a nested-safe temp area: [callee, arg0, arg1, ...]
             base = self.alloc_expr_temps((nargs + 1) * 8)
@@ -3569,7 +3628,11 @@ class CodegenExpr:
 
             a.jmp(l_done)
             a.mark(l_fail)
-            a.mov_rax_imm64(enc_void())
+            if callee_is_member:
+                msg = f"Cannot call '{callee_desc or 'member'}' with {nargs} args"
+                self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, msg)
+            else:
+                a.mov_rax_imm64(enc_void())
 
             a.mark(l_done)
 

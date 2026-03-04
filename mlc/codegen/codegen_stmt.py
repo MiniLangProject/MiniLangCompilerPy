@@ -3330,10 +3330,6 @@ class CodegenStmt:
             # r10 carries the incoming closure environment pointer (void for entry/main).
             a.mov_r64_imm64("r10", voidv)
 
-            # Optional call trace
-            if bool(getattr(self, 'trace_calls', False)):
-                self.emit_trace_call(str(main_name))
-
             a.call(f"fn_user_{main_name}")
 
             # unhandled error from main: print + exit
@@ -3977,6 +3973,33 @@ class CodegenStmt:
 
         # Reserve stack space (shadow + locals + temps). Must stay 16-byte aligned here.
         a.sub_rsp_imm32(frame_size)
+
+        # Runtime trace: print function name on entry (enabled with --trace-calls).
+        # NOTE: emit_writefile performs Win64 calls and clobbers volatile regs.
+        if bool(getattr(self, 'trace_calls', False)):
+            a.push_reg("rcx")
+            a.push_reg("rdx")
+            a.push_reg("r8")
+            a.push_reg("r9")
+
+            # Prefer qualified function name if available.
+            try:
+                trace_name = str(getattr(fn, 'name', None) or code_name)
+            except Exception:
+                trace_name = str(code_name)
+
+            lbl_tr = f"trace_call_{len(self.rdata.labels)}"
+            self.rdata.add_str(lbl_tr, trace_name, add_newline=True)
+            try:
+                tr_len = int(self.rdata.labels[lbl_tr][1])
+            except Exception:
+                tr_len = len((trace_name + "\n").encode("utf-8"))
+            self.emit_writefile(lbl_tr, tr_len)
+
+            a.pop_reg("r9")
+            a.pop_reg("r8")
+            a.pop_reg("rdx")
+            a.pop_reg("rcx")
 
         # Call profiling counter increment (enabled only with --profile-calls)
         if bool(getattr(self, 'call_profile', False)):

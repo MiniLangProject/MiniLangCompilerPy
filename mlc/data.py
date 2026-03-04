@@ -54,6 +54,36 @@ class DataBuilder:
         self.data += b
 
 
+class BssBuilder:
+    """Builder for uninitialized (zero-filled) data.
+
+    Windows PE supports sections where ``VirtualSize`` is larger than
+    ``SizeOfRawData`` (or even 0). The loader maps the section into memory and
+    zero-initializes the bytes that are not present in the file.
+
+    We use this for large scratch buffers (e.g. GC mark stack) to keep produced
+    executables small.
+    """
+
+    def __init__(self) -> None:
+        self.size: int = 0
+        self.labels: Dict[str, int] = {}
+
+    def pad_align(self, align: int = 8) -> None:
+        pad = (-self.size) % align
+        if pad:
+            self.size += pad
+
+    def reserve(self, name: str, size: int, *, align: int = 8) -> None:
+        """Reserve ``size`` bytes of zero-initialized memory and record ``name``."""
+
+        if name in self.labels:
+            return
+        self.pad_align(align)
+        self.labels[name] = self.size
+        self.size += int(size)
+
+
 class RDataBuilder:
     """Builder for the read-only ``.rdata`` section."""
 
