@@ -2063,15 +2063,15 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.SetIndex):
-            # target[index] = expr (safe)
-            # Native compiler has no exceptions; on type/range errors we do a no-op.
-            # Safety checks:
-            # - target must be TAG_PTR OBJ_ARRAY
-            # - index must be TAG_INT and within bounds
-            # - rhs must not be VOID
+            # target[index] = expr (strict)
+            # Runtime errors on invalid target/index/rhs (catchable via try()).
 
             lid = self.new_label_id()
-            l_fail = f"seti_fail_{lid}"
+            l_rhs_void = f"seti_rhs_void_{lid}"
+            l_bad_target = f"seti_bad_target_{lid}"
+            l_bad_index = f"seti_bad_index_{lid}"
+            l_oob = f"seti_oob_{lid}"
+            l_bad_byte = f"seti_bad_byte_{lid}"
             l_done = f"seti_done_{lid}"
 
             # --- eval target (spill so index/expr can't clobber) ---
@@ -2092,20 +2092,20 @@ class CodegenStmt:
             a.mov_r64_membase_disp("r11", "rsp", base_off)
             a.mov_rax_rsp_disp32(idx_off)
 
-            # free temps (clobbers RAX only; we already restored tagged index into RAX)
+            # free temps (clears stack roots to void)
             self.free_expr_temps(16)
 
             # rhs must not be VOID
             a.cmp_r64_imm("r10", enc_void())
-            a.jcc('e', l_fail)
+            a.jcc('e', l_rhs_void)
 
             # target must be TAG_PTR and non-null
             a.mov_r64_r64("r8", "r11")
             a.and_r64_imm("r8", 7)
             a.cmp_r64_imm("r8", TAG_PTR)
-            a.jcc('ne', l_fail)
+            a.jcc('ne', l_bad_target)
             a.test_r64_r64("r11", "r11")
-            a.jcc('e', l_fail)
+            a.jcc('e', l_bad_target)
 
             # target type must be OBJ_ARRAY or OBJ_BYTES
             a.mov_r32_membase_disp("edx", "r11", 0)
@@ -2114,14 +2114,14 @@ class CodegenStmt:
             a.jcc('e', l_type_ok)
             a.cmp_r32_imm("edx", OBJ_BYTES)
             a.jcc('e', l_type_ok)
-            a.jmp(l_fail)
+            a.jmp(l_bad_target)
             a.mark(l_type_ok)
 
             # index must be TAG_INT
             a.mov_r64_r64("r8", "rax")
             a.and_r64_imm("r8", 7)
             a.cmp_r64_imm("r8", TAG_INT)
-            a.jcc('ne', l_fail)
+            a.jcc('ne', l_bad_index)
 
             # rcx = decoded index
             a.mov_r64_r64("rcx", "rax")
@@ -2137,9 +2137,9 @@ class CodegenStmt:
             a.add_r32_r32("ecx", "edx")
             a.mark(l_ok)
             a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_fail)
+            a.jcc('l', l_oob)
             a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_fail)
+            a.jcc('ge', l_oob)
 
             # store:
             # - array:  [r11 + rcx*8 + 8] = r10
@@ -2162,15 +2162,15 @@ class CodegenStmt:
             a.mov_r64_r64("r8", "r10")
             a.and_r64_imm("r8", 7)
             a.cmp_r64_imm("r8", TAG_INT)
-            a.jcc('ne', l_fail)
+            a.jcc('ne', l_bad_byte)
 
             # rax = decoded rhs
             a.mov_r64_r64("rax", "r10")
             a.sar_r64_imm8("rax", 3)
             a.cmp_r64_imm("rax", 0)
-            a.jcc('l', l_fail)
+            a.jcc('l', l_bad_byte)
             a.cmp_r64_imm("rax", 255)
-            a.jcc('g', l_fail)
+            a.jcc('g', l_bad_byte)
 
             # addr = r11 + 8 + idx
             a.mov_r64_r64("r8", "r11")
@@ -2181,8 +2181,56 @@ class CodegenStmt:
             a.mov_membase_disp_r8("r8", 0, "al")
             a.jmp(l_done)
 
-            a.mark(l_fail)
-            # no-op
+            # ---- error paths ----
+            a.mark(l_rhs_void)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_VOID_OP, "Cannot assign void via index")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+            a.mark(l_bad_target)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_TARGET_TYPE, "Index assignment requires array or bytes")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+            a.mark(l_bad_index)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_TYPE, "Index must be an int")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+            a.mark(l_oob)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_OOB, "Array index out of bounds")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+            a.mark(l_bad_byte)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_VOID_OP, "Byte value must be an int in range 0..255")
+            self._emit_auto_errprop()
+
             a.mark(l_done)
             return
 

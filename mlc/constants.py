@@ -103,3 +103,7 @@ ERR_INDEX_TARGET_TYPE = 1302
 # Stringification / printing of unsupported values
 ERR_STRINGIFY_UNSUPPORTED = 1303
 ERR_PRINT_UNSUPPORTED = 1304
+
+# Struct member access errors
+ERR_MEMBER_TARGET_TYPE = 1305
+ERR_MEMBER_NOT_FOUND = 1306

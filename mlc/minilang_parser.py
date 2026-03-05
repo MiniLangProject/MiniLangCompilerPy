@@ -503,6 +503,29 @@ class Parser:
             raise ParseError(f"Expected {need}, got {got}", t.pos)
         return self.advance()
 
+
+
+    def _line_col(self, pos: int) -> tuple[int, int]:
+        # Convert absolute source offset -> (line, col), 1-indexed.
+        if pos is None:
+            return (1, 1)
+        try:
+            pos_i = int(pos)
+        except Exception:
+            pos_i = 0
+        if pos_i < 0:
+            pos_i = 0
+        src = self.source
+        line_no = src.count("\n", 0, pos_i) + 1
+        line_start = src.rfind("\n", 0, pos_i)
+        line_start = 0 if line_start == -1 else line_start + 1
+        col_no = pos_i - line_start + 1
+        return (line_no, col_no)
+
+    def _fmt_pos(self, pos: int) -> str:
+        ln, cn = self._line_col(pos)
+        return f"{self.filename}:{ln}:{cn}"
+
     def skip_newlines(self) -> None:
         while self.match("NL"):
             pass
@@ -1041,7 +1064,7 @@ class Parser:
                     if self.is_end_of("struct"):
                         break
                     if self.peek().kind == "EOF":
-                        raise ParseError("extern struct ended unexpectedly (missing 'end struct'?)", self.peek().pos)
+                        raise ParseError(f"extern struct ended unexpectedly (missing 'end struct'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
 
                     fname = self.expect("IDENT").value
                     self.expect("KW", "as")
@@ -1104,7 +1127,7 @@ class Parser:
             self.expect_block_nl()
             self._func_depth += 1
             try:
-                body = self.parse_block_until_end("function")
+                body = self.parse_block_until_end("function", start_pos)
             finally:
                 self._func_depth -= 1
             self.expect_end_of("function")
@@ -1128,7 +1151,7 @@ class Parser:
                 if self.is_end_of("struct"):
                     break
                 if self.peek().kind == "EOF":
-                    raise ParseError("struct ended unexpectedly (missing 'end struct'?)", self.peek().pos)
+                    raise ParseError(f"struct ended unexpectedly (missing 'end struct'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
 
                 # method inside struct (instance or static)
                 if self.peek().kind == "KW" and self.peek().value in ("function", "static"):
@@ -1155,7 +1178,7 @@ class Parser:
                     self.expect_block_nl()
                     self._func_depth += 1
                     try:
-                        m_body = self.parse_block_until_end("function")
+                        m_body = self.parse_block_until_end("function", m_start)
                     finally:
                         self._func_depth -= 1
                     self.expect_end_of("function")
@@ -1199,7 +1222,7 @@ class Parser:
                 if self.is_end_of("enum"):
                     break
                 if self.peek().kind == "EOF":
-                    raise ParseError("enum ended unexpectedly (missing 'end enum'?)", self.peek().pos)
+                    raise ParseError(f"enum ended unexpectedly (missing 'end enum'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
 
                 # Variants may optionally have explicit values:
                 #   X
@@ -1268,7 +1291,7 @@ class Parser:
                     return self._attach_pos(DoWhile(body, cond), start_pos)
 
                 if self.peek().kind == "EOF":
-                    raise ParseError("loop ended unexpectedly (missing 'end loop'?)", self.peek().pos)
+                    raise ParseError(f"loop ended unexpectedly (missing 'end loop'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
 
                 body.append(self.parse_stmt())
                 self.skip_stmt_seps()
@@ -1291,7 +1314,7 @@ class Parser:
                     if self.peek().kind == "KW" and self.peek().value == "default":
                         self.advance()
                         self.expect_block_nl()
-                        default_body = self.parse_block_until_end("case")
+                        default_body = self.parse_block_until_end("case", case_pos)
                         self.expect_end_of("case")
                         self.skip_stmt_seps()
                         continue
@@ -1304,7 +1327,7 @@ class Parser:
                         self.advance()
                         end_expr = self.parse_expr()
                         self.expect_block_nl()
-                        body = self.parse_block_until_end("case")
+                        body = self.parse_block_until_end("case", case_pos)
                         self.expect_end_of("case")
                         cases.append(SwitchCase("range", [], first, end_expr, body))
                         self.skip_stmt_seps()
@@ -1325,7 +1348,7 @@ class Parser:
                         values.append(self.parse_expr())
 
                     self.expect_block_nl()
-                    body = self.parse_block_until_end("case")
+                    body = self.parse_block_until_end("case", case_pos)
                     self.expect_end_of("case")
                     cases.append(SwitchCase("values", values, None, None, body))
                     self.skip_stmt_seps()
@@ -1343,7 +1366,7 @@ class Parser:
             self.expect("KW", "then")
             # NEWLINE after 'then' is optional (supports inline if)
 
-            then_body = self.parse_block_until({"else"}, end_type="if")
+            then_body = self.parse_block_until({"else"}, end_type="if", start_pos=start_pos)
 
             elifs: List[Tuple[Expr, List[Stmt]]] = []
             else_body: List[Stmt] = []
@@ -1357,13 +1380,13 @@ class Parser:
                     econd = self.parse_expr()
                     self.expect("KW", "then")
                     # NEWLINE after 'then' is optional (supports inline if)
-                    ebody = self.parse_block_until({"else"}, end_type="if")
+                    ebody = self.parse_block_until({"else"}, end_type="if", start_pos=start_pos)
                     elifs.append((econd, ebody))
                     continue
 
                 # else
                 # NEWLINE after 'else' is optional (supports inline if)
-                else_body = self.parse_block_until(set(), end_type="if")
+                else_body = self.parse_block_until(set(), end_type="if", start_pos=start_pos)
                 break
 
             self.expect_end_of("if")
@@ -1374,7 +1397,7 @@ class Parser:
             self.advance()
             cond = self.parse_expr()
             self.expect_block_nl()
-            body = self.parse_block_until_end("while")
+            body = self.parse_block_until_end("while", start_pos)
             self.expect_end_of("while")
             return self._attach_pos(While(cond, body), start_pos)
 
@@ -1388,7 +1411,7 @@ class Parser:
                 self.expect("KW", "in")
                 iterable = self.parse_expr()
                 self.expect_block_nl()
-                body = self.parse_block_until_end("for")
+                body = self.parse_block_until_end("for", start_pos)
                 self.expect_end_of("for")
                 return self._attach_pos(ForEach(varname, iterable, body), start_pos)
 
@@ -1398,7 +1421,7 @@ class Parser:
             self.expect("KW", "to")
             end = self.parse_expr()
             self.expect_block_nl()
-            body = self.parse_block_until_end("for")
+            body = self.parse_block_until_end("for", start_pos)
             self.expect_end_of("for")
             return self._attach_pos(For(varname, start, end, body), start_pos)
 
@@ -1425,14 +1448,15 @@ class Parser:
 
         raise ParseError(f"Unknown statement: {t.kind}:{t.value}", t.pos)
 
-    def parse_block_until_end(self, end_type: str) -> List[Stmt]:
+    def parse_block_until_end(self, end_type: str, start_pos: int | None = None) -> List[Stmt]:
         stmts: List[Stmt] = []
         self.skip_stmt_seps()
         while True:
             if self.is_end_of(end_type):
                 break
             if self.peek().kind == "EOF":
-                raise ParseError(f"Block ended unexpectedly (missing 'end {end_type}'?)", self.peek().pos)
+                loc = f" (block started at {self._fmt_pos(start_pos)})" if start_pos is not None else ""
+                raise ParseError(f"Block ended unexpectedly (missing 'end {end_type}'?){loc}", self.peek().pos)
             if self.collect_errors:
                 st = self._parse_stmt_recover(end_type=end_type)
                 if st is not None:
@@ -1445,7 +1469,7 @@ class Parser:
             self.skip_stmt_seps()
         return stmts
 
-    def parse_block_until(self, stop_keywords: set[str], end_type: Optional[str] = None) -> List[Stmt]:
+    def parse_block_until(self, stop_keywords: set[str], end_type: Optional[str] = None, start_pos: int | None = None) -> List[Stmt]:
         stmts: List[Stmt] = []
         self.skip_stmt_seps()
         while True:
@@ -1459,7 +1483,8 @@ class Parser:
 
             if t.kind == "EOF":
                 wanted = f"end {end_type}" if end_type else "end <...>"
-                raise ParseError(f"Block ended unexpectedly (missing '{wanted}'?)", t.pos)
+                loc = f" (block started at {self._fmt_pos(start_pos)})" if start_pos is not None else ""
+                raise ParseError(f"Block ended unexpectedly (missing '{wanted}'?){loc}", t.pos)
 
             if self.collect_errors:
                 st = self._parse_stmt_recover(stop_keywords=set(stop_keywords), end_type=end_type)

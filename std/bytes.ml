@@ -16,6 +16,13 @@ limitations under the License.
 
 package std.bytes
 
+const BYTES_ERR = 211
+
+function _bytesErr(msg)
+  return error(BYTES_ERR, msg)
+end function
+
+
 import std.encoding.hex as hx
 
 // ------------------------------------------------------------
@@ -66,6 +73,41 @@ function sub(b, offset, length)
   end if
   return slice(b, offset, length)
 end function
+
+function subOrError(b, offset, length)
+  if typeof(b) != "bytes" then
+    return _bytesErr("bytes.subOrError expects bytes")
+  end if
+  if typeof(offset) != "int" then
+    return _bytesErr("bytes.subOrError expects int offset")
+  end if
+  if typeof(length) != "int" then
+    return _bytesErr("bytes.subOrError expects int length")
+  end if
+  if length < 0 then
+    return _bytesErr("slice length must be >= 0")
+  end if
+
+  n = len(b)
+  off = offset
+  if off < 0 then
+    off = off + n
+  end if
+  if off < 0 or off > n then
+    return _bytesErr("slice out of bounds")
+  end if
+  if off + length > n then
+    return _bytesErr("slice out of bounds")
+  end if
+
+  // Call the builtin with the original offset (supports negative offsets).
+  output = slice(b, offset, length)
+  if typeof(output) == "void" then
+    return _bytesErr("slice failed")
+  end if
+  return output
+end function
+
 
 function concat(a, b)
   if typeof(a) != "bytes" then
@@ -291,9 +333,33 @@ function fromHex(s)
   return hx.decode(s)
 end function
 
+function fromHexOrError(s)
+  if typeof(s) != "string" then
+    return _bytesErr("bytes.fromHexOrError expects a string")
+  end if
+  b = hx.decode(s)
+  if typeof(b) == "void" then
+    return _bytesErr("Invalid hex string")
+  end if
+  return b
+end function
+
+
 function decodeUtf8(b)
   return decode(b)
 end function
+
+function decodeUtf8OrError(b)
+  if typeof(b) != "bytes" then
+    return _bytesErr("bytes.decodeUtf8OrError expects bytes")
+  end if
+  s = decode(b)
+  if typeof(s) == "void" then
+    return _bytesErr("decode failed")
+  end if
+  return s
+end function
+
 
 function decodeUtf8Z(b)
   // Wrapper around builtin decodeZ(bytes)

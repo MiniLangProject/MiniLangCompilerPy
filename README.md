@@ -532,6 +532,9 @@ print arr[
 
 Index must be an int (not bool).
 
+Out of bounds indexing (or indexing a non-indexable value) raises a runtime `error`
+that you can catch with `try(...)`.
+
 ### Assigning to an index
 
 ```ml
@@ -539,6 +542,9 @@ arr = [1, 2, 3]
 arr[1] = 99
 print arr // [1, 99, 3]
 ```
+
+Invalid index assignment (wrong target type, non-int index, out of bounds, invalid byte value)
+raises a runtime `error` (catchable via `try(...)`).
 
 ### Concatenation
 
@@ -1542,6 +1548,19 @@ end function
 // If unhandled, an error that reaches top-level terminates the program.
 loadConfig("cfg.txt")
 ```
+
+### 15.2.1 Optional APIs (`void` as "None")
+
+Some builtins intentionally return `void` to indicate failure/absence ("Option" style), e.g.:
+- `fromHex(str)`
+- `slice(bytes, off, len)`
+- `decode(bytes, encoding)`
+
+If you prefer strict behavior, use the stdlib wrappers that return an `error(...)` instead:
+- `std.encoding.hex.decodeOrError(s)`
+- `std.bytes.fromHexOrError(s)`
+- `std.bytes.subOrError(b, off, len)`
+- `std.bytes.decodeUtf8OrError(b)`
 
 ### 15.3 Catching propagation with `try(expr)`
 

@@ -16,6 +16,13 @@
 
 package std.encoding.hex
 
+const HEX_ERR = 210
+
+function _hexErr(msg)
+  return error(HEX_ERR, msg)
+end function
+
+
 // ------------------------------------------------------------
 // std.encoding.hex
 // Thin, ergonomic wrapper around builtins:
@@ -99,3 +106,19 @@ function decodeOr(s, fallbackBytes)
   return b
 end function
 
+
+/*
+decodes a hex string or returns an error on failure
+input: string s
+returns: bytes decoded OR error(code=HEX_ERR)
+*/
+function decodeOrError(s)
+  if typeof(s) != "string" then
+    return _hexErr("hex.decodeOrError expects a string")
+  end if
+  b = fromHex(s)
+  if typeof(b) == "void" then
+    return _hexErr("Invalid hex string")
+  end if
+  return b
+end function
