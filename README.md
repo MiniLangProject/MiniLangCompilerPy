@@ -371,7 +371,8 @@ end if
 For type checks, prefer:
 
 - `x is void` / `x is not void`
-- `x is int`, `x is string`, etc. (syntax sugar for `typeof(x) == "..."`)
+- `x is int`, `x is string`, etc. (primitive type checks; sugar for `typeof(x) == "..."`)
+- `x is Thing`, `x is Color`, etc. (concrete struct/enum type checks; compares the internal type id)
 
 Equality/inequality (`==`, `!=`) still works with `void` (e.g. `void == void`).
 
@@ -457,7 +458,7 @@ Important:
 | `<` |
 | `>=` |
 | `<=` |
-| `is <type>` | (syntax sugar) type check via `typeof(...)` |
+| `is <type>` | type check (primitive via `typeof`, struct/enum via internal id) |
 | `is not <type>` | negated type check |
 
 ### Logic
@@ -1185,6 +1186,32 @@ err = error(2, "bad input")
 print typeof(err) // "error"
 ```
 
+#### typeName(x)
+Returns a concrete type name for structs/enums.
+
+- For struct instances (and struct constructor values), returns the struct name.
+- For enum values, returns the enum name.
+- For all other values, behaves like `typeof(x)`.
+
+Note: `typeof(x)` intentionally stays coarse (`"struct"` / `"enum"`) for backward compatibility.
+
+```ml
+struct Animal
+  name
+end struct
+
+enum Color
+  Red
+end enum
+
+a = Animal("Fay")
+print typeof(a)      // "struct"
+print typeName(a)    // "Animal"
+
+print typeof(Color.Red)   // "enum"
+print typeName(Color.Red) // "Color"
+```
+
 #### error(code, message) -> error value
 
 Constructs an `error` value (fields: `.code` and `.message`).  
@@ -1693,7 +1720,7 @@ What works:
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
 - `extern function` via the PE import table (IAT)
-- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `error`, `try`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`,
+- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`,
   plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`
 
 Debugging / listings:

@@ -1080,9 +1080,9 @@ Returns:
         a.jcc('e', l_enum)
         a.jmp(l_uns)
 
-        # --- void -> <unsupported> ---
+        # --- void -> "void" ---
         a.mark(l_void)
-        a.lea_rax_rip('obj_uns')
+        a.lea_rax_rip('obj_void')
         a.jmp(l_done)
 
         # --- ptr cases: string / float / array ---

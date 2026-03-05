@@ -508,6 +508,175 @@ class CodegenRuntime:
         a.lea_rax_rip('obj_type_unknown')
         a.ret()
 
+    def emit_typeName_function(self) -> None:
+        """Builtin: typeName(x) -> boxed string (from .rdata)
+
+        Behavior:
+          - struct instance / struct type: returns the concrete struct name
+          - enum value: returns the enum name
+          - all other values: identical to typeof(x)
+
+        ABI:
+          RCX = value
+          RAX = pointer to boxed string object (TAG_PTR)
+        """
+        a = self.asm
+        a.mark('fn_typeName')
+
+        lid = self.new_label_id()
+        l_int = f"tna_int_{lid}"
+        l_bool = f"tna_bool_{lid}"
+        l_void = f"tna_void_{lid}"
+        l_enum = f"tna_enum_{lid}"
+        l_ptr = f"tna_ptr_{lid}"
+        l_str = f"tna_str_{lid}"
+        l_arr = f"tna_arr_{lid}"
+        l_flt = f"tna_flt_{lid}"
+        l_bytes = f"tna_bytes_{lid}"
+        l_fun = f"tna_fun_{lid}"
+        l_sti = f"tna_sti_{lid}"
+        l_stt = f"tna_stt_{lid}"
+        l_unk = f"tna_unk_{lid}"
+
+        # rax = rcx
+        a.mov_r64_r64("rax", "rcx")
+
+        # rdx = tag(rax)
+        a.mov_r64_r64("rdx", "rax")
+        a.and_r64_imm("rdx", 7)
+
+        a.cmp_r64_imm("rdx", TAG_INT)
+        a.jcc('e', l_int)
+        a.cmp_r64_imm("rdx", TAG_BOOL)
+        a.jcc('e', l_bool)
+        a.cmp_r64_imm("rdx", TAG_VOID)
+        a.jcc('e', l_void)
+        a.cmp_r64_imm("rdx", TAG_ENUM)
+        a.jcc('e', l_enum)
+        a.cmp_r64_imm("rdx", TAG_PTR)
+        a.jcc('e', l_ptr)
+        a.jmp(l_unk)
+
+        a.mark(l_int)
+        a.lea_rax_rip('obj_type_int')
+        a.ret()
+
+        a.mark(l_bool)
+        a.lea_rax_rip('obj_type_bool')
+        a.ret()
+
+        a.mark(l_void)
+        a.lea_rax_rip('obj_type_void')
+        a.ret()
+
+        a.mark(l_enum)
+        # Extract enum_id from payload: ((v >> 3) & 0xFF)
+        a.mov_r64_r64("rdx", "rax")
+        a.shr_r64_imm8("rdx", 3)
+        a.and_r64_imm("rdx", 0xFF)
+
+        # Compare against known enum IDs (u8), return enum name.
+        enum_map = getattr(self, 'typename_enum_by_id', {})
+        if isinstance(enum_map, dict) and enum_map:
+            # deterministic order for stable binaries
+            for eid in sorted(enum_map.keys()):
+                lbl = enum_map.get(eid)
+                if not isinstance(lbl, str) or not lbl:
+                    continue
+                l_next = f"tna_e_next_{eid}_{lid}"
+                a.cmp_r32_imm("edx", int(eid) & 0xFFFFFFFF)
+                a.jcc('ne', l_next)
+                a.lea_rax_rip(lbl)
+                a.ret()
+                a.mark(l_next)
+
+        # fallback: "enum"
+        a.lea_rax_rip('obj_type_enum')
+        a.ret()
+
+        a.mark(l_ptr)
+        # edx = [rax] (object type)
+        a.mov_r32_membase_disp("edx", "rax", 0)
+
+        a.cmp_r32_imm("edx", OBJ_STRING)
+        a.jcc('e', l_str)
+        a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_arr)
+        a.cmp_r32_imm("edx", OBJ_BYTES)
+        a.jcc('e', l_bytes)
+        a.cmp_r32_imm("edx", OBJ_FLOAT)
+        a.jcc('e', l_flt)
+        a.cmp_r32_imm("edx", OBJ_FUNCTION)
+        a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_BUILTIN)
+        a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_STRUCT)
+        a.jcc('e', l_sti)
+        a.cmp_r32_imm("edx", OBJ_STRUCTTYPE)
+        a.jcc('e', l_stt)
+        a.jmp(l_unk)
+
+        a.mark(l_str)
+        a.lea_rax_rip('obj_type_string')
+        a.ret()
+
+        a.mark(l_arr)
+        a.lea_rax_rip('obj_type_array')
+        a.ret()
+
+        a.mark(l_bytes)
+        a.lea_rax_rip('obj_type_bytes')
+        a.ret()
+
+        a.mark(l_flt)
+        a.lea_rax_rip('obj_type_float')
+        a.ret()
+
+        a.mark(l_fun)
+        a.lea_rax_rip('obj_type_function')
+        a.ret()
+
+        a.mark(l_sti)
+        # struct_id at [rax+8]
+        a.mov_r32_membase_disp("edx", "rax", 8)
+        struct_map = getattr(self, 'typename_struct_by_id', {})
+        if isinstance(struct_map, dict) and struct_map:
+            for sid in sorted(struct_map.keys()):
+                lbl = struct_map.get(sid)
+                if not isinstance(lbl, str) or not lbl:
+                    continue
+                l_next = f"tna_s_next_{sid}_{lid}"
+                a.cmp_r32_imm("edx", int(sid) & 0xFFFFFFFF)
+                a.jcc('ne', l_next)
+                a.lea_rax_rip(lbl)
+                a.ret()
+                a.mark(l_next)
+        # fallback: "struct" (or "error" for built-in error structs is handled by map above)
+        a.lea_rax_rip('obj_type_struct')
+        a.ret()
+
+        a.mark(l_stt)
+        # struct_id at [rax+8]
+        a.mov_r32_membase_disp("edx", "rax", 8)
+        struct_map = getattr(self, 'typename_struct_by_id', {})
+        if isinstance(struct_map, dict) and struct_map:
+            for sid in sorted(struct_map.keys()):
+                lbl = struct_map.get(sid)
+                if not isinstance(lbl, str) or not lbl:
+                    continue
+                l_next = f"tna_t_next_{sid}_{lid}"
+                a.cmp_r32_imm("edx", int(sid) & 0xFFFFFFFF)
+                a.jcc('ne', l_next)
+                a.lea_rax_rip(lbl)
+                a.ret()
+                a.mark(l_next)
+        a.lea_rax_rip('obj_type_struct')
+        a.ret()
+
+        a.mark(l_unk)
+        a.lea_rax_rip('obj_type_unknown')
+        a.ret()
+
     def emit_unhandled_error_exit_function(self) -> None:
         """Internal helper: abort on an unhandled MiniLang `error` value.
 

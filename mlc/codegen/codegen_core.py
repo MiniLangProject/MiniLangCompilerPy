@@ -138,6 +138,8 @@ class CodegenCore:
         self.rdata.add_obj_string('obj_uns', '<unsupported>')
         self.rdata.add_obj_string('obj_array', '<array>')
         self.rdata.add_obj_string('obj_bytes', '<bytes>')
+        self.rdata.add_obj_string('obj_void', 'void')
+
         # Boxed string constants for typeof(x) (no heap alloc)
         self.rdata.add_obj_string('obj_type_int', 'int')
         self.rdata.add_obj_string('obj_type_bool', 'bool')
@@ -1005,6 +1007,7 @@ class CodegenCore:
             'fn_input': getattr(self, 'emit_input_function', None),
             'fn_toNumber': getattr(self, 'emit_toNumber_function', None),
             'fn_typeof': getattr(self, 'emit_typeof_function', None),
+            'fn_typeName': getattr(self, 'emit_typeName_function', None),
             'fn_unhandled_error_exit': getattr(self, 'emit_unhandled_error_exit_function', None),
             'fn_heap_count': getattr(self, 'emit_heap_count_function', None),
             'fn_heap_bytes_used': getattr(self, 'emit_heap_bytes_used_function', None),

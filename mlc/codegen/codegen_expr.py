@@ -8,7 +8,7 @@ import os
 import re
 from typing import Any, List, Optional
 
-from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
@@ -1281,6 +1281,189 @@ class CodegenExpr:
             a.mov_rax_imm64(enc_void())
             return
 
+        # `is` named type checks (struct/enum)
+        if hasattr(ml, 'IsType') and isinstance(e, ml.IsType):
+            ty_raw = str(getattr(e, 'type_name', '') or '')
+            neg = bool(getattr(e, 'negated', False))
+
+            # Resolve qualified name similar to identifiers (package/namespace + import aliases)
+            ty_q = ty_raw
+            try:
+                if '.' in ty_q:
+                    ty_q = self._apply_import_alias(ty_q)
+                else:
+                    # Prefer struct resolution, then enum resolution
+                    cand_s = self._qualify_identifier(ty_q, e, kind='struct')
+                    if cand_s in getattr(self, 'struct_id', {}):
+                        ty_q = cand_s
+                    else:
+                        cand_e = self._qualify_identifier(ty_q, e, kind='enum')
+                        if cand_e in getattr(self, 'enum_id', {}):
+                            ty_q = cand_e
+                        else:
+                            ty_q = self._apply_import_alias(ty_q)
+            except Exception:
+                pass
+
+            # If user wrote Enum.Variant, treat as Enum.
+            try:
+                if '.' in ty_q and hasattr(self, 'enum_variants'):
+                    base, var = ty_q.rsplit('.', 1)
+                    base = self._apply_import_alias(base)
+                    if base in getattr(self, 'enum_id', {}) and var in getattr(self, 'enum_variants', {}).get(base, []):
+                        ty_q = base
+            except Exception:
+                pass
+
+            # Struct check
+            if ty_q in getattr(self, 'struct_id', {}):
+                sid = int(getattr(self, 'struct_id', {}).get(ty_q, 0) or 0)
+                self.emit_expr(getattr(e, 'expr'))
+
+                fid = self.new_label_id()
+                l_false = f"is_s_false_{fid}"
+                l_true = f"is_s_true_{fid}"
+                l_done = f"is_s_done_{fid}"
+                l_type_ok = f"is_s_typeok_{fid}"
+
+                # Must be pointer
+                a.mov_r10_rax()
+                a.and_r64_imm('r10', 7)
+                a.cmp_r64_imm('r10', TAG_PTR)
+                a.jcc('ne', l_false)
+
+                # r11 = obj
+                a.mov_r11_rax()
+                a.mov_r32_membase_disp('edx', 'r11', 0)
+                a.cmp_r32_imm('edx', OBJ_STRUCT)
+                a.jcc('e', l_type_ok)
+                a.cmp_r32_imm('edx', OBJ_STRUCTTYPE)
+                a.jcc('ne', l_false)
+
+                a.mark(l_type_ok)
+                a.mov_r32_membase_disp('edx', 'r11', 8)  # struct_id
+                a.cmp_r32_imm('edx', sid)
+                a.jcc('e', l_true)
+                a.jmp(l_false)
+
+                a.mark(l_true)
+                a.mov_rax_imm64(enc_bool(True))
+                a.jmp(l_done)
+
+                a.mark(l_false)
+                a.mov_rax_imm64(enc_bool(False))
+
+                a.mark(l_done)
+                if neg:
+                    a.xor_r64_imm8('rax', 8)
+                return
+
+            # Enum check
+            if hasattr(self, 'enum_id') and ty_q in getattr(self, 'enum_id', {}):
+                eid = int(getattr(self, 'enum_id', {}).get(ty_q, 0) or 0)
+                self.emit_expr(getattr(e, 'expr'))
+
+                fid = self.new_label_id()
+                l_false = f"is_e_false_{fid}"
+                l_true = f"is_e_true_{fid}"
+                l_done = f"is_e_done_{fid}"
+
+                a.mov_r10_rax()
+                a.and_r64_imm('r10', 7)
+                a.cmp_r64_imm('r10', TAG_ENUM)
+                a.jcc('ne', l_false)
+
+                # payload: (variant<<8)|enum_id at bits [3..]
+                a.mov_r64_r64('r10', 'rax')
+                a.shr_r64_imm8('r10', 3)
+                a.and_r64_imm('r10', 0xFF)
+                a.cmp_r64_imm('r10', eid)
+                a.jcc('e', l_true)
+                a.jmp(l_false)
+
+                a.mark(l_true)
+                a.mov_rax_imm64(enc_bool(True))
+                a.jmp(l_done)
+
+                a.mark(l_false)
+                a.mov_rax_imm64(enc_bool(False))
+
+                a.mark(l_done)
+                if neg:
+                    a.xor_r64_imm8('rax', 8)
+                return
+
+            # Value-enum check (enums materialized as constexpr const members)
+            # For these enums, member values are plain int/string values, not TAG_ENUM.
+            # `x is Color` is treated as: x equals one of Color.<variant> values.
+            if hasattr(self, 'value_enum_values') and ty_q in (getattr(self, 'value_enum_values', {}) or {}):
+                members = (getattr(self, 'value_enum_values', {}) or {}).get(ty_q) or {}
+                if not isinstance(members, dict) or not members:
+                    raise CompileError(f"Unknown type '{ty_raw}' in 'is' expression", getattr(e, 'pos', None))
+
+                # Evaluate expr once and spill to temp.
+                self.emit_expr(getattr(e, 'expr'))
+                off = self.alloc_expr_temps(8)
+                a.mov_rsp_disp32_rax(off)
+
+                fid = self.new_label_id()
+                l_true = f"is_ve_true_{fid}"
+                l_false = f"is_ve_false_{fid}"
+                l_done = f"is_ve_done_{fid}"
+
+                # Iterate members: if any equals(expr) => true
+                for vn in list(members.keys()):
+                    qmem = f"{ty_q}.{vn}"
+                    pyv = None
+                    try:
+                        b = self.resolve_binding(qmem) if hasattr(self, 'resolve_binding') else None
+                    except Exception:
+                        b = None
+                    if b is not None and getattr(b, 'is_const', False):
+                        pyv = getattr(b, 'const_value_py', None)
+
+                    # Load rhs
+                    if isinstance(pyv, bool):
+                        a.mov_r64_imm64('rdx', enc_bool(bool(pyv)))
+                    elif isinstance(pyv, int) and not isinstance(pyv, bool):
+                        a.mov_r64_imm64('rdx', enc_int(int(pyv)))
+                    elif isinstance(pyv, str):
+                        lbl = f"cstr_ve_{len(self.rdata.labels)}"
+                        self.rdata.add_obj_string(lbl, str(pyv))
+                        a.lea_rdx_rip(lbl)
+                    else:
+                        # Fallback: load the const member value (should fold to an immediate or rdata)
+                        try:
+                            self.emit_load_var(qmem, e)
+                            a.mov_rdx_rax()
+                        except Exception:
+                            a.mov_r64_imm64('rdx', enc_void())
+
+                    # Load lhs (after rhs load; emit_load_var may clobber rcx)
+                    a.mov_r64_membase_disp('rcx', 'rsp', off)
+
+                    a.call('fn_val_eq')
+                    a.cmp_r64_imm('rax', enc_bool(True))
+                    a.jcc('e', l_true)
+
+                a.jmp(l_false)
+
+                a.mark(l_true)
+                a.mov_rax_imm64(enc_bool(True))
+                a.jmp(l_done)
+
+                a.mark(l_false)
+                a.mov_rax_imm64(enc_bool(False))
+
+                a.mark(l_done)
+                self.free_expr_temps(8)
+                if neg:
+                    a.xor_r64_imm8('rax', 8)
+                return
+
+            raise CompileError(f"Unknown type '{ty_raw}' in 'is' expression", getattr(e, 'pos', None))
+
+
         if isinstance(e, ml.Var):
             # Inline-param override (used by `function inline ...` expansion).
             nm0 = str(getattr(e, 'name', ''))
@@ -2022,18 +2205,48 @@ class CodegenExpr:
                 l_done = f"add_done_{lid}"
                 l_arrcheck = f"add_arrcheck_{lid}"
 
-                # Strict void: '+' on void is a runtime error.
+                # Strict void: '+' on void is a runtime error unless used in string concatenation.
                 vidv = self.new_label_id()
                 l_nvoid = f"add_nvoid_{vidv}"
                 l_isvoid = f"add_isvoid_{vidv}"
+                l_void_lhs = f"add_voidlhs_{vidv}"
+                l_void_rhs = f"add_voidrhs_{vidv}"
+
+                # if lhs is void, allow only when rhs is string
                 a.mov_r64_r64("rax", "r10")
                 a.and_rax_imm8(7)
                 a.cmp_rax_imm8(TAG_VOID)
-                a.jcc('e', l_isvoid)
+                a.jcc('e', l_void_lhs)
+
+                # if rhs is void, allow only when lhs is string
                 a.mov_r64_r64("rax", "r11")
                 a.and_rax_imm8(7)
                 a.cmp_rax_imm8(TAG_VOID)
-                a.jcc('ne', l_nvoid)
+                a.jcc('e', l_void_rhs)
+                a.jmp(l_nvoid)
+
+                a.mark(l_void_lhs)
+                a.mov_r64_r64("rax", "r11")
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_PTR)
+                a.jcc('ne', l_isvoid)
+                a.mov_r32_membase_disp("edx", "rax", 0)
+                a.cmp_r32_imm("edx", OBJ_STRING)
+                a.jcc('e', l_nvoid)
+                a.jmp(l_isvoid)
+
+                a.mark(l_void_rhs)
+                a.mov_r64_r64("rax", "r10")
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_PTR)
+                a.jcc('ne', l_isvoid)
+                a.mov_r32_membase_disp("edx", "rax", 0)
+                a.cmp_r32_imm("edx", OBJ_STRING)
+                a.jcc('e', l_nvoid)
+                a.jmp(l_isvoid)
+
                 a.mark(l_isvoid)
                 if hasattr(self, 'emit_dbg_line'):
                     try:
@@ -2369,6 +2582,103 @@ class CodegenExpr:
                     l_call_val = f"eq_call_val_{eid}"
                     l_done_eq = f"eq_done_{eid}"
 
+
+                    # Enum equality extensions (== / !=):
+                    # - enum == enum: compare ordinal (variant_id) only (cross-enum allowed)
+                    # - enum == int: compare ordinal to int
+                    # - enum == string/other: always false (or true for !=)
+                    cc = 'e' if e.op == '==' else 'ne'
+                    eeid = self.new_label_id()
+                    l_no_enum = f"eq_no_enum_{eeid}"
+                    l_lhs_enum = f"eq_lhs_enum_{eeid}"
+                    l_rhs_enum = f"eq_rhs_enum_{eeid}"
+                    l_enum_enum = f"eq_enum_enum_{eeid}"
+                    l_enum_int = f"eq_enum_int_{eeid}"
+                    l_int_enum = f"eq_int_enum_{eeid}"
+
+                    # if lhs is enum -> l_lhs_enum
+                    a.mov_rax_r10()
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_ENUM)
+                    a.jcc('e', l_lhs_enum)
+                    # else if rhs is enum -> l_rhs_enum
+                    a.mov_rax_r11()
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_ENUM)
+                    a.jcc('e', l_rhs_enum)
+                    a.jmp(l_no_enum)
+
+                    a.mark(l_lhs_enum)
+                    # rhs enum?
+                    a.mov_rax_r11()
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_ENUM)
+                    a.jcc('e', l_enum_enum)
+                    # rhs int?
+                    a.cmp_rax_imm8(TAG_INT)
+                    a.jcc('e', l_enum_int)
+                    # else: non-int rhs
+                    a.xor_r32_r32('eax', 'eax')
+                    if e.op == '!=':
+                        a.inc_r32('eax')
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                    a.jmp(l_done_eq)
+
+                    a.mark(l_rhs_enum)
+                    # lhs int?
+                    a.mov_rax_r10()
+                    a.and_rax_imm8(7)
+                    a.cmp_rax_imm8(TAG_INT)
+                    a.jcc('e', l_int_enum)
+                    # else: non-int lhs
+                    a.xor_r32_r32('eax', 'eax')
+                    if e.op == '!=':
+                        a.inc_r32('eax')
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                    a.jmp(l_done_eq)
+
+                    a.mark(l_enum_enum)
+                    # compare ordinals (variant_id)
+                    a.mov_r64_r64('r8', 'r10')
+                    a.shr_r64_imm8('r8', 11)   # (v>>3)>>8
+                    a.mov_r64_r64('r9', 'r11')
+                    a.shr_r64_imm8('r9', 11)
+                    a.cmp_r64_r64('r8', 'r9')
+                    a.setcc_al(cc)
+                    a.movzx_eax_al()
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                    a.jmp(l_done_eq)
+
+                    a.mark(l_enum_int)
+                    # enum ordinal vs int
+                    a.mov_r64_r64('r8', 'r10')
+                    a.shr_r64_imm8('r8', 11)
+                    a.mov_r64_r64('r9', 'r11')
+                    a.sar_r64_imm8('r9', 3)
+                    a.cmp_r64_r64('r8', 'r9')
+                    a.setcc_al(cc)
+                    a.movzx_eax_al()
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                    a.jmp(l_done_eq)
+
+                    a.mark(l_int_enum)
+                    a.mov_r64_r64('r8', 'r10')
+                    a.sar_r64_imm8('r8', 3)
+                    a.mov_r64_r64('r9', 'r11')
+                    a.shr_r64_imm8('r9', 11)
+                    a.cmp_r64_r64('r8', 'r9')
+                    a.setcc_al(cc)
+                    a.movzx_eax_al()
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                    a.jmp(l_done_eq)
+
+                    a.mark(l_no_enum)
+
                     # --- check if lhs is bytes ---
                     a.mov_r64_r64('rax', 'r10')
                     a.mov_r64_r64('r9', 'rax')
@@ -2450,7 +2760,13 @@ class CodegenExpr:
                     self._emit_auto_errprop()
                     a.jmp(l_done)
                     a.mark(l_nvoid)
-                    a.mov_rax_imm64(enc_void())
+                    if hasattr(self, 'emit_dbg_line'):
+                        try:
+                            self.emit_dbg_line(e)
+                        except Exception:
+                            pass
+                    self._emit_make_error_const(ERR_VOID_OP, f"Cannot apply '{e.op}' to non-numeric values")
+                    self._emit_auto_errprop()
 
                 a.mark(l_done)
                 return
@@ -3004,6 +3320,200 @@ class CodegenExpr:
             if callee_name is not None:
                 callee_name = self._apply_import_alias(str(callee_name))
 
+            # --- Type-qualified helper calls for struct instance methods (no `this` usage) ---
+            # Allow calling an instance method through the struct type name without passing a
+            # receiver, *if* the method body never references `this`. Example:
+            #   struct S
+            #     function helper(x) return x+1 end function
+            #     static function f(x) return S.helper(x) end function
+            #   end struct
+            # This is compiled by injecting a dummy receiver value as the implicit first arg.
+            # We use `void` (not a null pointer) so that if a `this` access slips through,
+            # runtime errors are safer than a null dereference.
+            call_args = list(getattr(e, 'args', []) or [])
+
+            def _fn_uses_this(fn_node) -> bool:
+                # Conservative AST scan for Var('this') in the function body. Cached on node.
+                try:
+                    v = getattr(fn_node, '_ml_uses_this', None)
+                    if v is not None:
+                        return bool(v)
+                except Exception:
+                    pass
+
+                ml = self.ml
+
+                def _expr_has_this(x) -> bool:
+                    if x is None:
+                        return False
+                    if isinstance(x, ml.Var):
+                        return str(getattr(x, 'name', '')) == 'this'
+                    if isinstance(x, (ml.Num, ml.Str, ml.Bool, getattr(ml, 'VoidLit', ()) )):
+                        return False
+                    if isinstance(x, ml.Unary):
+                        return _expr_has_this(getattr(x, 'right', None))
+                    if isinstance(x, ml.Bin):
+                        return _expr_has_this(getattr(x, 'left', None)) or _expr_has_this(getattr(x, 'right', None))
+                    if isinstance(x, ml.IsType):
+                        return _expr_has_this(getattr(x, 'expr', None))
+                    if isinstance(x, ml.Call):
+                        if _expr_has_this(getattr(x, 'callee', None)):
+                            return True
+                        for aa in list(getattr(x, 'args', []) or []):
+                            if _expr_has_this(aa):
+                                return True
+                        return False
+                    if isinstance(x, ml.Index):
+                        return _expr_has_this(getattr(x, 'target', None)) or _expr_has_this(getattr(x, 'index', None))
+                    if hasattr(ml, 'Member') and isinstance(x, ml.Member):
+                        return _expr_has_this(getattr(x, 'target', None))
+                    if isinstance(x, ml.ArrayLit):
+                        for it in list(getattr(x, 'items', []) or []):
+                            if _expr_has_this(it):
+                                return True
+                        return False
+                    # Unknown expression node: be conservative and assume it may use `this`.
+                    return True
+
+                def _stmt_has_this(st) -> bool:
+                    if st is None:
+                        return False
+                    # Expressions inside statements
+                    for attr in ('expr', 'cond', 'value', 'target', 'index', 'start', 'end', 'iterable'):
+                        if hasattr(st, attr):
+                            if _expr_has_this(getattr(st, attr, None)):
+                                return True
+                    # Assignments
+                    if hasattr(ml, 'Assign') and isinstance(st, ml.Assign):
+                        if _expr_has_this(getattr(st, 'target', None)) or _expr_has_this(getattr(st, 'value', None)):
+                            return True
+                    # If/While/For bodies
+                    if isinstance(st, ml.If):
+                        if _expr_has_this(getattr(st, 'cond', None)):
+                            return True
+                        for bb in list(getattr(st, 'then_body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        for _c, _b in list(getattr(st, 'elifs', []) or []):
+                            if _expr_has_this(_c):
+                                return True
+                            for bb in list(_b or []):
+                                if _stmt_has_this(bb):
+                                    return True
+                        for bb in list(getattr(st, 'else_body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    if isinstance(st, ml.While) or isinstance(st, getattr(ml, 'DoWhile', ())):
+                        if _expr_has_this(getattr(st, 'cond', None)):
+                            return True
+                        for bb in list(getattr(st, 'body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    if isinstance(st, ml.For):
+                        if _expr_has_this(getattr(st, 'start', None)) or _expr_has_this(getattr(st, 'end', None)):
+                            return True
+                        for bb in list(getattr(st, 'body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    if isinstance(st, getattr(ml, 'ForEach', ())):
+                        if _expr_has_this(getattr(st, 'iterable', None)):
+                            return True
+                        for bb in list(getattr(st, 'body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    if isinstance(st, ml.Switch):
+                        if _expr_has_this(getattr(st, 'expr', None)):
+                            return True
+                        for cs in list(getattr(st, 'cases', []) or []):
+                            for vv in list(getattr(cs, 'values', []) or []):
+                                if _expr_has_this(vv):
+                                    return True
+                            if _expr_has_this(getattr(cs, 'range_start', None)) or _expr_has_this(getattr(cs, 'range_end', None)):
+                                return True
+                            for bb in list(getattr(cs, 'body', []) or []):
+                                if _stmt_has_this(bb):
+                                    return True
+                        for bb in list(getattr(st, 'default_body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    # Nested function defs: scan them too (conservative).
+                    if isinstance(st, ml.FunctionDef):
+                        for bb in list(getattr(st, 'body', []) or []):
+                            if _stmt_has_this(bb):
+                                return True
+                        return False
+                    # Generic: walk common body-like attributes
+                    for attr in ('body',):
+                        if hasattr(st, attr):
+                            for bb in list(getattr(st, attr, []) or []):
+                                if _stmt_has_this(bb):
+                                    return True
+                    return False
+
+                uses = False
+                try:
+                    for st in list(getattr(fn_node, 'body', []) or []):
+                        if _stmt_has_this(st):
+                            uses = True
+                            break
+                except Exception:
+                    uses = True
+
+                try:
+                    setattr(fn_node, '_ml_uses_this', bool(uses))
+                except Exception:
+                    pass
+                return bool(uses)
+
+            def _is_instance_method_qname(fn_qn: str) -> bool:
+                # Lazy build reverse map: function_qname -> (struct_qname, method_name)
+                rev = getattr(self, '_struct_method_rev', None)
+                if rev is None:
+                    rev = {}
+                    try:
+                        for _s, _md in (getattr(self, 'struct_methods', {}) or {}).items():
+                            for _m, _fn in (_md or {}).items():
+                                rev[str(_fn)] = (str(_s), str(_m))
+                    except Exception:
+                        rev = {}
+                    try:
+                        setattr(self, '_struct_method_rev', rev)
+                    except Exception:
+                        pass
+                return bool(fn_qn in (rev or {}))
+
+            if callee_name is not None and _is_instance_method_qname(str(callee_name)):
+                fn_def = (getattr(self, 'user_functions', {}) or {}).get(str(callee_name))
+                if fn_def is not None:
+                    expected = len(getattr(fn_def, 'params', []) or [])
+
+                    # For type-qualified references to instance methods we can enforce arity at compile time:
+                    # - `S.m(obj, ...)`  -> explicit receiver (expects `expected` args)
+                    # - `S.m(...)`      -> implicit/dummy receiver (only allowed when method never uses `this`)
+                    if len(call_args) == expected - 1:
+                        if not _fn_uses_this(fn_def):
+                            # Placeholder: emitted as `void` during argument materialization.
+                            call_args = [None] + call_args
+                        else:
+                            raise self.error(
+                                f"Cannot call instance method '{callee_name}' without receiver because it uses 'this'. "
+                                f"Call it on an instance (obj.method(...)) or pass the receiver explicitly "
+                                f"({callee_name}(... with receiver as first arg)) or make it static.",
+                                e,
+                            )
+                    elif len(call_args) != expected:
+                        exp_implicit = expected - 1 if expected > 0 else 0
+                        raise self.error(
+                            f"Method {callee_name} expects either {exp_implicit} args (implicit receiver) "
+                            f"or {expected} args (explicit receiver), got {len(call_args)}",
+                            e,
+                        )
+
             # Native-only heap debug builtins (no args):
             #   heap_bytes_committed() = heap_end - heap_base
             #   heap_bytes_reserved()  = heap_reserve_end - heap_base
@@ -3075,7 +3585,7 @@ class CodegenExpr:
                 if len(e.args) not in (1, 2):
                     raise self.error('decode() expects 1 or 2 arguments', e)
 
-                nargs = len(e.args)
+                nargs = len(call_args)
                 tmp_off = self.alloc_expr_temps(16 if nargs == 2 else 8)
 
                 # eval bytes arg
@@ -3662,6 +4172,57 @@ class CodegenExpr:
                 a.call('fn_typeof')
                 return
 
+            # Builtin typeName(x)
+            if callee_name == 'typeName' and len(e.args) == 1:
+                arg = e.args[0]
+                arg_name = _qname_of(arg)
+                if arg_name is not None:
+                    arg_name = self._apply_import_alias(str(arg_name))
+
+                # Special case: typeName(<struct_name>) -> "<struct_name>".
+                if arg_name is not None and arg_name in self.struct_fields:
+                    lbl = None
+                    try:
+                        lbl = getattr(self, 'typename_struct_by_qname', {}).get(arg_name)
+                    except Exception:
+                        lbl = None
+                    if isinstance(lbl, str) and lbl:
+                        a.lea_rax_rip(lbl)
+                    else:
+                        # fallback
+                        a.lea_rax_rip('obj_type_struct')
+                    return
+
+                # Special case: typeName(<enum_name>) or typeName(<enum_name.variant>) -> "<enum_name>".
+                if arg_name is not None:
+                    try:
+                        if hasattr(self, 'enum_id') and arg_name in getattr(self, 'enum_id', {}):
+                            lbl = getattr(self, 'typename_enum_by_qname', {}).get(arg_name)
+                            if isinstance(lbl, str) and lbl:
+                                a.lea_rax_rip(lbl)
+                            else:
+                                a.lea_rax_rip('obj_type_enum')
+                            return
+
+                        if "." in arg_name and hasattr(self, 'enum_variants'):
+                            base, var = arg_name.rsplit(".", 1)
+                            base = self._apply_import_alias(base)
+                            if base in getattr(self, 'enum_id', {}) and var in getattr(self, 'enum_variants', {}).get(base, []):
+                                lbl = getattr(self, 'typename_enum_by_qname', {}).get(base)
+                                if isinstance(lbl, str) and lbl:
+                                    a.lea_rax_rip(lbl)
+                                else:
+                                    a.lea_rax_rip('obj_type_enum')
+                                return
+                    except Exception:
+                        pass
+
+                # General case: evaluate expression and dispatch in runtime helper.
+                self.emit_expr(arg)
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_typeName')
+                return
+
             # Builtin heap_count()
             if callee_name == 'heap_count' and len(e.args) == 0:
                 a.call('fn_heap_count')
@@ -3817,8 +4378,8 @@ class CodegenExpr:
                 if b is None or getattr(b, "kind", None) == "global":
                     fn = self.user_functions.get(callee_name)
                     expected = len(getattr(fn, "params", []) or []) if fn is not None else 0
-                    if len(e.args) != expected:
-                        raise self.error(f"Function {callee_name} expects {expected} args, got {len(e.args)}", e)
+                    if len(call_args) != expected:
+                        raise self.error(f"Function {callee_name} expects {expected} args, got {len(call_args)}", e)
 
             # If the callee is a known extern (by qualified name), enforce arity at compile time for
             # direct calls like `MessageBoxA(...)`. This keeps "expects N args" as a compile-time error
@@ -3833,8 +4394,8 @@ class CodegenExpr:
                 if b is None or getattr(b, "kind", None) == "global":
                     sig = self.extern_sigs.get(callee_name) or {}
                     expected = len(list(sig.get("params", []) or []))
-                    if len(e.args) != expected:
-                        raise self.error(f"Extern {callee_name} expects {expected} args, got {len(e.args)}", e)
+                    if len(call_args) != expected:
+                        raise self.error(f"Extern {callee_name} expects {expected} args, got {len(call_args)}", e)
 
             # Indirect call: evaluate callee expression to a function value and call via code_ptr.
             #
@@ -3844,7 +4405,7 @@ class CodegenExpr:
             if callee_expr is None:
                 raise self.error("Invalid call node (missing callee)", e)
 
-            nargs = len(e.args)
+            nargs = len(call_args)
 
             # Only method-style calls (obj.member(...)) should produce a runtime error when
             # the member is missing / not callable. Plain indirect calls keep the historical
@@ -3888,13 +4449,23 @@ class CodegenExpr:
                         callee_desc = None
 
             # Evaluate callee + args into a nested-safe temp area: [callee, arg0, arg1, ...]
-            base = self.alloc_expr_temps((nargs + 1) * 8)
+            base = self.alloc_expr_temps((nargs + 1) * 8 + 24)  # +24 reserved for member-call diag temp slots
+            # Init diag temp slots to void (GC-safe even on first use)
+            void_imm = enc_void()
+            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 0, void_imm, qword=True)
+            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 8, void_imm, qword=True)
+            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 16, void_imm, qword=True)
+
 
             self.emit_expr(callee_expr)
             a.mov_rsp_disp32_rax(base)
 
-            for i, arg in enumerate(e.args):
-                self.emit_expr(arg)
+            for i, arg in enumerate(call_args):
+                if arg is None:
+                    # injected dummy receiver for type-qualified helper instance method calls
+                    a.mov_rax_imm64(enc_void())
+                else:
+                    self.emit_expr(arg)
                 a.mov_rsp_disp32_rax(base + (i + 1) * 8)
 
             # Load register args (Windows x64): RCX,RDX,R8,R9
@@ -4074,8 +4645,253 @@ class CodegenExpr:
 
             a.mark(l_not_void)
             if callee_is_member:
-                msg = f"Cannot call '{callee_desc or 'member'}' with {nargs} args"
+                # Improve diagnostics for member-call failures (wrong arity / non-callable).
+                # When the callee is a function/builtin/structtype value, we can read the expected arity
+                # from the object header and format a helpful error string at runtime.
+                desc_s = str(callee_desc or "member")
+
+                # Constant string fragments in .rdata
+                lbl_desc = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_desc, desc_s)
+                lbl_p0 = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_p0, "Cannot call '")
+                lbl_p1 = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_p1, "' with ")
+                lbl_p2 = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_p2, " args (expected ")
+                lbl_p3 = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_p3, "..")
+                lbl_p4 = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_p4, ")")
+
+                # temp slots: msg_ptr, min, max (all tagged values / pointers)
+                tmp = base + (nargs + 1) * 8  # diag temp slots (reserved with base)
+
+                lidm = self.new_label_id()
+                l_simple = f"icall_mdiag_simple_{lidm}"
+                l_fun = f"icall_mdiag_fun_{lidm}"
+                l_blt = f"icall_mdiag_blt_{lidm}"
+                l_stt = f"icall_mdiag_stt_{lidm}"
+                l_done_msg = f"icall_mdiag_done_{lidm}"
+
+                # if not ptr -> simple message
+                a.mov_r64_r64("r10", "r11")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_PTR)
+                a.jcc("ne", l_simple)
+
+                # type dispatch
+                a.mov_r32_membase_disp("r10d", "r11", 0)
+                a.cmp_r32_imm("r10d", OBJ_FUNCTION)
+                a.jcc("e", l_fun)
+                a.cmp_r32_imm("r10d", OBJ_BUILTIN)
+                a.jcc("e", l_blt)
+                a.cmp_r32_imm("r10d", OBJ_STRUCTTYPE)
+                a.jcc("e", l_stt)
+                a.jmp(l_simple)
+
+                # -------- function: expected exact arity --------
+                a.mark(l_fun)
+                a.mov_r32_membase_disp("r10d", "r11", 4)  # expected (u32)
+                a.mov_r64_r64("r10", "r10")               # zero-extend
+                a.shl_r64_imm8("r10", 3)
+                a.or_r64_imm("r10", TAG_INT)
+                a.mov_membase_disp_r64("rsp", tmp + 8, "r10")  # tmp+8 = expected
+
+                # Build message string into RAX
+                a.lea_rax_rip(lbl_p0)
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_desc)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")  # "Cannot call '" + desc
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p1)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")  # + "' with "
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_imm64("rdx", enc_int(nargs))
+                a.call("fn_add_string")  # + got
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p2)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")  # + " args (expected "
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # expected
+                a.call("fn_add_string")  # + expected
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p4)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")  # + ")"
+
+                a.mov_membase_disp_r64("rsp", tmp, "rax")  # tmp+0 = msg_ptr
+
+                # Allocate error(code,msg,script,func,line) into RAX
+                a.mov_rcx_imm32(56)
+                a.call("fn_alloc")
+                a.mov_r11_rax()
+                a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
+                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
+                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
+                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_r64_membase_disp("r10", "rsp", tmp)  # msg_ptr
+                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_rax_rip_qword("dbg_loc_script")
+                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_rax_rip_qword("dbg_loc_func")
+                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_rax_rip_qword("dbg_loc_line")
+                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_rax_r11()
+                a.jmp(l_done_msg)
+
+                # -------- builtin: expected min..max --------
+                a.mark(l_blt)
+                # min
+                a.mov_r32_membase_disp("r10d", "r11", 4)
+                a.mov_r64_r64("r10", "r10")
+                a.shl_r64_imm8("r10", 3)
+                a.or_r64_imm("r10", TAG_INT)
+                a.mov_membase_disp_r64("rsp", tmp + 8, "r10")
+                # max
+                a.mov_r32_membase_disp("r10d", "r11", 8)
+                a.mov_r64_r64("r10", "r10")
+                a.shl_r64_imm8("r10", 3)
+                a.or_r64_imm("r10", TAG_INT)
+                a.mov_membase_disp_r64("rsp", tmp + 16, "r10")
+
+                # Build message: Cannot call '<desc>' with N args (expected MIN..MAX)
+                a.lea_rax_rip(lbl_p0)
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_desc)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p1)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_imm64("rdx", enc_int(nargs))
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p2)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # min
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p3)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_membase_disp("rdx", "rsp", tmp + 16)  # max
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p4)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_membase_disp_r64("rsp", tmp, "rax")  # msg_ptr
+
+                a.mov_rcx_imm32(56)
+                a.call("fn_alloc")
+                a.mov_r11_rax()
+                a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
+                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
+                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
+                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_r64_membase_disp("r10", "rsp", tmp)
+                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_rax_rip_qword("dbg_loc_script")
+                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_rax_rip_qword("dbg_loc_func")
+                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_rax_rip_qword("dbg_loc_line")
+                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_rax_r11()
+                a.jmp(l_done_msg)
+
+                # -------- structtype: expected exact field count --------
+                a.mark(l_stt)
+                a.mov_r32_membase_disp("r10d", "r11", 4)  # expected (u32)
+                a.mov_r64_r64("r10", "r10")
+                a.shl_r64_imm8("r10", 3)
+                a.or_r64_imm("r10", TAG_INT)
+                a.mov_membase_disp_r64("rsp", tmp + 8, "r10")
+
+                a.lea_rax_rip(lbl_p0)
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_desc)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p1)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_imm64("rdx", enc_int(nargs))
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p2)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # expected
+                a.call("fn_add_string")
+
+                a.mov_r64_r64("rcx", "rax")
+                a.lea_rax_rip(lbl_p4)
+                a.mov_r64_r64("rdx", "rax")
+                a.call("fn_add_string")
+
+                a.mov_membase_disp_r64("rsp", tmp, "rax")
+
+                a.mov_rcx_imm32(56)
+                a.call("fn_alloc")
+                a.mov_r11_rax()
+                a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
+                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
+                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
+                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_r64_membase_disp("r10", "rsp", tmp)
+                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_rax_rip_qword("dbg_loc_script")
+                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_rax_rip_qword("dbg_loc_func")
+                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_rax_rip_qword("dbg_loc_line")
+                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_rax_r11()
+                a.jmp(l_done_msg)
+
+                # -------- fallback: old constant message --------
+                a.mark(l_simple)
+                msg = f"Cannot call '{desc_s}' with {nargs} args"
                 self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, msg)
+
+                a.mark(l_done_msg)
             else:
                 a.mov_rax_imm64(enc_void())
 
@@ -4107,7 +4923,7 @@ class CodegenExpr:
                 a.mark(l_noerr)
 
             # --- GC safety: clear temps + outgoing stack args ---
-            self.free_expr_temps((nargs + 1) * 8)
+            self.free_expr_temps((nargs + 1) * 8 + 24)
 
             void_imm = enc_void()
             if nargs > 4:

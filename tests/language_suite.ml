@@ -192,6 +192,11 @@ assertTrue("abc" == "abc", "string == same")
 assertFalse("abc" == "abd", "string == different")
 assertTrue("abc" != "abd", "string != different")
 
+// string concatenation with void is allowed
+assertEq("xvoid", "x" + void, "string + void")
+assertEq("voidx", void + "x", "void + string")
+
+
 // ------------------------------------------------------------
 // STRING INDEX
 // ------------------------------------------------------------
@@ -1079,6 +1084,25 @@ enum Color are
   Blue
 end enum
 
+// value-enum (constexpr members)
+enum VColor
+  red = 1,
+  green,
+  blue
+end enum
+
+// extra enums for cross-enum ordinal comparisons
+enum EOne are
+  A
+  B
+end enum
+
+enum ETwo are
+  X
+  Y
+end enum
+
+
 assertEq(typeof(Color.Red), "enum", "typeof enum")
 assertTrue(Color.Red == Color.Red, "enum == same")
 assertTrue(Color.Red != Color.Green, "enum != different")
@@ -1200,6 +1224,40 @@ end enum
 assertEq(Mixed.X, 1, "value enum: mixed X")
 assertEq(Mixed.Y, 18, "value enum: mixed Y")
 assertEq(Mixed.Z, "hallo welt", "value enum: mixed Z string")
+
+
+// value-enum: auto-increment ignores explicit string literals
+enum AutoStrHead are
+  A = "x"
+  B
+  C
+end enum
+
+assertEq(AutoStrHead.A, "x", "value enum: auto after leading string A")
+assertEq(AutoStrHead.B, 0, "value enum: auto after leading string starts 0")
+assertEq(AutoStrHead.C, 1, "value enum: auto after leading string +1")
+
+enum AutoStrMid are
+  A
+  B = "x"
+  C
+  D
+end enum
+
+assertEq(AutoStrMid.A, 0, "value enum: auto mid string A")
+assertEq(AutoStrMid.B, "x", "value enum: auto mid string B")
+assertEq(AutoStrMid.C, 1, "value enum: auto ignores string C")
+assertEq(AutoStrMid.D, 2, "value enum: auto ignores string D")
+
+enum AutoIntStr are
+  A = 5
+  B = "x"
+  C
+end enum
+
+assertEq(AutoIntStr.A, 5, "value enum: auto after int then string A")
+assertEq(AutoIntStr.B, "x", "value enum: auto after int then string B")
+assertEq(AutoIntStr.C, 6, "value enum: auto after int then string C")
 
 print "=== FUNCTIONS >4 PARAMS/ARGS ==="
 
@@ -1665,11 +1723,66 @@ end struct
 
 assertEq(Math.add(2, 3), 5, "oop: static method call")
 
+// type-qualified call of an instance helper without passing `this` (allowed if helper does not use `this`) 
+struct HelperTest
+  dummy
+  function plusOne(x)
+    return x + 1
+  end function
+  static function run(x)
+    return HelperTest.plusOne(x)
+  end function
+end struct
+
+assertEq(HelperTest.run(41), 42, "oop: type-qualified instance helper call")
+
+// ------------------------------------------------------------
+// typeName(x) reflection helper
+// ------------------------------------------------------------
+
+assertEq(typeName(o), "Thing", "typeName: struct instance")
+assertEq(typeName(Thing), "Thing", "typeName: struct type")
+assertEq(typeName(123), "int", "typeName: primitive")
+
+assertEq(typeName(Color.Red), "Color", "typeName: enum value")
+assertEq(typeName(Color), "Color", "typeName: enum type")
+
+// ------------------------------------------------------------
+// `is` operator: struct/enum concrete type checks
+// ------------------------------------------------------------
+
+assertEq(o is Thing, true, "is: struct concrete")
+assertEq(o is Counter, false, "is: struct mismatch")
+assertEq(o is struct, true, "is: typeof struct")
+assertEq((o is not Thing), false, "is not: struct concrete")
+assertEq((o is not Counter), true, "is not: struct mismatch")
+
+assertEq(Color.Red is Color, true, "is: enum concrete")
+assertEq(Color.Red is enum, true, "is: typeof enum")
+assertEq((Color.Red is not Color), false, "is not: enum concrete")
+
+
 // ------------------------------------------------------------
 // ERROR values + try() (Phase 1) + extern mismatch returns error (Phase 2)
 // ------------------------------------------------------------
 
 print "=== ERROR + try() ==="
+
+
+// value-enum: `is` should work (membership check)
+vx = VColor.red
+assertEq(vx is VColor, true, "value-enum: is VColor")
+
+// enum equality extensions: ordinal comparisons + cross-enum
+a = EOne.A
+b = ETwo.X
+assertEq(a == 0, true, "enum == int (ordinal)")
+assertEq(a == b, true, "enum cross-enum == (ordinal)")
+assertEq(EOne.B != b, true, "enum cross-enum != (ordinal)")
+
+// ordered compare on enum should raise error (not void)
+r = try(a > 0)
+assertEq(typeof(r), "error", "enum ordered compare returns error")
 
 // create + read
 err = error(1, "abc")

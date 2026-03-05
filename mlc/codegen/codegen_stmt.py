@@ -2636,7 +2636,9 @@ class CodegenStmt:
                             raise self.error(f"enum {qname} value list length mismatch", st)
 
                         member_map: Dict[str, Any] = {}
-                        prev_member: Optional[str] = None
+                        # Track last member that participates in numeric auto-increment.
+                        # Explicit string values are ignored for the numeric sequence.
+                        prev_int_member: Optional[str] = None
 
                         for vn, vx in zip(variants, values):
                             vname = str(vn)
@@ -2646,15 +2648,15 @@ class CodegenStmt:
                                     raise self.error(f"enum {qname} value for {vname} must be constexpr", st)
                                 expr_node = vx
                             else:
-                                # Auto-fill: first missing -> 0; subsequent missing -> prev+1 (checked during const-eval)
-                                if prev_member is None:
+                                # Auto-fill: first missing -> 0; subsequent missing -> prev_int+1
+                                if prev_int_member is None:
                                     expr_node = self.ml.Num(0)
                                 else:
-                                    vref = self.ml.Var(f"{qname}.{prev_member}")
+                                    vref = self.ml.Var(f"{qname}.{prev_int_member}")
                                     expr_node = self.ml.Bin(vref, '+', self.ml.Num(1))
                                     # marker for stricter auto-increment rules (must follow an int)
                                     try:
-                                        setattr(expr_node, '_ml_enum_autoinc_prev', f"{qname}.{prev_member}")
+                                        setattr(expr_node, '_ml_enum_autoinc_prev', f"{qname}.{prev_int_member}")
                                     except Exception:
                                         pass
 
@@ -2667,7 +2669,17 @@ class CodegenStmt:
                                             pass
 
                             member_map[vname] = expr_node
-                            prev_member = vname
+
+                            # Update numeric auto-increment anchor:
+                            # - Auto-filled members are numeric by construction.
+                            # - Explicit string literals are ignored.
+                            # - Other constexpr expressions remain anchors (old behavior).
+                            if vx is None:
+                                prev_int_member = vname
+                            else:
+                                str_cls = getattr(self.ml, 'Str', None)
+                                if str_cls is None or not isinstance(vx, str_cls):
+                                    prev_int_member = vname
 
                         self.value_enum_values[qname] = member_map
                         continue
@@ -2697,6 +2709,39 @@ class CodegenStmt:
         # Keep CodegenCore package-resolution helpers in sync.
         self._file_prefix_map = file_prefix_map
         self.current_file_prefix = ''
+
+        # Step 10.0: materialize boxed string constants for typeName(x).
+        # typeName() is like typeof(), but returns concrete struct/enum names.
+        # We create one boxed string in .rdata per known struct/enum ID.
+        self.typename_struct_by_id = {}
+        self.typename_struct_by_qname = {}
+        try:
+            for qn, sid in getattr(self, 'struct_id', {}).items():
+                try:
+                    sid_i = int(sid)
+                except Exception:
+                    continue
+                lbl = f"obj_typename_struct_{sid_i}"
+                self.rdata.add_obj_string(lbl, str(qn))
+                self.typename_struct_by_id[sid_i] = lbl
+                self.typename_struct_by_qname[str(qn)] = lbl
+        except Exception:
+            pass
+
+        self.typename_enum_by_id = {}
+        self.typename_enum_by_qname = {}
+        try:
+            for qn, eid in getattr(self, 'enum_id', {}).items():
+                try:
+                    eid_i = int(eid)
+                except Exception:
+                    continue
+                lbl = f"obj_typename_enum_{eid_i}"
+                self.rdata.add_obj_string(lbl, str(qn))
+                self.typename_enum_by_id[eid_i] = lbl
+                self.typename_enum_by_qname[str(qn)] = lbl
+        except Exception:
+            pass
         # Current emission context for CodegenCore._qualify_identifier
         # (set while emitting top-level statements and function bodies).
         self._current_fn_file = None
@@ -2878,6 +2923,7 @@ class CodegenStmt:
         # top level (i.e., we never override user globals / functions / structs).
         self.builtin_specs: Dict[str, Tuple[int, int, str]] = {# name: (min_arity, max_arity, code_label)
             'len': (1, 1, 'fn_builtin_len'), 'toNumber': (1, 1, 'fn_toNumber'), 'typeof': (1, 1, 'fn_typeof'),
+            'typeName': (1, 1, 'fn_typeName'),
             'input': (0, 1, 'fn_builtin_input'),
 
             # bytes/string helpers (native)
@@ -3610,7 +3656,7 @@ class CodegenStmt:
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
         builtin_callees = {'try', "input", "len", "toNumber", "typeof", "bytes", "byteBuffer", "decode", "decodeZ",
-            "decode16Z", "hex", "fromHex", "slice", "heap_count", "heap_bytes_used", "heap_bytes_committed",
+            "decode16Z", "hex", "fromHex", "slice", "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed",
             "heap_bytes_reserved", "heap_free_bytes", "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
         allowed_function_names = set(getattr(self, "user_functions", {}).keys())
@@ -3682,7 +3728,7 @@ class CodegenStmt:
 
                     cal = self._apply_import_alias(str(e.callee.name))
 
-                    if cal == "typeof":
+                    if cal in ("typeof", "typeName"):
 
                         for aa in e.args:
                             analyze_expr(aa, allow_func_ident=True)

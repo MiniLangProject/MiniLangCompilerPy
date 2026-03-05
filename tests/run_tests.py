@@ -1331,30 +1331,195 @@ def test_const_reassign_rejected(*, name: str, mlc_runner: Path) -> TestResult:
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
-def test_enum_autoinc_after_string_rejected(*, name: str, mlc_runner: Path) -> TestResult:
-    """Value-enum auto-fill must fail if previous value is not an int."""
+def test_enum_autoinc_ignores_strings(*, name: str, mlc_runner: Path) -> TestResult:
+    """Value-enum auto-fill should ignore explicit string literals for numeric sequencing."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
         td_path = Path(td)
-        ml_path = td_path / "enum_autoinc_bad.ml"
-        ml_path.write_text("\n".join(['enum E are', '  A = "x"', '  B', 'end enum', 'print E.A', ]) + "\n",
-                           encoding="utf-8", )
+        ml_path = td_path / "enum_autoinc_ignore_strings.ml"
+        ml_path.write_text(
+            "\n".join(
+                [
+                    # baseline: int -> string -> auto continues
+                    'enum E are',
+                    '  A = 1',
+                    '  B = "x"',
+                    '  C',
+                    '  D',
+                    'end enum',
+                    '',
+                    # leading string should NOT affect numeric start (still 0)
+                    'enum EHead are',
+                    '  A = "x"',
+                    '  B',
+                    '  C',
+                    'end enum',
+                    '',
+                    # mid string should be ignored for numeric sequencing
+                    'enum EMid are',
+                    '  A',
+                    '  B = "x"',
+                    '  C',
+                    '  D',
+                    'end enum',
+                    '',
+                    # explicit int then string then auto continues from int
+                    'enum EIntStr are',
+                    '  A = 5',
+                    '  B = "x"',
+                    '  C',
+                    'end enum',
+                    '',
+                    # prints (raw values, stable order)
+                    'print E.A',
+                    'print E.B',
+                    'print E.C',
+                    'print E.D',
+                    'print EHead.A',
+                    'print EHead.B',
+                    'print EHead.C',
+                    'print EMid.A',
+                    'print EMid.B',
+                    'print EMid.C',
+                    'print EMid.D',
+                    'print EIntStr.A',
+                    'print EIntStr.B',
+                    'print EIntStr.C',
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
-        exe = td_path / "enum_autoinc_bad.exe"
+        exe = td_path / "enum_autoinc_ignore_strings.exe"
         cr = compile_native(mlc_runner, ml_path, exe, timeout_s=120)
-        out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
+        if cr.returncode != 0:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"compile failed (exit {cr.returncode})",
+                stdout=cr.stdout,
+                stderr=cr.stderr,
+            )
 
-        if cr.returncode == 0:
-            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
-                              stdout=cr.stdout, stderr=cr.stderr, )
+        rr = run_exe(exe, timeout_s=120)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"runtime failed (exit {rr.returncode})",
+                stdout=rr.stdout,
+                stderr=rr.stderr,
+            )
 
-        marker = "cannot auto-increment after non-int"
-        if marker not in out:
-            return TestResult(name=name, status="FAIL",
-                              details=f"compile failed, but error output did not contain expected marker: {marker!r}",
-                              stdout=cr.stdout, stderr=cr.stderr, )
+        def _norm_line(s: str) -> str:
+            s = s.strip()
+            if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+                return s[1:-1]
+            return s
 
-        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+        out = normalize_out(rr.stdout)
+        lines = [_norm_line(ln) for ln in out.splitlines() if ln.strip()]
 
+        expected = ["1", "x", "2", "3", "x", "0", "1", "0", "x", "1", "2", "5", "x", "6"]
+        if len(lines) < len(expected):
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"expected at least {len(expected)} output lines",
+                stdout=rr.stdout,
+                stderr=rr.stderr,
+            )
+
+        got = lines[-len(expected):]
+        if got != expected:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"unexpected output lines: {got!r} (expected {expected!r})",
+                stdout=rr.stdout,
+                stderr=rr.stderr,
+            )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_typequalified_instance_method_uses_this_rejected(*, name: str, mlc_runner: Path) -> TestResult:
+    """Calling an instance method via StructName.method(...) must be rejected when the method uses `this`."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "typequalified_uses_this.ml"
+        ml_path.write_text(
+            "\n".join(
+                [
+                    "struct S",
+                    "  x",
+                    "  function inc()",
+                    "    this.x = this.x + 1",
+                    "    return this.x",
+                    "  end function",
+                    "",
+                    "  static function run()",
+                    "    // illegal: missing receiver, and method uses `this`",
+                    "    return S.inc()",
+                    "  end function",
+                    "end struct",
+                    "",
+                    "function main(args)",
+                    "  print S.run()",
+                    "end function",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return test_compile_expected_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            entry_ml=ml_path,
+            must_contain_err="without receiver because it uses 'this'",
+        )
+
+
+def test_member_call_arity_error_message(*, name: str, mlc_runner: Path) -> TestResult:
+    """Member-call arity mismatch should report got/expected in the error message."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "member_call_arity_diag.ml"
+        ml_path.write_text(
+            "\n".join(
+                [
+                    'print "=== CALL ARITY DIAG ==="',
+                    "struct Holder",
+                    "  f",
+                    "end struct",
+                    "",
+                    "function add2(a, b)",
+                    "  return a + b",
+                    "end function",
+                    "",
+                    "h = Holder(add2)",
+                    "// wrong: add2 expects 2 args",
+                    "h.f(1)",
+                    'print "SHOULD NOT REACH"',
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return test_program_expect_exit(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=ml_path,
+            expected_exit=1,
+            must_contain=[
+                "=== CALL ARITY DIAG ===",
+                "Error occured: no=1100 message=Cannot call 'h.f' with 1 args (expected 2)",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
 
 def test_import_constexpr_initializer_rejected(*, name: str, mlc_runner: Path, kind: str) -> TestResult:
     """Imported-module initializers must be constexpr (const + globals)."""
@@ -1887,6 +2052,9 @@ def main() -> int:
     tests.append(lambda: test_keep_going_reports_multiple_errors(name="keep-going: reports multiple errors", mlc_runner=mlc_runner))
     tests.append(lambda: test_keep_going_respects_max_errors(name="keep-going: respects --max-errors", mlc_runner=mlc_runner))
 
+    tests.append(lambda: test_member_call_arity_error_message(
+        name="diagnostics: member-call arity reports expected", mlc_runner=mlc_runner))
+
     if aes_ml is not None:
         tests.append(lambda: test_aes_kat(name="aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)", mlc_runner=mlc_runner,
                                           aes_ml=aes_ml))
@@ -1976,8 +2144,10 @@ def main() -> int:
     tests.append(
         lambda: test_import_constexpr_ok(name="import: constexpr initializers accepted", mlc_runner=mlc_runner))
     tests.append(lambda: test_const_reassign_rejected(name="const: reassign rejected", mlc_runner=mlc_runner))
-    tests.append(lambda: test_enum_autoinc_after_string_rejected(name="enum: auto-increment after string rejected",
-                                                                 mlc_runner=mlc_runner))
+    tests.append(lambda: test_enum_autoinc_ignores_strings(name="enum: auto-increment ignores strings",
+                                                           mlc_runner=mlc_runner))
+    tests.append(lambda: test_typequalified_instance_method_uses_this_rejected(
+        name="struct methods: type-qualified call uses this rejected", mlc_runner=mlc_runner))
     tests.append(lambda: test_import_constexpr_initializer_rejected(name="import: constexpr const initializer required",
                                                                     mlc_runner=mlc_runner, kind="const"))
     tests.append(

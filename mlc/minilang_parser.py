@@ -215,6 +215,13 @@ class Bin(Expr):
 
 
 @dataclass
+class IsType(Expr):
+    expr: Expr
+    type_name: str
+    negated: bool = False
+
+
+@dataclass
 class Call(Expr):
     callee: Expr
     args: List[Expr]
@@ -1494,7 +1501,9 @@ class Parser:
             #   x = 1 +\n    2
             self.skip_newlines()
 
-            # Syntactic sugar: `x is <type>` / `x is not <type>` -> `typeof(x) == "<type>"` (optionally negated)
+            # `is` operator:
+            # - For primitive categories: sugar to `typeof(x) == "..."` (optionally negated)
+            # - For named struct/enum types: keep as IsType(expr, "Name") and resolve later in codegen
             if op == "is":
                 is_start = tok.pos
                 is_not = False
@@ -1502,32 +1511,48 @@ class Parser:
                     is_not = True
                     self.advance()
                     self.skip_newlines()
+
+                # Parse a type name token sequence (IDENT/KW with optional dotted segments)
                 ty_tok = self.peek()
                 if ty_tok.kind not in ("IDENT", "KW"):
                     raise ParseError("Expected type name after 'is'", ty_tok.pos)
+                parts = [str(ty_tok.value)]
                 self.advance()
-                ty = str(ty_tok.value)
-                ty_l = ty.lower()
+                # allow dotted qualified names: Foo.Bar.Baz
+                while self.peek().kind == "OP" and self.peek().value == ".":
+                    dot = self.peek()
+                    self.advance()
+                    seg = self.peek()
+                    if seg.kind != "IDENT":
+                        raise ParseError("Expected identifier after '.' in type name", seg.pos)
+                    parts.append(str(seg.value))
+                    self.advance()
+
+                ty_raw = ".".join(parts)
+                ty_l = ty_raw.lower()
                 _aliases = {"integer": "int", "boolean": "bool", "str": "string"}
-                ty_canon = _aliases.get(ty_l, ty_l)
+                # Only apply aliases / canonicalization for non-qualified primitive names
+                ty_canon = _aliases.get(ty_l, ty_l) if "." not in ty_raw else ty_raw
+
                 _allowed = {"int", "float", "bool", "string", "array", "bytes", "function", "struct", "enum", "error", "void", "unknown"}
-                if ty_canon not in _allowed:
-                    raise ParseError(f"Unknown type '{ty}' in 'is' expression", ty_tok.pos)
 
                 start_pos = getattr(left, "_pos", None)
                 if start_pos is None:
                     start_pos = is_start
 
-                # typeof(left)
-                typeof_call = self._attach_pos(Call(self._attach_pos(Var("typeof"), is_start), [left]), start_pos)
-                rhs = self._attach_pos(Str(ty_canon), ty_tok.pos)
-                cmp_expr = self._attach_pos(Bin(typeof_call, "==", rhs), start_pos)
-                if is_not:
-                    left = self._attach_pos(Unary("not", cmp_expr), start_pos)
+                if isinstance(ty_canon, str) and ty_canon in _allowed:
+                    # typeof(left)
+                    typeof_call = self._attach_pos(Call(self._attach_pos(Var("typeof"), is_start), [left]), start_pos)
+                    rhs = self._attach_pos(Str(ty_canon), ty_tok.pos)
+                    cmp_expr = self._attach_pos(Bin(typeof_call, "==", rhs), start_pos)
+                    if is_not:
+                        left = self._attach_pos(Unary("not", cmp_expr), start_pos)
+                    else:
+                        left = cmp_expr
                 else:
-                    left = cmp_expr
+                    # Named type check (struct/enum): resolved by codegen
+                    left = self._attach_pos(IsType(left, ty_raw, is_not), start_pos)
                 continue
-
             right = self.parse_expr(prec + 1)
 
             start_pos = getattr(left, "_pos", None)
@@ -1536,6 +1561,7 @@ class Parser:
             left = self._attach_pos(Bin(left, op, right), start_pos)
 
         return left
+
     def parse_unary(self) -> Expr:
         """Parse unary expressions (prefix operators) or fall back to postfix parsing."""
         t = self.peek()
