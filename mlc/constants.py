@@ -94,3 +94,12 @@ ERR_METHOD_NOT_FOUND = 1101
 
 # Strict void handling
 ERR_VOID_OP = 1200
+
+# Indexing / bounds errors
+ERR_INDEX_OOB = 1300
+ERR_INDEX_TYPE = 1301
+ERR_INDEX_TARGET_TYPE = 1302
+
+# Stringification / printing of unsupported values
+ERR_STRINGIFY_UNSUPPORTED = 1303
+ERR_PRINT_UNSUPPORTED = 1304

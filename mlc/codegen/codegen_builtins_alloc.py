@@ -19,9 +19,10 @@ Builtins in this module:
 
 from __future__ import annotations
 
-from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, TAG_PTR, TAG_INT, TAG_BOOL,
-                         TAG_VOID, TAG_ENUM, )
-from ..tools import enc_void
+from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, OBJ_STRUCT, ERROR_STRUCT_ID,
+                         TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM,
+                         ERR_STRINGIFY_UNSUPPORTED, )
+from ..tools import enc_void, enc_int
 
 # I/O buffers
 INPUT_READ_MAX = 4095  # ReadFile max bytes (keeps NUL space)
@@ -1277,11 +1278,31 @@ Returns:
         # reserve 32B shadow + 24B locals (keep alignment)
         a.sub_rsp_imm8(0x38)
 
+        # If stringification produces <unsupported> or "void", return an `error(...)`
+        # value instead of silently concatenating placeholder strings.
+        lid = self.new_label_id()
+        l_fail_uns = f"addstr_fail_uns_{lid}"
+        l_fail_void = f"addstr_fail_void_{lid}"
+
+        lbl_msg_uns = f"objstr_{len(self.rdata.labels)}"
+        self.rdata.add_obj_string(lbl_msg_uns, "Cannot stringify unsupported value for string concatenation")
+        lbl_msg_void = f"objstr_{len(self.rdata.labels)}"
+        self.rdata.add_obj_string(lbl_msg_void, "Cannot stringify void for string concatenation")
+
         # Save b (RDX) at [rsp+0x20] (non-shadow local)
         a.mov_membase_disp_r64("rsp", 32, "rdx")  # mov [rsp+0x20],rdx
 
         # s1 = value_to_string(a)
         a.call('fn_value_to_string')
+
+        # Reject placeholder conversions (<unsupported> / void)
+        a.lea_r11_rip('obj_uns')
+        a.cmp_r64_r64('rax', 'r11')
+        a.jcc('e', l_fail_uns)
+        a.lea_r11_rip('obj_void')
+        a.cmp_r64_r64('rax', 'r11')
+        a.jcc('e', l_fail_void)
+
         # save s1 across calls (callee may clobber volatile r10)
         a.mov_membase_disp_r64("rsp", 40, "rax")  # mov [rsp+0x28],rax
 
@@ -1291,6 +1312,15 @@ Returns:
         # rcx = saved b
         a.mov_r64_membase_disp("rcx", "rsp", 32)  # mov rcx,[rsp+0x20]
         a.call('fn_value_to_string')
+
+        # Reject placeholder conversions (<unsupported> / void)
+        a.lea_r11_rip('obj_uns')
+        a.cmp_r64_r64('rax', 'r11')
+        a.jcc('e', l_fail_uns)
+        a.lea_r11_rip('obj_void')
+        a.cmp_r64_r64('rax', 'r11')
+        a.jcc('e', l_fail_void)
+
         a.mov_r11_rax()  # r11 = s2
         # save s2 across calls
         a.mov_membase_disp_r64("rsp", 48, "r11")  # mov [rsp+0x30],r11
@@ -1368,6 +1398,45 @@ Returns:
 
         a.add_rsp_imm8(0x38)
         a.ret()
+
+        # ---- failure paths: build error(code,msg,script,func,line) and return it ----
+        def _emit_addstr_error(msg_lbl: str) -> None:
+            # Clear GC temp roots (avoid pinning old values)
+            a.mov_rax_imm64(enc_void())
+            a.mov_rip_qword_rax('gc_tmp2')
+            a.mov_rip_qword_rax('gc_tmp3')
+
+            # Allocate error struct (5 fields)
+            a.mov_rcx_imm32(56)
+            a.call('fn_alloc')
+            a.mov_r11_rax()
+            a.mov_membase_disp_imm32('r11', 0, OBJ_STRUCT, qword=False)
+            a.mov_membase_disp_imm32('r11', 4, 5, qword=False)
+            a.mov_membase_disp_imm32('r11', 8, ERROR_STRUCT_ID, qword=False)
+            a.mov_membase_disp_imm32('r11', 12, 0, qword=False)
+
+            a.mov_rax_imm64(enc_int(int(ERR_STRINGIFY_UNSUPPORTED)))
+            a.mov_membase_disp_r64('r11', 16, 'rax')
+
+            a.lea_rax_rip(msg_lbl)
+            a.mov_membase_disp_r64('r11', 24, 'rax')
+
+            a.mov_rax_rip_qword('dbg_loc_script')
+            a.mov_membase_disp_r64('r11', 32, 'rax')
+            a.mov_rax_rip_qword('dbg_loc_func')
+            a.mov_membase_disp_r64('r11', 40, 'rax')
+            a.mov_rax_rip_qword('dbg_loc_line')
+            a.mov_membase_disp_r64('r11', 48, 'rax')
+
+            a.mov_rax_r11()
+            a.add_rsp_imm8(0x38)
+            a.ret()
+
+        a.mark(l_fail_uns)
+        _emit_addstr_error(lbl_msg_uns)
+
+        a.mark(l_fail_void)
+        _emit_addstr_error(lbl_msg_void)
 
     def emit_array_add_function(self) -> None:
         """

@@ -653,16 +653,23 @@ class Parser:
             return None
 
     def expect_block_nl(self) -> None:
-        # Historically this required a physical newline after block headers.
-        # Be a bit more liberal and also accept ';' as a block separator.
-        if self.match("NL"):
-            self.skip_newlines()
-            return
-        if self.match("SEMI"):
+        """Consume an optional block separator.
+
+        Historically MiniLang required a physical newline after many block headers
+        (e.g. after `function ... )`, `struct ...`, `enum ...`, `while ...`, ...).
+
+        To support newline-free / inline formatting, a separator is now optional:
+        - If a newline or ';' is present, we consume it (and any following separators).
+        - Otherwise we accept an inline block body immediately following the header.
+
+        This keeps existing code working while enabling one-liners like:
+            function main(args) if true then print "ok" end if end function
+        """
+        if self.match("NL") or self.match("SEMI"):
             self.skip_stmt_seps()
             return
-        t = self.peek()
-        raise ParseError("Expected NEWLINE or ';'", t.pos)
+        # Inline block body (no separator) is valid.
+        return
 
     def is_end_of(self, what: str) -> bool:
         return (

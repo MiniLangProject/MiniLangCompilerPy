@@ -9,7 +9,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from .codegen_scope import VarBinding
 from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, ERROR_STRUCT_ID,
-                         ERR_VOID_OP, )
+                         ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
+                         ERR_PRINT_UNSUPPORTED, )
 from ..context import BreakableCtx
 from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod
 
@@ -1255,8 +1256,13 @@ class CodegenStmt:
             lbl_bool = f"print_bool_{a.pos}"
             lbl_enum = f"print_enum_{a.pos}"
             lbl_ptr = f"print_ptr_{a.pos}"
+            lbl_void = f"print_void_{a.pos}"
             lbl_uns = f"print_uns_{a.pos}"
             lbl_end = f"print_end_{a.pos}"
+
+            # tag == VOID?
+            a.cmp_r64_imm("r10", TAG_VOID)
+            a.jcc('e', lbl_void)
 
             # tag == INT?
             a.cmp_r64_imm("r10", 1)
@@ -1272,6 +1278,17 @@ class CodegenStmt:
             a.jcc('e', lbl_ptr)
 
             a.jmp(lbl_uns)
+
+            # ---- void print ----
+            a.mark(lbl_void)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_PRINT_UNSUPPORTED, "Cannot print void")
+            self._emit_auto_errprop()
+            a.jmp(lbl_end)
 
             # ---- enum print (convert to string) ----
             a.mark(lbl_enum)
@@ -1294,6 +1311,7 @@ class CodegenStmt:
             lbl_ptr_str = f"print_ptr_str_{a.pos}"
             lbl_ptr_arr = f"print_ptr_arr_{a.pos}"
             lbl_ptr_flt = f"print_ptr_flt_{a.pos}"
+            lbl_ptr_bytes = f"print_ptr_bytes_{a.pos}"
             lbl_ptr_stt = f"print_ptr_stt_{a.pos}"
 
             # if type == OBJ_STRING
@@ -1307,6 +1325,10 @@ class CodegenStmt:
             # if type == OBJ_FLOAT
             a.cmp_r32_imm("edx", OBJ_FLOAT)
             a.jcc('e', lbl_ptr_flt)
+
+            # if type == OBJ_BYTES -> print "<bytes>"
+            a.cmp_r32_imm("edx", OBJ_BYTES)
+            a.jcc('e', lbl_ptr_bytes)
 
             # if type == OBJ_STRUCTTYPE (struct type / constructor value)
             a.cmp_r32_imm("edx", OBJ_STRUCTTYPE)
@@ -1351,6 +1373,11 @@ class CodegenStmt:
             self.emit_writefile_ptr_len()
             self.emit_writefile('nl', 1)
             a.jmp(lbl_end)
+
+            # ---- ptr bytes print ----
+            a.mark(lbl_ptr_bytes)
+            a.lea_rax_rip('obj_bytes')
+            a.jmp(lbl_ptr_str)
 
             # ---- ptr array print ----
             a.mark(lbl_ptr_arr)
@@ -1448,6 +1475,11 @@ class CodegenStmt:
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             l_el_arr = f"arr_el_arr_{elem_id}"
             a.jcc('e', l_el_arr)
+
+            # bytes?
+            a.cmp_r32_imm("edx", OBJ_BYTES)
+            l_el_bytes = f"arr_el_bytes_{elem_id}"
+            a.jcc('e', l_el_bytes)
             a.jmp(el_uns)
 
             a.mark(l_el_str)
@@ -1461,9 +1493,19 @@ class CodegenStmt:
             self.emit_writefile('array_nn', ln)
             a.jmp(el_end)
 
+            a.mark(l_el_bytes)
+            a.lea_rax_rip('obj_bytes')
+            a.jmp(l_el_str)
+
             a.mark(el_uns)
-            off, ln = self.rdata.labels['uns_nn']
-            self.emit_writefile('uns_nn', ln)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_PRINT_UNSUPPORTED, "Cannot print unsupported array element")
+            self._emit_auto_errprop()
+            a.jmp(lbl_end)
 
             a.mark(el_end)
 
@@ -1485,8 +1527,13 @@ class CodegenStmt:
 
             # ---- fallback: print "<unsupported>\n" ----
             a.mark(lbl_uns)
-            off, ln = self.rdata.labels['uns_s']
-            self.emit_writefile('uns_s', ln)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(s)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_PRINT_UNSUPPORTED, "Cannot print unsupported value")
+            self._emit_auto_errprop()
             a.jmp(lbl_end)
 
             # ---- int print ----

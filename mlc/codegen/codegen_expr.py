@@ -10,7 +10,9 @@ from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
-                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
+                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP,
+                         ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_PRINT_UNSUPPORTED, ERR_STRINGIFY_UNSUPPORTED,
+                         OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
 
@@ -1676,21 +1678,62 @@ class CodegenExpr:
             # r11 = object ptr
             a.mov_r11_rax()
 
-            # type check
-            a.mov_r32_membase_disp("edx", "r11", 0)  # [r11] => type
-            a.cmp_r32_imm("edx", OBJ_STRUCT)
-            a.jcc("ne", l_fail)
-
-            # load struct_id (u32) into EDX
-            a.mov_r32_membase_disp("edx", "r11", 8)  # [r11+8] => struct_id
-
             field = getattr(e, 'name', None)
             if field is None:
                 field = getattr(e, 'field', None)
             field = str(field)
 
+            # type dispatch: struct instance fields vs struct type static members
+            l_is_struct = f"memb_is_struct_{fid}"
+            l_is_stt = f"memb_is_stt_{fid}"
+
+            a.mov_r32_membase_disp("edx", "r11", 0)  # [r11] => type
+            a.cmp_r32_imm("edx", OBJ_STRUCT)
+            a.jcc("e", l_is_struct)
+            a.cmp_r32_imm("edx", OBJ_STRUCTTYPE)
+            a.jcc("e", l_is_stt)
+            a.jmp(l_fail)
+
+            # ---- struct instance: field read ----
+            a.mark(l_is_struct)
+
+            # load struct_id (u32) into EDX
+            a.mov_r32_membase_disp("edx", "r11", 8)  # [r11+8] => struct_id
+
             # Dispatch struct_id -> field index (ECX). Jumps to ok/fail.
             self.emit_struct_field_index_dispatch(field, 'edx', 'ecx', l_ok, l_fail, tag=f"memb_{fid}")
+
+            # ---- struct type: static member (method) ----
+            a.mark(l_is_stt)
+
+            # load struct_id (u32) into EDX
+            a.mov_r32_membase_disp("edx", "r11", 8)  # [r11+8] => struct_id
+
+            candidates = []
+            for s_qn, md in (getattr(self, 'struct_static_methods', {}) or {}).items():
+                fn_qn = (md or {}).get(field)
+                if not fn_qn:
+                    continue
+                sid = (getattr(self, 'struct_id', {}) or {}).get(s_qn)
+                if sid is None:
+                    continue
+                candidates.append((int(sid), str(fn_qn)))
+
+            if candidates:
+                # compare chain on struct_id
+                for sid, fn_qn in candidates:
+                    l_hit = f"memb_stt_hit_{fid}_{sid}"
+                    a.cmp_r32_imm("edx", sid)
+                    a.jcc("e", l_hit)
+                a.jmp(l_fail)
+
+                for sid, fn_qn in candidates:
+                    l_hit = f"memb_stt_hit_{fid}_{sid}"
+                    a.mark(l_hit)
+                    self.emit_load_var(fn_qn, e)
+                    a.jmp(l_done)
+            else:
+                a.jmp(l_fail)
 
             a.mark(l_ok)
             # value at [r11 + rcx*8 + 16]
@@ -2386,14 +2429,26 @@ class CodegenExpr:
 
                 # bytes mixed types => void
                 a.mark(l_bytes_fail)
-                a.mov_rax_imm64(enc_void())
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
+                self._emit_make_error_const(ERR_VOID_OP, "Cannot add bytes with non-bytes")
+                self._emit_auto_errprop()
                 a.jmp(l_done)
 
                 # ---- string concat fallback ----
                 a.mark(l_str)
+                if hasattr(self, 'emit_dbg_line'):
+                    try:
+                        self.emit_dbg_line(e)
+                    except Exception:
+                        pass
                 a.mov_r64_r64("rcx", "r10")  # mov rcx,r10
                 a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
                 a.call('fn_add_string')
+                self._emit_auto_errprop()
                 a.jmp(l_done)
 
                 a.mark(l_done)
@@ -2818,7 +2873,8 @@ class CodegenExpr:
             l_arr = f"idx_arr_{lid}"
             l_bytes = f"idx_bytes_{lid}"
             l_str = f"idx_str_{lid}"
-            l_fail = f"idx_fail_{lid}"
+            l_tfail = f"idx_tfail_{lid}"
+            l_oob = f"idx_oob_{lid}"
             l_done = f"idx_done_{lid}"
 
             # eval target
@@ -2898,6 +2954,25 @@ class CodegenExpr:
             a.jmp(l_done)
             a.mark(l_iok)
 
+            # index must be TAG_INT
+            vid3 = self.new_label_id()
+            l_iint = f"idx_iint_{vid3}"
+            a.mov_r64_r64("r10", "rax")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_INT)
+            a.jcc("e", l_iint)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_TYPE, "Index must be an int")
+            self._emit_auto_errprop()
+            # clear spilled target slot (GC safety) and exit
+            a.mov_membase_disp_imm32("rsp", base_off, enc_void(), qword=True)
+            a.jmp(l_done)
+            a.mark(l_iint)
+
             # rcx = decoded index
             a.mov_r64_r64("rcx", "rax")
             a.sar_r64_imm8("rcx", 3)
@@ -2912,9 +2987,9 @@ class CodegenExpr:
             a.mov_r64_r64("r10", "r11")
             a.and_r64_imm("r10", 7)
             a.cmp_r64_imm("r10", TAG_PTR)  # TAG_PTR == 0
-            a.jcc("ne", l_fail)
+            a.jcc("ne", l_tfail)
             a.test_r64_r64("r11", "r11")
-            a.jcc("e", l_fail)
+            a.jcc("e", l_tfail)
 
             # dispatch by obj type
             a.mov_r32_membase_disp("edx", "r11", 0)  # type
@@ -2924,7 +2999,7 @@ class CodegenExpr:
             a.jcc('e', l_str)
             a.cmp_r32_imm("edx", OBJ_BYTES)
             a.jcc('e', l_bytes)
-            a.jmp(l_fail)
+            a.jmp(l_tfail)
 
             # ---- array indexing ----
             a.mark(l_arr)
@@ -2937,9 +3012,9 @@ class CodegenExpr:
             a.mark(l_a_ok)
             # bounds check after normalization
             a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_fail)
+            a.jcc('l', l_oob)
             a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_fail)
+            a.jcc('ge', l_oob)
             a.mov_r64_mem_bis("rax", "r11", "rcx", 8, 8)
             a.jmp(l_done)
 
@@ -2954,9 +3029,9 @@ class CodegenExpr:
             a.mark(l_b_ok)
             # bounds check after normalization
             a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_fail)
+            a.jcc('l', l_oob)
             a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_fail)
+            a.jcc('ge', l_oob)
 
             # addr = r11 + 8 + i
             a.mov_r64_r64("rax", "r11")
@@ -2980,9 +3055,9 @@ class CodegenExpr:
             a.mark(l_s_ok)
             # bounds check after normalization
             a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_fail)
+            a.jcc('l', l_oob)
             a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_fail)
+            a.jcc('ge', l_oob)
 
             a.mov_r64_r64("rax", "r11")
             a.add_r64_r64("rax", "rcx")
@@ -3004,8 +3079,26 @@ class CodegenExpr:
             a.mov_rax_r11()
             a.jmp(l_done)
 
-            a.mark(l_fail)
-            a.mov_rax_imm64(enc_void())
+            a.mark(l_oob)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_OOB, "Array index out of bounds")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+            a.mark(l_tfail)
+            if hasattr(self, 'emit_dbg_line'):
+                try:
+                    self.emit_dbg_line(e)
+                except Exception:
+                    pass
+            self._emit_make_error_const(ERR_INDEX_TARGET_TYPE, "Indexing requires array, string, or bytes")
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
             a.mark(l_done)
             return
 

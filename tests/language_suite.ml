@@ -176,6 +176,43 @@ assertEq(arr[2], 30, "array index read 2")
 arr[1] = 99
 assertEq(arr[1], 99, "array index write")
 
+// strict errors: bad indexing should return error values (catchable via try())
+r_oob = try(arr[3])
+assertEq(typeof(r_oob), "error", "array index oob -> error")
+assertEq(r_oob.code, 1300, "array index oob code")
+
+r_oob2 = try(arr[-4])
+assertEq(typeof(r_oob2), "error", "array index oob (neg) -> error")
+assertEq(r_oob2.code, 1300, "array index oob (neg) code")
+
+r_it = try(arr["x"])
+assertEq(typeof(r_it), "error", "array index type -> error")
+assertEq(r_it.code, 1301, "array index type code")
+
+x_num = 123
+r_tt = try(x_num[0])
+assertEq(typeof(r_tt), "error", "index target type -> error")
+assertEq(r_tt.code, 1302, "index target type code")
+
+r_vt = try(void[0])
+assertEq(typeof(r_vt), "error", "index void -> error")
+assertEq(r_vt.code, 1200, "index void code")
+
+// strict errors: stringification for concatenation rejects unsupported values
+function _fn_val() return 1 end function
+fv = _fn_val
+r_uns1 = try("x" + fv)
+assertEq(typeof(r_uns1), "error", "string + function -> error")
+assertEq(r_uns1.code, 1303, "string + function code")
+
+struct _TmpS
+  a
+end struct
+sv = _TmpS(1)
+r_uns2 = try("x" + sv)
+assertEq(typeof(r_uns2), "error", "string + struct -> error")
+assertEq(r_uns2.code, 1303, "string + struct code")
+
 // printing strings/arrays should not crash
 print "print string literal"
 print s
@@ -192,10 +229,14 @@ assertTrue("abc" == "abc", "string == same")
 assertFalse("abc" == "abd", "string == different")
 assertTrue("abc" != "abd", "string != different")
 
-// string concatenation with void is allowed
-assertEq("xvoid", "x" + void, "string + void")
-assertEq("voidx", void + "x", "void + string")
+// string concatenation with void is NOT allowed (strict errors)
+r_void1 = try("x" + void)
+assertEq(typeof(r_void1), "error", "string + void -> error")
+assertEq(r_void1.code, 1303, "string + void error code")
 
+r_void2 = try(void + "x")
+assertEq(typeof(r_void2), "error", "void + string -> error")
+assertEq(r_void2.code, 1303, "void + string error code")
 
 // ------------------------------------------------------------
 // STRING INDEX
@@ -581,8 +622,10 @@ assertEq(typeof(slice(bs, 9, 2)), "void", "slice OOB -> void")
 assertEq(typeof(slice(bs, 0, -1)), "void", "slice neg len -> void")
 assertEq(typeof(slice(123, 0, 1)), "void", "slice bad type -> void")
 
-bad = bf + "a"
-assertEq(typeof(bad), "void", "bytes + string -> void")
+bad = try(bf + "a")
+assertEq(typeof(bad), "error", "bytes + string -> error")
+assertEq(bad.code, 1200, "bytes + string error code")
+assertEq(bad.message, "Cannot add bytes with non-bytes", "bytes + string error message")
 
 print "=== BREAK / CONTINUE ==="
 

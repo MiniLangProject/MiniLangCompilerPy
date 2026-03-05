@@ -1560,6 +1560,66 @@ def test_import_constexpr_initializer_rejected(*, name: str, mlc_runner: Path, k
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
+def test_no_newlines_required(*, name: str, mlc_runner: Path) -> TestResult:
+    """Block headers should not require physical newlines or ';'.
+
+    This is a formatting feature: a complete program (including block bodies)
+    should compile and run even when written as a single line.
+    """
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        ml_path = td_path / "no_newlines_required.ml"
+
+        # Intentionally a single-line program (no '\n' in the source).
+        src = (
+            'enum E are A = 1, B = "x", C end enum '
+            'struct S a, b static function sum(x, y) return x + y end function end struct '
+            'function main(args) '
+            'x = 0; while x < 2 x = x + 1 end while '
+            'if x == 2 then print "ok" else print "bad" end if '
+            'print E.C; print S.sum(2, 3); print "no-newlines [OK]" '
+            'end function'
+        )
+        ml_path.write_text(src, encoding="utf-8")
+
+        exe = td_path / "no_newlines_required.exe"
+        cr = compile_native(mlc_runner, ml_path, exe, timeout_s=120)
+        if cr.returncode != 0:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"compile failed (exit {cr.returncode})",
+                stdout=cr.stdout,
+                stderr=cr.stderr,
+            )
+
+        rr = run_exe(exe, timeout_s=120)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"runtime failed (exit {rr.returncode})",
+                stdout=rr.stdout,
+                stderr=rr.stderr,
+            )
+
+        out = normalize_out(rr.stdout)
+        # Strings may be printed with surrounding quotes; we only need markers.
+        for must in ("ok", "2", "5", "no-newlines [OK]"):
+            if must not in out:
+                return TestResult(
+                    name=name,
+                    status="FAIL",
+                    details=f"missing expected output marker: {must!r}",
+                    stdout=rr.stdout,
+                    stderr=rr.stderr,
+                )
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
 def test_import_constexpr_ok(*, name: str, mlc_runner: Path) -> TestResult:
     """Imported-module constexpr initializers should be accepted (const + globals + enum values)."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -2146,6 +2206,7 @@ def main() -> int:
     tests.append(lambda: test_const_reassign_rejected(name="const: reassign rejected", mlc_runner=mlc_runner))
     tests.append(lambda: test_enum_autoinc_ignores_strings(name="enum: auto-increment ignores strings",
                                                            mlc_runner=mlc_runner))
+    tests.append(lambda: test_no_newlines_required(name="syntax: newlines not required", mlc_runner=mlc_runner))
     tests.append(lambda: test_typequalified_instance_method_uses_this_rejected(
         name="struct methods: type-qualified call uses this rejected", mlc_runner=mlc_runner))
     tests.append(lambda: test_import_constexpr_initializer_rejected(name="import: constexpr const initializer required",

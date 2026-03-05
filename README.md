@@ -376,7 +376,7 @@ For type checks, prefer:
 
 Equality/inequality (`==`, `!=`) still works with `void` (e.g. `void == void`).
 
-> Note: `print void` is not useful; it prints `<unsupported>` (it is not treated as an error by `print`).
+> Note: `print void` (and printing unsupported heap objects) raises a runtime `error(...)`.
 
 #### Legacy note
 Older MiniLang versions treated `void` as an internal-only value that was not directly writable (e.g. assignment and printing were rejected). With strict void handling, `void` is writable, but *using it as a real value in operations* now fails loudly as described above.
