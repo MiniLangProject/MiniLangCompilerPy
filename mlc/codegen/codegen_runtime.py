@@ -570,12 +570,12 @@ class CodegenRuntime:
         a.ret()
 
         a.mark(l_enum)
-        # Extract enum_id from payload: ((v >> 3) & 0xFF)
+        # Extract enum_id from payload: ((v >> 3) & 0xFFFF)
         a.mov_r64_r64("rdx", "rax")
         a.shr_r64_imm8("rdx", 3)
-        a.and_r64_imm("rdx", 0xFF)
+        a.and_r64_imm("rdx", 0xFFFF)
 
-        # Compare against known enum IDs (u8), return enum name.
+        # Compare against known enum IDs, return enum name.
         enum_map = getattr(self, 'typename_enum_by_id', {})
         if isinstance(enum_map, dict) and enum_map:
             # deterministic order for stable binaries

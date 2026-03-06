@@ -92,8 +92,12 @@ def enc_void() -> int:
 def enc_enum(enum_id: int, variant_id: int) -> int:
     """Encode an enum immediate value.
 
-    Layout: (variant_id << 8) | enum_id, tagged with TAG_ENUM.
+    Layout: (variant_id << 16) | enum_id, tagged with TAG_ENUM.
+
+    We reserve 16 bits each for the enum type id and the ordinal/variant id,
+    which raises the practical limit from 256 to 65536 entries per enum and
+    also allows up to 65535 distinct ordinal-enum types.
     """
 
-    payload = ((variant_id & 0xFF) << 8) | (enum_id & 0xFF)
+    payload = ((variant_id & 0xFFFF) << 16) | (enum_id & 0xFFFF)
     return (payload << 3) | TAG_ENUM

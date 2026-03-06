@@ -2711,8 +2711,8 @@ class CodegenStmt:
                         raise self.error(f"enum name conflicts with struct: {qname}", st)
 
                     variants = list(getattr(st, "variants", []) or [])
-                    if len(variants) > 256:
-                        raise self.error(f"enum {qname} has too many variants (max 256)", st)
+                    if len(variants) > 65536:
+                        raise self.error(f"enum {qname} has too many variants (max 65536)", st)
 
                     seen = set()
                     for v in variants:
@@ -2781,8 +2781,8 @@ class CodegenStmt:
 
                     self.enum_variants[qname] = variants
                     if qname not in self.enum_id:
-                        if next_eid > 255:
-                            raise self.error("too many enums (max 255)", st)
+                        if next_eid > 65535:
+                            raise self.error("too many enums (max 65535)", st)
                         self.enum_id[qname] = next_eid
                         next_eid += 1
                     continue

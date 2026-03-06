@@ -1373,10 +1373,10 @@ class CodegenExpr:
                 a.cmp_r64_imm('r10', TAG_ENUM)
                 a.jcc('ne', l_false)
 
-                # payload: (variant<<8)|enum_id at bits [3..]
+                # payload: (variant<<16)|enum_id at bits [3..]
                 a.mov_r64_r64('r10', 'rax')
                 a.shr_r64_imm8('r10', 3)
-                a.and_r64_imm('r10', 0xFF)
+                a.and_r64_imm('r10', 0xFFFF)
                 a.cmp_r64_imm('r10', eid)
                 a.jcc('e', l_true)
                 a.jmp(l_false)
@@ -2700,9 +2700,9 @@ class CodegenExpr:
                     a.mark(l_enum_enum)
                     # compare ordinals (variant_id)
                     a.mov_r64_r64('r8', 'r10')
-                    a.shr_r64_imm8('r8', 11)   # (v>>3)>>8
+                    a.shr_r64_imm8('r8', 19)   # (v>>3)>>16
                     a.mov_r64_r64('r9', 'r11')
-                    a.shr_r64_imm8('r9', 11)
+                    a.shr_r64_imm8('r9', 19)
                     a.cmp_r64_r64('r8', 'r9')
                     a.setcc_al(cc)
                     a.movzx_eax_al()
@@ -2713,7 +2713,7 @@ class CodegenExpr:
                     a.mark(l_enum_int)
                     # enum ordinal vs int
                     a.mov_r64_r64('r8', 'r10')
-                    a.shr_r64_imm8('r8', 11)
+                    a.shr_r64_imm8('r8', 19)
                     a.mov_r64_r64('r9', 'r11')
                     a.sar_r64_imm8('r9', 3)
                     a.cmp_r64_r64('r8', 'r9')
@@ -2727,7 +2727,7 @@ class CodegenExpr:
                     a.mov_r64_r64('r8', 'r10')
                     a.sar_r64_imm8('r8', 3)
                     a.mov_r64_r64('r9', 'r11')
-                    a.shr_r64_imm8('r9', 11)
+                    a.shr_r64_imm8('r9', 19)
                     a.cmp_r64_r64('r8', 'r9')
                     a.setcc_al(cc)
                     a.movzx_eax_al()

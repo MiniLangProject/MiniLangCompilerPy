@@ -1131,13 +1131,13 @@ Returns:
 
         # --- enum -> boxed constant "Enum.Variant" (no heap alloc) ---
         a.mark(l_enum)
-        # Decode payload: (value >> 3) = enum_id | (variant_id << 8)
+        # Decode payload: (value >> 3) = enum_id | (variant_id << 16)
         a.mov_r64_r64("r8", "rax")  # mov r8,rax
         a.shr_r64_imm8("r8", 3)  # shr r8,3
         a.mov_r64_r64("r9", "r8")  # mov r9,r8
-        a.shr_r64_imm8("r9", 8)  # shr r9,8
-        a.and_r32_imm("r8d", 0xFF)  # enum_id
-        a.and_r32_imm("r9d", 0xFF)  # variant_id
+        a.shr_r64_imm8("r9", 16)  # shr r9,16
+        a.and_r32_imm("r8d", 0xFFFF)  # enum_id
+        a.and_r32_imm("r9d", 0xFFFF)  # variant_id
 
         # Select pre-boxed string for this enum value.
         # Use a compare chain to keep runtime simple (enum counts are expected to be small).

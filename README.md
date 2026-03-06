@@ -980,6 +980,8 @@ Native notes:
 
 Native compiler backend: supported (ordinal enums + optional explicit values).
 
+Ordinal enums currently support up to **65536 variants per enum** and up to **65535 ordinal-enum types** in one program.
+
 Basic form:
 
 ```ml
