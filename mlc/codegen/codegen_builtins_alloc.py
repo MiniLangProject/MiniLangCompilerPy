@@ -53,6 +53,18 @@ Returns:
         a = self.asm
         a.mark('fn_input')
 
+        # GUI / windows-subsystem executables should not try to read from an
+        # inherited console. Return an empty string instead.
+        if getattr(self, 'is_windows_subsystem', False):
+            a.sub_rsp_imm8(0x28)
+            a.mov_rcx_imm32(9)
+            a.call('fn_alloc')
+            a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
+            a.mov_membase_disp_imm32('rax', 4, 0, qword=False)
+            a.mov_membase_disp_imm8('rax', 8, 0)
+            a.add_rsp_imm8(0x28)
+            a.ret()
+
         # Windows x64 ABI:
         # - stack must be 16-byte aligned at each CALL instruction
         # - caller must reserve 32 bytes of "shadow space" for callees

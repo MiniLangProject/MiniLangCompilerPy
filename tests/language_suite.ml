@@ -20,7 +20,6 @@
 
 import std.assert as a
 import std.core as c
-import std.result as r
 import std.bytes as bx
 import std.encoding.hex as hx
 
@@ -59,26 +58,15 @@ assertEq(c.sign(8), 1, "core: sign +")
 assertEq(c.safeToNumber("123", -1), 123, "core: safeToNumber ok")
 assertEq(c.safeToNumber("xx", -1), -1, "core: safeToNumber fallback")
 
-// result/option
-opt = r.Option.Some(42)
-assertTrue(opt.isSome(), "option: isSome")
-assertFalse(opt.isNone(), "option: isNone")
-assertEq(opt.unwrapOr(0), 42, "option: unwrapOr (some)")
+// native error system
+okHex = hx.decode("4142")
+assertFalse(typeof(okHex) == "error", "error-system: success is not error")
+assertEq(hx.encode(okHex), "4142", "error-system: success value")
 
-none = r.Option.None()
-assertFalse(none.isSome(), "option: isSome (none)")
-assertTrue(none.isNone(), "option: isNone (none)")
-assertEq(none.unwrapOr(7), 7, "option: unwrapOr (none)")
-
-ok = r.Result.Ok("yay")
-assertTrue(ok.isOk(), "result: isOk")
-assertFalse(ok.isErr(), "result: isErr")
-assertEq(ok.unwrapOr("no"), "yay", "result: unwrapOr (ok)")
-
-err = r.Result.Err("bad")
-assertFalse(err.isOk(), "result: isOk (err)")
-assertTrue(err.isErr(), "result: isErr (err)")
-assertEq(err.unwrapOr("no"), "no", "result: unwrapOr (err)")
+badHex = try(error(210, "Invalid hex string"))
+assertEq(typeof(badHex), "error", "error-system: try returns error")
+assertEq(badHex.code, 210, "error-system: code")
+assertEq(badHex.message, "Invalid hex string", "error-system: message")
 
 print "=== STDLIB (SMOKE) DONE ==="
 

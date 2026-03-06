@@ -45,6 +45,10 @@ class PEBuilder:
         self.entry_rva: int = 0
         self.import_rva: int = 0
         self.import_size: int = 0
+        # PE Optional Header Subsystem:
+        #   2 = IMAGE_SUBSYSTEM_WINDOWS_GUI
+        #   3 = IMAGE_SUBSYSTEM_WINDOWS_CUI
+        self.subsystem: int = 3
 
     def add_section(self, name: str, data: bytes, characteristics: int) -> Section:
         """Add a section to the image and return its :class:`Section` record.
@@ -137,7 +141,7 @@ class PEBuilder:
 
         size_headers = align_up(0x80 + 4 + 20 + 0xF0 + 40 * len(self.sections), self.file_alignment)
 
-        subsystem = 3  # CUI
+        subsystem = int(getattr(self, "subsystem", 3) or 3)
         # NX_COMPAT | TERMINAL_SERVER_AWARE ; ASLR OFF (no DYNAMIC_BASE)
         dll_chars = 0x0100 | 0x8000
 

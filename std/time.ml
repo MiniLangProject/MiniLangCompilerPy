@@ -506,10 +506,10 @@ namespace date
   /*
   parse a date in the form YYYY-MM-DD
   input: string text
-  returns: Result<Date, string>
+  returns: Date OR error(...)
   */
   function parse(text)
-    // Returns Result<Date, string>
+    // Returns Date OR error(...)
     if typeof(text) != "string" then
       return _timeErr("date.parse: expected string")
     end if
@@ -652,10 +652,10 @@ namespace clock
   /*
   parse time in the form HH:MM or HH:MM:SS[.mmm]
   input: string text
-  returns: Result<Time, string>
+  returns: Time OR error(...)
   */
   function parse(text)
-    // Returns Result<Time, string>
+    // Returns Time OR error(...)
     if typeof(text) != "string" then
       return _timeErr("time.parse: expected string")
     end if
@@ -820,10 +820,10 @@ namespace datetime
   /*
   parse a DateTime in the form "YYYY-MM-DD HH:MM:SS[.mmm]" (also accepts 'T')
   input: string text
-  returns: Result<DateTime, string>
+  returns: DateTime OR error(...)
   */
   function parse(text)
-    // Returns Result<DateTime, string>
+    // Returns DateTime OR error(...)
     if typeof(text) != "string" then
       return _timeErr("datetime.parse: expected string")
     end if

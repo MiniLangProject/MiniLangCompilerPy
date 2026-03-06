@@ -23,7 +23,6 @@ function _fsErr(msg)
   return error(1, msg)
 end function
 
-import std.result as r
 import std.string as s
 
 // ------------------------------------------------------------
@@ -297,7 +296,7 @@ end function
 /*
 write all bytes to a file (overwrites if it exists)
 input: string path, bytes data
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function writeAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then
@@ -324,7 +323,7 @@ end function
 /*
 read all bytes from a file
 input: string path
-returns: Result<bytes, string> bytes
+returns: bytes data OR error(...)
 */
 function readAllBytes(path)
   if typeof(path) != "string" then
@@ -408,7 +407,7 @@ end function
 /*
 write all text to a file (overwrites if it exists)
 input: string path, string text
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function writeAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then
@@ -435,7 +434,7 @@ end function
 /*
 read all text from a file (assumes UTF-8)
 input: string path
-returns: Result<string, string> text
+returns: string text OR error(...)
 */
 function readAllText(path)
   if typeof(path) != "string" then
@@ -529,7 +528,7 @@ end function
 /*
 copy a file
 input: string sourcePath, string destPath, bool overwrite
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function copyFile(sourcePath, destPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destPath) != "string" then
@@ -553,7 +552,7 @@ end function
 /*
 move/rename a file
 input: string sourcePath, string destPath, bool overwrite
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function moveFile(sourcePath, destPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destPath) != "string" then
@@ -582,7 +581,7 @@ end function
 /*
 get the size of a file in bytes
 input: string path
-returns: Result<int, string> size
+returns: int size OR error(...)
 */
 function fileSize(path)
   if typeof(path) != "string" then
@@ -607,7 +606,7 @@ end function
 /*
 append bytes to a file (simple implementation: read + rewrite)
 input: string path, bytes data
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function appendAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then
@@ -629,7 +628,7 @@ end function
 /*
 append text to a file (simple implementation: read + rewrite)
 input: string path, string text
-returns: Result<bool, string> ok
+returns: bool ok OR error(...)
 */
 function appendAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then
@@ -651,7 +650,7 @@ end function
 /*
 read a file as lines (split by '\n', trims a trailing '\r')
 input: string path
-returns: Result<array, string> lines
+returns: array lines OR error(...)
 */
 function readAllLines(path)
   t = readAllText(path)

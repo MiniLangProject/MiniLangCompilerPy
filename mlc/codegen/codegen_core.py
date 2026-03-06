@@ -19,7 +19,8 @@ from ..tools import align_up, enc_int, enc_void
 class CodegenCore:
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
-                 extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False, trace_calls: bool = False):
+                 extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False, trace_calls: bool = False,
+                 subsystem: str = 'console'):
         self.ml = minilang_mod
         self.source = source
         self.filename = filename
@@ -52,6 +53,10 @@ class CodegenCore:
         # Runtime debug: print each entered function name.
         # Enabled via CLI flag --trace-calls.
         self.trace_calls = bool(trace_calls)
+
+        # PE/runtime subsystem selection (console or windows).
+        self.subsystem = str(subsystem or 'console').lower()
+        self.is_windows_subsystem = self.subsystem == 'windows'
 
         # `import ... as alias` maps alias -> package name (compile-time only)
         self.import_aliases: Dict[str, str] = dict(import_aliases or {})
@@ -225,7 +230,7 @@ class CodegenCore:
 
         # Imports (filled later)
         self.imports = {KERNEL32: ['GetStdHandle', 'ReadFile', 'WriteFile', 'WriteConsoleW', 'MultiByteToWideChar',
-                                   'SetConsoleOutputCP', 'ExitProcess', 'VirtualAlloc', 'VirtualFree',
+                                   'SetConsoleOutputCP', 'FreeConsole', 'ExitProcess', 'VirtualAlloc', 'VirtualFree',
                                    'GetCommandLineW', 'LocalFree', 'WideCharToMultiByte'], MSVCRT: ['_gcvt', 'fmod'],
             'shell32.dll': ['CommandLineToArgvW'],
 

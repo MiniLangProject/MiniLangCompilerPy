@@ -2325,7 +2325,7 @@ def main() -> int:
         tests.append(lambda: TestResult(name="language_suite.ml (full language suite)", status="SKIP",
                                         details="language_suite.ml not found"))
 
-    # Stdlib unit tests (std.core/std.assert/std.result)
+    # Stdlib unit tests (std.core/std.assert/native error handling)
     if std_test_ml is not None:
         tests.append(lambda: test_program_no_fail(name="stdlib_unit_tests.ml (stdlib unit)", mlc_runner=mlc_runner,
                                                   ml_path=std_test_ml,

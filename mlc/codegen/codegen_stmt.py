@@ -3264,6 +3264,14 @@ class CodegenStmt:
 
         a.sub_rsp_imm32(main_frame)
 
+        # For GUI / windows-subsystem builds, detach from any inherited console.
+        # This preserves normal Win32 window behavior (e.g. fullscreen) while
+        # preventing a console window/scrollbar from sticking around when started
+        # from PowerShell/cmd.
+        if getattr(self, 'is_windows_subsystem', False):
+            a.mov_rax_rip_qword('iat_FreeConsole')
+            a.call_rax()
+
         # GetStdHandle(STD_OUTPUT_HANDLE=-11)
         a.mov_rcx_imm32(0xFFFFFFF5)
         a.mov_rax_rip_qword('iat_GetStdHandle')
@@ -3271,9 +3279,10 @@ class CodegenStmt:
         a.mov_rbx_rax()
 
         # SetConsoleOutputCP(CP_UTF8=65001) so UTF-8 bytes are displayed correctly if we fall back to WriteFile
-        a.mov_rcx_imm32(65001)
-        a.mov_rax_rip_qword('iat_SetConsoleOutputCP')
-        a.call_rax()
+        if not getattr(self, 'is_windows_subsystem', False):
+            a.mov_rcx_imm32(65001)
+            a.mov_rax_rip_qword('iat_SetConsoleOutputCP')
+            a.call_rax()
 
         # Initialize heap + GC globals (implemented in CodegenMemory).
         # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.

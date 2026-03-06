@@ -64,6 +64,23 @@ def parse_size(s: str) -> int:
         raise argparse.ArgumentTypeError(f"size must be > 0: {s!r}")
     return out
 
+
+
+def _parse_subsystem(value: str) -> int:
+    raw = str(value).strip().lower()
+    mapping = {
+        "console": 3,
+        "cui": 3,
+        "windows": 2,
+        "window": 2,
+        "gui": 2,
+    }
+    if raw not in mapping:
+        raise argparse.ArgumentTypeError(
+            f"invalid subsystem: {value!r} (use console/cui or windows/window/gui)"
+        )
+    return mapping[raw]
+
 # ---------------- imports / multi-file loader ----------------
 
 def _flatten_program(program: Any) -> List[Any]:
@@ -1300,6 +1317,7 @@ def compile_to_exe(
     heap_config: Optional[Dict[str, Any]] = None,
     call_profile: bool = False,
     trace_calls: bool = False,
+    subsystem: int = 3,
 ) -> None:
     ml = load_minilang_frontend(input_ml)
     source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs, keep_going=keep_going, max_errors=max_errors)
@@ -1337,6 +1355,7 @@ def compile_to_exe(
 
     # Build PE with 2-pass layout (important!)
     pe = PEBuilder()
+    pe.subsystem = int(subsystem or 3)
 
     text_sec = pe.add_section('.text', bytes(cg.asm.buf), 0x60000020)
     rdata_sec = pe.add_section('.rdata', bytes(cg.rdata.data), 0x40000040)
@@ -1748,6 +1767,8 @@ def main(argv: List[str]) -> int:
 
     # Debug tracing (optional)
     parser.add_argument('--trace-calls', action='store_true', help='print each entered function name to stderr (runtime trace)')
+    parser.add_argument('--subsystem', type=_parse_subsystem, default=3,
+                        help='PE subsystem: console|cui or windows|window|gui (default: console)')
 
     args = parser.parse_args(argv[1:])
 
@@ -1821,6 +1842,7 @@ def main(argv: List[str]) -> int:
             trace_calls=bool(getattr(args, "trace_calls", False)),
             keep_going=bool(getattr(args, "keep_going", False)),
             max_errors=int(getattr(args, "max_errors", 20) or 20),
+            subsystem=int(getattr(args, "subsystem", 3) or 3),
         )
 
     except MultiCompileError as me:

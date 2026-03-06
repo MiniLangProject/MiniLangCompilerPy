@@ -258,7 +258,7 @@ end function
 /*
 Creates a TCP connection to an IPv4 address (dotted) or "localhost".
 input: string host, int port
-returns: Result socketPtr
+returns: socketPtr OR error(...)
 */
 function tcpConnect(host, port)
   if init() == false then
@@ -292,7 +292,7 @@ end function
 /*
 Creates a TCP listening socket on 0.0.0.0:port.
 input: int port, int backlog
-returns: Result serverSocketPtr
+returns: serverSocketPtr OR error(...)
 */
 function tcpListen(port, backlog)
   if init() == false then
@@ -336,7 +336,7 @@ end function
 /*
 Accepts a client connection on a listening socket.
 input: ptr serverSocket
-returns: Result clientSocketPtr
+returns: clientSocketPtr OR error(...)
 */
 function tcpAccept(serverSocket)
   if not _isSockHandle(serverSocket) then
@@ -355,7 +355,7 @@ end function
 /*
 Accepts a client connection and returns peer info.
 input: ptr serverSocket
-returns: Result array [ptr clientSocket, string peerIp, int peerPort]
+returns: array [ptr clientSocket, string peerIp, int peerPort] OR error(...)
 */
 function tcpAcceptPeer(serverSocket)
   if not _isSockHandle(serverSocket) then
@@ -384,7 +384,7 @@ end function
 /*
 Sends all bytes on a TCP socket (loops until everything is sent).
 input: ptr socket, bytes data
-returns: Result int bytesSent
+returns: int bytesSent OR error(...)
 */
 function tcpSendAll(sock, data)
   if not _isSockHandle(sock) then
@@ -421,7 +421,7 @@ end function
 /*
 Receives up to maxBytes from a TCP socket.
 input: ptr socket, int maxBytes
-returns: Result bytes data (empty bytes = connection closed)
+returns: bytes data OR error(...) (empty bytes = connection closed)
 */
 function tcpRecv(sock, maxBytes)
   if not _isSockHandle(sock) then
@@ -486,7 +486,7 @@ end function
 /*
 Opens a UDP socket.
 input: (none)
-returns: Result socketPtr
+returns: socketPtr OR error(...)
 */
 function udpOpen()
   if init() == false then
@@ -504,7 +504,7 @@ end function
 /*
 Binds a UDP socket to 0.0.0.0:port.
 input: ptr socket, int port
-returns: Result bool success
+returns: bool success OR error(...)
 */
 function udpBind(sock, port)
   if not _isSockHandle(sock) then
@@ -526,7 +526,7 @@ end function
 /*
 Sends a UDP datagram to an IPv4 host.
 input: ptr socket, string host, int port, bytes data
-returns: Result int bytesSent
+returns: int bytesSent OR error(...)
 */
 function udpSendTo(sock, host, port, data)
   if not _isSockHandle(sock) then
@@ -561,7 +561,7 @@ end function
 /*
 Receives a UDP datagram.
 input: ptr socket, int maxBytes
-returns: Result array [bytes data, string peerIp, int peerPort]
+returns: array [bytes data, string peerIp, int peerPort] OR error(...)
 */
 function udpRecvFrom(sock, maxBytes)
   if not _isSockHandle(sock) then

@@ -16,7 +16,6 @@
 
 import std.assert as a
 import std.core as c
-import std.result as r
 import std.string as s
 import std.bytes as b
 import std.encoding.hex as hx
@@ -73,21 +72,14 @@ function test_core_assert_result()
   chk(a.assertEq(c.clamp(5, 0, 3), 3, "core: clamp hi"))
   chk(a.assertEq(c.clamp(-2, 0, 3), 0, "core: clamp lo"))
 
-  opt = r.Option.Some(42)
-  chk(a.assertTrue(opt.isSome(), "result: Option isSome"))
-  chk(a.assertEq(opt.unwrapOr(0), 42, "result: Option unwrapOr"))
+  okHex = hx.decode("4142")
+  chk(a.assertTrue(typeof(okHex) != "error", "error-system: decode ok"))
+  chk(a.assertEq(hx.encode(okHex), "4142", "error-system: decode value"))
 
-  // new helpers
-  opt2 = r.Option.Some(7).map(times2)
-  chk(a.assertTrue(opt2.isSome(), "result: Option map isSome"))
-  chk(a.assertEq(opt2.unwrapOr(0), 14, "result: Option map value"))
-
-  opt3 = r.Option.None().unwrapOrElse(ret99)
-  chk(a.assertEq(opt3, 99, "result: Option unwrapOrElse"))
-
-  none = r.Option.None()
-  chk(a.assertTrue(none.isNone(), "result: Option isNone"))
-  chk(a.assertEq(none.unwrapOr(7), 7, "result: Option unwrapOr default"))
+  caught = try(error(210, "Invalid hex string"))
+  chk(a.assertEq(typeof(caught), "error", "error-system: try returns error"))
+  chk(a.assertEq(caught.code, 210, "error-system: code"))
+  chk(a.assertEq(caught.message, "Invalid hex string", "error-system: message"))
 
 end function
 

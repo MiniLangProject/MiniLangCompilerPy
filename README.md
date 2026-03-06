@@ -1147,7 +1147,6 @@ Common modules (subset; evolves over time):
 
 - **std.core**: small helpers (e.g. `min/max/clamp`, …)
 - **std.assert**: assertions for tests and small programs
-- **std.result**: `Option` and `Result` (methods like `isOk/isErr`, `isSome/isNone`, `map`, `unwrapOr`, `unwrapOrElse`, …)
 - **std.string**: string utilities (`trim`, `split`, `join`, `replaceAll`, …)
 - **std.bytes**: bytes helpers (`concat`, `equals`, `ctEquals` (constant-time-ish), …)
 - **std.encoding.hex**, **std.encoding.base64**: encoding helpers
@@ -1157,15 +1156,14 @@ Common modules (subset; evolves over time):
 - **std.net**: TCP/UDP networking
 - **std.ds.\***: stack/queue/hashmap/set
 
-Stdlib APIs that can fail (I/O, networking, parsing, …) typically return a `Result` instead of throwing exceptions:
+Stdlib APIs that can fail (I/O, networking, parsing, …) use MiniLang's native `error(...)` system. In practice this means a function either returns its normal value or an `error` value that automatically propagates unless you intercept it with `try(...)`.
 
 ```ml
 import std.fs as fs
 
-w = fs.writeAllText("demo.txt", "hello
-")
-if not w.isOk() then
-  print "write failed"
+w = try(fs.writeAllText("demo.txt", "hello\n"))
+if typeof(w) == "error" then
+  print "write failed: " + w.message
 end if
 ```
 
@@ -1378,8 +1376,8 @@ File I/O is provided by the **standard library** module `std.fs`, with convenien
 - `writeAllBytes`, `readAllBytes`
 - `exists`, `delete`, `fileSize`, `copyFile`, `moveFile`
 
-Most functions return a `Result` (`.isOk()/.isErr()` and `.value` on success).
-A few return plain `bool` (e.g. `exists`, `delete`).
+Most functions that can fail return either their normal value or `error(...)`.
+A few APIs return plain `bool` (e.g. `exists`, `delete`).
 
 Example:
 
@@ -1388,10 +1386,10 @@ import std.fs as fs
 import std.string as s
 
 p = "hello.txt"
-chk = fs.writeAllText(p, "hello\nworld\n")
-if chk.isOk() then
-  r = fs.readAllText(p)
-  if r.isOk() and s.startsWith(r.value, "hello") then
+chk = try(fs.writeAllText(p, "hello\nworld\n"))
+if typeof(chk) != "error" then
+  r = try(fs.readAllText(p))
+  if typeof(r) != "error" and s.startsWith(r, "hello") then
     print "ok"
   end if
 end if
@@ -1578,14 +1576,14 @@ end function
 loadConfig("cfg.txt")
 ```
 
-### 15.2.1 Optional APIs (`void` as "None")
+### 15.2.1 Optional APIs (`void` as absence/failure)
 
-Some builtins intentionally return `void` to indicate failure/absence ("Option" style), e.g.:
+Some builtins intentionally return `void` to indicate failure/absence, e.g.:
 - `fromHex(str)`
 - `slice(bytes, off, len)`
 - `decode(bytes, encoding)`
 
-If you prefer strict behavior, use the stdlib wrappers that return an `error(...)` instead:
+If you prefer strict behavior, use the stdlib wrappers that return `error(...)` instead:
 - `std.encoding.hex.decodeOrError(s)`
 - `std.bytes.fromHexOrError(s)`
 - `std.bytes.subOrError(b, off, len)`
