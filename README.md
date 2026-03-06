@@ -136,7 +136,7 @@ Tip: `python mlc_win64.py --help` prints the full option list.
 Notes (current implementation):
 - Targets Windows x64 console (PE32+).
 - Heap parameters can be configured via `--heap-*` flags (reserve/commit/grow/shrink).
-- If a top-level `function main(args)` exists, the native entrypoint will call it after top-level code has executed. `args` is `argv[1..]` as an array of strings. The returned int becomes the process exit code (void -> 0).
+- If a top-level `function main(args)` exists, the native entrypoint will call it after module initialization has completed. Imported module initializers and the entry file's top-level initialization run automatically before `main`. `args` is `argv[1..]` as an array of strings. The returned int becomes the process exit code (void -> 0).
 - The native runtime uses a VirtualAlloc heap with **separate reserve/commit**: it reserves a large address range and commits pages on demand.
 - Listing order is stable: optional PE dump -> `.text` listing -> optional section dumps.
 - The compiler uses the shared MiniLang frontend for parsing (tokenizer/parser).
@@ -855,7 +855,7 @@ Rules:
 - Signature must be `main(args)` (exactly 1 parameter).
 - `args` contains `argv[1..]` (arguments after the executable name), parsed with Windows quoting rules.
 - If `main` returns an `int`, it becomes the process exit code. If it returns `void` (no return), the exit code is `0`.
-- The entrypoint call happens **after** top-level statements have executed (so you can keep top-level setup code).
+- The entrypoint call happens **after** module initialization has executed. Imported modules are initialized automatically before the entry file continues, and all module-init blocks run at most once.
 
 
 ### Recursion
@@ -1071,14 +1071,16 @@ Rules:
 - If the file is not found there, the compiler also searches the include roots in order: **entry file directory (implicit)** first, then the `-I/--import-path` directories (in the order provided).
 - If an import matches multiple files across the search paths, compilation fails with an **ambiguous import** error listing the matches.
 - Diagnostics prefer short, stable paths (relative to the entry file directory) when possible.
-- Imported modules must be **declaration-only** (libraries). At top-level (and inside `namespace` blocks) only declarations are allowed:
+- Imported modules remain **declaration-oriented**. At top-level (and inside `namespace` blocks) the supported forms are:
   - `package`, `import`, `namespace`
   - `function`, `struct`, `enum`
   - `extern function` / `extern struct`
-  - global `const` and global assignments **only with `constexpr` initializers** (side-effect free; literals, simple arithmetic/bitwise ops, references to other `const`s/enum values, …)
+  - global `const` (initializer must be `constexpr`)
+  - global assignments (runtime initializers are allowed)
   - enum variants with explicit `= <value>` must also be `constexpr`
-  Anything that would execute code at import-time (e.g. `print`, function calls, `if/while/for`, non-constexpr initializers) is rejected.
-- Import cycles are detected and rejected.
+- Imported top-level global assignments are compiled as internal **module initialization** code. They run automatically before `main(args)` and each module-init block runs at most once.
+- Side-effectful top-level statements other than global assignments are still rejected in imported modules (for example `print`, top-level `if/while/for`, or arbitrary expression statements).
+- Harmless import cycles are supported, and self-imports are ignored. Cycles that create unsafe cross-module initialization reads are diagnosed at runtime during module initialization.
 - `import ... as <alias>` is supported: it creates a compile-time alias for the imported module’s `package` name, so you can write e.g. `g.add()` instead of `geom.vec.add()`. The imported file must declare `package ...`.
 - Alias names must be valid identifiers and must not be reserved (`try`, `error`).
 - If an imported file declares `package foo.bar`, its location must match that package when resolved via a stable root (importing directory or `-I` root): the file should be found as `foo/bar.ml` under that root. (Absolute-path imports skip this check.)
@@ -1097,6 +1099,31 @@ This is used by the native compiler’s import system (for `import ... as <alias
 Notes:
 - `package` must be the **first** statement in the file (before `import`, `namespace`, `function`, etc.).
 - It is compile-time only (no runtime effect).
+
+### Module initialization
+
+Imported modules may contain top-level global assignments such as:
+
+```ml
+package demo
+
+players = [void, void, void, void]
+count = len(players)
+```
+
+These assignments are compiled into internal module-init code. The compiler/runtime ensures that:
+
+- imported modules initialize automatically before `main(args)`
+- each module is initialized at most once
+- self-imports are ignored
+- simple cyclic imports are allowed
+- unsafe cross-module reads during initialization are reported instead of silently using half-initialized state
+
+Top-level `const` still stays compile-time only:
+
+```ml
+const Answer = 42
+```
 
 ---
 
@@ -1635,7 +1662,7 @@ Statements are separated by newlines or `;`.
 - `switch <expr> ... end switch`
 - `struct Name ... end struct` (optional legacy `are` after the name)
 - `enum Name ... end enum` (optional legacy `are` after the name; native supports optional `= <constexpr>` values)
-- `namespace Name ... end namespace` (top-level or nested in namespaces; declarations only; native compiler)
+- `namespace Name ... end namespace` (top-level or nested in namespaces; imported modules remain declaration-oriented, but top-level global assignments are allowed; native compiler)
 - `package foo.bar` (top-level only; must be the first statement; native compiler)
 - `import "relative/or/absolute/path.ml" [as <alias>]` (top-level only; native compiler)
 - `import foo.bar [as <alias>]` (module-style import; resolves to `foo/bar.ml`; native compiler)
@@ -1735,7 +1762,7 @@ What works:
 - `struct` (constructors + field read/write)
 - `enum` (values like `Color.Red`, comparisons, printing, `switch`)
 - `namespace` blocks (compile-time name qualification)
-- `package` + `import` (compile-time multi-file merge; imported files must be declaration-only)
+- `package` + `import` (compile-time multi-file merge; imported modules support runtime-initialized globals, self-import ignore, and harmless import cycles)
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
 - `extern function` via the PE import table (IAT)

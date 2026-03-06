@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import re
 
 from ..tools import enc_void
+from ..constants import ERR_MODULE_INIT_CYCLE
 
 
 def _sanitize_ident(name: str) -> str:
@@ -658,6 +659,77 @@ class CodegenScope:
 
     # --------- scoped load/store ---------
 
+    def _emit_module_init_dependency_error(self, *, target_name: str, target_file: str, target_state: int, node: Any = None) -> None:
+        """Abort with a clean runtime diagnostic for illegal module-init global reads."""
+        state_txt = 'initializing' if int(target_state) == 1 else 'not initialized'
+        cur_file = getattr(self, '_module_init_active_file', None)
+        cur_disp = str(cur_file) if isinstance(cur_file, str) and cur_file else '<entry>'
+        tgt_disp = str(target_file) if isinstance(target_file, str) and target_file else '<unknown>'
+        msg = (
+            f"Cyclic/invalid module initialization dependency while reading '{target_name}': "
+            f"module '{tgt_disp}' is {state_txt} (from '{cur_disp}')"
+        )
+        if hasattr(self, '_emit_make_error_const') and callable(getattr(self, '_emit_make_error_const')):
+            self._emit_make_error_const(ERR_MODULE_INIT_CYCLE, msg)
+            self.asm.mov_r64_r64('rcx', 'rax')
+            self.asm.call('fn_unhandled_error_exit')
+            return
+        raise self.error(msg, node)
+
+    def _maybe_emit_module_init_guard_for_global_read(self, binding: VarBinding, *, target_name: str, node: Any = None) -> None:
+        """Guard cross-module global reads during top-level module initialization.
+
+        Allowed:
+        - reads outside module-init emission
+        - reads of globals owned by the current module
+        - reads of globals from modules whose init status is INITIALIZED (2)
+
+        Illegal and diagnosed:
+        - reads from a module still INITIALIZING (1)
+        - reads from a module not yet INITIALIZED (0)
+        """
+        if not bool(getattr(self, '_module_init_active', False)):
+            return
+        owner_map = getattr(self, '_global_owner_file', None) or {}
+        if not isinstance(owner_map, dict):
+            return
+        tgt_file = owner_map.get(str(target_name))
+        if not (isinstance(tgt_file, str) and tgt_file):
+            return
+        cur_file = getattr(self, '_module_init_active_file', None)
+        if isinstance(cur_file, str) and cur_file == tgt_file:
+            return
+        status_map = getattr(self, '_module_init_status_labels', None) or {}
+        if not isinstance(status_map, dict):
+            return
+        status_lbl = status_map.get(tgt_file)
+        if not (isinstance(status_lbl, str) and status_lbl):
+            return
+
+        a = self.asm
+        ok_lbl = f"lbl_modinit_read_ok_{getattr(self, 'new_label_id')()}"
+        a.mov_rax_rip_qword(status_lbl)
+        a.cmp_rax_imm8(2)
+        a.jcc('e', ok_lbl)
+        # 0 = uninitialized, 1 = initializing. Both are illegal to read across modules
+        # while top-level init is still running; 1 is the true cycle case, 0 is a forward
+        # dependency into a module that has not run yet.
+        state_txt_lbl = f"{status_lbl}"  # keep Python-side state for the message below
+        # Determine the current state value conservatively for the diagnostic text.
+        # The runtime branch only reaches here for 0 or 1. We do not need the exact value
+        # in machine state afterwards because fn_unhandled_error_exit does not return.
+        # Use a tiny split so the message is specific.
+        st_init_lbl = f"lbl_modinit_read_initializing_{getattr(self, 'new_label_id')()}"
+        st_after_lbl = f"lbl_modinit_read_state_after_{getattr(self, 'new_label_id')()}"
+        a.cmp_rax_imm8(1)
+        a.jcc('e', st_init_lbl)
+        self._emit_module_init_dependency_error(target_name=str(target_name), target_file=tgt_file, target_state=0, node=node)
+        a.jmp(st_after_lbl)
+        a.mark(st_init_lbl)
+        self._emit_module_init_dependency_error(target_name=str(target_name), target_file=tgt_file, target_state=1, node=node)
+        a.mark(st_after_lbl)
+        a.mark(ok_lbl)
+
     def emit_load_var_scoped(self, name: object, node: Any = None) -> None:
         """
         Emit code that loads a variable into the value register.
@@ -757,6 +829,7 @@ class CodegenScope:
         if b.kind == "global":
             if b.label is None:
                 raise self.error(f"Internal error: missing global label for '{name_s}'", node)
+            self._maybe_emit_module_init_guard_for_global_read(b, target_name=name_s, node=node)
             a.mov_rax_rip_qword(b.label)
             return
 

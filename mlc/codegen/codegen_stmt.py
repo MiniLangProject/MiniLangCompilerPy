@@ -2923,6 +2923,32 @@ class CodegenStmt:
 
         program = _flatten_runtime(program)
 
+        # Track which module/file owns each top-level global/const runtime binding.
+        # Used for module-init dependency diagnostics on cross-module global reads.
+        self._global_owner_file = {}
+        self._module_init_status_labels = {}
+        self._module_init_active = False
+        self._module_init_active_file = None
+        try:
+            _assign_cls = getattr(self.ml, 'Assign', None)
+            _const_cls = getattr(self.ml, 'ConstDecl', None)
+            for _st in program:
+                _st_file = getattr(_st, '_filename', None)
+                if not (isinstance(_st_file, str) and _st_file):
+                    continue
+                _is_bind = False
+                if _assign_cls is not None and isinstance(_st, _assign_cls):
+                    _is_bind = True
+                if _const_cls is not None and isinstance(_st, _const_cls):
+                    _is_bind = True
+                if not _is_bind:
+                    continue
+                _nm = getattr(_st, 'name', None)
+                if isinstance(_nm, str) and _nm:
+                    self._global_owner_file[_nm] = _st_file
+        except Exception:
+            pass
+
         # Step 6.1: analyze nested functions + captures (closures preparation)
         nested_fns = self._closure_analyze_program()
 
@@ -3497,9 +3523,74 @@ class CodegenStmt:
         for _fn in (getattr(self, 'nested_user_functions', {}) or {}).values():
             _scan_function_for_global_decls(_fn)
 
-        # Compile top-level statements
-        for st in program:
-            self.emit_stmt(st)
+        # Group merged top-level statements into internal per-file module-init blocks.
+        # These init blocks are auto-called before main(args), are not user-visible,
+        # and are guarded so each module runs at most once.
+        def _group_program_by_file(stmts: List[Any]) -> List[Tuple[str, List[Any]]]:
+            groups: List[Tuple[str, List[Any]]] = []
+            cur_file: Optional[str] = None
+            cur_items: List[Any] = []
+            synthetic_idx = 0
+
+            for st in stmts:
+                st_file = getattr(st, '_filename', None)
+                if not (isinstance(st_file, str) and st_file):
+                    if cur_file is None:
+                        st_file = f"<module:{synthetic_idx}>"
+                        synthetic_idx += 1
+                    else:
+                        st_file = cur_file
+                if cur_file is None:
+                    cur_file = st_file
+                if st_file != cur_file:
+                    groups.append((cur_file, cur_items))
+                    cur_file = st_file
+                    cur_items = []
+                cur_items.append(st)
+
+            if cur_items:
+                groups.append((cur_file or '<module:entry>', cur_items))
+            return groups
+
+        module_init_recs: List[Tuple[str, List[Any], str, str, str]] = []
+        for _mid, (_mfile, _mstmts) in enumerate(_group_program_by_file(program), start=1):
+            fn_lbl = f"modinit_{_mid}"
+            flag_lbl = f"modinit_done_{_mid}"
+            status_lbl = f"modinit_status_{_mid}"
+            self.data.add_u64(flag_lbl, 0)
+            self.data.add_u64(status_lbl, 0)  # 0=uninitialized, 1=initializing, 2=initialized
+            self._module_init_status_labels[_mfile] = status_lbl
+            module_init_recs.append((_mfile, _mstmts, fn_lbl, flag_lbl, status_lbl))
+
+        # Auto-run internal module init blocks before main(args).
+        # IMPORTANT: run them inline inside the entry frame.
+        # Top-level stmt emission uses the entry scratch/expr-temp frame layout and
+        # assumes the current RSP-based offsets are valid. Emitting them as separate
+        # subroutines without a matching frame/prologue corrupts the stack/ABI.
+        # We still keep internal per-module guard labels/flags so each block executes
+        # at most once, but the execution itself stays inside the entry stub.
+        for _mfile, _mstmts, _fn_lbl, _flag_lbl, _status_lbl in module_init_recs:
+            _done_lbl = f"{_fn_lbl}_done"
+            a.mov_rax_rip_qword(_flag_lbl)
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('ne', _done_lbl)
+            a.mov_r64_imm64('rax', 1)
+            a.mov_rip_qword_rax(_flag_lbl)
+            a.mov_r64_imm64('rax', 1)
+            a.mov_rip_qword_rax(_status_lbl)
+            _prev_active = getattr(self, '_module_init_active', False)
+            _prev_file = getattr(self, '_module_init_active_file', None)
+            self._module_init_active = True
+            self._module_init_active_file = _mfile
+            try:
+                for _st in _mstmts:
+                    self.emit_stmt(_st)
+            finally:
+                self._module_init_active = _prev_active
+                self._module_init_active_file = _prev_file
+            a.mov_r64_imm64('rax', 2)
+            a.mov_rip_qword_rax(_status_lbl)
+            a.mark(_done_lbl)
 
         # If main(args) exists (top-level), call it after executing top-level code.
         main_name = getattr(self, "main_function", None)
@@ -3575,6 +3666,10 @@ class CodegenStmt:
         a.xor_ecx_ecx()
         a.mov_rax_rip_qword('iat_ExitProcess')
         a.call_rax()
+
+        # Internal per-file module init blocks currently execute inline in the
+        # entry stub (see above) so they share the entry frame/scratch area.
+        # We intentionally do not emit standalone call/ret bodies here yet.
 
         # User function bodies appended.
         #

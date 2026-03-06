@@ -21,6 +21,8 @@
 import std.assert as a
 import std.core as c
 import std.result as r
+import std.bytes as bx
+import std.encoding.hex as hx
 
 // ------------------------------------------------------------
 // Minimal assert helpers (consistent output format)
@@ -175,6 +177,37 @@ assertEq(arr[2], 30, "array index read 2")
 
 arr[1] = 99
 assertEq(arr[1], 99, "array index write")
+
+// strict index assignment errors (catchable via try)
+function _t_seti_oob()
+  x = [1, 2, 3]
+  x[99] = 7
+  return 0
+end function
+
+function _t_seti_bad_index()
+  x = [1, 2, 3]
+  x["x"] = 7
+  return 0
+end function
+
+function _t_seti_bad_target()
+  v = 123
+  v[0] = 7
+  return 0
+end function
+
+e1 = try(_t_seti_oob())
+assertEq(typeof(e1), "error", "array index write OOB -> error")
+assertEq(e1.code, 1300, "array index write OOB code")
+
+e2 = try(_t_seti_bad_index())
+assertEq(typeof(e2), "error", "array index write bad index -> error")
+assertEq(e2.code, 1301, "array index write bad index code")
+
+e3 = try(_t_seti_bad_target())
+assertEq(typeof(e3), "error", "array index write bad target -> error")
+assertEq(e3.code, 1302, "array index write bad target code")
 
 // strict errors: bad indexing should return error values (catchable via try())
 r_oob = try(arr[3])
@@ -594,6 +627,22 @@ assertEq(bx[3], 255, "fromHex content 3")
 assertEq(hex(fromHex("0x0011AAff")), "0011aaff", "fromHex 0x prefix + case")
 assertEq(typeof(fromHex("0x001")), "void", "fromHex odd digits -> void")
 assertEq(typeof(fromHex("zz")), "void", "fromHex invalid -> void")
+
+// Optional -> strict wrappers
+he = try(hx.decodeOrError("zz"))
+assertEq(typeof(he), "error", "hex.decodeOrError invalid -> error")
+assertEq(he.code, 210, "hex.decodeOrError error code")
+assertEq(he.message, "Invalid hex string", "hex.decodeOrError error message")
+
+be = try(bx.fromHexOrError("zz"))
+assertEq(typeof(be), "error", "bytes.fromHexOrError invalid -> error")
+assertEq(be.code, 211, "bytes.fromHexOrError error code")
+
+
+// decode wrappers
+de = try(bx.decodeUtf8OrError(123))
+assertEq(typeof(de), "error", "bytes.decodeUtf8OrError bad type -> error")
+assertEq(de.code, 211, "bytes.decodeUtf8OrError error code")
 assertEq(typeof(hex(123)), "void", "hex(int) -> void")
 
 // slice(bytes, off, len) -> bytes
@@ -603,6 +652,11 @@ while i < 10
   bs[i] = i
   i = i + 1
 end while
+
+// slice wrappers (strict error variant)
+se = try(bx.subOrError(bs, 9, 2))
+assertEq(typeof(se), "error", "bytes.subOrError OOB -> error")
+assertEq(se.code, 211, "bytes.subOrError error code")
 
 s1 = slice(bs, 2, 4)
 assertEq(typeof(s1), "bytes", "slice typeof")

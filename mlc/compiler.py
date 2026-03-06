@@ -351,13 +351,8 @@ def _check_decl_only_recursive(ml: Any, st: Any, *, module_path: str) -> None:
 
     assign_cls = getattr(ml, 'Assign', None)
     if assign_cls is not None and isinstance(st, assign_cls):
-        ex = getattr(st, 'expr', None)
-        if not _is_constexpr_expr(ml, ex):
-            raise CompileError(
-                f"Imported module global initializer must be constexpr: {module_path}",
-                pos=_node_pos(st),
-                filename=_node_filename(st) or module_path,
-            )
+        # Imported-module globals are initialized at runtime before main(args).
+        # Only `const`/enum values stay under constexpr rules here.
         return
 
     enum_cls = getattr(ml, 'EnumDef', None)
@@ -394,11 +389,13 @@ def load_modules_recursive(
     keep_going: bool = False,
     max_errors: int = 20,
 ) -> tuple[str, List[Any], Dict[str, str], Dict[str, Optional[str]]]:
-    """Load entry file + all transitive imports, with cycle detection.
+    """Load entry file + all transitive imports.
 
     - Imports resolved relative to importing file's directory.
-    - Imported modules must be declaration-only (no top-level executable statements).
-    - Cycles are detected and rejected.
+    - Imported modules must be declaration-only (no top-level executable statements other than
+      declarations and allowed global initializers).
+    - Import cycles are tolerated during loading; a module already being loaded is treated as
+      "known/in progress" and is not recursively re-entered.
     - Import statements are removed from the merged statement list.
 
     When ``keep_going`` is enabled, the loader attempts to continue after an error
@@ -544,29 +541,11 @@ def load_modules_recursive(
 
         if ap in cache or ap in failed:
             return
-
-        # Cycle detection with a readable import chain.
+        # Import cycles are allowed at loader level. If a module is already in progress,
+        # treat it as known and keep going without recursively re-entering it.
+        # This covers both self-imports and broader A <-> B style cycles.
         if ap in visiting:
-            idx = visiting.index(ap)
-            cycle_edges = [e for e in visiting_edges[idx:] if e is not None]
-            if edge is not None:
-                cycle_edges.append(edge)
-
-            msg_lines = ["Import cycle detected:"]
-            if cycle_edges:
-                msg_lines.extend(_format_edge(e) for e in cycle_edges)
-                msg_lines.append(f"  (back to {_pretty_path(ap, entry_root)})")
-            else:
-                msg_lines.append(f"  {_pretty_path(ap, entry_root)} imports itself")
-
-            pos = edge.pos if edge is not None else None
-            fn = edge.filename if edge is not None else ap
-            ce = CompileError("\n".join(msg_lines), pos=pos, filename=fn)
-            if keep_going:
-                _record_exc(ce, default_filename=fn, default_source=sources.get(fn))
-                failed.add(ap)
-                return
-            raise ce
+            return
 
         if not os.path.exists(ap):
             ce = CompileError(f"Import file not found: {ap}", filename=ap)

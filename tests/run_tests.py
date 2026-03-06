@@ -5,7 +5,7 @@ Runs (in one command):
   - language_suite.ml (full language suite)
   - aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)
   - namespace/import tests (existing framework if present)
-  - negative import tests (cycle + "declaration-only" enforcement)
+  - import loader tests (cycles/self-import + declaration-only enforcement)
 
 Default backend: native Win64 compiler + run produced .exe.
 
@@ -776,8 +776,8 @@ def test_package_basic(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_pkg.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE BASIC ===\"",
+            [f'import "{lib_abs}"', "", "import std.assert as t", "", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE BASIC ===\"",
              "assertEq(geom.add(2, 3), 5, \"geom.add\")", "print \"=== DONE ===\"", ]) + "\n", encoding="utf-8", )
 
         exe = td_path / "main_pkg.exe"
@@ -817,8 +817,8 @@ def test_package_dotted(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_pkg_dotted.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE DOTTED ===\"",
+            [f'import "{lib_abs}"', "", "import std.assert as t", "", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", "", "print \"=== PACKAGE DOTTED ===\"",
              "assertEq(geom.vec.add(2, 3), 5, \"geom.vec.add\")", "print \"=== DONE ===\"", ]) + "\n",
                            encoding="utf-8", )
 
@@ -859,8 +859,8 @@ def test_import_as_alias(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_import_as.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}" as g', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", "", "print \"=== IMPORT AS ===\"",
+            [f'import "{lib_abs}" as g', "", "import std.assert as t", "", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", "", "print \"=== IMPORT AS ===\"",
              "assertEq(g.add(2, 3), 5, \"g.add\")", "print \"=== DONE ===\"", ]) + "\n", encoding="utf-8", )
 
         exe = td_path / "main_import_as.exe"
@@ -1133,8 +1133,8 @@ def test_namespace_dotted(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_ns_dotted.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE DOTTED ==="',
+            [f'import "{lib_abs}"', "", "import std.assert as t", "", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE DOTTED ==="',
              'assertEq(geom.vec.add(2, 3), 5, "geom.vec.add")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
 
         return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
@@ -1155,8 +1155,8 @@ def test_namespace_nested(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_ns_nested.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}"', "", "import std.assert as a", "", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE NESTED ==="',
+            [f'import "{lib_abs}"', "", "import std.assert as t", "", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", "", 'print "=== NAMESPACE NESTED ==="',
              'assertEq(geom.vec.add(2, 3), 5, "geom.vec.add")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
 
         return test_program_no_fail(name=name, mlc_runner=mlc_runner, ml_path=main_ml,
@@ -1179,6 +1179,217 @@ def test_compile_expected_fail(*, name: str, mlc_runner: Path, entry_ml: Path, m
                               details=f"compile failed, but error output did not contain expected marker: {must_contain_err!r}",
                               stdout=cr.stdout, stderr=cr.stderr, )
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
+def test_import_cycle_allowed(*, name: str, mlc_runner: Path) -> TestResult:
+    """A <-> B import cycles should load once and compile successfully."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        cyc_dir = td_path / "cyc"
+        cyc_dir.mkdir(parents=True, exist_ok=True)
+
+        a_ml = cyc_dir / "a.ml"
+        b_ml = cyc_dir / "b.ml"
+        main_ml = td_path / "main_cycle_ok.ml"
+
+        a_ml.write_text("\n".join([
+            "package cyc.a",
+            "import cyc.b",
+            "function a()",
+            "  return 11",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        b_ml.write_text("\n".join([
+            "package cyc.b",
+            "import cyc.a",
+            "function b()",
+            "  return 22",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        main_ml.write_text("\n".join([
+            "import cyc.a",
+            "import std.assert as t",
+            'print "=== IMPORT CYCLE OK ==="',
+            't.assertEq(cyc.a.a(), 11, "cyc.a.a")',
+            't.assertEq(cyc.b.b(), 22, "cyc.b.b")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        exe = td_path / "main_cycle_ok.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        if "=== IMPORT CYCLE OK ===" not in out or "=== DONE ===" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output markers",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_import_self_ignored(*, name: str, mlc_runner: Path) -> TestResult:
+    """A module importing itself should be treated as a no-op by the loader."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        doom_dir = td_path / "doom"
+        doom_dir.mkdir(parents=True, exist_ok=True)
+
+        mod_ml = doom_dir / "doomdef.ml"
+        mod_ml.write_text("\n".join([
+            "package doom.doomdef",
+            "import doom.doomdef",
+            "function answer()",
+            "  return 42",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        main_ml = td_path / "main_self_import_ok.ml"
+        main_ml.write_text("\n".join([
+            "import doom.doomdef",
+            "import std.assert as t",
+            'print "=== SELF IMPORT OK ==="',
+            't.assertEq(doom.doomdef.answer(), 42, "doom.doomdef.answer")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        exe = td_path / "main_self_import_ok.exe"
+        cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180)
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout)
+        if "[FAIL]" in out:
+            return TestResult(name=name, status="FAIL", details="program printed at least one [FAIL]",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        if "=== SELF IMPORT OK ===" not in out or "=== DONE ===" not in out:
+            return TestResult(name=name, status="FAIL", details="missing expected output markers",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
+def test_module_init_order(*, name: str, mlc_runner: Path) -> TestResult:
+    """Imported module initializers should run before dependent modules and before main()."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        mod_dir = td_path / "mod"
+        mod_dir.mkdir(parents=True, exist_ok=True)
+
+        b_ml = mod_dir / "b.ml"
+        a_ml = mod_dir / "a.ml"
+        main_ml = td_path / "main_modinit_order.ml"
+
+        b_ml.write_text("\n".join([
+            "package mod.b",
+            "value = 10",
+            "function getValue()",
+            "  return value",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        a_ml.write_text("\n".join([
+            "package mod.a",
+            "import mod.b",
+            "value = mod.b.getValue() + 1",
+            "function getValue()",
+            "  return value",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        main_ml.write_text("\n".join([
+            "import mod.a",
+            "import std.assert as t",
+            'print "=== MODULE INIT ORDER ==="',
+            't.assertEq(mod.b.getValue(), 10, "mod.b.getValue")',
+            't.assertEq(mod.a.getValue(), 11, "mod.a.getValue")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=["=== MODULE INIT ORDER ===", "mod.b.getValue [OK]", "mod.a.getValue [OK]", "=== DONE ==="],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
+
+def test_module_init_once_in_cycle(*, name: str, mlc_runner: Path) -> TestResult:
+    """Cyclic imports should still run each module initializer exactly once."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        cyc_dir = td_path / "cyc"
+        cyc_dir.mkdir(parents=True, exist_ok=True)
+
+        a_ml = cyc_dir / "a.ml"
+        b_ml = cyc_dir / "b.ml"
+        main_ml = td_path / "main_modinit_once_cycle.ml"
+
+        a_ml.write_text("\n".join([
+            "package cyc.a",
+            "import cyc.b",
+            "initCount = 0",
+            "initCount = initCount + 1",
+            "function getInitCount()",
+            "  return initCount",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        b_ml.write_text("\n".join([
+            "package cyc.b",
+            "import cyc.a",
+            "initCount = 0",
+            "initCount = initCount + 1",
+            "function getInitCount()",
+            "  return initCount",
+            "end function",
+        ]) + "\n", encoding="utf-8")
+
+        main_ml.write_text("\n".join([
+            "import cyc.a",
+            "import std.assert as t",
+            'print "=== MODULE INIT ONCE CYCLE ==="',
+            't.assertEq(cyc.a.getInitCount(), 1, "cyc.a init once")',
+            't.assertEq(cyc.b.getInitCount(), 1, "cyc.b init once")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=["=== MODULE INIT ONCE CYCLE ===", "cyc.a init once [OK]", "cyc.b init once [OK]", "=== DONE ==="],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
 
 
 def test_import_decl_only_violation(*, name: str, mlc_runner: Path, lib_bad: Path) -> TestResult:
@@ -1521,41 +1732,80 @@ def test_member_call_arity_error_message(*, name: str, mlc_runner: Path) -> Test
             timeout_run_s=180,
         )
 
-def test_import_constexpr_initializer_rejected(*, name: str, mlc_runner: Path, kind: str) -> TestResult:
-    """Imported-module initializers must be constexpr (const + globals)."""
+def test_import_initializer_behavior(*, name: str, mlc_runner: Path, kind: str) -> TestResult:
+    """Imported const initializers must stay constexpr; global initializers may run at runtime."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
         td_path = Path(td)
 
         lib = td_path / "lib_ce_bad.ml"
         if kind == "const":
-            lib.write_text("\n".join(
-                ["package ce.bad", "function foo()", "  return 1", "end function", "const A = foo()", ]) + "\n",
-                           encoding="utf-8", )
+            lib.write_text(
+                "\n".join(["package ce.bad", "function foo()", "  return 1", "end function", "const A = foo()", ]) + "\n",
+                encoding="utf-8",
+            )
             marker = "Imported module const initializer must be constexpr"
         elif kind == "global":
             lib.write_text(
-                "\n".join(["package ce.bad", "function foo()", "  return 1", "end function", "x = foo()", ]) + "\n",
-                encoding="utf-8", )
-            marker = "Imported module global initializer must be constexpr"
+                "\n".join([
+                    "package ce.bad",
+                    "function foo()",
+                    "  return 1",
+                    "end function",
+                    "x = foo()",
+                    "function getX()",
+                    "  return x",
+                    "end function",
+                ]) + "\n",
+                encoding="utf-8",
+            )
+            marker = None
         else:
             return TestResult(name=name, status="FAIL", details=f"internal: unknown kind {kind!r}")
 
         main_ml = td_path / "main_ce_bad.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
-        main_ml.write_text("\n".join([f'import "{lib_abs}"', 'print "should not reach"', ]) + "\n", encoding="utf-8", )
+        if kind == "const":
+            main_ml.write_text(
+                "\n".join([f'import "{lib_abs}"', 'print "should not reach"', ]) + "\n",
+                encoding="utf-8",
+            )
+        else:
+            main_ml.write_text(
+                "\n".join([f'import "{lib_abs}"', 'print ce.bad.getX()', ]) + "\n",
+                encoding="utf-8",
+            )
 
         exe = td_path / "main_ce_bad.exe"
         cr = compile_native(mlc_runner, main_ml, exe, timeout_s=120)
         out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
 
-        if cr.returncode == 0:
-            return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
-                              stdout=cr.stdout, stderr=cr.stderr, )
+        if kind == "const":
+            if cr.returncode == 0:
+                return TestResult(
+                    name=name,
+                    status="FAIL",
+                    details="expected compile failure, but compile succeeded",
+                    stdout=cr.stdout,
+                    stderr=cr.stderr,
+                )
+            if marker not in out:
+                return TestResult(
+                    name=name,
+                    status="FAIL",
+                    details=f"compile failed, but error output did not contain expected marker: {marker!r}",
+                    stdout=cr.stdout,
+                    stderr=cr.stderr,
+                )
+            return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
-        if marker not in out:
-            return TestResult(name=name, status="FAIL",
-                              details=f"compile failed, but error output did not contain expected marker: {marker!r}",
-                              stdout=cr.stdout, stderr=cr.stderr, )
+        if cr.returncode != 0:
+            return TestResult(
+                name=name,
+                status="FAIL",
+                details=f"compile failed (exit {cr.returncode})",
+                stdout=cr.stdout,
+                stderr=cr.stderr,
+            )
 
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
@@ -1633,8 +1883,8 @@ def test_import_constexpr_ok(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "main_ce_ok.ml"
         lib_abs = str(lib.resolve()).replace("\\", "\\\\")
         main_ml.write_text("\n".join(
-            [f'import "{lib_abs}"', "import std.assert as a", "function assertEq(actual, expected, label)",
-             "  return a.assertEq(actual, expected, label)", "end function", 'print "=== IMPORT CONSTEXPR OK ==="',
+            [f'import "{lib_abs}"', "import std.assert as t", "function assertEq(actual, expected, label)",
+             "  return t.assertEq(actual, expected, label)", "end function", 'print "=== IMPORT CONSTEXPR OK ==="',
              'assertEq(ce.ok.A, 3, "ce.ok.A")', 'assertEq(ce.ok.x, 17, "ce.ok.x")',
              'assertEq(ce.ok.Flags.All, 3, "ce.ok.Flags.All")', 'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
 
@@ -1988,7 +2238,7 @@ def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "call_profile_counts.ml"
 
         main_ml.write_text("\n".join([
-            'import std.assert as a',
+            'import std.assert as t',
             '',
             'function cp_f()',
             '  return 1',
@@ -2011,8 +2261,8 @@ def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
             '  if s.name == "cp_g" then g_calls = s.calls end if',
             'end for',
             '',
-            'a.assertEq(f_calls, 4, "callprof: cp_f calls")',
-            'a.assertEq(g_calls, 2, "callprof: cp_g calls")',
+            't.assertEq(f_calls, 4, "callprof: cp_f calls")',
+            't.assertEq(g_calls, 2, "callprof: cp_g calls")',
             'print "=== DONE ==="',
         ]) + '\n', encoding='utf-8')
 
@@ -2064,7 +2314,6 @@ def main() -> int:
     lib_bad = find_file_by_name(tests_root, "lib_bad.ml")
     geom_ml = find_file_by_name(tests_root, "geom.ml")
     testlib_ml = find_file_by_name(tests_root, "testlib.ml")
-    cycle_a = find_file_by_name(tests_root, "a.ml")
 
     tests: list[Callable[[], TestResult]] = []
 
@@ -2171,14 +2420,11 @@ def main() -> int:
     tests.append(lambda: test_namespace_dotted(name="namespace: dotted", mlc_runner=mlc_runner))
     tests.append(lambda: test_namespace_nested(name="namespace: nested", mlc_runner=mlc_runner))
 
-    # Negative: import cycle
-    if cycle_a is not None:
-        tests.append(
-            lambda: test_compile_expected_fail(name="import cycle detection (a.ml <-> b.ml)", mlc_runner=mlc_runner,
-                                               entry_ml=cycle_a, must_contain_err="Import cycle detected", ))
-    else:
-        tests.append(
-            lambda: TestResult(name="import cycle detection (a.ml <-> b.ml)", status="SKIP", details="a.ml not found"))
+    tests.append(lambda: test_import_cycle_allowed(name="import: cycle allowed (a.ml <-> b.ml)",
+                                                  mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_self_ignored(name="import: self-import ignored", mlc_runner=mlc_runner))
+    tests.append(lambda: test_module_init_order(name="module init: import order + before main", mlc_runner=mlc_runner))
+    tests.append(lambda: test_module_init_once_in_cycle(name="module init: once per module in cycle", mlc_runner=mlc_runner))
 
     # Negative: imported module must be declaration-only
     if lib_bad is not None:
@@ -2209,11 +2455,11 @@ def main() -> int:
     tests.append(lambda: test_no_newlines_required(name="syntax: newlines not required", mlc_runner=mlc_runner))
     tests.append(lambda: test_typequalified_instance_method_uses_this_rejected(
         name="struct methods: type-qualified call uses this rejected", mlc_runner=mlc_runner))
-    tests.append(lambda: test_import_constexpr_initializer_rejected(name="import: constexpr const initializer required",
-                                                                    mlc_runner=mlc_runner, kind="const"))
+    tests.append(lambda: test_import_initializer_behavior(name="import: constexpr const initializer required",
+                                                    mlc_runner=mlc_runner, kind="const"))
     tests.append(
-        lambda: test_import_constexpr_initializer_rejected(name="import: constexpr global initializer required",
-                                                           mlc_runner=mlc_runner, kind="global"))
+        lambda: test_import_initializer_behavior(name="import: runtime global initializer allowed",
+                                                   mlc_runner=mlc_runner, kind="global"))
 
     # main(args) entrypoint tests
     tests.append(
