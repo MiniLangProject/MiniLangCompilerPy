@@ -762,6 +762,36 @@ class CodegenCore:
         a.mov_rax_rip_qword('iat_WriteFile')
         a.call_rax()
 
+    def emit_writefile_ptr_len_stderr(self) -> None:
+        """Write UTF-8 buffer given by (RDX=ptr, R8D=len bytes) to stderr.
+
+        Used for debug tracing such as --trace-calls. We fetch the stderr handle
+        on demand so normal stdout handling stays unchanged.
+        """
+        a = self.asm
+
+        # Preserve ptr/len across GetStdHandle(STD_ERROR_HANDLE=-12).
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.mov_rcx_imm32(-12)
+        a.mov_rax_rip_qword('iat_GetStdHandle')
+        a.call_rax()
+
+        # WriteFile(h=rax, buf=r10, nbytes=r11d, &written, NULL)
+        a.mov_r64_r64('rcx', 'rax')
+        a.mov_r64_r64('rdx', 'r10')
+        a.mov_r32_r32('r8d', 'r11d')
+        a.lea_r9_rip('bytesWritten')
+        a.mov_qword_ptr_rsp20_rax_zero()
+        a.mov_rax_rip_qword('iat_WriteFile')
+        a.call_rax()
+
+    def emit_writefile_stderr(self, buf_label: str, length: int) -> None:
+        """Write UTF-8 constant buffer (rdata label) to stderr using WriteFile."""
+        self.asm.lea_rdx_rip(buf_label)
+        self.asm.mov_r8d_imm32(length)
+        self.emit_writefile_ptr_len_stderr()
+
     def emit_normalize_xmm0_to_value(self) -> None:
         """Normalize XMM0 numeric result: if it is an exact int64, return tagged int, else boxed float."""
         a = self.asm

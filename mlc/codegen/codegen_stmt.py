@@ -2963,11 +2963,15 @@ class CodegenStmt:
                 parent = getattr(nf, '_ml_parent_fn', None)
                 parent_code = getattr(parent, '_ml_codegen_name',
                                       getattr(parent, 'name', 'toplevel')) if parent is not None else 'toplevel'
-                base = getattr(nf, 'name', 'fn')
+                parent_disp = getattr(parent, '_ml_display_name',
+                                      getattr(parent, 'name', 'toplevel')) if parent is not None else 'toplevel'
+                base = str(getattr(nf, 'name', 'fn'))
                 code_name = f"{parent_code}__{base}__n{nested_counter}"
                 nested_counter += 1
+                display_name = f"{parent_disp}.{base}" if parent is not None else base
 
                 setattr(nf, '_ml_codegen_name', code_name)
+                setattr(nf, '_ml_display_name', display_name)
                 self.nested_user_functions[code_name] = nf
 
                 # ------------------------------------------------------------
@@ -2983,10 +2987,11 @@ class CodegenStmt:
             for nm in sorted(self.user_functions.keys()):
                 fn = self.user_functions[nm]
                 code_name = getattr(fn, '_ml_codegen_name', nm)
-                entries.append((str(code_name), str(nm)))
+                disp = getattr(fn, '_ml_display_name', nm)
+                entries.append((str(code_name), str(disp)))
             for nm in sorted(getattr(self, 'nested_user_functions', {}).keys()):
                 fn = (getattr(self, 'nested_user_functions', {}) or {}).get(nm)
-                disp = getattr(fn, 'name', None) if fn is not None else None
+                disp = getattr(fn, '_ml_display_name', None) if fn is not None else None
                 if not (isinstance(disp, str) and disp):
                     disp = str(nm)
                 entries.append((str(nm), str(disp)))
@@ -4278,7 +4283,7 @@ class CodegenStmt:
 
             # Prefer qualified function name if available.
             try:
-                trace_name = str(getattr(fn, 'name', None) or code_name)
+                trace_name = str(getattr(fn, '_ml_display_name', None) or getattr(fn, 'name', None) or code_name)
             except Exception:
                 trace_name = str(code_name)
 
@@ -4288,7 +4293,7 @@ class CodegenStmt:
                 tr_len = int(self.rdata.labels[lbl_tr][1])
             except Exception:
                 tr_len = len((trace_name + "\n").encode("utf-8"))
-            self.emit_writefile(lbl_tr, tr_len)
+            self.emit_writefile_stderr(lbl_tr, tr_len)
 
             a.pop_reg("r9")
             a.pop_reg("r8")

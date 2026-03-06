@@ -1154,6 +1154,8 @@ Common modules (subset; evolves over time):
 - **std.time**: monotonic `ticks()` / `sleep(ms)`, Win32 wall-clock wrappers `std.time.win32.GetLocalTime()` / `GetSystemTime()` (returns `SystemTime`), plus `Date/Time/DateTime` helpers
 - **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io)); plus basic directory helpers (`isDir/isFile/listDir/joinPath`)
 - **std.net**: TCP/UDP networking
+
+There is no separate `std.result` module anymore. MiniLang stdlib code uses the native `error(...)` propagation model plus `try(...)` where explicit handling is needed.
 - **std.ds.\***: stack/queue/hashmap/set
 
 Stdlib APIs that can fail (I/O, networking, parsing, …) use MiniLang's native `error(...)` system. In practice this means a function either returns its normal value or an `error` value that automatically propagates unless you intercept it with `try(...)`.
