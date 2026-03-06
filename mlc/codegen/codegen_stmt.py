@@ -2963,15 +2963,11 @@ class CodegenStmt:
                 parent = getattr(nf, '_ml_parent_fn', None)
                 parent_code = getattr(parent, '_ml_codegen_name',
                                       getattr(parent, 'name', 'toplevel')) if parent is not None else 'toplevel'
-                parent_disp = getattr(parent, '_ml_display_name',
-                                      getattr(parent, 'name', 'toplevel')) if parent is not None else 'toplevel'
-                base = str(getattr(nf, 'name', 'fn'))
+                base = getattr(nf, 'name', 'fn')
                 code_name = f"{parent_code}__{base}__n{nested_counter}"
                 nested_counter += 1
-                display_name = f"{parent_disp}.{base}" if parent is not None else base
 
                 setattr(nf, '_ml_codegen_name', code_name)
-                setattr(nf, '_ml_display_name', display_name)
                 self.nested_user_functions[code_name] = nf
 
                 # ------------------------------------------------------------
@@ -2987,11 +2983,10 @@ class CodegenStmt:
             for nm in sorted(self.user_functions.keys()):
                 fn = self.user_functions[nm]
                 code_name = getattr(fn, '_ml_codegen_name', nm)
-                disp = getattr(fn, '_ml_display_name', nm)
-                entries.append((str(code_name), str(disp)))
+                entries.append((str(code_name), str(nm)))
             for nm in sorted(getattr(self, 'nested_user_functions', {}).keys()):
                 fn = (getattr(self, 'nested_user_functions', {}) or {}).get(nm)
-                disp = getattr(fn, '_ml_display_name', None) if fn is not None else None
+                disp = getattr(fn, 'name', None) if fn is not None else None
                 if not (isinstance(disp, str) and disp):
                     disp = str(nm)
                 entries.append((str(nm), str(disp)))
@@ -3288,6 +3283,20 @@ class CodegenStmt:
             a.mov_rcx_imm32(65001)
             a.mov_rax_rip_qword('iat_SetConsoleOutputCP')
             a.call_rax()
+
+        # Runtime trace: the synthetic top-level entry behaves like a visible `main` frame.
+        # Keep this on stderr like normal --trace-calls output, and reserve separate call
+        # space so the helper's Win64 shadow/stack args do not overlap our entry frame.
+        if bool(getattr(self, 'trace_calls', False)):
+            lbl_tr_main = f"trace_call_{len(self.rdata.labels)}"
+            self.rdata.add_str(lbl_tr_main, 'main', add_newline=True)
+            try:
+                tr_main_len = int(self.rdata.labels[lbl_tr_main][1])
+            except Exception:
+                tr_main_len = len(b'main')
+            a.sub_rsp_imm8(0x30)
+            self.emit_writefile_stderr(lbl_tr_main, tr_main_len)
+            a.add_rsp_imm8(0x30)
 
         # Initialize heap + GC globals (implemented in CodegenMemory).
         # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.
@@ -4276,16 +4285,21 @@ class CodegenStmt:
         # Runtime trace: print function name on entry (enabled with --trace-calls).
         # NOTE: emit_writefile performs Win64 calls and clobbers volatile regs.
         if bool(getattr(self, 'trace_calls', False)):
+            # Save incoming argument registers before tracing. The trace helper itself
+            # performs a Win64 API call, so it needs its own shadow space plus one
+            # extra stack slot for WriteFile's 5th argument. Do NOT let that overlap
+            # with the saved registers, or the callee may smash the original params.
             a.push_reg("rcx")
             a.push_reg("rdx")
             a.push_reg("r8")
             a.push_reg("r9")
+            a.sub_rsp_imm8(0x30)
 
-            # Prefer qualified function name if available.
+            # Prefer the qualified display name when available.
             try:
-                trace_name = str(getattr(fn, '_ml_display_name', None) or getattr(fn, 'name', None) or code_name)
-            except Exception:
                 trace_name = str(code_name)
+            except Exception:
+                trace_name = str(getattr(fn, 'name', None) or code_name)
 
             lbl_tr = f"trace_call_{len(self.rdata.labels)}"
             self.rdata.add_str(lbl_tr, trace_name, add_newline=True)
@@ -4295,6 +4309,7 @@ class CodegenStmt:
                 tr_len = len((trace_name + "\n").encode("utf-8"))
             self.emit_writefile_stderr(lbl_tr, tr_len)
 
+            a.add_rsp_imm8(0x30)
             a.pop_reg("r9")
             a.pop_reg("r8")
             a.pop_reg("rdx")

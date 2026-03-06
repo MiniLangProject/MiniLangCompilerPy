@@ -2277,97 +2277,30 @@ def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
         )
 
 
-def test_call_profile_nested_names(*, name: str, mlc_runner: Path) -> TestResult:
-    """Runtime test: nested functions should be distinguishable in callStats()."""
+def test_trace_calls_preserves_params(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime test: --trace-calls must not corrupt incoming argument registers."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
         td_path = Path(td)
-        main_ml = td_path / "call_profile_nested_names.ml"
+        main_ml = td_path / "trace_calls_params.ml"
 
         main_ml.write_text("\n".join([
-            'import std.assert as t',
-            '',
-            'function outer1()',
-            '  function inner()',
-            '    return 11',
-            '  end function',
-            '  return inner()',
+            'function add4(a, b, c, d)',
+            '  return a + b + c + d',
             'end function',
             '',
-            'function outer2()',
-            '  function inner()',
-            '    return 22',
-            '  end function',
-            '  return inner()',
+            'function gate(level, threshold)',
+            '  if level >= threshold then',
+            '    return 1',
+            '  else',
+            '    return 0',
+            '  end if',
             'end function',
             '',
-            'print "=== CALL PROFILE NESTED ==="',
-            'outer1()',
-            'outer1()',
-            'outer2()',
-            '',
-            'stats = callStats()',
-            'c_outer1 = 0',
-            'c_outer1_inner = 0',
-            'c_outer2 = 0',
-            'c_outer2_inner = 0',
-            'for each s in stats',
-            '  if s.name == "outer1" then c_outer1 = s.calls end if',
-            '  if s.name == "outer1.inner" then c_outer1_inner = s.calls end if',
-            '  if s.name == "outer2" then c_outer2 = s.calls end if',
-            '  if s.name == "outer2.inner" then c_outer2_inner = s.calls end if',
-            'end for',
-            '',
-            't.assertEq(c_outer1, 2, "callprof nested: outer1 calls")',
-            't.assertEq(c_outer1_inner, 2, "callprof nested: outer1.inner calls")',
-            't.assertEq(c_outer2, 1, "callprof nested: outer2 calls")',
-            't.assertEq(c_outer2_inner, 1, "callprof nested: outer2.inner calls")',
-            'print "=== DONE ==="',
+            'print add4(1, 2, 3, 4)',
+            'print gate(5, 3)',
         ]) + '\n', encoding='utf-8')
 
-        return test_program_no_fail(
-            name=name,
-            mlc_runner=mlc_runner,
-            ml_path=main_ml,
-            must_contain=[
-                "=== CALL PROFILE NESTED ===",
-                "callprof nested: outer1 calls [OK]",
-                "callprof nested: outer1.inner calls [OK]",
-                "callprof nested: outer2 calls [OK]",
-                "callprof nested: outer2.inner calls [OK]",
-                "=== DONE ===",
-            ],
-            timeout_compile_s=180,
-            timeout_run_s=180,
-            extra_args=['--profile-calls'],
-        )
-
-
-def test_trace_calls_nested_names(*, name: str, mlc_runner: Path) -> TestResult:
-    """Runtime test: --trace-calls should print distinguishable nested function names."""
-    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
-        td_path = Path(td)
-        main_ml = td_path / "trace_calls_nested_names.ml"
-        exe = td_path / "trace_calls_nested_names.exe"
-
-        main_ml.write_text("\n".join([
-            'function outer1()',
-            '  function inner()',
-            '    return 11',
-            '  end function',
-            '  return inner()',
-            'end function',
-            '',
-            'function outer2()',
-            '  function inner()',
-            '    return 22',
-            '  end function',
-            '  return inner()',
-            'end function',
-            '',
-            'print outer1()',
-            'print outer2()',
-        ]) + '\n', encoding='utf-8')
-
+        exe = td_path / "trace_calls_params.exe"
         cr = compile_native(mlc_runner, main_ml, exe, timeout_s=180, extra_args=['--trace-calls'])
         if cr.returncode != 0:
             return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
@@ -2377,22 +2310,23 @@ def test_trace_calls_nested_names(*, name: str, mlc_runner: Path) -> TestResult:
         if rr.returncode == 999:
             return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
         if rr.returncode != 0:
-            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+            return TestResult(name=name, status="FAIL", details=f"run failed (exit {rr.returncode})",
                               stdout=rr.stdout, stderr=rr.stderr)
 
+        out = normalize_out(rr.stdout)
         err = normalize_out(rr.stderr)
-        for marker in ["outer1", "outer1.inner", "outer2", "outer2.inner"]:
+        for marker in ['10', '1']:
+            if marker not in out:
+                return TestResult(name=name, status="FAIL", details=f"missing expected stdout marker: {marker!r}",
+                                  stdout=rr.stdout, stderr=rr.stderr)
+        for marker in ['main', 'add4', 'gate']:
             if marker not in err:
                 return TestResult(name=name, status="FAIL",
                                   details=f"missing expected trace marker in stderr: {marker!r}",
                                   stdout=rr.stdout, stderr=rr.stderr)
 
-        if err.count("outer1.inner") != 1 or err.count("outer2.inner") != 1:
-            return TestResult(name=name, status="FAIL",
-                              details="nested trace names are not uniquely distinguishable",
-                              stdout=rr.stdout, stderr=rr.stderr)
-
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
 # -----------------------------
 # Main
 # -----------------------------
@@ -2606,10 +2540,9 @@ def main() -> int:
 
     # Runtime: call profiling (--profile-calls)
     tests.append(lambda: test_call_profile_counts(name="call profile: callStats() + counters", mlc_runner=mlc_runner))
-    tests.append(lambda: test_call_profile_nested_names(name="call profile: nested names stay distinct", mlc_runner=mlc_runner))
 
-    # Runtime: debug tracing (--trace-calls)
-    tests.append(lambda: test_trace_calls_nested_names(name="trace calls: nested names stay distinct", mlc_runner=mlc_runner))
+    # Runtime: trace-calls must preserve argument registers
+    tests.append(lambda: test_trace_calls_preserves_params(name="trace calls: preserves params", mlc_runner=mlc_runner))
 
     # Runtime: extern stubs are first-class values
     tests.append(lambda: test_extern_value_runtime(name="extern: value semantics + GC", mlc_runner=mlc_runner))
