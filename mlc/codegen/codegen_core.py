@@ -256,7 +256,7 @@ class CodegenCore:
         # (separate from call arguments temps)
         self.expr_temp_base: int = self.call_temp_base + 0x40
         self.expr_temp_top: int = 0
-        self.expr_temp_max: int = 0x200
+        self.expr_temp_max: int = 0x400
 
         # ------------------------------------------------------------
         # Inline functions (function inline ...)
