@@ -343,6 +343,45 @@ function test_base64_ds()
   chk(a.assertEq(st.len(), 3, "stack: len"))
   chk(a.assertEq(st.peekOr(0), 3, "stack: peekOr"))
   chk(a.assertEq(st.popOr(0), 3, "stack: popOr"))
+  chk(a.assertEq(st.popOr(0), 2, "stack: popOr2"))
+  chk(a.assertEq(st.popOr(0), 1, "stack: popOr3"))
+  chk(a.assertTrue(st.isEmpty(), "stack: empty after pops"))
+
+  // growth + LIFO under larger load
+  for i = 0 to 255
+    st.push(i)
+  end for
+  chk(a.assertEq(st.len(), 256, "stack: len after growth"))
+  chk(a.assertEq(st.peekOr(0), 255, "stack: peek after growth"))
+
+  okLifo = true
+  i = 255
+  while i >= 0
+    v = st.pop()
+    if v != i then
+      okLifo = false
+    end if
+    i = i - 1
+  end while
+  chk(a.assertTrue(okLifo, "stack: lifo after growth"))
+  chk(a.assertTrue(st.isEmpty(), "stack: empty after growth pops"))
+
+  // fromArray / toArray
+  st2 = stack.Stack.fromArray([9, 8, 7])
+  chk(a.assertEq(st2.len(), 3, "stack: fromArray len"))
+  chk(a.assertEq(st2.popOr(0), 7, "stack: fromArray pop"))
+  st2Arr = st2.toArray()
+  chk(a.assertEq(len(st2Arr), 2, "stack: toArray len"))
+  chk(a.assertEq(st2Arr[0], 9, "stack: toArray[0]"))
+  chk(a.assertEq(st2Arr[1], 8, "stack: toArray[1]"))
+
+  // direct constructor compatibility (legacy payload shape)
+  legacy = stack.Stack([4, 5])
+  legacy.push(6)
+  chk(a.assertEq(legacy.popOr(0), 6, "stack: legacy ctor push/pop"))
+  chk(a.assertEq(legacy.popOr(0), 5, "stack: legacy ctor pop2"))
+  chk(a.assertEq(legacy.popOr(0), 4, "stack: legacy ctor pop3"))
+  chk(a.assertTrue(legacy.isEmpty(), "stack: legacy ctor empty"))
 
   // ds.queue
   q = queue.Queue.new()
@@ -541,4 +580,3 @@ function main(args)
   print "=== STDLIB: FAIL ==="
   return 1
 end function
-
