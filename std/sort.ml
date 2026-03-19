@@ -239,16 +239,7 @@ function __allocArray(n, fill)
   if n < 0 then
     return
   end if
-
-  a =[]
-  if n == 0 then
-    return a
-  end if
-
-  for i = 0 to(n - 1)
-    a = a +[fill]
-  end for
-  return a
+  return array(n, fill)
 end function
 
 /*
@@ -313,5 +304,4 @@ function __insertionSortRange(arr, lo, hi, lessFn)
     i = i + 1
   end while
 end function
-
 

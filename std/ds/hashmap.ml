@@ -39,17 +39,13 @@ input: int n, any fill
 returns: array output
 */
 function _allocArray(n, fill)
-  output =[]
   if typeof(n) != "int" then
     return
   end if
   if n <= 0 then
-    return output
+    return []
   end if
-  for i = 1 to n
-    output = output +[fill]
-  end for
-  return output
+  return array(n, fill)
 end function
 
 /*
@@ -382,10 +378,12 @@ input: (none)
 returns: array keys
 */
 function keysArray()
-  output =[]
+  output = array(this.size)
+  oi = 0
   for i = 0 to(this.cap - 1)
     if this.states[i] == 1 then
-      output = output +[this.keys[i]]
+      output[oi] = this.keys[i]
+      oi = oi + 1
     end if
   end for
   return output
@@ -397,10 +395,12 @@ input: (none)
 returns: array values
 */
 function valuesArray()
-  output =[]
+  output = array(this.size)
+  oi = 0
   for i = 0 to(this.cap - 1)
     if this.states[i] == 1 then
-      output = output +[this.values[i]]
+      output[oi] = this.values[i]
+      oi = oi + 1
     end if
   end for
   return output
@@ -412,13 +412,14 @@ input: (none)
 returns: array<Entry> entries
 */
 function entriesArray()
-  output =[]
+  output = array(this.size)
+  oi = 0
   for i = 0 to(this.cap - 1)
     if this.states[i] == 1 then
-      output = output +[Entry(this.keys[i], this.values[i])]
+      output[oi] = Entry(this.keys[i], this.values[i])
+      oi = oi + 1
     end if
   end for
   return output
 end function
 end struct
-

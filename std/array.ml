@@ -42,13 +42,13 @@ function copy(a)
   end if
 
   n = len(a)
-  val =[]
+  val = array(n)
   if n <= 0 then
     return val
   end if
 
   for i = 0 to(n - 1)
-    val = val +[a[i]]
+    val[i] = a[i]
   end for
   return val
 end function
@@ -90,13 +90,13 @@ function slice(a, offset, length)
     return
   end if
 
-  val =[]
+  val = array(length)
   if length == 0 then
     return val
   end if
 
   for i = 0 to(length - 1)
-    val = val +[a[off + i]]
+    val[i] = a[off + i]
   end for
   return val
 end function
@@ -184,13 +184,13 @@ function map(a, fn)
   end if
 
   n = len(a)
-  val =[]
+  val = array(n)
   if n <= 0 then
     return val
   end if
 
   for i = 0 to(n - 1)
-    val = val +[fn(a[i])]
+    val[i] = fn(a[i])
   end for
   return val
 end function
@@ -398,12 +398,17 @@ function concat(a, b)
     return
   end if
 
-  // Copy 'a' first, then append elements of 'b'.
-  val = std.array.copy(a)
-  for i = 0 to(len(b) - 1)
-    val = val +[b[i]]
+  n1 = len(a)
+  n2 = len(b)
+  val = array(n1 + n2)
+
+  for i = 0 to(n1 - 1)
+    val[i] = a[i]
+  end for
+
+  for i = 0 to(n2 - 1)
+    val[n1 + i] = b[i]
   end for
   return val
 end function
-
 

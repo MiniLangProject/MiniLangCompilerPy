@@ -30,17 +30,13 @@ input: int n, any fill
 returns: array output
 */
 function _allocArray(n, fill)
-  output =[]
   if typeof(n) != "int" then
     return
   end if
   if n <= 0 then
-    return output
+    return []
   end if
-  for i = 1 to n
-    output = output +[fill]
-  end for
-  return output
+  return array(n, fill)
 end function
 
 /*
@@ -192,16 +188,15 @@ input: (none)
 returns: array values
 */
 function toArray()
-  output =[]
+  output = array(this.size)
   if this.size == 0 then
     return output
   end if
 
   mask = this.cap - 1
   for i = 0 to(this.size - 1)
-    output = output +[this.buf[(this.head + i) & mask]]
+    output[i] = this.buf[(this.head + i) & mask]
   end for
   return output
 end function
 end struct
-
