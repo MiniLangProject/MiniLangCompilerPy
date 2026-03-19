@@ -2189,6 +2189,85 @@ def test_extern_value_runtime(*, name: str, mlc_runner: Path) -> TestResult:
                                                   "=== DONE ===", ], timeout_compile_s=180, timeout_run_s=180, )
 
 
+def test_array_initializer_builtin(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime test: array(size[, fill]) supports void/default and custom fill initialization."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "array_initializer_builtin.ml"
+
+        main_ml.write_text("\n".join([
+            'function ok(cond, label)',
+            '  if cond then',
+            '    print label + " [OK]"',
+            '  else',
+            '    print label + " [FAIL]"',
+            '  end if',
+            'end function',
+            '',
+            'print "=== ARRAY INIT BUILTIN ==="',
+            '',
+            'a = array(4)',
+            'ok(len(a) == 4, "array(size): len")',
+            'ok(typeName(a[0]) == "void", "array(size): fill first void")',
+            'ok(typeName(a[3]) == "void", "array(size): fill last void")',
+            '',
+            'b = array(5, 7)',
+            'ok(len(b) == 5, "array(size,fill): len")',
+            'ok(b[0] == 7, "array(size,fill): first")',
+            'ok(b[4] == 7, "array(size,fill): last")',
+            '',
+            'c = array(3, "x")',
+            'ok(c[1] == "x", "array(fill string)")',
+            '',
+            'd = [1, 2]',
+            'e = array(2, d)',
+            'ok(len(e[0]) == 2, "array(fill object): elem0 len")',
+            'e[0][0] = 9',
+            'ok(e[1][0] == 9, "array(fill object): shared value")',
+            '',
+            'n1 = try(array(-1))',
+            'ok(typeof(n1) == "error", "array(size): negative -> error")',
+            'ok(n1.code == 1307, "array(size): negative error code")',
+            '',
+            'n2 = try(array("4"))',
+            'ok(typeof(n2) == "error", "array(size): non-int -> error")',
+            'ok(n2.code == 1307, "array(size): non-int error code")',
+            '',
+            'n3 = try(array(2147483648))',
+            'ok(typeof(n3) == "error", "array(size): too large -> error")',
+            'ok(n3.code == 1307, "array(size): too large error code")',
+            '',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== ARRAY INIT BUILTIN ===",
+                "array(size): len [OK]",
+                "array(size): fill first void [OK]",
+                "array(size): fill last void [OK]",
+                "array(size,fill): len [OK]",
+                "array(size,fill): first [OK]",
+                "array(size,fill): last [OK]",
+                "array(fill string) [OK]",
+                "array(fill object): elem0 len [OK]",
+                "array(fill object): shared value [OK]",
+                "array(size): negative -> error [OK]",
+                "array(size): negative error code [OK]",
+                "array(size): non-int -> error [OK]",
+                "array(size): non-int error code [OK]",
+                "array(size): too large -> error [OK]",
+                "array(size): too large error code [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 def test_callable_values_runtime(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime smoke test: first-class callables for user functions, struct ctors, and selected builtins, incl. GC."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -2533,6 +2612,10 @@ def main() -> int:
                                         geom_ml=geom_ml, testlib_ml=testlib_ml))
 
     tests.append(lambda: test_extern_namespaced(name="extern: namespaced + import-as alias", mlc_runner=mlc_runner))
+
+    # Runtime: array(size[, fill]) initializer forms
+    tests.append(lambda: test_array_initializer_builtin(
+        name="array init: array(size[, fill])", mlc_runner=mlc_runner))
 
     # Runtime: callable values (user/builtin/struct) + GC
     tests.append(

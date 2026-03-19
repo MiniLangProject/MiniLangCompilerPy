@@ -108,5 +108,8 @@ ERR_PRINT_UNSUPPORTED = 1304
 ERR_MEMBER_TARGET_TYPE = 1305
 ERR_MEMBER_NOT_FOUND = 1306
 
+# Array initializer errors
+ERR_ARRAY_INIT_SIZE = 1307
+
 # Module initialization dependency / cycle
 ERR_MODULE_INIT_CYCLE = 1400

@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
-                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
+                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
 
@@ -3758,6 +3758,112 @@ class CodegenExpr:
                 a.call('fn_slice')
 
                 self.free_expr_temps(24)
+                return
+
+            # Builtin array(size[, fill]) -> array
+            #
+            # Mirrors the bytes(size[, fill]) initializer style:
+            # - array(size)         -> size elements filled with void
+            # - array(size, value)  -> size elements filled with value
+            if callee_name == 'array':
+                nargs = len(e.args)
+                if nargs not in (1, 2):
+                    raise self.error("array() expects 1 or 2 arguments", e)
+
+                tmp_off = self.alloc_expr_temps(16 if nargs == 2 else 8)
+
+                # eval size
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+
+                # eval fill (optional)
+                if nargs == 2:
+                    self.emit_expr(e.args[1])
+                    a.mov_rsp_disp32_rax(tmp_off + 8)
+
+                # We use gc_tmp0 to keep the optional fill value alive across fn_alloc
+                # (fn_alloc may trigger GC and stack temps are not root-scanned).
+                self.ensure_gc_data()
+
+                lid = self.new_label_id()
+                l_fail = f"array_init_fail_{lid}"
+                l_fill_top = f"array_init_fill_top_{lid}"
+                l_fill_done = f"array_init_fill_done_{lid}"
+                l_done = f"array_init_done_{lid}"
+
+                # validate + decode size (tagged int >= 0)
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off)
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+
+                # optional fill root across fn_alloc
+                if nargs == 2:
+                    a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
+                    a.mov_rip_qword_rax("gc_tmp0")
+
+                # allocate payload bytes = 8 + len*8
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off)
+                a.sar_r64_imm8("rax", 3)
+                a.mov_r64_r64("rcx", "rax")
+                a.shl_r64_imm8("rcx", 3)
+                a.add_r64_imm("rcx", 8)
+                a.call('fn_alloc')
+
+                # r11 = array base
+                a.mov_r11_rax()
+                a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+
+                # header len (u32)
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off)
+                a.sar_r64_imm8("rax", 3)
+                a.mov_r32_r32("edx", "eax")
+                a.mov_membase_disp_r32("r11", 4, "edx")
+
+                # fill value in rdx
+                if nargs == 2:
+                    a.mov_rdx_rip_qword("gc_tmp0")
+                else:
+                    a.mov_r64_imm64("rdx", enc_void())
+
+                # fill payload with rdx
+                a.lea_r64_membase_disp("r8", "r11", 8)
+                a.mov_r32_membase_disp("r9d", "r11", 4)
+                a.mark(l_fill_top)
+                a.test_r32_r32("r9d", "r9d")
+                a.jcc("e", l_fill_done)
+                a.mov_membase_disp_r64("r8", 0, "rdx")
+                a.add_r64_imm("r8", 8)
+                a.dec_r32("r9d")
+                a.jmp(l_fill_top)
+                a.mark(l_fill_done)
+
+                # clear temporary root
+                if nargs == 2:
+                    a.mov_rax_imm64(enc_void())
+                    a.mov_rip_qword_rax("gc_tmp0")
+
+                a.mov_rax_r11()
+                a.jmp(l_done)
+
+                a.mark(l_fail)
+                if nargs == 2:
+                    a.mov_rax_imm64(enc_void())
+                    a.mov_rip_qword_rax("gc_tmp0")
+                self._emit_make_error_const(
+                    ERR_ARRAY_INIT_SIZE,
+                    "array() size must be an int in range 0..2147483647",
+                )
+                self._emit_auto_errprop()
+
+                a.mark(l_done)
+                self.free_expr_temps(16 if nargs == 2 else 8)
                 return
 
             # Builtin bytes(...) / byteBuffer(...)

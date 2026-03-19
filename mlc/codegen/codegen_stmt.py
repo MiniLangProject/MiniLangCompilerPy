@@ -3048,7 +3048,7 @@ class CodegenStmt:
             'input': (0, 1, 'fn_builtin_input'),
 
             # bytes/string helpers (native)
-            # NOTE: bytes()/byteBuffer() are implemented as special forms in CodegenExpr
+            # NOTE: bytes()/byteBuffer()/array() are implemented as special forms in CodegenExpr
             # (argument validation + allocation) and are therefore not first-class here.
             'decode': (1, 2, 'fn_decode'), 'decodeZ': (1, 1, 'fn_decodeZ'), 'decode16Z': (1, 1, 'fn_decode16Z'),
             'hex': (1, 1, 'fn_hex'), 'fromHex': (1, 1, 'fn_fromHex'), 'slice': (3, 3, 'fn_slice'),

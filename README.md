@@ -504,7 +504,14 @@ Newlines may appear after operators (see [3.1](#31-newlines--statement-separator
 ```ml
 a = [1, 2, 3]
 b = ["x", "y"]
+c = array(4)         // [void, void, void, void]
+d = array(3, "hi")   // ["hi", "hi", "hi"]
 ```
+
+`array(size[, fill])` initializes a new array with `size` elements.  
+If `fill` is omitted, elements are initialized with `void`.
+Invalid `size` (non-int, negative, or too large) returns a runtime `error`
+(catchable via `try(...)`).
 
 ### Multiline literals + trailing commas
 
@@ -1182,6 +1189,17 @@ print len(bytes(4)) // 4
 
 Native compiler behavior (current): unsupported types return `0` (no exceptions yet).
 
+#### array(size[, fill])
+Creates an array with a fixed size and optional fill value.
+
+```ml
+a = array(5)       // 5x void
+b = array(5, 42)   // 5x 42
+```
+
+Invalid `size` (non-int, negative, or > `2147483647`) returns a runtime `error`
+(catchable via `try(...)`).
+
 #### input() / input(prompt)
 Reads one line from stdin.
 
@@ -1768,7 +1786,7 @@ What works:
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
 - `extern function` via the PE import table (IAT)
-- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`,
+- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`,
   plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`
 
 Debugging / listings:
