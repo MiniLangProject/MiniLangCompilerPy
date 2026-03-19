@@ -3868,7 +3868,7 @@ class CodegenStmt:
         _saved_ctx_file = getattr(self, "_current_fn_file", None)
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
-        builtin_callees = {'try', "input", "len", "toNumber", "typeof", "bytes", "byteBuffer", "decode", "decodeZ",
+        builtin_callees = {'try', "input", "len", "toNumber", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
             "decode16Z", "hex", "fromHex", "slice", "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed",
             "heap_bytes_reserved", "heap_free_bytes", "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
