@@ -216,6 +216,53 @@ function _findDataName(buf)
   return decode16Z(nameBuf)
 end function
 
+function _growStringArray(items, need)
+  if typeof(items) != "array" then
+    return
+  end if
+  if typeof(need) != "int" then
+    return
+  end if
+
+  oldLen = len(items)
+  newLen = oldLen
+  if newLen < 8 then
+    newLen = 8
+  end if
+  while newLen < need
+    newLen = newLen * 2
+  end while
+
+  grown = array(newLen)
+  if oldLen > 0 then
+    for i = 0 to(oldLen - 1)
+      grown[i] = items[i]
+    end for
+  end if
+  return grown
+end function
+
+function _takeStringArray(items, count)
+  if typeof(items) != "array" then
+    return
+  end if
+  if typeof(count) != "int" then
+    return
+  end if
+  if count <= 0 then
+    return []
+  end if
+  if count == len(items) then
+    return items
+  end if
+
+  output = array(count)
+  for i = 0 to(count - 1)
+    output[i] = items[i]
+  end for
+  return output
+end function
+
 /*
 list directory entries (names only, without '.' and '..')
 input: string path
@@ -242,12 +289,17 @@ function listDir(path)
     return _fsErr("listDir: FindFirstFileW failed")
   end if
 
-  names =[]
+  names = array(8)
+  count = 0
   while true
     nm = std.fs._findDataName(data)
     if typeof(nm) == "string" then
       if nm != "." and nm != ".." then
-        names = names +[nm]
+        if count == len(names) then
+          names = std.fs._growStringArray(names, count + 1)
+        end if
+        names[count] = nm
+        count = count + 1
       end if
     end if
 
@@ -258,7 +310,7 @@ function listDir(path)
   end while
 
   FindClose(h)
-  return names
+  return std.fs._takeStringArray(names, count)
 end function
 
 /*
@@ -386,11 +438,7 @@ function readAllBytes(path)
       break
     end if
 
-    i = 0
-    while i < n
-      output[pos + i] = buf[i]
-      i = i + 1
-    end while
+    copyBytes(output, pos, buf, 0, n)
 
     pos = pos + n
   end while
@@ -503,11 +551,7 @@ function readAllText(path)
       break
     end if
 
-    i = 0
-    while i < n
-      output[pos + i] = buf[i]
-      i = i + 1
-    end while
+    copyBytes(output, pos, buf, 0, n)
 
     pos = pos + n
   end while

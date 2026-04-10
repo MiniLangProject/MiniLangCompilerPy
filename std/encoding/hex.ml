@@ -16,6 +16,8 @@
 
 package std.encoding.hex
 
+import std.string as s
+
 const HEX_ERR = 210
 
 function _hexErr(msg)
@@ -45,33 +47,11 @@ input: bytes b
 returns: string hexUpper
 */
 function encodeUpper(b)
-  s = hex(b)
-  if typeof(s) != "string" then
+  text = hex(b)
+  if typeof(text) != "string" then
     return
   end if
-  output = ""
-  i = 0
-  while i < len(s)
-    c = s[i]
-    // convert a-f to A-F (ASCII-only)
-    if c == "a" then
-      output = output + "A"
-    else if c == "b" then
-      output = output + "B"
-    else if c == "c" then
-      output = output + "C"
-    else if c == "d" then
-      output = output + "D"
-    else if c == "e" then
-      output = output + "E"
-    else if c == "f" then
-      output = output + "F"
-    else
-      output = output + c
-    end if
-    i = i + 1
-  end while
-  return output
+  return s.toUpperAscii(text)
 end function
 
 /*

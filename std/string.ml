@@ -39,6 +39,109 @@ function _isWhitespace(ch)
   return ch == " " or ch == "\t" or ch == "\n" or ch == "\r"
 end function
 
+function _isWhitespaceByte(v)
+  return v == 32 or v == 9 or v == 10 or v == 13
+end function
+
+function _lowerAsciiByte(v)
+  if v >= 65 and v <= 90 then
+    return v + 32
+  end if
+  return v
+end function
+
+function _upperAsciiByte(v)
+  if v >= 97 and v <= 122 then
+    return v - 32
+  end if
+  return v
+end function
+
+function _decodeOrEmpty(b)
+  if typeof(b) != "bytes" then
+    return
+  end if
+  if len(b) == 0 then
+    return ""
+  end if
+  return decode(b)
+end function
+
+function _indexOfBytes(hay, needle, start)
+  if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
+    return -1
+  end if
+
+  n = len(hay)
+  m = len(needle)
+  i0 = start
+  if typeof(i0) != "int" then
+    i0 = 0
+  end if
+  if i0 < 0 then
+    i0 = 0
+  end if
+  if i0 > n then
+    i0 = n
+  end if
+
+  if m == 0 then
+    return i0
+  end if
+  if m > n then
+    return -1
+  end if
+
+  last = n - m
+  if i0 > last then
+    return -1
+  end if
+
+  i = i0
+  while i <= last
+    j = 0
+    while j < m and hay[i + j] == needle[j]
+      j = j + 1
+    end while
+    if j == m then
+      return i
+    end if
+    i = i + 1
+  end while
+
+  return -1
+end function
+
+function _lastIndexOfBytes(hay, needle)
+  if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
+    return -1
+  end if
+
+  n = len(hay)
+  m = len(needle)
+
+  if m == 0 then
+    return n
+  end if
+  if m > n then
+    return -1
+  end if
+
+  i = n - m
+  while i >= 0
+    j = 0
+    while j < m and hay[i + j] == needle[j]
+      j = j + 1
+    end while
+    if j == m then
+      return i
+    end if
+    i = i - 1
+  end while
+
+  return -1
+end function
+
 /*
 checks whether a string is empty
 input: string s
@@ -67,11 +170,22 @@ function repeat(s, count)
     return ""
   end if
 
-  val = ""
-  for i = 1 to count
-    val = val + s
-  end for
-  return val
+  sb = bytes(s)
+  sl = len(sb)
+  if sl == 0 then
+    return ""
+  end if
+
+  total = sl * count
+  output = bytes(total, 0)
+  pos = 0
+  i = 0
+  while i < count
+    copyBytes(output, pos, sb, 0, sl)
+    pos = pos + sl
+    i = i + 1
+  end while
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -117,11 +231,9 @@ function substr(s, start, length)
     return ""
   end if
 
-  val = ""
-  for k = i to(i + l - 1)
-    val = val + s[k]
-  end for
-  return val
+  sb = bytes(s)
+  output = slice(sb, i, l)
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -137,8 +249,10 @@ function startsWith(s, prefix)
     return false
   end if
 
-  n = len(s)
-  m = len(prefix)
+  hb = bytes(s)
+  nb = bytes(prefix)
+  n = len(hb)
+  m = len(nb)
   if m == 0 then
     return true
   end if
@@ -147,7 +261,7 @@ function startsWith(s, prefix)
   end if
 
   for i = 0 to(m - 1)
-    if s[i] != prefix[i] then
+    if hb[i] != nb[i] then
       return false
     end if
   end for
@@ -167,8 +281,10 @@ function endsWith(s, suffix)
     return false
   end if
 
-  n = len(s)
-  m = len(suffix)
+  hb = bytes(s)
+  nb = bytes(suffix)
+  n = len(hb)
+  m = len(nb)
   if m == 0 then
     return true
   end if
@@ -178,7 +294,7 @@ function endsWith(s, suffix)
 
   start = n - m
   for i = 0 to(m - 1)
-    if s[start + i] != suffix[i] then
+    if hb[start + i] != nb[i] then
       return false
     end if
   end for
@@ -201,8 +317,10 @@ function indexOf(s, needle, start)
     return
   end if
 
-  n = len(s)
-  m = len(needle)
+  hb = bytes(s)
+  nb = bytes(needle)
+  n = len(hb)
+  m = len(nb)
 
   i0 = start
   if i0 < 0 then
@@ -225,21 +343,7 @@ function indexOf(s, needle, start)
   if i0 > last then
     return -1
   end if
-
-  for i = i0 to last
-    ok = true
-    for j = 0 to(m - 1)
-      if s[i + j] != needle[j] then
-        ok = false
-        break
-      end if
-    end for
-    if ok then
-      return i
-    end if
-  end for
-
-  return -1
+  return _indexOfBytes(hb, nb, i0)
 end function
 
 /*
@@ -255,8 +359,10 @@ function lastIndexOf(s, needle)
     return
   end if
 
-  n = len(s)
-  m = len(needle)
+  hb = bytes(s)
+  nb = bytes(needle)
+  n = len(hb)
+  m = len(nb)
 
   if m == 0 then
     return n
@@ -265,22 +371,7 @@ function lastIndexOf(s, needle)
     return -1
   end if
 
-  i = n - m
-  while i >= 0
-    ok = true
-    for j = 0 to(m - 1)
-      if s[i + j] != needle[j] then
-        ok = false
-        break
-      end if
-    end for
-    if ok then
-      return i
-    end if
-    i = i - 1
-  end while
-
-  return -1
+  return _lastIndexOfBytes(hb, nb)
 end function
 
 /*
@@ -306,21 +397,24 @@ function ltrim(s)
     return
   end if
 
-  n = len(s)
+  sb = bytes(s)
+  n = len(sb)
   if n == 0 then
     return ""
   end if
 
   i = 0
   while i < n
-    ch = s[i]
-    if not std.string._isWhitespace(ch) then
+    if not _isWhitespaceByte(sb[i]) then
       break
     end if
     i = i + 1
   end while
 
-  return std.string.substr(s, i, n - i)
+  if i == 0 then
+    return s
+  end if
+  return _decodeOrEmpty(slice(sb, i, n - i))
 end function
 
 /*
@@ -333,21 +427,27 @@ function rtrim(s)
     return
   end if
 
-  n = len(s)
+  sb = bytes(s)
+  n = len(sb)
   if n == 0 then
     return ""
   end if
 
   i = n - 1
   while i >= 0
-    ch = s[i]
-    if not std.string._isWhitespace(ch) then
+    if not _isWhitespaceByte(sb[i]) then
       break
     end if
     i = i - 1
   end while
 
-  return std.string.substr(s, 0, i + 1)
+  if i == n - 1 then
+    return s
+  end if
+  if i < 0 then
+    return ""
+  end if
+  return _decodeOrEmpty(slice(sb, 0, i + 1))
 end function
 
 /*
@@ -356,7 +456,35 @@ input: string s
 returns: string trimmed
 */
 function trim(s)
-  return std.string.rtrim(std.string.ltrim(s))
+  if typeof(s) != "string" then
+    return
+  end if
+
+  sb = bytes(s)
+  n = len(sb)
+  if n == 0 then
+    return ""
+  end if
+
+  left = 0
+  while left < n and _isWhitespaceByte(sb[left])
+    left = left + 1
+  end while
+
+  if left >= n then
+    return ""
+  end if
+
+  right = n - 1
+  while right >= left and _isWhitespaceByte(sb[right])
+    right = right - 1
+  end while
+
+  if left == 0 and right == n - 1 then
+    return s
+  end if
+
+  return _decodeOrEmpty(slice(sb, left, right - left + 1))
 end function
 
 /*
@@ -368,7 +496,16 @@ function isBlank(s)
   if typeof(s) != "string" then
     return false
   end if
-  return len(std.string.trim(s)) == 0
+  sb = bytes(s)
+  n = len(sb)
+  i = 0
+  while i < n
+    if not _isWhitespaceByte(sb[i]) then
+      return false
+    end if
+    i = i + 1
+  end while
+  return true
 end function
 
 /*
@@ -386,36 +523,42 @@ function split(s, sep)
 
   // split into chars
   if len(sep) == 0 then
-    val =[]
-    for each ch in s
-      val = val +[ch]
+    n = len(s)
+    val = array(n)
+    for i = 0 to(n - 1)
+      val[i] = s[i]
     end for
     return val
   end if
 
-  val =[]
+  hb = bytes(s)
+  nb = bytes(sep)
+  n = len(hb)
+  sl = len(nb)
+
+  count = 1
   i = 0
-  n = len(s)
-  sl = len(sep)
-
-  while true
-    p = std.string.indexOf(s, sep, i)
-    if typeof(p) == "void" then
-      return
-    end if
-
+  while i <= n - sl
+    p = _indexOfBytes(hb, nb, i)
     if p < 0 then
-      val = val +[std.string.substr(s, i, n - i)]
       break
     end if
-
-    val = val +[std.string.substr(s, i, p - i)]
+    count = count + 1
     i = p + sl
+  end while
 
-    if i > n then
-      val = val +[""]
+  val = array(count)
+  i = 0
+  oi = 0
+  while true
+    p = _indexOfBytes(hb, nb, i)
+    if p < 0 then
+      val[oi] = _decodeOrEmpty(slice(hb, i, n - i))
       break
     end if
+    val[oi] = _decodeOrEmpty(slice(hb, i, p - i))
+    oi = oi + 1
+    i = p + sl
   end while
 
   return val
@@ -439,15 +582,42 @@ function join(parts, sep)
     return ""
   end if
 
-  val = ""
+  sepBytes = bytes(sep)
+  sepLen = len(sepBytes)
+  partBytes = array(n)
+  totalLen = 0
+
   for i = 0 to(n - 1)
-    if i == 0 then
-      val = val + parts[i]
-    else
-      val = val + sep + parts[i]
+    if typeof(parts[i]) != "string" then
+      return
+    end if
+    pb = bytes(parts[i])
+    partBytes[i] = pb
+    totalLen = totalLen + len(pb)
+    if i > 0 then
+      totalLen = totalLen + sepLen
     end if
   end for
-  return val
+
+  if totalLen == 0 then
+    return ""
+  end if
+
+  output = bytes(totalLen, 0)
+  pos = 0
+  for i = 0 to(n - 1)
+    if i > 0 and sepLen > 0 then
+      copyBytes(output, pos, sepBytes, 0, sepLen)
+      pos = pos + sepLen
+    end if
+    pb = partBytes[i]
+    plen = len(pb)
+    if plen > 0 then
+      copyBytes(output, pos, pb, 0, plen)
+      pos = pos + plen
+    end if
+  end for
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -470,30 +640,59 @@ function replaceAll(s, needle, repl)
     return s
   end if
 
-  val = ""
+  hb = bytes(s)
+  nb = bytes(needle)
+  rb = bytes(repl)
+  n = len(hb)
+  nl = len(nb)
+  rl = len(rb)
+
+  count = 0
   i = 0
-  n = len(s)
-  nl = len(needle)
-
-  while true
-    p = std.string.indexOf(s, needle, i)
-    if typeof(p) == "void" then
-      return
-    end if
+  while i <= n - nl
+    p = _indexOfBytes(hb, nb, i)
     if p < 0 then
-      val = val + std.string.substr(s, i, n - i)
       break
     end if
-
-    val = val + std.string.substr(s, i, p - i) + repl
+    count = count + 1
     i = p + nl
-
-    if i > n then
-      break
-    end if
   end while
 
-  return val
+  if count == 0 then
+    return s
+  end if
+
+  totalLen = n + count * (rl - nl)
+  if totalLen == 0 then
+    return ""
+  end if
+
+  output = bytes(totalLen, 0)
+  pos = 0
+  i = 0
+  while true
+    p = _indexOfBytes(hb, nb, i)
+    if p < 0 then
+      tailLen = n - i
+      if tailLen > 0 then
+        copyBytes(output, pos, hb, i, tailLen)
+      end if
+      break
+    end if
+
+    segLen = p - i
+    if segLen > 0 then
+      copyBytes(output, pos, hb, i, segLen)
+      pos = pos + segLen
+    end if
+    if rl > 0 then
+      copyBytes(output, pos, rb, 0, rl)
+      pos = pos + rl
+    end if
+    i = p + nl
+  end while
+
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -549,16 +748,15 @@ function countOf(s, needle)
     return 0
   end if
 
+  hb = bytes(s)
+  nb = bytes(needle)
+  n = len(hb)
+  nl = len(nb)
+
   count = 0
   i = 0
-  n = len(s)
-  nl = len(needle)
-
-  while i <=(n - nl)
-    p = std.string.indexOf(s, needle, i)
-    if typeof(p) == "void" then
-      return
-    end if
+  while i <= n - nl
+    p = _indexOfBytes(hb, nb, i)
     if p < 0 then
       break
     end if
@@ -588,14 +786,18 @@ function reverse(s)
     return
   end if
 
-  n = len(s)
-  output = ""
-  i = n - 1
-  while i >= 0
-    output = output + s[i]
-    i = i - 1
+  sb = bytes(s)
+  n = len(sb)
+  if n == 0 then
+    return ""
+  end if
+  output = bytes(n, 0)
+  i = 0
+  while i < n
+    output[i] = sb[n - 1 - i]
+    i = i + 1
   end while
-  return output
+  return _decodeOrEmpty(output)
 end function
 
 // ------------------------------------------------------------
@@ -651,22 +853,18 @@ function toLowerAscii(s)
     return
   end if
 
-  upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  lower = "abcdefghijklmnopqrstuvwxyz"
-
-  output = ""
-  for each ch in s
-    idx = std.string.indexOf(upper, ch, 0)
-    if typeof(idx) == "void" then
-      return
-    end if
-    if idx >= 0 then
-      output = output + lower[idx]
-    else
-      output = output + ch
-    end if
-  end for
-  return output
+  sb = bytes(s)
+  n = len(sb)
+  if n == 0 then
+    return ""
+  end if
+  output = bytes(n, 0)
+  i = 0
+  while i < n
+    output[i] = _lowerAsciiByte(sb[i])
+    i = i + 1
+  end while
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -679,22 +877,18 @@ function toUpperAscii(s)
     return
   end if
 
-  upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  lower = "abcdefghijklmnopqrstuvwxyz"
-
-  output = ""
-  for each ch in s
-    idx = std.string.indexOf(lower, ch, 0)
-    if typeof(idx) == "void" then
-      return
-    end if
-    if idx >= 0 then
-      output = output + upper[idx]
-    else
-      output = output + ch
-    end if
-  end for
-  return output
+  sb = bytes(s)
+  n = len(sb)
+  if n == 0 then
+    return ""
+  end if
+  output = bytes(n, 0)
+  i = 0
+  while i < n
+    output[i] = _upperAsciiByte(sb[i])
+    i = i + 1
+  end while
+  return _decodeOrEmpty(output)
 end function
 
 /*
@@ -710,16 +904,20 @@ function equalsIgnoreCaseAscii(a, b)
     return false
   end if
 
-  if len(a) != len(b) then
+  ab = bytes(a)
+  bb = bytes(b)
+  n = len(ab)
+  if n != len(bb) then
     return false
   end if
-
-  aa = std.string.toLowerAscii(a)
-  bb = std.string.toLowerAscii(b)
-  if typeof(aa) == "void" or typeof(bb) == "void" then
-    return false
-  end if
-  return aa == bb
+  i = 0
+  while i < n
+    if _lowerAsciiByte(ab[i]) != _lowerAsciiByte(bb[i]) then
+      return false
+    end if
+    i = i + 1
+  end while
+  return true
 end function
 
 

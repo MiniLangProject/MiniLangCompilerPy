@@ -117,6 +117,9 @@ function test_string_hex_bytes()
   chk(a.assertTrue(b.equals(fromHex("0011"), fromHex("00 11")), "bytes: equals"))
   chk(a.assertTrue(b.ctEquals(fromHex("deadbeef"), fromHex("DE AD BE EF")), "bytes: ctEquals"))
   chk(a.assertFalse(b.ctEquals(fromHex("00"), fromHex("00 00")), "bytes: ctEquals len mismatch"))
+  fillBuf = bytes(6, 0)
+  b.fill(fillBuf, 0xAB)
+  chk(a.assertEq(hex(fillBuf), "abababababab", "bytes: fill"))
 
   // bytes base64 helpers
   b64s = b64.toBase64(bytes("Hello"))
@@ -277,6 +280,11 @@ function test_fs_io()
   chk(_assertNotError(rtxt, "fs: readAllText ok"))
   chk(a.assertTrue(s.startsWith(rtxt, "hello"), "fs: readAllText content"))
 
+  names = try(fs.listDir("."))
+  chk(_assertNotError(names, "fs: listDir ok"))
+  chk(a.assertTrue(arr.contains(names, p_txt), "fs: listDir contains txt"))
+  chk(a.assertTrue(arr.contains(names, p_bin) == false, "fs: listDir before bin"))
+
   lines = try(fs.readAllLines(p_txt))
   chk(_assertNotError(lines, "fs: readAllLines ok"))
   chk(a.assertEq(lines[0], "hello", "fs: readAllLines[0]"))
@@ -289,6 +297,10 @@ function test_fs_io()
   rb = try(fs.readAllBytes(p_bin))
   chk(_assertNotError(rb, "fs: readAllBytes ok"))
   chk(a.assertEq(hex(rb), "0011aaff", "fs: bytes roundtrip"))
+
+  names2 = try(fs.listDir("."))
+  chk(_assertNotError(names2, "fs: listDir after bin"))
+  chk(a.assertTrue(arr.contains(names2, p_bin), "fs: listDir contains bin"))
 
   // file size
   sz = try(fs.fileSize(p_bin))

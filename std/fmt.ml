@@ -109,27 +109,53 @@ function quote(s)
     return
   end if
 
-  output = ""
+  src = bytes(s)
+  n = len(src)
+  extra = 0
   i = 0
-  while i < len(s)
-    c = s[i]
-    if c == "\\" then
-      output = output + "\\\\"
-    else if c == "\"" then
-      output = output + "\\\""
-    else if c == "\n" then
-      output = output + "\\n"
-    else if c == "\r" then
-      output = output + "\\r"
-    else if c == "\t" then
-      output = output + "\\t"
-    else
-      output = output + c
+  while i < n
+    c = src[i]
+    if c == 92 or c == 34 or c == 10 or c == 13 or c == 9 then
+      extra = extra + 1
     end if
     i = i + 1
   end while
 
-  return "\"" + output + "\""
+  output = bytes(n + extra + 2, 0)
+  output[0] = 34
+  pos = 1
+  i = 0
+  while i < n
+    c = src[i]
+    if c == 92 then
+      output[pos] = 92
+      output[pos + 1] = 92
+      pos = pos + 2
+    else if c == 34 then
+      output[pos] = 92
+      output[pos + 1] = 34
+      pos = pos + 2
+    else if c == 10 then
+      output[pos] = 92
+      output[pos + 1] = 110
+      pos = pos + 2
+    else if c == 13 then
+      output[pos] = 92
+      output[pos + 1] = 114
+      pos = pos + 2
+    else if c == 9 then
+      output[pos] = 92
+      output[pos + 1] = 116
+      pos = pos + 2
+    else
+      output[pos] = c
+      pos = pos + 1
+    end if
+    i = i + 1
+  end while
+
+  output[pos] = 34
+  return decode(output)
 end function
 
 /*

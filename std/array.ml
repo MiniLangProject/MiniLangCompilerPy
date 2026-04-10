@@ -16,6 +16,8 @@ limitations under the License.
 
 package std.array
 
+import std.string as s
+
 // ------------------------------------------------------------
 // std.array
 // Common helpers for MiniLang arrays.
@@ -209,18 +211,27 @@ function filter(a, pred)
   end if
 
   n = len(a)
-  val =[]
   if n <= 0 then
-    return val
+    return []
   end if
 
+  tmp = array(n)
+  count = 0
   for i = 0 to(n - 1)
     v = a[i]
     if pred(v) then
-      val = val +[v]
+      tmp[count] = v
+      count = count + 1
     end if
   end for
-  return val
+
+  if count == 0 then
+    return []
+  end if
+  if count == n then
+    return tmp
+  end if
+  return std.array.slice(tmp, 0, count)
 end function
 
 /*
@@ -300,22 +311,7 @@ function joinStrings(a, sep)
     return
   end if
 
-  n = len(a)
-  if n <= 0 then
-    return ""
-  end if
-
-  val = ""
-  for i = 0 to(n - 1)
-    if typeof(a[i]) != "string" then
-      return
-    end if
-    if i > 0 then
-      val = val + sep
-    end if
-    val = val + a[i]
-  end for
-  return val
+  return s.join(a, sep)
 end function
 
 /*
@@ -382,7 +378,16 @@ function append(a, value)
   if typeof(a) != "array" then
     return
   end if
-  return a +[value]
+
+  n = len(a)
+  val = array(n + 1)
+  if n > 0 then
+    for i = 0 to(n - 1)
+      val[i] = a[i]
+    end for
+  end if
+  val[n] = value
+  return val
 end function
 
 /*

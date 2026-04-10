@@ -182,9 +182,7 @@ function fill(b, value)
     return
   end if
 
-  for i = 0 to(n - 1)
-    b[i] = value
-  end for
+  fillBytes(b, 0, n, value)
 end function
 
 function startsWith(b, prefix)
@@ -632,5 +630,4 @@ function xorInPlace(a, b)
   end while
   return a
 end function
-
 
