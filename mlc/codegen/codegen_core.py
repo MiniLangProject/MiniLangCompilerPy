@@ -1102,6 +1102,8 @@ class CodegenCore:
             # Step 5: first-class builtin function values
             'fn_builtin_len': getattr(self, 'emit_builtin_len_function', None),
             'fn_builtin_input': getattr(self, 'emit_builtin_input_function', None),
+            'fn_builtin_copyBytes': getattr(self, 'emit_builtin_copyBytes_function', None),
+            'fn_builtin_fillBytes': getattr(self, 'emit_builtin_fillBytes_function', None),
             'fn_builtin_gc_collect': getattr(self, 'emit_builtin_gc_collect_function', None),
             'fn_builtin_gc_set_limit': getattr(self, 'emit_builtin_gc_set_limit_function', None), }
 

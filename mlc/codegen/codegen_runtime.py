@@ -2196,6 +2196,213 @@ class CodegenRuntime:
         a.mov_rax_imm64(enc_void())
         a.ret()
 
+    def emit_builtin_copyBytes_function(self) -> None:
+        """Emit fn_builtin_copyBytes(dst, dstOff, src, srcOff, len).
+
+        Calling convention:
+        - RCX/RDX/R8/R9 = first four tagged MiniLang args
+        - [rsp+0x28]    = 5th tagged MiniLang arg
+        - R10D          = nargs
+
+        Returns VOID and treats invalid arguments as a no-op.
+        """
+        a = self.asm
+        a.mark('fn_builtin_copyBytes')
+        lid = self.new_label_id()
+        l_ret_void = f"bcopy_ret_void_{lid}"
+        l_len_dst = f"bcopy_len_dst_{lid}"
+        l_len_src = f"bcopy_len_src_{lid}"
+
+        a.cmp_r32_imm('r10d', 5)
+        a.jcc('ne', l_ret_void)
+
+        a.mov_r64_r64('r11', 'rcx')  # dst object
+        a.mov_r64_r64('r10', 'r8')   # src object
+        a.mov_r64_r64('r8', 'r9')    # srcOff tagged
+
+        # dst must be OBJ_BYTES
+        a.mov_r64_r64('rax', 'r11')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_ret_void)
+
+        # dstOff -> r9d
+        a.mov_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r9d', 'eax')
+
+        # src must be OBJ_BYTES
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_ret_void)
+
+        # srcOff -> r8d
+        a.mov_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r8d', 'eax')
+
+        # len -> edx
+        a.mov_r64_membase_disp('rax', 'rsp', 0x28)
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('edx', 'eax')
+
+        # Clamp length to available tail room in both buffers.
+        a.mov_r32_membase_disp('eax', 'r11', 4)
+        a.cmp_r32_r32('r9d', 'eax')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('eax', 'r9d')
+
+        a.mov_r32_membase_disp('ecx', 'r10', 4)
+        a.cmp_r32_r32('r8d', 'ecx')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('ecx', 'r8d')
+
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('le', l_len_dst)
+        a.mov_r32_r32('edx', 'eax')
+        a.mark(l_len_dst)
+        a.cmp_r32_r32('edx', 'ecx')
+        a.jcc('le', l_len_src)
+        a.mov_r32_r32('edx', 'ecx')
+        a.mark(l_len_src)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('le', l_ret_void)
+
+        a.mov_membase_disp_r32('rsp', 0x20, 'edx')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.add_r64_r64('rcx', 'r9')
+        a.lea_r64_membase_disp('rdx', 'r10', 8)
+        a.add_r64_r64('rdx', 'r8')
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
+        a.call('fn_copy_bytes')
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_builtin_fillBytes_function(self) -> None:
+        """Emit fn_builtin_fillBytes(dst, off, len, fill).
+
+        Calling convention:
+        - RCX/RDX/R8/R9 = tagged MiniLang args
+        - R10D          = nargs
+
+        Returns VOID and treats invalid arguments as a no-op.
+        """
+        a = self.asm
+        a.mark('fn_builtin_fillBytes')
+        lid = self.new_label_id()
+        l_ret_void = f"bfill_ret_void_{lid}"
+        l_len_ok = f"bfill_len_ok_{lid}"
+
+        a.cmp_r32_imm('r10d', 4)
+        a.jcc('ne', l_ret_void)
+
+        a.mov_r64_r64('r11', 'rcx')  # dst object
+        a.mov_r64_r64('r10', 'r9')   # fill tagged
+
+        # dst must be OBJ_BYTES
+        a.mov_r64_r64('rax', 'r11')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_ret_void)
+
+        # off -> r9d
+        a.mov_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r9d', 'eax')
+
+        # len -> edx
+        a.mov_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('edx', 'eax')
+
+        # fill -> r8d
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 255)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r8d', 'eax')
+
+        # Clamp len to destination tail room and dispatch.
+        a.mov_r32_membase_disp('eax', 'r11', 4)
+        a.cmp_r32_r32('r9d', 'eax')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('eax', 'r9d')
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('le', l_len_ok)
+        a.mov_r32_r32('edx', 'eax')
+        a.mark(l_len_ok)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('le', l_ret_void)
+
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.add_r64_r64('rcx', 'r9')
+        a.call('fn_fill_bytes')
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
     def emit_builtin_gc_set_limit_function(self) -> None:
         """Emit fn_builtin_gc_set_limit(limit_bytes):
 

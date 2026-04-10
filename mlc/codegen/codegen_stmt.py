@@ -3055,6 +3055,7 @@ class CodegenStmt:
             # (argument validation + allocation) and are therefore not first-class here.
             'decode': (1, 2, 'fn_decode'), 'decodeZ': (1, 1, 'fn_decodeZ'), 'decode16Z': (1, 1, 'fn_decode16Z'),
             'hex': (1, 1, 'fn_hex'), 'fromHex': (1, 1, 'fn_fromHex'), 'slice': (3, 3, 'fn_slice'),
+            'copyBytes': (5, 5, 'fn_builtin_copyBytes'), 'fillBytes': (4, 4, 'fn_builtin_fillBytes'),
 
             'gc_collect': (0, 0, 'fn_builtin_gc_collect'),
 

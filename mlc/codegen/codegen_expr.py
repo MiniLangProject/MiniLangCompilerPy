@@ -3847,6 +3847,226 @@ class CodegenExpr:
                 self.free_expr_temps(24)
                 return
 
+            # Builtin copyBytes(dst, dstOff, src, srcOff, len) -> void
+            if callee_name == 'copyBytes':
+                if len(e.args) != 5:
+                    raise self.error('copyBytes() expects exactly 5 arguments', e)
+
+                tmp_off = self.alloc_expr_temps(40)
+
+                for i, arg in enumerate(e.args):
+                    self.emit_expr(arg)
+                    a.mov_rsp_disp32_rax(tmp_off + i * 8)
+
+                lid = self.new_label_id()
+                l_done = f"copybytes_done_{lid}"
+                l_fail = f"copybytes_fail_{lid}"
+                l_min_dst = f"copybytes_min_dst_{lid}"
+                l_min_src = f"copybytes_min_src_{lid}"
+
+                # dst: must be OBJ_BYTES
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
+                a.mov_r64_r64("rax", "r11")
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_PTR)
+                a.jcc("ne", l_fail)
+                a.mov_r32_membase_disp("edx", "r11", 0)
+                a.cmp_r32_imm("edx", OBJ_BYTES)
+                a.jcc("ne", l_fail)
+
+                # dstOff: tagged int >= 0, <= i32 max
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 8, "rax")
+
+                # src: must be OBJ_BYTES
+                a.mov_r64_membase_disp("r10", "rsp", tmp_off + 16)
+                a.mov_r64_r64("rax", "r10")
+                a.mov_r64_r64("r9", "rax")
+                a.and_r64_imm("r9", 7)
+                a.cmp_r64_imm("r9", TAG_PTR)
+                a.jcc("ne", l_fail)
+                a.mov_r32_membase_disp("edx", "r10", 0)
+                a.cmp_r32_imm("edx", OBJ_BYTES)
+                a.jcc("ne", l_fail)
+
+                # srcOff: tagged int >= 0, <= i32 max
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 24)
+                a.mov_r64_r64("r9", "rax")
+                a.and_r64_imm("r9", 7)
+                a.cmp_r64_imm("r9", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 24, "rax")
+
+                # len: tagged int >= 0, <= i32 max
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 32)
+                a.mov_r64_r64("r9", "rax")
+                a.and_r64_imm("r9", 7)
+                a.cmp_r64_imm("r9", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 32, "rax")
+
+                # Clamp len to dst/src tail room and dispatch to fn_copy_bytes.
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
+                a.mov_r64_membase_disp("r10", "rsp", tmp_off + 16)
+
+                a.mov_r32_membase_disp("r9d", "r11", 4)
+                a.mov_r32_membase_disp("eax", "rsp", tmp_off + 8)
+                a.cmp_r32_r32("eax", "r9d")
+                a.jcc("ge", l_done)
+                a.sub_r32_r32("r9d", "eax")
+
+                a.mov_r32_membase_disp("r8d", "r10", 4)
+                a.mov_r32_membase_disp("edx", "rsp", tmp_off + 24)
+                a.cmp_r32_r32("edx", "r8d")
+                a.jcc("ge", l_done)
+                a.sub_r32_r32("r8d", "edx")
+
+                a.mov_r32_membase_disp("ecx", "rsp", tmp_off + 32)
+                a.cmp_r32_r32("ecx", "r9d")
+                a.jcc("le", l_min_dst)
+                a.mov_r32_r32("ecx", "r9d")
+                a.mark(l_min_dst)
+                a.cmp_r32_r32("ecx", "r8d")
+                a.jcc("le", l_min_src)
+                a.mov_r32_r32("ecx", "r8d")
+                a.mark(l_min_src)
+                a.test_r32_r32("ecx", "ecx")
+                a.jcc("le", l_done)
+
+                a.mov_r32_r32("r9d", "ecx")
+                a.lea_r64_membase_disp("rcx", "r11", 8)
+                a.mov_r32_membase_disp("eax", "rsp", tmp_off + 8)
+                a.add_r64_r64("rcx", "rax")
+                a.lea_r64_membase_disp("rdx", "r10", 8)
+                a.mov_r32_membase_disp("eax", "rsp", tmp_off + 24)
+                a.add_r64_r64("rdx", "rax")
+                a.mov_r32_r32("r8d", "r9d")
+                a.call("fn_copy_bytes")
+                a.jmp(l_done)
+
+                a.mark(l_fail)
+
+                a.mark(l_done)
+                a.mov_rax_imm64(enc_void())
+                self.free_expr_temps(40)
+                return
+
+            # Builtin fillBytes(dst, off, len, fill) -> void
+            if callee_name == 'fillBytes':
+                if len(e.args) != 4:
+                    raise self.error('fillBytes() expects exactly 4 arguments', e)
+
+                tmp_off = self.alloc_expr_temps(32)
+
+                for i, arg in enumerate(e.args):
+                    self.emit_expr(arg)
+                    a.mov_rsp_disp32_rax(tmp_off + i * 8)
+
+                lid = self.new_label_id()
+                l_done = f"fillbytes_done_{lid}"
+                l_fail = f"fillbytes_fail_{lid}"
+                l_len_ok = f"fillbytes_len_ok_{lid}"
+
+                # dst: must be OBJ_BYTES
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
+                a.mov_r64_r64("rax", "r11")
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_PTR)
+                a.jcc("ne", l_fail)
+                a.mov_r32_membase_disp("edx", "r11", 0)
+                a.cmp_r32_imm("edx", OBJ_BYTES)
+                a.jcc("ne", l_fail)
+
+                # off: tagged int >= 0, <= i32 max
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 8, "rax")
+
+                # len: tagged int >= 0, <= i32 max
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 16)
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 0x7FFFFFFF)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 16, "rax")
+
+                # fill: tagged int 0..255
+                a.mov_r64_membase_disp("rax", "rsp", tmp_off + 24)
+                a.mov_r64_r64("r10", "rax")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", l_fail)
+                a.sar_r64_imm8("rax", 3)
+                a.cmp_r64_imm("rax", 0)
+                a.jcc("l", l_fail)
+                a.cmp_r64_imm("rax", 255)
+                a.jcc("g", l_fail)
+                a.mov_membase_disp_r64("rsp", tmp_off + 24, "rax")
+
+                # Clamp len to remaining bytes and dispatch to fn_fill_bytes.
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
+                a.mov_r32_membase_disp("r9d", "r11", 4)
+                a.mov_r32_membase_disp("eax", "rsp", tmp_off + 8)
+                a.cmp_r32_r32("eax", "r9d")
+                a.jcc("ge", l_done)
+                a.sub_r32_r32("r9d", "eax")
+
+                a.mov_r32_membase_disp("edx", "rsp", tmp_off + 16)
+                a.cmp_r32_r32("edx", "r9d")
+                a.jcc("le", l_len_ok)
+                a.mov_r32_r32("edx", "r9d")
+                a.mark(l_len_ok)
+                a.test_r32_r32("edx", "edx")
+                a.jcc("le", l_done)
+
+                a.lea_r64_membase_disp("rcx", "r11", 8)
+                a.mov_r32_membase_disp("eax", "rsp", tmp_off + 8)
+                a.add_r64_r64("rcx", "rax")
+                a.mov_r32_membase_disp("r8d", "rsp", tmp_off + 24)
+                a.call("fn_fill_bytes")
+                a.jmp(l_done)
+
+                a.mark(l_fail)
+
+                a.mark(l_done)
+                a.mov_rax_imm64(enc_void())
+                self.free_expr_temps(32)
+                return
+
             # Builtin array(size[, fill]) -> array
             #
             # Mirrors the bytes(size[, fill]) initializer style:
