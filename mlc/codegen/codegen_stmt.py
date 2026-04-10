@@ -459,6 +459,145 @@ class CodegenStmt:
                 return vv
         return str(v)
 
+    def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
+        ml = self.ml
+        if expr is None:
+            return 0
+        if isinstance(expr, (getattr(ml, 'Num', ()), getattr(ml, 'Str', ()), getattr(ml, 'Bool', ()),
+                             getattr(ml, 'VoidLit', ()), getattr(ml, 'Var', ()))):
+            return 1
+        if isinstance(expr, getattr(ml, 'ArrayLit', ())):
+            cost = 4
+            for item in getattr(expr, 'items', []) or []:
+                cost += self._inline_collect_expr_stats(item, stats)
+            return cost
+        if isinstance(expr, getattr(ml, 'Unary', ())):
+            return 2 + self._inline_collect_expr_stats(getattr(expr, 'right', None), stats)
+        if isinstance(expr, getattr(ml, 'Bin', ())):
+            return 3 + self._inline_collect_expr_stats(getattr(expr, 'left', None), stats) + self._inline_collect_expr_stats(
+                getattr(expr, 'right', None), stats)
+        if isinstance(expr, getattr(ml, 'IsType', ())):
+            return 3 + self._inline_collect_expr_stats(getattr(expr, 'expr', None), stats)
+        if isinstance(expr, getattr(ml, 'Call', ())):
+            stats['call_count'] += 1
+            args = list(getattr(expr, 'args', []) or [])
+            if len(args) > int(stats.get('max_call_args', 0) or 0):
+                stats['max_call_args'] = len(args)
+            cost = 12 + self._inline_collect_expr_stats(getattr(expr, 'callee', None), stats)
+            for arg in args:
+                cost += self._inline_collect_expr_stats(arg, stats)
+            return cost
+        if isinstance(expr, getattr(ml, 'Index', ())):
+            return 5 + self._inline_collect_expr_stats(getattr(expr, 'target', None), stats) + self._inline_collect_expr_stats(
+                getattr(expr, 'index', None), stats)
+        if isinstance(expr, getattr(ml, 'Member', ())):
+            return 4 + self._inline_collect_expr_stats(getattr(expr, 'target', None), stats)
+        return 8
+
+    def _inline_collect_stmt_stats(self, st: Any, stats: Dict[str, Any]) -> int:
+        ml = self.ml
+        if st is None:
+            return 0
+        if isinstance(st, getattr(ml, 'GlobalDecl', ())):
+            return 0
+
+        stats['stmt_count'] += 1
+
+        if isinstance(st, getattr(ml, 'Assign', ())):
+            return 2 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'ConstDecl', ())):
+            return 2 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'Print', ())):
+            return 4 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'ExprStmt', ())):
+            return 2 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'Return', ())):
+            return 1 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'SetMember', ())):
+            return 6 + self._inline_collect_expr_stats(getattr(st, 'obj', None), stats) + self._inline_collect_expr_stats(
+                getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'SetIndex', ())):
+            return 7 + self._inline_collect_expr_stats(getattr(st, 'target', None), stats) + self._inline_collect_expr_stats(
+                getattr(st, 'index', None), stats) + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if isinstance(st, getattr(ml, 'If', ())):
+            stats['branch_count'] += 1 + len(getattr(st, 'elifs', []) or []) + (
+                    1 if len(getattr(st, 'else_body', []) or []) > 0 else 0)
+            cost = 8 + self._inline_collect_expr_stats(getattr(st, 'cond', None), stats)
+            cost += self._inline_collect_stmt_list_stats(getattr(st, 'then_body', []) or [], stats)
+            for cond, body in getattr(st, 'elifs', []) or []:
+                cost += 4 + self._inline_collect_expr_stats(cond, stats)
+                cost += self._inline_collect_stmt_list_stats(body or [], stats)
+            cost += self._inline_collect_stmt_list_stats(getattr(st, 'else_body', []) or [], stats)
+            return cost
+        if isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()), getattr(ml, 'For', ()))):
+            stats['has_loop'] = True
+            cost = 48
+            if hasattr(st, 'cond'):
+                cost += self._inline_collect_expr_stats(getattr(st, 'cond', None), stats)
+            if hasattr(st, 'start'):
+                cost += self._inline_collect_expr_stats(getattr(st, 'start', None), stats)
+            if hasattr(st, 'end'):
+                cost += self._inline_collect_expr_stats(getattr(st, 'end', None), stats)
+            cost += self._inline_collect_stmt_list_stats(getattr(st, 'body', []) or [], stats)
+            return cost
+        if self._is_foreach_stmt(st):
+            stats['has_loop'] = True
+            return 48 + self._inline_collect_expr_stats(getattr(st, 'iterable', None), stats) + self._inline_collect_stmt_list_stats(
+                getattr(st, 'body', []) or [], stats)
+        if isinstance(st, getattr(ml, 'Switch', ())):
+            stats['has_switch'] = True
+            cost = 56 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+            for cs in getattr(st, 'cases', []) or []:
+                if getattr(cs, 'kind', None) == 'values':
+                    for value in getattr(cs, 'values', []) or []:
+                        cost += self._inline_collect_expr_stats(value, stats)
+                else:
+                    cost += self._inline_collect_expr_stats(getattr(cs, 'range_start', None), stats)
+                    cost += self._inline_collect_expr_stats(getattr(cs, 'range_end', None), stats)
+                cost += self._inline_collect_stmt_list_stats(getattr(cs, 'body', []) or [], stats)
+            cost += self._inline_collect_stmt_list_stats(getattr(st, 'default_body', []) or [], stats)
+            return cost
+        if isinstance(st, getattr(ml, 'FunctionDef', ())):
+            stats['has_nested_fn'] = True
+            return 64
+        if isinstance(st, (getattr(ml, 'Break', ()), getattr(ml, 'Continue', ()))):
+            return 1
+        return 6
+
+    def _inline_collect_stmt_list_stats(self, stmts: List[Any], stats: Dict[str, Any]) -> int:
+        cost = 0
+        for st in stmts or []:
+            cost += self._inline_collect_stmt_stats(st, stats)
+        return cost
+
+    def _inline_analyze_function(self, fn: Any) -> Dict[str, Any]:
+        cached = getattr(fn, '_ml_inline_stats', None)
+        if isinstance(cached, dict):
+            return cached
+
+        stats: Dict[str, Any] = {
+            'cost': 0,
+            'stmt_count': 0,
+            'call_count': 0,
+            'branch_count': 0,
+            'max_call_args': 0,
+            'has_loop': False,
+            'has_switch': False,
+            'has_nested_fn': False,
+        }
+        stats['cost'] = self._inline_collect_stmt_list_stats(list(getattr(fn, 'body', []) or []), stats) + len(
+            list(getattr(fn, 'params', []) or []))
+        stats['ok'] = (
+                not bool(stats['has_loop']) and
+                not bool(stats['has_switch']) and
+                not bool(stats['has_nested_fn']) and
+                int(stats['stmt_count']) <= 8 and
+                int(stats['call_count']) <= 2 and
+                int(stats['branch_count']) <= 2 and
+                int(stats['cost']) <= 64)
+        setattr(fn, '_ml_inline_stats', stats)
+        return stats
+
     # ------------------------------------------------------------
     # Step 6 (Closures) — Analysis only (6.0/6.1)
     #
@@ -3214,42 +3353,39 @@ class CodegenStmt:
         # ------------------------------------------------------------
         # Inline functions (function inline ...)
         # ------------------------------------------------------------
-        # Inline functions are expanded directly in CodegenExpr (no call overhead).
-        # Direct calls like `f(x,y)` are expanded; indirect calls still work via the
-        # out-of-line function body.
-        #
-        # NOTE: Multi-statement bodies are supported; CodegenExpr implements the
-        #       full statement/block expansion with an isolated inline scope.
+        # Inline functions are expanded directly in CodegenExpr (no call overhead),
+        # but only when their bodies stay small enough to be a net win.
+        # Large/branchy bodies still keep their out-of-line form and are called
+        # normally so code size and I-cache pressure do not explode.
         self.inline_functions = {}
+        self.inline_function_stats = {}
         for qn, fn in (getattr(self, "user_functions", {}) or {}).items():
             if not bool(getattr(fn, "is_inline", False)):
                 continue
-            self.inline_functions[qn] = fn
+            stats = self._inline_analyze_function(fn)
+            self.inline_function_stats[qn] = stats
+            if bool(stats.get('ok', False)):
+                self.inline_functions[qn] = fn
 
         # ------------------------------------------------------------
-        # Stack layout sizing (global maximum call arity)
+        # Stack layout sizing (visible calls + hidden calls inside inline bodies)
         # ------------------------------------------------------------
-        # When inlining, calls inside the inlined expression appear in the *caller*
-        # without being visible in the caller's own AST. To avoid under-sizing the
-        # outgoing-args scratch area, we conservatively size it to the maximum call
-        # arity seen anywhere in the program.
+        # When inlining, calls inside the inlined expression appear in the caller
+        # without being visible in the caller's own AST. We therefore add the
+        # maximum call arity seen in inline-eligible bodies on top of each
+        # function's own visible call-arity requirement.
         max_call_args_main = max_calls_stmts(program)
-        max_call_args_global = max_call_args_main
-        for _fn in (getattr(self, "user_functions", {}) or {}).values():
+        max_inline_call_args = 0
+        for _fn in (getattr(self, 'inline_functions', {}) or {}).values():
             try:
-                max_call_args_global = max(max_call_args_global, max_calls_stmts(list(getattr(_fn, "body", []) or [])))
-            except Exception:
-                pass
-        for _fn in (getattr(self, "nested_user_functions", {}) or {}).values():
-            try:
-                max_call_args_global = max(max_call_args_global, max_calls_stmts(list(getattr(_fn, "body", []) or [])))
+                max_inline_call_args = max(max_inline_call_args, max_calls_stmts(list(getattr(_fn, "body", []) or [])))
             except Exception:
                 pass
 
-        self._max_call_args_global = int(max_call_args_global)
+        self._max_inline_call_args_global = int(max_inline_call_args)
 
-        # Use global max for main frame too.
-        max_call_args_main = self._max_call_args_global
+        # Main needs its own visible calls plus anything hidden by inline expansion.
+        max_call_args_main = max(int(max_call_args_main), int(self._max_inline_call_args_global))
 
         # Layout:
         # [rsp+0x00..0x1F] shadow space for calls
@@ -3845,11 +3981,9 @@ class CodegenStmt:
                     pass
             return m
 
-        # See emit_program(): stack call-arg scratch is sized to the global maximum
-        # to stay safe under inlining.
-        max_call_args = int(getattr(self, "_max_call_args_global", 0) or 0)
-        if max_call_args <= 0:
-            max_call_args = max_calls_stmts(fn.body)
+        # See emit_program(): each frame needs enough outgoing-arg space for its
+        # own visible calls plus calls hidden inside any inlined body it may expand.
+        max_call_args = max(max_calls_stmts(fn.body), int(getattr(self, "_max_inline_call_args_global", 0) or 0))
 
         # ---- lexical analysis: pre-allocate local bindings + decl-site map ----
         # We keep global bindings visible via resolve_binding() fallback, but start with an empty
@@ -4264,7 +4398,7 @@ class CodegenStmt:
         frame_size = align_up(frame_end + 0x20, 16)
         root_rec_off = frame_size - 0x20
         root_base = local_base
-        root_top = expr_temp_base + self.expr_temp_max
+        root_static_top = expr_temp_base
         # Assign offsets for the preallocated local bindings.
         self.analysis_layout_function_locals(locals_base)
 
@@ -4372,11 +4506,12 @@ class CodegenStmt:
 
         # ---- GC shadow stack roots (Part A) ----
 
-        # Clear all root slots (locals + params + temps) to VOID so GC doesn't keep stale values alive.
-        self.emit_gc_clear_root_slots(root_base, root_top)
+        # Clear the always-live root prefix (locals + params + call-temp area).
+        # Expression temps extend this range lazily as slots are actually allocated.
+        self.emit_gc_clear_root_slots(root_base, root_static_top)
 
         # Push function root-frame record at [rsp+root_rec_off] and link it into gc_roots_head.
-        self.emit_gc_push_root_frame(root_rec_off, root_base, root_top)
+        self.emit_gc_push_root_frame(root_rec_off, root_base, root_static_top)
 
         # Save incoming closure environment (passed in r10) in a nonvolatile register.
         a.mov_r64_r64("r14", "r10")
@@ -4389,6 +4524,8 @@ class CodegenStmt:
         old_ctb = self.call_temp_base
         old_etb = self.expr_temp_base
         old_ett = self.expr_temp_top
+        old_root_rec = getattr(self, '_current_root_rec_off', None)
+        old_root_static_qwords = int(getattr(self, '_current_root_static_qwords', 0) or 0)
 
         # Save/override scope stack for real emission (function-local only)
         saved_emit_stack = getattr(self, "_scope_stack", None)
@@ -4401,6 +4538,8 @@ class CodegenStmt:
         self.call_temp_base = call_temp_base
         self.expr_temp_base = expr_temp_base
         self.expr_temp_top = 0
+        self._current_root_rec_off = root_rec_off
+        self._current_root_static_qwords = (root_static_top - root_base) // 8
 
         if saved_emit_stack is not None:
             base_globals = {}
@@ -4602,6 +4741,8 @@ class CodegenStmt:
         self.call_temp_base = old_ctb
         self.expr_temp_base = old_etb
         self.expr_temp_top = old_ett
+        self._current_root_rec_off = old_root_rec
+        self._current_root_static_qwords = old_root_static_qwords
 
         a.add_rsp_imm32(frame_size)
         a.pop_r15()

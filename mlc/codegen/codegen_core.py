@@ -279,6 +279,8 @@ class CodegenCore:
         self.expr_temp_base: int = self.call_temp_base + 0x40
         self.expr_temp_top: int = 0
         self.expr_temp_max: int = 0x400
+        self._current_root_rec_off: Optional[int] = None
+        self._current_root_static_qwords: int = 0
 
         # ------------------------------------------------------------
         # Inline functions (function inline ...)
@@ -456,6 +458,14 @@ class CodegenCore:
 
     # ---------- expression temp allocation (nested-safe) ----------
 
+    def _sync_expr_temp_root_count(self) -> None:
+        rec_off = getattr(self, '_current_root_rec_off', None)
+        if rec_off is None:
+            return
+        base_qwords = int(getattr(self, '_current_root_static_qwords', 0) or 0)
+        dyn_qwords = int(getattr(self, 'expr_temp_top', 0) or 0) // 8
+        self.asm.mov_membase_disp_imm32("rsp", int(rec_off) + 16, base_qwords + dyn_qwords, qword=True)
+
     def alloc_expr_temps(self, size: int) -> int:
         """Reserve `size` bytes in the expression temp area and return the absolute [rsp+off] offset."""
         size = align_up(size, 8)
@@ -463,6 +473,11 @@ class CodegenCore:
         self.expr_temp_top += size
         if self.expr_temp_top > self.expr_temp_max:
             raise CompileError('Expression temp overflow (increase expr_temp_max)', None)
+        if size > 0:
+            imm = enc_void()
+            for disp in range(off, off + size, 8):
+                self.asm.mov_membase_disp_imm32("rsp", disp, imm, qword=True)
+            self._sync_expr_temp_root_count()
         return off
 
     def free_expr_temps(self, size: int) -> None:
@@ -480,6 +495,7 @@ class CodegenCore:
         self.expr_temp_top -= size
         if self.expr_temp_top < 0:
             self.expr_temp_top = 0
+        self._sync_expr_temp_root_count()
 
     def ensure_var(self, name: str) -> str:
         if name in self.var_slots:

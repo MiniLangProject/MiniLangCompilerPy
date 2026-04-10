@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import re
+import struct
 from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
@@ -13,6 +14,8 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STR
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
+
+_F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
 
 class CodegenExpr:
@@ -1335,6 +1338,91 @@ class CodegenExpr:
                     self.free_expr_temps(delta)
             except Exception:
                 pass
+
+    def _emit_std_math_roundlike_intrinsic(self, callee_name: str, arg: Any) -> bool:
+        if callee_name not in ('std.math.floor', 'std.math.ceil', 'std.math.trunc', 'std.math.round'):
+            return False
+
+        a = self.asm
+        lid = self.new_label_id()
+        l_ptr = f"math_ptr_{lid}"
+        l_float = f"math_float_{lid}"
+        l_fail = f"math_fail_{lid}"
+        l_done = f"math_done_{lid}"
+
+        self.emit_expr(arg)
+
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_INT)
+        a.jcc('e', l_done)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc('e', l_ptr)
+        a.jmp(l_fail)
+
+        a.mark(l_ptr)
+        a.mov_r32_membase_disp("r10d", "rax", 0)
+        a.cmp_r32_imm("r10d", OBJ_FLOAT)
+        a.jcc('e', l_float)
+        a.jmp(l_fail)
+
+        a.mark(l_float)
+        if callee_name == 'std.math.floor':
+            l_exact = f"math_floor_exact_{lid}"
+            a.mov_r64_r64("r11", "rax")
+            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
+            a.roundsd_xmm_xmm_imm8("xmm1", "xmm0", 1)
+            a.ucomisd_xmm_xmm("xmm0", "xmm1")
+            a.jcc('e', l_exact)
+            a.movapd_xmm_xmm("xmm0", "xmm1")
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+            a.mark(l_exact)
+            a.mov_r64_r64("rax", "r11")
+            a.jmp(l_done)
+
+        if callee_name == 'std.math.ceil':
+            l_exact = f"math_ceil_exact_{lid}"
+            a.mov_r64_r64("r11", "rax")
+            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
+            a.roundsd_xmm_xmm_imm8("xmm1", "xmm0", 2)
+            a.ucomisd_xmm_xmm("xmm0", "xmm1")
+            a.jcc('e', l_exact)
+            a.movapd_xmm_xmm("xmm0", "xmm1")
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+            a.mark(l_exact)
+            a.mov_r64_r64("rax", "r11")
+            a.jmp(l_done)
+
+        if callee_name == 'std.math.trunc':
+            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
+            a.roundsd_xmm_xmm_imm8("xmm0", "xmm0", 3)
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+
+        if callee_name == 'std.math.round':
+            l_nonneg = f"math_round_nonneg_{lid}"
+            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
+            a.xorpd_xmm_xmm("xmm2", "xmm2")
+            a.ucomisd_xmm_xmm("xmm0", "xmm2")
+            a.mov_rax_imm64(_F64_POS_HALF_BITS)
+            a.movq_xmm_r64("xmm1", "rax")
+            a.jcc('ae', l_nonneg)
+            a.subsd_xmm_xmm("xmm0", "xmm1")
+            a.roundsd_xmm_xmm_imm8("xmm0", "xmm0", 2)
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+            a.mark(l_nonneg)
+            a.addsd_xmm_xmm("xmm0", "xmm1")
+            a.roundsd_xmm_xmm_imm8("xmm0", "xmm0", 1)
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.mark(l_done)
+        return True
 
     def emit_expr(self, e: Any) -> None:
         """Emit code so that RAX contains the Value."""
@@ -4588,6 +4676,11 @@ class CodegenExpr:
                 a.mark(l_after)
                 self.free_expr_temps(32)
                 return
+
+            # std.math floor/ceil/trunc/round: lower directly to scalar SSE code.
+            if callee_name in ('std.math.floor', 'std.math.ceil', 'std.math.trunc', 'std.math.round') and len(e.args) == 1:
+                if self._emit_std_math_roundlike_intrinsic(callee_name, e.args[0]):
+                    return
 
             # Special form: try(expr) suppresses automatic error propagation for calls inside expr
             if callee_name == 'try' and len(e.args) == 1:

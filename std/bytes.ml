@@ -236,7 +236,7 @@ function endsWith(b, suffix)
   return true
 end function
 
-function indexOf(hay, needle, start)
+function _indexOfNaive(hay, needle, start)
   if typeof(hay) != "bytes" then
     return
   end if
@@ -282,6 +282,80 @@ function indexOf(hay, needle, start)
       return i
     end if
   end for
+
+  return -1
+end function
+
+function indexOf(hay, needle, start)
+  if typeof(hay) != "bytes" then
+    return
+  end if
+  if typeof(needle) != "bytes" then
+    return
+  end if
+  if typeof(start) != "int" then
+    return
+  end if
+
+  n = len(hay)
+  m = len(needle)
+
+  i0 = start
+  if i0 < 0 then
+    i0 = 0
+  end if
+  if i0 > n then
+    i0 = n
+  end if
+
+  if m == 0 then
+    return i0
+  end if
+  if m > n then
+    return -1
+  end if
+
+  last = n - m
+  if i0 > last then
+    return -1
+  end if
+
+  if m == 1 then
+    b0 = needle[0]
+    i = i0
+    while i <= last
+      if hay[i] == b0 then
+        return i
+      end if
+      i = i + 1
+    end while
+    return -1
+  end if
+
+  if m < 4 or (last - i0) < 32 then
+    return _indexOfNaive(hay, needle, i0)
+  end if
+
+  shift = array(256, m)
+  for j = 0 to(m - 2)
+    shift[needle[j]] = (m - 1) - j
+  end for
+
+  lastByte = needle[m - 1]
+  i = i0
+  while i <= last
+    tail = hay[i + m - 1]
+    if tail == lastByte then
+      j = 0
+      while j < m - 1 and hay[i + j] == needle[j]
+        j = j + 1
+      end while
+      if j == m - 1 then
+        return i
+      end if
+    end if
+    i = i + shift[tail]
+  end while
 
   return -1
 end function
@@ -630,4 +704,3 @@ function xorInPlace(a, b)
   end while
   return a
 end function
-
