@@ -397,6 +397,8 @@ def _set_const_binding_value(cg: Any, b: VarBinding, pyv: Any) -> None:
 
 
 class CodegenStmt:
+    _FOR_UNROLL_MAX_TRIPS = 6
+    _FOR_UNROLL_MAX_BODY_STMTS = 12
 
     # ------------------------------------------------------------
     # Optimizer Step 4 helpers
@@ -508,6 +510,117 @@ class CodegenStmt:
         except Exception:
             pass
         return names
+
+    def _for_unroll_body_ok(self, stmts: list[Any], loop_var: str) -> bool:
+        """Conservative filter for tiny constant-trip `for` loop unrolling.
+
+        We only unroll bodies that are small and structurally simple:
+        no nested loops/switches/functions and no direct writes to the loop var.
+        """
+        ml = self.ml
+        budget = [int(getattr(self, "_FOR_UNROLL_MAX_BODY_STMTS", 12))]
+
+        def visit_stmt(st: Any) -> bool:
+            if st is None:
+                return True
+            budget[0] -= 1
+            if budget[0] < 0:
+                return False
+
+            if hasattr(ml, 'Break') and isinstance(st, ml.Break):
+                return False
+            if hasattr(ml, 'Continue') and isinstance(st, ml.Continue):
+                return False
+            if hasattr(ml, 'FunctionDef') and isinstance(st, ml.FunctionDef):
+                return False
+            if hasattr(ml, 'Switch') and isinstance(st, ml.Switch):
+                return False
+            if hasattr(ml, 'While') and isinstance(st, ml.While):
+                return False
+            if hasattr(ml, 'DoWhile') and isinstance(st, ml.DoWhile):
+                return False
+            if hasattr(ml, 'For') and isinstance(st, ml.For):
+                return False
+            if self._is_foreach_stmt(st):
+                return False
+
+            if hasattr(ml, 'Assign') and isinstance(st, ml.Assign):
+                if str(getattr(st, 'name', '')) == loop_var:
+                    return False
+
+            if hasattr(ml, 'If') and isinstance(st, ml.If):
+                if not visit_expr(getattr(st, 'cond', None)):
+                    return False
+                for ss in getattr(st, 'then_body', []) or []:
+                    if not visit_stmt(ss):
+                        return False
+                for cond, body in getattr(st, 'elifs', []) or []:
+                    if not visit_expr(cond):
+                        return False
+                    for ss in body or []:
+                        if not visit_stmt(ss):
+                            return False
+                for ss in getattr(st, 'else_body', []) or []:
+                    if not visit_stmt(ss):
+                        return False
+
+            return True
+
+        def visit_expr(expr: Any) -> bool:
+            if expr is None:
+                return True
+            budget[0] -= 1
+            if budget[0] < 0:
+                return False
+            # We only use the expression walk as a tiny complexity budget, not
+            # as a semantic filter, so keep it shallow and structural.
+            for attr in ('left', 'right', 'expr', 'cond', 'value', 'target', 'index', 'start', 'end', 'iterable'):
+                child = getattr(expr, attr, None)
+                if isinstance(child, list):
+                    for it in child:
+                        if not visit_expr(it):
+                            return False
+                elif child is not None and type(child) is not type(expr):
+                    try:
+                        if not visit_expr(child):
+                            return False
+                    except RecursionError:
+                        return False
+            for attr in ('args', 'items'):
+                child_list = getattr(expr, attr, None)
+                if isinstance(child_list, list):
+                    for it in child_list:
+                        if not visit_expr(it):
+                            return False
+            return True
+
+        for st in stmts or []:
+            if not visit_stmt(st):
+                return False
+        return True
+
+    def _for_unroll_values(self, s: Any) -> Optional[list[int]]:
+        """Return concrete iteration values for tiny constant-trip `for` loops."""
+        try:
+            start_i = self._opt_try_const_int(getattr(s, 'start', None))
+            end_i = self._opt_try_const_int(getattr(s, 'end', None))
+        except Exception:
+            return None
+        if start_i is None or end_i is None:
+            return None
+
+        trips = abs(int(end_i) - int(start_i)) + 1
+        if trips <= 0 or trips > int(getattr(self, "_FOR_UNROLL_MAX_TRIPS", 6)):
+            return None
+
+        loop_var = str(getattr(s, 'var', ''))
+        if not loop_var:
+            return None
+        if not self._for_unroll_body_ok(getattr(s, 'body', []) or [], loop_var):
+            return None
+
+        step = 1 if start_i <= end_i else -1
+        return list(range(int(start_i), int(end_i) + step, step))
 
     def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
         ml = self.ml
@@ -2176,6 +2289,23 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.For):
+            unroll_values = self._for_unroll_values(s)
+            if unroll_values is not None:
+                # Conservative unrolling for tiny constant-trip loops. We keep
+                # the dedicated loop scope so the implicit loop variable stays
+                # lexically identical to the regular lowering.
+                self.push_scope()
+                if hasattr(self, "declare_fresh_binding"):
+                    self.declare_fresh_binding(s.var, node=s)
+                for iv in unroll_values:
+                    a.mov_rax_imm64(enc_int(iv))
+                    self.emit_store_var(s.var, s)
+                    self.push_scope()
+                    self._emit_stmt_list(getattr(s, 'body', []) or [])
+                    self.pop_scope()
+                self.pop_scope()
+                return
+
             # inclusive for, supports up/down
             top = f"for_top_{a.pos}"
             cont = f"for_cont_{a.pos}"

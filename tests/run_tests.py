@@ -2572,6 +2572,83 @@ def test_codegen_plus_minus_one_fastpaths(*, name: str, mlc_runner: Path) -> Tes
 
 
 
+def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestResult:
+    """Codegen regression: tiny constant-trip for-loops should be unrolled."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "for_unroll_small_const.ml"
+        exe = td_path / "for_unroll_small_const.exe"
+        asm_path = td_path / "for_unroll_small_const.asm"
+
+        main_ml.write_text("\n".join([
+            'function main(args)',
+            '  sum1 = 0',
+            '  for i = 1 to(4)',
+            '    sum1 = sum1 + i',
+            '  end for',
+            '  sum2 = 0',
+            '  for j = 3 to(1)',
+            '    sum2 = sum2 + j',
+            '  end for',
+            '  print(sum1)',
+            '  print(sum2)',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        cr = compile_native(
+            mlc_runner,
+            main_ml,
+            exe,
+            timeout_s=180,
+            extra_args=['--asm', '--asm-out', str(asm_path)],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout).strip().splitlines()
+        if out[:2] != ['10', '6']:
+            return TestResult(name=name, status="FAIL",
+                              details="unexpected runtime output for small const for-unroll probe",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        asm_lines = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace")).splitlines()
+        start = None
+        end = len(asm_lines)
+        for i, line in enumerate(asm_lines):
+            if line.lstrip().startswith("fn_user_main:"):
+                start = i
+                break
+        if start is None:
+            return TestResult(name=name, status="FAIL", details="fn_user_main not found in generated .asm listing")
+        for i in range(start + 1, len(asm_lines)):
+            stripped = asm_lines[i].lstrip()
+            if stripped.startswith("fn_") and re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", stripped):
+                end = i
+                break
+
+        main_asm = "\n".join(asm_lines[start:end])
+        forbidden = ["for_top_", "for_cont_", "for_end_", "__for_end_", "__for_step_"]
+        for marker in forbidden:
+            if marker in main_asm:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"small constant for-loop was not fully unrolled: found {marker!r} in fn_user_main",
+                                  stdout=rr.stdout, stderr=main_asm)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime test: --profile-calls instruments user functions and exposes callStats()."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -2898,6 +2975,8 @@ def main() -> int:
     tests.append(lambda: test_foreach_gc_root_runtime(name="foreach: iterable survives gc", mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_plus_minus_one_fastpaths(name="codegen: +/-1 fast paths in user main",
                                                               mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_small_const_for_unroll(name="codegen: small const for loops unrolled",
+                                                             mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None
