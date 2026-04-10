@@ -8,7 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .codegen_scope import VarBinding
 from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
-                         OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, ERROR_STRUCT_ID,
+                         OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
+                         OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
                          ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
                          ERR_PRINT_UNSUPPORTED, )
 from ..context import BreakableCtx
@@ -2042,7 +2043,7 @@ class CodegenStmt:
             a.jcc("ne", l_fail)
 
             # load struct_id (u32) into edx
-            a.mov_r32_membase_disp("edx", "r12", 8)  # mov edx,[r12+8]
+            a.mov_r32_membase_disp("edx", "r12", 4)  # mov edx,[r12+4]
 
             field = getattr(s, 'field', None)
             if field is None:
@@ -2053,8 +2054,8 @@ class CodegenStmt:
             self.emit_struct_field_index_dispatch(field, 'edx', 'ecx', l_ok, l_fail, tag=f"setm_{fid}")
 
             a.mark(l_ok)
-            # store value: [obj + 16 + rcx*8] = r13
-            a.mov_mem_bis_r64('r12', 'rcx', 8, 16, 'r13')
+            # store value: [obj + 8 + rcx*8] = r13
+            a.mov_mem_bis_r64('r12', 'rcx', 8, 8, 'r13')
             a.jmp(l_done)
 
             a.mark(l_fail)
@@ -2433,24 +2434,26 @@ class CodegenStmt:
                     s, )
 
             # Allocate function object:
+            # plain function:
             #   +0  u32 type (=OBJ_FUNCTION)
             #   +4  u32 arity
             #   +8  u64 code_ptr (raw address of fn_user_<code_name>)
+            #
+            # capturing closure:
+            #   +0  u32 type (=OBJ_CLOSURE)
+            #   +4  u32 arity
+            #   +8  u64 code_ptr
             #   +16 u64 env (tagged ptr to current environment frame)
-            a.mov_rcx_imm32(24)
+            need_parent = bool(getattr(s, "_ml_captures", set()) or set()) or bool(getattr(s, "_ml_env_hop", False))
+            a.mov_rcx_imm32(24 if need_parent else 16)
             a.call("fn_alloc")
             a.mov_r64_r64("r11", "rax")  # r11 = obj
-            a.mov_membase_disp_imm32("r11", 0, OBJ_FUNCTION, qword=False)
+            a.mov_membase_disp_imm32("r11", 0, OBJ_CLOSURE if need_parent else OBJ_FUNCTION, qword=False)
             a.mov_membase_disp_imm32("r11", 4, len(getattr(s, 'params', []) or []), qword=False)
             a.lea_rdx_rip(f"fn_user_{code_name}")
             a.mov_membase_disp_r64("r11", 8, "rdx")
-            # +16 env: capture current environment pointer ONLY if the nested function
-            # actually needs a parent env (it captures or is an env-hop for deeper captures).
-            need_parent = bool(getattr(s, "_ml_captures", set()) or set()) or bool(getattr(s, "_ml_env_hop", False))
             if need_parent:
                 a.mov_membase_disp_r64("r11", 16, "r15")
-            else:
-                a.mov_membase_disp_imm32("r11", 16, enc_void(), qword=True)
 
             # Assign to the local variable name.
             self.emit_store_var_scoped(getattr(s, 'name'), s)
@@ -3301,27 +3304,26 @@ class CodegenStmt:
         # Initialize heap + GC globals (implemented in CodegenMemory).
         # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.
         self.emit_heap_init()
+        a.call('fn_cpu_init')
 
         # Initialize function values for all top-level (and namespaced) user functions.
-        # Layout (24 bytes):
+        # Layout (16 bytes):
         #   +0  u32 type    = OBJ_FUNCTION
         #   +4  u32 arity
         #   +8  u64 code_ptr (raw address of fn_user_<name>)
-        #  +16  u64 env      (reserved for closures; currently VOID)
         voidv = enc_void()
         for nm, fn in self.user_functions.items():
             lbl = getattr(self, "function_global_labels", {}).get(nm)
             if not lbl:
                 continue
             arity = len(getattr(fn, "params", []) or [])
-            a.mov_rcx_imm32(24)
+            a.mov_rcx_imm32(16)
             a.call("fn_alloc")
             a.mov_r64_r64("r11", "rax")  # r11 = obj
             a.mov_membase_disp_imm32("r11", 0, OBJ_FUNCTION, qword=False)
             a.mov_membase_disp_imm32("r11", 4, arity, qword=False)
             a.lea_rax_rip(f"fn_user_{nm}")
             a.mov_membase_disp_r64("r11", 8, "rax")
-            a.mov_membase_disp_imm32("r11", 16, voidv, qword=True)
             a.mov_rip_qword_r11(lbl)
         # Step 6.2b-2b-1: compute env slot layout metadata (boxed vars + indices)
         # Must happen AFTER nested_user_functions is populated so nested functions also get layout.
@@ -3641,7 +3643,7 @@ class CodegenStmt:
             a.cmp_r32_imm("edx", OBJ_STRUCT)
             a.jcc("ne", l_main_noerr)
             # if struct_id != ERROR_STRUCT_ID -> noerr
-            a.mov_r32_membase_disp("edx", "rax", 8)
+            a.mov_r32_membase_disp("edx", "rax", 4)
             a.cmp_r32_imm("edx", ERROR_STRUCT_ID)
             a.jcc("ne", l_main_noerr)
             # handle
@@ -4493,6 +4495,7 @@ class CodegenStmt:
             else:
                 raise self.error(f"Internal compiler error: captured name '{nm}' has no slot", fn, )
 
+        has_parent_env = has_caps or env_hop
         if need_env:
             # Box captured locals/params and write the cell pointer back into the variable slot.
             for nm in env_slots:
@@ -4509,20 +4512,24 @@ class CodegenStmt:
                 # overwrite variable slot with box pointer
                 a.mov_rsp_disp32_rax(off)
 
-            # Allocate env frame: 16-byte header + N slots.
+            # Allocate env frame:
+            #   parentful: [type][nslots][parent][slot0...]
+            #   parentless: [type][nslots][slot0...]
             env_n = len(env_slots)
-            a.mov_rcx_imm32(16 + env_n * 8)
+            a.mov_rcx_imm32((16 if has_parent_env else 8) + env_n * 8)
             a.call("fn_alloc")
             a.mov_r64_r64("r11", "rax")
-            a.mov_membase_disp_imm32("r11", 0, OBJ_ENV, qword=False)
+            a.mov_membase_disp_imm32("r11", 0, OBJ_ENV if has_parent_env else OBJ_ENV_LOCAL, qword=False)
             a.mov_membase_disp_imm32("r11", 4, env_n, qword=False)
-            # parent = incoming env (VOID if not needed / not provided)
-            a.mov_membase_disp_r64("r11", 8, "r14")
+            slot_base = 16 if has_parent_env else 8
+            if has_parent_env:
+                # parent = incoming env
+                a.mov_membase_disp_r64("r11", 8, "r14")
             # slots = pointers to boxes
             for i, nm in enumerate(env_slots):
                 off = slot_off[nm]
                 a.mov_r64_membase_disp("r10", "rsp", off)
-                a.mov_membase_disp_r64("r11", 16 + i * 8, "r10")
+                a.mov_membase_disp_r64("r11", slot_base + i * 8, "r10")
 
             # Current env pointer lives in r15 (and in the hidden root slot for GC).
             a.mov_r64_r64("r15", "r11")

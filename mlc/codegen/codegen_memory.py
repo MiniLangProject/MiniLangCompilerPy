@@ -14,8 +14,9 @@ Allocation-using language builtins were split out into:
 
 from __future__ import annotations
 
-from ..constants import (GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE, GC_OFF_NEXT_FREE, OBJ_ARRAY, OBJ_BOX, OBJ_ENV, OBJ_FREE,
-                         OBJ_FUNCTION, OBJ_STRUCT, )
+from ..constants import (GC_BLOCK_FREE_BIT, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE, GC_OFF_NEXT_FREE,
+                         GC_OFF_REFCOUNT, OBJ_ARRAY, OBJ_BOX, OBJ_CLOSURE, OBJ_ENV, OBJ_ENV_LOCAL, OBJ_FUNCTION,
+                         OBJ_STRUCT, )
 from ..tools import align_up, enc_void
 
 # ============================================================
@@ -44,13 +45,20 @@ GC_DEFAULT_BYTES_LIMIT = 64 << 20  # 64 MiB periodic GC trigger (if enabled)
 GC_DISABLE_PERIODIC_LIMIT = 0x7FFFFFFFFFFFFFFF
 
 # NOTE on refcount helpers:
-# This file currently implements a mark/sweep GC header layout:
-#   [header+0]  u64 block_size
-#   [header+8]  u64 mark (0/1)
-#   [header+16] u64 next_free
-# There is no refcount field. Therefore incref/decref would corrupt mark bits unless
-# you redesign the header. Keep this disabled unless you implement a compatible layout.
+# This file currently implements a compact mark/sweep GC header layout:
+#   [header+0]  u64 block_size_and_flags
+# Mark bits live in an out-of-line bitmap and free-list links live in the
+# payload area of free blocks. There is no dedicated refcount field. Therefore
+# incref/decref would corrupt GC metadata unless you redesign the runtime.
+# Keep this disabled unless you implement a compatible layout.
 MEMORY_ENABLE_REFCOUNT = False
+
+
+def _mark_bitmap_bytes_for_heap_bytes(heap_bytes: int) -> int:
+    """Return the number of bitmap bytes needed for ``heap_bytes`` of heap."""
+
+    heap_bytes = max(0, int(heap_bytes))
+    return (heap_bytes + 63) // 64
 
 
 class CodegenMemory:
@@ -122,6 +130,9 @@ class CodegenMemory:
             commit_bytes = reserve_bytes
         if shrink_min_bytes > commit_bytes:
             shrink_min_bytes = commit_bytes
+
+        bitmap_reserve_bytes = align_up(_mark_bitmap_bytes_for_heap_bytes(reserve_bytes), MEM_RESERVE_GRANULARITY)
+        bitmap_commit_bytes = align_up(_mark_bitmap_bytes_for_heap_bytes(commit_bytes), MEM_PAGE_SIZE)
 
         # ------------------------------------------------------------
         # 1) RESERVE: base = VirtualAlloc(NULL, reserve, MEM_RESERVE, PAGE_READWRITE)
@@ -204,6 +215,57 @@ class CodegenMemory:
         a.mov_rax_imm64(reserve_bytes)
         a.mov_rip_qword_rax('heap_reserve_bytes')
 
+        # ------------------------------------------------------------
+        # 4) Reserve+commit the GC mark bitmap alongside the heap.
+        # One bitmap bit covers one 8-byte-aligned block header position.
+        # ------------------------------------------------------------
+        a.xor_ecx_ecx()  # rcx = NULL
+        a.mov_rax_imm64(bitmap_reserve_bytes)
+        a.mov_rdx_rax()
+        a.mov_r8d_imm32(0x2000)  # MEM_RESERVE
+        a.mov_r9d_imm32(0x04)  # PAGE_READWRITE
+        a.mov_rax_rip_qword('iat_VirtualAlloc')
+        a.call_rax()
+
+        a.test_r64_r64("rax", "rax")
+        lbl_ok_bm_res = f"heap_bm_res_ok_{a.pos}"
+        a.jcc("ne", lbl_ok_bm_res)
+        a.mov_rcx_imm32(1)
+        a.mov_rax_rip_qword('iat_ExitProcess')
+        a.call_rax()
+        a.mark(lbl_ok_bm_res)
+
+        a.mov_rip_qword_rax('gc_mark_bits_base')
+
+        a.mov_rax_rip_qword('gc_mark_bits_base')
+        a.mov_r64_r64("rcx", "rax")
+        a.mov_rax_imm64(bitmap_commit_bytes)
+        a.mov_rdx_rax()
+        a.mov_r8d_imm32(0x1000)  # MEM_COMMIT
+        a.mov_r9d_imm32(0x04)  # PAGE_READWRITE
+        a.mov_rax_rip_qword('iat_VirtualAlloc')
+        a.call_rax()
+
+        a.test_r64_r64("rax", "rax")
+        lbl_ok_bm_com = f"heap_bm_com_ok_{a.pos}"
+        a.jcc("ne", lbl_ok_bm_com)
+        a.mov_rcx_imm32(1)
+        a.mov_rax_rip_qword('iat_ExitProcess')
+        a.call_rax()
+        a.mark(lbl_ok_bm_com)
+
+        a.mov_rax_rip_qword('gc_mark_bits_base')
+        a.mov_r64_r64("rdx", "rax")
+        a.mov_rax_imm64(bitmap_commit_bytes)
+        a.add_r64_r64("rdx", "rax")
+        a.mov_rip_qword_rdx('gc_mark_bits_end')
+
+        a.mov_rax_rip_qword('gc_mark_bits_base')
+        a.mov_r64_r64("rdx", "rax")
+        a.mov_rax_imm64(bitmap_reserve_bytes)
+        a.add_r64_r64("rdx", "rax")
+        a.mov_rip_qword_rdx('gc_mark_bits_reserve_end')
+
     def emit_gc_init_globals(self, *, disable_periodic: bool = True) -> None:
         """
         Initialize GC-related global variables for the program.
@@ -249,9 +311,34 @@ class CodegenMemory:
         - The [rsp+off] offsets must refer to the caller's root slot area (not Windows shadow space).
         """
         a = self.asm
+        root_count = (int(root_top) - int(root_base)) // 8
+        if root_count <= 0:
+            return
+
+        # A compact counted loop keeps large function prologues from exploding
+        # into hundreds of individual stores. The incoming arg registers are
+        # still live here, so preserve them in shadow-space scratch first.
+        lid = self.new_label_id()
+        l_loop = f"gcclr_loop_{lid}"
+
+        a.mov_membase_disp_r64("rsp", 0x00, "rcx")
+        a.mov_membase_disp_r64("rsp", 0x08, "rdx")
+        a.mov_membase_disp_r64("rsp", 0x10, "r8")
+        a.mov_membase_disp_r64("rsp", 0x18, "r9")
+        a.mov_r64_r64("r11", "r10")
         a.mov_rax_imm64(enc_void())
-        for off in range(root_base, root_top, 8):
-            a.mov_rsp_disp32_rax(off)
+        a.lea_r64_membase_disp("r10", "rsp", int(root_base))
+        a.mov_r32_imm32("ecx", root_count)
+        a.mark(l_loop)
+        a.mov_membase_disp_r64("r10", 0, "rax")
+        a.add_r64_imm("r10", 8)
+        a.sub_r32_imm("ecx", 1)
+        a.jcc("ne", l_loop)
+        a.mov_r64_membase_disp("rcx", "rsp", 0x00)
+        a.mov_r64_membase_disp("rdx", "rsp", 0x08)
+        a.mov_r64_membase_disp("r8", "rsp", 0x10)
+        a.mov_r64_membase_disp("r9", "rsp", 0x18)
+        a.mov_r64_r64("r10", "r11")
 
     def emit_gc_push_root_frame(self, root_rec_off: int, root_base: int, root_top: int) -> None:
         """
@@ -321,10 +408,10 @@ class CodegenMemory:
            - if new_ptr > heap_end: call fn_heap_grow(new_ptr)
              - if grow fails: call fn_gc_collect once, then retry
              - if still fails: ExitProcess(1)
-        4) Initialize header (mark=0, next_free=0) and return payload pointer.
+        4) Initialize header (size only; allocated blocks clear the free flag) and return payload pointer.
 
         Notes:
-        - Free blocks are linked via header[+16] (next_free).
+        - Free blocks are linked via [header+GC_HEADER_SIZE] (payload slot 0).
         - Splitting creates a new free block header at (old_header + total) and pushes
           it to the free-list head.
         """
@@ -517,6 +604,7 @@ class CodegenMemory:
         l_free_head = f"alloc_free_head_{lid0}"
         l_free_unlinked = f"alloc_free_unlinked_{lid0}"
         l_free_nosplit = f"alloc_free_nosplit_{lid0}"
+        l_free_return = f"alloc_free_return_{lid0}"
         l_bump = f"alloc_bump_{lid0}"
         l_grow = f"alloc_grow_{lid0}"
         l_after_gc = f"alloc_after_gc_{lid0}"
@@ -575,6 +663,7 @@ class CodegenMemory:
 
         # rdx = cur.block_size
         a.mov_r64_membase_disp("rdx", "r8", 0)
+        a.and_r64_imm("rdx", GC_BLOCK_SIZE_MASK)
 
         # if block_size < total -> advance
         a.cmp_r64_r64("rdx", "rcx")
@@ -588,19 +677,19 @@ class CodegenMemory:
         a.mov_r64_r64("rax", "r8")
         a.mov_rsp_disp32_rax(0x28)
         # cur = cur.next_free
-        a.mov_r64_membase_disp("r8", "r8", 16)
+        a.mov_r64_membase_disp("r8", "r8", GC_OFF_NEXT_FREE)
         a.jmp(l_free_loop)
 
         a.mark(l_free_found)
         # r9 = next = cur.next_free
-        a.mov_r64_membase_disp("r9", "r8", 16)
+        a.mov_r64_membase_disp("r9", "r8", GC_OFF_NEXT_FREE)
         # r10 = prev
         a.mov_r64_membase_disp("r10", "rsp", 0x28)
         a.test_r64_r64("r10", "r10")
         a.jcc("z", l_free_head)
 
         # prev.next_free = next
-        a.mov_membase_disp_r64("r10", 16, "r9")
+        a.mov_membase_disp_r64("r10", GC_OFF_NEXT_FREE, "r9")
         a.jmp(l_free_unlinked)
 
         a.mark(l_free_head)
@@ -624,27 +713,25 @@ class CodegenMemory:
         a.add_r64_r64("rdx", "rcx")  # rdx = new_free header
 
         # new_free.block_size = remainder
+        a.or_r64_imm("r11", GC_BLOCK_FREE_BIT)
         a.mov_membase_disp_r64("rdx", 0, "r11")
-        # new_free.mark = 0
-        a.mov_membase_disp_imm32("rdx", 8, 0, qword=True)
 
         # push new_free to free-list head:
         a.mov_rax_rip_qword("gc_free_head")
-        a.mov_membase_disp_r64("rdx", 16, "rax")  # new_free.next = old_head
+        a.mov_membase_disp_r64("rdx", GC_OFF_NEXT_FREE, "rax")  # new_free.next = old_head
         a.mov_r64_r64("rax", "rdx")
         a.mov_rip_qword_rax("gc_free_head")
 
-        # mark payload type as OBJ_FREE (debug/GC hygiene)
-        a.mov_membase_disp_imm32("rdx", GC_HEADER_SIZE + 0, OBJ_FREE, qword=False)
-
         # shrink allocated block_size to total
         a.mov_membase_disp_r64("r8", 0, "rcx")
+        a.jmp(l_free_return)
 
         a.mark(l_free_nosplit)
+        # No split: the whole free block becomes the allocation, including the
+        # small tail slack. Preserve the original block size in the header.
+        a.mov_membase_disp_r64("r8", 0, "rdx")
 
-        # allocated header: mark=0, next_free=0
-        a.mov_membase_disp_imm32("r8", 8, 0, qword=True)
-        a.mov_membase_disp_imm32("r8", 16, 0, qword=True)
+        a.mark(l_free_return)
 
         # return payload ptr = cur + GC_HEADER_SIZE
         a.mov_r64_r64("rax", "r8")
@@ -851,12 +938,8 @@ class CodegenMemory:
         a.mov_rip_qword_rax("heap_ptr")
 
         # init header at [header_base]:
-        #   [0]  = block_size (total)
-        #   [8]  = mark (0)
-        #   [16] = next_free (0)
+        #   [0] = block_size (total), low flag bits cleared for allocated blocks
         a.mov_membase_disp_r64("rdx", 0, "rcx")
-        a.mov_membase_disp_imm32("rdx", 8, 0, qword=True)
-        a.mov_membase_disp_imm32("rdx", 16, 0, qword=True)
 
         # return payload ptr = header_base + GC_HEADER_SIZE
         a.mov_r64_r64("rax", "rdx")
@@ -876,6 +959,7 @@ class CodegenMemory:
         - gc_bytes_since, gc_bytes_limit
         - gc_tmp0..gc_tmp7
         - gc_mark_top, gc_mark_stack
+        - gc_mark_bits_base, gc_mark_bits_end, gc_mark_bits_reserve_end
         - heap_base, heap_ptr, heap_end, heap_reserve_end, heap_min_end
 
         Correctness notes:
@@ -906,6 +990,12 @@ class CodegenMemory:
         # Mark stack (iterative)
         if 'gc_mark_top' not in d.labels:
             d.add_u64('gc_mark_top', 0)
+        if 'gc_mark_bits_base' not in d.labels:
+            d.add_u64('gc_mark_bits_base', 0)
+        if 'gc_mark_bits_end' not in d.labels:
+            d.add_u64('gc_mark_bits_end', 0)
+        if 'gc_mark_bits_reserve_end' not in d.labels:
+            d.add_u64('gc_mark_bits_reserve_end', 0)
 
         # Heap globals (used by allocator / heap grow paths)
         if 'heap_base' not in d.labels:
@@ -946,9 +1036,9 @@ class CodegenMemory:
 
         Heap layout assumptions:
         - header = obj_ptr - GC_HEADER_SIZE
-          [header+0]  u64 block_size
-          [header+8]  u64 mark
-          [header+16] u64 next_free
+          [header+0]  u64 block_size_and_flags
+        - mark bits live in the side bitmap at gc_mark_bits_base
+        - free-list links live in [header+GC_HEADER_SIZE]
 
         Correctness requirements:
         - Preserve non-volatile registers per Windows x64 ABI (notably RDI if used).
@@ -975,6 +1065,8 @@ class CodegenMemory:
 
         # Save non-volatile regs we use
         a.push_rbx()
+        a.push_rbp()
+        a.push_reg("rsi")
         a.push_r12()
         a.push_r13()
         a.push_r14()
@@ -999,6 +1091,7 @@ class CodegenMemory:
         L_SCAN_STRUCT_DONE = f"gc_scan_struct_done_{lid}"
         L_SCAN_FUNCTION = f"gc_scan_function_{lid}"
         L_SCAN_ENV = f"gc_scan_env_{lid}"
+        L_SCAN_ENV_LOCAL = f"gc_scan_env_local_{lid}"
         L_SCAN_ENV_LOOP = f"gc_scan_env_loop_{lid}"
         L_SCAN_ENV_DONE = f"gc_scan_env_done_{lid}"
         L_SCAN_BOX = f"gc_scan_box_{lid}"
@@ -1012,6 +1105,7 @@ class CodegenMemory:
         L_SWEEP_DEAD = f"gc_sweep_dead_{lid}"
         L_SWEEP_DONE = f"gc_sweep_done_{lid}"
         L_REBUILD_LOOP = f"gc_rebuild_free_loop_{lid}"
+        L_REBUILD_LIVE = f"gc_rebuild_free_live_{lid}"
         L_REBUILD_DONE = f"gc_rebuild_free_done_{lid}"
         L_REBUILD_NEXT = f"gc_rebuild_free_next_{lid}"
         L_TRIM_SKIP = f"gc_trim_skip_{lid}"
@@ -1021,6 +1115,12 @@ class CodegenMemory:
         # r12 = &gc_mark_stack
         a.lea_rax_rip('gc_mark_stack')
         a.mov_r64_r64("r12", "rax")  # mov r12, rax
+
+        # Keep the hot GC side tables in non-volatile regs across the collection.
+        a.mov_rax_rip_qword('heap_base')
+        a.mov_r64_r64("rbp", "rax")
+        a.mov_rax_rip_qword('gc_mark_bits_base')
+        a.mov_r64_r64("rsi", "rax")
 
         # gc_mark_top = 0
         a.mov_rax_imm64(0)
@@ -1061,13 +1161,36 @@ class CodegenMemory:
         # rdx = header = obj - GC_HEADER_SIZE
         a.sub_r64_imm("rdx", GC_HEADER_SIZE)  # sub rdx, GC_HEADER_SIZE
 
-        # if [rdx+8] != 0 -> already marked
-        a.mov_r64_membase_disp("rcx", "rdx", 8)  # mov rcx, [rdx+8]
-        a.test_r64_r64("rcx", "rcx")  # test rcx, rcx
+        # Stale roots may still point at blocks that have already been returned
+        # to the free list. Those payload bytes now contain ``next_free`` instead
+        # of a benign OBJ_FREE tag, so we must reject free blocks here before any
+        # mark-bit or object-type logic can observe them as live objects.
+        a.mov_r64_membase_disp("r10", "rdx", 0)
+        a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
         a.jcc('ne', L_MARK_VALUE_RET)
 
-        # [rdx+8] = 1 (mark)
-        a.mov_membase_disp_imm32("rdx", 8, 1, qword=True)  # mov qword [rdx+8], 1        # r10 = gc_mark_top
+        # Locate the mark bit for this header:
+        #   byte_index = (header - heap_base) >> 6
+        #   bit_index  = ((header - heap_base) >> 3) & 7
+        a.mov_r64_r64("r8", "rdx")
+        a.sub_r64_r64("r8", "rbp")
+        a.mov_r64_r64("rcx", "r8")
+        a.shr_r64_imm8("r8", 6)
+        a.shr_r64_imm8("rcx", 3)
+        a.and_r64_imm("rcx", 7)
+        a.mov_rax_imm64(1)
+        a.shl_r64_cl("rax")
+        a.mov_r64_r64("r9", "rsi")
+        a.add_r64_r64("r9", "r8")
+        a.mov_r8_membase_disp("r10b", "r9", 0)
+        a.test_r8_r8("r10b", "al")
+        a.jcc('ne', L_MARK_VALUE_RET)
+
+        # Set the mark bit in the bitmap.
+        a.or_r8_r8("r10b", "al")
+        a.mov_membase_disp_r8("r9", 0, "r10b")
+
+        # r10 = gc_mark_top
         a.mov_rax_rip_qword('gc_mark_top')
         a.mov_r10_rax()
 
@@ -1179,10 +1302,16 @@ class CodegenMemory:
         a.jcc('e', L_SCAN_STRUCT)
 
         a.cmp_r32_imm("ecx", OBJ_FUNCTION)  # cmp ecx, OBJ_FUNCTION
+        a.jcc('e', L_MARK_LOOP)
+
+        a.cmp_r32_imm("ecx", OBJ_CLOSURE)  # cmp ecx, OBJ_CLOSURE
         a.jcc('e', L_SCAN_FUNCTION)
 
         a.cmp_r32_imm("ecx", OBJ_ENV)  # cmp ecx, OBJ_ENV
         a.jcc('e', L_SCAN_ENV)
+
+        a.cmp_r32_imm("ecx", OBJ_ENV_LOCAL)  # cmp ecx, OBJ_ENV_LOCAL
+        a.jcc('e', L_SCAN_ENV_LOCAL)
 
         a.cmp_r32_imm("ecx", OBJ_BOX)  # cmp ecx, OBJ_BOX
         a.jcc('e', L_SCAN_BOX)
@@ -1197,20 +1326,19 @@ class CodegenMemory:
         a.mov_r32_membase_disp("edx", "rax", 4)  # mov edx, [rax+4]
         # rbx = data base = rax + 8
         a.lea_r64_membase_disp("rbx", "rax", 8)  # lea rbx, [rax+8]
-        # r9d = len
-        a.mov_r32_r32("r9d", "edx")  # mov r9d, edx
-        # i = 0 (r8d)
-        a.xor_r32_r32("r8d", "r8d")  # xor r8d, r8d
+        # Use non-volatile regs for loop state; gc_mark_value clobbers r8/r9.
+        a.mov_r32_r32("r14d", "edx")
+        a.xor_r32_r32("r13d", "r13d")
 
         a.mark(L_SCAN_ARRAY_LOOP)
-        a.cmp_r32_r32("r8d", "r9d")  # cmp r8d, r9d
+        a.cmp_r32_r32("r13d", "r14d")
         a.jcc('ge', L_SCAN_ARRAY_DONE)
 
-        # rax = [rbx + r8*8]
-        a.mov_r64_mem_bis("rax", "rbx", "r8", 8, 0)  # mov rax, [rbx + r8*8]
+        # rax = [rbx + i*8]
+        a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)
         a.call(L_MARK_VALUE)
 
-        a.inc_r32("r8d")  # inc r8d
+        a.inc_r32("r13d")
         a.jmp(L_SCAN_ARRAY_LOOP)
 
         a.mark(L_SCAN_ARRAY_DONE)
@@ -1220,39 +1348,40 @@ class CodegenMemory:
         # scan struct fields
         # layout:
         #   [0] u32 type = OBJ_STRUCT
-        #   [4] u32 nfields
-        #   [8] u32 struct_id
-        #   [12] u32 pad
-        #   [16] qword field0 ...
+        #   [4] u32 struct_id
+        #   [8] qword field0 ...
+        #
+        # The field count is derived from the block size:
+        #   (block_size - GC_HEADER_SIZE - 8) / 8
         # ------------------------------------------------------------
         a.mark(L_SCAN_STRUCT)
-        # edx = nfields
-        a.mov_r32_membase_disp("edx", "rax", 4)  # mov edx, [rax+4]
-        # rbx = fields base = rax + 16
-        a.lea_r64_membase_disp("rbx", "rax", 16)  # lea rbx, [rax+16]
-        # r9d = nfields
-        a.mov_r32_r32("r9d", "edx")  # mov r9d, edx
-        # i = 0 (r8d)
-        a.xor_r32_r32("r8d", "r8d")  # xor r8d, r8d
+        # rdx = nfields
+        a.mov_r64_membase_disp("rdx", "rax", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rdx", GC_BLOCK_SIZE_MASK)
+        a.sub_r64_imm("rdx", GC_HEADER_SIZE + 8)
+        a.shr_r64_imm8("rdx", 3)
+        # rbx = fields base = rax + 8
+        a.lea_r64_membase_disp("rbx", "rax", 8)  # lea rbx, [rax+8]
+        a.mov_r32_r32("r14d", "edx")
+        a.xor_r32_r32("r13d", "r13d")
 
         a.mark(L_SCAN_STRUCT_LOOP)
-        a.cmp_r32_r32("r8d", "r9d")  # cmp r8d, r9d
+        a.cmp_r32_r32("r13d", "r14d")
         a.jcc('ge', L_SCAN_STRUCT_DONE)
 
-        # rax = [rbx + r8*8]
-        a.mov_r64_mem_bis("rax", "rbx", "r8", 8, 0)  # mov rax, [rbx + r8*8]
+        a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)
         a.call(L_MARK_VALUE)
 
-        a.inc_r32("r8d")  # inc r8d
+        a.inc_r32("r13d")
         a.jmp(L_SCAN_STRUCT_LOOP)
 
         a.mark(L_SCAN_STRUCT_DONE)
         a.jmp(L_MARK_LOOP)
 
         # ------------------------------------------------------------
-        # scan function object (closure env)
+        # scan closure object
         # layout:
-        #   [0]  u32 type = OBJ_FUNCTION
+        #   [0]  u32 type = OBJ_CLOSURE
         #   [4]  u32 arity
         #   [8]  u64 code_ptr (raw)
         #   [16] u64 env (Value)
@@ -1282,23 +1411,36 @@ class CodegenMemory:
         a.mov_r32_membase_disp("edx", "rdi", 4)  # mov edx, [env+4]
         # rbx = slots base = env + 16
         a.lea_r64_membase_disp("rbx", "rdi", 16)  # lea rbx, [env+16]
-        # r9d = nslots
-        a.mov_r32_r32("r9d", "edx")
-        # i = 0 (r8d)
-        a.xor_r32_r32("r8d", "r8d")
+        a.mov_r32_r32("r14d", "edx")
+        a.xor_r32_r32("r13d", "r13d")
 
         a.mark(L_SCAN_ENV_LOOP)
-        a.cmp_r32_r32("r8d", "r9d")
+        a.cmp_r32_r32("r13d", "r14d")
         a.jcc('ge', L_SCAN_ENV_DONE)
 
-        a.mov_r64_mem_bis("rax", "rbx", "r8", 8, 0)  # slot value
+        a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)  # slot value
         a.call(L_MARK_VALUE)
 
-        a.inc_r32("r8d")
+        a.inc_r32("r13d")
         a.jmp(L_SCAN_ENV_LOOP)
 
         a.mark(L_SCAN_ENV_DONE)
         a.jmp(L_MARK_LOOP)
+
+        # ------------------------------------------------------------
+        # scan parentless env object
+        # layout:
+        #   [0]  u32 type = OBJ_ENV_LOCAL
+        #   [4]  u32 nslots
+        #   [8]  qword slot0 (Value) ...
+        # ------------------------------------------------------------
+        a.mark(L_SCAN_ENV_LOCAL)
+        a.mov_r64_r64("rdi", "r11")
+        a.mov_r32_membase_disp("edx", "rdi", 4)
+        a.lea_r64_membase_disp("rbx", "rdi", 8)
+        a.mov_r32_r32("r14d", "edx")
+        a.xor_r32_r32("r13d", "r13d")
+        a.jmp(L_SCAN_ENV_LOOP)
 
         # ------------------------------------------------------------
         # scan box/cell object
@@ -1316,10 +1458,8 @@ class CodegenMemory:
 
         # ------------------------------------------------------------
         # Sweep pass 1:
-        # - clear marks on live blocks
-        # - turn dead blocks into OBJ_FREE
-        # - compute new heap_ptr = end of highest live block (r15)
-        # NOTE: We rebuild the free list in pass 2 so we can safely shrink.
+        # - compute new heap_ptr = end of highest marked live block (r15)
+        # - keep mark bits intact for pass 2
         # ------------------------------------------------------------
 
         # Clear gc_free_head now; we rebuild it in pass 2.
@@ -1332,39 +1472,41 @@ class CodegenMemory:
 
         # r14 = old heap_ptr
         a.mov_rax_rip_qword('heap_ptr')
-        a.mov_r64_r64("r14", "rax")  # mov r14, rax
+        a.mov_r64_r64("r14", "rax")
 
         # r15 = max_live_end (init to heap_base)
-        a.mov_r64_r64("r15", "rbx")  # mov r15, rbx
+        a.mov_r64_r64("r15", "rbx")
 
         a.mark(L_SWEEP_LOOP)
-        # if (rbx >= old_heap_ptr) done
         a.cmp_r64_r64("rbx", "r14")
         a.jcc('ae', L_SWEEP_DONE)
 
         # r10 = block_size
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
-        a.jcc('e', L_SWEEP_DONE)  # safety
+        a.jcc('e', L_SWEEP_DONE)
+        a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
 
-        # rcx = mark
-        a.mov_r64_membase_disp("rcx", "rbx", 8)
-        a.test_r64_r64("rcx", "rcx")
+        # Check the side-bitmap mark bit for this block header.
+        a.mov_r64_r64("r8", "rbx")
+        a.sub_r64_r64("r8", "rbp")
+        a.mov_r64_r64("rcx", "r8")
+        a.shr_r64_imm8("r8", 6)
+        a.shr_r64_imm8("rcx", 3)
+        a.and_r64_imm("rcx", 7)
+        a.mov_rax_imm64(1)
+        a.shl_r64_cl("rax")
+        a.mov_r64_r64("r9", "rsi")
+        a.add_r64_r64("r9", "r8")
+        a.mov_r8_membase_disp("r8b", "r9", 0)
+        a.test_r8_r8("r8b", "al")
         a.jcc('ne', L_SWEEP_LIVE)
 
-        # -------- dead block: set object type to OBJ_FREE (0) --------
-        a.lea_r64_membase_disp("rdx", "rbx", GC_HEADER_SIZE)  # rdx = payload
-        a.mov_membase_disp_imm32("rdx", 0, 0, qword=False)  # mov dword [payload], 0
-
-        # advance scan: rbx += block_size
+        # dead block -> just advance
         a.add_r64_r64("rbx", "r10")
         a.jmp(L_SWEEP_LOOP)
 
-        # -------- live block --------
         a.mark(L_SWEEP_LIVE)
-
-        # clear mark: [rbx+8] = 0
-        a.mov_membase_disp_imm32("rbx", 8, 0, qword=True)
 
         # end = rbx + block_size
         a.mov_r64_r64("rdx", "rbx")
@@ -1376,7 +1518,6 @@ class CodegenMemory:
         a.mov_r64_r64("r15", "rdx")
 
         a.mark(L_SWEEP_DEAD)
-        # advance scan
         a.add_r64_r64("rbx", "r10")
         a.jmp(L_SWEEP_LOOP)
 
@@ -1385,6 +1526,102 @@ class CodegenMemory:
         # heap_ptr = max_live_end
         a.mov_r64_r64("rax", "r15")
         a.mov_rip_qword_rax('heap_ptr')
+
+        # New rebuild path: free-list links live in free-block payloads and
+        # liveness comes from the side mark bitmap.
+        L_REBUILD2_LOOP = f"gc_rebuild2_loop_{lid}"
+        L_REBUILD2_LIVE = f"gc_rebuild2_live_{lid}"
+        L_REBUILD2_NEXT = f"gc_rebuild2_next_{lid}"
+        L_REBUILD2_DONE = f"gc_rebuild2_done_{lid}"
+        L_REBUILD2_AFTER = f"gc_rebuild2_after_{lid}"
+        l_coal2_loop = f"gc_coal2_loop_{lid}"
+        l_coal2_done = f"gc_coal2_done_{lid}"
+
+        a.mov_rax_imm64(0)
+        a.mov_rip_qword_rax('gc_free_head')
+
+        a.mov_rax_rip_qword('heap_base')
+        a.mov_rbx_rax()
+
+        a.mov_rax_rip_qword('heap_ptr')
+        a.mov_r64_r64("r14", "rax")
+
+        a.mark(L_REBUILD2_LOOP)
+        a.cmp_r64_r64("rbx", "r14")
+        a.jcc('ae', L_REBUILD2_DONE)
+
+        a.mov_r64_membase_disp("r10", "rbx", 0)
+        a.test_r64_r64("r10", "r10")
+        a.jcc('e', L_REBUILD2_DONE)
+        a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
+
+        a.mov_r64_r64("r8", "rbx")
+        a.sub_r64_r64("r8", "rbp")
+        a.mov_r64_r64("rcx", "r8")
+        a.shr_r64_imm8("r8", 6)
+        a.shr_r64_imm8("rcx", 3)
+        a.and_r64_imm("rcx", 7)
+        a.mov_rax_imm64(1)
+        a.shl_r64_cl("rax")
+        a.mov_r64_r64("r9", "rsi")
+        a.add_r64_r64("r9", "r8")
+        a.mov_r8_membase_disp("r8b", "r9", 0)
+        a.test_r8_r8("r8b", "al")
+        a.jcc('ne', L_REBUILD2_LIVE)
+
+        a.mark(l_coal2_loop)
+        a.mov_r64_r64("r11", "rbx")
+        a.add_r64_r64("r11", "r10")
+        a.cmp_r64_r64("r11", "r14")
+        a.jcc('ae', l_coal2_done)
+
+        a.mov_r64_membase_disp("rcx", "r11", 0)
+        a.test_r64_r64("rcx", "rcx")
+        a.jcc('e', l_coal2_done)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+
+        a.mov_r64_r64("r8", "r11")
+        a.sub_r64_r64("r8", "rbp")
+        a.mov_r64_r64("rdx", "r8")
+        a.shr_r64_imm8("r8", 6)
+        a.shr_r64_imm8("rdx", 3)
+        a.and_r64_imm("rdx", 7)
+        a.mov_r64_imm64("rax", 1)
+        a.mov_r64_r64("rcx", "rdx")
+        a.shl_r64_cl("rax")
+        a.mov_r64_r64("r9", "rsi")
+        a.add_r64_r64("r9", "r8")
+        a.mov_r8_membase_disp("r8b", "r9", 0)
+        a.test_r8_r8("r8b", "al")
+        a.jcc('ne', l_coal2_done)
+
+        a.mov_r64_membase_disp("rcx", "r11", 0)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.add_r64_r64("r10", "rcx")
+        a.jmp(l_coal2_loop)
+
+        a.mark(l_coal2_done)
+        a.mov_r64_r64("rax", "r10")
+        a.or_r64_imm("rax", GC_BLOCK_FREE_BIT)
+        a.mov_membase_disp_r64("rbx", 0, "rax")
+        a.mov_rax_rip_qword('gc_free_head')
+        a.mov_membase_disp_r64("rbx", GC_OFF_NEXT_FREE, "rax")
+        a.mov_r64_r64("rax", "rbx")
+        a.mov_rip_qword_rax('gc_free_head')
+        a.jmp(L_REBUILD2_NEXT)
+
+        a.mark(L_REBUILD2_LIVE)
+        a.xor_r8_imm8("al", 0xFF)
+        a.and_r8_r8("r8b", "al")
+        a.mov_membase_disp_r8("r9", 0, "r8b")
+        a.mov_membase_disp_r64("rbx", 0, "r10")
+
+        a.mark(L_REBUILD2_NEXT)
+        a.add_r64_r64("rbx", "r10")
+        a.jmp(L_REBUILD2_LOOP)
+
+        a.mark(L_REBUILD2_DONE)
+        a.jmp(L_REBUILD2_AFTER)
 
         # ------------------------------------------------------------
         # Sweep pass 2: rebuild free list in [heap_base, heap_ptr)
@@ -1445,7 +1682,7 @@ class CodegenMemory:
 
         # Den (nun riesigen) zusammengefassten Block in die Free-List einhängen
         a.mov_rax_rip_qword('gc_free_head')
-        a.mov_membase_disp_r64("rbx", 16, "rax")
+        a.mov_membase_disp_r64("rbx", 8, "rax")
 
         # gc_free_head = rbx
         a.mov_r64_r64("rax", "rbx")
@@ -1456,6 +1693,7 @@ class CodegenMemory:
         a.jmp(L_REBUILD_LOOP)
 
         a.mark(L_REBUILD_DONE)
+        a.mark(L_REBUILD2_AFTER)
 
         if shrink_enabled:
             # ------------------------------------------------------------
@@ -1524,6 +1762,8 @@ class CodegenMemory:
         a.pop_r14()
         a.pop_r13()
         a.pop_r12()
+        a.pop_reg("rsi")
+        a.pop_rbp()
         a.pop_rbx()
         a.ret()
 
@@ -1564,8 +1804,8 @@ class CodegenMemory:
         a.cmp_r64_r64("rdx", "rax")  # cmp rdx,rax
         a.jcc('ae', l_ret)
 
-        # inc qword [rdx-16] (refcount)
-        a.inc_membase_disp_qword("rdx", -16)  # inc qword [rdx-16]
+        # inc qword [rdx+GC_OFF_REFCOUNT] (refcount alias)
+        a.inc_membase_disp_qword("rdx", GC_OFF_REFCOUNT)
 
         a.mark(l_ret)
         a.ret()
@@ -1609,28 +1849,31 @@ class CodegenMemory:
         a.jcc('ae', l_ret)
 
         # if refcount == 0 -> ret (avoid underflow)
-        a.mov_r64_membase_disp("rax", "rdx", -16)  # mov rax,[rdx-16]
+        a.mov_r64_membase_disp("rax", "rdx", GC_OFF_REFCOUNT)
         a.test_r64_r64("rax", "rax")  # test rax,rax
         a.jcc('e', l_ret)
 
-        # dec qword [rdx-16]
-        a.dec_membase_disp_qword("rdx", -16)  # dec qword [rdx-16]
+        # dec qword [rdx+GC_OFF_REFCOUNT]
+        a.dec_membase_disp_qword("rdx", GC_OFF_REFCOUNT)
 
         # if refcount != 0 -> ret
-        a.mov_r64_membase_disp("rax", "rdx", -16)  # mov rax,[rdx-16]
+        a.mov_r64_membase_disp("rax", "rdx", GC_OFF_REFCOUNT)
         a.test_r64_r64("rax", "rax")  # test rax,rax
         a.jcc('ne', l_ret)
 
         # refcount == 0 -> push block header into gc_free_head
         a.mark(l_push)
-        # r9 = header = rdx - GC_HEADER_SIZE (24)
-        a.lea_r64_membase_disp("r9", "rdx", -24)  # lea r9,[rdx-24]
+        # r9 = header = rdx - GC_HEADER_SIZE
+        a.lea_r64_membase_disp("r9", "rdx", -GC_HEADER_SIZE)
 
         # rax = gc_free_head
         a.mov_rax_rip_qword('gc_free_head')
 
-        # [r9+16] = old_head
-        a.mov_membase_disp_r64("r9", 16, "rax")  # mov [r9+16], rax
+        # set the free flag and link the block into the free list
+        a.mov_r64_membase_disp("r10", "r9", 0)
+        a.or_r64_imm("r10", GC_BLOCK_FREE_BIT)
+        a.mov_membase_disp_r64("r9", 0, "r10")
+        a.mov_membase_disp_r64("r9", GC_OFF_NEXT_FREE, "rax")
 
         # gc_free_head = r9
         a.mov_r64_r64("rax", "r9")  # mov rax,r9
@@ -1642,8 +1885,8 @@ class CodegenMemory:
     def emit_heap_count_function(self) -> None:
         """Emit fn_heap_count() -> tagged int.
 
-        Counts *live* heap blocks in the range [heap_base, heap_ptr):
-        blocks whose object type (u32 at obj_ptr) is not OBJ_FREE (0).
+        Counts *allocated* heap blocks in the range [heap_base, heap_ptr):
+        blocks whose inline size word does not carry the free-block flag.
         """
         self.ensure_gc_data()
         a = self.asm
@@ -1670,21 +1913,19 @@ class CodegenMemory:
         a.cmp_r64_r64('r10', 'r11')
         a.jcc('ae', L_DONE)
 
-        # edx = dword [scan + GC_HEADER_SIZE]  (object type)
-        a.mov_r32_membase_disp("edx", "r10", GC_HEADER_SIZE)
-        # if edx != OBJ_FREE: count++
-        a.cmp_r32_imm("edx", OBJ_FREE)  # cmp edx, imm8
-        a.jcc('ne', L_LIVE)
-
-        # rcx = qword [scan] (block_size)
+        # rcx = block_size_and_flags
         a.mov_r64_membase_disp('rcx', 'r10', 0)
+        a.test_r64_imm32('rcx', GC_BLOCK_FREE_BIT)
+        a.jcc('e', L_LIVE)
+
+        a.and_r64_imm('rcx', GC_BLOCK_SIZE_MASK)
         a.add_r64_r64('r10', 'rcx')
         a.jmp(L_LOOP)
 
         a.mark(L_LIVE)
         a.add_r64_imm("r8", 1)  # add r8, 1
-        # rcx = qword [scan] (block_size)
         a.mov_r64_membase_disp('rcx', 'r10', 0)
+        a.and_r64_imm('rcx', GC_BLOCK_SIZE_MASK)
         a.add_r64_r64('r10', 'rcx')
         a.jmp(L_LOOP)
 
@@ -1754,7 +1995,7 @@ class CodegenMemory:
         Counts the number of blocks in the GC free list (gc_free_head).
 
         Safety:
-        - Validates that each node pointer is within [heap_base+GC_HEADER_SIZE, heap_end)
+        - Validates that each node pointer is within [heap_base, heap_end)
           and 8-byte aligned before dereferencing.
         - If an invalid pointer is detected (corruption), returns 0 instead of crashing.
         - Hard caps iterations to avoid infinite loops on cycles.
@@ -1770,9 +2011,8 @@ class CodegenMemory:
         a.mov_rax_rip_qword('gc_free_head')
         a.mov_r64_r64('r10', 'rax')
 
-        # r11 = heap_base_payload = heap_base + GC_HEADER_SIZE
+        # r11 = heap_base (free-list nodes are header pointers)
         a.mov_rax_rip_qword('heap_base')
-        a.add_rax_imm8(GC_HEADER_SIZE)
         a.mov_r64_r64('r11', 'rax')
 
         # r9 = heap_end
@@ -1828,7 +2068,7 @@ class CodegenMemory:
         Note: block_size includes the GC header (i.e. total block bytes).
 
         Safety:
-        - Validates that each node pointer is within [heap_base+GC_HEADER_SIZE, heap_end)
+        - Validates that each node pointer is within [heap_base, heap_end)
           and 8-byte aligned before dereferencing.
         - If an invalid pointer is detected (corruption), returns 0 instead of crashing.
         - Hard caps iterations to avoid infinite loops on cycles.
@@ -1844,9 +2084,8 @@ class CodegenMemory:
         a.mov_rax_rip_qword('gc_free_head')
         a.mov_r64_r64('r10', 'rax')
 
-        # r11 = heap_base_payload = heap_base + GC_HEADER_SIZE
+        # r11 = heap_base (free-list nodes are header pointers)
         a.mov_rax_rip_qword('heap_base')
-        a.add_rax_imm8(GC_HEADER_SIZE)
         a.mov_r64_r64('r11', 'rax')
 
         # r9 = heap_end
@@ -1878,6 +2117,7 @@ class CodegenMemory:
 
         # load size and sum
         a.mov_r64_membase_disp('rax', 'r10', GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm('rax', GC_BLOCK_SIZE_MASK)
         a.add_r64_r64('r8', 'rax')
 
         # next
@@ -1901,12 +2141,15 @@ class CodegenMemory:
         cfg = getattr(self, 'heap_config', None) or {}
         grow_min = int(cfg.get('grow_min_bytes') or HEAP_GROW_MIN)
 
-        # Win64 ABI: rbx sichern und Shadow Space reservieren
+        # Win64 ABI: save non-volatiles and keep 16-byte alignment at CALLs.
         a.push_rbx()
-        a.sub_rsp_imm8(0x20)
+        a.push_r12()
+        a.sub_rsp_imm8(0x28)
 
         lid = self.new_label_id()
         l_ok = f"hg_ok_{lid}"
+        l_bitmap_ok = f"hg_bitmap_ok_{lid}"
+        l_bitmap_call = f"hg_bitmap_call_{lid}"
         l_call = f"hg_call_{lid}"
         l_fail = f"hg_fail_{lid}"
         l_done = f"hg_done_{lid}"
@@ -1939,8 +2182,51 @@ class CodegenMemory:
         a.jcc("be", l_call)
         a.jmp(l_fail)
 
+        # Grow the bitmap first so GC metadata always covers committed heap pages.
         a.mark(l_call)
+        a.mov_rax_rip_qword("heap_base")
+        a.mov_r64_r64("r10", "rbx")
+        a.sub_r64_r64("r10", "rax")  # committed heap bytes after growth
+        a.add_r64_imm("r10", 63)
+        a.shr_r64_imm8("r10", 6)  # required bitmap bytes
+        a.add_r64_imm("r10", MEM_PAGE_SIZE - 1)
+        a.and_r64_imm("r10", -MEM_PAGE_SIZE)
+
+        a.mov_rax_rip_qword("gc_mark_bits_base")
+        a.mov_r64_r64("r12", "rax")
+        a.add_r64_r64("r12", "r10")  # r12 = required bitmap committed end
+
+        a.mov_rax_rip_qword("gc_mark_bits_end")
+        a.cmp_r64_r64("rax", "r12")
+        a.jcc("ae", l_bitmap_ok)
+
+        a.mov_rax_rip_qword("gc_mark_bits_reserve_end")
+        a.cmp_r64_r64("r12", "rax")
+        a.jcc("be", l_bitmap_call)
+        a.jmp(l_fail)
+
+        a.mark(l_bitmap_call)
+        a.mov_rax_rip_qword("gc_mark_bits_end")
+        a.mov_r64_r64("rcx", "rax")
+        a.mov_r64_r64("rdx", "r12")
+        a.sub_r64_r64("rdx", "rax")
+        a.mov_r8d_imm32(0x1000)  # MEM_COMMIT
+        a.mov_r9d_imm32(0x04)    # PAGE_READWRITE
+        a.mov_rax_rip_qword("iat_VirtualAlloc")
+        a.call_rax()
+
+        a.test_r64_r64("rax", "rax")
+        a.jcc("e", l_fail)
+
+        a.mov_r64_r64("rax", "r12")
+        a.mov_rip_qword_rax("gc_mark_bits_end")
+
+        a.mark(l_bitmap_ok)
+        a.mov_rax_rip_qword("heap_end")
+        a.mov_r64_r64("r11", "rax")
         a.mov_r64_r64("rcx", "r11")
+        a.mov_r64_r64("rdx", "rbx")
+        a.sub_r64_r64("rdx", "r11")
         a.mov_r8d_imm32(0x1000)  # MEM_COMMIT
         a.mov_r9d_imm32(0x04)    # PAGE_READWRITE
         a.mov_rax_rip_qword("iat_VirtualAlloc")
@@ -1962,6 +2248,7 @@ class CodegenMemory:
         a.xor_eax_eax()
 
         a.mark(l_done)
-        a.add_rsp_imm8(0x20)
+        a.add_rsp_imm8(0x28)
+        a.pop_reg("r12")
         a.pop_rbx()
         a.ret()

@@ -233,6 +233,7 @@ class Asm:
                            "r9b": 9, "r10b": 10, "r11b": 11, "r12b": 12, "r13b": 13, "r14b": 14, "r15b": 15, }
 
     XMM: Dict[str, int] = {f"xmm{i}": i for i in range(16)}
+    YMM: Dict[str, int] = {f"ymm{i}": i for i in range(16)}
 
     @classmethod
     def gpr(cls, name: str) -> GPR:
@@ -274,6 +275,29 @@ class Asm:
         if (w | r | x | b) == 0 and not force:
             return b""
         return bytes([0x40 | ((w & 1) << 3) | ((r & 1) << 2) | ((x & 1) << 1) | (b & 1)])
+
+    @staticmethod
+    def _vex3(*, m: int = 1, w: int = 0, vvvv: Optional[int] = None, l: int = 0, pp: int = 0, r: int = 0, x: int = 0,
+              b: int = 0) -> bytes:
+        """Build a 3-byte VEX prefix.
+
+        Args:
+            m: Opcode-map selector (1 => 0F).
+            w: W bit.
+            vvvv: Source register encoded in VEX.vvvv (non-inverted value 0..15, None if unused).
+            l: Vector length bit (0 => 128, 1 => 256).
+            pp: Implied legacy prefix bits (0 none, 1 66, 2 F3, 3 F2).
+            r: High bit of ModRM.reg.
+            x: High bit of SIB.index.
+            b: High bit of ModRM.rm/base.
+        """
+        b1 = ((0 if r else 1) << 7) | ((0 if x else 1) << 6) | ((0 if b else 1) << 5) | (m & 0x1F)
+        if vvvv is None:
+            v_field = 0xF
+        else:
+            v_field = 0xF ^ (vvvv & 0xF)
+        b2 = ((w & 1) << 7) | (v_field << 3) | ((l & 1) << 2) | (pp & 0x3)
+        return b"\xC4" + bytes([b1, b2])
 
     @staticmethod
     def _modrm(mod: int, reg: int, rm: int) -> bytes:
@@ -879,7 +903,17 @@ class Asm:
         """
         r = self._rid_any(dst)
         rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=1, b=rex_b) + bytes([0xB8 + (r & 7)]) + u64(imm))
+        imm_u = int(imm) & 0xFFFFFFFFFFFFFFFF
+
+        # Prefer shorter encodings when they preserve the final 64-bit value.
+        if imm_u <= 0xFFFFFFFF:
+            self.emit(self._rex(w=0, b=rex_b) + bytes([0xB8 + (r & 7)]) + u32(imm_u))
+            return
+        if imm_u >= 0xFFFFFFFF80000000:
+            self.emit(self._rex(w=1, b=rex_b) + b"\xC7" + self._modrm(3, 0, r) + u32(imm_u))
+            return
+
+        self.emit(self._rex(w=1, b=rex_b) + bytes([0xB8 + (r & 7)]) + u64(imm_u))
 
     def mov_r32_imm32(self, dst: str, imm: int) -> None:
         """Emit `MOV` instruction helper.
@@ -1631,6 +1665,17 @@ class Asm:
         rex_b = 1 if r >= 8 else 0
         self.emit(self._rex(w=0, b=rex_b) + b"\xC1" + self._modrm(3, 7, r) + bytes([imm & 0xFF]))
 
+    def shr_r32_imm8(self, reg: str, imm: int) -> None:
+        """Emit `SHR` instruction helper.
+
+        Args:
+            reg: Register name (e.g. 'eax', 'r10d').
+            imm: Immediate integer value.
+        """
+        r = self._rid_any(reg)
+        rex_b = 1 if r >= 8 else 0
+        self.emit(self._rex(w=0, b=rex_b) + b"\xC1" + self._modrm(3, 5, r) + bytes([imm & 0xFF]))
+
     # ---------------------------------------------------------------------
     # shifts (CL)
     # ---------------------------------------------------------------------
@@ -1822,6 +1867,21 @@ class Asm:
         rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
         self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB6" + tail)
 
+    def bsf_r32_r32(self, dst32: str, src32: str) -> None:
+        """Emit `BSF` instruction helper.
+
+        Args:
+            dst32: Destination register name.
+            src32: Source register name.
+        """
+        d = self.gpr(dst32)
+        s = self.gpr(src32)
+        if d.size != 32 or s.size != 32:
+            raise ValueError("bsf_r32_r32 requires (r32, r32)")
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s.id >= 8 else 0
+        self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x0F\xBC" + self._modrm(3, d.id, s.id))
+
     # ---------------------------------------------------------------------
     # inc/dec/neg, mul/div
     # ---------------------------------------------------------------------
@@ -1966,6 +2026,40 @@ class Asm:
         """
         # rep movsb
         self.emit(b"\xF3\xA4")
+
+    def rep_movsq(self) -> None:
+        """Emit instruction/utility helper.
+        """
+        # rep movsq
+        self.emit(b"\xF3\x48\xA5")
+
+    def rep_stosb(self) -> None:
+        """Emit instruction/utility helper.
+        """
+        # rep stosb
+        self.emit(b"\xF3\xAA")
+
+    def rep_stosq(self) -> None:
+        """Emit instruction/utility helper.
+        """
+        # rep stosq
+        self.emit(b"\xF3\x48\xAB")
+
+    def repe_cmpsb(self) -> None:
+        """Emit instruction/utility helper.
+        """
+        # repe cmpsb
+        self.emit(b"\xF3\xA6")
+
+    def cpuid(self) -> None:
+        """Emit `CPUID` instruction helper.
+        """
+        self.emit(b"\x0F\xA2")
+
+    def xgetbv(self) -> None:
+        """Emit `XGETBV` instruction helper.
+        """
+        self.emit(b"\x0F\x01\xD0")
 
     # ---------------------------------------------------------------------
     # SSE2 helpers (xmm0..xmm15)
@@ -2168,6 +2262,194 @@ class Asm:
         rex_r = 1 if d >= 8 else 0
         rex_b = 1 if s >= 8 else 0
         self.emit(b"\x66" + self._rex(w=1, r=rex_r, b=rex_b) + b"\x0F\x6E" + self._modrm(3, d, s))
+
+    def movdqu_xmm_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
+        """Emit `MOVDQU xmm, [base+disp]`.
+
+        Args:
+            dst: XMM destination register.
+            base: Base register.
+            disp: Displacement in bytes.
+        """
+        d = self.XMM[dst]
+        b = self._rid_any(base)
+        rex_r = 1 if d >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
+        self.emit(b"\xF3" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x6F" + tail)
+
+    def movdqu_membase_disp_xmm(self, base: str, disp: int, src: str) -> None:
+        """Emit `MOVDQU [base+disp], xmm`.
+
+        Args:
+            base: Base register.
+            disp: Displacement in bytes.
+            src: XMM source register.
+        """
+        s = self.XMM[src]
+        b = self._rid_any(base)
+        rex_r = 1 if s >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
+        self.emit(b"\xF3" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x7F" + tail)
+
+    def pxor_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `PXOR` instruction helper.
+
+        Args:
+            dst: XMM destination register.
+            src: XMM source register.
+        """
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\xEF" + self._modrm(3, d, s))
+
+    def pcmpeqb_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `PCMPEQB` instruction helper.
+
+        Args:
+            dst: XMM destination register.
+            src: XMM source register.
+        """
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x74" + self._modrm(3, d, s))
+
+    def pcmpeqw_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `PCMPEQW` instruction helper.
+
+        Args:
+            dst: XMM destination register.
+            src: XMM source register.
+        """
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x75" + self._modrm(3, d, s))
+
+    def pmovmskb_r32_xmm(self, dst32: str, src: str) -> None:
+        """Emit `PMOVMSKB` instruction helper.
+
+        Args:
+            dst32: 32-bit destination register.
+            src: XMM source register.
+        """
+        d = self.gpr(dst32)
+        if d.size != 32:
+            raise ValueError("pmovmskb_r32_xmm requires 32-bit dst")
+        s = self.XMM[src]
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\xD7" + self._modrm(3, d.id, s))
+
+    def punpcklqdq_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `PUNPCKLQDQ` instruction helper.
+
+        Args:
+            dst: XMM destination register.
+            src: XMM source register.
+        """
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x6C" + self._modrm(3, d, s))
+
+    def vmovdqu_ymm_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
+        """Emit `VMOVDQU ymm, [base+disp]`.
+
+        Args:
+            dst: YMM destination register.
+            base: Base register.
+            disp: Displacement in bytes.
+        """
+        d = self.YMM[dst]
+        b = self._rid_any(base)
+        rex_r = 1 if d >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
+        self.emit(self._vex3(m=1, w=0, vvvv=None, l=1, pp=2, r=rex_r, x=rex_x, b=rex_b) + b"\x6F" + tail)
+
+    def vmovdqu_membase_disp_ymm(self, base: str, disp: int, src: str) -> None:
+        """Emit `VMOVDQU [base+disp], ymm`.
+
+        Args:
+            base: Base register.
+            disp: Displacement in bytes.
+            src: YMM source register.
+        """
+        s = self.YMM[src]
+        b = self._rid_any(base)
+        rex_r = 1 if s >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
+        self.emit(self._vex3(m=1, w=0, vvvv=None, l=1, pp=2, r=rex_r, x=rex_x, b=rex_b) + b"\x7F" + tail)
+
+    def vpcmpeqb_ymm_ymm_ymm(self, dst: str, src1: str, src2: str) -> None:
+        """Emit `VPCMPEQB` instruction helper.
+
+        Args:
+            dst: YMM destination register.
+            src1: First YMM source register.
+            src2: Second YMM source register.
+        """
+        d = self.YMM[dst]
+        s1 = self.YMM[src1]
+        s2 = self.YMM[src2]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s2 >= 8 else 0
+        self.emit(self._vex3(m=1, w=0, vvvv=s1, l=1, pp=1, r=rex_r, b=rex_b) + b"\x74" + self._modrm(3, d, s2))
+
+    def vpcmpeqw_ymm_ymm_ymm(self, dst: str, src1: str, src2: str) -> None:
+        """Emit `VPCMPEQW` instruction helper.
+
+        Args:
+            dst: YMM destination register.
+            src1: First YMM source register.
+            src2: Second YMM source register.
+        """
+        d = self.YMM[dst]
+        s1 = self.YMM[src1]
+        s2 = self.YMM[src2]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s2 >= 8 else 0
+        self.emit(self._vex3(m=1, w=0, vvvv=s1, l=1, pp=1, r=rex_r, b=rex_b) + b"\x75" + self._modrm(3, d, s2))
+
+    def vpmovmskb_r32_ymm(self, dst32: str, src: str) -> None:
+        """Emit `VPMOVMSKB` instruction helper.
+
+        Args:
+            dst32: 32-bit destination register.
+            src: YMM source register.
+        """
+        d = self.gpr(dst32)
+        if d.size != 32:
+            raise ValueError("vpmovmskb_r32_ymm requires 32-bit dst")
+        s = self.YMM[src]
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(self._vex3(m=1, w=0, vvvv=None, l=1, pp=1, r=rex_r, b=rex_b) + b"\xD7" + self._modrm(3, d.id, s))
+
+    def vpxor_ymm_ymm_ymm(self, dst: str, src1: str, src2: str) -> None:
+        """Emit `VPXOR` instruction helper.
+
+        Args:
+            dst: YMM destination register.
+            src1: First YMM source register.
+            src2: Second YMM source register.
+        """
+        d = self.YMM[dst]
+        s1 = self.YMM[src1]
+        s2 = self.YMM[src2]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s2 >= 8 else 0
+        self.emit(self._vex3(m=1, w=0, vvvv=s1, l=1, pp=1, r=rex_r, b=rex_b) + b"\xEF" + self._modrm(3, d, s2))
+
+    def vzeroupper(self) -> None:
+        """Emit `VZEROUPPER` instruction helper.
+        """
+        self.emit(b"\xC5\xF8\x77")
 
     # ---------------------------------------------------------------------
     # Backwards-compatible, older fixed helpers (thin wrappers)

@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-02-28T09:34:08.483070Z",
-  "count": 187,
+  "generated_utc": "2026-04-10T08:46:16.204032Z",
+  "count": 209,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -195,6 +195,16 @@
       "asm": "; and_rax_imm8(127)"
     },
     {
+      "name": "bsf_r32_r32",
+      "args": [
+        "r11d",
+        "r10d"
+      ],
+      "kwargs": {},
+      "hex": "450fbcda",
+      "asm": "; bsf_r32_r32(r11d, r10d)"
+    },
+    {
       "name": "call",
       "args": [
         "L"
@@ -336,6 +346,13 @@
       "kwargs": {},
       "hex": "493bc2",
       "asm": "; cmp_rax_r10()"
+    },
+    {
+      "name": "cpuid",
+      "args": [],
+      "kwargs": {},
+      "hex": "0fa2",
+      "asm": "; cpuid()"
     },
     {
       "name": "cqo",
@@ -1080,6 +1097,28 @@
       "asm": "; movapd_xmm_xmm(xmm9, xmm1)"
     },
     {
+      "name": "movdqu_membase_disp_xmm",
+      "args": [
+        "rbp",
+        -16,
+        "xmm9"
+      ],
+      "kwargs": {},
+      "hex": "f3440f7f4df0",
+      "asm": "; movdqu_membase_disp_xmm(rbp, -16, xmm9)"
+    },
+    {
+      "name": "movdqu_xmm_membase_disp",
+      "args": [
+        "xmm9",
+        "rbp",
+        -16
+      ],
+      "kwargs": {},
+      "hex": "f3440f6f4df0",
+      "asm": "; movdqu_xmm_membase_disp(xmm9, rbp, -16)"
+    },
+    {
       "name": "movq_xmm_r64",
       "args": [
         "xmm9",
@@ -1252,6 +1291,36 @@
       "asm": "; or_rax_imm8(127)"
     },
     {
+      "name": "pcmpeqb_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440f74c9",
+      "asm": "; pcmpeqb_xmm_xmm(xmm9, xmm1)"
+    },
+    {
+      "name": "pcmpeqw_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440f75c9",
+      "asm": "; pcmpeqw_xmm_xmm(xmm9, xmm1)"
+    },
+    {
+      "name": "pmovmskb_r32_xmm",
+      "args": [
+        "r11d",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440fd7d9",
+      "asm": "; pmovmskb_r32_xmm(r11d, xmm1)"
+    },
+    {
       "name": "pop_r12",
       "args": [],
       "kwargs": {},
@@ -1301,6 +1370,16 @@
       "kwargs": {},
       "hex": "415b",
       "asm": "pop r11"
+    },
+    {
+      "name": "punpcklqdq_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440f6cc9",
+      "asm": "; punpcklqdq_xmm_xmm(xmm9, xmm1)"
     },
     {
       "name": "push_r12",
@@ -1354,11 +1433,49 @@
       "asm": "push r11"
     },
     {
+      "name": "pxor_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440fefc9",
+      "asm": "; pxor_xmm_xmm(xmm9, xmm1)"
+    },
+    {
       "name": "rep_movsb",
       "args": [],
       "kwargs": {},
       "hex": "f3a4",
       "asm": "; rep_movsb()"
+    },
+    {
+      "name": "rep_movsq",
+      "args": [],
+      "kwargs": {},
+      "hex": "f348a5",
+      "asm": "; rep_movsq()"
+    },
+    {
+      "name": "rep_stosb",
+      "args": [],
+      "kwargs": {},
+      "hex": "f3aa",
+      "asm": "; rep_stosb()"
+    },
+    {
+      "name": "rep_stosq",
+      "args": [],
+      "kwargs": {},
+      "hex": "f348ab",
+      "asm": "; rep_stosq()"
+    },
+    {
+      "name": "repe_cmpsb",
+      "args": [],
+      "kwargs": {},
+      "hex": "f3a6",
+      "asm": "; repe_cmpsb()"
     },
     {
       "name": "ret",
@@ -1472,6 +1589,16 @@
       "kwargs": {},
       "hex": "48c1e07f",
       "asm": "; shl_rax_imm8(127)"
+    },
+    {
+      "name": "shr_r32_imm8",
+      "args": [
+        "r11d",
+        127
+      ],
+      "kwargs": {},
+      "hex": "41c1eb7f",
+      "asm": "; shr_r32_imm8(r11d, 127)"
     },
     {
       "name": "shr_r64_cl",
@@ -1654,6 +1781,85 @@
       "kwargs": {},
       "hex": "66440f2ec9",
       "asm": "; ucomisd_xmm_xmm(xmm9, xmm1)"
+    },
+    {
+      "name": "vmovdqu_membase_disp_ymm",
+      "args": [
+        "rbp",
+        -16,
+        "ymm9"
+      ],
+      "kwargs": {},
+      "hex": "c4617e7f4df0",
+      "asm": "; vmovdqu_membase_disp_ymm(rbp, -16, ymm9)"
+    },
+    {
+      "name": "vmovdqu_ymm_membase_disp",
+      "args": [
+        "ymm9",
+        "rbp",
+        -16
+      ],
+      "kwargs": {},
+      "hex": "c4617e6f4df0",
+      "asm": "; vmovdqu_ymm_membase_disp(ymm9, rbp, -16)"
+    },
+    {
+      "name": "vpcmpeqb_ymm_ymm_ymm",
+      "args": [
+        "ymm9",
+        "ymm1",
+        "ymm1"
+      ],
+      "kwargs": {},
+      "hex": "c4617574c9",
+      "asm": "; vpcmpeqb_ymm_ymm_ymm(ymm9, ymm1, ymm1)"
+    },
+    {
+      "name": "vpcmpeqw_ymm_ymm_ymm",
+      "args": [
+        "ymm9",
+        "ymm1",
+        "ymm1"
+      ],
+      "kwargs": {},
+      "hex": "c4617575c9",
+      "asm": "; vpcmpeqw_ymm_ymm_ymm(ymm9, ymm1, ymm1)"
+    },
+    {
+      "name": "vpmovmskb_r32_ymm",
+      "args": [
+        "r11d",
+        "ymm1"
+      ],
+      "kwargs": {},
+      "hex": "c4617dd7d9",
+      "asm": "; vpmovmskb_r32_ymm(r11d, ymm1)"
+    },
+    {
+      "name": "vpxor_ymm_ymm_ymm",
+      "args": [
+        "ymm9",
+        "ymm1",
+        "ymm1"
+      ],
+      "kwargs": {},
+      "hex": "c46175efc9",
+      "asm": "; vpxor_ymm_ymm_ymm(ymm9, ymm1, ymm1)"
+    },
+    {
+      "name": "vzeroupper",
+      "args": [],
+      "kwargs": {},
+      "hex": "c5f877",
+      "asm": "; vzeroupper()"
+    },
+    {
+      "name": "xgetbv",
+      "args": [],
+      "kwargs": {},
+      "hex": "0f01d0",
+      "asm": "; xgetbv()"
     },
     {
       "name": "xor_eax_eax",

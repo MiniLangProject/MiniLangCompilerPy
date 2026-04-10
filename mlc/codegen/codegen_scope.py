@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import re
 
 from ..tools import enc_void
-from ..constants import ERR_MODULE_INIT_CYCLE
+from ..constants import ERR_MODULE_INIT_CYCLE, OBJ_ENV_LOCAL
 
 
 def _sanitize_ident(name: str) -> str:
@@ -813,7 +813,17 @@ class CodegenScope:
             a.mov_r64_r64('r11', 'r15')  # r11 = current env
             for _ in range(depth):
                 a.mov_r64_membase_disp('r11', 'r11', 8)  # parent
+            lid = self.new_label_id()
+            l_cap_full = f"cap_load_full_{lid}"
+            l_cap_done = f"cap_load_done_{lid}"
+            a.mov_r32_membase_disp('r10d', 'r11', 0)
+            a.cmp_r32_imm('r10d', OBJ_ENV_LOCAL)
+            a.jcc('ne', l_cap_full)
+            a.mov_r64_membase_disp('r11', 'r11', 8 + int(idx) * 8)  # cell ptr
+            a.jmp(l_cap_done)
+            a.mark(l_cap_full)
             a.mov_r64_membase_disp('r11', 'r11', 16 + int(idx) * 8)  # cell ptr
+            a.mark(l_cap_done)
             a.mov_r64_membase_disp('rax', 'r11', 8)  # cell[0]
             return
 
@@ -887,7 +897,17 @@ class CodegenScope:
             a.mov_r64_r64('r11', 'r15')  # r11 = current env
             for _ in range(depth):
                 a.mov_r64_membase_disp('r11', 'r11', 8)  # parent
+            lid = self.new_label_id()
+            l_cap_full = f"cap_store_full_{lid}"
+            l_cap_done = f"cap_store_done_{lid}"
+            a.mov_r32_membase_disp('r10d', 'r11', 0)
+            a.cmp_r32_imm('r10d', OBJ_ENV_LOCAL)
+            a.jcc('ne', l_cap_full)
+            a.mov_r64_membase_disp('r11', 'r11', 8 + int(idx) * 8)  # cell ptr
+            a.jmp(l_cap_done)
+            a.mark(l_cap_full)
             a.mov_r64_membase_disp('r11', 'r11', 16 + int(idx) * 8)  # cell ptr
+            a.mark(l_cap_done)
             a.mov_membase_disp_r64('r11', 8, 'rax')  # cell[0] = value
             return
         if b.kind in ("param", "local"):

@@ -2316,6 +2316,96 @@ def test_callable_values_runtime(*, name: str, mlc_runner: Path) -> TestResult:
                                     timeout_compile_s=180, timeout_run_s=180, )
 
 
+def test_nested_closure_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime test: nested closures, env hops, and cached tiny strings behave across GC."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "nested_closure_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['function ok(cond, label)', '  if cond then', '    print label + " [OK]"', '  else',
+             '    print label + " [FAIL]"', '  end if', 'end function', '',
+             'function makeCounter(seed)',
+             '  n = seed',
+             '  function step()',
+             '    n = n + 1',
+             '    return n',
+             '  end function',
+             '  return step',
+             'end function',
+             '',
+             'function makeAdder(base)',
+             '  function mid(delta)',
+             '    function inner(z)',
+             '      return base + delta + z',
+             '    end function',
+             '    return inner',
+             '  end function',
+             '  return mid',
+             'end function',
+             '',
+             'function makePlain()',
+             '  function plus1(x)',
+             '    return x + 1',
+             '  end function',
+             '  return plus1',
+             'end function',
+             '',
+             'print "=== NESTED CLOSURE RUNTIME ==="',
+             'ctr = makeCounter(10)',
+             'ok(ctr() == 11, "counter first call")',
+             'ok(ctr() == 12, "counter second call")',
+             '',
+             'mid = makeAdder(100)',
+             'inner = mid(7)',
+             'ok(inner(5) == 112, "closure captures parent + local")',
+             '',
+             'plain = makePlain()',
+             'ok(plain(41) == 42, "non-capturing nested fn")',
+             '',
+             's = "AZ"',
+             'ok(s[0] == "A", "string index cached char")',
+             'acc = ""',
+             'for each ch in s',
+             '  acc = acc + ch',
+             'end for',
+             'ok(acc == "AZ", "string foreach cached chars")',
+             '',
+             'for i = 0 to 20000',
+             '  tmp = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + i',
+             '  tmp2 = [tmp, i, [i, tmp]]',
+             '  if (i % 200) == 0 then',
+             '    gc_collect()',
+             '  end if',
+             'end for',
+             'gc_collect()',
+             'ok(ctr() == 13, "counter after gc_collect")',
+             'ok(inner(6) == 113, "closure after gc_collect")',
+             'ok(plain(99) == 100, "plain fn after gc_collect")',
+             'print "=== DONE ==="', ]) + "\n", encoding="utf-8", )
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== NESTED CLOSURE RUNTIME ===",
+                "counter first call [OK]",
+                "counter second call [OK]",
+                "closure captures parent + local [OK]",
+                "non-capturing nested fn [OK]",
+                "string index cached char [OK]",
+                "string foreach cached chars [OK]",
+                "counter after gc_collect [OK]",
+                "closure after gc_collect [OK]",
+                "plain fn after gc_collect [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 
 
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
@@ -2628,6 +2718,8 @@ def main() -> int:
     # Runtime: callable values (user/builtin/struct) + GC
     tests.append(
         lambda: test_callable_values_runtime(name="callables: user+builtin+struct values + GC", mlc_runner=mlc_runner))
+    tests.append(lambda: test_nested_closure_runtime(name="closures: nested values + tiny string cache + GC",
+                                                     mlc_runner=mlc_runner))
 
     # Runtime: call profiling (--profile-calls)
     tests.append(lambda: test_call_profile_counts(name="call profile: callStats() + counters", mlc_runner=mlc_runner))

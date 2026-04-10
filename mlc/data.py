@@ -47,6 +47,13 @@ class DataBuilder:
         self.labels[name] = len(self.data)
         self.data += u64(value)
 
+    def pad_align(self, align: int = 8) -> None:
+        """Pad with NUL bytes to reach ``align``-byte alignment."""
+
+        pad = (-len(self.data)) % align
+        if pad:
+            self.data += b"\x00" * pad
+
     def add_bytes(self, name: str, b: bytes) -> None:
         """Append raw bytes and record their start offset as label."""
 

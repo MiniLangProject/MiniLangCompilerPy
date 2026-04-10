@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ..asm import Asm
-from ..constants import (TAG_INT, OBJ_STRING, OBJ_ARRAY, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
+from ..constants import (TAG_INT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
 from ..context import BreakableCtx
 from ..data import DataBuilder, RDataBuilder, BssBuilder
 from ..errors import CompileError
@@ -144,6 +144,19 @@ class CodegenCore:
         self.rdata.add_obj_string('obj_array', '<array>')
         self.rdata.add_obj_string('obj_bytes', '<bytes>')
         self.rdata.add_obj_string('obj_void', 'void')
+        self.rdata.add_obj_string('obj_empty_string', '')
+
+        # Dense cache for 1-byte strings used by string indexing / foreach.
+        # Layout per entry (16-byte stride):
+        #   [u32 OBJ_STRING][u32 len=1][u8 byte][u8 0][6 pad]
+        self.rdata.pad_align(16)
+        char_objs = bytearray()
+        for i in range(256):
+            char_objs += int(OBJ_STRING).to_bytes(4, "little", signed=False)
+            char_objs += (1).to_bytes(4, "little", signed=False)
+            char_objs += bytes((i, 0))
+            char_objs += b"\x00" * 6
+        self.rdata.add_bytes('obj_char_table', bytes(char_objs))
 
         # Boxed string constants for typeof(x) (no heap alloc)
         self.rdata.add_obj_string('obj_type_int', 'int')
@@ -193,12 +206,21 @@ class CodegenCore:
         self.data.add_u64('dbg_loc_script', enc_void())
         self.data.add_u64('dbg_loc_func', enc_void())
         self.data.add_u64('dbg_loc_line', enc_int(0))
+        self.data.add_u32('cpu_has_avx2', 0)
         #   the heap globals (heap_base/heap_end/...), leading to spurious
         #   "MiniLang heap exhausted" errors with nonsense committed values.
         # - By placing heap/GC globals at the start of .data, overruns hit
         #   later scratch space instead of the allocator's control words.
         if hasattr(self, 'ensure_gc_data'):
             self.ensure_gc_data()
+
+        # Zero-length bytes are immutable in practice (no valid in-bounds writes), so a
+        # single writable process-global instance avoids repeated heap churn for empty results.
+        self.data.pad_align(8)
+        self.data.add_bytes(
+            'obj_empty_bytes',
+            int(OBJ_BYTES).to_bytes(4, "little", signed=False) + (0).to_bytes(4, "little", signed=False) + b"\x00" * 8,
+        )
 
         self.data.add_u32('bytesWritten', 0)
         self.data.add_u32('bytesRead', 0)
@@ -1033,6 +1055,7 @@ class CodegenCore:
     def emit_used_helpers(self) -> None:
         """Emit only the internal runtime helpers that were referenced (fn_*)."""
         emitters = {'fn_int_to_dec': getattr(self, 'emit_int_to_dec_function', None),
+            'fn_cpu_init': getattr(self, 'emit_cpu_init_function', None),
             'fn_strlen': getattr(self, 'emit_strlen_function', None),
             'fn_alloc': getattr(self, 'emit_alloc_function', None),
             'fn_init_argvw': getattr(self, 'emit_init_argvw_function', None),
@@ -1052,6 +1075,13 @@ class CodegenCore:
             'fn_heap_free_blocks': getattr(self, 'emit_heap_free_blocks_function', None),
             'fn_heap_grow': getattr(self, 'emit_heap_grow_function', None),
             'fn_gc_collect': getattr(self, 'emit_gc_collect_function', None),
+            'fn_mem_eq_bytes': getattr(self, 'emit_mem_eq_bytes_function', None),
+            'fn_scan_nul_bytes': getattr(self, 'emit_scan_nul_bytes_function', None),
+            'fn_scan_byte2_bytes': getattr(self, 'emit_scan_byte2_bytes_function', None),
+            'fn_scan_nul_wchars': getattr(self, 'emit_scan_nul_wchars_function', None),
+            'fn_copy_bytes': getattr(self, 'emit_copy_bytes_function', None),
+            'fn_fill_bytes': getattr(self, 'emit_fill_bytes_function', None),
+            'fn_fill_qwords': getattr(self, 'emit_fill_qwords_function', None),
             'fn_box_float': getattr(self, 'emit_box_float_function', None),
             'fn_value_to_string': getattr(self, 'emit_value_to_string_function', None),
             'fn_str_eq': getattr(self, 'emit_string_eq_function', None),

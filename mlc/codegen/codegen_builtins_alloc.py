@@ -22,7 +22,7 @@ from __future__ import annotations
 from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, OBJ_STRUCT, ERROR_STRUCT_ID,
                          TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM,
                          ERR_STRINGIFY_UNSUPPORTED, )
-from ..tools import enc_void, enc_int
+from ..tools import enc_void, enc_int, enc_bool
 
 # I/O buffers
 INPUT_READ_MAX = 4095  # ReadFile max bytes (keeps NUL space)
@@ -56,13 +56,7 @@ Returns:
         # GUI / windows-subsystem executables should not try to read from an
         # inherited console. Return an empty string instead.
         if getattr(self, 'is_windows_subsystem', False):
-            a.sub_rsp_imm8(0x28)
-            a.mov_rcx_imm32(9)
-            a.call('fn_alloc')
-            a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
-            a.mov_membase_disp_imm32('rax', 4, 0, qword=False)
-            a.mov_membase_disp_imm8('rax', 8, 0)
-            a.add_rsp_imm8(0x28)
+            a.lea_rax_rip('obj_empty_string')
             a.ret()
 
         # Windows x64 ABI:
@@ -91,10 +85,6 @@ Returns:
 
         lid = self.new_label_id()
         l_read_ok = f"in_read_ok_{lid}"
-        l_scan_top = f"in_scan_top_{lid}"
-        l_scan_done = f"in_scan_done_{lid}"
-        l_found = f"in_scan_found_{lid}"
-        l_copy_done = f"in_copy_done_{lid}"
 
         # if ReadFile failed -> bytesRead = 0
         a.test_r32_r32("eax", "eax")  # test eax,eax
@@ -107,32 +97,23 @@ Returns:
         a.mov_eax_rip_dword('bytesRead')
         a.mov_r32_r32("r9d", "eax")  # mov r9d,eax
 
-        # r10 = &inbuf
-        a.lea_rax_rip('inbuf')
-        a.mov_r10_rax()
-
         # scan for first CR/LF, set r9d = effective length
-        a.xor_r32_r32("r8d", "r8d")  # xor r8d,r8d (idx)
-        a.mark(l_scan_top)
-        # cmp r8d, r9d
-        a.cmp_r32_r32("r8d", "r9d")  # cmp r8d,r9d
-        a.jcc('ge', l_scan_done)
-        # al = inbuf[idx]
-        a.mov_r64_r64("rax", "r10")  # mov rax,r10
-        a.add_r64_r64("rax", "r8")  # add rax,r8
-        a.mov_r8_membase_disp("al", "rax", 0)  # mov al,[rax]
-        a.cmp_r8_imm8("al", 10)  # cmp al,10
-        a.jcc('e', l_found)
-        a.cmp_r8_imm8("al", 13)  # cmp al,13
-        a.jcc('e', l_found)
-        a.inc_r32("r8d")  # inc r8d
-        a.jmp(l_scan_top)
+        a.lea_rax_rip('inbuf')
+        a.mov_r64_r64('rcx', 'rax')
+        a.mov_r32_r32('edx', 'r9d')
+        a.mov_r32_imm32('r8d', 10)
+        a.mov_r32_imm32('r9d', 13)
+        a.call('fn_scan_byte2_bytes')
+        a.mov_r32_r32('r9d', 'edx')
 
-        a.mark(l_found)
-        # r9d = idx
-        a.mov_r32_r32("r9d", "r8d")  # mov r9d,r8d
-
-        a.mark(l_scan_done)
+        # Empty input/result -> shared immutable empty string.
+        l_nonempty = f"in_nonempty_{lid}"
+        a.cmp_r32_imm("r9d", 0)
+        a.jcc('ne', l_nonempty)
+        a.lea_rax_rip('obj_empty_string')
+        a.add_rsp_imm8(0x28)
+        a.ret()
+        a.mark(l_nonempty)
 
         # allocate size = 8 + len + 1 = len + 9
         a.mov_r32_r32("ecx", "r9d")  # mov ecx,r9d
@@ -146,17 +127,13 @@ Returns:
         a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)  # mov dword [r11],OBJ_STRING
         a.mov_membase_disp_r32("r11", 4, "r9d")  # mov [r11+4], r9d
 
-        # copy bytes: rep movsb (save rsi/rdi)
-        a.lea_rax_rip('inbuf')
-        a.mov_r10_rax()
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
-        a.mov_r64_r64("rsi", "r10")  # mov rsi,r10
-        a.lea_r64_membase_disp("rdi", "r11", 8)  # lea rdi,[r11+8]
-        a.mov_r32_r32("ecx", "r9d")  # mov ecx,r9d
-        a.rep_movsb()  # rep movsb
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mov_membase_disp_r64('rsp', 0x20, 'r11')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.lea_rdx_rip('inbuf')
+        a.mov_r32_r32('r8d', 'r9d')
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x20)
+        a.mov_r32_membase_disp('r9d', 'r11', 4)
 
         # write NUL terminator at [base+8+len]
         a.mov_rax_r11()
@@ -215,6 +192,14 @@ Returns:
         # len = dword [src+4]
         a.mov_r32_membase_disp('r9d', 'rax', 4)
 
+        l_nonempty = f"dec_nonempty_{lid}"
+        a.cmp_r32_imm('r9d', 0)
+        a.jcc('ne', l_nonempty)
+        a.lea_rax_rip('obj_empty_string')
+        a.add_rsp_imm8(0x28)
+        a.ret()
+        a.mark(l_nonempty)
+
         # alloc size = len + 9
         a.mov_r32_r32('ecx', 'r9d')
         a.add_r32_imm('ecx', 9)
@@ -231,15 +216,13 @@ Returns:
         a.mov_membase_disp_imm32('r11', 0, OBJ_STRING, qword=False)
         a.mov_membase_disp_r32('r11', 4, 'r9d')
 
-        # copy bytes payload (preserve nonvolatile rsi/rdi)
-        a.push_reg('rsi')
-        a.push_reg('rdi')
-        a.lea_r64_membase_disp('rsi', 'r10', 8)
-        a.lea_r64_membase_disp('rdi', 'r11', 8)
-        a.mov_r32_r32('ecx', 'r9d')
-        a.rep_movsb()
-        a.pop_reg('rdi')
-        a.pop_reg('rsi')
+        a.mov_membase_disp_r64('rsp', 0x20, 'r11')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.lea_r64_membase_disp('rdx', 'r10', 8)
+        a.mov_r32_r32('r8d', 'r9d')
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x20)
+        a.mov_r32_membase_disp('r9d', 'r11', 4)
 
         # NUL terminator at [dest+8+len]
         a.mov_rax_r11()
@@ -278,9 +261,6 @@ Returns:
 
         lid = self.new_label_id()
         l_fail = f"decZ_fail_{lid}"
-        l_loop = f"decZ_loop_{lid}"
-        l_done_scan = f"decZ_done_scan_{lid}"
-
         # rax = rcx
         a.mov_r64_r64('rax', 'rcx')
 
@@ -299,28 +279,18 @@ Returns:
         a.mov_membase_disp_r64('rsp', 0x20, 'rax')
 
         # maxlen = dword [src+4]
-        a.mov_r32_membase_disp('r9d', 'rax', 4)
+        a.mov_r32_membase_disp('edx', 'rax', 4)
+        a.lea_r64_membase_disp('rcx', 'rax', 8)
+        a.call('fn_scan_nul_bytes')
+        a.mov_r32_r32('r9d', 'edx')
 
-        # scan payload for NUL
-        a.lea_r64_membase_disp('r11', 'rax', 8)  # r11 = p
-        a.xor_r32_r32('r8d', 'r8d')  # r8d = n
-
-        a.mark(l_loop)
-        a.cmp_r32_r32('r8d', 'r9d')
-        a.jcc('ge', l_done_scan)
-
-        a.mov_r8_membase_disp('r10b', 'r11', 0)
-        a.test_r8_r8('r10b', 'r10b')
-        a.jcc('e', l_done_scan)
-
-        a.add_r64_imm8('r11', 1)
-        a.add_r32_imm('r8d', 1)
-        a.jmp(l_loop)
-
-        a.mark(l_done_scan)
-
-        # len = n
-        a.mov_r32_r32('r9d', 'r8d')
+        l_nonempty2 = f"decZ_nonempty_{lid}"
+        a.cmp_r32_imm('r9d', 0)
+        a.jcc('ne', l_nonempty2)
+        a.lea_rax_rip('obj_empty_string')
+        a.add_rsp_imm8(0x28)
+        a.ret()
+        a.mark(l_nonempty2)
 
         # alloc size = len + 9
         a.mov_r32_r32('ecx', 'r9d')
@@ -338,15 +308,13 @@ Returns:
         a.mov_membase_disp_imm32('r11', 0, OBJ_STRING, qword=False)
         a.mov_membase_disp_r32('r11', 4, 'r9d')
 
-        # copy bytes payload (preserve nonvolatile rsi/rdi)
-        a.push_reg('rsi')
-        a.push_reg('rdi')
-        a.lea_r64_membase_disp('rsi', 'r10', 8)
-        a.lea_r64_membase_disp('rdi', 'r11', 8)
-        a.mov_r32_r32('ecx', 'r8d')
-        a.rep_movsb()
-        a.pop_reg('rdi')
-        a.pop_reg('rsi')
+        a.mov_membase_disp_r64('rsp', 0x20, 'r11')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.lea_r64_membase_disp('rdx', 'r10', 8)
+        a.mov_r32_r32('r8d', 'r8d')
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x20)
+        a.mov_r32_membase_disp('r8d', 'r11', 4)
 
         # NUL terminator at [dest+8+len]
         a.mov_rax_r11()
@@ -385,8 +353,6 @@ Returns:
 
         lid = self.new_label_id()
         l_fail = f"dec16Z_fail_{lid}"
-        l_scan = f"dec16Z_scan_{lid}"
-        l_scan_done = f"dec16Z_scan_done_{lid}"
         l_empty = f"dec16Z_empty_{lid}"
 
         # rax = rcx
@@ -403,36 +369,18 @@ Returns:
         a.cmp_r32_imm('r11d', OBJ_BYTES)
         a.jcc('ne', l_fail)
 
-        # len_bytes = dword [src+4]
-        a.mov_r32_membase_disp('r9d', 'rax', 4)
+        a.mov_membase_disp_r64('rsp', 0x40, 'rax')
 
-        # payload ptr
-        a.lea_r64_membase_disp('r11', 'rax', 8)  # r11 = p
-
-        # max_wchars = len_bytes >> 1
-        a.shr_r64_imm8('r9', 1)
-
-        # scan for 0x0000
-        a.xor_r32_r32('r8d', 'r8d')  # wlen
-
-        a.mark(l_scan)
-        a.cmp_r32_r32('r8d', 'r9d')
-        a.jcc('ge', l_scan_done)
-
-        a.mov_r8_membase_disp('r10b', 'r11', 0)
-        a.mov_r8_membase_disp('dl', 'r11', 1)
-        a.or_r8_r8('r10b', 'dl')
-        a.test_r8_r8('r10b', 'r10b')
-        a.jcc('e', l_scan_done)
-
-        a.add_r64_imm8('r11', 2)
-        a.add_r32_imm('r8d', 1)
-        a.jmp(l_scan)
-
-        a.mark(l_scan_done)
+        # len_bytes = dword [src+4], max_wchars = len_bytes >> 1
+        a.mov_r32_membase_disp('edx', 'rax', 4)
+        a.shr_r32_imm8('edx', 1)
+        a.lea_r64_membase_disp('rcx', 'rax', 8)
+        a.call('fn_scan_nul_wchars')
+        a.mov_r32_r32('r8d', 'edx')
 
         # save src payload ptr and wlen for later calls
-        a.lea_r64_membase_disp('r11', 'rax', 8)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x40)
+        a.lea_r64_membase_disp('r11', 'r11', 8)
         a.mov_membase_disp_r64('rsp', 0x40, 'r11')  # src payload
         a.mov_membase_disp_r64('rsp', 0x48, 'r8')  # wlen (qword)
 
@@ -504,14 +452,7 @@ Returns:
         a.ret()
 
         a.mark(l_empty)
-        # alloc empty string (size 9)
-        a.mov_rcx_imm32(9)
-        a.call('fn_alloc')
-        a.mov_r11_rax()
-        a.mov_membase_disp_imm32('r11', 0, OBJ_STRING, qword=False)
-        a.mov_membase_disp_imm32('r11', 4, 0, qword=False)
-        a.mov_membase_disp_imm8('r11', 8, 0)
-        a.mov_rax_r11()
+        a.lea_rax_rip('obj_empty_string')
         a.add_rsp_imm8(0x68)
         a.ret()
 
@@ -579,6 +520,14 @@ Returns:
         a.mov_r32_r32('r9d', 'r8d')
         a.add_r32_r32('r9d', 'r8d')
         a.mov_membase_disp_r32('rsp', 0x28, 'r9d')  # spill outLen
+
+        l_nonempty = f"hex_nonempty_{lid}"
+        a.cmp_r32_imm('r9d', 0)
+        a.jcc('ne', l_nonempty)
+        a.lea_rax_rip('obj_empty_string')
+        a.add_rsp_imm8(0x38)
+        a.ret()
+        a.mark(l_nonempty)
 
         # alloc size = outLen + 9
         a.mov_r32_r32('ecx', 'r9d')
@@ -1195,16 +1144,16 @@ Returns:
         # header
         a.mov_membase_disp_imm32("rax", 0, OBJ_STRING, qword=False)  # mov dword [rax],OBJ_STRING
         a.mov_membase_disp_r32("rax", 4, "r9d")  # mov [rax+4],r9d
-        # copy digits from r10 -> [rax+8]
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
-        a.mov_r64_r64("rsi", "r10")  # mov rsi,r10
-        a.lea_r64_membase_disp("rdi", "rax", 8)  # lea rdi,[rax+8]
-        a.mov_r32_r32("ecx", "r9d")  # mov ecx,r9d
-        a.rep_movsb()  # rep movsb
-        a.mov_membase_disp_imm8("rdi", 0, 0)  # mov byte [rdi],0
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mov_membase_disp_r64("rsp", 32, "rax")
+        a.lea_r64_membase_disp("rcx", "rax", 8)
+        a.mov_r64_r64("rdx", "r10")
+        a.mov_r32_r32("r8d", "r9d")
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp("rax", "rsp", 32)
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.lea_r64_membase_disp("r10", "rax", 8)
+        a.add_r64_r64("r10", "r9")
+        a.mov_membase_disp_imm8("r10", 0, 0)
         a.jmp(l_done)
 
         # --- float -> decimal string via _gcvt (allocate) ---
@@ -1243,16 +1192,16 @@ Returns:
         # header
         a.mov_membase_disp_imm32("rax", 0, OBJ_STRING, qword=False)
         a.mov_membase_disp_r32("rax", 4, "r9d")  # [rax+4]=r9d
-        # copy bytes from r11 -> [rax+8]
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
-        a.mov_r64_r64("rsi", "r11")  # mov rsi,r11
-        a.lea_r64_membase_disp("rdi", "rax", 8)  # lea rdi,[rax+8]
-        a.mov_r32_r32("ecx", "r9d")  # mov ecx,r9d
-        a.rep_movsb()  # rep movsb
-        a.mov_membase_disp_imm8("rdi", 0, 0)  # mov byte [rdi],0
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mov_membase_disp_r64("rsp", 32, "rax")
+        a.lea_r64_membase_disp("rcx", "rax", 8)
+        a.mov_r64_r64("rdx", "r11")
+        a.mov_r32_r32("r8d", "r9d")
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp("rax", "rsp", 32)
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.lea_r64_membase_disp("r10", "rax", 8)
+        a.add_r64_r64("r10", "r9")
+        a.mov_membase_disp_imm8("r10", 0, 0)
         a.jmp(l_done)
 
         # --- unsupported -> <unsupported> ---
@@ -1295,6 +1244,10 @@ Returns:
         lid = self.new_label_id()
         l_fail_uns = f"addstr_fail_uns_{lid}"
         l_fail_void = f"addstr_fail_void_{lid}"
+        l_s1_convert = f"addstr_s1_convert_{lid}"
+        l_s1_ready = f"addstr_s1_ready_{lid}"
+        l_s2_convert = f"addstr_s2_convert_{lid}"
+        l_s2_ready = f"addstr_s2_ready_{lid}"
 
         lbl_msg_uns = f"objstr_{len(self.rdata.labels)}"
         self.rdata.add_obj_string(lbl_msg_uns, "Cannot stringify unsupported value for string concatenation")
@@ -1304,8 +1257,18 @@ Returns:
         # Save b (RDX) at [rsp+0x20] (non-shadow local)
         a.mov_membase_disp_r64("rsp", 32, "rdx")  # mov [rsp+0x20],rdx
 
-        # s1 = value_to_string(a)
+        # s1 = a if already string, else value_to_string(a)
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc('ne', l_s1_convert)
+        a.mov_r32_membase_disp("r10d", "rax", 0)
+        a.cmp_r32_imm("r10d", OBJ_STRING)
+        a.jcc('e', l_s1_ready)
+        a.mark(l_s1_convert)
         a.call('fn_value_to_string')
+        a.mark(l_s1_ready)
 
         # Reject placeholder conversions (<unsupported> / void)
         a.lea_r11_rip('obj_uns')
@@ -1321,9 +1284,19 @@ Returns:
         # Root s1 for GC (stack locals are NOT scanned)
         a.mov_rip_qword_rax('gc_tmp2')
 
-        # rcx = saved b
+        # s2 = b if already string, else value_to_string(b)
         a.mov_r64_membase_disp("rcx", "rsp", 32)  # mov rcx,[rsp+0x20]
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc('ne', l_s2_convert)
+        a.mov_r32_membase_disp("r10d", "rax", 0)
+        a.cmp_r32_imm("r10d", OBJ_STRING)
+        a.jcc('e', l_s2_ready)
+        a.mark(l_s2_convert)
         a.call('fn_value_to_string')
+        a.mark(l_s2_ready)
 
         # Reject placeholder conversions (<unsupported> / void)
         a.lea_r11_rip('obj_uns')
@@ -1351,6 +1324,19 @@ Returns:
         a.mov_r32_r32("ecx", "r8d")  # mov ecx,r8d
         a.add_r32_r32("ecx", "r9d")  # add ecx,r9d
 
+        l_add_nonempty = f"addstr_nonempty_{self.new_label_id()}"
+        a.cmp_r32_imm("ecx", 0)
+        a.jcc('ne', l_add_nonempty)
+        a.lea_rax_rip('obj_empty_string')
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax('gc_tmp2')
+        a.mov_rip_qword_rax('gc_tmp3')
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x38)
+        a.ret()
+        a.mark(l_add_nonempty)
+
         # Save totalLen across the alloc call.
         # Note: R8/R9 are volatile and fn_alloc may clobber them.
         # We can reuse the old "saved b" slot at [rsp+0x20] now.
@@ -1376,26 +1362,27 @@ Returns:
         a.mov_r64_membase_disp("r10", "rsp", 40)  # mov r10,[rsp+0x28]
         a.mov_r64_membase_disp("r11", "rsp", 48)  # mov r11,[rsp+0x30]
 
-        # dest = base+8
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
-        a.lea_r64_membase_disp("rdi", "rdx", 8)  # lea rdi,[rdx+8]
+        a.mov_membase_disp_r64("rsp", 32, "rdx")
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.lea_r64_membase_disp("rdx", "r10", 8)
+        a.mov_r32_membase_disp("r8d", "r10", 4)
+        a.call('fn_copy_bytes')
 
-        # copy s1 bytes
-        a.lea_r64_membase_disp("rsi", "r10", 8)  # lea rsi,[r10+8]
-        a.mov_r32_membase_disp("ecx", "r10", 4)  # mov ecx,[r10+4]
-        a.rep_movsb()  # rep movsb
+        a.mov_r64_membase_disp("rdx", "rsp", 32)
+        a.mov_r64_membase_disp("r10", "rsp", 40)
+        a.mov_r64_membase_disp("r11", "rsp", 48)
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.mov_r32_membase_disp("eax", "r10", 4)
+        a.add_r64_r64("rcx", "rax")
+        a.lea_r64_membase_disp("rdx", "r11", 8)
+        a.mov_r32_membase_disp("r8d", "r11", 4)
+        a.call('fn_copy_bytes')
 
-        # copy s2 bytes (len2)
-        a.lea_r64_membase_disp("rsi", "r11", 8)  # lea rsi,[r11+8]
-        a.mov_r32_membase_disp("ecx", "r11", 4)  # mov ecx,[r11+4]
-        a.rep_movsb()  # rep movsb
-
-        # NUL terminator
-        a.mov_membase_disp_imm8("rdi", 0, 0)  # mov byte [rdi],0
-
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mov_r64_membase_disp("rdx", "rsp", 32)
+        a.mov_r32_membase_disp("r8d", "rdx", 4)
+        a.lea_r64_membase_disp("r11", "rdx", 8)
+        a.add_r64_r64("r11", "r8")
+        a.mov_membase_disp_imm8("r11", 0, 0)
 
         # return rax = base
         a.mov_r64_r64("rax", "rdx")  # mov rax,rdx
@@ -1418,27 +1405,25 @@ Returns:
             a.mov_rip_qword_rax('gc_tmp2')
             a.mov_rip_qword_rax('gc_tmp3')
 
-            # Allocate error struct (5 fields)
-            a.mov_rcx_imm32(56)
+            # Allocate error struct (8-byte header + 5 fields)
+            a.mov_rcx_imm32(48)
             a.call('fn_alloc')
             a.mov_r11_rax()
             a.mov_membase_disp_imm32('r11', 0, OBJ_STRUCT, qword=False)
-            a.mov_membase_disp_imm32('r11', 4, 5, qword=False)
-            a.mov_membase_disp_imm32('r11', 8, ERROR_STRUCT_ID, qword=False)
-            a.mov_membase_disp_imm32('r11', 12, 0, qword=False)
+            a.mov_membase_disp_imm32('r11', 4, ERROR_STRUCT_ID, qword=False)
 
             a.mov_rax_imm64(enc_int(int(ERR_STRINGIFY_UNSUPPORTED)))
-            a.mov_membase_disp_r64('r11', 16, 'rax')
+            a.mov_membase_disp_r64('r11', 8, 'rax')
 
             a.lea_rax_rip(msg_lbl)
-            a.mov_membase_disp_r64('r11', 24, 'rax')
+            a.mov_membase_disp_r64('r11', 16, 'rax')
 
             a.mov_rax_rip_qword('dbg_loc_script')
-            a.mov_membase_disp_r64('r11', 32, 'rax')
+            a.mov_membase_disp_r64('r11', 24, 'rax')
             a.mov_rax_rip_qword('dbg_loc_func')
-            a.mov_membase_disp_r64('r11', 40, 'rax')
+            a.mov_membase_disp_r64('r11', 32, 'rax')
             a.mov_rax_rip_qword('dbg_loc_line')
-            a.mov_membase_disp_r64('r11', 48, 'rax')
+            a.mov_membase_disp_r64('r11', 40, 'rax')
 
             a.mov_rax_r11()
             a.add_rsp_imm8(0x38)
@@ -1509,73 +1494,27 @@ Returns:
         a.mov_r64_membase_disp("r10", "rsp", 32)  # mov r10,[rsp+0x20]
         a.mov_r64_membase_disp("r11", "rsp", 40)  # mov r11,[rsp+0x28]
 
-        # preserve non-volatile regs we will use (RSI/RDI)
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
+        a.mov_membase_disp_r64("rsp", 48, "rdx")
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.lea_r64_membase_disp("rdx", "r10", 8)
+        a.mov_r32_membase_disp("r8d", "r10", 4)
+        a.shl_r32_imm8("r8d", 3)
+        a.call('fn_copy_bytes')
 
-        # rdi = dest data start
-        a.lea_r64_membase_disp("rdi", "rdx", 8)  # lea rdi,[rdx+8]
-
-        # ---------------- copy arr1 ----------------
-        # rsi = arr1 data
-        a.lea_r64_membase_disp("rsi", "r10", 8)  # lea rsi,[r10+8]
-        # r9d = len1
-        a.mov_r32_membase_disp("r9d", "r10", 4)  # mov r9d,[r10+4]
-        # r8d = i = 0
-        a.xor_r32_r32("r8d", "r8d")  # xor r8d,r8d
-
-        lid = self.new_label_id()
-        l1_top = f"arrcat1_top_{lid}"
-        l1_done = f"arrcat1_done_{lid}"
-
-        a.mark(l1_top)
-        # if i >= len1 -> done
-        a.cmp_r32_r32("r8d", "r9d")  # cmp r8d,r9d
-        a.jcc('ge', l1_done)
-        # rax = [rsi + i*8]
-        a.mov_r64_mem_bis("rax", "rsi", "r8", 8, 0)  # mov rax,[rsi+r8*8]
-        # [rdi + i*8] = rax
-        a.mov_mem_bis_r64("rdi", "r8", 8, 0, "rax")  # mov [rdi+r8*8],rax
-        # i++
-        a.inc_r32("r8d")  # inc r8d
-        a.jmp(l1_top)
-
-        a.mark(l1_done)
-
-        # ---------------- copy arr2 ----------------
-        # rsi = arr2 data
-        a.lea_r64_membase_disp("rsi", "r11", 8)  # lea rsi,[r11+8]
-        # r10d = len2
-        a.mov_r32_membase_disp("r10d", "r11", 4)  # mov r10d,[r11+4]
-        # r8d = j = 0
-        a.xor_r32_r32("r8d", "r8d")  # xor r8d,r8d
-
-        l2_top = f"arrcat2_top_{lid}"
-        l2_done = f"arrcat2_done_{lid}"
-
-        a.mark(l2_top)
-        # if j >= len2 -> done
-        a.cmp_r32_r32("r8d", "r10d")  # cmp r8d,r10d
-        a.jcc('ge', l2_done)
-        # rax = [rsi + j*8]
-        a.mov_r64_mem_bis("rax", "rsi", "r8", 8, 0)  # mov rax,[rsi+r8*8]
-        # r11d = len1
-        a.mov_r32_r32("r11d", "r9d")  # mov r11d,r9d
-        # r11d += j
-        a.add_r32_r32("r11d", "r8d")  # add r11d,r8d
-        # [rdi + r11*8] = rax
-        a.mov_mem_bis_r64("rdi", "r11", 8, 0, "rax")  # mov [rdi+r11*8],rax
-        # j++
-        a.inc_r32("r8d")  # inc r8d
-        a.jmp(l2_top)
-
-        a.mark(l2_done)
-
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mov_r64_membase_disp("rdx", "rsp", 48)
+        a.mov_r64_membase_disp("r10", "rsp", 32)
+        a.mov_r64_membase_disp("r11", "rsp", 40)
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.mov_r32_membase_disp("eax", "r10", 4)
+        a.shl_r32_imm8("eax", 3)
+        a.add_r64_r64("rcx", "rax")
+        a.lea_r64_membase_disp("rdx", "r11", 8)
+        a.mov_r32_membase_disp("r8d", "r11", 4)
+        a.shl_r32_imm8("r8d", 3)
+        a.call('fn_copy_bytes')
 
         # return base in rax
-        a.mov_r64_r64("rax", "rdx")  # mov rax,rdx
+        a.mov_r64_membase_disp("rax", "rsp", 48)
 
         a.add_rsp_imm8(0x38)
         a.ret()
@@ -1593,6 +1532,14 @@ Returns:
         self.ensure_gc_data()
         a = self.asm
         a.mark('fn_bytes_alloc')
+
+        lid = self.new_label_id()
+        l_nonempty = f"bytes_alloc_nonempty_{lid}"
+        a.test_r32_r32("ecx", "ecx")
+        a.jcc('ne', l_nonempty)
+        a.lea_rax_rip('obj_empty_bytes')
+        a.ret()
+        a.mark(l_nonempty)
 
         # 32B shadow + 24B locals (alignment)
         a.sub_rsp_imm8(0x38)
@@ -1616,28 +1563,12 @@ Returns:
         a.mov_r32_membase_disp("ecx", "rsp", 0x20)
         a.mov_membase_disp_r32("r11", 4, "ecx")
 
-        # r8 = data ptr
-        a.lea_r64_membase_disp("r8", "r11", 8)
-
-        # r9d = remaining count
-        a.mov_r32_r32("r9d", "ecx")
-
-        # dl = fill byte
-        a.mov_r8_membase_disp("dl", "rsp", 0x24)
-
-        lid = self.new_label_id()
-        l_top = f"bfill_top_{lid}"
-        l_done = f"bfill_done_{lid}"
-
-        a.mark(l_top)
-        a.test_r32_r32("r9d", "r9d")
-        a.jcc('e', l_done)
-        a.mov_membase_disp_r8("r8", 0, "dl")
-        a.inc_r64("r8")
-        a.dec_r32("r9d")
-        a.jmp(l_top)
-
-        a.mark(l_done)
+        a.mov_membase_disp_r64("rsp", 0x28, "r11")
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.mov_r32_membase_disp("edx", "rsp", 0x20)
+        a.mov_r8_membase_disp("r8b", "rsp", 0x24)
+        a.call('fn_fill_bytes')
+        a.mov_r64_membase_disp("r11", "rsp", 0x28)
 
         a.mov_rax_r11()
         a.add_rsp_imm8(0x38)
@@ -1683,6 +1614,14 @@ Returns:
         a.add_r32_r32("eax", "r9d")
         a.mov_membase_disp_r32("rsp", 0x30, "eax")
 
+        l_nonempty = f"addbytes_nonempty_{self.new_label_id()}"
+        a.cmp_r32_imm("eax", 0)
+        a.jcc('ne', l_nonempty)
+        a.lea_rax_rip('obj_empty_bytes')
+        a.add_rsp_imm8(0x38)
+        a.ret()
+        a.mark(l_nonempty)
+
         # rcx = sizeBytes = 8 + totalLen
         a.mov_r32_r32("ecx", "eax")
         a.add_r32_imm("ecx", 8)
@@ -1706,28 +1645,24 @@ Returns:
         a.mov_r32_membase_disp("r8d", "r10", 4)  # len1
         a.mov_r32_membase_disp("r9d", "r11", 4)  # len2
 
-        # preserve non-volatile regs we will use (RSI/RDI)
-        a.push_reg("rsi")
-        a.push_reg("rdi")
+        a.mov_membase_disp_r64("rsp", 0x30, "rdx")
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.lea_r64_membase_disp("rdx", "r10", 8)
+        a.mov_r32_r32("r8d", "r8d")
+        a.call('fn_copy_bytes')
 
-        # rdi = dest start
-        a.lea_r64_membase_disp("rdi", "rdx", 8)
-
-        # copy b1 payload
-        a.lea_r64_membase_disp("rsi", "r10", 8)
-        a.mov_r32_r32("ecx", "r8d")
-        a.rep_movsb()
-
-        # copy b2 payload
-        a.lea_r64_membase_disp("rsi", "r11", 8)
-        a.mov_r32_r32("ecx", "r9d")
-        a.rep_movsb()
-
-        a.pop_reg("rdi")
-        a.pop_reg("rsi")
+        a.mov_r64_membase_disp("rdx", "rsp", 0x30)
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r64_membase_disp("r11", "rsp", 0x28)
+        a.lea_r64_membase_disp("rcx", "rdx", 8)
+        a.mov_r32_membase_disp("eax", "r10", 4)
+        a.add_r64_r64("rcx", "rax")
+        a.lea_r64_membase_disp("rdx", "r11", 8)
+        a.mov_r32_membase_disp("r8d", "r11", 4)
+        a.call('fn_copy_bytes')
 
         # return base in rax
-        a.mov_r64_r64("rax", "rdx")
+        a.mov_r64_membase_disp("rax", "rsp", 0x30)
 
         a.add_rsp_imm8(0x38)
         a.ret()
@@ -1755,13 +1690,14 @@ Returns:
 
         lid = self.new_label_id()
         l_fail = f"beq_fail_{lid}"
-        l_loop = f"beq_loop_{lid}"
         l_ok = f"beq_ok_{lid}"
 
         # ---- type checks: both must be TAG_PTR to OBJ_BYTES ----
         # a in r8, b in r9
         a.mov_r64_r64('r8', 'rcx')
         a.mov_r64_r64('r9', 'rdx')
+        a.cmp_r64_r64('r8', 'r9')
+        a.jcc('e', l_ok)
 
         # tag check a
         a.mov_r64_r64('rax', 'r8')
@@ -1783,28 +1719,20 @@ Returns:
         a.cmp_r32_imm('eax', OBJ_BYTES)
         a.jcc('ne', l_fail)
 
-        # len1 in ecx, len2 in edx
-        a.mov_r32_membase_disp('ecx', 'r8', 4)
-        a.mov_r32_membase_disp('edx', 'r9', 4)
-        a.cmp_r32_r32('ecx', 'edx')
+        # len1 in r10d, len2 in r11d
+        a.mov_r32_membase_disp('r10d', 'r8', 4)
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.cmp_r32_r32('r10d', 'r11d')
         a.jcc('ne', l_fail)
 
-        # r8 = p1, r9 = p2
-        a.lea_r64_membase_disp('r8', 'r8', 8)
-        a.lea_r64_membase_disp('r9', 'r9', 8)
-
-        # loop ecx times
-        a.mark(l_loop)
-        a.test_r32_r32('ecx', 'ecx')
+        a.test_r32_r32('r10d', 'r10d')
         a.jcc('e', l_ok)
-        a.movzx_r32_membase_disp('eax', 'r8', 0)
-        a.movzx_r32_membase_disp('edx', 'r9', 0)
-        a.cmp_r32_r32('eax', 'edx')
+        a.lea_r64_membase_disp('rcx', 'r8', 8)
+        a.lea_r64_membase_disp('rdx', 'r9', 8)
+        a.mov_r32_r32('r8d', 'r10d')
+        a.call('fn_mem_eq_bytes')
+        a.cmp_rax_imm32(enc_bool(True))
         a.jcc('ne', l_fail)
-        a.inc_r64('r8')
-        a.inc_r64('r9')
-        a.dec_r32('ecx')
-        a.jmp(l_loop)
 
         # equal
         a.mark(l_ok)
@@ -1944,13 +1872,12 @@ Returns:
         a.mov_r64_membase_disp('r10', 'rsp', 0x20)  # src
         a.mov_r64_membase_disp('r9', 'rsp', 0x28)  # off
 
-        # rsi = src + 8 + off
-        a.lea_r64_mem_bis('rsi', 'r10', 'r9', 1, 8)
-        # rdi = dest + 8
-        a.lea_r64_membase_disp('rdi', 'r11', 8)
-
-        # rcx already has len (u32)
-        a.rep_movsb()
+        a.mov_membase_disp_r64('rsp', 0x38, 'r11')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.lea_r64_mem_bis('rdx', 'r10', 'r9', 1, 8)
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x30)
+        a.call('fn_copy_bytes')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x38)
 
         a.mark(l_done)
         a.mov_rax_r11()

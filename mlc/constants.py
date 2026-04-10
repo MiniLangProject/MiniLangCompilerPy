@@ -37,6 +37,8 @@ OBJ_BUILTIN = 7
 OBJ_ENV = 8
 OBJ_BOX = 9
 OBJ_BYTES = 10
+OBJ_CLOSURE = 11
+OBJ_ENV_LOCAL = 12
 # ============================================================
 # Heap GC header (Mark/Sweep + Free-List)
 # ============================================================
@@ -44,22 +46,31 @@ OBJ_BYTES = 10
 # Heap objects keep their existing layout starting at the object pointer:
 #   [u32 type][u32 len/pad][payload...]
 #
-# Additionally, every *heap-allocated* object gets a GC header placed
+# Additionally, every *heap-allocated* object gets a compact GC header placed
 # immediately *before* the object pointer:
-#   [ptr-24] u64 block_size   (total bytes incl. GC header, 8-byte aligned)
-#   [ptr-16] u64 mark         (0 or 1; used by the tracing GC)
-#   [ptr-8 ] u64 next_free    (singly-linked free list when block is free)
+#   [ptr-8] u64 block_size_and_flags
+#
+# The upper bits store the total block size (including this header), aligned to
+# 8 bytes. Low bits are available for flags; currently only ``GC_BLOCK_FREE_BIT``
+# is used to distinguish allocated vs. free-list blocks.
+#
+# GC mark bits live out-of-line in a bitmap keyed by block header address.
+# Free-list links live in the payload area of free blocks.
 #
 # IMPORTANT:
 # - The MiniLang value for pointers (TAG_PTR) is the pointer to the *object*
 #   start (type/len/payload). The GC header is at negative offsets.
 # - For compatibility, GC_OFF_REFCOUNT is kept as an alias for GC_OFF_MARK.
 
-GC_HEADER_SIZE = 24
-GC_OFF_BLOCK_SIZE = -24
-GC_OFF_MARK = -16
-GC_OFF_REFCOUNT = GC_OFF_MARK  # backward-compatible alias
-GC_OFF_NEXT_FREE = -8
+GC_HEADER_SIZE = 8
+GC_OFF_BLOCK_SIZE = -8
+GC_OFF_MARK = 0  # legacy placeholder: marks are stored in the side bitmap now
+GC_OFF_REFCOUNT = GC_OFF_MARK  # backward-compatible alias; not a usable refcount slot
+GC_OFF_NEXT_FREE = 8  # payload slot used only while a block is free
+
+GC_BLOCK_FREE_BIT = 0x1
+GC_BLOCK_FLAGS_MASK = 0x7
+GC_BLOCK_SIZE_MASK = ~GC_BLOCK_FLAGS_MASK
 
 # ============================================================
 # Runtime buffer sizes

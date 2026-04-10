@@ -7,8 +7,9 @@ an unhandled-error abort helper).
 
 from __future__ import annotations
 
-from ..constants import (ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, OBJ_ARRAY, OBJ_BUILTIN, OBJ_BYTES, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING,
-                         OBJ_STRUCT, OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_INT, TAG_PTR, TAG_VOID, )
+from ..constants import (CALLSTAT_STRUCT_ID, ERROR_STRUCT_ID, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE,
+                         OBJ_ARRAY, OBJ_BUILTIN, OBJ_BYTES, OBJ_CLOSURE, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING, OBJ_STRUCT,
+                         OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_INT, TAG_PTR, TAG_VOID, )
 from ..tools import enc_bool, enc_int, enc_void
 
 
@@ -23,6 +24,687 @@ class CodegenRuntime:
     - ``self.rdata`` / ``self.data``: constant & global builders
     - helper emitters like ``emit_writefile`` / ``emit_writefile_ptr_len``
     """
+
+    def emit_cpu_init_function(self) -> None:
+        """Probe optional SIMD features once at startup."""
+        a = self.asm
+        a.mark('fn_cpu_init')
+
+        lid = self.new_label_id()
+        l_no = f"cpuinit_no_{lid}"
+        l_done = f"cpuinit_done_{lid}"
+
+        a.push_reg('rbx')
+        a.xor_r32_r32('eax', 'eax')
+        a.xor_r32_r32('ecx', 'ecx')
+        a.cpuid()
+        a.cmp_r32_imm('eax', 7)
+        a.jcc('b', l_no)
+
+        a.mov_r32_imm32('eax', 1)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.cpuid()
+        a.mov_r32_r32('r10d', 'ecx')
+        a.and_r32_imm('r10d', (1 << 27) | (1 << 28))
+        a.cmp_r32_imm('r10d', (1 << 27) | (1 << 28))
+        a.jcc('ne', l_no)
+
+        a.xor_r32_r32('ecx', 'ecx')
+        a.xgetbv()
+        a.and_r32_imm('eax', 0x6)
+        a.cmp_r32_imm('eax', 0x6)
+        a.jcc('ne', l_no)
+
+        a.mov_r32_imm32('eax', 7)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.cpuid()
+        a.mov_r32_r32('eax', 'ebx')
+        a.shr_r32_imm8('eax', 5)
+        a.and_r32_imm('eax', 1)
+        a.mov_rip_dword_eax('cpu_has_avx2')
+        a.jmp(l_done)
+
+        a.mark(l_no)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_rip_dword_eax('cpu_has_avx2')
+
+        a.mark(l_done)
+        a.pop_reg('rbx')
+        a.ret()
+
+    def emit_mem_eq_bytes_function(self) -> None:
+        """Emit fn_mem_eq_bytes(p1, p2, len) -> bool."""
+        a = self.asm
+        a.mark('fn_mem_eq_bytes')
+
+        lid = self.new_label_id()
+        l_true = f"memeq_true_{lid}"
+        l_false = f"memeq_false_{lid}"
+        l_false_avx = f"memeq_false_avx_{lid}"
+        l_avx_check = f"memeq_avx_check_{lid}"
+        l_avx_loop = f"memeq_avx_loop_{lid}"
+        l_avx_done = f"memeq_avx_done_{lid}"
+        l_sse_loop = f"memeq_sse_loop_{lid}"
+        l_tail = f"memeq_tail_{lid}"
+        l_tail_loop = f"memeq_tail_loop_{lid}"
+        l_done = f"memeq_done_{lid}"
+
+        a.cmp_r64_r64('rcx', 'rdx')
+        a.jcc('e', l_true)
+        a.test_r32_r32('r8d', 'r8d')
+        a.jcc('e', l_true)
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r32_r32('r11d', 'r8d')
+
+        a.mov_eax_rip_dword('cpu_has_avx2')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_sse_loop)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('b', l_sse_loop)
+
+        a.mark(l_avx_check)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('b', l_avx_done)
+        a.mark(l_avx_loop)
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r9', 0)
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r10', 0)
+        a.vpcmpeqb_ymm_ymm_ymm('ymm0', 'ymm0', 'ymm1')
+        a.vpmovmskb_r32_ymm('eax', 'ymm0')
+        a.cmp_r32_imm('eax', 0xFFFFFFFF)
+        a.jcc('ne', l_false_avx)
+        a.add_r64_imm('r9', 32)
+        a.add_r64_imm('r10', 32)
+        a.sub_r32_imm('r11d', 32)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('ae', l_avx_loop)
+
+        a.mark(l_avx_done)
+        a.vzeroupper()
+
+        a.mark(l_sse_loop)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('b', l_tail)
+        a.movdqu_xmm_membase_disp('xmm0', 'r9', 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'r10', 0)
+        a.pcmpeqb_xmm_xmm('xmm0', 'xmm1')
+        a.pmovmskb_r32_xmm('eax', 'xmm0')
+        a.cmp_r32_imm('eax', 0xFFFF)
+        a.jcc('ne', l_false)
+        a.add_r64_imm('r9', 16)
+        a.add_r64_imm('r10', 16)
+        a.sub_r32_imm('r11d', 16)
+        a.jmp(l_sse_loop)
+
+        a.mark(l_tail)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_true)
+        a.mark(l_tail_loop)
+        a.movzx_r32_membase_disp('eax', 'r9', 0)
+        a.movzx_r32_membase_disp('edx', 'r10', 0)
+        a.cmp_r32_r32('eax', 'edx')
+        a.jcc('ne', l_false)
+        a.inc_r64('r9')
+        a.inc_r64('r10')
+        a.dec_r32('r11d')
+        a.jcc('ne', l_tail_loop)
+        a.jmp(l_true)
+
+        a.mark(l_false_avx)
+        a.vzeroupper()
+        a.jmp(l_false)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.ret()
+
+    def emit_scan_nul_bytes_function(self) -> None:
+        """Emit fn_scan_nul_bytes(ptr, maxlen) -> EDX index of first NUL or maxlen."""
+        a = self.asm
+        a.mark('fn_scan_nul_bytes')
+
+        lid = self.new_label_id()
+        l_avx_setup = f"scan0b_avx_setup_{lid}"
+        l_avx_loop = f"scan0b_avx_loop_{lid}"
+        l_avx_found = f"scan0b_avx_found_{lid}"
+        l_avx_done = f"scan0b_avx_done_{lid}"
+        l_sse_setup = f"scan0b_sse_setup_{lid}"
+        l_sse_loop = f"scan0b_sse_loop_{lid}"
+        l_sse_found = f"scan0b_sse_found_{lid}"
+        l_tail = f"scan0b_tail_{lid}"
+        l_tail_loop = f"scan0b_tail_loop_{lid}"
+        l_done = f"scan0b_done_{lid}"
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.mov_r32_r32('r10d', 'edx')
+        a.xor_r32_r32('r9d', 'r9d')
+
+        a.mov_eax_rip_dword('cpu_has_avx2')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_sse_setup)
+        a.cmp_r32_imm('r10d', 32)
+        a.jcc('b', l_sse_setup)
+
+        a.mark(l_avx_setup)
+        a.vpxor_ymm_ymm_ymm('ymm0', 'ymm0', 'ymm0')
+        a.mark(l_avx_loop)
+        a.mov_r32_r32('eax', 'r10d')
+        a.sub_r32_imm('eax', 32)
+        a.cmp_r32_r32('eax', 'r9d')
+        a.jcc('l', l_avx_done)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 1, 0)
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r11', 0)
+        a.vpcmpeqb_ymm_ymm_ymm('ymm1', 'ymm1', 'ymm0')
+        a.vpmovmskb_r32_ymm('eax', 'ymm1')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_avx_found)
+        a.add_r32_imm('r9d', 32)
+        a.jmp(l_avx_loop)
+
+        a.mark(l_avx_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'r9d')
+        a.mov_r32_r32('edx', 'eax')
+        a.vzeroupper()
+        a.ret()
+
+        a.mark(l_avx_done)
+        a.vzeroupper()
+
+        a.mark(l_sse_setup)
+        a.pxor_xmm_xmm('xmm0', 'xmm0')
+        a.mark(l_sse_loop)
+        a.mov_r32_r32('eax', 'r10d')
+        a.sub_r32_imm('eax', 16)
+        a.cmp_r32_r32('eax', 'r9d')
+        a.jcc('l', l_tail)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 1, 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'r11', 0)
+        a.pcmpeqb_xmm_xmm('xmm1', 'xmm0')
+        a.pmovmskb_r32_xmm('eax', 'xmm1')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_sse_found)
+        a.add_r32_imm('r9d', 16)
+        a.jmp(l_sse_loop)
+
+        a.mark(l_sse_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'r9d')
+        a.mov_r32_r32('edx', 'eax')
+        a.ret()
+
+        a.mark(l_tail)
+        a.mark(l_tail_loop)
+        a.cmp_r32_r32('r9d', 'r10d')
+        a.jcc('ge', l_done)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 1, 0)
+        a.movzx_r32_membase_disp('eax', 'r11', 0)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_done)
+        a.inc_r32('r9d')
+        a.jmp(l_tail_loop)
+
+        a.mark(l_done)
+        a.mov_r32_r32('edx', 'r9d')
+        a.ret()
+
+    def emit_scan_byte2_bytes_function(self) -> None:
+        """Emit fn_scan_byte2_bytes(ptr, maxlen, b1, b2) -> EDX index of first match or maxlen."""
+        a = self.asm
+        a.mark('fn_scan_byte2_bytes')
+
+        lid = self.new_label_id()
+        l_sse_loop = f"scan2b_sse_loop_{lid}"
+        l_sse_found = f"scan2b_sse_found_{lid}"
+        l_tail = f"scan2b_tail_{lid}"
+        l_tail_loop = f"scan2b_tail_loop_{lid}"
+        l_done = f"scan2b_done_{lid}"
+
+        a.mov_r64_r64('r10', 'rcx')
+        a.mov_r32_r32('r11d', 'edx')
+
+        # Broadcast b1 into xmm0
+        a.movzx_r32_r8('eax', 'r8b')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 8)
+        a.or_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 16)
+        a.or_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 32)
+        a.or_r64_r64('rax', 'rdx')
+        a.movq_xmm_r64('xmm0', 'rax')
+        a.punpcklqdq_xmm_xmm('xmm0', 'xmm0')
+
+        # Broadcast b2 into xmm2
+        a.movzx_r32_r8('eax', 'r9b')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 8)
+        a.or_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 16)
+        a.or_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('rdx', 'rax')
+        a.shl_r64_imm8('rdx', 32)
+        a.or_r64_r64('rax', 'rdx')
+        a.movq_xmm_r64('xmm2', 'rax')
+        a.punpcklqdq_xmm_xmm('xmm2', 'xmm2')
+
+        a.xor_r32_r32('ecx', 'ecx')
+
+        a.mark(l_sse_loop)
+        a.mov_r32_r32('eax', 'r11d')
+        a.sub_r32_imm('eax', 16)
+        a.cmp_r32_r32('eax', 'ecx')
+        a.jcc('l', l_tail)
+        a.lea_r64_mem_bis('rax', 'r10', 'rcx', 1, 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'rax', 0)
+        a.movdqu_xmm_membase_disp('xmm3', 'rax', 0)
+        a.pcmpeqb_xmm_xmm('xmm1', 'xmm0')
+        a.pcmpeqb_xmm_xmm('xmm3', 'xmm2')
+        a.pmovmskb_r32_xmm('eax', 'xmm1')
+        a.pmovmskb_r32_xmm('edx', 'xmm3')
+        a.or_r64_r64('rax', 'rdx')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_sse_found)
+        a.add_r32_imm('ecx', 16)
+        a.jmp(l_sse_loop)
+
+        a.mark(l_sse_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'ecx')
+        a.mov_r32_r32('edx', 'eax')
+        a.ret()
+
+        a.mark(l_tail)
+        a.mark(l_tail_loop)
+        a.cmp_r32_r32('ecx', 'r11d')
+        a.jcc('ge', l_done)
+        a.lea_r64_mem_bis('rax', 'r10', 'rcx', 1, 0)
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.movzx_r32_r8('edx', 'r8b')
+        a.cmp_r32_r32('eax', 'edx')
+        a.jcc('e', l_done)
+        a.movzx_r32_r8('edx', 'r9b')
+        a.cmp_r32_r32('eax', 'edx')
+        a.jcc('e', l_done)
+        a.inc_r32('ecx')
+        a.jmp(l_tail_loop)
+
+        a.mark(l_done)
+        a.mov_r32_r32('edx', 'ecx')
+        a.ret()
+
+    def emit_scan_nul_wchars_function(self) -> None:
+        """Emit fn_scan_nul_wchars(ptr, max_wchars) -> EDX index of first UTF-16 NUL or max."""
+        a = self.asm
+        a.mark('fn_scan_nul_wchars')
+
+        lid = self.new_label_id()
+        l_avx_setup = f"scan0w_avx_setup_{lid}"
+        l_avx_loop = f"scan0w_avx_loop_{lid}"
+        l_avx_found = f"scan0w_avx_found_{lid}"
+        l_avx_done = f"scan0w_avx_done_{lid}"
+        l_sse_setup = f"scan0w_sse_setup_{lid}"
+        l_sse_loop = f"scan0w_sse_loop_{lid}"
+        l_sse_found = f"scan0w_sse_found_{lid}"
+        l_tail = f"scan0w_tail_{lid}"
+        l_tail_loop = f"scan0w_tail_loop_{lid}"
+        l_done = f"scan0w_done_{lid}"
+        l_tail_cont = f"scan0w_tail_cont_{lid}"
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.mov_r32_r32('r10d', 'edx')
+        a.xor_r32_r32('r9d', 'r9d')
+
+        a.mov_eax_rip_dword('cpu_has_avx2')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_sse_setup)
+        a.cmp_r32_imm('r10d', 16)
+        a.jcc('b', l_sse_setup)
+
+        a.mark(l_avx_setup)
+        a.vpxor_ymm_ymm_ymm('ymm0', 'ymm0', 'ymm0')
+        a.mark(l_avx_loop)
+        a.mov_r32_r32('eax', 'r10d')
+        a.sub_r32_imm('eax', 16)
+        a.cmp_r32_r32('eax', 'r9d')
+        a.jcc('l', l_avx_done)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 2, 0)
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r11', 0)
+        a.vpcmpeqw_ymm_ymm_ymm('ymm1', 'ymm1', 'ymm0')
+        a.vpmovmskb_r32_ymm('eax', 'ymm1')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_avx_found)
+        a.add_r32_imm('r9d', 16)
+        a.jmp(l_avx_loop)
+
+        a.mark(l_avx_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.shr_r32_imm8('eax', 1)
+        a.add_r32_r32('eax', 'r9d')
+        a.mov_r32_r32('edx', 'eax')
+        a.vzeroupper()
+        a.ret()
+
+        a.mark(l_avx_done)
+        a.vzeroupper()
+
+        a.mark(l_sse_setup)
+        a.pxor_xmm_xmm('xmm0', 'xmm0')
+        a.mark(l_sse_loop)
+        a.mov_r32_r32('eax', 'r10d')
+        a.sub_r32_imm('eax', 8)
+        a.cmp_r32_r32('eax', 'r9d')
+        a.jcc('l', l_tail)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 2, 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'r11', 0)
+        a.pcmpeqw_xmm_xmm('xmm1', 'xmm0')
+        a.pmovmskb_r32_xmm('eax', 'xmm1')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_sse_found)
+        a.add_r32_imm('r9d', 8)
+        a.jmp(l_sse_loop)
+
+        a.mark(l_sse_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.shr_r32_imm8('eax', 1)
+        a.add_r32_r32('eax', 'r9d')
+        a.mov_r32_r32('edx', 'eax')
+        a.ret()
+
+        a.mark(l_tail)
+        a.mark(l_tail_loop)
+        a.cmp_r32_r32('r9d', 'r10d')
+        a.jcc('ge', l_done)
+        a.lea_r64_mem_bis('r11', 'r8', 'r9', 2, 0)
+        a.movzx_r32_membase_disp('eax', 'r11', 0)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_tail_cont)
+        a.movzx_r32_membase_disp('eax', 'r11', 1)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_done)
+        a.mark(l_tail_cont)
+        a.inc_r32('r9d')
+        a.jmp(l_tail_loop)
+
+        a.mark(l_done)
+        a.mov_r32_r32('edx', 'r9d')
+        a.ret()
+
+    def emit_copy_bytes_function(self) -> None:
+        """Emit fn_copy_bytes(dst, src, len)."""
+        a = self.asm
+        a.mark('fn_copy_bytes')
+
+        lid = self.new_label_id()
+        l_ret = f"cpy_ret_{lid}"
+        l_scalar_small = f"cpy_scalar_small_{lid}"
+        l_scalar_loop = f"cpy_scalar_loop_{lid}"
+        l_qword_small = f"cpy_qword_small_{lid}"
+        l_xmm_small = f"cpy_xmm_small_{lid}"
+        l_large = f"cpy_large_{lid}"
+        l_avx_loop = f"cpy_avx_loop_{lid}"
+        l_avx_done = f"cpy_avx_done_{lid}"
+        l_sse_loop = f"cpy_sse_loop_{lid}"
+        l_tail = f"cpy_tail_{lid}"
+        l_rep = f"cpy_rep_{lid}"
+
+        a.test_r32_r32('r8d', 'r8d')
+        a.jcc('e', l_ret)
+        a.cmp_r32_imm('r8d', 8)
+        a.jcc('b', l_scalar_small)
+        a.cmp_r32_imm('r8d', 16)
+        a.jcc('b', l_qword_small)
+        a.cmp_r32_imm('r8d', 32)
+        a.jcc('be', l_xmm_small)
+        a.jmp(l_large)
+
+        a.mark(l_scalar_small)
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.mark(l_scalar_loop)
+        a.mov_r8_membase_disp('al', 'r10', 0)
+        a.mov_membase_disp_r8('r9', 0, 'al')
+        a.inc_r64('r9')
+        a.inc_r64('r10')
+        a.dec_r32('r11d')
+        a.jcc('ne', l_scalar_loop)
+        a.ret()
+
+        a.mark(l_qword_small)
+        a.mov_r64_membase_disp('rax', 'rdx', 0)
+        a.mov_membase_disp_r64('rcx', 0, 'rax')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.sub_r32_imm('r11d', 8)
+        a.lea_r64_mem_bis('r10', 'rdx', 'r11', 1, 0)
+        a.mov_r64_membase_disp('rax', 'r10', 0)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r11', 1, 0)
+        a.mov_membase_disp_r64('r9', 0, 'rax')
+        a.ret()
+
+        a.mark(l_xmm_small)
+        a.movdqu_xmm_membase_disp('xmm0', 'rdx', 0)
+        a.movdqu_membase_disp_xmm('rcx', 0, 'xmm0')
+        a.cmp_r32_imm('r8d', 16)
+        a.jcc('e', l_ret)
+        a.mov_r32_r32('r11d', 'r8d')
+        a.sub_r32_imm('r11d', 16)
+        a.lea_r64_mem_bis('r10', 'rdx', 'r11', 1, 0)
+        a.movdqu_xmm_membase_disp('xmm0', 'r10', 0)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r11', 1, 0)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.ret()
+
+        a.mark(l_large)
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.mov_eax_rip_dword('cpu_has_avx2')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_rep)
+        a.cmp_r32_imm('r11d', 64)
+        a.jcc('b', l_sse_loop)
+
+        a.mark(l_avx_loop)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('b', l_avx_done)
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r10', 0)
+        a.vmovdqu_membase_disp_ymm('r9', 0, 'ymm0')
+        a.add_r64_imm('r9', 32)
+        a.add_r64_imm('r10', 32)
+        a.sub_r32_imm('r11d', 32)
+        a.jmp(l_avx_loop)
+
+        a.mark(l_avx_done)
+        a.vzeroupper()
+
+        a.mark(l_sse_loop)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('b', l_tail)
+        a.movdqu_xmm_membase_disp('xmm0', 'r10', 0)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.add_r64_imm('r9', 16)
+        a.add_r64_imm('r10', 16)
+        a.sub_r32_imm('r11d', 16)
+        a.jmp(l_sse_loop)
+
+        a.mark(l_tail)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_ret)
+        a.mov_r8_membase_disp('al', 'r10', 0)
+        a.mov_membase_disp_r8('r9', 0, 'al')
+        a.inc_r64('r9')
+        a.inc_r64('r10')
+        a.dec_r32('r11d')
+        a.jmp(l_tail)
+
+        a.mark(l_rep)
+        a.push_reg('rsi')
+        a.push_reg('rdi')
+        a.mov_r64_r64('rdi', 'rcx')
+        a.mov_r64_r64('rsi', 'rdx')
+        a.mov_r32_r32('ecx', 'r8d')
+        a.rep_movsb()
+        a.pop_reg('rdi')
+        a.pop_reg('rsi')
+
+        a.mark(l_ret)
+        a.ret()
+
+    def emit_fill_bytes_function(self) -> None:
+        """Emit fn_fill_bytes(dst, len, fill_u8)."""
+        a = self.asm
+        a.mark('fn_fill_bytes')
+
+        lid = self.new_label_id()
+        l_ret = f"fillb_ret_{lid}"
+        l_scalar = f"fillb_scalar_{lid}"
+        l_scalar_loop = f"fillb_scalar_loop_{lid}"
+        l_after_pattern = f"fillb_after_pattern_{lid}"
+        l_qword = f"fillb_qword_{lid}"
+        l_xmm = f"fillb_xmm_{lid}"
+        l_xmm_loop = f"fillb_xmm_loop_{lid}"
+        l_tail = f"fillb_tail_{lid}"
+        l_rep = f"fillb_rep_{lid}"
+
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('e', l_ret)
+        a.cmp_r32_imm('edx', 8)
+        a.jcc('b', l_scalar)
+
+        a.movzx_r32_r8('eax', 'r8b')
+        a.mov_r64_r64('r10', 'rax')
+        a.shl_r64_imm8('r10', 8)
+        a.or_r64_r64('rax', 'r10')
+        a.mov_r64_r64('r10', 'rax')
+        a.shl_r64_imm8('r10', 16)
+        a.or_r64_r64('rax', 'r10')
+        a.mov_r64_r64('r10', 'rax')
+        a.shl_r64_imm8('r10', 32)
+        a.or_r64_r64('rax', 'r10')
+        a.jmp(l_after_pattern)
+
+        a.mark(l_scalar)
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r32_r32('r10d', 'edx')
+        a.mark(l_scalar_loop)
+        a.mov_membase_disp_r8('r9', 0, 'r8b')
+        a.inc_r64('r9')
+        a.dec_r32('r10d')
+        a.jcc('ne', l_scalar_loop)
+        a.ret()
+
+        a.mark(l_after_pattern)
+        a.cmp_r32_imm('edx', 16)
+        a.jcc('b', l_qword)
+
+        a.movq_xmm_r64('xmm0', 'rax')
+        a.punpcklqdq_xmm_xmm('xmm0', 'xmm0')
+        a.cmp_r32_imm('edx', 32)
+        a.jcc('be', l_xmm)
+        a.cmp_r32_imm('edx', 64)
+        a.jcc('a', l_rep)
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r32_r32('r10d', 'edx')
+        a.mark(l_xmm_loop)
+        a.cmp_r32_imm('r10d', 16)
+        a.jcc('b', l_tail)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.add_r64_imm('r9', 16)
+        a.sub_r32_imm('r10d', 16)
+        a.jmp(l_xmm_loop)
+
+        a.mark(l_qword)
+        a.mov_membase_disp_r64('rcx', 0, 'rax')
+        a.mov_r32_r32('r10d', 'edx')
+        a.sub_r32_imm('r10d', 8)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r10', 1, 0)
+        a.mov_membase_disp_r64('r9', 0, 'rax')
+        a.ret()
+
+        a.mark(l_xmm)
+        a.movdqu_membase_disp_xmm('rcx', 0, 'xmm0')
+        a.cmp_r32_imm('edx', 16)
+        a.jcc('e', l_ret)
+        a.mov_r32_r32('r10d', 'edx')
+        a.sub_r32_imm('r10d', 16)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r10', 1, 0)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.ret()
+
+        a.mark(l_tail)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_ret)
+        a.mov_membase_disp_r8('r9', 0, 'r8b')
+        a.inc_r64('r9')
+        a.dec_r32('r10d')
+        a.jmp(l_tail)
+
+        a.mark(l_rep)
+        a.push_reg('rdi')
+        a.mov_r64_r64('rdi', 'rcx')
+        a.mov_r8_r8('al', 'r8b')
+        a.mov_r32_r32('ecx', 'edx')
+        a.rep_stosb()
+        a.pop_reg('rdi')
+
+        a.mark(l_ret)
+        a.ret()
+
+    def emit_fill_qwords_function(self) -> None:
+        """Emit fn_fill_qwords(dst, count, value64)."""
+        a = self.asm
+        a.mark('fn_fill_qwords')
+
+        lid = self.new_label_id()
+        l_ret = f"fillq_ret_{lid}"
+        l_small = f"fillq_small_{lid}"
+        l_rep = f"fillq_rep_{lid}"
+
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('e', l_ret)
+        a.mov_r64_r64('rax', 'r8')
+        a.cmp_r32_imm('edx', 1)
+        a.jcc('e', l_small)
+        a.cmp_r32_imm('edx', 4)
+        a.jcc('a', l_rep)
+
+        a.movq_xmm_r64('xmm0', 'rax')
+        a.punpcklqdq_xmm_xmm('xmm0', 'xmm0')
+        a.movdqu_membase_disp_xmm('rcx', 0, 'xmm0')
+        a.cmp_r32_imm('edx', 2)
+        a.jcc('e', l_ret)
+        a.mov_r32_r32('r10d', 'edx')
+        a.shl_r32_imm8('r10d', 3)
+        a.sub_r32_imm('r10d', 16)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r10', 1, 0)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.ret()
+
+        a.mark(l_small)
+        a.mov_membase_disp_r64('rcx', 0, 'rax')
+        a.ret()
+
+        a.mark(l_rep)
+        a.push_reg('rdi')
+        a.mov_r64_r64('rdi', 'rcx')
+        a.mov_r32_r32('ecx', 'edx')
+        a.rep_stosq()
+        a.pop_reg('rdi')
+
+        a.mark(l_ret)
+        a.ret()
 
     def emit_int_to_dec_function(self) -> None:
         """Emit an internal function:
@@ -459,6 +1141,8 @@ class CodegenRuntime:
         a.jcc('e', l_flt)
         a.cmp_r32_imm("edx", OBJ_FUNCTION)
         a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_CLOSURE)
+        a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_BUILTIN)
         a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_STRUCT)
@@ -491,7 +1175,7 @@ class CodegenRuntime:
         a.mark(l_sti)
         # Special-case: built-in error struct instance => typeof(x) == "error"
         l_err = f"tof_err_{lid}"
-        a.mov_r32_membase_disp("edx", "rax", 8)  # struct_id (u32)
+        a.mov_r32_membase_disp("edx", "rax", 4)  # struct_id (u32)
         a.cmp_r32_imm("edx", ERROR_STRUCT_ID)
         a.jcc('e', l_err)
         a.lea_rax_rip('obj_type_struct')
@@ -608,6 +1292,8 @@ class CodegenRuntime:
         a.jcc('e', l_flt)
         a.cmp_r32_imm("edx", OBJ_FUNCTION)
         a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_CLOSURE)
+        a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_BUILTIN)
         a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_STRUCT)
@@ -637,8 +1323,8 @@ class CodegenRuntime:
         a.ret()
 
         a.mark(l_sti)
-        # struct_id at [rax+8]
-        a.mov_r32_membase_disp("edx", "rax", 8)
+        # struct_id at [rax+4]
+        a.mov_r32_membase_disp("edx", "rax", 4)
         struct_map = getattr(self, 'typename_struct_by_id', {})
         if isinstance(struct_map, dict) and struct_map:
             for sid in sorted(struct_map.keys()):
@@ -696,9 +1382,9 @@ class CodegenRuntime:
 
         # Save error fields into locals.
         a.mov_r64_r64('r11', 'rcx')
-        a.mov_r64_membase_disp('rax', 'r11', 16)  # code
+        a.mov_r64_membase_disp('rax', 'r11', 8)  # code
         a.mov_membase_disp_r64('rsp', 0x30, 'rax')
-        a.mov_r64_membase_disp('rax', 'r11', 24)  # message
+        a.mov_r64_membase_disp('rax', 'r11', 16)  # message
         a.mov_membase_disp_r64('rsp', 0x38, 'rax')
 
         # The error struct historically had only 2 fields (code, message).
@@ -708,16 +1394,19 @@ class CodegenRuntime:
         l_nf_old = f"unh_nf_old_{lid_nf}"
         l_nf_done = f"unh_nf_done_{lid_nf}"
 
-        a.mov_r32_membase_disp('edx', 'r11', 4)  # nfields
+        a.mov_r64_membase_disp('rdx', 'r11', GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm('rdx', GC_BLOCK_SIZE_MASK)
+        a.sub_r64_imm('rdx', GC_HEADER_SIZE + 8)
+        a.shr_r64_imm8('rdx', 3)
         a.cmp_r32_imm('edx', 5)
         a.jcc('l', l_nf_old)
 
         # nfields >= 5 -> load origin fields
-        a.mov_r64_membase_disp('rax', 'r11', 32)  # script
+        a.mov_r64_membase_disp('rax', 'r11', 24)  # script
         a.mov_membase_disp_r64('rsp', 0x40, 'rax')
-        a.mov_r64_membase_disp('rax', 'r11', 40)  # func
+        a.mov_r64_membase_disp('rax', 'r11', 32)  # func
         a.mov_membase_disp_r64('rsp', 0x48, 'rax')
-        a.mov_r64_membase_disp('rax', 'r11', 48)  # line
+        a.mov_r64_membase_disp('rax', 'r11', 40)  # line
         a.mov_membase_disp_r64('rsp', 0x50, 'rax')
         a.jmp(l_nf_done)
 
@@ -846,17 +1535,8 @@ class CodegenRuntime:
         """Helper: strlen for NUL-terminated ascii/utf8. RCX=ptr, returns EDX=len."""
         a = self.asm
         a.mark('fn_strlen')
-        a.mov_r64_r64("rax", "rcx")  # mov rax,rcx
-        a.xor_r32_r32("edx", "edx")  # xor edx,edx
-        l_top = f"strlen_top_{a.pos}"
-        l_done = f"strlen_done_{a.pos}"
-        a.mark(l_top)
-        a.cmp_membase_disp_imm8("rax", 0, 0)  # cmp byte [rax],0
-        a.jcc('e', l_done)
-        a.inc_r64("rax")  # inc rax
-        a.inc_r32("edx")  # inc edx
-        a.jmp(l_top)
-        a.mark(l_done)
+        a.mov_r32_imm32('edx', 0x7FFFFFFF)
+        a.call('fn_scan_nul_bytes')
         a.ret()
 
     def emit_string_eq_function(self) -> None:
@@ -876,52 +1556,31 @@ class CodegenRuntime:
         # 32B shadow space (alignment) - no calls, but keep ABI-consistent.
         a.sub_rsp_imm8(0x28)
 
+        # Same object => equal.
+        a.cmp_r64_r64("rcx", "rdx")
+        lid = self.new_label_id()
+        l_true = f"streq_true_{lid}"
+        l_false = f"streq_false_{lid}"
+        l_done = f"streq_done_{lid}"
+        a.jcc('e', l_true)
+
         # r8d = len1, r9d = len2
         a.mov_r32_membase_disp("r8d", "rcx", 4)  # mov r8d,[rcx+4]
         a.mov_r32_membase_disp("r9d", "rdx", 4)  # mov r9d,[rdx+4]
         # if len1 != len2 -> false
         a.cmp_r32_r32("r8d", "r9d")  # cmp r8d,r9d
-        lid = self.new_label_id()
-        l_false0 = f"streq_false0_{lid}"
-        l_false1 = f"streq_false1_{lid}"
-        l_true = f"streq_true_{lid}"
-        l_loop = f"streq_loop_{lid}"
-        l_done = f"streq_done_{lid}"
-        a.jcc('ne', l_false0)
+        a.jcc('ne', l_false)
 
         # if len == 0 -> true
         a.test_r32_r32("r8d", "r8d")  # test r8d,r8d
         a.jcc('e', l_true)
 
-        # compare bytes
-        a.push_reg("rsi")  # push rsi
-        a.push_reg("rdi")  # push rdi
-        a.lea_r64_membase_disp("rsi", "rcx", 8)  # lea rsi,[rcx+8]
-        a.lea_r64_membase_disp("rdi", "rdx", 8)  # lea rdi,[rdx+8]
-        a.mov_r32_r32("ecx", "r8d")  # mov ecx,r8d
-
-        a.mark(l_loop)
-        a.mov_r8_membase_disp("al", "rsi", 0)  # mov al,[rsi]
-        a.cmp_r8_membase_disp("al", "rdi", 0)  # cmp al,[rdi]
-        a.jcc('ne', l_false1)
-        a.inc_r64("rsi")  # inc rsi
-        a.inc_r64("rdi")  # inc rdi
-        a.dec_r32("ecx")  # dec ecx
-        a.jcc('ne', l_loop)
-
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
-        a.jmp(l_true)
-
-        # failure before any pushes
-        a.mark(l_false0)
-        a.mov_rax_imm64(enc_bool(False))
+        a.lea_r64_membase_disp("rcx", "rcx", 8)
+        a.lea_r64_membase_disp("rdx", "rdx", 8)
+        a.call('fn_mem_eq_bytes')
         a.jmp(l_done)
 
-        # failure after pushing rsi/rdi inside the loop
-        a.mark(l_false1)
-        a.pop_reg("rdi")  # pop rdi
-        a.pop_reg("rsi")  # pop rsi
+        a.mark(l_false)
         a.mov_rax_imm64(enc_bool(False))
         a.jmp(l_done)
 
@@ -1646,30 +2305,28 @@ class CodegenRuntime:
 
         # Build entries (unrolled; n is compile-time known in the compiler output).
         for i in range(n):
-            # Allocate callStat struct (2 fields): size = 16 + 2*8 = 32
-            a.mov_rcx_imm32(32)
+            # Allocate callStat struct (8-byte header + 2 fields): size = 24
+            a.mov_rcx_imm32(24)
             a.call('fn_alloc')
             a.mov_r64_r64('r10', 'rax')  # r10 = struct
 
-            # header: type / nfields / struct_id / pad
+            # header: type / struct_id
             a.mov_membase_disp_imm32('r10', 0, OBJ_STRUCT, qword=False)
-            a.mov_membase_disp_imm32('r10', 4, 2, qword=False)
-            a.mov_membase_disp_imm32('r10', 8, CALLSTAT_STRUCT_ID, qword=False)
-            a.mov_membase_disp_imm32('r10', 12, 0, qword=False)
+            a.mov_membase_disp_imm32('r10', 4, CALLSTAT_STRUCT_ID, qword=False)
 
             # field0: name (boxed string constant in .rdata)
             if i < len(name_labels) and name_labels[i]:
                 a.lea_rax_rip(str(name_labels[i]))
-                a.mov_membase_disp_r64('r10', 16, 'rax')
+                a.mov_membase_disp_r64('r10', 8, 'rax')
             else:
-                a.mov_membase_disp_imm32('r10', 16, enc_void(), qword=True)
+                a.mov_membase_disp_imm32('r10', 8, enc_void(), qword=True)
 
             # field1: calls (load u64 counter, tag as int)
             a.lea_r11_rip('callprof_counts')
             a.mov_r64_membase_disp('rax', 'r11', i * 8)
             a.shl_r64_imm8('rax', 3)
             a.or_rax_imm8(TAG_INT)
-            a.mov_membase_disp_r64('r10', 24, 'rax')
+            a.mov_membase_disp_r64('r10', 16, 'rax')
 
             # store struct into array element slot
             a.mov_r64_membase_disp('r11', 'rsp', 0x20)  # arr ptr

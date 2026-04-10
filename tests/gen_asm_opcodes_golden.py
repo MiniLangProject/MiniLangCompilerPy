@@ -46,7 +46,7 @@ def main() -> int:
         "__getattribute__",
     }
 
-    type_tokens = {"xmm", "r64", "r32", "r8"}
+    type_tokens = {"xmm", "ymm", "r64", "r32", "r8"}
 
     def operand_types_from_name(name: str) -> list[str]:
         return [p for p in name.split("_") if p in type_tokens]
@@ -60,6 +60,8 @@ def main() -> int:
             return "r11b" if i == 0 else "r10b"
         if kind == "xmm":
             return "xmm9" if i == 0 else "xmm1"
+        if kind == "ymm":
+            return "ymm9" if i == 0 else "ymm1"
         raise ValueError(kind)
 
     def choose_int(method_name: str, param_name: str) -> int:
@@ -123,6 +125,8 @@ def main() -> int:
                     kind = "r" + m.group(1)
                     args.append(reg_val(kind, reg_i))
                     reg_i += 1
+                    if op_i < len(op_types) and op_types[op_i] == kind:
+                        op_i += 1
                     continue
                 if op_i < len(op_types):
                     kind = op_types[op_i]

@@ -9,7 +9,7 @@ import re
 from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
-                         OBJ_FLOAT, OBJ_STRUCT, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
+                         OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
@@ -300,38 +300,143 @@ class CodegenExpr:
         lbl = f"objstr_{len(self.rdata.labels)}"
         self.rdata.add_obj_string(lbl, str(message))
 
-        # Allocate a 5-field struct: 16 header + 5*8 fields = 56 bytes.
-        a.mov_rcx_imm32(56)
+        # Allocate a 5-field struct: 8-byte header + 5*8 fields = 48 bytes.
+        a.mov_rcx_imm32(48)
         a.call('fn_alloc')
 
         a.mov_r11_rax()
-        # header: type / nfields / struct_id / pad
+        # header: type / struct_id
         a.mov_membase_disp_imm32('r11', 0, OBJ_STRUCT, qword=False)
-        a.mov_membase_disp_imm32('r11', 4, 5, qword=False)
-        a.mov_membase_disp_imm32('r11', 8, ERROR_STRUCT_ID, qword=False)
-        a.mov_membase_disp_imm32('r11', 12, 0, qword=False)
+        a.mov_membase_disp_imm32('r11', 4, ERROR_STRUCT_ID, qword=False)
 
         # field0 = code (TAG_INT)
         a.mov_rax_imm64(enc_int(int(code)))
-        a.mov_membase_disp_r64('r11', 16, 'rax')
+        a.mov_membase_disp_r64('r11', 8, 'rax')
 
         # field1 = message (TAG_PTR to OBJ_STRING)
         a.lea_rax_rip(lbl)
-        a.mov_membase_disp_r64('r11', 24, 'rax')
+        a.mov_membase_disp_r64('r11', 16, 'rax')
 
         # field2 = script (string|void)
         a.mov_rax_rip_qword('dbg_loc_script')
-        a.mov_membase_disp_r64('r11', 32, 'rax')
+        a.mov_membase_disp_r64('r11', 24, 'rax')
 
         # field3 = func (string|void)
         a.mov_rax_rip_qword('dbg_loc_func')
-        a.mov_membase_disp_r64('r11', 40, 'rax')
+        a.mov_membase_disp_r64('r11', 32, 'rax')
 
         # field4 = line (int|void)
         a.mov_rax_rip_qword('dbg_loc_line')
-        a.mov_membase_disp_r64('r11', 48, 'rax')
+        a.mov_membase_disp_r64('r11', 40, 'rax')
 
         a.mov_rax_r11()
+
+    def _emit_concat_string_parts_one_alloc(self, parts: List[tuple[str, Any]]) -> None:
+        """Emit a one-allocation concat for a small mix of string constants and tagged values.
+
+        Supported part descriptors:
+        - ``("label", <rdata string label>)``
+        - ``("imm", <tagged immediate value>)``
+        - ``("stack", <rsp displacement holding a tagged value>)``
+
+        Result:
+        - ``RAX`` = concatenated OBJ_STRING*
+        - ``gc_tmp3`` roots the result for a following allocating path
+        """
+        self.ensure_gc_data()
+        a = self.asm
+
+        dyn_count = sum(1 for kind, _ in parts if kind != 'label')
+        if dyn_count > 3:
+            raise CompileError("internal concat helper supports at most 3 dynamic values", None)
+
+        if not parts:
+            a.lea_rax_rip('obj_empty_string')
+            a.mov_rip_qword_rax('gc_tmp3')
+            return
+
+        tmp_off = self.alloc_expr_temps((len(parts) + 1) * 8)
+        copied_off = tmp_off + len(parts) * 8
+        lid = self.new_label_id()
+        l_nonempty = f"concat_nonempty_{lid}"
+        l_done = f"concat_done_{lid}"
+
+        try:
+            root_i = 0
+            for i, (kind, value) in enumerate(parts):
+                if kind == 'label':
+                    a.lea_rax_rip(str(value))
+                elif kind == 'imm':
+                    a.mov_r64_imm64('rcx', int(value))
+                    a.call('fn_value_to_string')
+                    a.mov_rip_qword_rax(f'gc_tmp{root_i}')
+                    root_i += 1
+                elif kind == 'stack':
+                    a.mov_r64_membase_disp('rcx', 'rsp', int(value))
+                    a.call('fn_value_to_string')
+                    a.mov_rip_qword_rax(f'gc_tmp{root_i}')
+                    root_i += 1
+                else:
+                    raise CompileError(f"internal concat helper does not support part kind '{kind}'", None)
+
+                a.mov_membase_disp_r64('rsp', tmp_off + i * 8, 'rax')
+
+            a.xor_r32_r32('r10d', 'r10d')
+            for i in range(len(parts)):
+                a.mov_r64_membase_disp('r11', 'rsp', tmp_off + i * 8)
+                a.mov_r32_membase_disp('eax', 'r11', 4)
+                a.add_r32_r32('r10d', 'eax')
+
+            a.cmp_r32_imm('r10d', 0)
+            a.jcc('ne', l_nonempty)
+            a.lea_rax_rip('obj_empty_string')
+            a.mov_rip_qword_rax('gc_tmp3')
+            a.jmp(l_done)
+
+            a.mark(l_nonempty)
+            a.mov_r32_r32('ecx', 'r10d')
+            a.add_r32_imm('ecx', 9)
+            a.call('fn_alloc')
+            a.mov_r64_r64('r11', 'rax')
+            a.mov_rip_qword_r11('gc_tmp3')
+            a.mov_membase_disp_imm32('r11', 0, OBJ_STRING, qword=False)
+            a.mov_membase_disp_r32('r11', 4, 'r10d')
+            a.mov_membase_disp_imm32('rsp', copied_off, 0, qword=True)
+
+            for i in range(len(parts)):
+                a.mov_r64_membase_disp('r10', 'rsp', tmp_off + i * 8)
+                a.mov_rax_rip_qword('gc_tmp3')
+                a.add_rax_imm8(8)
+                a.mov_r32_membase_disp('ecx', 'rsp', copied_off)
+                a.add_r64_r64('rax', 'rcx')
+                a.mov_r64_r64('rcx', 'rax')
+                a.lea_r64_membase_disp('rdx', 'r10', 8)
+                a.mov_r32_membase_disp('r8d', 'r10', 4)
+                a.call('fn_copy_bytes')
+                a.mov_r64_membase_disp('r10', 'rsp', tmp_off + i * 8)
+                a.mov_r32_membase_disp('eax', 'r10', 4)
+                a.mov_r32_membase_disp('r11d', 'rsp', copied_off)
+                a.add_r32_r32('eax', 'r11d')
+                a.mov_membase_disp_r32('rsp', copied_off, 'eax')
+
+            a.mov_rax_rip_qword('gc_tmp3')
+            a.mov_r64_r64('r11', 'rax')
+            a.mov_r32_membase_disp('r10d', 'r11', 4)
+            a.mov_r64_r64('rax', 'r11')
+            a.add_r64_r64('rax', 'r10')
+            a.add_rax_imm8(8)
+            a.mov_membase_disp_imm8('rax', 0, 0)
+            a.mov_rax_r11()
+
+            a.mark(l_done)
+            voidv = enc_void()
+            a.mov_rax_imm64(voidv)
+            a.mov_rip_qword_rax('gc_tmp0')
+            a.mov_rip_qword_rax('gc_tmp1')
+            a.mov_rip_qword_rax('gc_tmp2')
+            a.mov_rax_rip_qword('gc_tmp3')
+        finally:
+            self.free_expr_temps((len(parts) + 1) * 8)
 
 
     def _emit_auto_errprop(self) -> None:
@@ -351,7 +456,7 @@ class CodegenExpr:
         a.mov_r32_membase_disp("r10d", "rax", 0)
         a.cmp_r32_imm("r10d", OBJ_STRUCT)
         a.jcc("ne", l_noerr)
-        a.mov_r32_membase_disp("r10d", "rax", 8)
+        a.mov_r32_membase_disp("r10d", "rax", 4)
         a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
         a.jcc("ne", l_noerr)
     
@@ -624,8 +729,6 @@ class CodegenExpr:
 
             lid = self.new_label_id()
             l_null = f"L_extret_cstr_null_{lid}"
-            l_scan = f"L_extret_cstr_scan_{lid}"
-            l_done = f"L_extret_cstr_done_{lid}"
             l_after = f"L_extret_cstr_after_{lid}"
 
             # gc_tmp0 = src (TAG_INT encoded pointer)
@@ -645,18 +748,9 @@ class CodegenExpr:
             a.mov_r64_r64("r10", "rax")
             a.sar_r64_imm8("r10", 3)
 
-            # r9d = len (scan for NUL)
-            a.xor_r32_r32("r9d", "r9d")
-            a.mark(l_scan)
-            a.mov_r64_r64("r11", "r10")
-            a.add_r64_r64("r11", "r9")
-            a.movzx_r32_membase_disp("eax", "r11", 0)
-            a.cmp_r8_imm8("al", 0)
-            a.je(l_done)
-            a.inc_r32("r9d")
-            a.jmp(l_scan)
-
-            a.mark(l_done)
+            a.mov_r64_r64("rcx", "r10")
+            a.call("fn_strlen")
+            a.mov_r32_r32("r9d", "edx")
             a.mov_r64_r64("r11", "r9")
             a.shl_r64_imm8("r11", 3)
             a.or_r64_imm8("r11", TAG_INT)
@@ -683,15 +777,12 @@ class CodegenExpr:
             a.mov_r64_r64("r10", "rax")
             a.sar_r64_imm8("r10", 3)
 
-            # copy bytes
-            a.push_reg("rsi")
-            a.push_reg("rdi")
-            a.mov_r64_r64("rsi", "r10")
-            a.lea_r64_membase_disp("rdi", "r11", 8)
-            a.mov_r32_r32("ecx", "r9d")
-            a.rep_movsb()
-            a.pop_reg("rdi")
-            a.pop_reg("rsi")
+            a.lea_r64_membase_disp("rcx", "r11", 8)
+            a.mov_r64_r64("rdx", "r10")
+            a.mov_r32_r32("r8d", "r9d")
+            a.call("fn_copy_bytes")
+            a.mov_rax_rip_qword("gc_tmp2")
+            a.mov_r64_r64("r11", "rax")
 
             # ensure NUL at [base+8+len]
             a.mov_r64_r64("rax", "r11")
@@ -1334,14 +1425,21 @@ class CodegenExpr:
 
                 # r11 = obj
                 a.mov_r11_rax()
+                l_struct_inst = f"is_type_struct_inst_{fid}"
+                l_struct_sid = f"is_type_struct_sid_{fid}"
+
                 a.mov_r32_membase_disp('edx', 'r11', 0)
                 a.cmp_r32_imm('edx', OBJ_STRUCT)
-                a.jcc('e', l_type_ok)
+                a.jcc('e', l_struct_inst)
                 a.cmp_r32_imm('edx', OBJ_STRUCTTYPE)
                 a.jcc('ne', l_false)
+                a.mov_r32_membase_disp('edx', 'r11', 8)  # structtype.struct_id
+                a.jmp(l_struct_sid)
 
-                a.mark(l_type_ok)
-                a.mov_r32_membase_disp('edx', 'r11', 8)  # struct_id
+                a.mark(l_struct_inst)
+                a.mov_r32_membase_disp('edx', 'r11', 4)  # struct.struct_id
+
+                a.mark(l_struct_sid)
                 a.cmp_r32_imm('edx', sid)
                 a.jcc('e', l_true)
                 a.jmp(l_false)
@@ -1682,7 +1780,7 @@ class CodegenExpr:
             a.jcc("ne", l_fail)
 
             # load struct_id (u32) into EDX
-            a.mov_r32_membase_disp("edx", "r11", 8)  # [r11+8] => struct_id
+            a.mov_r32_membase_disp("edx", "r11", 4)  # [r11+4] => struct_id
 
             field = getattr(e, 'name', None)
             if field is None:
@@ -1693,8 +1791,8 @@ class CodegenExpr:
             self.emit_struct_field_index_dispatch(field, 'edx', 'ecx', l_ok, l_fail, tag=f"memb_{fid}")
 
             a.mark(l_ok)
-            # value at [r11 + rcx*8 + 16]
-            a.mov_r64_mem_bis("rax", "r11", "rcx", 8, 16)
+            # value at [r11 + rcx*8 + 8]
+            a.mov_r64_mem_bis("rax", "r11", "rcx", 8, 8)
             a.jmp(l_done)
 
             a.mark(l_fail)
@@ -3047,7 +3145,7 @@ class CodegenExpr:
             a.or_rax_imm8(TAG_INT)
             a.jmp(l_done)
 
-            # ---- string indexing -> 1-char string ----
+            # ---- string indexing -> cached 1-char string ----
             a.mark(l_str)
             a.mov_r32_membase_disp("edx", "r11", 4)  # len
             # support negative indices: if idx < 0 => idx += len
@@ -3065,21 +3163,10 @@ class CodegenExpr:
             a.mov_r64_r64("rax", "r11")
             a.add_r64_r64("rax", "rcx")
             a.add_rax_imm8(8)
-            a.mov_r8_membase_disp("dl", "rax", 0)
-            # Save the byte across the call (calls clobber RDX/DL). Use the outgoing-args area,
-            # which is not part of the GC root slots.
-            a.mov_membase_disp_r8("rsp", 0x20, "dl")
-
-            a.mov_rcx_imm32(10)
-            a.call('fn_alloc')
-
-            a.mov_r11_rax()
-            a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
-            a.mov_membase_disp_imm32("r11", 4, 1, qword=False)
-            a.mov_r8_membase_disp("dl", "rsp", 0x20)
-            a.mov_membase_disp_r8("r11", 8, "dl")
-            a.mov_membase_disp_imm8("r11", 9, 0)
-            a.mov_rax_r11()
+            a.movzx_r32_membase_disp("eax", "rax", 0)
+            a.lea_r11_rip("obj_char_table")
+            a.shl_rax_imm8(4)
+            a.add_r64_r64("rax", "r11")
             a.jmp(l_done)
 
             # ---- error paths ----
@@ -3355,7 +3442,7 @@ class CodegenExpr:
                         a.cmp_r32_imm("r10d", OBJ_STRUCT)
                         a.jcc("ne", l_fail)
 
-                        a.mov_r32_membase_disp("r10d", "r11", 8)  # struct_id
+                        a.mov_r32_membase_disp("r10d", "r11", 4)  # struct_id
 
                         # Dispatch by struct_id.
                         for sid, fn_qn in candidates:
@@ -3389,7 +3476,7 @@ class CodegenExpr:
                             a.mov_r32_membase_disp("r10d", "rax", 0)
                             a.cmp_r32_imm("r10d", OBJ_STRUCT)
                             a.jcc("ne", l_noerr)
-                            a.mov_r32_membase_disp("r10d", "rax", 8)
+                            a.mov_r32_membase_disp("r10d", "rax", 4)
                             a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
                             a.jcc("ne", l_noerr)
 
@@ -3787,8 +3874,6 @@ class CodegenExpr:
 
                 lid = self.new_label_id()
                 l_fail = f"array_init_fail_{lid}"
-                l_fill_top = f"array_init_fill_top_{lid}"
-                l_fill_done = f"array_init_fill_done_{lid}"
                 l_done = f"array_init_done_{lid}"
 
                 # validate + decode size (tagged int >= 0)
@@ -3832,17 +3917,12 @@ class CodegenExpr:
                 else:
                     a.mov_r64_imm64("rdx", enc_void())
 
-                # fill payload with rdx
-                a.lea_r64_membase_disp("r8", "r11", 8)
-                a.mov_r32_membase_disp("r9d", "r11", 4)
-                a.mark(l_fill_top)
-                a.test_r32_r32("r9d", "r9d")
-                a.jcc("e", l_fill_done)
-                a.mov_membase_disp_r64("r8", 0, "rdx")
-                a.add_r64_imm("r8", 8)
-                a.dec_r32("r9d")
-                a.jmp(l_fill_top)
-                a.mark(l_fill_done)
+                a.mov_membase_disp_r64("rsp", tmp_off, "r11")
+                a.lea_r64_membase_disp("rcx", "r11", 8)
+                a.mov_r64_r64("r8", "rdx")
+                a.mov_r32_membase_disp("edx", "r11", 4)
+                a.call('fn_fill_qwords')
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
 
                 # clear temporary root
                 if nargs == 2:
@@ -3999,13 +4079,10 @@ class CodegenExpr:
                 # dest -> r10
                 a.mov_r64_membase_disp("r10", "rsp", tmp_off + 8)
 
-                a.push_reg("rsi")
-                a.push_reg("rdi")
-                a.lea_r64_membase_disp("rsi", "r11", 8)
-                a.lea_r64_membase_disp("rdi", "r10", 8)
-                a.rep_movsb()
-                a.pop_reg("rdi")
-                a.pop_reg("rsi")
+                a.lea_r64_membase_disp("rcx", "r10", 8)
+                a.lea_r64_membase_disp("rdx", "r11", 8)
+                a.mov_r32_membase_disp("r8d", "r11", 4)
+                a.call('fn_copy_bytes')
 
                 a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
                 a.jmp(l_done)
@@ -4082,13 +4159,10 @@ class CodegenExpr:
                 # dest -> r10
                 a.mov_r64_membase_disp("r10", "rsp", tmp_off + 8)
 
-                a.push_reg("rsi")
-                a.push_reg("rdi")
-                a.lea_r64_membase_disp("rsi", "r11", 8)
-                a.lea_r64_membase_disp("rdi", "r10", 8)
-                a.rep_movsb()
-                a.pop_reg("rdi")
-                a.pop_reg("rsi")
+                a.lea_r64_membase_disp("rcx", "r10", 8)
+                a.lea_r64_membase_disp("rdx", "r11", 8)
+                a.mov_r32_membase_disp("r8d", "r11", 4)
+                a.call('fn_copy_bytes')
 
                 a.mov_r64_membase_disp("rax", "rsp", tmp_off + 8)
                 a.jmp(l_done)
@@ -4107,7 +4181,6 @@ class CodegenExpr:
                 self.emit_expr(e.args[0])  # -> RAX
                 lid = self.new_label_id()
                 l_fail = f"decodeZ_fail_{lid}"
-                l_scan = f"decodeZ_scan_{lid}"
                 l_done = f"decodeZ_done_{lid}"
                 l_after = f"decodeZ_after_{lid}"
 
@@ -4123,22 +4196,10 @@ class CodegenExpr:
                 # stash bytes obj (GC root)
                 a.mov_membase_disp_r64("rsp", tmp_off, "rax")
 
-                # r9d = cap bytes, r10 = payload
-                a.mov_r32_membase_disp("r9d", "rax", 4)
-                a.lea_r64_membase_disp("r10", "rax", 8)
-
-                # r8d = len (scan)
-                a.xor_r32_r32("r8d", "r8d")
-                a.mark(l_scan)
-                a.cmp_r32_r32("r8d", "r9d")
-                a.jcc("ge", l_done)
-                a.mov_r64_r64("r11", "r10")
-                a.add_r64_r64("r11", "r8")
-                a.movzx_r32_membase_disp("eax", "r11", 0)
-                a.cmp_r8_imm8("al", 0)
-                a.je(l_done)
-                a.inc_r32("r8d")
-                a.jmp(l_scan)
+                a.mov_r32_membase_disp("edx", "rax", 4)
+                a.lea_r64_membase_disp("rcx", "rax", 8)
+                a.call("fn_scan_nul_bytes")
+                a.mov_r32_r32("r8d", "edx")
 
                 a.mark(l_done)
 
@@ -4165,15 +4226,12 @@ class CodegenExpr:
                 # reload bytes obj -> r10
                 a.mov_r64_membase_disp("r10", "rsp", tmp_off)
 
-                # copy payload[0:len] into string
-                a.push_reg("rsi")
-                a.push_reg("rdi")
-                a.lea_r64_membase_disp("rsi", "r10", 8)
-                a.lea_r64_membase_disp("rdi", "r11", 8)
-                a.mov_r32_r32("ecx", "r8d")
-                a.rep_movsb()
-                a.pop_reg("rdi")
-                a.pop_reg("rsi")
+                a.mov_membase_disp_r64("rsp", tmp_off, "r11")
+                a.lea_r64_membase_disp("rcx", "r11", 8)
+                a.lea_r64_membase_disp("rdx", "r10", 8)
+                a.mov_r32_r32("r8d", "r8d")
+                a.call("fn_copy_bytes")
+                a.mov_r64_membase_disp("r11", "rsp", tmp_off)
 
                 # NUL at [base+8+len]
                 a.mov_r64_r64("rax", "r11")
@@ -4198,7 +4256,6 @@ class CodegenExpr:
                 self.emit_expr(e.args[0])  # -> RAX
                 lid = self.new_label_id()
                 l_fail = f"decode16Z_fail_{lid}"
-                l_scan = f"decode16Z_scan_{lid}"
                 l_done = f"decode16Z_done_{lid}"
                 l_after = f"decode16Z_after_{lid}"
 
@@ -4215,31 +4272,11 @@ class CodegenExpr:
                 a.mov_membase_disp_r64("rsp", tmp_off, "rax")
 
                 # r9d = cap bytes; wcap = cap/2
-                a.mov_r32_membase_disp("r9d", "rax", 4)
-                a.shr_r64_imm8("r9", 1)
-
-                # r10 = payload
-                a.lea_r64_membase_disp("r10", "rax", 8)
-
-                # r8d = wlen (scan)
-                a.xor_r32_r32("r8d", "r8d")
-                a.mark(l_scan)
-                a.cmp_r32_r32("r8d", "r9d")
-                a.jcc("ge", l_done)
-
-                # ptr = payload + r8*2
-                a.lea_r64_mem_bis("r11", "r10", "r8", 2, 0)
-                a.movzx_r32_membase_disp("eax", "r11", 0)
-                a.cmp_r8_imm8("al", 0)
-                a.jcc("ne", f"decode16Z_cont_{lid}")
-
-                a.movzx_r32_membase_disp("edx", "r11", 1)
-                a.cmp_r8_imm8("dl", 0)
-                a.je(l_done)
-
-                a.mark(f"decode16Z_cont_{lid}")
-                a.inc_r32("r8d")
-                a.jmp(l_scan)
+                a.mov_r32_membase_disp("edx", "rax", 4)
+                a.shr_r32_imm8("edx", 1)
+                a.lea_r64_membase_disp("rcx", "rax", 8)
+                a.call("fn_scan_nul_wchars")
+                a.mov_r32_r32("r8d", "edx")
 
                 a.mark(l_done)
 
@@ -4491,7 +4528,7 @@ class CodegenExpr:
                         a.mov_r32_membase_disp("r10d", "rax", 0)
                         a.cmp_r32_imm("r10d", OBJ_STRUCT)
                         a.jcc("ne", l_noerr)
-                        a.mov_r32_membase_disp("r10d", "rax", 8)
+                        a.mov_r32_membase_disp("r10d", "rax", 4)
                         a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
                         a.jcc("ne", l_noerr)
 
@@ -4527,7 +4564,7 @@ class CodegenExpr:
                     if len(e.args) != n:
                         raise self.error(f"Struct {sname} expects {n} args, got {len(e.args)}", e)
 
-                size = 16 + n * 8
+                size = 8 + n * 8
                 a.mov_rcx_imm32(size)
                 a.call('fn_alloc')
 
@@ -4536,30 +4573,28 @@ class CodegenExpr:
                 a.mov_rsp_disp32_rax(base_off)
                 a.mov_r11_rax()
 
-                # header: type / nfields / struct_id / pad
+                # header: type / struct_id
                 a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
-                a.mov_membase_disp_imm32("r11", 4, n, qword=False)
                 sid = self.struct_id.get(sname, 0)
-                a.mov_membase_disp_imm32("r11", 8, sid, qword=False)
-                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, sid, qword=False)
 
                 # fill fields in order
                 for i, arg in enumerate(e.args):
                     self.emit_expr(arg)
                     # restore base pointer into r11 (do NOT clobber rax)
                     a.mov_r64_membase_disp("r11", "rsp", base_off)
-                    disp = 16 + i * 8
+                    disp = 8 + i * 8
                     a.mov_membase_disp_r64("r11", disp, "rax")
 
                 # Auto-fill error origin fields: script, func, line
                 if sname == 'error':
                     a.mov_r64_membase_disp("r11", "rsp", base_off)
                     a.mov_rax_rip_qword('dbg_loc_script')
-                    a.mov_membase_disp_r64('r11', 16 + 2 * 8, 'rax')
+                    a.mov_membase_disp_r64('r11', 8 + 2 * 8, 'rax')
                     a.mov_rax_rip_qword('dbg_loc_func')
-                    a.mov_membase_disp_r64('r11', 16 + 3 * 8, 'rax')
+                    a.mov_membase_disp_r64('r11', 8 + 3 * 8, 'rax')
                     a.mov_rax_rip_qword('dbg_loc_line')
-                    a.mov_membase_disp_r64('r11', 16 + 4 * 8, 'rax')
+                    a.mov_membase_disp_r64('r11', 8 + 4 * 8, 'rax')
 
                 # return ptr in rax
                 a.mov_rax_rsp_disp32(base_off)
@@ -4703,14 +4738,17 @@ class CodegenExpr:
             a.cmp_r64_imm("r10", TAG_PTR)
             a.jcc("ne", l_fail)
 
-            # Type check: must be OBJ_FUNCTION or OBJ_STRUCTTYPE or OBJ_BUILTIN
+            # Type check: must be OBJ_FUNCTION / OBJ_CLOSURE / OBJ_STRUCTTYPE / OBJ_BUILTIN
             a.mov_r32_membase_disp("r10d", "r11", 0)
             l_fun = f"icall_fun_{fid}"
+            l_clo = f"icall_clo_{fid}"
             l_stt = f"icall_stt_{fid}"
             l_blt = f"icall_blt_{fid}"
 
             a.cmp_r32_imm("r10d", OBJ_FUNCTION)
             a.jcc("e", l_fun)
+            a.cmp_r32_imm("r10d", OBJ_CLOSURE)
+            a.jcc("e", l_clo)
             a.cmp_r32_imm("r10d", OBJ_STRUCTTYPE)
             a.jcc("e", l_stt)
             a.cmp_r32_imm("r10d", OBJ_BUILTIN)
@@ -4725,7 +4763,19 @@ class CodegenExpr:
 
             # Load code pointer and call
             a.mov_r64_membase_disp("rax", "r11", 8)
-            a.mov_r64_membase_disp("r10", "r11", 16)  # closure env (Step 6.2b-1 prep)
+            a.mov_r64_imm64("r10", enc_void())
+            a.call_rax()
+            a.jmp(l_done)
+
+            a.mark(l_clo)
+            # Arity check
+            a.mov_r32_membase_disp("r10d", "r11", 4)
+            a.cmp_r32_imm("r10d", nargs)
+            a.jcc("ne", l_fail)
+
+            # Load code pointer and closure env, then call
+            a.mov_r64_membase_disp("rax", "r11", 8)
+            a.mov_r64_membase_disp("r10", "r11", 16)
             a.call_rax()
             a.jmp(l_done)
 
@@ -4766,32 +4816,30 @@ class CodegenExpr:
                 a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
                 a.jcc("ne", l_stt_normal)
 
-                # Allocate 5-field error struct: 16 header + 5*8 = 56 bytes
-                a.mov_rcx_imm32(56)
+                # Allocate 5-field error struct: 8-byte header + 5*8 = 48 bytes
+                a.mov_rcx_imm32(48)
                 a.call("fn_alloc")
 
                 # keep struct base pointer in r11 so we can freely use rax as scratch
                 a.mov_r11_rax()
 
-                # header: type / nfields / struct_id / pad
+                # header: type / struct_id
                 a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
-                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
-                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
-                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, ERROR_STRUCT_ID, qword=False)
 
                 # field0/1 from temp args (code, message)
                 a.mov_r64_membase_disp("r10", "rsp", base + 8)
-                a.mov_membase_disp_r64("r11", 16, "r10")
+                a.mov_membase_disp_r64("r11", 8, "r10")
                 a.mov_r64_membase_disp("r10", "rsp", base + 16)
-                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_membase_disp_r64("r11", 16, "r10")
 
                 # field2/3/4 from debug-loc globals
                 a.mov_rax_rip_qword('dbg_loc_script')
-                a.mov_membase_disp_r64('r11', 32, 'rax')
+                a.mov_membase_disp_r64('r11', 24, 'rax')
                 a.mov_rax_rip_qword('dbg_loc_func')
-                a.mov_membase_disp_r64('r11', 40, 'rax')
+                a.mov_membase_disp_r64('r11', 32, 'rax')
                 a.mov_rax_rip_qword('dbg_loc_line')
-                a.mov_membase_disp_r64('r11', 48, 'rax')
+                a.mov_membase_disp_r64('r11', 40, 'rax')
 
                 # return ptr in rax
                 a.mov_rax_r11()
@@ -4800,24 +4848,22 @@ class CodegenExpr:
 
                 a.mark(l_stt_normal)
 
-            # Allocate struct instance (payload 16 + nargs * 8 bytes)
-            a.mov_rcx_imm32(16 + nargs * 8)
+            # Allocate struct instance (payload 8 + nargs * 8 bytes)
+            a.mov_rcx_imm32(8 + nargs * 8)
             a.call("fn_alloc")
 
             # reload callee in r11 (fn_alloc clobbers r10/r11)
             a.mov_r64_membase_disp("r11", "rsp", base)
 
-            # header: type / nfields / struct_id / pad
+            # header: type / struct_id
             a.mov_membase_disp_imm32("rax", 0, OBJ_STRUCT, qword=False)
-            a.mov_membase_disp_imm32("rax", 4, nargs, qword=False)
             a.mov_r32_membase_disp("r10d", "r11", 8)  # struct_id (u32)
-            a.mov_membase_disp_r32("rax", 8, "r10d")
-            a.mov_membase_disp_imm32("rax", 12, 0, qword=False)
+            a.mov_membase_disp_r32("rax", 4, "r10d")
 
             # fill fields in order from temp args
             for i in range(nargs):
                 a.mov_r64_membase_disp("r10", "rsp", base + (i + 1) * 8)
-                a.mov_membase_disp_r64("rax", 16 + i * 8, "r10")
+                a.mov_membase_disp_r64("rax", 8 + i * 8, "r10")
 
             a.jmp(l_done)
             a.mark(l_fail)
@@ -4853,14 +4899,8 @@ class CodegenExpr:
                 desc_s = str(callee_desc or "member")
 
                 # Constant string fragments in .rdata
-                lbl_desc = f"objstr_{len(self.rdata.labels)}"
-                self.rdata.add_obj_string(lbl_desc, desc_s)
-                lbl_p0 = f"objstr_{len(self.rdata.labels)}"
-                self.rdata.add_obj_string(lbl_p0, "Cannot call '")
-                lbl_p1 = f"objstr_{len(self.rdata.labels)}"
-                self.rdata.add_obj_string(lbl_p1, "' with ")
-                lbl_p2 = f"objstr_{len(self.rdata.labels)}"
-                self.rdata.add_obj_string(lbl_p2, " args (expected ")
+                lbl_pref = f"objstr_{len(self.rdata.labels)}"
+                self.rdata.add_obj_string(lbl_pref, f"Cannot call '{desc_s}' with {nargs} args (expected ")
                 lbl_p3 = f"objstr_{len(self.rdata.labels)}"
                 self.rdata.add_obj_string(lbl_p3, "..")
                 lbl_p4 = f"objstr_{len(self.rdata.labels)}"
@@ -4886,6 +4926,8 @@ class CodegenExpr:
                 a.mov_r32_membase_disp("r10d", "r11", 0)
                 a.cmp_r32_imm("r10d", OBJ_FUNCTION)
                 a.jcc("e", l_fun)
+                a.cmp_r32_imm("r10d", OBJ_CLOSURE)
+                a.jcc("e", l_fun)
                 a.cmp_r32_imm("r10d", OBJ_BUILTIN)
                 a.jcc("e", l_blt)
                 a.cmp_r32_imm("r10d", OBJ_STRUCTTYPE)
@@ -4900,56 +4942,33 @@ class CodegenExpr:
                 a.or_r64_imm("r10", TAG_INT)
                 a.mov_membase_disp_r64("rsp", tmp + 8, "r10")  # tmp+8 = expected
 
-                # Build message string into RAX
-                a.lea_rax_rip(lbl_p0)
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_desc)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")  # "Cannot call '" + desc
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p1)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")  # + "' with "
-
-                a.mov_r64_r64("rcx", "rax")
-                a.mov_r64_imm64("rdx", enc_int(nargs))
-                a.call("fn_add_string")  # + got
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p2)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")  # + " args (expected "
-
+                a.lea_rax_rip(lbl_pref)
                 a.mov_r64_r64("rcx", "rax")
                 a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # expected
-                a.call("fn_add_string")  # + expected
+                a.call("fn_add_string")
 
                 a.mov_r64_r64("rcx", "rax")
                 a.lea_rax_rip(lbl_p4)
                 a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")  # + ")"
-
+                a.call("fn_add_string")
                 a.mov_membase_disp_r64("rsp", tmp, "rax")  # tmp+0 = msg_ptr
 
                 # Allocate error(code,msg,script,func,line) into RAX
-                a.mov_rcx_imm32(56)
+                a.mov_rcx_imm32(48)
                 a.call("fn_alloc")
                 a.mov_r11_rax()
                 a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
-                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
-                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
-                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, ERROR_STRUCT_ID, qword=False)
                 a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
-                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_membase_disp_r64("r11", 8, "rax")
                 a.mov_r64_membase_disp("r10", "rsp", tmp)  # msg_ptr
-                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_membase_disp_r64("r11", 16, "r10")
                 a.mov_rax_rip_qword("dbg_loc_script")
-                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_membase_disp_r64("r11", 24, "rax")
                 a.mov_rax_rip_qword("dbg_loc_func")
-                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_membase_disp_r64("r11", 32, "rax")
                 a.mov_rax_rip_qword("dbg_loc_line")
-                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_membase_disp_r64("r11", 40, "rax")
                 a.mov_rax_r11()
                 a.jmp(l_done_msg)
 
@@ -4968,27 +4987,7 @@ class CodegenExpr:
                 a.or_r64_imm("r10", TAG_INT)
                 a.mov_membase_disp_r64("rsp", tmp + 16, "r10")
 
-                # Build message: Cannot call '<desc>' with N args (expected MIN..MAX)
-                a.lea_rax_rip(lbl_p0)
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_desc)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p1)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.mov_r64_imm64("rdx", enc_int(nargs))
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p2)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
+                a.lea_rax_rip(lbl_pref)
                 a.mov_r64_r64("rcx", "rax")
                 a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # min
                 a.call("fn_add_string")
@@ -5006,26 +5005,23 @@ class CodegenExpr:
                 a.lea_rax_rip(lbl_p4)
                 a.mov_r64_r64("rdx", "rax")
                 a.call("fn_add_string")
-
                 a.mov_membase_disp_r64("rsp", tmp, "rax")  # msg_ptr
 
-                a.mov_rcx_imm32(56)
+                a.mov_rcx_imm32(48)
                 a.call("fn_alloc")
                 a.mov_r11_rax()
                 a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
-                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
-                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
-                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, ERROR_STRUCT_ID, qword=False)
                 a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
-                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_membase_disp_r64("r11", 8, "rax")
                 a.mov_r64_membase_disp("r10", "rsp", tmp)
-                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_membase_disp_r64("r11", 16, "r10")
                 a.mov_rax_rip_qword("dbg_loc_script")
-                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_membase_disp_r64("r11", 24, "rax")
                 a.mov_rax_rip_qword("dbg_loc_func")
-                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_membase_disp_r64("r11", 32, "rax")
                 a.mov_rax_rip_qword("dbg_loc_line")
-                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_membase_disp_r64("r11", 40, "rax")
                 a.mov_rax_r11()
                 a.jmp(l_done_msg)
 
@@ -5037,26 +5033,7 @@ class CodegenExpr:
                 a.or_r64_imm("r10", TAG_INT)
                 a.mov_membase_disp_r64("rsp", tmp + 8, "r10")
 
-                a.lea_rax_rip(lbl_p0)
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_desc)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p1)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.mov_r64_imm64("rdx", enc_int(nargs))
-                a.call("fn_add_string")
-
-                a.mov_r64_r64("rcx", "rax")
-                a.lea_rax_rip(lbl_p2)
-                a.mov_r64_r64("rdx", "rax")
-                a.call("fn_add_string")
-
+                a.lea_rax_rip(lbl_pref)
                 a.mov_r64_r64("rcx", "rax")
                 a.mov_r64_membase_disp("rdx", "rsp", tmp + 8)  # expected
                 a.call("fn_add_string")
@@ -5065,26 +5042,23 @@ class CodegenExpr:
                 a.lea_rax_rip(lbl_p4)
                 a.mov_r64_r64("rdx", "rax")
                 a.call("fn_add_string")
-
                 a.mov_membase_disp_r64("rsp", tmp, "rax")
 
-                a.mov_rcx_imm32(56)
+                a.mov_rcx_imm32(48)
                 a.call("fn_alloc")
                 a.mov_r11_rax()
                 a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
-                a.mov_membase_disp_imm32("r11", 4, 5, qword=False)
-                a.mov_membase_disp_imm32("r11", 8, ERROR_STRUCT_ID, qword=False)
-                a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
+                a.mov_membase_disp_imm32("r11", 4, ERROR_STRUCT_ID, qword=False)
                 a.mov_rax_imm64(enc_int(int(ERR_CALL_NOT_CALLABLE)))
-                a.mov_membase_disp_r64("r11", 16, "rax")
+                a.mov_membase_disp_r64("r11", 8, "rax")
                 a.mov_r64_membase_disp("r10", "rsp", tmp)
-                a.mov_membase_disp_r64("r11", 24, "r10")
+                a.mov_membase_disp_r64("r11", 16, "r10")
                 a.mov_rax_rip_qword("dbg_loc_script")
-                a.mov_membase_disp_r64("r11", 32, "rax")
+                a.mov_membase_disp_r64("r11", 24, "rax")
                 a.mov_rax_rip_qword("dbg_loc_func")
-                a.mov_membase_disp_r64("r11", 40, "rax")
+                a.mov_membase_disp_r64("r11", 32, "rax")
                 a.mov_rax_rip_qword("dbg_loc_line")
-                a.mov_membase_disp_r64("r11", 48, "rax")
+                a.mov_membase_disp_r64("r11", 40, "rax")
                 a.mov_rax_r11()
                 a.jmp(l_done_msg)
 
@@ -5111,7 +5085,7 @@ class CodegenExpr:
                 a.mov_r32_membase_disp("r10d", "rax", 0)
                 a.cmp_r32_imm("r10d", OBJ_STRUCT)
                 a.jcc("ne", l_noerr)
-                a.mov_r32_membase_disp("r10d", "rax", 8)
+                a.mov_r32_membase_disp("r10d", "rax", 4)
                 a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
                 a.jcc("ne", l_noerr)
 
