@@ -681,8 +681,7 @@ class CodegenExpr:
             a.lea_r11_rip(wbuf_label or "widebuf")  # dst buffer
             a.mov_membase_disp_r64("rsp", 0x20, "r11")  # arg5: dst
             a.mov_membase_disp_imm32("rsp", 0x28, (WIDEBUF_SIZE // 2), qword=True)  # arg6: cchWideChar
-            a.mov_rax_rip_qword("iat_MultiByteToWideChar")
-            a.call_rax()
+            a.call_rip_qword("iat_MultiByteToWideChar")
 
             # return wchar_t* = wbuf
             a.lea_rax_rip(wbuf_label or "widebuf")
@@ -845,8 +844,7 @@ class CodegenExpr:
             a.mov_membase_disp_imm32("rsp", 0x28, 0, qword=True)
             a.mov_membase_disp_imm32("rsp", 0x30, 0, qword=True)
             a.mov_membase_disp_imm32("rsp", 0x38, 0, qword=True)
-            a.mov_rax_rip_qword("iat_WideCharToMultiByte")
-            a.call_rax()
+            a.call_rip_qword("iat_WideCharToMultiByte")
 
             a.cmp_rax_imm8(0)
             a.je(l_fail)
@@ -895,8 +893,7 @@ class CodegenExpr:
 
             a.mov_membase_disp_imm32("rsp", 0x30, 0, qword=True)
             a.mov_membase_disp_imm32("rsp", 0x38, 0, qword=True)
-            a.mov_rax_rip_qword("iat_WideCharToMultiByte")
-            a.call_rax()
+            a.call_rip_qword("iat_WideCharToMultiByte")
 
             a.cmp_rax_imm8(0)
             a.je(l_fail)
@@ -990,8 +987,7 @@ class CodegenExpr:
             a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "rax")
 
         # Call through the imported function pointer.
-        a.mov_rax_rip_qword(self._extern_iat_label(dll, symbol))
-        a.call_rax()
+        a.call_rip_qword(self._extern_iat_label(dll, symbol))
 
         # Marshal return value back into MiniLang representation.
         self._emit_extern_ret_from_native(ret_ty, e.pos)
@@ -1118,8 +1114,7 @@ class CodegenExpr:
                     raise CompileError(
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",
                         pos, )
-            a.mov_rax_rip_qword(self._extern_iat_label(str(dll), str(sym)))
-            a.call_rax()
+            a.call_rip_qword(self._extern_iat_label(str(dll), str(sym)))
 
             # Convert return value back to a tagged MiniLang Value.
             self._emit_extern_ret_from_native(ret_ty, pos)
@@ -4597,8 +4592,7 @@ class CodegenExpr:
                 a.mov_membase_disp_imm32("rsp", 0x28, 0, qword=True)
                 a.mov_membase_disp_imm32("rsp", 0x30, 0, qword=True)
                 a.mov_membase_disp_imm32("rsp", 0x38, 0, qword=True)
-                a.mov_rax_rip_qword("iat_WideCharToMultiByte")
-                a.call_rax()
+                a.call_rip_qword("iat_WideCharToMultiByte")
 
                 a.cmp_rax_imm8(0)
                 a.je(l_fail)
@@ -4643,8 +4637,7 @@ class CodegenExpr:
                 a.mov_membase_disp_r64("rsp", 0x28, "rax")
                 a.mov_membase_disp_imm32("rsp", 0x30, 0, qword=True)
                 a.mov_membase_disp_imm32("rsp", 0x38, 0, qword=True)
-                a.mov_rax_rip_qword("iat_WideCharToMultiByte")
-                a.call_rax()
+                a.call_rip_qword("iat_WideCharToMultiByte")
 
                 a.cmp_rax_imm8(0)
                 a.je(l_fail)
@@ -4790,6 +4783,14 @@ class CodegenExpr:
             if callee_name == 'gc_collect' and len(e.args) == 0:
                 a.call('fn_gc_collect')
                 a.mov_rax_imm64(enc_void())
+                return
+
+            # Builtin gc_set_limit(limitBytes)
+            if callee_name == 'gc_set_limit' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64("rcx", "rax")
+                a.mov_r32_imm32("r10d", 1)
+                a.call('fn_builtin_gc_set_limit')
                 return
 
             # Builtin heap_bytes_committed()
@@ -4990,12 +4991,16 @@ class CodegenExpr:
                         callee_desc = None
 
             # Evaluate callee + args into a nested-safe temp area: [callee, arg0, arg1, ...]
-            base = self.alloc_expr_temps((nargs + 1) * 8 + 24)  # +24 reserved for member-call diag temp slots
-            # Init diag temp slots to void (GC-safe even on first use)
+            # Member-call diagnostics need a few extra temp roots for assembled error strings;
+            # plain indirect calls do not.
+            diag_extra = 24 if callee_is_member else 0
+            base = self.alloc_expr_temps((nargs + 1) * 8 + diag_extra)
             void_imm = enc_void()
-            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 0, void_imm, qword=True)
-            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 8, void_imm, qword=True)
-            a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 16, void_imm, qword=True)
+            if callee_is_member:
+                # Init diag temp slots to void (GC-safe even on first use)
+                a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 0, void_imm, qword=True)
+                a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 8, void_imm, qword=True)
+                a.mov_membase_disp_imm32("rsp", base + (nargs + 1) * 8 + 16, void_imm, qword=True)
 
 
             self.emit_expr(callee_expr)
@@ -5011,23 +5016,19 @@ class CodegenExpr:
 
             # Load register args (Windows x64): RCX,RDX,R8,R9
             if nargs >= 1:
-                a.mov_rax_rsp_disp32(base + 8)
-                a.mov_r64_r64("rcx", "rax")
+                a.mov_r64_membase_disp("rcx", "rsp", base + 8)
             if nargs >= 2:
-                a.mov_rax_rsp_disp32(base + 16)
-                a.mov_r64_r64("rdx", "rax")
+                a.mov_r64_membase_disp("rdx", "rsp", base + 16)
             if nargs >= 3:
-                a.mov_rax_rsp_disp32(base + 24)
-                a.mov_r64_r64("r8", "rax")
+                a.mov_r64_membase_disp("r8", "rsp", base + 24)
             if nargs >= 4:
-                a.mov_rax_rsp_disp32(base + 32)
-                a.mov_r64_r64("r9", "rax")
+                a.mov_r64_membase_disp("r9", "rsp", base + 32)
 
             # Stack args (arg5+): placed right above caller shadow space at [rsp+0x20]...
             if nargs > 4:
                 for i in range(4, nargs):
-                    a.mov_rax_rsp_disp32(base + (i + 1) * 8)
-                    a.mov_rsp_disp32_rax(0x20 + (i - 4) * 8)
+                    a.mov_r64_membase_disp("r10", "rsp", base + (i + 1) * 8)
+                    a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "r10")
 
             # r11 = callee value
             a.mov_r64_membase_disp("r11", "rsp", base)
@@ -5065,10 +5066,8 @@ class CodegenExpr:
             a.cmp_r32_imm("r10d", nargs)
             a.jcc("ne", l_fail)
 
-            # Load code pointer and call
-            a.mov_r64_membase_disp("rax", "r11", 8)
             a.mov_r64_imm64("r10", enc_void())
-            a.call_rax()
+            a.call_membase_disp("r11", 8)
             a.jmp(l_done)
 
             a.mark(l_clo)
@@ -5077,10 +5076,8 @@ class CodegenExpr:
             a.cmp_r32_imm("r10d", nargs)
             a.jcc("ne", l_fail)
 
-            # Load code pointer and closure env, then call
-            a.mov_r64_membase_disp("rax", "r11", 8)
             a.mov_r64_membase_disp("r10", "r11", 16)
-            a.call_rax()
+            a.call_membase_disp("r11", 8)
             a.jmp(l_done)
 
             a.mark(l_blt)
@@ -5095,9 +5092,7 @@ class CodegenExpr:
             # Pass nargs in r10d for builtin stubs (internal convention)
             a.mov_r32_imm32("r10d", nargs)
 
-            # Load code pointer and call
-            a.mov_r64_membase_disp("rax", "r11", 16)
-            a.call_rax()
+            a.call_membase_disp("r11", 16)
             a.jmp(l_done)
 
             a.mark(l_stt)
@@ -5403,7 +5398,7 @@ class CodegenExpr:
                 a.mark(l_noerr)
 
             # --- GC safety: clear temps + outgoing stack args ---
-            self.free_expr_temps((nargs + 1) * 8 + 24)
+            self.free_expr_temps((nargs + 1) * 8 + diag_extra)
 
             void_imm = enc_void()
             if nargs > 4:

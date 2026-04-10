@@ -1520,8 +1520,7 @@ class CodegenRuntime:
 
         # Exit code for unhandled MiniLang error is always 1 (even if error.code is different).
         a.mov_rcx_imm32(1)
-        a.mov_rax_rip_qword('iat_ExitProcess')
-        a.call_rax()
+        a.call_rip_qword('iat_ExitProcess')
 
         # Should never return
         a.add_rsp_imm8(0x68)
@@ -1900,14 +1899,12 @@ class CodegenRuntime:
         l_done = f"argvw_done_{lid}"
 
         # cmd = GetCommandLineW()
-        a.mov_rax_rip_qword('iat_GetCommandLineW')
-        a.call_rax()
+        a.call_rip_qword('iat_GetCommandLineW')
 
         # argvw = CommandLineToArgvW(cmd, &ml_argc)
         a.mov_r64_r64("rcx", "rax")  # rcx = cmdline
         a.lea_rdx_rip('ml_argc')  # rdx = &argc (int*)
-        a.mov_rax_rip_qword('iat_CommandLineToArgvW')
-        a.call_rax()
+        a.call_rip_qword('iat_CommandLineToArgvW')
 
         # if argvw == NULL: argc=0; ml_argvw=0
         a.test_r64_r64("rax", "rax")
@@ -2028,8 +2025,7 @@ class CodegenRuntime:
         a.mov_membase_disp_imm32('rsp', 0x28, 0, qword=True)  # cbMultiByte=0
         a.mov_membase_disp_imm32('rsp', 0x30, 0, qword=True)  # defaultChar=NULL
         a.mov_membase_disp_imm32('rsp', 0x38, 0, qword=True)  # usedDefaultChar=NULL
-        a.mov_rax_rip_qword('iat_WideCharToMultiByte')
-        a.call_rax()
+        a.call_rip_qword('iat_WideCharToMultiByte')
         a.mov_membase_disp_r32('rsp', 0x60, 'eax')
 
         # len = max(bytes_with_nul - 1, 0)
@@ -2076,8 +2072,7 @@ class CodegenRuntime:
         a.mov_membase_disp_r32('rsp', 0x28, 'eax')  # len+1
         a.mov_membase_disp_imm32('rsp', 0x30, 0, qword=True)
         a.mov_membase_disp_imm32('rsp', 0x38, 0, qword=True)
-        a.mov_rax_rip_qword('iat_WideCharToMultiByte')
-        a.call_rax()
+        a.call_rip_qword('iat_WideCharToMultiByte')
 
         # ensure NUL at dest[len]
         a.mov_r64_membase_disp('r10', 'rsp', 0x70)  # restore dest_ptr (r10 is volatile across call)
@@ -2108,8 +2103,7 @@ class CodegenRuntime:
         a.jcc('e', l_free + "_skip")
 
         a.mov_r64_r64('rcx', 'rax')
-        a.mov_rax_rip_qword('iat_LocalFree')
-        a.call_rax()
+        a.call_rip_qword('iat_LocalFree')
 
         a.mark(l_free + "_skip")
         # clear argc/argv globals

@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-04-10T19:18:04.817319Z",
-  "count": 212,
+  "generated_utc": "2026-04-10T19:39:33.671899Z",
+  "count": 214,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -214,11 +214,30 @@
       "asm": "call L"
     },
     {
+      "name": "call_membase_disp",
+      "args": [
+        "rbp",
+        -16
+      ],
+      "kwargs": {},
+      "hex": "ff55f0",
+      "asm": "call qword [rbp-0x10]"
+    },
+    {
       "name": "call_rax",
       "args": [],
       "kwargs": {},
       "hex": "ffd0",
       "asm": "call rax"
+    },
+    {
+      "name": "call_rip_qword",
+      "args": [
+        "L"
+      ],
+      "kwargs": {},
+      "hex": "ff15faffffff",
+      "asm": "call qword [rip+L]"
     },
     {
       "name": "cmp_membase_disp_imm8",

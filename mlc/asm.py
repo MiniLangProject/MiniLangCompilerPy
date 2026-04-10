@@ -555,6 +555,19 @@ class Asm:
         """
         self.emit(b"\xFF\xD0")
 
+    def call_membase_disp(self, base: str, disp: int = 0) -> None:
+        """Emit `call qword [base+disp]`."""
+        b = self.gpr(base)
+        rex_x, rex_b, tail = self._encode_mem(2, b.id, int(disp))
+        self.emit(self._rex(x=rex_x, b=rex_b) + b"\xFF" + tail)
+
+    def call_rip_qword(self, label: str) -> None:
+        """Emit `call qword [rip+label]`."""
+        self.emit(b"\xFF\x15")
+        p = self.pos
+        self.emit32(0)
+        self.patches.append((p, label, "rip32"))
+
     def ret(self) -> None:
         """Emit `RET` instruction.
         """
@@ -2705,6 +2718,12 @@ class Asm:
             return f'call {args[0]}', (str(args[0]),)
         if name == 'call_rax':
             return 'call rax', ()
+        if name == 'call_membase_disp':
+            base, disp = args
+            return f'call {self._fmt_mem(base, int(disp), "qword")}', ()
+        if name == 'call_rip_qword':
+            lab = args[0]
+            return f'call qword [rip+{lab}]', (str(lab),)
         if name == 'ret':
             return 'ret', ()
         if name == 'leave':
