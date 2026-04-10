@@ -91,7 +91,12 @@ class CodegenCore:
         self._cold_block_stack: list[list[tuple[str, Any]]] = []
 
         def _track_call_label(lbl: str) -> None:
-            if isinstance(lbl, str) and lbl.startswith('fn_') and not lbl.startswith('fn_user_'):
+            if (
+                isinstance(lbl, str)
+                and lbl.startswith('fn_')
+                and not lbl.startswith('fn_user_')
+                and not lbl.startswith('fn_extern_')
+            ):
                 self.used_helpers.add(lbl)
 
         # Asm.call() invokes this hook (if present).
@@ -1306,6 +1311,15 @@ class CodegenCore:
             'fn_builtin_fillBytes': getattr(self, 'emit_builtin_fillBytes_function', None),
             'fn_builtin_gc_collect': getattr(self, 'emit_builtin_gc_collect_function', None),
             'fn_builtin_gc_set_limit': getattr(self, 'emit_builtin_gc_set_limit_function', None), }
+        helper_order = ['fn_cpu_init', 'fn_alloc', 'fn_heap_grow', 'fn_gc_collect', 'fn_copy_bytes', 'fn_fill_bytes',
+            'fn_fill_qwords', 'fn_mem_eq_bytes', 'fn_str_eq', 'fn_bytes_eq', 'fn_add_string', 'fn_add_array',
+            'fn_add_bytes', 'fn_value_to_string', 'fn_box_float', 'fn_toNumber', 'fn_typeof', 'fn_typeName',
+            'fn_int_to_dec', 'fn_strlen', 'fn_decode', 'fn_decodeZ', 'fn_decode16Z', 'fn_hex', 'fn_fromHex',
+            'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_fillBytes',
+            'fn_builtin_gc_collect', 'fn_builtin_gc_set_limit', 'fn_build_args', 'fn_init_argvw', 'fn_incref',
+            'fn_decref', 'fn_callStats', 'fn_heap_count', 'fn_heap_bytes_used', 'fn_heap_bytes_committed',
+            'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', ]
+        helper_rank = {lbl: i for i, lbl in enumerate(helper_order)}
 
         used = getattr(self, 'used_helpers', set())
         emitted = getattr(self, '_emitted_helpers', set())
@@ -1313,7 +1327,8 @@ class CodegenCore:
         pending = set(used) - set(emitted)
 
         while pending:
-            lbl = pending.pop()
+            lbl = min(pending, key=lambda x: (helper_rank.get(x, 1 << 20), str(x)))
+            pending.discard(lbl)
             if lbl in emitted:
                 continue
 

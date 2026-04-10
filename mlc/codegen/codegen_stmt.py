@@ -2472,9 +2472,13 @@ class CodegenStmt:
             fid = self.new_label_id()
             it_lbl = f"__foreach_it_{fid}"
             i_lbl = f"__foreach_i_{fid}"
+            len_lbl = f"__foreach_len_{fid}"
+            top_ptr_lbl = f"__foreach_top_ptr_{fid}"
 
             self.data.add_u64(it_lbl, 0)
             self.data.add_u32(i_lbl, 0)
+            self.data.add_u32(len_lbl, 0)
+            self.data.add_u64(top_ptr_lbl, 0)
 
             # it = iterable
             self.emit_expr(s.iterable)
@@ -2483,8 +2487,12 @@ class CodegenStmt:
             # i = 0
             a.xor_r32_r32("eax", "eax")  # xor eax,eax
             a.mov_rip_dword_eax(i_lbl)
+            a.mov_rip_dword_eax(len_lbl)
 
-            top = f"foreach_top_{fid}"
+            setup = f"foreach_setup_{fid}"
+            top_arr = f"foreach_top_arr_{fid}"
+            top_bytes = f"foreach_top_bytes_{fid}"
+            top_str = f"foreach_top_str_{fid}"
             body = f"foreach_body_{fid}"
             cont = f"foreach_cont_{fid}"
             end = f"foreach_end_{fid}"
@@ -2508,11 +2516,7 @@ class CodegenStmt:
                 BreakableCtx(kind='loop', break_label=end, continue_label=cont, break_depth=depth_outer,
                              continue_depth=loop_depth))
 
-            a.mark(top)
-            # ecx = i
-            a.mov_eax_rip_dword(i_lbl)
-            a.mov_r32_r32("ecx", "eax")  # mov ecx,eax
-
+            a.mark(setup)
             # r14 = it
             a.mov_rax_rip_qword(it_lbl)
             a.mov_r64_r64("r14", "rax")  # mov r14,rax
@@ -2531,26 +2535,54 @@ class CodegenStmt:
             # unsupported iterable => end
             a.jmp(end)
 
-            # ---- array path ----
             a.mark(l_arr)
-            # edx = len(arr)
             a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
-            # if i >= len => end
-            a.cmp_r32_r32("ecx", "edx")  # cmp ecx,edx
+            a.mov_r32_r32("eax", "edx")
+            a.mov_rip_dword_eax(len_lbl)
+            a.lea_rax_rip(top_arr)
+            a.mov_rip_qword_rax(top_ptr_lbl)
+            a.jmp(top_arr)
+
+            a.mark(l_bytes)
+            a.mov_r32_membase_disp("edx", "r14", 4)
+            a.mov_r32_r32("eax", "edx")
+            a.mov_rip_dword_eax(len_lbl)
+            a.lea_rax_rip(top_bytes)
+            a.mov_rip_qword_rax(top_ptr_lbl)
+            a.jmp(top_bytes)
+
+            a.mark(l_str)
+            a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
+            a.mov_r32_r32("eax", "edx")
+            a.mov_rip_dword_eax(len_lbl)
+            a.lea_rax_rip(top_str)
+            a.mov_rip_qword_rax(top_ptr_lbl)
+            a.jmp(top_str)
+
+            # ---- array path ----
+            a.mark(top_arr)
+            a.mov_eax_rip_dword(i_lbl)
+            a.mov_r32_r32("ecx", "eax")
+            a.mov_eax_rip_dword(len_lbl)
+            a.mov_r32_r32("edx", "eax")
+            a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
-            # load element rax = [r14 + rcx*8 + 8]
+            a.mov_rax_rip_qword(it_lbl)
+            a.mov_r64_r64("r14", "rax")
             a.mov_r64_mem_bis("rax", "r14", "rcx", 8, 8)
-            # assign loop var
             self.emit_store_var(var_name, s)
             a.jmp(body)
 
             # ---- bytes path ----
-            a.mark(l_bytes)
-            # edx = len(bytes)
-            a.mov_r32_membase_disp("edx", "r14", 4)
-            # if i >= len => end
+            a.mark(top_bytes)
+            a.mov_eax_rip_dword(i_lbl)
+            a.mov_r32_r32("ecx", "eax")
+            a.mov_eax_rip_dword(len_lbl)
+            a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
+            a.mov_rax_rip_qword(it_lbl)
+            a.mov_r64_r64("r14", "rax")
 
             # addr = r14 + 8 + i
             a.mov_r64_r64("rax", "r14")
@@ -2565,41 +2597,26 @@ class CodegenStmt:
             # assign loop var
             self.emit_store_var(var_name, s)
             a.jmp(body)
+
             # ---- string path ----
-            a.mark(l_str)
-            # edx = len(str)
-            a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
-            # if i >= len => end
+            a.mark(top_str)
+            a.mov_eax_rip_dword(i_lbl)
+            a.mov_r32_r32("ecx", "eax")
+            a.mov_eax_rip_dword(len_lbl)
+            a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")  # cmp ecx,edx
             a.jcc('ge', end)
+            a.mov_rax_rip_qword(it_lbl)
+            a.mov_r64_r64("r14", "rax")
 
             # addr = r14 + 8 + i
             a.mov_r64_r64("rax", "r14")  # mov rax,r14
             a.add_r64_r64("rax", "rcx")  # add rax,rcx
             a.add_rax_imm8(8)
-            # dl = byte [rax]
-            a.mov_r8_membase_disp("dl", "rax", 0)  # mov dl,[rax]
-            # Save the byte across the call (calls clobber RDX/DL). Use the outgoing-args area,
-            # which is not part of the GC root slots.
-            a.mov_membase_disp_r8("rsp", 0x20, "dl")  # mov byte [rsp+0x20],dl
-
-            # allocate new 1-char string: size = 8 + 1 + 1 = 10
-            a.mov_rcx_imm32(10)
-            a.call('fn_alloc')
-
-            # r11 = base
-            a.mov_r11_rax()
-            # header
-            a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
-            a.mov_membase_disp_imm32("r11", 4, 1, qword=False)
-            # [r11+8] = char
-            a.mov_r8_membase_disp("dl", "rsp", 0x20)
-            a.mov_membase_disp_r8("r11", 8, "dl")
-            # [r11+9] = 0
-            a.mov_membase_disp_imm8("r11", 9, 0)
-
-            # return tagged ptr (heap is 8-aligned => low bits 000)
-            a.mov_rax_r11()
+            a.movzx_r32_membase_disp("eax", "rax", 0)
+            a.lea_r11_rip("obj_char_table")
+            a.shl_rax_imm8(4)
+            a.add_r64_r64("rax", "r11")
             self.emit_store_var(var_name, s)
 
             a.mark(body)
@@ -2616,7 +2633,8 @@ class CodegenStmt:
             a.inc_r32("ecx")  # inc ecx
             a.mov_r32_r32("eax", "ecx")  # mov eax,ecx
             a.mov_rip_dword_eax(i_lbl)
-            a.jmp(top)
+            a.mov_rax_rip_qword(top_ptr_lbl)
+            a.jmp_r64("rax")
 
             a.mark(end)
             self.break_stack.pop()

@@ -64,6 +64,7 @@ class Asm:
         # - cmp reg,0  -> test reg,reg (safe for zero checks)
         self._peephole_enabled: bool = True
         self._peephole_last_push: tuple[bytes, str] | None = None  # (push_bytes, reg)
+        self._peephole_last_jump: tuple[int, int, str, int] | None = None  # (start, end, label, disp_pos)
 
     # -----------------------------------------------------------------
     # peephole helpers
@@ -200,6 +201,18 @@ class Asm:
         Args:
             name: Label name.
         """
+        if getattr(self, '_peephole_enabled', False):
+            last_jump = getattr(self, '_peephole_last_jump', None)
+            if last_jump is not None:
+                start, end, target, disp_pos = last_jump
+                if target == name and end == self.pos:
+                    for i in range(len(self.patches) - 1, -1, -1):
+                        p_pos, p_label, _p_kind = self.patches[i]
+                        if p_pos == disp_pos and p_label == name:
+                            del self.patches[i]
+                            break
+                    self._peephole_trim_tail(end - start)
+                self._peephole_last_jump = None
         if name in self.labels:
             raise ValueError(f"Label already defined: {name}")
         self._label_defs.append((self.pos, name))
@@ -409,10 +422,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        start = self.pos
         self.emit(b"\xE9")
         p = self.pos
         self.emit32(0)
         self.patches.append((p, label, "rel32"))
+        if getattr(self, '_peephole_enabled', False):
+            self._peephole_last_jump = (start, self.pos, str(label), p)
 
     def jmp_r64(self, reg: str) -> None:
         """Emit `jmp reg` for a 64-bit GPR."""
@@ -436,10 +452,13 @@ class Asm:
                   "o": 0x80, "no": 0x81, }
         if cc not in cc_map:
             raise ValueError(f"Unknown jcc: {cc}")
+        start = self.pos
         self.emit(b"\x0F" + bytes([cc_map[cc]]))
         p = self.pos
         self.emit32(0)
         self.patches.append((p, label, "rel32"))
+        if getattr(self, '_peephole_enabled', False):
+            self._peephole_last_jump = (start, self.pos, str(label), p)
 
     # Convenience conditional jump wrappers (Windows-style mnemonics)
     def je(self, label: str) -> None:

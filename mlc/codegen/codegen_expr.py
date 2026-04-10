@@ -3492,17 +3492,23 @@ class CodegenExpr:
                     if candidates:
                         a = self.asm
                         fid = self.new_label_id()
-                        l_ok = f"mcall_ok_{fid}"
                         l_fail = f"mcall_fail_{fid}"
                         l_done = f"mcall_done_{fid}"
+                        l_ic_try1 = f"mcall_ic_try1_{fid}"
                         l_ic_miss = f"mcall_ic_miss_{fid}"
-                        cache_sid_lbl = f"mcall_ic_sid_{fid}"
-                        cache_pad_lbl = f"mcall_ic_sidpad_{fid}"
-                        cache_code_lbl = f"mcall_ic_code_{fid}"
+                        cache_sid0_lbl = f"mcall_ic_sid0_{fid}"
+                        cache_pad0_lbl = f"mcall_ic_sid0pad_{fid}"
+                        cache_code0_lbl = f"mcall_ic_code0_{fid}"
+                        cache_sid1_lbl = f"mcall_ic_sid1_{fid}"
+                        cache_pad1_lbl = f"mcall_ic_sid1pad_{fid}"
+                        cache_code1_lbl = f"mcall_ic_code1_{fid}"
                         self.data.pad_align(8)
-                        self.data.add_u32(cache_sid_lbl, 0xFFFFFFFF)
-                        self.data.add_u32(cache_pad_lbl, 0)
-                        self.data.add_u64(cache_code_lbl, 0)
+                        self.data.add_u32(cache_sid0_lbl, 0xFFFFFFFF)
+                        self.data.add_u32(cache_pad0_lbl, 0)
+                        self.data.add_u64(cache_code0_lbl, 0)
+                        self.data.add_u32(cache_sid1_lbl, 0xFFFFFFFF)
+                        self.data.add_u32(cache_pad1_lbl, 0)
+                        self.data.add_u64(cache_code1_lbl, 0)
 
                         base = self.alloc_expr_temps(total * 8)
 
@@ -3541,11 +3547,22 @@ class CodegenExpr:
 
                         a.mov_r32_membase_disp("r10d", "r11", 4)  # struct_id
 
-                        # Monomorphic inline cache: last seen struct_id -> code pointer.
-                        a.mov_eax_rip_dword(cache_sid_lbl)
+                        # Small polymorphic inline cache: primary + secondary struct_id/code pair.
+                        a.mov_eax_rip_dword(cache_sid0_lbl)
+                        a.cmp_r32_r32("r10d", "eax")
+                        a.jcc("ne", l_ic_try1)
+                        a.mov_rax_rip_qword(cache_code0_lbl)
+                        a.test_r64_r64("rax", "rax")
+                        a.jcc("e", l_ic_try1)
+                        a.mov_r64_imm64("r10", enc_void())
+                        a.call_rax()
+                        a.jmp(l_done)
+
+                        a.mark(l_ic_try1)
+                        a.mov_eax_rip_dword(cache_sid1_lbl)
                         a.cmp_r32_r32("r10d", "eax")
                         a.jcc("ne", l_ic_miss)
-                        a.mov_rax_rip_qword(cache_code_lbl)
+                        a.mov_rax_rip_qword(cache_code1_lbl)
                         a.test_r64_r64("rax", "rax")
                         a.jcc("e", l_ic_miss)
                         a.mov_r64_imm64("r10", enc_void())
@@ -3563,10 +3580,14 @@ class CodegenExpr:
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
                             a.mark(l_case)
+                            a.mov_eax_rip_dword(cache_sid0_lbl)
+                            a.mov_rip_dword_eax(cache_sid1_lbl)
+                            a.mov_rax_rip_qword(cache_code0_lbl)
+                            a.mov_rip_qword_rax(cache_code1_lbl)
                             a.mov_r32_r32("eax", "r10d")
-                            a.mov_rip_dword_eax(cache_sid_lbl)
+                            a.mov_rip_dword_eax(cache_sid0_lbl)
                             a.lea_rax_rip(f"fn_user_{fn_qn}")
-                            a.mov_rip_qword_rax(cache_code_lbl)
+                            a.mov_rip_qword_rax(cache_code0_lbl)
                             a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
                             a.call(f"fn_user_{fn_qn}")
                             a.jmp(l_done)
@@ -4944,18 +4965,39 @@ class CodegenExpr:
             # behavior of evaluating to void on type mismatch.
             callee_is_member = hasattr(ml, 'Member') and isinstance(callee_expr, ml.Member)
             direct_guard_obj_lbl = None
-            direct_guard_fn_lbl = None
-            if not callee_is_member and callee_name is not None and callee_name in (getattr(self, 'user_functions', {}) or {}):
+            direct_guard_call_lbl = None
+            direct_guard_builtin_nargs = False
+            if not callee_is_member and callee_name is not None:
                 b = None
                 try:
                     b = self.resolve_binding(callee_name)
                 except Exception:
                     b = None
                 if b is None or getattr(b, 'kind', None) == 'global':
-                    obj_lbl = (getattr(self, 'function_static_obj_labels', {}) or {}).get(callee_name)
-                    if isinstance(obj_lbl, str) and obj_lbl:
-                        direct_guard_obj_lbl = obj_lbl
-                        direct_guard_fn_lbl = f"fn_user_{callee_name}"
+                    if callee_name in (getattr(self, 'user_functions', {}) or {}):
+                        obj_lbl = (getattr(self, 'function_static_obj_labels', {}) or {}).get(callee_name)
+                        if isinstance(obj_lbl, str) and obj_lbl:
+                            direct_guard_obj_lbl = obj_lbl
+                            direct_guard_call_lbl = f"fn_user_{callee_name}"
+                            direct_guard_builtin_nargs = False
+                    elif callee_name in (getattr(self, 'builtin_specs', {}) or {}):
+                        spec = (getattr(self, 'builtin_specs', {}) or {}).get(callee_name)
+                        obj_lbl = (getattr(self, 'builtin_static_obj_labels', {}) or {}).get(callee_name)
+                        try:
+                            min_a, max_a, code_lbl = spec
+                        except Exception:
+                            min_a = max_a = code_lbl = None
+                        if isinstance(obj_lbl, str) and obj_lbl and isinstance(code_lbl, str) and int(min_a) <= nargs <= int(max_a):
+                            direct_guard_obj_lbl = obj_lbl
+                            direct_guard_call_lbl = str(code_lbl)
+                            direct_guard_builtin_nargs = True
+                    elif callee_name in (getattr(self, 'extern_sigs', {}) or {}):
+                        obj_lbl = (getattr(self, 'extern_static_obj_labels', {}) or {}).get(callee_name)
+                        stub_lbl = (getattr(self, 'extern_stub_labels', {}) or {}).get(callee_name)
+                        if isinstance(obj_lbl, str) and obj_lbl and isinstance(stub_lbl, str) and stub_lbl:
+                            direct_guard_obj_lbl = obj_lbl
+                            direct_guard_call_lbl = stub_lbl
+                            direct_guard_builtin_nargs = True
             callee_desc = None
             if callee_is_member:
                 def _qname_parts_any(x: Any) -> Optional[List[str]]:
@@ -5018,7 +5060,7 @@ class CodegenExpr:
                 a.mov_rsp_disp32_rax(base + (i + 1) * 8)
 
             devirt_done_lbl = None
-            if direct_guard_obj_lbl and direct_guard_fn_lbl:
+            if direct_guard_obj_lbl and direct_guard_call_lbl:
                 l_devirt_indirect = f"icall_devirt_indirect_{self.new_label_id()}"
                 devirt_done_lbl = f"icall_devirt_done_{self.new_label_id()}"
 
@@ -5043,8 +5085,11 @@ class CodegenExpr:
                         a.mov_r64_membase_disp("r10", "rsp", base + (i + 1) * 8)
                         a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "r10")
 
-                a.mov_r64_imm64("r10", enc_void())
-                a.call(direct_guard_fn_lbl)
+                if direct_guard_builtin_nargs:
+                    a.mov_r32_imm32("r10d", nargs)
+                else:
+                    a.mov_r64_imm64("r10", enc_void())
+                a.call(direct_guard_call_lbl)
                 self._emit_auto_errprop()
                 a.jmp(devirt_done_lbl)
                 a.mark(l_devirt_indirect)
