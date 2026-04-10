@@ -332,7 +332,7 @@ class CodegenMemory:
         a.mark(l_loop)
         a.mov_membase_disp_r64("r10", 0, "rax")
         a.add_r64_imm("r10", 8)
-        a.sub_r32_imm("ecx", 1)
+        a.dec_r32("ecx")
         a.jcc("ne", l_loop)
         a.mov_r64_membase_disp("rcx", "rsp", 0x00)
         a.mov_r64_membase_disp("rdx", "rsp", 0x08)
@@ -1923,7 +1923,7 @@ class CodegenMemory:
         a.jmp(L_LOOP)
 
         a.mark(L_LIVE)
-        a.add_r64_imm("r8", 1)  # add r8, 1
+        a.inc_r64("r8")
         a.mov_r64_membase_disp('rcx', 'r10', 0)
         a.and_r64_imm('rcx', GC_BLOCK_SIZE_MASK)
         a.add_r64_r64('r10', 'rcx')
@@ -2033,7 +2033,7 @@ class CodegenMemory:
         a.jcc('e', L_DONE)
 
         # iter cap
-        a.sub_r64_imm('r13', 1)
+        a.dec_r64('r13')
         a.jcc('z', L_BAD)
 
         # sanity: heap_base_payload <= cur < heap_end
@@ -2047,7 +2047,7 @@ class CodegenMemory:
         a.jcc('ne', L_BAD)
 
         # count++
-        a.add_r32_imm('r8d', 1)
+        a.inc_r32('r8d')
 
         # next = [cur + GC_OFF_NEXT_FREE]
         a.mov_r64_membase_disp('r10', 'r10', GC_OFF_NEXT_FREE)
@@ -2107,7 +2107,7 @@ class CodegenMemory:
         a.cmp_r64_imm('r10', 0)
         a.jcc('e', L_DONE)
 
-        a.sub_r64_imm('r13', 1)
+        a.dec_r64('r13')
         a.jcc('z', L_BAD)
 
         # sanity
@@ -2245,7 +2245,7 @@ class CodegenMemory:
 
         a.mark(l_ok)
         a.xor_eax_eax()
-        a.add_rax_imm8(1)
+        a.inc_r32("eax")
         a.jmp(l_done)
 
         a.mark(l_fail)

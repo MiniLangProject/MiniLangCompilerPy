@@ -2494,6 +2494,82 @@ def test_foreach_gc_root_runtime(*, name: str, mlc_runner: Path) -> TestResult:
         )
 
 
+def test_codegen_plus_minus_one_fastpaths(*, name: str, mlc_runner: Path) -> TestResult:
+    """Codegen regression: tagged-int +/-1 should use the immediate fast path in user code."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "plus_minus_one_fastpaths.ml"
+        exe = td_path / "plus_minus_one_fastpaths.exe"
+        asm_path = td_path / "plus_minus_one_fastpaths.asm"
+
+        main_ml.write_text("\n".join([
+            'function main(args)',
+            '  x = 41',
+            '  print(x + 1)',
+            '  print(x - 1)',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        cr = compile_native(
+            mlc_runner,
+            main_ml,
+            exe,
+            timeout_s=180,
+            extra_args=['--asm', '--asm-out', str(asm_path)],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout).strip().splitlines()
+        if out[:2] != ['42', '40']:
+            return TestResult(name=name, status="FAIL", details="unexpected runtime output for +/-1 fastpath probe",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        asm_lines = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace")).splitlines()
+        start = None
+        end = len(asm_lines)
+        for i, line in enumerate(asm_lines):
+            if line.lstrip().startswith("fn_user_main:"):
+                start = i
+                break
+        if start is None:
+            return TestResult(name=name, status="FAIL", details="fn_user_main not found in generated .asm listing")
+        for i in range(start + 1, len(asm_lines)):
+            stripped = asm_lines[i].lstrip()
+            if stripped.startswith("fn_") and re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", stripped):
+                end = i
+                break
+
+        main_asm = "\n".join(asm_lines[start:end])
+        required = ["; add_r64_imm(rax, 8)", "; sub_r64_imm(rax, 8)"]
+        for marker in required:
+            if marker not in main_asm:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"missing optimized +/-1 codegen marker in fn_user_main: {marker}",
+                                  stdout=rr.stdout, stderr=main_asm)
+
+        forbidden = ["; add_r64_r64(rax, r11)", "; sub_rax_r11()"]
+        for marker in forbidden:
+            if marker in main_asm:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"unexpected generic int arithmetic remained in fn_user_main: {marker}",
+                                  stdout=rr.stdout, stderr=main_asm)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
 
 
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
@@ -2820,6 +2896,8 @@ def main() -> int:
     tests.append(lambda: test_extern_out_value_runtime(name="extern: out value keeps full arity", mlc_runner=mlc_runner))
     tests.append(lambda: test_foreach_reentrant_runtime(name="foreach: reentrant state isolation", mlc_runner=mlc_runner))
     tests.append(lambda: test_foreach_gc_root_runtime(name="foreach: iterable survives gc", mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_plus_minus_one_fastpaths(name="codegen: +/-1 fast paths in user main",
+                                                              mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None

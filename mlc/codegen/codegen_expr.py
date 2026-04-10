@@ -267,6 +267,17 @@ class CodegenExpr:
 
         return self._OPT_NO
 
+    def _opt_try_const_int(self, e: Any) -> Optional[int]:
+        """Return a compile-time integer value for `e` when safely known."""
+        v = self._opt_try_const_value(e)
+        if isinstance(v, bool) or v is self._OPT_NO:
+            return None
+        if isinstance(v, int):
+            return int(v)
+        if isinstance(v, float) and v.is_integer():
+            return int(v)
+        return None
+
     def _opt_emit_const_value(self, v: Any) -> None:
         """Emit a folded constant into RAX."""
         a = self.asm
@@ -2215,6 +2226,9 @@ class CodegenExpr:
             self.free_expr_value_temp(right_tmp)
             self.free_expr_value_temp(left_tmp)
 
+            lhs_const_int = self._opt_try_const_int(getattr(e, 'left', None))
+            rhs_const_int = self._opt_try_const_int(getattr(e, 'right', None))
+
             # -------------------------
             # Numeric ops (int + float)
             # -------------------------
@@ -2499,9 +2513,22 @@ class CodegenExpr:
                 a.cmp_rax_imm8(TAG_INT)
                 a.jcc('ne', l_check_numeric)
 
-                a.mov_rax_r10()
-                a.add_r64_r64("rax", "r11")  # add rax,r11
-                a.sub_rax_imm8(1)
+                if rhs_const_int == 1:
+                    a.mov_rax_r10()
+                    a.add_rax_imm8(8)
+                elif rhs_const_int == -1:
+                    a.mov_rax_r10()
+                    a.sub_rax_imm8(8)
+                elif lhs_const_int == 1:
+                    a.mov_rax_r11()
+                    a.add_rax_imm8(8)
+                elif lhs_const_int == -1:
+                    a.mov_rax_r11()
+                    a.sub_rax_imm8(8)
+                else:
+                    a.mov_rax_r10()
+                    a.add_r64_r64("rax", "r11")  # add rax,r11
+                    a.sub_rax_imm8(1)
                 a.jmp(l_done)
 
                 # ---- non-int: if both numeric (int/float), do float add, else string concat ----
@@ -2661,8 +2688,13 @@ class CodegenExpr:
                 # ---- int fast path ----
                 if e.op == '-':
                     a.mov_rax_r10()
-                    a.sub_rax_r11()
-                    a.add_rax_imm8(1)
+                    if rhs_const_int == 1:
+                        a.sub_rax_imm8(8)
+                    elif rhs_const_int == -1:
+                        a.add_rax_imm8(8)
+                    else:
+                        a.sub_rax_r11()
+                        a.add_rax_imm8(1)
                     a.jmp(l_done)
 
                 elif e.op == '*':

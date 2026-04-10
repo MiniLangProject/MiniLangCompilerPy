@@ -1963,7 +1963,7 @@ class CodegenRuntime:
         a.mov_eax_rip_dword('ml_argc')
         a.cmp_r32_imm('eax', 1)
         a.jcc('le', l_n0)
-        a.sub_r32_imm('eax', 1)
+        a.dec_r32('eax')
         a.mov_membase_disp_r32('rsp', 0x48, 'eax')
         a.jmp(l_done + "_alloc")
 
@@ -2009,7 +2009,7 @@ class CodegenRuntime:
 
         # wide_ptr = argvw[i+1]
         a.mov_r32_r32('edx', 'eax')  # edx=i
-        a.add_r32_imm('edx', 1)  # edx=i+1
+        a.inc_r32('edx')  # edx=i+1
         a.mov_r64_membase_disp('r10', 'rsp', 0x50)  # r10=argvw
         a.shl_r64_imm8('rdx', 3)  # rdx=(i+1)*8
         a.mov_r64_r64('rax', 'r10')
@@ -2031,7 +2031,7 @@ class CodegenRuntime:
         # len = max(bytes_with_nul - 1, 0)
         a.test_r32_r32('eax', 'eax')
         a.jcc('e', l_len0)
-        a.sub_r32_imm('eax', 1)
+        a.dec_r32('eax')
         a.mov_membase_disp_r32('rsp', 0x64, 'eax')
         a.jmp(l_len0 + "_done")
 
@@ -2068,7 +2068,7 @@ class CodegenRuntime:
         a.mov_membase_disp_r64('rsp', 0x20, 'r10')  # dest
         a.mov_membase_disp_imm32('rsp', 0x28, 0, qword=True)
         a.mov_r32_membase_disp('eax', 'rsp', 0x64)
-        a.add_r32_imm('eax', 1)
+        a.inc_r32('eax')
         a.mov_membase_disp_r32('rsp', 0x28, 'eax')  # len+1
         a.mov_membase_disp_imm32('rsp', 0x30, 0, qword=True)
         a.mov_membase_disp_imm32('rsp', 0x38, 0, qword=True)
@@ -2092,7 +2092,7 @@ class CodegenRuntime:
 
         # i++
         a.mov_r32_membase_disp('eax', 'rsp', 0x4C)
-        a.add_r32_imm('eax', 1)
+        a.inc_r32('eax')
         a.mov_membase_disp_r32('rsp', 0x4C, 'eax')
         a.jmp(l_loop)
 
