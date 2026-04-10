@@ -18,7 +18,7 @@ from mlc.codegen import Codegen
 from .errors import CompileError, Diagnostic, MultiCompileError
 from .frontend import load_minilang_frontend, parse_program, normalize_code_for_tokenizer
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
-from .tools import u32
+from .tools import u32, u64
 
 
 # Reserved identifiers cannot be used as `import ... as <alias>` (and are generally
@@ -1450,8 +1450,23 @@ def compile_to_exe(
         else:
             raise RuntimeError(f"Unknown patch kind: {kind}")
 
+    # apply .rdata / .data absolute-address patches
+    for blob, patches in (
+        (cg.rdata.data, getattr(cg.rdata, 'patches', []) or []),
+        (cg.data.data, getattr(cg.data, 'patches', []) or []),
+    ):
+        for pos, target, kind in patches:
+            if target not in label_rva_map:
+                raise RuntimeError(f"Unknown data patch target: {target}")
+            if kind != 'abs64':
+                raise RuntimeError(f"Unknown data patch kind: {kind}")
+            target_va = pe.image_base + label_rva_map[target]
+            blob[pos:pos + 8] = u64(target_va)
+
     # update .text with patched bytes
     text_sec.data = bytearray(cg.asm.buf)
+    rdata_sec.data = bytearray(cg.rdata.data)
+    data_sec.data = bytearray(cg.data.data)
 
     exe = pe.build()
     with open(output_exe, 'wb') as f:

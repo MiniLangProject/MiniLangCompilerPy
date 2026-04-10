@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-04-10T19:39:33.671899Z",
-  "count": 214,
+  "generated_utc": "2026-04-10T20:15:12.090142Z",
+  "count": 215,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -624,6 +624,15 @@
       "kwargs": {},
       "hex": "e9fbffffff",
       "asm": "jmp L"
+    },
+    {
+      "name": "jmp_r64",
+      "args": [
+        "r11"
+      ],
+      "kwargs": {},
+      "hex": "41ffe3",
+      "asm": "jmp r11"
     },
     {
       "name": "jne",

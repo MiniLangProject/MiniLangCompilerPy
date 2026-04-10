@@ -414,6 +414,13 @@ class Asm:
         self.emit32(0)
         self.patches.append((p, label, "rel32"))
 
+    def jmp_r64(self, reg: str) -> None:
+        """Emit `jmp reg` for a 64-bit GPR."""
+
+        r = self.gpr(reg)
+        rex_b = 1 if r.id >= 8 else 0
+        self.emit(self._rex(b=rex_b) + b"\xFF" + self._modrm(3, 4, r.id))
+
     def jcc(self, cc: str, label: str) -> None:
         """Emit instruction/utility helper.
 
@@ -2735,6 +2742,8 @@ class Asm:
         # Control flow
         if name == 'jmp':
             return f'jmp {args[0]}', (str(args[0]),)
+        if name == 'jmp_r64':
+            return f'jmp {args[0]}', ()
         if name == 'jcc':
             cc, lab = args
             return f"{self._jcc_mnemonic(cc)} {lab}", (str(lab),)

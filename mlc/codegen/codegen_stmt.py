@@ -1850,104 +1850,165 @@ class CodegenStmt:
             # Pre-allocate labels for each case body so we can jump forward.
             case_body_labels = [f"switch_case_body_{sid}_{i}" for i in range(len(s.cases))]
 
-            # --- match chain ---
-            for i, cs in enumerate(s.cases):
-                l_next = f"switch_case_next_{sid}_{i}"
+            # Dense int switches benefit from a jump table.
+            dense_switch = None
+            try:
+                value_map: Dict[int, str] = {}
+                total_keys = 0
+                ok_dense = True
+                for i, cs in enumerate(s.cases):
+                    if getattr(cs, 'kind', None) != 'values':
+                        ok_dense = False
+                        break
+                    for ve in list(getattr(cs, 'values', []) or []):
+                        vv = self._opt_try_const_value(ve) if hasattr(self, '_opt_try_const_value') else None
+                        if not isinstance(vv, int) or isinstance(vv, bool):
+                            ok_dense = False
+                            break
+                        if vv in value_map:
+                            ok_dense = False
+                            break
+                        value_map[int(vv)] = case_body_labels[i]
+                        total_keys += 1
+                    if not ok_dense:
+                        break
+                if ok_dense and total_keys >= 4:
+                    min_v = min(value_map.keys())
+                    max_v = max(value_map.keys())
+                    span = max_v - min_v + 1
+                    if (-0x7FFFFFFF - 1) <= min_v <= 0x7FFFFFFF and span <= 4096 and span <= total_keys * 2:
+                        dense_switch = (min_v, span, value_map)
+            except Exception:
+                dense_switch = None
 
-                if cs.kind == 'values':
-                    # multi-value case: if any value equals the switch value -> match
-                    self.reserve_expr_temp_regs("r12")
-                    for j, ve in enumerate(cs.values):
-                        l_val_next = f"switch_val_next_{sid}_{i}_{j}"
+            if dense_switch is not None:
+                min_v, span, value_map = dense_switch
+                miss_lbl = l_default if getattr(s, 'default_body', None) else l_end
+                tbl_lbl = f"switch_jtbl_{sid}"
+                self.rdata.pad_align(8)
+                self.rdata.add_bytes_unique(tbl_lbl, b"\x00" * (8 * int(span)))
+                tbl_off, _ = self.rdata.labels[tbl_lbl]
+                for idx in range(int(span)):
+                    tgt_lbl = value_map.get(int(min_v) + idx, miss_lbl)
+                    self.rdata.add_abs64_patch(int(tbl_off) + idx * 8, tgt_lbl)
 
-                        # eval case value -> rax
-                        self.emit_expr(ve)
-                        a.mov_r11_rax()  # keep case value safe
+                # Value must be a tagged int; otherwise there is no match.
+                a.mov_r64_r64("r10", "r12")
+                a.and_r64_imm("r10", 7)
+                a.cmp_r64_imm("r10", TAG_INT)
+                a.jcc("ne", miss_lbl)
 
-                        # rcx = switch_val ; rdx = case_val
-                        a.mov_r64_r64("rcx", "r12")  # rcx = switch_val (tagged)
-                        a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
+                a.mov_r64_r64("rcx", "r12")
+                a.sar_r64_imm8("rcx", 3)
+                if int(min_v) != 0:
+                    if int(min_v) > 0:
+                        a.sub_r64_imm("rcx", int(min_v))
+                    else:
+                        a.add_r64_imm("rcx", -int(min_v))
+                a.cmp_r64_imm("rcx", int(span) - 1)
+                a.jcc("a", miss_lbl)
+                a.lea_rax_rip(tbl_lbl)
+                a.mov_r64_mem_bis("rax", "rax", "rcx", 8, 0)
+                a.jmp_r64("rax")
+            else:
+                # --- match chain ---
+                for i, cs in enumerate(s.cases):
+                    l_next = f"switch_case_next_{sid}_{i}"
 
-                        # rax = fn_val_eq(rcx, rdx)  (encoded bool)
-                        a.call('fn_val_eq')
+                    if cs.kind == 'values':
+                        # multi-value case: if any value equals the switch value -> match
+                        self.reserve_expr_temp_regs("r12")
+                        for j, ve in enumerate(cs.values):
+                            l_val_next = f"switch_val_next_{sid}_{i}_{j}"
 
-                        # if false -> next value
-                        self.emit_jmp_if_false_rax(l_val_next)
+                            # eval case value -> rax
+                            self.emit_expr(ve)
+                            a.mov_r11_rax()  # keep case value safe
+
+                            # rcx = switch_val ; rdx = case_val
+                            a.mov_r64_r64("rcx", "r12")  # rcx = switch_val (tagged)
+                            a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
+
+                            # rax = fn_val_eq(rcx, rdx)  (encoded bool)
+                            a.call('fn_val_eq')
+
+                            # if false -> next value
+                            self.emit_jmp_if_false_rax(l_val_next)
+                            # matched
+                            a.jmp(case_body_labels[i])
+
+                            a.mark(l_val_next)
+                        self.release_expr_temp_regs("r12")
+
+                        # no value matched
+                        a.jmp(l_next)
+
+                    elif cs.kind == 'range':
+                        # range case: only for INT (not bool). inclusive between min/max.
+                        # Evaluate bounds
+                        rng_off = self.alloc_expr_temps(16)
+                        lo_off = rng_off
+                        hi_off = rng_off + 8
+
+                        self.emit_expr(cs.range_start)
+                        a.mov_rsp_disp32_rax(lo_off)
+                        self.emit_expr(cs.range_end)
+                        a.mov_rsp_disp32_rax(hi_off)
+
+                        # r10 = lo ; r11 = hi
+                        a.mov_r64_membase_disp("r10", "rsp", lo_off)  # mov r10,[rsp+lo_off]
+                        a.mov_r64_membase_disp("r11", "rsp", hi_off)  # mov r11,[rsp+hi_off]
+
+                        # Both bounds must be int-tagged, otherwise no-match (interpreter would error)
+                        # r8 = r10 & 7
+                        a.mov_r64_r64("r8", "r10")  # mov r8,r10
+                        a.and_r64_imm("r8", 7)  # and r8,7
+                        a.cmp_r64_imm("r8", 1)  # cmp r8,1
+                        a.jcc('ne', l_next)
+
+                        # r8 = r11 & 7
+                        a.mov_r64_r64("r8", "r11")  # mov r8,r11
+                        a.and_r64_imm("r8", 7)  # and r8,7
+                        a.cmp_r64_imm("r8", 1)  # cmp r8,1
+                        a.jcc('ne', l_next)
+
+                        # Ensure r10 <= r11 (swap if needed)
+                        l_noswap = f"switch_rng_noswap_{sid}_{i}"
+                        a.cmp_r64_r64("r10", "r11")  # cmp r10,r11
+                        a.jcc('le', l_noswap)
+                        # swap via r8
+                        a.mov_r64_r64("r8", "r10")  # mov r8,r10
+                        a.mov_r64_r64("r10", "r11")  # mov r10,r11
+                        a.mov_r64_r64("r11", "r8")  # mov r11,r8
+                        a.mark(l_noswap)
+
+                        # rax = switch_val (tagged) from r12
+                        a.mov_r64_r64("rax", "r12")  # mov rax,r12
+
+                        # switch value must be int-tagged
+                        a.mov_r64_r64("r8", "rax")  # mov r8,rax
+                        a.and_r64_imm("r8", 7)  # and r8,7
+                        a.cmp_r64_imm("r8", 1)  # cmp r8,1
+                        a.jcc('ne', l_next)
+
+                        # if rax < r10 -> no match
+                        a.cmp_r64_r64("rax", "r10")  # cmp rax,r10
+                        a.jcc('l', l_next)
+
+                        # if rax > r11 -> no match
+                        a.cmp_r64_r64("rax", "r11")  # cmp rax,r11
+                        a.jcc('g', l_next)
+
                         # matched
                         a.jmp(case_body_labels[i])
 
-                        a.mark(l_val_next)
-                    self.release_expr_temp_regs("r12")
+                        self.free_expr_temps(16)
 
-                    # no value matched
-                    a.jmp(l_next)
+                    else:
+                        # Unknown case kind -> treat as no-match
+                        a.jmp(l_next)
 
-                elif cs.kind == 'range':
-                    # range case: only for INT (not bool). inclusive between min/max.
-                    # Evaluate bounds
-                    rng_off = self.alloc_expr_temps(16)
-                    lo_off = rng_off
-                    hi_off = rng_off + 8
-
-                    self.emit_expr(cs.range_start)
-                    a.mov_rsp_disp32_rax(lo_off)
-                    self.emit_expr(cs.range_end)
-                    a.mov_rsp_disp32_rax(hi_off)
-
-                    # r10 = lo ; r11 = hi
-                    a.mov_r64_membase_disp("r10", "rsp", lo_off)  # mov r10,[rsp+lo_off]
-                    a.mov_r64_membase_disp("r11", "rsp", hi_off)  # mov r11,[rsp+hi_off]
-
-                    # Both bounds must be int-tagged, otherwise no-match (interpreter would error)
-                    # r8 = r10 & 7
-                    a.mov_r64_r64("r8", "r10")  # mov r8,r10
-                    a.and_r64_imm("r8", 7)  # and r8,7
-                    a.cmp_r64_imm("r8", 1)  # cmp r8,1
-                    a.jcc('ne', l_next)
-
-                    # r8 = r11 & 7
-                    a.mov_r64_r64("r8", "r11")  # mov r8,r11
-                    a.and_r64_imm("r8", 7)  # and r8,7
-                    a.cmp_r64_imm("r8", 1)  # cmp r8,1
-                    a.jcc('ne', l_next)
-
-                    # Ensure r10 <= r11 (swap if needed)
-                    l_noswap = f"switch_rng_noswap_{sid}_{i}"
-                    a.cmp_r64_r64("r10", "r11")  # cmp r10,r11
-                    a.jcc('le', l_noswap)
-                    # swap via r8
-                    a.mov_r64_r64("r8", "r10")  # mov r8,r10
-                    a.mov_r64_r64("r10", "r11")  # mov r10,r11
-                    a.mov_r64_r64("r11", "r8")  # mov r11,r8
-                    a.mark(l_noswap)
-
-                    # rax = switch_val (tagged) from r12
-                    a.mov_r64_r64("rax", "r12")  # mov rax,r12
-
-                    # switch value must be int-tagged
-                    a.mov_r64_r64("r8", "rax")  # mov r8,rax
-                    a.and_r64_imm("r8", 7)  # and r8,7
-                    a.cmp_r64_imm("r8", 1)  # cmp r8,1
-                    a.jcc('ne', l_next)
-
-                    # if rax < r10 -> no match
-                    a.cmp_r64_r64("rax", "r10")  # cmp rax,r10
-                    a.jcc('l', l_next)
-
-                    # if rax > r11 -> no match
-                    a.cmp_r64_r64("rax", "r11")  # cmp rax,r11
-                    a.jcc('g', l_next)
-
-                    # matched
-                    a.jmp(case_body_labels[i])
-
-                    self.free_expr_temps(16)
-
-                else:
-                    # Unknown case kind -> treat as no-match
-                    a.jmp(l_next)
-
-                a.mark(l_next)
+                    a.mark(l_next)
 
             # No case matched -> default or end
             if getattr(s, 'default_body', None):
@@ -3277,9 +3338,95 @@ class CodegenStmt:
                 # Use the unique global label in the stub name to avoid collisions.
                 self.extern_stub_labels[qn] = f"fn_extern_{b.label}"
 
+        # Materialize immutable first-class callable/type objects in .rdata so top-level
+        # initialization only needs to point global slots at them instead of heap-allocating.
+        self.function_static_obj_labels: Dict[str, str] = {}
+        for nm, fn in self.user_functions.items():
+            obj_lbl = f"obj_fn_static_{len(self.rdata.labels)}"
+            arity = len(getattr(fn, "params", []) or [])
+            self.rdata.pad_align(8)
+            self.rdata.add_bytes_unique(
+                obj_lbl,
+                int(OBJ_FUNCTION).to_bytes(4, "little", signed=False)
+                + int(arity).to_bytes(4, "little", signed=False)
+                + b"\x00" * 8,
+            )
+            off, _ = self.rdata.labels[obj_lbl]
+            self.rdata.add_abs64_patch(int(off) + 8, f"fn_user_{nm}")
+            self.function_static_obj_labels[nm] = obj_lbl
+
+        self.struct_static_obj_labels: Dict[str, str] = {}
+        for nm, fields in self.struct_fields.items():
+            obj_lbl = f"obj_structtype_static_{len(self.rdata.labels)}"
+            sid = int(self.struct_id.get(nm, 0) or 0)
+            nfields = len(fields)
+            self.rdata.pad_align(8)
+            self.rdata.add_bytes_unique(
+                obj_lbl,
+                int(OBJ_STRUCTTYPE).to_bytes(4, "little", signed=False)
+                + int(nfields).to_bytes(4, "little", signed=False)
+                + sid.to_bytes(4, "little", signed=False)
+                + b"\x00" * 4,
+            )
+            self.struct_static_obj_labels[nm] = obj_lbl
+
+        self.builtin_static_obj_labels: Dict[str, str] = {}
+        for nm, spec in getattr(self, 'builtin_specs', {}).items():
+            try:
+                min_a, max_a, code_lbl = spec
+            except Exception:
+                continue
+            obj_lbl = f"obj_builtin_static_{len(self.rdata.labels)}"
+            self.rdata.pad_align(8)
+            self.rdata.add_bytes_unique(
+                obj_lbl,
+                int(OBJ_BUILTIN).to_bytes(4, "little", signed=False)
+                + int(min_a).to_bytes(4, "little", signed=False)
+                + int(max_a).to_bytes(4, "little", signed=False)
+                + b"\x00" * 4
+                + b"\x00" * 8,
+            )
+            off, _ = self.rdata.labels[obj_lbl]
+            self.rdata.add_abs64_patch(int(off) + 16, str(code_lbl))
+            self.builtin_static_obj_labels[nm] = obj_lbl
+            if hasattr(self, 'used_helpers'):
+                self.used_helpers.add(str(code_lbl))
+
+        self.extern_static_obj_labels: Dict[str, str] = {}
+        for qn, sig in (getattr(self, 'extern_sigs', {}) or {}).items():
+            stub_lbl = self.extern_stub_labels.get(qn)
+            if not stub_lbl:
+                continue
+            params = list((sig or {}).get('params', []) or [])
+            arity = 0
+            for pp in params:
+                if isinstance(pp, dict) and bool(pp.get('out', False)):
+                    continue
+                arity += 1
+            obj_lbl = f"obj_extern_static_{len(self.rdata.labels)}"
+            self.rdata.pad_align(8)
+            self.rdata.add_bytes_unique(
+                obj_lbl,
+                int(OBJ_BUILTIN).to_bytes(4, "little", signed=False)
+                + int(arity).to_bytes(4, "little", signed=False)
+                + int(arity).to_bytes(4, "little", signed=False)
+                + b"\x00" * 4
+                + b"\x00" * 8,
+            )
+            off, _ = self.rdata.labels[obj_lbl]
+            self.rdata.add_abs64_patch(int(off) + 16, stub_lbl)
+            self.extern_static_obj_labels[qn] = obj_lbl
+
         # Reset internal-helper usage tracking for this compilation unit
         if hasattr(self, 'reset_helper_tracking'):
             self.reset_helper_tracking()
+        for _nm, _spec in getattr(self, 'builtin_specs', {}).items():
+            try:
+                _min_a, _max_a, _code_lbl = _spec
+            except Exception:
+                continue
+            if _nm in (getattr(self, 'builtin_static_obj_labels', {}) or {}):
+                self.used_helpers.add(str(_code_lbl))
 
         # Prologue: create stack frame.
         # We size the main stack frame dynamically based on maximum call arity.
@@ -3475,105 +3622,42 @@ class CodegenStmt:
         self.emit_heap_init()
         a.call('fn_cpu_init')
 
-        # Initialize function values for all top-level (and namespaced) user functions.
-        # Layout (16 bytes):
-        #   +0  u32 type    = OBJ_FUNCTION
-        #   +4  u32 arity
-        #   +8  u64 code_ptr (raw address of fn_user_<name>)
+        # Point global function names at immutable OBJ_FUNCTION objects in .rdata.
         voidv = enc_void()
         for nm, fn in self.user_functions.items():
             lbl = getattr(self, "function_global_labels", {}).get(nm)
-            if not lbl:
+            obj_lbl = getattr(self, "function_static_obj_labels", {}).get(nm)
+            if not lbl or not obj_lbl:
                 continue
-            arity = len(getattr(fn, "params", []) or [])
-            a.mov_rcx_imm32(16)
-            a.call("fn_alloc")
-            a.mov_r64_r64("r11", "rax")  # r11 = obj
-            a.mov_membase_disp_imm32("r11", 0, OBJ_FUNCTION, qword=False)
-            a.mov_membase_disp_imm32("r11", 4, arity, qword=False)
-            a.lea_rax_rip(f"fn_user_{nm}")
-            a.mov_membase_disp_r64("r11", 8, "rax")
-            a.mov_rip_qword_r11(lbl)
+            a.lea_rax_rip(obj_lbl)
+            a.mov_rip_qword_rax(lbl)
         # Step 6.2b-2b-1: compute env slot layout metadata (boxed vars + indices)
         # Must happen AFTER nested_user_functions is populated so nested functions also get layout.
         self._closure_assign_env_layout(nested_fns)
 
-        # Initialize struct type values for all structs.
-        # Layout (16 bytes):
-        #   +0  u32 type     = OBJ_STRUCTTYPE
-        #   +4  u32 nfields
-        #   +8  u32 struct_id
-        #   +12 u32 pad
         for nm, fields in self.struct_fields.items():
             lbl = getattr(self, "struct_global_labels", {}).get(nm)
-            if not lbl:
+            obj_lbl = getattr(self, "struct_static_obj_labels", {}).get(nm)
+            if not lbl or not obj_lbl:
                 continue
-            nfields = len(fields)
-            sid = self.struct_id.get(nm, 0)
-            a.mov_rcx_imm32(16)
-            a.call("fn_alloc")
-            a.mov_r64_r64("r11", "rax")  # r11 = obj
-            a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCTTYPE, qword=False)
-            a.mov_membase_disp_imm32("r11", 4, nfields, qword=False)
-            a.mov_membase_disp_imm32("r11", 8, sid, qword=False)
-            a.mov_membase_disp_imm32("r11", 12, 0, qword=False)
-            a.mov_rip_qword_r11(lbl)
+            a.lea_rax_rip(obj_lbl)
+            a.mov_rip_qword_rax(lbl)
 
-        # Initialize first-class builtin function values (OBJ_BUILTIN) for selected builtins.
-        # Layout (24 bytes):
-        #   +0  u32 type    = OBJ_BUILTIN
-        #   +4  u32 min_arity
-        #   +8  u32 max_arity
-        #   +12 u32 pad
-        #   +16 u64 code_ptr (raw address of fn_*)
         for nm, spec in getattr(self, 'builtin_specs', {}).items():
             lbl = getattr(self, 'builtin_global_labels', {}).get(nm)
-            if not lbl:
+            obj_lbl = getattr(self, 'builtin_static_obj_labels', {}).get(nm)
+            if not lbl or not obj_lbl:
                 continue
-            try:
-                min_a, max_a, code_lbl = spec
-            except Exception:
-                continue
-            # We take the address of `code_lbl` (lea rip), so ensure the helper is emitted.
-            if hasattr(self, 'used_helpers'):
-                try:
-                    self.used_helpers.add(str(code_lbl))  # type: ignore[attr-defined]
-                except Exception:
-                    pass
-            a.mov_rcx_imm32(24)
-            a.call('fn_alloc')
-            a.mov_r64_r64('r11', 'rax')
-            a.mov_membase_disp_imm32('r11', 0, OBJ_BUILTIN, qword=False)
-            a.mov_membase_disp_imm32('r11', 4, int(min_a), qword=False)
-            a.mov_membase_disp_imm32('r11', 8, int(max_a), qword=False)
-            a.mov_membase_disp_imm32('r11', 12, 0, qword=False)
-            a.lea_rax_rip(str(code_lbl))
-            a.mov_membase_disp_r64('r11', 16, 'rax')
-            a.mov_rip_qword_r11(lbl)
+            a.lea_rax_rip(obj_lbl)
+            a.mov_rip_qword_rax(lbl)
 
-        # Initialize extern function values (OBJ_BUILTIN stubs).
         for qn, sig in (getattr(self, 'extern_sigs', {}) or {}).items():
             lbl = getattr(self, 'extern_global_labels', {}).get(qn)
-            stub_lbl = getattr(self, 'extern_stub_labels', {}).get(qn)
-            if not lbl or not stub_lbl:
+            obj_lbl = getattr(self, 'extern_static_obj_labels', {}).get(qn)
+            if not lbl or not obj_lbl:
                 continue
-            params = list((sig or {}).get('params', []) or [])
-            # Extern out-params are implicit at the call site: arity counts only non-out params.
-            arity = 0
-            for pp in params:
-                if isinstance(pp, dict) and bool(pp.get('out', False)):
-                    continue
-                arity += 1
-            a.mov_rcx_imm32(24)
-            a.call('fn_alloc')
-            a.mov_r64_r64('r11', 'rax')
-            a.mov_membase_disp_imm32('r11', 0, OBJ_BUILTIN, qword=False)
-            a.mov_membase_disp_imm32('r11', 4, arity, qword=False)
-            a.mov_membase_disp_imm32('r11', 8, arity, qword=False)
-            a.mov_membase_disp_imm32('r11', 12, 0, qword=False)
-            a.lea_rax_rip(stub_lbl)
-            a.mov_membase_disp_r64('r11', 16, 'rax')
-            a.mov_rip_qword_r11(lbl)
+            a.lea_rax_rip(obj_lbl)
+            a.mov_rip_qword_rax(lbl)
 
         # ------------------------------------------------------------
         # Step 7.1b: predeclare globals referenced via `global ...` inside functions.
@@ -3763,6 +3847,7 @@ class CodegenStmt:
         # subroutines without a matching frame/prologue corrupts the stack/ABI.
         # We still keep internal per-module guard labels/flags so each block executes
         # at most once, but the execution itself stays inside the entry stub.
+        self.push_cold_block_scope()
         for _mfile, _mstmts, _fn_lbl, _flag_lbl, _status_lbl in module_init_recs:
             _done_lbl = f"{_fn_lbl}_done"
             a.mov_rax_rip_qword(_flag_lbl)
@@ -3798,27 +3883,7 @@ class CodegenStmt:
             a.mov_r64_imm64("r10", voidv)
 
             a.call(f"fn_user_{main_name}")
-
-            # unhandled error from main: print + exit
-            err_id = self.new_label_id()
-            l_main_noerr = f"lbl_main_noerr_{err_id}"
-            # if not ptr -> noerr
-            a.mov_r64_r64("r11", "rax")
-            a.and_r64_imm("r11", 7)
-            a.cmp_r64_imm("r11", TAG_PTR)
-            a.jcc("ne", l_main_noerr)
-            # if not struct -> noerr
-            a.mov_r32_membase_disp("edx", "rax", 0)
-            a.cmp_r32_imm("edx", OBJ_STRUCT)
-            a.jcc("ne", l_main_noerr)
-            # if struct_id != ERROR_STRUCT_ID -> noerr
-            a.mov_r32_membase_disp("edx", "rax", 4)
-            a.cmp_r32_imm("edx", ERROR_STRUCT_ID)
-            a.jcc("ne", l_main_noerr)
-            # handle
-            a.mov_r64_r64("rcx", "rax")
-            a.call("fn_unhandled_error_exit")
-            a.mark(l_main_noerr)
+            self._emit_auto_errprop()
 
             # main return handling:
             # - int  -> ExitProcess(int)
@@ -3860,6 +3925,9 @@ class CodegenStmt:
         a.xor_ecx_ecx()
         a.mov_rax_rip_qword('iat_ExitProcess')
         a.call_rax()
+
+        self.emit_deferred_cold_blocks()
+        self.pop_cold_block_scope()
 
         # Internal per-file module init blocks currently execute inline in the
         # entry stub (see above) so they share the entry frame/scratch area.
@@ -4734,6 +4802,7 @@ class CodegenStmt:
             self._current_fn_qname = _old_fn_qn
             self._current_fn_file = _old_fn_file
 
+        self.push_cold_block_scope()
         try:
             for st in fn.body:
                 self.emit_stmt(st)
@@ -4745,6 +4814,9 @@ class CodegenStmt:
         # Default return void
         a.mov_rax_imm64(enc_void())
         a.jmp(ret_label)
+
+        self.emit_deferred_cold_blocks()
+        self.pop_cold_block_scope()
 
         # ---- epilogue ----
         a.mark(ret_label)

@@ -88,6 +88,7 @@ class CodegenCore:
         self._expr_temp_reg_live: list[ExprValueTemp] = []
         self._expr_temp_reg_live_by_reg: Dict[str, ExprValueTemp] = {}
         self._expr_temp_reg_reserved: Dict[str, int] = {}
+        self._cold_block_stack: list[list[tuple[str, Any]]] = []
 
         def _track_call_label(lbl: str) -> None:
             if isinstance(lbl, str) and lbl.startswith('fn_') and not lbl.startswith('fn_user_'):
@@ -614,6 +615,29 @@ class CodegenCore:
             tmp.reg = None
             tmp.dirty = False
         self.free_expr_temps(8)
+
+    def push_cold_block_scope(self) -> None:
+        self._cold_block_stack.append([])
+
+    def pop_cold_block_scope(self) -> list[tuple[str, Any]]:
+        if not self._cold_block_stack:
+            return []
+        return self._cold_block_stack.pop()
+
+    def defer_cold_block(self, label: str, emitter: Any) -> bool:
+        if not self._cold_block_stack:
+            return False
+        self._cold_block_stack[-1].append((str(label), emitter))
+        return True
+
+    def emit_deferred_cold_blocks(self) -> None:
+        if not self._cold_block_stack:
+            return
+        blocks = self._cold_block_stack[-1]
+        while blocks:
+            label, emitter = blocks.pop(0)
+            self.asm.mark(str(label))
+            emitter()
 
     def ensure_var(self, name: str) -> str:
         if name in self.var_slots:

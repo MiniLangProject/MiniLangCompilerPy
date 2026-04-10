@@ -2003,6 +2003,7 @@ class CodegenMemory:
         self.ensure_gc_data()
         a = self.asm
         a.mark('fn_heap_free_blocks')
+        a.push_r13()
 
         # r8 = count (u64)
         a.xor_r32_r32('r8d', 'r8d')
@@ -2059,12 +2060,13 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r8')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
+        a.pop_r13()
         a.ret()
 
     def emit_heap_free_bytes_function(self) -> None:
         """Emit fn_heap_free_bytes() -> tagged int.
 
-        Sums GC_OFF_BLOCK_SIZE for each free block in gc_free_head.
+        Sums the header-resident block size for each free block in gc_free_head.
         Note: block_size includes the GC header (i.e. total block bytes).
 
         Safety:
@@ -2076,6 +2078,7 @@ class CodegenMemory:
         self.ensure_gc_data()
         a = self.asm
         a.mark('fn_heap_free_bytes')
+        a.push_r13()
 
         # r8 = sum_bytes (u64)
         a.xor_r32_r32('r8d', 'r8d')
@@ -2115,8 +2118,8 @@ class CodegenMemory:
         a.test_r64_imm32('r10', 7)
         a.jcc('ne', L_BAD)
 
-        # load size and sum
-        a.mov_r64_membase_disp('rax', 'r10', GC_OFF_BLOCK_SIZE)
+        # load header block size and sum
+        a.mov_r64_membase_disp('rax', 'r10', 0)
         a.and_r64_imm('rax', GC_BLOCK_SIZE_MASK)
         a.add_r64_r64('r8', 'rax')
 
@@ -2131,6 +2134,7 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r8')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
+        a.pop_r13()
         a.ret()
 
     def emit_heap_grow_function(self) -> None:

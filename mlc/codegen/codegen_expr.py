@@ -454,6 +454,7 @@ class CodegenExpr:
     
         lidp = self.new_label_id()
         l_noerr = f"errprop_noerr_{lidp}"
+        l_cold = f"errprop_cold_{lidp}"
     
         # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
         a.mov_r64_r64("r10", "rax")
@@ -466,13 +467,22 @@ class CodegenExpr:
         a.mov_r32_membase_disp("r10d", "rax", 4)
         a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
         a.jcc("ne", l_noerr)
-    
-        if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
-            a.jmp(self.func_ret_label)
+        if hasattr(self, 'defer_cold_block') and self.defer_cold_block(
+            l_cold,
+            lambda: (
+                a.jmp(self.func_ret_label)
+                if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None)
+                else (a.mov_r64_r64("rcx", "rax"), a.call('fn_unhandled_error_exit'))
+            ),
+        ):
+            a.jmp(l_cold)
         else:
-            a.mov_r64_r64("rcx", "rax")
-            a.call('fn_unhandled_error_exit')
-    
+            if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
+                a.jmp(self.func_ret_label)
+            else:
+                a.mov_r64_r64("rcx", "rax")
+                a.call('fn_unhandled_error_exit')
+
         a.mark(l_noerr)
     
     
@@ -3485,6 +3495,14 @@ class CodegenExpr:
                         l_ok = f"mcall_ok_{fid}"
                         l_fail = f"mcall_fail_{fid}"
                         l_done = f"mcall_done_{fid}"
+                        l_ic_miss = f"mcall_ic_miss_{fid}"
+                        cache_sid_lbl = f"mcall_ic_sid_{fid}"
+                        cache_pad_lbl = f"mcall_ic_sidpad_{fid}"
+                        cache_code_lbl = f"mcall_ic_code_{fid}"
+                        self.data.pad_align(8)
+                        self.data.add_u32(cache_sid_lbl, 0xFFFFFFFF)
+                        self.data.add_u32(cache_pad_lbl, 0)
+                        self.data.add_u64(cache_code_lbl, 0)
 
                         base = self.alloc_expr_temps(total * 8)
 
@@ -3523,6 +3541,18 @@ class CodegenExpr:
 
                         a.mov_r32_membase_disp("r10d", "r11", 4)  # struct_id
 
+                        # Monomorphic inline cache: last seen struct_id -> code pointer.
+                        a.mov_eax_rip_dword(cache_sid_lbl)
+                        a.cmp_r32_r32("r10d", "eax")
+                        a.jcc("ne", l_ic_miss)
+                        a.mov_rax_rip_qword(cache_code_lbl)
+                        a.test_r64_r64("rax", "rax")
+                        a.jcc("e", l_ic_miss)
+                        a.mov_r64_imm64("r10", enc_void())
+                        a.call_rax()
+                        a.jmp(l_done)
+
+                        a.mark(l_ic_miss)
                         # Dispatch by struct_id.
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
@@ -3533,6 +3563,10 @@ class CodegenExpr:
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
                             a.mark(l_case)
+                            a.mov_r32_r32("eax", "r10d")
+                            a.mov_rip_dword_eax(cache_sid_lbl)
+                            a.lea_rax_rip(f"fn_user_{fn_qn}")
+                            a.mov_rip_qword_rax(cache_code_lbl)
                             a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
                             a.call(f"fn_user_{fn_qn}")
                             a.jmp(l_done)
@@ -3542,30 +3576,7 @@ class CodegenExpr:
                                                     f"No matching method '{mname}' for receiver")
 
                         a.mark(l_done)
-
-                        # Automatic error propagation (unless suppressed by try()).
-                        if int(getattr(self, '_errprop_suppression', 0) or 0) == 0:
-                            lidp = self.new_label_id()
-                            l_noerr = f"errprop_noerr_{lidp}"
-                            # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
-                            a.mov_r64_r64("r10", "rax")
-                            a.and_r64_imm("r10", 7)
-                            a.cmp_r64_imm("r10", TAG_PTR)
-                            a.jcc("ne", l_noerr)
-                            a.mov_r32_membase_disp("r10d", "rax", 0)
-                            a.cmp_r32_imm("r10d", OBJ_STRUCT)
-                            a.jcc("ne", l_noerr)
-                            a.mov_r32_membase_disp("r10d", "rax", 4)
-                            a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
-                            a.jcc("ne", l_noerr)
-
-                            if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
-                                a.jmp(self.func_ret_label)
-                            else:
-                                a.mov_r64_r64("rcx", "rax")
-                                a.call('fn_unhandled_error_exit')
-
-                            a.mark(l_noerr)
+                        self._emit_auto_errprop()
 
                         # --- GC safety: clear temps + outgoing stack args ---
                         self.free_expr_temps(total * 8)
@@ -4824,33 +4835,7 @@ class CodegenExpr:
                 # Only inline if the identifier refers to the global function binding.
                 if b is None or getattr(b, 'kind', None) == 'global':
                     self._emit_inline_call(e, callee_name)
-
-                    # Automatic error propagation for inlined calls (unless suppressed by try()).
-                    # Normally this is emitted after a real CALL; inlining removes that site.
-                    if int(getattr(self, '_errprop_suppression', 0) or 0) == 0:
-                        lidp = self.new_label_id()
-                        l_noerr = f"errprop_noerr_{lidp}"
-                        # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
-                        a.mov_r64_r64("r10", "rax")
-                        a.and_r64_imm("r10", 7)
-                        a.cmp_r64_imm("r10", TAG_PTR)
-                        a.jcc("ne", l_noerr)
-                        a.mov_r32_membase_disp("r10d", "rax", 0)
-                        a.cmp_r32_imm("r10d", OBJ_STRUCT)
-                        a.jcc("ne", l_noerr)
-                        a.mov_r32_membase_disp("r10d", "rax", 4)
-                        a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
-                        a.jcc("ne", l_noerr)
-
-                        # Is error: propagate to caller (function return) or abort at top-level.
-                        if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
-                            a.jmp(self.func_ret_label)
-                        else:
-                            a.mov_r64_r64("rcx", "rax")
-                            a.call('fn_unhandled_error_exit')
-
-                        a.mark(l_noerr)
-
+                    self._emit_auto_errprop()
                     return
 
             # Extern calls are handled via stub-only OBJ_BUILTIN values.
@@ -4958,6 +4943,19 @@ class CodegenExpr:
             # the member is missing / not callable. Plain indirect calls keep the historical
             # behavior of evaluating to void on type mismatch.
             callee_is_member = hasattr(ml, 'Member') and isinstance(callee_expr, ml.Member)
+            direct_guard_obj_lbl = None
+            direct_guard_fn_lbl = None
+            if not callee_is_member and callee_name is not None and callee_name in (getattr(self, 'user_functions', {}) or {}):
+                b = None
+                try:
+                    b = self.resolve_binding(callee_name)
+                except Exception:
+                    b = None
+                if b is None or getattr(b, 'kind', None) == 'global':
+                    obj_lbl = (getattr(self, 'function_static_obj_labels', {}) or {}).get(callee_name)
+                    if isinstance(obj_lbl, str) and obj_lbl:
+                        direct_guard_obj_lbl = obj_lbl
+                        direct_guard_fn_lbl = f"fn_user_{callee_name}"
             callee_desc = None
             if callee_is_member:
                 def _qname_parts_any(x: Any) -> Optional[List[str]]:
@@ -5018,6 +5016,38 @@ class CodegenExpr:
                 else:
                     self.emit_expr(arg)
                 a.mov_rsp_disp32_rax(base + (i + 1) * 8)
+
+            devirt_done_lbl = None
+            if direct_guard_obj_lbl and direct_guard_fn_lbl:
+                l_devirt_indirect = f"icall_devirt_indirect_{self.new_label_id()}"
+                devirt_done_lbl = f"icall_devirt_done_{self.new_label_id()}"
+
+                # Compare the already-evaluated callee value against the expected immutable
+                # top-level function object. If the global binding was rebound while still
+                # preserving call semantics, we fall back to the generic indirect path.
+                a.mov_r64_membase_disp("r11", "rsp", base)
+                a.lea_rax_rip(direct_guard_obj_lbl)
+                a.cmp_r64_r64("r11", "rax")
+                a.jcc("ne", l_devirt_indirect)
+
+                if nargs >= 1:
+                    a.mov_r64_membase_disp("rcx", "rsp", base + 8)
+                if nargs >= 2:
+                    a.mov_r64_membase_disp("rdx", "rsp", base + 16)
+                if nargs >= 3:
+                    a.mov_r64_membase_disp("r8", "rsp", base + 24)
+                if nargs >= 4:
+                    a.mov_r64_membase_disp("r9", "rsp", base + 32)
+                if nargs > 4:
+                    for i in range(4, nargs):
+                        a.mov_r64_membase_disp("r10", "rsp", base + (i + 1) * 8)
+                        a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "r10")
+
+                a.mov_r64_imm64("r10", enc_void())
+                a.call(direct_guard_fn_lbl)
+                self._emit_auto_errprop()
+                a.jmp(devirt_done_lbl)
+                a.mark(l_devirt_indirect)
 
             # Load register args (Windows x64): RCX,RDX,R8,R9
             if nargs >= 1:
@@ -5376,31 +5406,9 @@ class CodegenExpr:
                 a.mov_rax_imm64(enc_void())
 
             a.mark(l_done)
-
-            # Automatic error propagation (unless suppressed by try()).
-            if int(getattr(self, '_errprop_suppression', 0) or 0) == 0:
-                lidp = self.new_label_id()
-                l_noerr = f"errprop_noerr_{lidp}"
-                # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
-                a.mov_r64_r64("r10", "rax")
-                a.and_r64_imm("r10", 7)
-                a.cmp_r64_imm("r10", TAG_PTR)
-                a.jcc("ne", l_noerr)
-                a.mov_r32_membase_disp("r10d", "rax", 0)
-                a.cmp_r32_imm("r10d", OBJ_STRUCT)
-                a.jcc("ne", l_noerr)
-                a.mov_r32_membase_disp("r10d", "rax", 4)
-                a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
-                a.jcc("ne", l_noerr)
-
-                # Is error: propagate to caller (function return) or abort at top-level.
-                if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
-                    a.jmp(self.func_ret_label)
-                else:
-                    a.mov_r64_r64("rcx", "rax")
-                    a.call('fn_unhandled_error_exit')
-
-                a.mark(l_noerr)
+            self._emit_auto_errprop()
+            if devirt_done_lbl:
+                a.mark(devirt_done_lbl)
 
             # --- GC safety: clear temps + outgoing stack args ---
             self.free_expr_temps((nargs + 1) * 8 + diag_extra)

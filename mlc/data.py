@@ -34,6 +34,7 @@ class DataBuilder:
 
         self.data: bytearray = bytearray()
         self.labels: Dict[str, int] = {}
+        self.patches: list[tuple[int, str, str]] = []
 
     def add_u32(self, name: str, value: int) -> None:
         """Append a 32-bit little-endian integer and record its label."""
@@ -59,6 +60,11 @@ class DataBuilder:
 
         self.labels[name] = len(self.data)
         self.data += b
+
+    def add_abs64_patch(self, offset: int, target: str) -> None:
+        """Patch a qword at ``offset`` with the absolute VA of ``target``."""
+
+        self.patches.append((int(offset), str(target), "abs64"))
 
 
 class BssBuilder:
@@ -100,6 +106,7 @@ class RDataBuilder:
         self.data: bytearray = bytearray()
         # name -> (offset, length)
         self.labels: Dict[str, Tuple[int, int]] = {}
+        self.patches: list[tuple[int, str, str]] = []
 
         # --- constant pooling ---
         # Deduplicate identical constants so they land only once in the executable.
@@ -140,12 +147,24 @@ class RDataBuilder:
         # Pool identical raw blobs.
         self._intern_raw(name, b)
 
+    def add_bytes_unique(self, name: str, b: bytes) -> None:
+        """Append raw bytes without pooling and record ``name``."""
+
+        off = len(self.data)
+        self.data += b
+        self.labels[name] = (off, len(b))
+
     def pad_align(self, align: int = 8) -> None:
         """Pad with NUL bytes to reach ``align``-byte alignment."""
 
         pad = (-len(self.data)) % align
         if pad:
             self.data += b"\x00" * pad
+
+    def add_abs64_patch(self, offset: int, target: str) -> None:
+        """Patch a qword at ``offset`` with the absolute VA of ``target``."""
+
+        self.patches.append((int(offset), str(target), "abs64"))
 
     def add_obj_string(self, name: str, s: str) -> None:
         """Add a boxed string object into .rdata.
