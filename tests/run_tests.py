@@ -2189,6 +2189,38 @@ def test_extern_value_runtime(*, name: str, mlc_runner: Path) -> TestResult:
                                                   "=== DONE ===", ], timeout_compile_s=180, timeout_run_s=180, )
 
 
+def test_extern_out_value_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: first-class extern values keep the full declared ABI arity."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "extern_out_value_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['import std.assert as t', '',
+             # MulDiv really takes 3 scalar ints; marking the last parameter as `out`
+             # exercises the callable-object arity metadata without depending on future
+             # out-parameter lowering.
+             'extern function MulDiv(a as int, b as int, out c as int) from "kernel32.dll" returns int', '',
+             'print "=== EXTERN OUT VALUE RUNTIME ==="',
+             't.assertEq(MulDiv(6, 7, 3), 14, "direct out-annotated call")', 'f = MulDiv',
+             't.assertEq(f(6, 7, 3), 14, "extern value keeps full arity")', 'print "=== DONE ==="', ]) + "\n",
+                           encoding="utf-8", )
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== EXTERN OUT VALUE RUNTIME ===",
+                "direct out-annotated call [OK]",
+                "extern value keeps full arity [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 def test_array_initializer_builtin(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime test: array(size[, fill]) supports void/default and custom fill initialization."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -2399,6 +2431,62 @@ def test_nested_closure_runtime(*, name: str, mlc_runner: Path) -> TestResult:
                 "counter after gc_collect [OK]",
                 "closure after gc_collect [OK]",
                 "plain fn after gc_collect [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
+def test_foreach_reentrant_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: foreach loop state must stay isolated per activation."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "foreach_reentrant_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['import std.assert as t', '',
+             'function sumTree(n)', '  total = 0', '  for each x in [1, 2, 3]', '    total = total + x',
+             '    if n > 0 and x == 1 then', '      total = total + sumTree(n - 1)', '    end if', '  end for',
+             '  return total', 'end function', '',
+             'print "=== FOREACH REENTRANT ==="',
+             't.assertEq(sumTree(1), 12, "foreach recursion keeps state isolated")', 'print "=== DONE ==="', ]) + "\n",
+                           encoding="utf-8", )
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== FOREACH REENTRANT ===",
+                "foreach recursion keeps state isolated [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
+def test_foreach_gc_root_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: foreach must keep temporary iterables alive across GC."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "foreach_gc_root_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['import std.assert as t', '',
+             'print "=== FOREACH GC ROOT ==="', 'gc_set_limit(65536)', 'sum = 0', 'for each x in [1, 2, 3, 4]',
+             '  tmp = array(2000, 123)', '  gc_collect()', '  sum = sum + x', 'end for',
+             't.assertEq(sum, 10, "foreach keeps iterable alive across gc")', 'print "=== DONE ==="', ]) + "\n",
+                           encoding="utf-8", )
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== FOREACH GC ROOT ===",
+                "foreach keeps iterable alive across gc [OK]",
                 "=== DONE ===",
             ],
             timeout_compile_s=180,
@@ -2729,6 +2817,9 @@ def main() -> int:
 
     # Runtime: extern stubs are first-class values
     tests.append(lambda: test_extern_value_runtime(name="extern: value semantics + GC", mlc_runner=mlc_runner))
+    tests.append(lambda: test_extern_out_value_runtime(name="extern: out value keeps full arity", mlc_runner=mlc_runner))
+    tests.append(lambda: test_foreach_reentrant_runtime(name="foreach: reentrant state isolation", mlc_runner=mlc_runner))
+    tests.append(lambda: test_foreach_gc_root_runtime(name="foreach: iterable survives gc", mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None

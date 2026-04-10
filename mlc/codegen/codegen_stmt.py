@@ -463,6 +463,52 @@ class CodegenStmt:
                 return vv
         return str(v)
 
+    def _foreach_state_names(self, s: Any) -> tuple[str, str, str, str]:
+        cached = getattr(s, "_ml_foreach_state_names", None)
+        if (
+            isinstance(cached, tuple)
+            and len(cached) == 4
+            and all(isinstance(x, str) and x for x in cached)
+        ):
+            return cached
+        line = getattr(s, "_line", None)
+        col = getattr(s, "_col", None)
+        if (not isinstance(line, int) or line <= 0) or (not isinstance(col, int) or col < 0):
+            pos = getattr(s, "pos", None)
+            try:
+                if not isinstance(line, int) or line <= 0:
+                    line = getattr(pos, "line", None)
+                if not isinstance(col, int) or col < 0:
+                    col = getattr(pos, "col", None)
+            except Exception:
+                pass
+            if isinstance(pos, (tuple, list)):
+                if len(pos) >= 1 and (not isinstance(line, int) or line <= 0):
+                    try:
+                        line = int(pos[0])
+                    except Exception:
+                        pass
+                if len(pos) >= 2 and (not isinstance(col, int) or col < 0):
+                    try:
+                        col = int(pos[1])
+                    except Exception:
+                        pass
+        if isinstance(line, int) and line > 0 and isinstance(col, int) and col >= 0:
+            fid = f"l{line}_c{col}_{self._foreach_var_name(s)}"
+        else:
+            fid = f"id_{id(s)}"
+        names = (
+            f"__foreach_it_{fid}",
+            f"__foreach_i_{fid}",
+            f"__foreach_len_{fid}",
+            f"__foreach_top_ptr_{fid}",
+        )
+        try:
+            setattr(s, "_ml_foreach_state_names", names)
+        except Exception:
+            pass
+        return names
+
     def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
         ml = self.ml
         if expr is None:
@@ -2470,24 +2516,7 @@ class CodegenStmt:
         if self._is_foreach_stmt(s):
             # for each <var> in <iterable>  (arrays + strings + bytes)
             fid = self.new_label_id()
-            it_lbl = f"__foreach_it_{fid}"
-            i_lbl = f"__foreach_i_{fid}"
-            len_lbl = f"__foreach_len_{fid}"
-            top_ptr_lbl = f"__foreach_top_ptr_{fid}"
-
-            self.data.add_u64(it_lbl, 0)
-            self.data.add_u32(i_lbl, 0)
-            self.data.add_u32(len_lbl, 0)
-            self.data.add_u64(top_ptr_lbl, 0)
-
-            # it = iterable
-            self.emit_expr(s.iterable)
-            a.mov_rip_qword_rax(it_lbl)
-
-            # i = 0
-            a.xor_r32_r32("eax", "eax")  # xor eax,eax
-            a.mov_rip_dword_eax(i_lbl)
-            a.mov_rip_dword_eax(len_lbl)
+            it_name, i_name, len_name, top_ptr_name = self._foreach_state_names(s)
 
             setup = f"foreach_setup_{fid}"
             top_arr = f"foreach_top_arr_{fid}"
@@ -2512,13 +2541,76 @@ class CodegenStmt:
             elif hasattr(self, "ensure_binding_for_write"):
                 self.ensure_binding_for_write(var_name, node=s)
 
+            state_stack = bool(getattr(self, "in_function", False))
+            state_slots = {}
+            if state_stack:
+                for nm in (it_name, i_name, len_name, top_ptr_name):
+                    if hasattr(self, "declare_fresh_binding"):
+                        b_state = self.declare_fresh_binding(nm, node=s)
+                    elif hasattr(self, "ensure_binding_for_write"):
+                        b_state = self.ensure_binding_for_write(nm, node=s)
+                    else:
+                        raise self.error(f"Internal error: missing scope binding helper for '{nm}'", s)
+                    off = getattr(b_state, "offset", None)
+                    if off is None:
+                        raise self.error(f"Internal error: missing foreach state slot for '{nm}'", s)
+                    state_slots[nm] = int(off)
+            else:
+                for nm in (it_name, i_name, len_name, top_ptr_name):
+                    if hasattr(self, "declare_global_binding"):
+                        b = self.declare_global_binding(nm, node=s)
+                        state_slots[nm] = str(getattr(b, "label", "") or "")
+                    else:
+                        state_slots[nm] = self.ensure_var(nm)
+
+            it_slot = state_slots[it_name]
+            i_slot = state_slots[i_name]
+            len_slot = state_slots[len_name]
+            top_ptr_slot = state_slots[top_ptr_name]
+
+            def _state_store_qword_rax(slot) -> None:
+                if state_stack:
+                    a.mov_rsp_disp32_rax(int(slot))
+                else:
+                    a.mov_rip_qword_rax(str(slot))
+
+            def _state_load_qword_rax(slot) -> None:
+                if state_stack:
+                    a.mov_rax_rsp_disp32(int(slot))
+                else:
+                    a.mov_rax_rip_qword(str(slot))
+
+            def _state_store_dword_eax(slot) -> None:
+                if state_stack:
+                    a.mov_membase_disp_r32("rsp", int(slot), "eax")
+                else:
+                    a.mov_rip_dword_eax(str(slot))
+
+            def _state_load_dword_eax(slot) -> None:
+                if state_stack:
+                    a.mov_r32_membase_disp("eax", "rsp", int(slot))
+                else:
+                    a.mov_eax_rip_dword(str(slot))
+
+            def _state_store_zero_qword(slot) -> None:
+                a.xor_r32_r32("eax", "eax")
+                _state_store_qword_rax(slot)
+
+            # Keep the iterable state activation-local and rooted so recursive/re-entrant
+            # calls and collections inside the loop body cannot corrupt it.
+            self.emit_expr(s.iterable)
+            _state_store_qword_rax(it_slot)
+            _state_store_zero_qword(i_slot)
+            _state_store_zero_qword(len_slot)
+            _state_store_zero_qword(top_ptr_slot)
+
             self.break_stack.append(
                 BreakableCtx(kind='loop', break_label=end, continue_label=cont, break_depth=depth_outer,
                              continue_depth=loop_depth))
 
             a.mark(setup)
             # r14 = it
-            a.mov_rax_rip_qword(it_lbl)
+            _state_load_qword_rax(it_slot)
             a.mov_r64_r64("r14", "rax")  # mov r14,rax
 
             # edx = [r14] (obj type)
@@ -2538,36 +2630,36 @@ class CodegenStmt:
             a.mark(l_arr)
             a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
             a.mov_r32_r32("eax", "edx")
-            a.mov_rip_dword_eax(len_lbl)
+            _state_store_dword_eax(len_slot)
             a.lea_rax_rip(top_arr)
-            a.mov_rip_qword_rax(top_ptr_lbl)
+            _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_arr)
 
             a.mark(l_bytes)
             a.mov_r32_membase_disp("edx", "r14", 4)
             a.mov_r32_r32("eax", "edx")
-            a.mov_rip_dword_eax(len_lbl)
+            _state_store_dword_eax(len_slot)
             a.lea_rax_rip(top_bytes)
-            a.mov_rip_qword_rax(top_ptr_lbl)
+            _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_bytes)
 
             a.mark(l_str)
             a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
             a.mov_r32_r32("eax", "edx")
-            a.mov_rip_dword_eax(len_lbl)
+            _state_store_dword_eax(len_slot)
             a.lea_rax_rip(top_str)
-            a.mov_rip_qword_rax(top_ptr_lbl)
+            _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_str)
 
             # ---- array path ----
             a.mark(top_arr)
-            a.mov_eax_rip_dword(i_lbl)
+            _state_load_dword_eax(i_slot)
             a.mov_r32_r32("ecx", "eax")
-            a.mov_eax_rip_dword(len_lbl)
+            _state_load_dword_eax(len_slot)
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
-            a.mov_rax_rip_qword(it_lbl)
+            _state_load_qword_rax(it_slot)
             a.mov_r64_r64("r14", "rax")
             a.mov_r64_mem_bis("rax", "r14", "rcx", 8, 8)
             self.emit_store_var(var_name, s)
@@ -2575,13 +2667,13 @@ class CodegenStmt:
 
             # ---- bytes path ----
             a.mark(top_bytes)
-            a.mov_eax_rip_dword(i_lbl)
+            _state_load_dword_eax(i_slot)
             a.mov_r32_r32("ecx", "eax")
-            a.mov_eax_rip_dword(len_lbl)
+            _state_load_dword_eax(len_slot)
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
-            a.mov_rax_rip_qword(it_lbl)
+            _state_load_qword_rax(it_slot)
             a.mov_r64_r64("r14", "rax")
 
             # addr = r14 + 8 + i
@@ -2600,13 +2692,13 @@ class CodegenStmt:
 
             # ---- string path ----
             a.mark(top_str)
-            a.mov_eax_rip_dword(i_lbl)
+            _state_load_dword_eax(i_slot)
             a.mov_r32_r32("ecx", "eax")
-            a.mov_eax_rip_dword(len_lbl)
+            _state_load_dword_eax(len_slot)
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")  # cmp ecx,edx
             a.jcc('ge', end)
-            a.mov_rax_rip_qword(it_lbl)
+            _state_load_qword_rax(it_slot)
             a.mov_r64_r64("r14", "rax")
 
             # addr = r14 + 8 + i
@@ -2628,12 +2720,12 @@ class CodegenStmt:
 
             a.mark(cont)
             # i++ (reload i because body may clobber ECX)
-            a.mov_eax_rip_dword(i_lbl)
+            _state_load_dword_eax(i_slot)
             a.mov_r32_r32("ecx", "eax")  # mov ecx,eax
             a.inc_r32("ecx")  # inc ecx
             a.mov_r32_r32("eax", "ecx")  # mov eax,ecx
-            a.mov_rip_dword_eax(i_lbl)
-            a.mov_rax_rip_qword(top_ptr_lbl)
+            _state_store_dword_eax(i_slot)
+            _state_load_qword_rax(top_ptr_slot)
             a.jmp_r64("rax")
 
             a.mark(end)
@@ -3416,11 +3508,10 @@ class CodegenStmt:
             if not stub_lbl:
                 continue
             params = list((sig or {}).get('params', []) or [])
-            arity = 0
-            for pp in params:
-                if isinstance(pp, dict) and bool(pp.get('out', False)):
-                    continue
-                arity += 1
+            # Keep the first-class callable object metadata aligned with the actual stub ABI.
+            # Out-parameter lowering is still experimental, but today both direct calls and
+            # stub calls consume the full declared parameter list.
+            arity = len(params)
             obj_lbl = f"obj_extern_static_{len(self.rdata.labels)}"
             self.rdata.pad_align(8)
             self.rdata.add_bytes_unique(
@@ -3525,9 +3616,9 @@ class CodegenStmt:
                     m = max(m, max_calls_expr(ss.start))
                     m = max(m, max_calls_expr(ss.end))
                     m = max(m, max_calls_stmts(ss.body))
-                elif isinstance(ss, self.ml.ForEach):
-                    m = max(m, max_calls_expr(ss.iterable))
-                    m = max(m, max_calls_stmts(ss.body))
+                elif self._is_foreach_stmt(ss):
+                    m = max(m, max_calls_expr(getattr(ss, 'iterable', None)))
+                    m = max(m, max_calls_stmts(list(getattr(ss, 'body', []) or [])))
                 elif isinstance(ss, self.ml.Switch):
                     m = max(m, max_calls_expr(ss.expr))
                     for case in ss.cases:
@@ -4386,15 +4477,18 @@ class CodegenStmt:
                     analyze_block(st.body)
                     self.pop_scope(emit_cleanup=False)
                     continue
-                if isinstance(st, ml.ForEach):
-                    analyze_expr(st.iterable)
+                if self._is_foreach_stmt(st):
+                    analyze_expr(getattr(st, 'iterable', None))
                     self.push_scope()
                     # loop var is an implicit *fresh* declaration (must not clobber outer vars)
-                    b = self.declare_local_binding(st.var, node=st, offset=None)
+                    b = self.declare_local_binding(getattr(st, 'var', None), node=st, offset=None)
                     if isinstance(st.var, str) and st.var in boxed_names:
                         b.boxed = True
-                    self.register_decl_site_binding(st, st.var, b)
-                    analyze_block(st.body)
+                    self.register_decl_site_binding(st, getattr(st, 'var', None), b)
+                    for _nm in self._foreach_state_names(st):
+                        _b_hidden = self.declare_local_binding(_nm, node=st, offset=None)
+                        self.register_decl_site_binding(st, _nm, _b_hidden)
+                    analyze_block(list(getattr(st, 'body', []) or []))
                     self.pop_scope(emit_cleanup=False)
                     continue
                 if isinstance(st, ml.Switch):
