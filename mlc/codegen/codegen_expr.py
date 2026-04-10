@@ -2188,20 +2188,22 @@ class CodegenExpr:
                     a.mark(lbl_end)
                     return
 
-            # normal binary: preserve left/right across calls by spilling to nested-safe temp slots
-            base = self.alloc_expr_temps(16)
+            # normal binary: preserve left/right in local temp homes and keep them
+            # in non-volatile registers when possible. The home slots stay part of
+            # the GC root range, and the assembler spills dirty temp regs before any call.
+            left_tmp = self.alloc_expr_value_temp()
+            right_tmp = self.alloc_expr_value_temp()
             self.emit_expr(e.left)
-            a.mov_rsp_disp32_rax(base + 0)
+            self.expr_value_temp_store_rax(left_tmp)
             self.emit_expr(e.right)
-            a.mov_rsp_disp32_rax(base + 8)
+            self.expr_value_temp_store_rax(right_tmp)
 
             # load left -> r10, right -> r11
-            a.mov_rax_rsp_disp32(base + 0)
-            a.mov_r10_rax()
-            a.mov_rax_rsp_disp32(base + 8)
-            a.mov_r11_rax()
+            self.expr_value_temp_load("r10", left_tmp)
+            self.expr_value_temp_load("r11", right_tmp)
 
-            self.free_expr_temps(16)
+            self.free_expr_value_temp(right_tmp)
+            self.free_expr_value_temp(left_tmp)
 
             # -------------------------
             # Numeric ops (int + float)
@@ -3016,9 +3018,10 @@ class CodegenExpr:
             a.mov_rcx_imm32(size)
             a.call('fn_alloc')
 
-            # spill base pointer (rax) into expression-temp area
-            base_off = self.alloc_expr_temps(8)
-            a.mov_rsp_disp32_rax(base_off)
+            # Keep the array base in a non-volatile temp reg when possible while
+            # retaining a rooted home slot for nested allocations inside elements.
+            base_tmp = self.alloc_expr_value_temp()
+            self.expr_value_temp_store_rax(base_tmp)
 
             # base pointer in r11 for header writes
             a.mov_r11_rax()
@@ -3033,14 +3036,14 @@ class CodegenExpr:
             for i, it in enumerate(e.items):
                 self.emit_expr(it)
                 # restore outer base pointer into r11 (do NOT clobber rax)
-                a.mov_r64_membase_disp("r11", "rsp", base_off)  # mov r11,[rsp+base_off]
+                self.expr_value_temp_load("r11", base_tmp)
                 disp = 8 + i * 8
                 # mov [r11+disp32], rax
                 a.mov_membase_disp_r64("r11", disp, "rax")
 
             # return ptr in rax
-            a.mov_rax_rsp_disp32(base_off)
-            self.free_expr_temps(8)
+            self.expr_value_temp_load("rax", base_tmp)
+            self.free_expr_value_temp(base_tmp)
             return
 
         if isinstance(e, ml.Index):
@@ -3072,8 +3075,10 @@ class CodegenExpr:
             a.jmp(l_done)
             a.mark(l_nvoid)
 
-            # spill target (rax) into expr temp so index eval can't clobber it
-            base_off = self.alloc_expr_temps(8)
+            # Keep the indexed base in a local temp register when possible, while
+            # still backing it with a rooted home slot for nested allocations.
+            base_tmp = self.alloc_expr_value_temp()
+            base_off = int(base_tmp.off)
             # NOTE: Some nested emitters (notably inline expansion cleanup)
             # may temporarily restore expr_temp_top to an earlier checkpoint.
             # That can break LIFO freeing here and cause us to clear the *wrong*
@@ -3091,7 +3096,7 @@ class CodegenExpr:
                         self.expr_temp_top = need_top
             except Exception:
                 pass
-            a.mov_rsp_disp32_rax(base_off)
+            self.expr_value_temp_store_rax(base_tmp)
 
             # eval index
             self.emit_expr(e.index)
@@ -3152,10 +3157,10 @@ class CodegenExpr:
             a.sar_r64_imm8("rcx", 3)
 
             # restore target -> r11
-            a.mov_r64_membase_disp("r11", "rsp", base_off)
+            self.expr_value_temp_load("r11", base_tmp)
 
             # free temp (clobbers RAX only, safe here)
-            self.free_expr_temps(8)
+            self.free_expr_value_temp(base_tmp)
 
             # --- safety: target must be TAG_PTR and non-null ---
             a.mov_r64_r64("r10", "r11")

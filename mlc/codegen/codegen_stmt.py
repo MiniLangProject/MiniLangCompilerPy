@@ -1856,6 +1856,7 @@ class CodegenStmt:
 
                 if cs.kind == 'values':
                     # multi-value case: if any value equals the switch value -> match
+                    self.reserve_expr_temp_regs("r12")
                     for j, ve in enumerate(cs.values):
                         l_val_next = f"switch_val_next_{sid}_{i}_{j}"
 
@@ -1876,6 +1877,7 @@ class CodegenStmt:
                         a.jmp(case_body_labels[i])
 
                         a.mark(l_val_next)
+                    self.release_expr_temp_regs("r12")
 
                     # no value matched
                     a.jmp(l_next)
@@ -2190,7 +2192,9 @@ class CodegenStmt:
             a.mov_r64_r64("r12", "rax")
 
             # Evaluate value, keep in non-volatile reg r13
+            self.reserve_expr_temp_regs("r12")
             self.emit_expr(getattr(s, 'expr', None))
+            self.release_expr_temp_regs("r12")
             a.mov_r64_r64("r13", "rax")
 
             fid = self.new_label_id()

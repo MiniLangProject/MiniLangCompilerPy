@@ -16,6 +16,15 @@ from ..pe import KERNEL32, MSVCRT
 from ..tools import align_up, enc_int, enc_void
 
 
+class ExprValueTemp:
+    __slots__ = ("off", "reg", "dirty")
+
+    def __init__(self, off: int, reg: Optional[str]) -> None:
+        self.off = int(off)
+        self.reg = str(reg) if isinstance(reg, str) and reg else None
+        self.dirty = False
+
+
 class CodegenCore:
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
@@ -75,6 +84,10 @@ class CodegenCore:
         # This lets us emit only the helpers that are needed by the compiled program.
         self.used_helpers = set()
         self._emitted_helpers = set()
+        self._expr_temp_reg_order = ("r12", "r13", "r14")
+        self._expr_temp_reg_live: list[ExprValueTemp] = []
+        self._expr_temp_reg_live_by_reg: Dict[str, ExprValueTemp] = {}
+        self._expr_temp_reg_reserved: Dict[str, int] = {}
 
         def _track_call_label(lbl: str) -> None:
             if isinstance(lbl, str) and lbl.startswith('fn_') and not lbl.startswith('fn_user_'):
@@ -82,6 +95,7 @@ class CodegenCore:
 
         # Asm.call() invokes this hook (if present).
         self.asm._on_call_label = _track_call_label
+        self.asm._before_call = self._spill_live_expr_value_temps
 
         self.rdata = RDataBuilder()
         self.data = DataBuilder()
@@ -496,6 +510,110 @@ class CodegenCore:
         if self.expr_temp_top < 0:
             self.expr_temp_top = 0
         self._sync_expr_temp_root_count()
+
+    def _spill_live_expr_value_temps(self) -> None:
+        for tmp in list(getattr(self, '_expr_temp_reg_live', []) or []):
+            if not isinstance(tmp, ExprValueTemp):
+                continue
+            reg = getattr(tmp, 'reg', None)
+            if not reg or not bool(getattr(tmp, 'dirty', False)):
+                continue
+            self.asm.mov_membase_disp_r64("rsp", int(tmp.off), str(reg))
+            tmp.dirty = False
+
+    def reserve_expr_temp_regs(self, *regs: str) -> None:
+        for reg in regs:
+            reg_s = str(reg or "").lower()
+            if not reg_s:
+                continue
+            live = (getattr(self, '_expr_temp_reg_live_by_reg', {}) or {}).get(reg_s)
+            if isinstance(live, ExprValueTemp):
+                if bool(getattr(live, 'dirty', False)):
+                    self.asm.mov_membase_disp_r64("rsp", int(live.off), reg_s)
+                    live.dirty = False
+                live.reg = None
+                try:
+                    self._expr_temp_reg_live.remove(live)
+                except ValueError:
+                    pass
+                try:
+                    self._expr_temp_reg_live_by_reg.pop(reg_s, None)
+                except Exception:
+                    pass
+            self._expr_temp_reg_reserved[reg_s] = int(self._expr_temp_reg_reserved.get(reg_s, 0) or 0) + 1
+
+    def release_expr_temp_regs(self, *regs: str) -> None:
+        for reg in regs:
+            reg_s = str(reg or "").lower()
+            if not reg_s:
+                continue
+            cnt = int(self._expr_temp_reg_reserved.get(reg_s, 0) or 0)
+            if cnt <= 1:
+                self._expr_temp_reg_reserved.pop(reg_s, None)
+            else:
+                self._expr_temp_reg_reserved[reg_s] = cnt - 1
+
+    def alloc_expr_value_temp(self, *, prefer_reg: bool = True) -> ExprValueTemp:
+        off = self.alloc_expr_temps(8)
+        reg = None
+        if prefer_reg:
+            for cand in tuple(getattr(self, '_expr_temp_reg_order', ()) or ()):
+                cand_s = str(cand).lower()
+                if (cand_s not in (getattr(self, '_expr_temp_reg_live_by_reg', {}) or {})
+                        and int((getattr(self, '_expr_temp_reg_reserved', {}) or {}).get(cand_s, 0) or 0) <= 0):
+                    reg = cand_s
+                    break
+        tmp = ExprValueTemp(off, reg)
+        if reg:
+            self._expr_temp_reg_live.append(tmp)
+            self._expr_temp_reg_live_by_reg[reg] = tmp
+        return tmp
+
+    def expr_value_temp_store_rax(self, tmp: ExprValueTemp) -> None:
+        if getattr(tmp, 'reg', None):
+            self.asm.mov_r64_r64(str(tmp.reg), "rax")
+            tmp.dirty = True
+            return
+        self.asm.mov_rsp_disp32_rax(int(tmp.off))
+
+    def expr_value_temp_store_reg(self, tmp: ExprValueTemp, reg: str) -> None:
+        reg_s = str(reg)
+        if getattr(tmp, 'reg', None):
+            self.asm.mov_r64_r64(str(tmp.reg), reg_s)
+            tmp.dirty = True
+            return
+        self.asm.mov_membase_disp_r64("rsp", int(tmp.off), reg_s)
+
+    def expr_value_temp_load(self, dst: str, tmp: ExprValueTemp) -> None:
+        dst_s = str(dst)
+        reg = getattr(tmp, 'reg', None)
+        if reg:
+            if dst_s.lower() != str(reg).lower():
+                self.asm.mov_r64_r64(dst_s, str(reg))
+            return
+        self.asm.mov_r64_membase_disp(dst_s, "rsp", int(tmp.off))
+
+    def expr_value_temp_offset(self, tmp: ExprValueTemp) -> int:
+        reg = getattr(tmp, 'reg', None)
+        if reg and bool(getattr(tmp, 'dirty', False)):
+            self.asm.mov_membase_disp_r64("rsp", int(tmp.off), str(reg))
+            tmp.dirty = False
+        return int(tmp.off)
+
+    def free_expr_value_temp(self, tmp: ExprValueTemp) -> None:
+        try:
+            self._expr_temp_reg_live.remove(tmp)
+        except ValueError:
+            pass
+        reg = getattr(tmp, 'reg', None)
+        if reg:
+            try:
+                self._expr_temp_reg_live_by_reg.pop(str(reg).lower(), None)
+            except Exception:
+                pass
+            tmp.reg = None
+            tmp.dirty = False
+        self.free_expr_temps(8)
 
     def ensure_var(self, name: str) -> str:
         if name in self.var_slots:
