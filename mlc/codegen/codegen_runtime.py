@@ -8,7 +8,7 @@ an unhandled-error abort helper).
 from __future__ import annotations
 
 from ..constants import (CALLSTAT_STRUCT_ID, ERROR_STRUCT_ID, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE,
-                         OBJ_ARRAY, OBJ_BUILTIN, OBJ_BYTES, OBJ_CLOSURE, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING, OBJ_STRUCT,
+                         OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BUILTIN, OBJ_BYTES, OBJ_CLOSURE, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING, OBJ_STRUCT,
                          OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_FLOAT, TAG_INT, TAG_PTR, TAG_VOID, )
 from ..tools import enc_bool, enc_int, enc_void
 
@@ -1124,6 +1124,8 @@ class CodegenRuntime:
         a.jcc('e', l_str)
         a.cmp_r32_imm("edx", OBJ_ARRAY)
         a.jcc('e', l_arr)
+        a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+        a.jcc('e', l_arr)
         a.cmp_r32_imm("edx", OBJ_BYTES)
         a.jcc('e', l_bytes)
         a.cmp_r32_imm("edx", OBJ_FLOAT)
@@ -1281,6 +1283,8 @@ class CodegenRuntime:
         a.cmp_r32_imm("edx", OBJ_STRING)
         a.jcc('e', l_str)
         a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_arr)
+        a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
         a.jcc('e', l_arr)
         a.cmp_r32_imm("edx", OBJ_BYTES)
         a.jcc('e', l_bytes)
@@ -1688,15 +1692,18 @@ class CodegenRuntime:
         # type1 in eax, type2 in edx
         a.mov_r32_membase_disp("eax", "r10", 0)  # mov eax,[r10]
         a.mov_r32_membase_disp("edx", "r11", 0)  # mov edx,[r11]
-        a.cmp_r32_r32("eax", "edx")  # cmp eax,edx
-        a.jcc('ne', l_false)
 
         # if type == OBJ_STRING
         a.cmp_r32_imm("eax", OBJ_STRING)  # cmp eax,imm8
         l_is_arr = f"vale_it_is_arr_{lid}"
         l_is_flt = f"vale_it_is_flt_{lid}"
         l_is_other = f"vale_it_is_other_{lid}"
+        l_arr_pair = f"vale_it_arr_pair_{lid}"
+        l_arr_scan = f"vale_it_arr_scan_{lid}"
+        l_type_mismatch = f"vale_it_type_mismatch_{lid}"
         a.jcc('ne', l_is_arr)
+        a.cmp_r32_r32("eax", "edx")  # cmp eax,edx
+        a.jcc('ne', l_false)
         # call fn_str_eq(r10,r11) -> bool in rax
         a.mov_r64_r64("rcx", "r10")  # mov rcx,r10
         a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
@@ -1705,10 +1712,20 @@ class CodegenRuntime:
         a.jcc('ne', l_false)
         a.jmp(l_loop)
 
-        # if type == OBJ_ARRAY
+        # if type == OBJ_ARRAY / OBJ_ARRAY_IMM
         a.mark(l_is_arr)
         a.cmp_r32_imm("eax", OBJ_ARRAY)
-        a.jcc('ne', l_is_flt)
+        a.jcc('e', l_arr_pair)
+        a.cmp_r32_imm("eax", OBJ_ARRAY_IMM)
+        a.jcc('e', l_arr_pair)
+        a.jmp(l_is_flt)
+
+        a.mark(l_arr_pair)
+        a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_arr_scan)
+        a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+        a.jcc('ne', l_type_mismatch)
+        a.mark(l_arr_scan)
         # Compare lengths
         a.mov_r32_membase_disp("ebx", "r10", 4)  # mov ebx,[r10+4]
         a.mov_r32_membase_disp("ecx", "r11", 4)  # mov ecx,[r11+4]
@@ -1757,6 +1774,8 @@ class CodegenRuntime:
 
         # if type == OBJ_FLOAT
         a.mark(l_is_flt)
+        a.cmp_r32_r32("eax", "edx")
+        a.jcc('ne', l_type_mismatch)
         a.cmp_r32_imm("eax", OBJ_FLOAT)
         a.jcc('ne', l_is_other)
         # Compare doubles: NaN => false
@@ -1769,6 +1788,7 @@ class CodegenRuntime:
 
         # unknown ptr types -> false (identity already handled)
         a.mark(l_is_other)
+        a.mark(l_type_mismatch)
         a.jmp(l_false)
 
         # ---- numeric path (int/bool/float mix) ----
@@ -2150,6 +2170,8 @@ class CodegenRuntime:
         a.jcc('e', l_ok)
         a.cmp_r32_imm('edx', OBJ_ARRAY)
         a.jcc('e', l_ok)
+        a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
+        a.jcc('e', l_ok)
         a.cmp_r32_imm('edx', OBJ_BYTES)
         a.jcc('e', l_ok)
         a.jmp(l_ret0)
@@ -2421,8 +2443,8 @@ class CodegenRuntime:
         - If limit_bytes <= 0: disables periodic GC by setting a very large limit.
 
         Side effects:
-        - Updates gc_bytes_limit
-        - Resets gc_bytes_since to 0
+        - Updates gc_bytes_limit and gc_young_bytes_limit
+        - Resets gc_bytes_since and gc_young_bytes_since to 0
         - Returns VOID
         """
         a = self.asm
@@ -2455,11 +2477,13 @@ class CodegenRuntime:
         a.cmp_r64_imm('rax', 0)
         a.jcc('le', l_disable)
 
-        # gc_bytes_limit = rax
+        # gc_bytes_limit / gc_young_bytes_limit = rax
         a.mov_rip_qword_rax('gc_bytes_limit')
-        # gc_bytes_since = 0
+        a.mov_rip_qword_rax('gc_young_bytes_limit')
+        # gc_bytes_since / gc_young_bytes_since = 0
         a.mov_rax_imm64(0)
         a.mov_rip_qword_rax('gc_bytes_since')
+        a.mov_rip_qword_rax('gc_young_bytes_since')
         a.jmp(l_done)
 
         a.mark(l_not_int)
@@ -2467,12 +2491,14 @@ class CodegenRuntime:
         a.jmp(l_disable)
 
         a.mark(l_disable)
-        # gc_bytes_limit = very large (effectively disables periodic GC)
+        # gc_bytes_limit / gc_young_bytes_limit = very large (effectively disables periodic GC)
         a.mov_rax_imm64(0x7FFFFFFFFFFFFFFF)
         a.mov_rip_qword_rax('gc_bytes_limit')
-        # gc_bytes_since = 0
+        a.mov_rip_qword_rax('gc_young_bytes_limit')
+        # gc_bytes_since / gc_young_bytes_since = 0
         a.mov_rax_imm64(0)
         a.mov_rip_qword_rax('gc_bytes_since')
+        a.mov_rip_qword_rax('gc_young_bytes_since')
 
         a.mark(l_done)
         a.mov_rax_imm64(enc_void())

@@ -9,7 +9,7 @@ import re
 import struct
 from typing import Any, List, Optional
 
-from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
@@ -304,6 +304,53 @@ class CodegenExpr:
 
         # Not supported -> don't fold
         raise CompileError(f"Internal error: cannot emit const value type {type(v).__name__}")
+
+    def _opt_try_const_immediate_encoded(self, e: Any) -> Optional[int]:
+        """Return the encoded tagged value for a non-pointer constant expression."""
+        v = self._opt_try_const_value(e)
+        if v is self._OPT_NO:
+            return None
+        if isinstance(v, bool):
+            return int(enc_bool(bool(v)))
+        if isinstance(v, int) and not isinstance(v, bool):
+            return int(enc_int(int(v)))
+        if isinstance(v, float):
+            enc = try_enc_float_immediate(float(v))
+            if isinstance(enc, int):
+                return int(enc)
+        return None
+
+    def _opt_try_pure_const_array_len(self, e: Any) -> Optional[int]:
+        """Return the length of a pure constant array literal when it can skip runtime construction."""
+        ml = self.ml
+        arr_cls = getattr(ml, 'ArrayLit', None)
+        if arr_cls is None or not isinstance(e, arr_cls):
+            return None
+        items = list(getattr(e, 'items', []) or [])
+        for item in items:
+            if self._opt_try_const_value(item) is self._OPT_NO:
+                return None
+        return len(items)
+
+    def _opt_try_known_type_label(self, e: Any, *, detailed: bool = False) -> Optional[str]:
+        """Return a boxed type/typeName string label for obvious pure expressions."""
+        ml = self.ml
+        v = self._opt_try_const_value(e)
+        if v is not self._OPT_NO:
+            if isinstance(v, bool):
+                return 'obj_type_bool'
+            if isinstance(v, int) and not isinstance(v, bool):
+                return 'obj_type_int'
+            if isinstance(v, float):
+                return 'obj_type_float'
+            if isinstance(v, str):
+                return 'obj_type_string'
+        arr_len = self._opt_try_pure_const_array_len(e)
+        if arr_len is not None:
+            return 'obj_type_array'
+        if hasattr(ml, 'VoidLit') and isinstance(e, ml.VoidLit):
+            return 'obj_type_void'
+        return None
 
     def _emit_make_error_const(self, code: int, message: str) -> None:
         """Allocate and return an `error(code, message)` value in RAX.
@@ -2209,22 +2256,23 @@ class CodegenExpr:
                     a.mark(lbl_end)
                     return
 
-            # normal binary: preserve left/right in local temp homes and keep them
-            # in non-volatile registers when possible. The home slots stay part of
-            # the GC root range, and the assembler spills dirty temp regs before any call.
-            left_tmp = self.alloc_expr_value_temp()
-            right_tmp = self.alloc_expr_value_temp()
+            # Normal binary expressions may nest calls, indexing, and helper paths
+            # that transiently repurpose scratch/non-volatile registers. Keep the
+            # generic path on rooted stack homes so nested call-heavy expressions
+            # remain semantically stable; the register-backed temp allocator is
+            # still used in narrower hot paths that do not hit this hazard.
+            left_tmp = self.alloc_expr_temps(8)
+            right_tmp = self.alloc_expr_temps(8)
             self.emit_expr(e.left)
-            self.expr_value_temp_store_rax(left_tmp)
+            a.mov_rsp_disp32_rax(left_tmp)
             self.emit_expr(e.right)
-            self.expr_value_temp_store_rax(right_tmp)
+            a.mov_rsp_disp32_rax(right_tmp)
 
             # load left -> r10, right -> r11
-            self.expr_value_temp_load("r10", left_tmp)
-            self.expr_value_temp_load("r11", right_tmp)
+            a.mov_r64_membase_disp("r10", "rsp", left_tmp)
+            a.mov_r64_membase_disp("r11", "rsp", right_tmp)
 
-            self.free_expr_value_temp(right_tmp)
-            self.free_expr_value_temp(left_tmp)
+            self.free_expr_temps(16)
 
             lhs_const_int = self._opt_try_const_int(getattr(e, 'left', None))
             rhs_const_int = self._opt_try_const_int(getattr(e, 'right', None))
@@ -2603,6 +2651,8 @@ class CodegenExpr:
                 a.mark(l_bytes_after)
 
                 # ---- array concat check (list + list) ----
+                l_arr_ok1 = f"arr_add_ok1_{lid}"
+                l_arr_ok2 = f"arr_add_ok2_{lid}"
                 # operand1 must be ptr to OBJ_ARRAY
                 a.mov_rax_r10()
                 a.and_rax_imm8(7)
@@ -2611,9 +2661,12 @@ class CodegenExpr:
                 a.mov_rax_r10()
                 a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
                 a.cmp_r32_imm("edx", OBJ_ARRAY)
+                a.jcc('e', l_arr_ok1)
+                a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
                 a.jcc('ne', l_str)
 
                 # operand2 must be ptr to OBJ_ARRAY
+                a.mark(l_arr_ok1)
                 a.mov_rax_r11()
                 a.and_rax_imm8(7)
                 a.cmp_rax_imm8(TAG_PTR)
@@ -2621,9 +2674,12 @@ class CodegenExpr:
                 a.mov_rax_r11()
                 a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
                 a.cmp_r32_imm("edx", OBJ_ARRAY)
+                a.jcc('e', l_arr_ok2)
+                a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
                 a.jcc('ne', l_str)
 
                 # call fn_add_array(rcx=r10, rdx=r11)
+                a.mark(l_arr_ok2)
                 a.mov_r64_r64("rcx", "r10")  # mov rcx,r10
                 a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
                 a.call('fn_add_array')
@@ -3055,6 +3111,13 @@ class CodegenExpr:
             # so we must preserve the base pointer of the *outer* array across
             # element evaluation.
             n = len(e.items)
+            imm_items: Optional[list[int]] = []
+            for it in e.items:
+                enc = self._opt_try_const_immediate_encoded(it)
+                if enc is None:
+                    imm_items = None
+                    break
+                imm_items.append(int(enc))
             size = 8 + n * 8
             # allocate bytes via fn_alloc(size)
             a.mov_rcx_imm32(size)
@@ -3069,19 +3132,25 @@ class CodegenExpr:
             a.mov_r11_rax()
 
             # header: type/len
-            # mov dword [r11], OBJ_ARRAY
-            a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+            a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY_IMM if imm_items is not None else OBJ_ARRAY, qword=False)
             # mov dword [r11+4], n
             a.mov_membase_disp_imm32("r11", 4, n, qword=False)
 
             # fill elements
-            for i, it in enumerate(e.items):
-                self.emit_expr(it)
-                # restore outer base pointer into r11 (do NOT clobber rax)
-                self.expr_value_temp_load("r11", base_tmp)
-                disp = 8 + i * 8
-                # mov [r11+disp32], rax
-                a.mov_membase_disp_r64("r11", disp, "rax")
+            if imm_items is not None:
+                for i, enc in enumerate(imm_items):
+                    a.mov_rax_imm64(enc)
+                    self.expr_value_temp_load("r11", base_tmp)
+                    disp = 8 + i * 8
+                    a.mov_membase_disp_r64("r11", disp, "rax")
+            else:
+                for i, it in enumerate(e.items):
+                    self.emit_expr(it)
+                    # restore outer base pointer into r11 (do NOT clobber rax)
+                    self.expr_value_temp_load("r11", base_tmp)
+                    disp = 8 + i * 8
+                    # mov [r11+disp32], rax
+                    a.mov_membase_disp_r64("r11", disp, "rax")
 
             # return ptr in rax
             self.expr_value_temp_load("rax", base_tmp)
@@ -3117,10 +3186,11 @@ class CodegenExpr:
             a.jmp(l_done)
             a.mark(l_nvoid)
 
-            # Keep the indexed base in a local temp register when possible, while
-            # still backing it with a rooted home slot for nested allocations.
-            base_tmp = self.alloc_expr_value_temp()
-            base_off = int(base_tmp.off)
+            # Index expressions can nest calls and helper paths on both the
+            # target and index sides. Keep the generic base value in a rooted
+            # stack home here; the register-backed temp allocator stays enabled
+            # for narrower safe hotspots.
+            base_off = self.alloc_expr_temps(8)
             # NOTE: Some nested emitters (notably inline expansion cleanup)
             # may temporarily restore expr_temp_top to an earlier checkpoint.
             # That can break LIFO freeing here and cause us to clear the *wrong*
@@ -3138,7 +3208,7 @@ class CodegenExpr:
                         self.expr_temp_top = need_top
             except Exception:
                 pass
-            self.expr_value_temp_store_rax(base_tmp)
+            a.mov_rsp_disp32_rax(base_off)
 
             # eval index
             self.emit_expr(e.index)
@@ -3199,10 +3269,10 @@ class CodegenExpr:
             a.sar_r64_imm8("rcx", 3)
 
             # restore target -> r11
-            self.expr_value_temp_load("r11", base_tmp)
+            a.mov_r64_membase_disp("r11", "rsp", base_off)
 
             # free temp (clobbers RAX only, safe here)
-            self.free_expr_value_temp(base_tmp)
+            self.free_expr_temps(8)
 
             # --- safety: target must be TAG_PTR and non-null ---
             a.mov_r64_r64("r10", "r11")
@@ -3215,6 +3285,8 @@ class CodegenExpr:
             # dispatch by obj type
             a.mov_r32_membase_disp("edx", "r11", 0)  # type
             a.cmp_r32_imm("edx", OBJ_ARRAY)
+            a.jcc('e', l_arr)
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
             a.jcc('e', l_arr)
             a.cmp_r32_imm("edx", OBJ_STRING)
             a.jcc('e', l_str)
@@ -3884,7 +3956,18 @@ class CodegenExpr:
 
             # Builtin len(x)
             if callee_name == 'len' and len(e.args) == 1:
-                self.emit_expr(e.args[0])
+                arg = e.args[0]
+                const_len = None
+                v = self._opt_try_const_value(arg)
+                if isinstance(v, str):
+                    const_len = len(v)
+                else:
+                    const_len = self._opt_try_pure_const_array_len(arg)
+                if isinstance(const_len, int):
+                    a.mov_rax_imm64(enc_int(const_len))
+                    return
+
+                self.emit_expr(arg)
 
                 # Strict-void: len(void) must raise an error, not silently return 0.
                 lid = self.new_label_id()
@@ -4266,7 +4349,22 @@ class CodegenExpr:
 
                 # r11 = array base
                 a.mov_r11_rax()
-                a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+                if nargs == 2:
+                    lidt = self.new_label_id()
+                    l_arr_imm = f"array_init_imm_{lidt}"
+                    l_arr_type_done = f"array_init_type_done_{lidt}"
+                    a.mov_rax_rip_qword("gc_tmp0")
+                    a.mov_r64_r64("r10", "rax")
+                    a.and_r64_imm("r10", 7)
+                    a.cmp_r64_imm("r10", TAG_PTR)
+                    a.jcc("ne", l_arr_imm)
+                    a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+                    a.jmp(l_arr_type_done)
+                    a.mark(l_arr_imm)
+                    a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY_IMM, qword=False)
+                    a.mark(l_arr_type_done)
+                else:
+                    a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY_IMM, qword=False)
 
                 # header len (u32)
                 a.mov_r64_membase_disp("rax", "rsp", tmp_off)
@@ -4425,6 +4523,8 @@ class CodegenExpr:
                 a.cmp_r32_imm("edx", OBJ_BYTES)
                 a.jcc("e", l_bcopy)
                 a.cmp_r32_imm("edx", OBJ_ARRAY)
+                a.jcc("e", l_arr)
+                a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
                 a.jcc("e", l_arr)
                 a.jmp(l_fail)
 
@@ -4753,6 +4853,10 @@ class CodegenExpr:
             # Builtin typeof(x)
             if callee_name == 'typeof' and len(e.args) == 1:
                 arg = e.args[0]
+                known_lbl = self._opt_try_known_type_label(arg, detailed=False)
+                if isinstance(known_lbl, str) and known_lbl:
+                    a.lea_rax_rip(known_lbl)
+                    return
                 arg_name = _qname_of(arg)
                 if arg_name is not None:
                     arg_name = self._apply_import_alias(str(arg_name))
@@ -4780,6 +4884,10 @@ class CodegenExpr:
             # Builtin typeName(x)
             if callee_name == 'typeName' and len(e.args) == 1:
                 arg = e.args[0]
+                known_lbl = self._opt_try_known_type_label(arg, detailed=True)
+                if isinstance(known_lbl, str) and known_lbl:
+                    a.lea_rax_rip(known_lbl)
+                    return
                 arg_name = _qname_of(arg)
                 if arg_name is not None:
                     arg_name = self._apply_import_alias(str(arg_name))

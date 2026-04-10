@@ -19,7 +19,7 @@ Builtins in this module:
 
 from __future__ import annotations
 
-from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, OBJ_STRUCT, ERROR_STRUCT_ID,
+from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, OBJ_STRUCT, ERROR_STRUCT_ID,
                          TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT,
                          ERR_STRINGIFY_UNSUPPORTED, )
 from ..tools import enc_void, enc_int, enc_bool
@@ -1061,8 +1061,10 @@ Returns:
         # if OBJ_FLOAT => convert via _gcvt
         a.cmp_r32_imm("edx", OBJ_FLOAT)
         a.jcc('e', l_float)
-        # if OBJ_ARRAY => <array>
+        # if OBJ_ARRAY / OBJ_ARRAY_IMM => <array>
         a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_array)
+        a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
         a.jcc('e', l_array)
         a.cmp_r32_imm("edx", OBJ_BYTES)
         a.jcc('e', l_bytes)
@@ -1484,8 +1486,22 @@ Returns:
         a.add_r32_r32("eax", "r9d")  # add eax,r9d
         a.mov_membase_disp_r32("rsp", 48, "eax")  # mov [rsp+0x30],eax
 
+        # Output stays pointer-free only when both inputs are pointer-free arrays.
+        lid = self.new_label_id()
+        l_store_out_type = f"addarr_store_out_type_{lid}"
+        a.mov_r32_imm32("eax", OBJ_ARRAY)
+        a.mov_r32_membase_disp("r10d", "rcx", 0)
+        a.cmp_r32_imm("r10d", OBJ_ARRAY_IMM)
+        a.jcc("ne", l_store_out_type)
+        a.mov_r32_membase_disp("r10d", "rdx", 0)
+        a.cmp_r32_imm("r10d", OBJ_ARRAY_IMM)
+        a.jcc("ne", l_store_out_type)
+        a.mov_r32_imm32("eax", OBJ_ARRAY_IMM)
+        a.mark(l_store_out_type)
+        a.mov_membase_disp_r32("rsp", 52, "eax")
+
         # rcx = sizeBytes = 8 + totalLen*8
-        a.mov_r64_r64("rcx", "rax")  # mov rcx,rax
+        a.mov_r32_membase_disp("ecx", "rsp", 48)  # totalLen
         a.shl_r64_imm8("rcx", 3)  # shl rcx,3
         a.add_r64_imm("rcx", 8)  # add rcx,8
 
@@ -1495,7 +1511,8 @@ Returns:
         a.mov_rdx_rax()
 
         # header
-        a.mov_membase_disp_imm32("rdx", 0, OBJ_ARRAY, qword=False)  # mov dword [rdx],OBJ_ARRAY
+        a.mov_r32_membase_disp("ecx", "rsp", 52)  # mov ecx,[rsp+0x34]
+        a.mov_membase_disp_r32("rdx", 0, "ecx")
         a.mov_r32_membase_disp("ecx", "rsp", 48)  # mov ecx,[rsp+0x30]
         a.mov_membase_disp_r32("rdx", 4, "ecx")  # mov [rdx+4],ecx
 

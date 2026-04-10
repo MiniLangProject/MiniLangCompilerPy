@@ -2572,6 +2572,48 @@ def test_codegen_plus_minus_one_fastpaths(*, name: str, mlc_runner: Path) -> Tes
 
 
 
+def test_nested_call_in_binary_expr_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: nested helper calls inside binary expressions keep operand values stable."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "nested_call_in_binary_expr_runtime.ml"
+
+        main_ml.write_text("\n".join([
+            'import std.assert as t',
+            '',
+            'function byte_to_hex(v)',
+            '  digits = "0123456789abcdef"',
+            '  hi = (v >> 4) & 15',
+            '  lo = v & 15',
+            '  return digits[hi] + digits[lo]',
+            'end function',
+            '',
+            'print "=== NESTED CALL IN BINARY EXPR ==="',
+            'k = [0, 1, 2, 3]',
+            'acc = ""',
+            'i = 0',
+            'while i < len(k)',
+            '  acc = acc + byte_to_hex(k[i])',
+            '  i = i + 1',
+            'end while',
+            't.assertEq(acc, "00010203", "nested helper call in + expression")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== NESTED CALL IN BINARY EXPR ===",
+                "nested helper call in + expression [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestResult:
     """Codegen regression: tiny constant-trip for-loops should be unrolled."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -2647,6 +2689,205 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
                                   stdout=rr.stdout, stderr=main_asm)
 
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
+def test_immediate_array_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: immediate arrays stay semantically identical and upgrade on pointer stores."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "immediate_array_runtime.ml"
+
+        main_ml.write_text("\n".join([
+            'import std.assert as t',
+            '',
+            'print "=== IMMEDIATE ARRAY ==="',
+            'a = array(4)',
+            't.assertEq(len(a), 4, "array(size) len")',
+            't.assertEq(typeName(a[0]), "void", "array(size) default fill")',
+            't.assertEq(typeof(a), "array", "array(size) typeof")',
+            't.assertEq(typeName(a), "array", "array(size) typeName")',
+            'gc_collect()',
+            't.assertEq(typeName(a[3]), "void", "array(size) survives gc")',
+            '',
+            'b = array(3, 7)',
+            't.assertEq(b[2], 7, "array(fill int)")',
+            'gc_collect()',
+            't.assertEq(b[0], 7, "array(fill int) after gc")',
+            '',
+            'c = [1, 2, 3]',
+            't.assertEq(len(c), 3, "literal immediate array len")',
+            'gc_collect()',
+            't.assertEq(c[1], 2, "literal immediate array after gc")',
+            '',
+            'd = array(2, 0)',
+            'd[1] = "x"',
+            'gc_collect()',
+            't.assertEq(d[1], "x", "immediate array upgrades on pointer store")',
+            '',
+            'e = [1, 2] + [3, 4]',
+            't.assertEq(len(e), 4, "immediate concat len")',
+            'gc_collect()',
+            't.assertEq(e[3], 4, "immediate concat after gc")',
+            '',
+            'f = []',
+            'i = 0',
+            'while i < 4',
+            '  f = f + [i]',
+            '  i = i + 1',
+            'end while',
+            'gc_collect()',
+            't.assertEq(len(f), 4, "dynamic concat len")',
+            't.assertEq(f[0], 0, "dynamic concat first")',
+            't.assertEq(f[3], 3, "dynamic concat last")',
+            '',
+            'sum = 0',
+            'for each x in [1, 2, 3, 4]',
+            '  tmp = array(2000, 123)',
+            '  gc_collect()',
+            '  sum = sum + x',
+            'end for',
+            't.assertEq(sum, 10, "foreach over immediate array survives gc")',
+            'print "=== DONE ==="',
+        ]) + "\n", encoding="utf-8")
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== IMMEDIATE ARRAY ===",
+                "array(size) len [OK]",
+                "array(size) default fill [OK]",
+                "array(size) typeof [OK]",
+                "array(size) typeName [OK]",
+                "array(size) survives gc [OK]",
+                "array(fill int) [OK]",
+                "array(fill int) after gc [OK]",
+                "literal immediate array len [OK]",
+                "literal immediate array after gc [OK]",
+                "immediate array upgrades on pointer store [OK]",
+                "immediate concat len [OK]",
+                "immediate concat after gc [OK]",
+                "dynamic concat len [OK]",
+                "dynamic concat first [OK]",
+                "dynamic concat last [OK]",
+                "foreach over immediate array survives gc [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
+def test_codegen_literal_query_fastpaths(*, name: str, mlc_runner: Path) -> TestResult:
+    """Codegen regression: pure literal len/typeof/typeName queries should fold without helper calls."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "literal_query_fastpaths.ml"
+        exe = td_path / "literal_query_fastpaths.exe"
+        asm_path = td_path / "literal_query_fastpaths.asm"
+
+        main_ml.write_text("\n".join([
+            'function main(args)',
+            '  print(len("abcd"))',
+            '  print(typeof(1.25))',
+            '  print(typeName([1, 2, 3]))',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        cr = compile_native(
+            mlc_runner,
+            main_ml,
+            exe,
+            timeout_s=180,
+            extra_args=['--asm', '--asm-out', str(asm_path)],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        out = normalize_out(rr.stdout).strip().splitlines()
+        if out[:3] != ['4', 'float', 'array']:
+            return TestResult(name=name, status="FAIL",
+                              details="unexpected runtime output for literal query fastpath probe",
+                              stdout=rr.stdout, stderr=rr.stderr)
+
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        asm_lines = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace")).splitlines()
+        start = None
+        end = len(asm_lines)
+        for i, line in enumerate(asm_lines):
+            if line.lstrip().startswith("fn_user_main:"):
+                start = i
+                break
+        if start is None:
+            return TestResult(name=name, status="FAIL", details="fn_user_main not found in generated .asm listing")
+        for i in range(start + 1, len(asm_lines)):
+            stripped = asm_lines[i].lstrip()
+            if stripped.startswith("fn_") and re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", stripped):
+                end = i
+                break
+
+        main_asm = "\n".join(asm_lines[start:end])
+        forbidden = ["call fn_builtin_len", "call fn_typeof", "call fn_typeName"]
+        for marker in forbidden:
+            if marker in main_asm:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"literal query fastpath still called runtime helper: {marker}",
+                                  stdout=rr.stdout, stderr=main_asm)
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
+def test_codegen_young_gc_heuristic_present(*, name: str, mlc_runner: Path) -> TestResult:
+    """Codegen regression: fn_alloc should emit the young-allocation pressure counters."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "young_gc_heuristic.ml"
+        exe = td_path / "young_gc_heuristic.exe"
+        asm_path = td_path / "young_gc_heuristic.asm"
+
+        main_ml.write_text("\n".join([
+            'function main(args)',
+            '  a = array(2, 1)',
+            '  print(len(a))',
+            'end function',
+        ]) + "\n", encoding="utf-8")
+
+        cr = compile_native(
+            mlc_runner,
+            main_ml,
+            exe,
+            timeout_s=180,
+            extra_args=['--asm', '--asm-out', str(asm_path)],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        asm_txt = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
+        required = ["gc_young_bytes_since", "gc_young_bytes_limit"]
+        for marker in required:
+            if marker not in asm_txt:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"young-allocation GC heuristic marker missing from asm: {marker}",
+                                  stdout=cr.stdout, stderr=asm_txt)
+
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr="")
 
 
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
@@ -2975,8 +3216,15 @@ def main() -> int:
     tests.append(lambda: test_foreach_gc_root_runtime(name="foreach: iterable survives gc", mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_plus_minus_one_fastpaths(name="codegen: +/-1 fast paths in user main",
                                                               mlc_runner=mlc_runner))
+    tests.append(lambda: test_nested_call_in_binary_expr_runtime(name="runtime: nested call inside binary expression",
+                                                                 mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_small_const_for_unroll(name="codegen: small const for loops unrolled",
                                                              mlc_runner=mlc_runner))
+    tests.append(lambda: test_immediate_array_runtime(name="arrays: immediate layout + upgrade semantics", mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_literal_query_fastpaths(name="codegen: literal len/typeof/typeName fast paths",
+                                                              mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_young_gc_heuristic_present(name="codegen: young-allocation gc heuristic emitted",
+                                                                 mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None

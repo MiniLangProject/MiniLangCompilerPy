@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ..asm import Asm
-from ..constants import (TAG_INT, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
+from ..constants import (TAG_INT, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
 from ..context import BreakableCtx
 from ..data import DataBuilder, RDataBuilder, BssBuilder
 from ..errors import CompileError
@@ -1147,8 +1147,10 @@ class CodegenCore:
         # if type == OBJ_STRING => check len
         a.cmp_r32_imm("edx", OBJ_STRING)
         a.jcc('e', l_checklen)
-        # if type == OBJ_ARRAY  => check len
+        # if type == OBJ_ARRAY / OBJ_ARRAY_IMM => check len
         a.cmp_r32_imm("edx", OBJ_ARRAY)
+        a.jcc('e', l_checklen)
+        a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
         a.jcc('e', l_checklen)
 
         # otherwise: unknown heap object => truthy

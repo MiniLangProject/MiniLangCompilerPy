@@ -15,7 +15,7 @@ Allocation-using language builtins were split out into:
 from __future__ import annotations
 
 from ..constants import (GC_BLOCK_FREE_BIT, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE, GC_OFF_NEXT_FREE,
-                         GC_OFF_REFCOUNT, OBJ_ARRAY, OBJ_BOX, OBJ_CLOSURE, OBJ_ENV, OBJ_ENV_LOCAL, OBJ_FUNCTION,
+                         GC_OFF_REFCOUNT, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BOX, OBJ_CLOSURE, OBJ_ENV, OBJ_ENV_LOCAL, OBJ_FUNCTION,
                          OBJ_STRUCT, )
 from ..tools import align_up, enc_void
 
@@ -43,6 +43,8 @@ ALLOC_MIN_SPLIT = 32  # smallest remainder block when splitting free blocks (byt
 GC_MARK_STACK_QWORDS = 1048576  # 1048576*8 = 8 MiB mark stack (prevents overflow on large graphs)
 GC_DEFAULT_BYTES_LIMIT = 64 << 20  # 64 MiB periodic GC trigger (if enabled)
 GC_DISABLE_PERIODIC_LIMIT = 0x7FFFFFFFFFFFFFFF
+GC_YOUNG_DEFAULT_BYTES_LIMIT = 8 << 20  # small-object pressure trigger
+GC_YOUNG_OBJECT_MAX_BYTES = 256  # only bias tiny/short-lived allocations
 
 # NOTE on refcount helpers:
 # This file currently implements a compact mark/sweep GC header layout:
@@ -293,6 +295,10 @@ class CodegenMemory:
             a.mov_rip_qword_rax('gc_bytes_since')
             a.mov_rax_imm64(GC_DISABLE_PERIODIC_LIMIT)
             a.mov_rip_qword_rax('gc_bytes_limit')
+            a.mov_rax_imm64(0)
+            a.mov_rip_qword_rax('gc_young_bytes_since')
+            a.mov_rax_imm64(GC_DISABLE_PERIODIC_LIMIT)
+            a.mov_rip_qword_rax('gc_young_bytes_limit')
 
         # Clear gc_tmp0..7 to VOID (avoid accidental TAG_PTR=0 values)
         a.mov_rax_imm64(enc_void())
@@ -597,6 +603,7 @@ class CodegenMemory:
         lid0 = self.new_label_id()
         l_retry = f"alloc_retry_{lid0}"
         l_periodic_done = f"alloc_periodic_done_{lid0}"
+        l_young_skip = f"alloc_young_skip_{lid0}"
         l_try_free = f"alloc_try_free_{lid0}"
         l_free_loop = f"alloc_free_loop_{lid0}"
         l_free_advance = f"alloc_free_adv_{lid0}"
@@ -630,6 +637,25 @@ class CodegenMemory:
         a.add_r64_r64("rdx", "rcx")
         a.mov_r64_r64("rax", "rdx")
         a.mov_rip_qword_rax("gc_bytes_since")
+
+        # Small-object pressure trigger: bias collections toward bursts of tiny
+        # allocations that are likely to die young, while keeping the collector
+        # semantics unchanged (still a full mark/sweep collection).
+        a.cmp_r64_imm("rcx", GC_YOUNG_OBJECT_MAX_BYTES)
+        a.jcc("a", l_young_skip)
+        a.mov_rax_rip_qword("gc_young_bytes_since")
+        a.mov_r64_r64("r10", "rax")
+        a.add_r64_r64("r10", "rcx")
+        a.mov_r64_r64("rax", "r10")
+        a.mov_rip_qword_rax("gc_young_bytes_since")
+        a.mov_rax_rip_qword("gc_young_bytes_limit")
+        a.cmp_r64_r64("r10", "rax")
+        a.jcc("b", l_young_skip)
+        a.call("fn_gc_collect")
+        a.mov_r64_membase_disp("rcx", "rsp", 0x20)
+        a.mov_rax_rip_qword("gc_bytes_since")
+        a.mov_r64_r64("rdx", "rax")
+        a.mark(l_young_skip)
 
         # if gc_bytes_since >= gc_bytes_limit: collect
         a.mov_rax_rip_qword("gc_bytes_limit")
@@ -957,6 +983,7 @@ class CodegenMemory:
         Creates:
         - gc_roots_head, gc_free_head
         - gc_bytes_since, gc_bytes_limit
+        - gc_young_bytes_since, gc_young_bytes_limit
         - gc_tmp0..gc_tmp7
         - gc_mark_top, gc_mark_stack
         - gc_mark_bits_base, gc_mark_bits_end, gc_mark_bits_reserve_end
@@ -980,6 +1007,10 @@ class CodegenMemory:
             d.add_u64('gc_bytes_since', 0)
         if 'gc_bytes_limit' not in d.labels:
             d.add_u64('gc_bytes_limit', GC_DEFAULT_BYTES_LIMIT)  # default periodic GC trigger
+        if 'gc_young_bytes_since' not in d.labels:
+            d.add_u64('gc_young_bytes_since', 0)
+        if 'gc_young_bytes_limit' not in d.labels:
+            d.add_u64('gc_young_bytes_limit', GC_YOUNG_DEFAULT_BYTES_LIMIT)
 
         # Temp roots (important: must not look like TAG_PTR=0)
         for i in range(8):
@@ -1297,6 +1328,8 @@ class CodegenMemory:
         a.mov_r32_membase_disp("ecx", "rax", 0)  # mov ecx, [rax]
         a.cmp_r32_imm("ecx", OBJ_ARRAY)  # cmp ecx, OBJ_ARRAY
         a.jcc('e', L_SCAN_ARRAY)
+        a.cmp_r32_imm("ecx", OBJ_ARRAY_IMM)
+        a.jcc('e', L_MARK_LOOP)
 
         a.cmp_r32_imm("ecx", OBJ_STRUCT)  # cmp ecx, OBJ_STRUCT
         a.jcc('e', L_SCAN_STRUCT)
@@ -1749,9 +1782,10 @@ class CodegenMemory:
             a.mov_rip_qword_rax('heap_end')
 
             a.mark(L_TRIM_SKIP)
-        # reset gc_bytes_since (optional)
+        # reset allocation pressure counters after a full collection
         a.mov_rax_imm64(0)
         a.mov_rip_qword_rax('gc_bytes_since')
+        a.mov_rip_qword_rax('gc_young_bytes_since')
 
         # restore stack (shadow space + alignment)
         a.add_rsp_imm8(0x28)

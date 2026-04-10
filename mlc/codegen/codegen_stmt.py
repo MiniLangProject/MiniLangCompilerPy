@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from .codegen_scope import VarBinding
-from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
                           OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
                           ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
@@ -465,11 +465,11 @@ class CodegenStmt:
                 return vv
         return str(v)
 
-    def _foreach_state_names(self, s: Any) -> tuple[str, str, str, str]:
+    def _foreach_state_names(self, s: Any) -> tuple[str, str, str, str, str]:
         cached = getattr(s, "_ml_foreach_state_names", None)
         if (
             isinstance(cached, tuple)
-            and len(cached) == 4
+            and len(cached) == 5
             and all(isinstance(x, str) and x for x in cached)
         ):
             return cached
@@ -504,6 +504,7 @@ class CodegenStmt:
             f"__foreach_i_{fid}",
             f"__foreach_len_{fid}",
             f"__foreach_top_ptr_{fid}",
+            f"__foreach_base_ptr_{fid}",
         )
         try:
             setattr(s, "_ml_foreach_state_names", names)
@@ -1628,6 +1629,8 @@ class CodegenStmt:
             # if type == OBJ_ARRAY
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             a.jcc('e', lbl_ptr_arr)
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+            a.jcc('e', lbl_ptr_arr)
 
             # if type == OBJ_FLOAT
             a.cmp_r32_imm("edx", OBJ_FLOAT)
@@ -1801,6 +1804,8 @@ class CodegenStmt:
             # array?
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             l_el_arr = f"arr_el_arr_{elem_id}"
+            a.jcc('e', l_el_arr)
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
             a.jcc('e', l_el_arr)
 
             # bytes?
@@ -2516,10 +2521,12 @@ class CodegenStmt:
             a.test_r64_r64("r11", "r11")
             a.jcc('e', l_bad_target)
 
-            # target type must be OBJ_ARRAY or OBJ_BYTES
+            # target type must be OBJ_ARRAY / OBJ_ARRAY_IMM or OBJ_BYTES
             a.mov_r32_membase_disp("edx", "r11", 0)
             l_type_ok = f"seti_type_ok_{lid}"
             a.cmp_r32_imm("edx", OBJ_ARRAY)
+            a.jcc('e', l_type_ok)
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
             a.jcc('e', l_type_ok)
             a.cmp_r32_imm("edx", OBJ_BYTES)
             a.jcc('e', l_type_ok)
@@ -2561,6 +2568,15 @@ class CodegenStmt:
             a.jcc('e', l_store_bytes)
 
             # array store
+            l_store_array = f"seti_store_array_{lid}"
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+            a.jcc('ne', l_store_array)
+            a.mov_r64_r64("r8", "r10")
+            a.and_r64_imm("r8", 7)
+            a.cmp_r64_imm("r8", TAG_PTR)
+            a.jcc('ne', l_store_array)
+            a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+            a.mark(l_store_array)
             a.mov_mem_bis_r64("r11", "rcx", 8, 8, "r10")
             a.jmp(l_done)
 
@@ -2646,7 +2662,7 @@ class CodegenStmt:
         if self._is_foreach_stmt(s):
             # for each <var> in <iterable>  (arrays + strings + bytes)
             fid = self.new_label_id()
-            it_name, i_name, len_name, top_ptr_name = self._foreach_state_names(s)
+            it_name, i_name, len_name, top_ptr_name, base_ptr_name = self._foreach_state_names(s)
 
             setup = f"foreach_setup_{fid}"
             top_arr = f"foreach_top_arr_{fid}"
@@ -2674,7 +2690,7 @@ class CodegenStmt:
             state_stack = bool(getattr(self, "in_function", False))
             state_slots = {}
             if state_stack:
-                for nm in (it_name, i_name, len_name, top_ptr_name):
+                for nm in (it_name, i_name, len_name, top_ptr_name, base_ptr_name):
                     if hasattr(self, "declare_fresh_binding"):
                         b_state = self.declare_fresh_binding(nm, node=s)
                     elif hasattr(self, "ensure_binding_for_write"):
@@ -2686,7 +2702,7 @@ class CodegenStmt:
                         raise self.error(f"Internal error: missing foreach state slot for '{nm}'", s)
                     state_slots[nm] = int(off)
             else:
-                for nm in (it_name, i_name, len_name, top_ptr_name):
+                for nm in (it_name, i_name, len_name, top_ptr_name, base_ptr_name):
                     if hasattr(self, "declare_global_binding"):
                         b = self.declare_global_binding(nm, node=s)
                         state_slots[nm] = str(getattr(b, "label", "") or "")
@@ -2697,6 +2713,7 @@ class CodegenStmt:
             i_slot = state_slots[i_name]
             len_slot = state_slots[len_name]
             top_ptr_slot = state_slots[top_ptr_name]
+            base_ptr_slot = state_slots[base_ptr_name]
 
             def _state_store_qword_rax(slot) -> None:
                 if state_stack:
@@ -2733,6 +2750,7 @@ class CodegenStmt:
             _state_store_zero_qword(i_slot)
             _state_store_zero_qword(len_slot)
             _state_store_zero_qword(top_ptr_slot)
+            _state_store_zero_qword(base_ptr_slot)
 
             self.break_stack.append(
                 BreakableCtx(kind='loop', break_label=end, continue_label=cont, break_depth=depth_outer,
@@ -2748,6 +2766,8 @@ class CodegenStmt:
             # if array
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             a.jcc('e', l_arr)
+            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+            a.jcc('e', l_arr)
             # if bytes
             a.cmp_r32_imm("edx", OBJ_BYTES)
             a.jcc('e', l_bytes)
@@ -2761,6 +2781,10 @@ class CodegenStmt:
             a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
             a.mov_r32_r32("eax", "edx")
             _state_store_dword_eax(len_slot)
+            a.lea_r64_membase_disp("rax", "r14", 8)
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            _state_store_qword_rax(base_ptr_slot)
             a.lea_rax_rip(top_arr)
             _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_arr)
@@ -2769,6 +2793,10 @@ class CodegenStmt:
             a.mov_r32_membase_disp("edx", "r14", 4)
             a.mov_r32_r32("eax", "edx")
             _state_store_dword_eax(len_slot)
+            a.lea_r64_membase_disp("rax", "r14", 8)
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            _state_store_qword_rax(base_ptr_slot)
             a.lea_rax_rip(top_bytes)
             _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_bytes)
@@ -2777,6 +2805,10 @@ class CodegenStmt:
             a.mov_r32_membase_disp("edx", "r14", 4)  # mov edx,[r14+4]
             a.mov_r32_r32("eax", "edx")
             _state_store_dword_eax(len_slot)
+            a.lea_r64_membase_disp("rax", "r14", 8)
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            _state_store_qword_rax(base_ptr_slot)
             a.lea_rax_rip(top_str)
             _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_str)
@@ -2789,9 +2821,10 @@ class CodegenStmt:
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
-            _state_load_qword_rax(it_slot)
+            _state_load_qword_rax(base_ptr_slot)
+            a.sar_rax_imm8(3)
             a.mov_r64_r64("r14", "rax")
-            a.mov_r64_mem_bis("rax", "r14", "rcx", 8, 8)
+            a.mov_r64_mem_bis("rax", "r14", "rcx", 8, 0)
             self.emit_store_var(var_name, s)
             a.jmp(body)
 
@@ -2803,13 +2836,13 @@ class CodegenStmt:
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")
             a.jcc('ge', end)
-            _state_load_qword_rax(it_slot)
+            _state_load_qword_rax(base_ptr_slot)
+            a.sar_rax_imm8(3)
             a.mov_r64_r64("r14", "rax")
 
-            # addr = r14 + 8 + i
+            # addr = payload + i
             a.mov_r64_r64("rax", "r14")
             a.add_r64_r64("rax", "rcx")
-            a.add_rax_imm8(8)
             # eax = byte [rax]
             a.movzx_r32_membase_disp("eax", "rax", 0)
             # tag int
@@ -2828,13 +2861,13 @@ class CodegenStmt:
             a.mov_r32_r32("edx", "eax")
             a.cmp_r32_r32("ecx", "edx")  # cmp ecx,edx
             a.jcc('ge', end)
-            _state_load_qword_rax(it_slot)
+            _state_load_qword_rax(base_ptr_slot)
+            a.sar_rax_imm8(3)
             a.mov_r64_r64("r14", "rax")
 
-            # addr = r14 + 8 + i
+            # addr = payload + i
             a.mov_r64_r64("rax", "r14")  # mov rax,r14
             a.add_r64_r64("rax", "rcx")  # add rax,rcx
-            a.add_rax_imm8(8)
             a.movzx_r32_membase_disp("eax", "rax", 0)
             a.lea_r11_rip("obj_char_table")
             a.shl_rax_imm8(4)

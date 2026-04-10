@@ -40,6 +40,7 @@ OBJ_BOX = 9
 OBJ_BYTES = 10
 OBJ_CLOSURE = 11
 OBJ_ENV_LOCAL = 12
+OBJ_ARRAY_IMM = 13
 # ============================================================
 # Heap GC header (Mark/Sweep + Free-List)
 # ============================================================
