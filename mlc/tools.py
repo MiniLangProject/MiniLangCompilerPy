@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import struct
 
-from .constants import TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM
+from .constants import TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT
 
 
 def align_up(n: int, a: int) -> int:
@@ -101,3 +101,20 @@ def enc_enum(enum_id: int, variant_id: int) -> int:
 
     payload = ((variant_id & 0xFFFF) << 16) | (enum_id & 0xFFFF)
     return (payload << 3) | TAG_ENUM
+
+
+def try_enc_float_immediate(x: float) -> int | None:
+    """Encode ``x`` as an exact immediate float32 when possible.
+
+    Returns:
+        Encoded tagged value or ``None`` when ``x`` needs the boxed-double fallback.
+    """
+
+    try:
+        f32 = struct.pack("<f", float(x))
+        if struct.unpack("<f", f32)[0] != float(x):
+            return None
+        bits = struct.unpack("<I", f32)[0]
+        return ((bits & 0xFFFFFFFF) << 3) | TAG_FLOAT
+    except OverflowError:
+        return None

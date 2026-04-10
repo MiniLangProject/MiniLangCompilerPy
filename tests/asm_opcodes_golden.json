@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-04-10T08:46:16.204032Z",
-  "count": 209,
+  "generated_utc": "2026-04-10T19:18:04.817319Z",
+  "count": 212,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -362,6 +362,16 @@
       "asm": "; cqo()"
     },
     {
+      "name": "cvtsd2ss_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "f2440f5ac9",
+      "asm": "; cvtsd2ss_xmm_xmm(xmm9, xmm1)"
+    },
+    {
       "name": "cvtsi2sd_xmm_r64",
       "args": [
         "xmm9",
@@ -370,6 +380,16 @@
       "kwargs": {},
       "hex": "f24d0f2aca",
       "asm": "; cvtsi2sd_xmm_r64(xmm9, r10)"
+    },
+    {
+      "name": "cvtss2sd_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "f3440f5ac9",
+      "asm": "; cvtss2sd_xmm_xmm(xmm9, xmm1)"
     },
     {
       "name": "cvttsd2si_r64_xmm",
@@ -1095,6 +1115,16 @@
       "kwargs": {},
       "hex": "66440f28c9",
       "asm": "; movapd_xmm_xmm(xmm9, xmm1)"
+    },
+    {
+      "name": "movd_r32_xmm",
+      "args": [
+        "r11d",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66410f7ecb",
+      "asm": "; movd_r32_xmm(r11d, xmm1)"
     },
     {
       "name": "movdqu_membase_disp_xmm",

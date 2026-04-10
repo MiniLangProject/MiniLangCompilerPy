@@ -9,11 +9,11 @@ import re
 import struct
 from typing import Any, List, Optional
 
-from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
-from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod
+from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod, try_enc_float_immediate
 
 _F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
@@ -277,9 +277,13 @@ class CodegenExpr:
             a.mov_rax_imm64(enc_int(int(v)))
             return
         if isinstance(v, float):
-            lbl = f"cflt_{len(self.rdata.labels)}"
-            self.rdata.add_obj_float(lbl, float(v))
-            a.lea_rax_rip(lbl)
+            enc = try_enc_float_immediate(float(v))
+            if isinstance(enc, int):
+                a.mov_rax_imm64(enc)
+            else:
+                lbl = f"cflt_{len(self.rdata.labels)}"
+                self.rdata.add_obj_float(lbl, float(v))
+                a.lea_rax_rip(lbl)
             return
         if isinstance(v, str):
             lbl = f"cstr_{len(self.rdata.labels)}"
@@ -1352,25 +1356,17 @@ class CodegenExpr:
 
         self.emit_expr(arg)
 
+        a.mov_r64_r64("r11", "rax")
         a.mov_r64_r64("r10", "rax")
         a.and_r64_imm("r10", 7)
         a.cmp_r64_imm("r10", TAG_INT)
         a.jcc('e', l_done)
-        a.cmp_r64_imm("r10", TAG_PTR)
-        a.jcc('e', l_ptr)
-        a.jmp(l_fail)
-
-        a.mark(l_ptr)
-        a.mov_r32_membase_disp("r10d", "rax", 0)
-        a.cmp_r32_imm("r10d", OBJ_FLOAT)
-        a.jcc('e', l_float)
-        a.jmp(l_fail)
+        self.emit_to_double_xmm(0, l_fail)
+        a.jmp(l_float)
 
         a.mark(l_float)
         if callee_name == 'std.math.floor':
             l_exact = f"math_floor_exact_{lid}"
-            a.mov_r64_r64("r11", "rax")
-            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
             a.roundsd_xmm_xmm_imm8("xmm1", "xmm0", 1)
             a.ucomisd_xmm_xmm("xmm0", "xmm1")
             a.jcc('e', l_exact)
@@ -1383,8 +1379,6 @@ class CodegenExpr:
 
         if callee_name == 'std.math.ceil':
             l_exact = f"math_ceil_exact_{lid}"
-            a.mov_r64_r64("r11", "rax")
-            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
             a.roundsd_xmm_xmm_imm8("xmm1", "xmm0", 2)
             a.ucomisd_xmm_xmm("xmm0", "xmm1")
             a.jcc('e', l_exact)
@@ -1396,14 +1390,12 @@ class CodegenExpr:
             a.jmp(l_done)
 
         if callee_name == 'std.math.trunc':
-            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
             a.roundsd_xmm_xmm_imm8("xmm0", "xmm0", 3)
             self.emit_normalize_xmm0_to_value()
             a.jmp(l_done)
 
         if callee_name == 'std.math.round':
             l_nonneg = f"math_round_nonneg_{lid}"
-            a.movsd_xmm_membase_disp("xmm0", "rax", 8)
             a.xorpd_xmm_xmm("xmm2", "xmm2")
             a.ucomisd_xmm_xmm("xmm0", "xmm2")
             a.mov_rax_imm64(_F64_POS_HALF_BITS)
@@ -1446,10 +1438,14 @@ class CodegenExpr:
             if isinstance(e.value, int):
                 a.mov_rax_imm64(enc_int(e.value))
             else:
-                # boxed float literal in .rdata
-                lbl = f"flt_{len(self.rdata.labels)}"
-                self.rdata.add_obj_float(lbl, float(e.value))
-                a.lea_rax_rip(lbl)
+                enc = try_enc_float_immediate(float(e.value))
+                if isinstance(enc, int):
+                    a.mov_rax_imm64(enc)
+                else:
+                    # boxed float literal fallback in .rdata
+                    lbl = f"flt_{len(self.rdata.labels)}"
+                    self.rdata.add_obj_float(lbl, float(e.value))
+                    a.lea_rax_rip(lbl)
             return
 
         if isinstance(e, ml.Bool):
@@ -1962,10 +1958,9 @@ class CodegenExpr:
         if isinstance(e, ml.Unary):
             self.emit_expr(e.right)
             if e.op == '-':
-                # unary minus: int or boxed float
+                # unary minus: int or float
                 lid = self.new_label_id()
                 l_int = f"uminus_int_{lid}"
-                l_ptr = f"uminus_ptr_{lid}"
                 l_fail = f"uminus_fail_{lid}"
                 l_end = f"uminus_end_{lid}"
 
@@ -1974,24 +1969,16 @@ class CodegenExpr:
                 a.and_r64_imm("rdx", 7)  # and rdx,7
                 a.cmp_r64_imm("rdx", 1)  # cmp rdx,TAG_INT
                 a.jcc('e', l_int)
-                a.cmp_r64_imm("rdx", 0)  # cmp rdx,TAG_PTR
-                a.jcc('e', l_ptr)
-                a.jmp(l_fail)
-
-                a.mark(l_int)
-                a.neg_rax()
-                a.add_rax_imm8(2)
-                a.jmp(l_end)
-
-                a.mark(l_ptr)
-                a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
-                a.cmp_r32_imm("edx", OBJ_FLOAT)
-                a.jcc('ne', l_fail)
-                a.movsd_xmm_membase_disp("xmm0", "rax", 8)  # movsd xmm0,[rax+8]
+                self.emit_to_double_xmm(0, l_fail)
                 a.xorpd_xmm_xmm("xmm1", "xmm1")  # xorpd xmm1,xmm1
                 a.subsd_xmm_xmm("xmm1", "xmm0")  # subsd xmm1,xmm0
                 a.movapd_xmm_xmm("xmm0", "xmm1")  # movapd xmm0,xmm1
                 self.emit_normalize_xmm0_to_value()
+                a.jmp(l_end)
+
+                a.mark(l_int)
+                a.neg_rax()
+                a.add_rax_imm8(2)
                 a.jmp(l_end)
 
                 a.mark(l_fail)
@@ -2513,11 +2500,13 @@ class CodegenExpr:
                 # ---- non-int: if both numeric (int/float), do float add, else string concat ----
                 a.mark(l_check_numeric)
 
-                # check operand1 is numeric (TAG_INT or boxed float)
+                # check operand1 is numeric (TAG_INT, immediate float, or boxed float)
                 a.mov_rax_r10()
                 a.mov_r64_r64("rdx", "rax")  # mov rdx,rax
                 a.and_r64_imm("rdx", 7)  # and rdx,7
                 a.cmp_r64_imm("rdx", 1)  # cmp rdx,TAG_INT
+                a.jcc('e', l_num2_check)
+                a.cmp_r64_imm("rdx", TAG_FLOAT)
                 a.jcc('e', l_num2_check)
                 a.cmp_r64_imm("rdx", 0)  # cmp rdx,TAG_PTR
                 a.jcc('ne', l_arrcheck)
@@ -2531,6 +2520,8 @@ class CodegenExpr:
                 a.mov_r64_r64("rdx", "rax")  # mov rdx,rax
                 a.and_r64_imm("rdx", 7)  # and rdx,7
                 a.cmp_r64_imm("rdx", 1)  # cmp rdx,TAG_INT
+                a.jcc('e', l_float_add)
+                a.cmp_r64_imm("rdx", TAG_FLOAT)
                 a.jcc('e', l_float_add)
                 a.cmp_r64_imm("rdx", 0)  # cmp rdx,TAG_PTR
                 a.jcc('ne', l_arrcheck)

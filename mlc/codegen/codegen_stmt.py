@@ -7,13 +7,13 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from .codegen_scope import VarBinding
-from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
-                         OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
-                         ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
-                         ERR_PRINT_UNSUPPORTED, )
+                          OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
+                          ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
+                          ERR_PRINT_UNSUPPORTED, )
 from ..context import BreakableCtx
-from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod
+from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc_float_immediate
 
 # ============================================================
 # Constexpr / consteval helpers (Step 3)
@@ -378,9 +378,13 @@ def _set_const_binding_value(cg: Any, b: VarBinding, pyv: Any) -> None:
         return
 
     if isinstance(pyv, float):
-        lbl = f"cflt_{len(cg.rdata.labels)}"
-        cg.rdata.add_obj_float(lbl, float(pyv))
-        b.const_value_label = lbl
+        enc = try_enc_float_immediate(float(pyv))
+        if isinstance(enc, int):
+            b.const_value_encoded = enc
+        else:
+            lbl = f"cflt_{len(cg.rdata.labels)}"
+            cg.rdata.add_obj_float(lbl, float(pyv))
+            b.const_value_label = lbl
         return
 
     if isinstance(pyv, str):
@@ -1396,6 +1400,7 @@ class CodegenStmt:
             lbl_bool = f"print_bool_{a.pos}"
             lbl_enum = f"print_enum_{a.pos}"
             lbl_ptr = f"print_ptr_{a.pos}"
+            lbl_float = f"print_float_{a.pos}"
             lbl_void = f"print_void_{a.pos}"
             lbl_uns = f"print_uns_{a.pos}"
             lbl_end = f"print_end_{a.pos}"
@@ -1413,6 +1418,9 @@ class CodegenStmt:
             # tag == ENUM?
             a.cmp_r64_imm("r10", TAG_ENUM)
             a.jcc('e', lbl_enum)
+            # tag == FLOAT?
+            a.cmp_r64_imm("r10", TAG_FLOAT)
+            a.jcc('e', lbl_float)
             # tag == PTR?
             a.cmp_r64_imm("r10", 0)
             a.jcc('e', lbl_ptr)
@@ -1494,8 +1502,28 @@ class CodegenStmt:
 
             # ---- ptr float print ----
             a.mark(lbl_ptr_flt)
-            # xmm0 = double value
-            a.movsd_xmm_membase_disp("xmm0", "rax", 8)  # movsd xmm0,[rax+8]
+            self.emit_to_double_xmm(0, lbl_uns)
+            # edx = digits
+            a.mov_r32_imm32("edx", 15)  # mov edx,15
+            # r8 = &floatbuf
+            a.lea_rax_rip('floatbuf')
+            a.mov_r64_r64("r8", "rax")  # mov r8,rax
+            # call _gcvt(double, digits, buf)
+            a.mov_rax_rip_qword('iat__gcvt')
+            a.call_rax()
+            # rax = c-string pointer
+            a.mov_r11_rax()
+            a.mov_r64_r64("rcx", "rax")  # mov rcx,rax
+            a.call('fn_strlen')  # edx=len
+            a.mov_r8d_edx()
+            a.mov_r64_r64("rdx", "r11")  # mov rdx,r11
+            self.emit_writefile_ptr_len()
+            self.emit_writefile('nl', 1)
+            a.jmp(lbl_end)
+
+            # ---- immediate float print ----
+            a.mark(lbl_float)
+            self.emit_to_double_xmm(0, lbl_uns)
             # edx = digits
             a.mov_r32_imm32("edx", 15)  # mov edx,15
             # r8 = &floatbuf

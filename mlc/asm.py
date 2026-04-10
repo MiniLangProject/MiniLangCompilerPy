@@ -2203,6 +2203,22 @@ class Asm:
         rex_b = 1 if s >= 8 else 0
         self.emit(b"\xF2" + self._rex(w=1, r=rex_r, b=rex_b) + b"\x0F\x2C" + self._modrm(3, d, s))
 
+    def cvtsd2ss_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `CVTSD2SS` instruction helper."""
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\xF2" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x5A" + self._modrm(3, d, s))
+
+    def cvtss2sd_xmm_xmm(self, dst: str, src: str) -> None:
+        """Emit `CVTSS2SD` instruction helper."""
+        d = self.XMM[dst]
+        s = self.XMM[src]
+        rex_r = 1 if d >= 8 else 0
+        rex_b = 1 if s >= 8 else 0
+        self.emit(b"\xF3" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x5A" + self._modrm(3, d, s))
+
     # Missing-but-needed float helpers (from report)
     def xorpd_xmm_xmm(self, dst: str, src: str) -> None:
         """Emit `XORPD` instruction helper.
@@ -2262,6 +2278,14 @@ class Asm:
         rex_r = 1 if d >= 8 else 0
         rex_b = 1 if s >= 8 else 0
         self.emit(b"\x66" + self._rex(w=1, r=rex_r, b=rex_b) + b"\x0F\x6E" + self._modrm(3, d, s))
+
+    def movd_r32_xmm(self, dst: str, src: str) -> None:
+        """Emit `MOVD r32, xmm`."""
+        d = self._rid_any(dst)
+        s = self.XMM[src]
+        rex_r = 1 if s >= 8 else 0
+        rex_b = 1 if d >= 8 else 0
+        self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x7E" + self._modrm(3, s, d))
 
     def movdqu_xmm_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `MOVDQU xmm, [base+disp]`.

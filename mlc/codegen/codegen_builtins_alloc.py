@@ -20,7 +20,7 @@ Builtins in this module:
 from __future__ import annotations
 
 from ..constants import (OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, OBJ_STRUCTTYPE, OBJ_STRUCT, ERROR_STRUCT_ID,
-                         TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM,
+                         TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT,
                          ERR_STRINGIFY_UNSUPPORTED, )
 from ..tools import enc_void, enc_int, enc_bool
 
@@ -1013,6 +1013,7 @@ Returns:
         l_bool = f"v2s_bool_{lid}"
         l_enum = f"v2s_enum_{lid}"
         l_void = f"v2s_void_{lid}"
+        l_float_imm = f"v2s_float_imm_{lid}"
         l_float = f"v2s_float_{lid}"
         l_array = f"v2s_array_{lid}"
         l_bytes = f"v2s_bytes_{lid}"
@@ -1040,6 +1041,9 @@ Returns:
         # enum?
         a.cmp_r64_imm("rdx", TAG_ENUM)  # cmp rdx,TAG_ENUM
         a.jcc('e', l_enum)
+        # immediate float?
+        a.cmp_r64_imm("rdx", TAG_FLOAT)
+        a.jcc('e', l_float_imm)
         a.jmp(l_uns)
 
         # --- void -> "void" ---
@@ -1156,10 +1160,15 @@ Returns:
         a.mov_membase_disp_imm8("r10", 0, 0)
         a.jmp(l_done)
 
+        a.mark(l_float_imm)
+        self.emit_to_double_xmm(0, l_uns)
+        l_float_fmt = f"v2s_float_fmt_{lid}"
+        a.jmp(l_float_fmt)
+
         # --- float -> decimal string via _gcvt (allocate) ---
         a.mark(l_float)
-        # xmm0 = [rax+8]
-        a.movsd_xmm_membase_disp("xmm0", "rax", 8)  # movsd xmm0,[rax+8]
+        self.emit_to_double_xmm(0, l_uns)
+        a.mark(l_float_fmt)
         # edx = digits (15)
         a.mov_r32_imm32("edx", 15)
         # r8 = &floatbuf

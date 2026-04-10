@@ -15,6 +15,7 @@ TAG_INT = 1
 TAG_BOOL = 2
 TAG_VOID = 3
 TAG_ENUM = 4
+TAG_FLOAT = 5
 
 # ============================================================
 # Heap object type ids (for TAG_PTR objects)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from ..constants import (CALLSTAT_STRUCT_ID, ERROR_STRUCT_ID, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE,
                          OBJ_ARRAY, OBJ_BUILTIN, OBJ_BYTES, OBJ_CLOSURE, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING, OBJ_STRUCT,
-                         OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_INT, TAG_PTR, TAG_VOID, )
+                         OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_FLOAT, TAG_INT, TAG_PTR, TAG_VOID, )
 from ..tools import enc_bool, enc_int, enc_void
 
 
@@ -802,7 +802,7 @@ class CodegenRuntime:
 
         Supported inputs:
         - int: returned unchanged
-        - boxed float: normalized (10.0 -> 10) else unchanged
+        - float: normalized (10.0 -> 10) else unchanged
         - string: trims ASCII whitespace, parses:
             - -?\d+   -> int
             - -?\d+\.\d+ -> float (normalized if exact int)
@@ -820,6 +820,7 @@ class CodegenRuntime:
         a.sub_rsp_imm8(0x28)
 
         lid = self.new_label_id()
+        l_immf = f"ton_immf_{lid}"
         l_ptr = f"ton_ptr_{lid}"
         l_float = f"ton_float_{lid}"
         l_str = f"ton_str_{lid}"
@@ -836,6 +837,8 @@ class CodegenRuntime:
         # if tag == TAG_INT -> return input
         a.cmp_r64_imm("rdx", 1)
         a.jcc('e', l_done)
+        a.cmp_r64_imm("rdx", TAG_FLOAT)
+        a.jcc('e', l_immf)
 
         # if tag == TAG_PTR -> inspect object type
         a.cmp_r64_imm("rdx", 0)
@@ -843,6 +846,11 @@ class CodegenRuntime:
 
         # else fail
         a.jmp(l_fail)
+
+        a.mark(l_immf)
+        self.emit_to_double_xmm(0, l_fail)
+        self.emit_normalize_xmm0_to_value()
+        a.jmp(l_done)
 
         # --- ptr case ---
         a.mark(l_ptr)
@@ -858,25 +866,8 @@ class CodegenRuntime:
 
         # --- boxed float: normalize ---
         a.mark(l_float)
-        # r9 = ptr (preserve)
-        a.mov_r64_r64("r9", "rax")  # mov r9, rax
-        # xmm0 = [rax+8]
-        a.movsd_xmm_membase_disp("xmm0", "rax", 8)
-        # rax = trunc(xmm0)
-        a.cvttsd2si_r64_xmm("rax", "xmm0")
-        # xmm1 = float(rax)
-        a.cvtsi2sd_xmm_r64("xmm1", "rax")
-        # compare
-        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
-        l_keepf = f"ton_keepf_{lid}"
-        a.jcc('ne', l_keepf)
-        # exact int => tagged int
-        a.shl_rax_imm8(3)
-        a.or_rax_imm8(TAG_INT)
-        a.jmp(l_done)
-        a.mark(l_keepf)
-        # keep original float ptr
-        a.mov_r64_r64("rax", "r9")  # mov rax,r9
+        self.emit_to_double_xmm(0, l_fail)
+        self.emit_normalize_xmm0_to_value()
         a.jmp(l_done)
 
         # --- string parse ---
@@ -1032,17 +1023,8 @@ class CodegenRuntime:
         a.mulsd_xmm_xmm("xmm0", "xmm3")  # mulsd xmm0,xmm3
         a.mark(l_pos)
 
-        # normalize: if exact int -> tagged int else box float
-        a.cvttsd2si_r64_xmm("rax", "xmm0")  # cvttsd2si rax,xmm0
-        a.cvtsi2sd_xmm_r64("xmm1", "rax")  # cvtsi2sd xmm1,rax
-        a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
-        l_box = f"ton_box_{lid}"
-        a.jcc('ne', l_box)
-        a.shl_rax_imm8(3)
-        a.or_rax_imm8(TAG_INT)
-        a.jmp(l_done)
-        a.mark(l_box)
-        a.call('fn_box_float')
+        # normalize parsed float via the shared numeric normalization path
+        self.emit_normalize_xmm0_to_value()
         a.jmp(l_done)
 
         # --- make integer return from parsed digits ---
@@ -1081,6 +1063,7 @@ class CodegenRuntime:
         l_bool = f"tof_bool_{lid}"
         l_void = f"tof_void_{lid}"
         l_enum = f"tof_enum_{lid}"
+        l_immf = f"tof_immf_{lid}"
         l_ptr = f"tof_ptr_{lid}"
         l_str = f"tof_str_{lid}"
         l_arr = f"tof_arr_{lid}"
@@ -1107,6 +1090,8 @@ class CodegenRuntime:
         a.jcc('e', l_void)
         a.cmp_r64_imm("rdx", TAG_ENUM)
         a.jcc('e', l_enum)
+        a.cmp_r64_imm("rdx", TAG_FLOAT)
+        a.jcc('e', l_immf)
         a.cmp_r64_imm("rdx", TAG_PTR)
         a.jcc('e', l_ptr)
         a.jmp(l_unk)
@@ -1125,6 +1110,10 @@ class CodegenRuntime:
 
         a.mark(l_enum)
         a.lea_rax_rip('obj_type_enum')
+        a.ret()
+
+        a.mark(l_immf)
+        a.lea_rax_rip('obj_type_float')
         a.ret()
 
         a.mark(l_ptr)
@@ -1212,6 +1201,7 @@ class CodegenRuntime:
         l_bool = f"tna_bool_{lid}"
         l_void = f"tna_void_{lid}"
         l_enum = f"tna_enum_{lid}"
+        l_immf = f"tna_immf_{lid}"
         l_ptr = f"tna_ptr_{lid}"
         l_str = f"tna_str_{lid}"
         l_arr = f"tna_arr_{lid}"
@@ -1237,6 +1227,8 @@ class CodegenRuntime:
         a.jcc('e', l_void)
         a.cmp_r64_imm("rdx", TAG_ENUM)
         a.jcc('e', l_enum)
+        a.cmp_r64_imm("rdx", TAG_FLOAT)
+        a.jcc('e', l_immf)
         a.cmp_r64_imm("rdx", TAG_PTR)
         a.jcc('e', l_ptr)
         a.jmp(l_unk)
@@ -1276,6 +1268,10 @@ class CodegenRuntime:
 
         # fallback: "enum"
         a.lea_rax_rip('obj_type_enum')
+        a.ret()
+
+        a.mark(l_immf)
+        a.lea_rax_rip('obj_type_float')
         a.ret()
 
         a.mark(l_ptr)
@@ -1784,6 +1780,10 @@ class CodegenRuntime:
         a.jcc('e', l_num_mix)
         a.cmp_r64_imm("r9", 0)  # cmp r9,0
         a.jcc('e', l_num_mix)
+        a.cmp_r64_imm("r8", TAG_FLOAT)
+        a.jcc('e', l_num_mix)
+        a.cmp_r64_imm("r9", TAG_FLOAT)
+        a.jcc('e', l_num_mix)
         # rax = v1>>3, rdx = v2>>3
         a.mov_r64_r64("rax", "r10")  # mov rax,r10
         a.sar_r64_imm8("rax", 3)  # sar rax,3
@@ -1797,6 +1797,7 @@ class CodegenRuntime:
         a.mark(l_num_mix)
         # v1 -> xmm0
         l_v1_imm = f"vale_it_v1_imm_{lid}"
+        l_v1_immf = f"vale_it_v1_immf_{lid}"
         l_v1_done = f"vale_it_v1_done_{lid}"
         a.cmp_r64_imm("r8", 0)  # cmp r8,0
         a.jcc('ne', l_v1_imm)
@@ -1808,14 +1809,22 @@ class CodegenRuntime:
         a.jmp(l_v1_done)
 
         a.mark(l_v1_imm)
+        a.cmp_r64_imm("r8", TAG_FLOAT)
+        a.jcc('e', l_v1_immf)
         a.mov_r64_r64("rax", "r10")  # mov rax,r10
         a.sar_r64_imm8("rax", 3)  # sar rax,3
         a.cvtsi2sd_xmm_r64("xmm0", "rax")  # cvtsi2sd xmm0,rax
+        a.jmp(l_v1_done)
+
+        a.mark(l_v1_immf)
+        a.mov_r64_r64("rax", "r10")
+        self.emit_to_double_xmm(0, l_false)
 
         a.mark(l_v1_done)
 
         # v2 -> xmm1
         l_v2_imm = f"vale_it_v2_imm_{lid}"
+        l_v2_immf = f"vale_it_v2_immf_{lid}"
         l_v2_done = f"vale_it_v2_done_{lid}"
         a.cmp_r64_imm("r9", 0)  # cmp r9,0
         a.jcc('ne', l_v2_imm)
@@ -1826,9 +1835,16 @@ class CodegenRuntime:
         a.jmp(l_v2_done)
 
         a.mark(l_v2_imm)
+        a.cmp_r64_imm("r9", TAG_FLOAT)
+        a.jcc('e', l_v2_immf)
         a.mov_r64_r64("rax", "r11")  # mov rax,r11
         a.sar_r64_imm8("rax", 3)  # sar rax,3
         a.cvtsi2sd_xmm_r64("xmm1", "rax")  # cvtsi2sd xmm1,rax
+        a.jmp(l_v2_done)
+
+        a.mark(l_v2_immf)
+        a.mov_r64_r64("rax", "r11")
+        self.emit_to_double_xmm(1, l_false)
 
         a.mark(l_v2_done)
         a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1

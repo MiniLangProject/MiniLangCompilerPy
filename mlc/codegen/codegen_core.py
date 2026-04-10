@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ..asm import Asm
-from ..constants import (TAG_INT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
+from ..constants import (TAG_INT, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_BYTES, OBJ_FLOAT, ERROR_STRUCT_ID, CALLSTAT_STRUCT_ID, WIDEBUF_SIZE, INBUF_SIZE, )
 from ..context import BreakableCtx
 from ..data import DataBuilder, RDataBuilder, BssBuilder
 from ..errors import CompileError
@@ -831,10 +831,12 @@ class CodegenCore:
         self.emit_writefile_ptr_len_stderr()
 
     def emit_normalize_xmm0_to_value(self) -> None:
-        """Normalize XMM0 numeric result: if it is an exact int64, return tagged int, else boxed float."""
+        """Normalize XMM0 numeric result: int when exact, else immediate float32 when exact, else boxed double."""
         a = self.asm
         lid = self.new_label_id()
         l_int = f"norm_int_{lid}"
+        l_try_immf = f"norm_try_immf_{lid}"
+        l_box = f"norm_box_{lid}"
         l_end = f"norm_end_{lid}"
         # rax = trunc(xmm0)
         a.cvttsd2si_r64_xmm("rax", "xmm0")  # cvttsd2si rax,xmm0
@@ -843,16 +845,29 @@ class CodegenCore:
         # compare xmm0,xmm1
         a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
         a.jcc('e', l_int)
-        # not exact integer -> box float
-        a.call('fn_box_float')
-        a.jmp(l_end)
+        a.jmp(l_try_immf)
+        # exact integer -> tagged int
         a.mark(l_int)
         a.shl_rax_imm8(3)
         a.or_rax_imm8(TAG_INT)
+        a.jmp(l_end)
+        # not exact integer -> try exact float32 immediate first
+        a.mark(l_try_immf)
+        a.cvtsd2ss_xmm_xmm("xmm2", "xmm0")
+        a.cvtss2sd_xmm_xmm("xmm3", "xmm2")
+        a.ucomisd_xmm_xmm("xmm0", "xmm3")
+        a.jcc('ne', l_box)
+        a.jcc('p', l_box)
+        a.movd_r32_xmm("eax", "xmm2")
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_FLOAT)
+        a.jmp(l_end)
+        a.mark(l_box)
+        a.call('fn_box_float')
         a.mark(l_end)
 
     def emit_to_double_xmm(self, xmm: int, fail_label: str) -> None:
-        """Convert numeric value in RAX (tagged int or boxed float) to XMM0/XMM1.
+        """Convert numeric value in RAX (tagged int, immediate float, or boxed float) to XMM0/XMM1.
 
         xmm: 0 -> XMM0, 1 -> XMM1
         On type mismatch, jumps to fail_label.
@@ -860,6 +875,7 @@ class CodegenCore:
         a = self.asm
         lid = self.new_label_id()
         l_int = f"todbl_int_{lid}"
+        l_immf = f"todbl_immf_{lid}"
         l_ptr = f"todbl_ptr_{lid}"
         l_done = f"todbl_done_{lid}"
 
@@ -868,6 +884,8 @@ class CodegenCore:
         a.and_r64_imm("rdx", 7)  # and rdx,7
         a.cmp_r64_imm("rdx", 1)  # cmp rdx,TAG_INT
         a.jcc('e', l_int)
+        a.cmp_r64_imm("rdx", TAG_FLOAT)
+        a.jcc('e', l_immf)
         a.cmp_r64_imm("rdx", 0)  # cmp rdx,TAG_PTR
         a.jcc('e', l_ptr)
         a.jmp(fail_label)
@@ -880,6 +898,17 @@ class CodegenCore:
             a.cvtsi2sd_xmm_r64("xmm0", "rcx")  # cvtsi2sd xmm0,rcx
         else:
             a.cvtsi2sd_xmm_r64("xmm1", "rcx")  # cvtsi2sd xmm1,rcx
+        a.jmp(l_done)
+
+        a.mark(l_immf)
+        a.mov_r64_r64("rcx", "rax")
+        a.shr_r64_imm8("rcx", 3)
+        if xmm == 0:
+            a.movq_xmm_r64("xmm0", "rcx")
+            a.cvtss2sd_xmm_xmm("xmm0", "xmm0")
+        else:
+            a.movq_xmm_r64("xmm1", "rcx")
+            a.cvtss2sd_xmm_xmm("xmm1", "xmm1")
         a.jmp(l_done)
 
         a.mark(l_ptr)
@@ -918,6 +947,11 @@ class CodegenCore:
         a.cmp_r64_imm("r10", 2)  # cmp r10,2
         a.jcc('e', l_bool)
 
+        # if tag == FLOAT => check numeric != 0.0
+        l_immf = f"truthy_immf_{lid}"
+        a.cmp_r64_imm("r10", TAG_FLOAT)
+        a.jcc('e', l_immf)
+
         # if tag == PTR => check boxed string emptiness
         l_ptr = f"truthy_ptr_{lid}"
         a.cmp_r64_imm("r10", 0)  # cmp r10,0
@@ -942,6 +976,14 @@ class CodegenCore:
         # test rax, 8 (bit3)
         a.test_rax_imm32(8)
         a.jcc('z', false_label)
+        a.jmp(l_end)
+
+        # --- immediate float case ---
+        a.mark(l_immf)
+        self.emit_to_double_xmm(0, false_label)
+        a.xorpd_xmm_xmm("xmm1", "xmm1")
+        a.ucomisd_xmm_xmm("xmm0", "xmm1")
+        a.jcc('e', false_label)
         a.jmp(l_end)
 
         # --- ptr case (boxed string / array) ---
