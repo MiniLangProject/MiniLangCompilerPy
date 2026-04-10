@@ -33,6 +33,7 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
   - [13.2 Builtins: basics](#132-builtins-basics)
   - [13.3 Bytes / Encoding / File I/O](#133-bytes--encoding--file-io)
   - [13.4 Heap / GC debug](#134-heap--gc-debug-native-compiler)
+  - [13.5 Call profiling (optional)](#135-call-profiling-optional)
 - [14. extern](#14-extern-native-compiler)
 - [15. Error handling: `error` & `try`](#15-error-handling-error--try)
 - [16. Syntax Reference (short)](#16-syntax-reference-short)
@@ -1388,6 +1389,40 @@ print hex(slice(b, 2, 3))   // "223344"
 print hex(slice(b, -2, 2))  // "4455"
 ```
 
+#### copyBytes(dst, dstOff, src, srcOff, len) -> void
+Copies raw bytes from one `bytes` object into another.
+
+Rules (native compiler backend, current):
+- `dst` and `src` must be `bytes`.
+- `dstOff`, `srcOff`, and `len` must be non-negative integers.
+- The effective copy length is clamped to the remaining tail room of both buffers:
+  `min(len, len(dst) - dstOff, len(src) - srcOff)`.
+- If an offset is already at or past the end of its buffer, or any argument is invalid, the call is a no-op and still returns `void`.
+- Treat source/destination ranges as non-overlapping; overlap behavior is not guaranteed.
+
+```ml
+src = fromHex("00 11 22 33 44")
+dst = bytes(5, 0)
+copyBytes(dst, 1, src, 2, 3)
+print hex(dst) // "0022334400"
+```
+
+#### fillBytes(dst, off, len, fill) -> void
+Fills a range inside a `bytes` object with a repeated byte value.
+
+Rules (native compiler backend, current):
+- `dst` must be `bytes`.
+- `off` and `len` must be non-negative integers.
+- `fill` must be an integer in the range `0..255`.
+- The effective fill length is clamped to the remaining tail room of `dst`.
+- If `off` is at/past the end, or any argument is invalid, the call is a no-op and still returns `void`.
+
+```ml
+b = bytes(6, 0)
+fillBytes(b, 2, 10, 0xAB)
+print hex(b) // "0000abababab"
+```
+
 #### File I/O
 The native runtime currently does not expose low-level file-handle builtins.
 
@@ -1440,6 +1475,19 @@ Returns the number of blocks currently in the free-list.
 
 #### gc_collect()
 Runs the mark/sweep collector and returns `void`.
+
+#### gc_set_limit(limitBytes)
+Sets the allocation threshold for the **periodic** GC trigger and returns `void`.
+
+Rules (native compiler backend, current):
+- A positive integer enables periodic GC with that byte limit.
+- `limitBytes <= 0` disables the periodic trigger.
+- Non-integer input also disables the periodic trigger.
+- The runtime resets the current periodic-allocation counter when the limit is changed.
+
+Notes:
+- This only affects the periodic GC trigger. GC on allocation failure / OOM-retry still remains active.
+- This is mainly useful for debugging, stress tests, and GC behavior tuning.
 
 Notes (when does GC run?):
 - The GC runs **automatically** when an allocation cannot be satisfied and the heap can’t grow further; the runtime triggers a `fn_gc_collect` once and retries the allocation.
@@ -1786,8 +1834,8 @@ What works:
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
 - `extern function` via the PE import table (IAT)
-- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`,
-  plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`
+- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`, `copyBytes`, `fillBytes`,
+  plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`, `gc_set_limit`, `callStats`
 
 Debugging / listings:
 - `--asm` writes a combined `.asm` listing
