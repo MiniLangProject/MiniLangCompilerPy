@@ -40,7 +40,7 @@ HEAP_GROW_MIN = 0x01000000  # 16 MiB
 ALLOC_MIN_SPLIT = 32  # smallest remainder block when splitting free blocks (bytes)
 
 # GC
-GC_MARK_STACK_QWORDS = 1048576  # 1048576*8 = 8 MiB mark stack (prevents overflow on large graphs)
+GC_MARK_STACK_QWORDS = 8388608  # 8388608*8 = 64 MiB mark stack for very large compiler/runtime object graphs
 GC_DEFAULT_BYTES_LIMIT = 64 << 20  # 64 MiB periodic GC trigger (if enabled)
 GC_DISABLE_PERIODIC_LIMIT = 0x7FFFFFFFFFFFFFFF
 GC_YOUNG_DEFAULT_BYTES_LIMIT = 8 << 20  # small-object pressure trigger
@@ -1179,8 +1179,9 @@ class CodegenMemory:
         # rdx = objptr
         a.mov_r64_r64("rdx", "r11")  # mov rdx, r11
 
-        # if rdx < heap_base -> return
+        # if rdx < heap_base + GC_HEADER_SIZE -> return
         a.mov_rax_rip_qword('heap_base')
+        a.add_r64_imm("rax", GC_HEADER_SIZE)
         a.cmp_r64_r64("rdx", "rax")  # cmp rdx, rax
         a.jcc('b', L_MARK_VALUE_RET)
 
@@ -1199,6 +1200,21 @@ class CodegenMemory:
         a.mov_r64_membase_disp("r10", "rdx", 0)
         a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
         a.jcc('ne', L_MARK_VALUE_RET)
+
+        # Reject bogus interior pointers whose synthetic "header" does not
+        # describe a plausible block. This keeps stale stack/global roots from
+        # turning random payload bytes into fake markable objects.
+        a.mov_r64_r64("r8", "r10")
+        a.and_r64_imm("r8", GC_BLOCK_SIZE_MASK)
+        a.cmp_r64_imm("r8", GC_HEADER_SIZE + 8)
+        a.jcc('b', L_MARK_VALUE_RET)
+        a.mov_r64_r64("rcx", "rdx")
+        a.add_r64_r64("rcx", "r8")
+        a.cmp_r64_r64("rcx", "rdx")
+        a.jcc('b', L_MARK_VALUE_RET)
+        a.mov_rax_rip_qword('heap_end')
+        a.cmp_r64_r64("rcx", "rax")
+        a.jcc('a', L_MARK_VALUE_RET)
 
         # Locate the mark bit for this header:
         #   byte_index = (header - heap_base) >> 6

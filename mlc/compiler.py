@@ -1314,6 +1314,7 @@ def compile_to_exe(
     asm_show_text: bool = True,
     asm_dump_data: bool = False,
     asm_dump_pe: bool = False,
+    dump_labels_out: Optional[str] = None,
     heap_config: Optional[Dict[str, Any]] = None,
     call_profile: bool = False,
     trace_calls: bool = False,
@@ -1471,6 +1472,31 @@ def compile_to_exe(
     exe = pe.build()
     with open(output_exe, 'wb') as f:
         f.write(exe)
+
+    if isinstance(dump_labels_out, str) and dump_labels_out:
+        labels: List[Tuple[str, int]] = []
+        labels.extend((name, int(off)) for name, off in cg.asm.labels.items())
+        labels.extend((name, int(off)) for name, (off, _ln) in cg.rdata.labels.items())
+        labels.extend((name, int(off)) for name, off in cg.data.labels.items())
+        if getattr(cg, 'bss', None) is not None:
+            labels.extend((name, int(off)) for name, off in cg.bss.labels.items())
+        for (dll, sym), rva in iat_symbol_rva.items():
+            labels.append((f'iat_{sym}', int(rva)))
+            labels.append((f'iat_{_dll_base(dll)}_{sym}', int(rva)))
+
+        labels.sort(key=lambda item: (item[1], item[0]))
+        helper_names = list(getattr(cg, '_emitted_helpers', []) or [])
+
+        with open(dump_labels_out, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(f'[section] .text raw={len(text_sec.data)}\n')
+            f.write(f'[section] .rdata raw={len(rdata_sec.data)}\n')
+            f.write(f'[section] .data raw={len(data_sec.data)}\n')
+            for i, h in enumerate(helper_names):
+                if isinstance(h, str):
+                    f.write(f'[helper] {i} {h}\n')
+            for name, off in labels:
+                if isinstance(name, str):
+                    f.write(f'[label] {name} {off}\n')
 
     # Write combined listing for debugging (optional).
     # Order: optional PE header -> .text listing -> optional data dumps.
@@ -1763,6 +1789,7 @@ def main(argv: List[str]) -> int:
     parser.add_argument('--asm-no-code', action='store_true', help='hide pseudo-assembly column in listing')
     parser.add_argument('--asm-data', action='store_true', help='include .rdata/.data/.idata dumps in the listing')
     parser.add_argument('--asm-pe', action='store_true', help='include PE header + section table dump in the listing')
+    parser.add_argument('--dump-labels', default=None, help='write a raw section/helper/label dump for parity debugging')
 
 
     # Heap/GC configuration (optional)
@@ -1852,6 +1879,7 @@ def main(argv: List[str]) -> int:
             asm_show_text=show_text,
             asm_dump_data=bool(args.asm_data),
             asm_dump_pe=bool(args.asm_pe),
+            dump_labels_out=args.dump_labels,
             heap_config=heap_config,
             call_profile=bool(getattr(args, "profile_calls", False)),
             trace_calls=bool(getattr(args, "trace_calls", False)),

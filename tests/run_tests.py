@@ -2494,6 +2494,36 @@ def test_foreach_gc_root_runtime(*, name: str, mlc_runner: Path) -> TestResult:
         )
 
 
+def test_for_reentrant_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: for-loop end/step state must stay isolated per activation."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+        main_ml = td_path / "for_reentrant_runtime.ml"
+
+        main_ml.write_text("\n".join(
+            ['import std.assert as t', '',
+             'function sumTree(n)', '  total = 0', '  for i = 1 to n + 2', '    total = total + i',
+             '    if n > 0 and i == 1 then', '      total = total + sumTree(n - 1)', '    end if', '  end for',
+             '  return total', 'end function', '',
+             'print "=== FOR REENTRANT ==="',
+             't.assertEq(sumTree(1), 9, "for recursion keeps activation-local end/step state")',
+             'print "=== DONE ==="', ]) + "\n",
+                           encoding="utf-8", )
+
+        return test_program_no_fail(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            must_contain=[
+                "=== FOR REENTRANT ===",
+                "for recursion keeps activation-local end/step state [OK]",
+                "=== DONE ===",
+            ],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 def test_codegen_plus_minus_one_fastpaths(*, name: str, mlc_runner: Path) -> TestResult:
     """Codegen regression: tagged-int +/-1 should use the immediate fast path in user code."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -3212,6 +3242,7 @@ def main() -> int:
     # Runtime: extern stubs are first-class values
     tests.append(lambda: test_extern_value_runtime(name="extern: value semantics + GC", mlc_runner=mlc_runner))
     tests.append(lambda: test_extern_out_value_runtime(name="extern: out value keeps full arity", mlc_runner=mlc_runner))
+    tests.append(lambda: test_for_reentrant_runtime(name="for: reentrant state isolation", mlc_runner=mlc_runner))
     tests.append(lambda: test_foreach_reentrant_runtime(name="foreach: reentrant state isolation", mlc_runner=mlc_runner))
     tests.append(lambda: test_foreach_gc_root_runtime(name="foreach: iterable survives gc", mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_plus_minus_one_fastpaths(name="codegen: +/-1 fast paths in user main",

@@ -512,6 +512,50 @@ class CodegenStmt:
             pass
         return names
 
+    def _for_state_names(self, s: Any) -> tuple[str, str]:
+        cached = getattr(s, "_ml_for_state_names", None)
+        if (
+            isinstance(cached, tuple)
+            and len(cached) == 2
+            and all(isinstance(x, str) and x for x in cached)
+        ):
+            return cached
+        line = getattr(s, "_line", None)
+        col = getattr(s, "_col", None)
+        if (not isinstance(line, int) or line <= 0) or (not isinstance(col, int) or col < 0):
+            pos = getattr(s, "pos", None)
+            try:
+                if not isinstance(line, int) or line <= 0:
+                    line = getattr(pos, "line", None)
+                if not isinstance(col, int) or col < 0:
+                    col = getattr(pos, "col", None)
+            except Exception:
+                pass
+            if isinstance(pos, (tuple, list)):
+                if len(pos) >= 1 and (not isinstance(line, int) or line <= 0):
+                    try:
+                        line = int(pos[0])
+                    except Exception:
+                        pass
+                if len(pos) >= 2 and (not isinstance(col, int) or col < 0):
+                    try:
+                        col = int(pos[1])
+                    except Exception:
+                        pass
+        if isinstance(line, int) and line > 0 and isinstance(col, int) and col >= 0:
+            base = f"l{line}_c{col}_{self._foreach_var_name(s)}"
+        else:
+            base = f"id_{id(s)}"
+        names = (
+            f"__for_end_{base}",
+            f"__for_step_{base}",
+        )
+        try:
+            setattr(s, "_ml_for_state_names", names)
+        except Exception:
+            pass
+        return names
+
     def _for_unroll_body_ok(self, stmts: list[Any], loop_var: str) -> bool:
         """Conservative filter for tiny constant-trip `for` loop unrolling.
 
@@ -2327,8 +2371,43 @@ class CodegenStmt:
                 BreakableCtx(kind='loop', break_label=end, continue_label=cont, break_depth=depth_outer,
                              continue_depth=loop_depth))
 
-            end_lbl = self.ensure_var(f"__for_end_{a.pos}")
-            step_lbl = self.ensure_var(f"__for_step_{a.pos}")
+            end_name, step_name = self._for_state_names(s)
+            state_stack = bool(getattr(self, "in_function", False))
+            state_slots = {}
+            if state_stack:
+                for nm in (end_name, step_name):
+                    if hasattr(self, "declare_fresh_binding"):
+                        b_state = self.declare_fresh_binding(nm, node=s)
+                    elif hasattr(self, "ensure_binding_for_write"):
+                        b_state = self.ensure_binding_for_write(nm, node=s)
+                    else:
+                        raise self.error(f"Internal error: missing scope binding helper for '{nm}'", s)
+                    off = getattr(b_state, "offset", None)
+                    if off is None:
+                        raise self.error(f"Internal error: missing for-loop state slot for '{nm}'", s)
+                    state_slots[nm] = int(off)
+            else:
+                for nm in (end_name, step_name):
+                    if hasattr(self, "declare_global_binding"):
+                        b = self.declare_global_binding(nm, node=s)
+                        state_slots[nm] = str(getattr(b, "label", "") or "")
+                    else:
+                        state_slots[nm] = self.ensure_var(nm)
+
+            end_slot = state_slots[end_name]
+            step_slot = state_slots[step_name]
+
+            def _state_store_qword_rax(slot) -> None:
+                if state_stack:
+                    a.mov_rsp_disp32_rax(int(slot))
+                else:
+                    a.mov_rip_qword_rax(str(slot))
+
+            def _state_load_qword_rax(slot) -> None:
+                if state_stack:
+                    a.mov_rax_rsp_disp32(int(slot))
+                else:
+                    a.mov_rax_rip_qword(str(slot))
 
             # init var = start
             self.emit_expr(s.start)
@@ -2336,24 +2415,24 @@ class CodegenStmt:
 
             # store end
             self.emit_expr(s.end)
-            a.mov_rip_qword_rax(end_lbl)
+            _state_store_qword_rax(end_slot)
 
             # determine step based on start <= end
             # compare tagged var and end (monotonic)
             self.emit_load_var(s.var)
             a.mov_r10_rax()
-            a.mov_rax_rip_qword(end_lbl)
+            _state_load_qword_rax(end_slot)
             a.cmp_r64_r64("rax", "r10")  # cmp rax, r10  (end ? start)
             # if end >= start => step=+1 else -1
             lbl_step_pos = f"for_step_pos_{a.pos}"
             lbl_step_done = f"for_step_done_{a.pos}"
             a.jcc('ge', lbl_step_pos)
             a.mov_rax_imm64(enc_int(-1))
-            a.mov_rip_qword_rax(step_lbl)
+            _state_store_qword_rax(step_slot)
             a.jmp(lbl_step_done)
             a.mark(lbl_step_pos)
             a.mov_rax_imm64(enc_int(1))
-            a.mov_rip_qword_rax(step_lbl)
+            _state_store_qword_rax(step_slot)
             a.mark(lbl_step_done)
 
             a.mark(top)
@@ -2367,14 +2446,14 @@ class CodegenStmt:
             # if var == end -> end loop
             self.emit_load_var(s.var)
             a.mov_r10_rax()
-            a.mov_rax_rip_qword(end_lbl)
+            _state_load_qword_rax(end_slot)
             a.cmp_rax_r10()
             a.jcc('e', end)
 
             # var = var + step (tag-add) => (a+b)-1
             self.emit_load_var(s.var)
             a.mov_r10_rax()
-            a.mov_rax_rip_qword(step_lbl)
+            _state_load_qword_rax(step_slot)
             a.add_rax_r10()
             a.sub_rax_imm8(1)
             self.emit_store_var(s.var, s)
@@ -4637,6 +4716,9 @@ class CodegenStmt:
                     if isinstance(st.var, str) and st.var in boxed_names:
                         b.boxed = True
                     self.register_decl_site_binding(st, st.var, b)
+                    for _nm in self._for_state_names(st):
+                        _b_hidden = self.declare_local_binding(_nm, node=st, offset=None)
+                        self.register_decl_site_binding(st, _nm, _b_hidden)
                     analyze_block(st.body)
                     self.pop_scope(emit_cleanup=False)
                     continue
