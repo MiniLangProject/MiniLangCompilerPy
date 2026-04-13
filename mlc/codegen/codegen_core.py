@@ -1013,6 +1013,25 @@ class CodegenCore:
         a.call('fn_box_float')
         a.mark(l_end)
 
+    def emit_force_xmm0_to_float_value(self) -> None:
+        """Encode XMM0 as a float value without normalizing exact integers to TAG_INT."""
+        a = self.asm
+        lid = self.new_label_id()
+        l_box = f"forcef_box_{lid}"
+        l_end = f"forcef_end_{lid}"
+        a.cvtsd2ss_xmm_xmm("xmm2", "xmm0")
+        a.cvtss2sd_xmm_xmm("xmm3", "xmm2")
+        a.ucomisd_xmm_xmm("xmm0", "xmm3")
+        a.jcc('ne', l_box)
+        a.jcc('p', l_box)
+        a.movd_r32_xmm("eax", "xmm2")
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_FLOAT)
+        a.jmp(l_end)
+        a.mark(l_box)
+        a.call('fn_box_float')
+        a.mark(l_end)
+
     def emit_to_double_xmm(self, xmm: int, fail_label: str) -> None:
         """Convert numeric value in RAX (tagged int, immediate float, or boxed float) to XMM0/XMM1.
 
@@ -1271,6 +1290,7 @@ class CodegenCore:
             'fn_decref': getattr(self, 'emit_decref_function', None),
             'fn_input': getattr(self, 'emit_input_function', None),
             'fn_toNumber': getattr(self, 'emit_toNumber_function', None),
+            'fn_toFloat': getattr(self, 'emit_toFloat_function', None),
             'fn_typeof': getattr(self, 'emit_typeof_function', None),
             'fn_typeName': getattr(self, 'emit_typeName_function', None),
             'fn_unhandled_error_exit': getattr(self, 'emit_unhandled_error_exit_function', None),
@@ -1344,7 +1364,7 @@ class CodegenCore:
             'fn_string_endswith', 'fn_string_repeat', 'fn_string_ltrim_ascii', 'fn_string_rtrim_ascii',
             'fn_string_trim_ascii', 'fn_string_is_blank_ascii', 'fn_string_reverse', 'fn_string_to_lower_ascii',
             'fn_string_to_upper_ascii', 'fn_string_eq_ignore_case_ascii', 'fn_string_join', 'fn_bytes_eq', 'fn_add_string', 'fn_add_array',
-            'fn_add_bytes', 'fn_value_to_string', 'fn_box_float', 'fn_toNumber', 'fn_typeof', 'fn_typeName',
+            'fn_add_bytes', 'fn_value_to_string', 'fn_box_float', 'fn_toNumber', 'fn_toFloat', 'fn_typeof', 'fn_typeName',
             'fn_int_to_dec', 'fn_strlen', 'fn_decode', 'fn_decodeZ', 'fn_decode16Z', 'fn_hex', 'fn_fromHex',
             'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_copyStringBytes', 'fn_builtin_fillBytes',
             'fn_builtin_gc_collect', 'fn_builtin_gc_set_limit', 'fn_build_args', 'fn_init_argvw', 'fn_incref',

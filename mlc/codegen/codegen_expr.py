@@ -5077,6 +5077,14 @@ class CodegenExpr:
                 a.call('fn_toNumber')
                 return
 
+            # Builtin toFloat(x): parse/coerce numerics but preserve exact
+            # integer-valued floats as floats instead of normalizing to TAG_INT.
+            if callee_name == 'toFloat' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64("rcx", "rax")
+                a.call('fn_toFloat')
+                return
+
             # Builtin typeof(x)
             if callee_name == 'typeof' and len(e.args) == 1:
                 arg = e.args[0]

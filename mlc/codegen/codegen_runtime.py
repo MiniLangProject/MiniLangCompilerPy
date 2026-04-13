@@ -1517,6 +1517,35 @@ class CodegenRuntime:
         a.add_rsp_imm8(0x28)
         a.ret()
 
+    def emit_toFloat_function(self) -> None:
+        r"""Builtin: toFloat(x) -> float
+
+        Like ``toNumber(x)``, but exact integer-valued results stay floats.
+        Unsupported inputs return ``void``.
+        """
+        a = self.asm
+        a.mark('fn_toFloat')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"toflt_fail_{lid}"
+        l_done = f"toflt_done_{lid}"
+
+        a.call('fn_toNumber')
+        a.mov_r64_r64("rdx", "rax")
+        a.and_r64_imm("rdx", 7)
+        a.cmp_r64_imm("rdx", TAG_VOID)
+        a.jcc('e', l_done)
+        self.emit_to_double_xmm(0, l_fail)
+        self.emit_force_xmm0_to_float_value()
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
     def emit_typeof_function(self) -> None:
         """Builtin: typeof(x) -> boxed string (from .rdata)
 

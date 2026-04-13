@@ -3630,7 +3630,7 @@ class CodegenStmt:
         # NOTE: We only declare a builtin binding if the name is otherwise unused at the
         # top level (i.e., we never override user globals / functions / structs).
         self.builtin_specs: Dict[str, Tuple[int, int, str]] = {# name: (min_arity, max_arity, code_label)
-            'len': (1, 1, 'fn_builtin_len'), 'toNumber': (1, 1, 'fn_toNumber'), 'typeof': (1, 1, 'fn_typeof'),
+            'len': (1, 1, 'fn_builtin_len'), 'toNumber': (1, 1, 'fn_toNumber'), 'toFloat': (1, 1, 'fn_toFloat'), 'typeof': (1, 1, 'fn_typeof'),
             'typeName': (1, 1, 'fn_typeName'),
             'input': (0, 1, 'fn_builtin_input'),
 
@@ -4481,7 +4481,7 @@ class CodegenStmt:
         _saved_ctx_file = getattr(self, "_current_fn_file", None)
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
-        builtin_callees = {'try', "input", "len", "toNumber", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
+        builtin_callees = {'try', "input", "len", "toNumber", "toFloat", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
             "decode16Z", "hex", "fromHex", "slice", "bytesHash", "stringHash", "bytesStartsWith", "bytesEndsWith", "bytesIndexOf", "bytesLastIndexOf", "bytesCompare", "str", "stringSlice", "stringIndexOf", "stringLastIndexOf", "stringStartsWith", "stringEndsWith",
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",

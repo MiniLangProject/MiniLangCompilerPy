@@ -944,6 +944,9 @@ assertEq(toNumber("3.5"), 3.5, "toNumber float")
 assertEq(toNumber("3.0"), 3, "toNumber float normalizes to int")
 assertEq(toNumber(9), 9, "toNumber int passthrough")
 assertEq(toNumber(2.5), 2.5, "toNumber float passthrough")
+assertEq(typeof(toFloat("3.0")), "float", "toFloat exact string type")
+assertEq(toFloat("3.0"), 3.0, "toFloat exact string value")
+assertEq(typeof(toFloat(9)), "float", "toFloat int passthrough type")
 
 // ------------------------------------------------------------
 // STRING CONCAT (+)
