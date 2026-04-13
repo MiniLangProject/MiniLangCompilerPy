@@ -25,6 +25,7 @@ import std.ds.hashmap as hm
 // Supported key types are the same as the underlying HashMap:
 // - int
 // - bytes
+// - string
 // ------------------------------------------------------------
 
 struct HashSet
@@ -68,7 +69,7 @@ end function
 
 /*
 adds a key to the set
-input: int|bytes key
+ input: int|bytes|string key
 returns: bool ok
 */
 function add(key)
@@ -77,7 +78,7 @@ end function
 
 /*
 checks whether the set contains a key
-input: int|bytes key
+ input: int|bytes|string key
 returns: bool present
 */
 function has(key)
@@ -86,7 +87,7 @@ end function
 
 /*
 removes a key from the set
-input: int|bytes key
+ input: int|bytes|string key
 returns: bool removed
 */
 function remove(key)
@@ -95,7 +96,7 @@ end function
 
 /*
 alias for remove(key) to match common naming in the stdlib/tests
-input: int|bytes key
+ input: int|bytes|string key
 returns: bool removed
 */
 function delete(key)

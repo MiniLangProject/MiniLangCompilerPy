@@ -32,6 +32,7 @@ import std.ds.stack as stack
 import std.ds.queue as queue
 import std.ds.hashmap as hm
 import std.ds.set as hset
+import std.ds.list as list
 import std.net as net
 
 function _assertNotError(v, msg)
@@ -487,6 +488,35 @@ function test_base64_ds()
   chk(a.assertTrue(hs.has(10), "set: has"))
   chk(a.assertTrue(hs.delete(10), "set: delete"))
   chk(a.assertFalse(hs.has(10), "set: has after delete"))
+  chk(a.assertTrue(hs.add("beta"), "set: string add"))
+  chk(a.assertTrue(hs.has("beta"), "set: string has"))
+  chk(a.assertTrue(hs.delete("beta"), "set: string delete"))
+  chk(a.assertFalse(hs.has("beta"), "set: string has after delete"))
+
+  // ds.list
+  lst = list.List.new()
+  chk(a.assertTrue(lst.isEmpty(), "list: isEmpty"))
+  lst.add(1)
+  lst.push(2)
+  lst.addAll([3, 4])
+  chk(a.assertEq(lst.len(), 4, "list: len after addAll"))
+  chk(a.assertEq(lst.first(), 1, "list: first"))
+  chk(a.assertEq(lst.last(), 4, "list: last"))
+  chk(a.assertEq(lst.get(1), 2, "list: get"))
+  chk(a.assertTrue(lst.set(1, 20), "list: set ok"))
+  chk(a.assertEq(lst.get(1), 20, "list: set value"))
+  chk(a.assertTrue(lst.insert(2, 99), "list: insert"))
+  chk(a.assertEq(lst.toArray(), [1, 20, 99, 3, 4], "list: toArray after insert"))
+  chk(a.assertEq(lst.removeAt(2), 99, "list: removeAt"))
+  chk(a.assertEq(lst.popOr(-1), 4, "list: popOr"))
+  chk(a.assertEq(lst.toArray(), [1, 20, 3], "list: toArray final"))
+  lst.reserve(64)
+  chk(a.assertEq(lst.len(), 3, "list: len after reserve"))
+  lst.clear()
+  chk(a.assertTrue(lst.isEmpty(), "list: clear"))
+  lst2 = list.List.fromArray(["a", "b", "c"])
+  chk(a.assertEq(lst2.pop(), "c", "list: fromArray pop"))
+  chk(a.assertEq(lst2.toArray(), ["a", "b"], "list: fromArray toArray"))
 end function
 
 function _tcpListenAny(backlog)
