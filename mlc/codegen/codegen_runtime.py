@@ -165,6 +165,475 @@ class CodegenRuntime:
         a.mark(l_done)
         a.ret()
 
+    def emit_bytes_hash_function(self) -> None:
+        """Emit fn_bytes_hash(bytes) -> int|void."""
+        a = self.asm
+        a.mark('fn_bytes_hash')
+        lid = self.new_label_id()
+        l_fail = f"bhash_fail_{lid}"
+        l_loop = f"bhash_loop_{lid}"
+        l_done = f"bhash_done_{lid}"
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('rax', 'r9')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r9', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.mov_r64_imm64('rax', 2166136261)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.mark(l_loop)
+        a.cmp_r32_r32('ecx', 'r11d')
+        a.jcc('ge', l_done)
+        a.lea_r64_mem_bis('r10', 'r9', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('r10d', 'r10', 0)
+        a.xor_r64_r64('rax', 'r10')
+        a.imul_r64_r64_imm('rax', 'rax', 16777619)
+        a.and_r64_imm('rax', 0xFFFFFFFF)
+        a.inc_r32('ecx')
+        a.jmp(l_loop)
+
+        a.mark(l_done)
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.ret()
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_string_hash_function(self) -> None:
+        """Emit fn_string_hash(string) -> int|void."""
+        a = self.asm
+        a.mark('fn_string_hash')
+        lid = self.new_label_id()
+        l_fail = f"shash_fail_{lid}"
+        l_loop = f"shash_loop_{lid}"
+        l_done = f"shash_done_{lid}"
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('rax', 'r9')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r9', 0)
+        a.cmp_r32_imm('eax', OBJ_STRING)
+        a.jcc('ne', l_fail)
+
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.mov_r64_imm64('rax', 2166136261)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.mark(l_loop)
+        a.cmp_r32_r32('ecx', 'r11d')
+        a.jcc('ge', l_done)
+        a.lea_r64_mem_bis('r10', 'r9', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('r10d', 'r10', 0)
+        a.xor_r64_r64('rax', 'r10')
+        a.imul_r64_r64_imm('rax', 'rax', 16777619)
+        a.and_r64_imm('rax', 0xFFFFFFFF)
+        a.inc_r32('ecx')
+        a.jmp(l_loop)
+
+        a.mark(l_done)
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.ret()
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_bytes_startswith_function(self) -> None:
+        """Emit fn_bytes_startswith(bytes, prefix) -> bool."""
+        a = self.asm
+        a.mark('fn_bytes_startswith')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_false = f"bstarts_false_{lid}"
+        l_true = f"bstarts_true_{lid}"
+        l_done = f"bstarts_done_{lid}"
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r64_r64('rax', 'r8')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_false)
+        a.mov_r64_r64('rax', 'r9')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_false)
+        a.mov_r32_membase_disp('eax', 'r8', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_false)
+        a.mov_r32_membase_disp('eax', 'r9', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_false)
+
+        a.cmp_r64_r64('r8', 'r9')
+        a.jcc('e', l_true)
+        a.mov_r32_membase_disp('r10d', 'r8', 4)
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_true)
+        a.cmp_r32_r32('r11d', 'r10d')
+        a.jcc('g', l_false)
+        a.lea_r64_membase_disp('rcx', 'r8', 8)
+        a.lea_r64_membase_disp('rdx', 'r9', 8)
+        a.mov_r32_r32('r8d', 'r11d')
+        a.call('fn_mem_eq_bytes')
+        a.jmp(l_done)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_bytes_endswith_function(self) -> None:
+        """Emit fn_bytes_endswith(bytes, suffix) -> bool."""
+        a = self.asm
+        a.mark('fn_bytes_endswith')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_false = f"bends_false_{lid}"
+        l_true = f"bends_true_{lid}"
+        l_done = f"bends_done_{lid}"
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r64_r64('rax', 'r8')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_false)
+        a.mov_r64_r64('rax', 'r9')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_false)
+        a.mov_r32_membase_disp('eax', 'r8', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_false)
+        a.mov_r32_membase_disp('eax', 'r9', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_false)
+
+        a.cmp_r64_r64('r8', 'r9')
+        a.jcc('e', l_true)
+        a.mov_r32_membase_disp('r10d', 'r8', 4)
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_true)
+        a.cmp_r32_r32('r11d', 'r10d')
+        a.jcc('g', l_false)
+        a.mov_r32_r32('eax', 'r10d')
+        a.sub_r32_r32('eax', 'r11d')
+        a.lea_r64_membase_disp('rcx', 'r8', 8)
+        a.add_r64_r64('rcx', 'rax')
+        a.lea_r64_membase_disp('rdx', 'r9', 8)
+        a.mov_r32_r32('r8d', 'r11d')
+        a.call('fn_mem_eq_bytes')
+        a.jmp(l_done)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_bytes_indexof_function(self) -> None:
+        """Emit fn_bytes_indexof(bytes, needle, start) -> int|void."""
+        a = self.asm
+        a.mark('fn_bytes_indexof')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"bidx_fail_{lid}"
+        l_not_found = f"bidx_not_found_{lid}"
+        l_start_nonneg = f"bidx_start_nonneg_{lid}"
+        l_start_in_range = f"bidx_start_in_range_{lid}"
+        l_prepare = f"bidx_prepare_{lid}"
+        l_outer = f"bidx_outer_{lid}"
+        l_inner = f"bidx_inner_{lid}"
+        l_found = f"bidx_found_{lid}"
+        l_done = f"bidx_done_{lid}"
+
+        a.mov_r64_r64('r11', 'rcx')
+        a.mov_r64_r64('rax', 'r11')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('r9d', 'r11', 4)
+
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r64_r64('rax', 'r10')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+
+        a.mov_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rdx', 'rax')
+        a.and_r64_imm('rdx', 7)
+        a.cmp_r64_imm('rdx', TAG_INT)
+        a.jcc('ne', l_fail)
+        a.sar_r64_imm8('r8', 3)
+        a.cmp_r64_imm('r8', 0)
+        a.jcc('ge', l_start_nonneg)
+        a.xor_r32_r32('r8d', 'r8d')
+        a.mark(l_start_nonneg)
+        a.cmp_r64_r64('r8', 'r9')
+        a.jcc('le', l_start_in_range)
+        a.mov_r64_r64('r8', 'r9')
+        a.mark(l_start_in_range)
+
+        a.mov_r32_membase_disp('edx', 'r10', 4)
+        a.mov_membase_disp_r32('rsp', 0x20, 'edx')
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('ne', l_prepare)
+        a.mov_r64_r64('rax', 'r8')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_prepare)
+        a.cmp_r32_r32('edx', 'r9d')
+        a.jcc('g', l_not_found)
+        a.mov_r32_r32('eax', 'r9d')
+        a.sub_r32_r32('eax', 'edx')
+        a.mov_membase_disp_r32('rsp', 0x24, 'eax')
+        a.cmp_r32_r32('r8d', 'eax')
+        a.jcc('g', l_not_found)
+        a.mov_r32_r32('r9d', 'r8d')
+
+        a.mark(l_outer)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x24)
+        a.cmp_r32_r32('r9d', 'eax')
+        a.jcc('g', l_not_found)
+        a.xor_r32_r32('r8d', 'r8d')
+
+        a.mark(l_inner)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x20)
+        a.cmp_r32_r32('r8d', 'ecx')
+        a.jcc('ge', l_found)
+        a.mov_r64_r64('rax', 'r9')
+        a.add_r64_r64('rax', 'r8')
+        a.lea_r64_mem_bis('rdx', 'r11', 'rax', 1, 8)
+        a.movzx_r32_membase_disp('edx', 'rdx', 0)
+        a.lea_r64_mem_bis('rax', 'r10', 'r8', 1, 8)
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('ne', l_inner + '_miss')
+        a.inc_r32('r8d')
+        a.jmp(l_inner)
+
+        a.mark(l_inner + '_miss')
+        a.inc_r32('r9d')
+        a.jmp(l_outer)
+
+        a.mark(l_found)
+        a.mov_r64_r64('rax', 'r9')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_not_found)
+        a.mov_rax_imm64(enc_int(-1))
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_bytes_lastindexof_function(self) -> None:
+        """Emit fn_bytes_lastindexof(bytes, needle) -> int|void."""
+        a = self.asm
+        a.mark('fn_bytes_lastindexof')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"bridx_fail_{lid}"
+        l_not_found = f"bridx_not_found_{lid}"
+        l_prepare = f"bridx_prepare_{lid}"
+        l_outer = f"bridx_outer_{lid}"
+        l_inner = f"bridx_inner_{lid}"
+        l_found = f"bridx_found_{lid}"
+        l_done = f"bridx_done_{lid}"
+
+        a.mov_r64_r64('r11', 'rcx')
+        a.mov_r64_r64('rax', 'r11')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('r9d', 'r11', 4)
+
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r64_r64('rax', 'r10')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('edx', 'r10', 4)
+        a.mov_membase_disp_r32('rsp', 0x20, 'edx')
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('ne', l_prepare)
+        a.mov_r64_r64('rax', 'r9')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_prepare)
+        a.cmp_r32_r32('edx', 'r9d')
+        a.jcc('g', l_not_found)
+        a.mov_r32_r32('eax', 'r9d')
+        a.sub_r32_r32('eax', 'edx')
+        a.mov_membase_disp_r32('rsp', 0x24, 'eax')
+        a.mov_r32_r32('r9d', 'eax')
+
+        a.mark(l_outer)
+        a.cmp_r32_imm('r9d', 0)
+        a.jcc('l', l_not_found)
+        a.xor_r32_r32('r8d', 'r8d')
+
+        a.mark(l_inner)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x20)
+        a.cmp_r32_r32('r8d', 'ecx')
+        a.jcc('ge', l_found)
+        a.mov_r64_r64('rax', 'r9')
+        a.add_r64_r64('rax', 'r8')
+        a.lea_r64_mem_bis('rdx', 'r11', 'rax', 1, 8)
+        a.movzx_r32_membase_disp('edx', 'rdx', 0)
+        a.lea_r64_mem_bis('rax', 'r10', 'r8', 1, 8)
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('ne', l_inner + '_miss')
+        a.inc_r32('r8d')
+        a.jmp(l_inner)
+
+        a.mark(l_inner + '_miss')
+        a.dec_r32('r9d')
+        a.jmp(l_outer)
+
+        a.mark(l_found)
+        a.mov_r64_r64('rax', 'r9')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_not_found)
+        a.mov_rax_imm64(enc_int(-1))
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_bytes_compare_function(self) -> None:
+        """Emit fn_bytes_compare(bytes, bytes) -> int|void."""
+        a = self.asm
+        a.mark('fn_bytes_compare')
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"bcmp_fail_{lid}"
+        l_loop = f"bcmp_loop_{lid}"
+        l_done = f"bcmp_done_{lid}"
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r64_r64('rax', 'r8')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r64_r64('rax', 'r9')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r8', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'r9', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+
+        a.mov_r32_membase_disp('r10d', 'r8', 4)
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.mov_membase_disp_r32('rsp', 0x20, 'r10d')
+        a.mov_membase_disp_r32('rsp', 0x24, 'r11d')
+        a.xor_r64_r64('rcx', 'rcx')
+        a.cmp_r32_r32('r11d', 'r10d')
+        a.jcc('ge', l_loop)
+        a.mov_r32_r32('r10d', 'r11d')
+
+        a.mark(l_loop)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_done)
+        a.lea_r64_mem_bis('rax', 'r8', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.lea_r64_mem_bis('rdx', 'r9', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('edx', 'rdx', 0)
+        a.cmp_r32_r32('eax', 'edx')
+        a.jcc('b', l_done + '_neg')
+        a.jcc('a', l_done + '_pos')
+        a.inc_r64('rcx')
+        a.dec_r32('r10d')
+        a.jmp(l_loop)
+
+        a.mark(l_done)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x20)
+        a.mov_r32_membase_disp('edx', 'rsp', 0x24)
+        a.cmp_r32_r32('eax', 'edx')
+        a.jcc('b', l_done + '_neg')
+        a.jcc('a', l_done + '_pos')
+        a.mov_rax_imm64(enc_int(0))
+        a.jmp(l_done + '_ret')
+
+        a.mark(l_done + '_neg')
+        a.mov_rax_imm64(enc_int(-1))
+        a.jmp(l_done + '_ret')
+
+        a.mark(l_done + '_pos')
+        a.mov_rax_imm64(enc_int(1))
+        a.jmp(l_done + '_ret')
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done + '_ret')
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
     def emit_scan_nul_bytes_function(self) -> None:
         """Emit fn_scan_nul_bytes(ptr, maxlen) -> EDX index of first NUL or maxlen."""
         a = self.asm
@@ -2283,6 +2752,123 @@ class CodegenRuntime:
         a.jcc('ne', l_ret_void)
         a.mov_r32_membase_disp('eax', 'r10', 0)
         a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_ret_void)
+
+        # srcOff -> r8d
+        a.mov_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r8d', 'eax')
+
+        # len -> edx
+        a.mov_r64_membase_disp('rax', 'rsp', 0x28)
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('edx', 'eax')
+
+        # Clamp length to available tail room in both buffers.
+        a.mov_r32_membase_disp('eax', 'r11', 4)
+        a.cmp_r32_r32('r9d', 'eax')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('eax', 'r9d')
+
+        a.mov_r32_membase_disp('ecx', 'r10', 4)
+        a.cmp_r32_r32('r8d', 'ecx')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('ecx', 'r8d')
+
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('le', l_len_dst)
+        a.mov_r32_r32('edx', 'eax')
+        a.mark(l_len_dst)
+        a.cmp_r32_r32('edx', 'ecx')
+        a.jcc('le', l_len_src)
+        a.mov_r32_r32('edx', 'ecx')
+        a.mark(l_len_src)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('le', l_ret_void)
+
+        a.mov_membase_disp_r32('rsp', 0x20, 'edx')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.add_r64_r64('rcx', 'r9')
+        a.lea_r64_membase_disp('rdx', 'r10', 8)
+        a.add_r64_r64('rdx', 'r8')
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
+        a.call('fn_copy_bytes')
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def emit_builtin_copyStringBytes_function(self) -> None:
+        """Emit fn_builtin_copyStringBytes(dst, dstOff, srcString, srcOff, len).
+
+        Calling convention:
+        - RCX/RDX/R8/R9 = first four tagged MiniLang args
+        - [rsp+0x28]    = 5th tagged MiniLang arg
+        - R10D          = nargs
+
+        Returns VOID and treats invalid arguments as a no-op.
+        """
+        a = self.asm
+        a.mark('fn_builtin_copyStringBytes')
+        lid = self.new_label_id()
+        l_ret_void = f"bcopys_ret_void_{lid}"
+        l_len_dst = f"bcopys_len_dst_{lid}"
+        l_len_src = f"bcopys_len_src_{lid}"
+
+        a.cmp_r32_imm('r10d', 5)
+        a.jcc('ne', l_ret_void)
+
+        a.mov_r64_r64('r11', 'rcx')  # dst bytes object
+        a.mov_r64_r64('r10', 'r8')   # src string object
+        a.mov_r64_r64('r8', 'r9')    # srcOff tagged
+
+        # dst must be OBJ_BYTES
+        a.mov_r64_r64('rax', 'r11')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_ret_void)
+
+        # dstOff -> r9d
+        a.mov_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r9d', 'eax')
+
+        # src must be OBJ_STRING
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('eax', OBJ_STRING)
         a.jcc('ne', l_ret_void)
 
         # srcOff -> r8d

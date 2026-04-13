@@ -192,22 +192,7 @@ function startsWith(b, prefix)
   if typeof(prefix) != "bytes" then
     return false
   end if
-
-  n = len(b)
-  m = len(prefix)
-  if m == 0 then
-    return true
-  end if
-  if m > n then
-    return false
-  end if
-
-  for i = 0 to(m - 1)
-    if b[i] != prefix[i] then
-      return false
-    end if
-  end for
-  return true
+  return bytesStartsWith(b, prefix)
 end function
 
 function endsWith(b, suffix)
@@ -217,23 +202,7 @@ function endsWith(b, suffix)
   if typeof(suffix) != "bytes" then
     return false
   end if
-
-  n = len(b)
-  m = len(suffix)
-  if m == 0 then
-    return true
-  end if
-  if m > n then
-    return false
-  end if
-
-  start = n - m
-  for i = 0 to(m - 1)
-    if b[start + i] != suffix[i] then
-      return false
-    end if
-  end for
-  return true
+  return bytesEndsWith(b, suffix)
 end function
 
 function _indexOfNaive(hay, needle, start)
@@ -296,68 +265,17 @@ function indexOf(hay, needle, start)
   if typeof(start) != "int" then
     return
   end if
+  return bytesIndexOf(hay, needle, start)
+end function
 
-  n = len(hay)
-  m = len(needle)
-
-  i0 = start
-  if i0 < 0 then
-    i0 = 0
+function lastIndexOf(hay, needle)
+  if typeof(hay) != "bytes" then
+    return
   end if
-  if i0 > n then
-    i0 = n
+  if typeof(needle) != "bytes" then
+    return
   end if
-
-  if m == 0 then
-    return i0
-  end if
-  if m > n then
-    return -1
-  end if
-
-  last = n - m
-  if i0 > last then
-    return -1
-  end if
-
-  if m == 1 then
-    b0 = needle[0]
-    i = i0
-    while i <= last
-      if hay[i] == b0 then
-        return i
-      end if
-      i = i + 1
-    end while
-    return -1
-  end if
-
-  if m < 4 or (last - i0) < 32 then
-    return _indexOfNaive(hay, needle, i0)
-  end if
-
-  shift = array(256, m)
-  for j = 0 to(m - 2)
-    shift[needle[j]] = (m - 1) - j
-  end for
-
-  lastByte = needle[m - 1]
-  i = i0
-  while i <= last
-    tail = hay[i + m - 1]
-    if tail == lastByte then
-      j = 0
-      while j < m - 1 and hay[i + j] == needle[j]
-        j = j + 1
-      end while
-      if j == m - 1 then
-        return i
-      end if
-    end if
-    i = i + shift[tail]
-  end while
-
-  return -1
+  return bytesLastIndexOf(hay, needle)
 end function
 
 function compare(a, b)
@@ -367,34 +285,7 @@ function compare(a, b)
   if typeof(b) != "bytes" then
     return
   end if
-
-  na = len(a)
-  nb = len(b)
-  n = na
-  if nb < n then
-    n = nb
-  end if
-
-  if n > 0 then
-    for i = 0 to(n - 1)
-      va = a[i]
-      vb = b[i]
-      if va < vb then
-        return -1
-      end if
-      if va > vb then
-        return 1
-      end if
-    end for
-  end if
-
-  if na < nb then
-    return -1
-  end if
-  if na > nb then
-    return 1
-  end if
-  return 0
+  return bytesCompare(a, b)
 end function
 
 function toHex(b)

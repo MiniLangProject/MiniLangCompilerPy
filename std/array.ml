@@ -311,7 +311,7 @@ function joinStrings(a, sep)
     return
   end if
 
-  return s.join(a, sep)
+  return stringJoin(a, sep)
 end function
 
 /*

@@ -16,33 +16,15 @@ limitations under the License.
 
 package std.fmt
 
+import std.string_builder as sb
+
 /*
 repeats a string `ch` exactly `count` times
 input: string ch, int count
 returns: string repeated
 */
 function repeat(ch, count)
-  if typeof(ch) != "string" or typeof(count) != "int" then
-    return
-  end if
-  if count <= 0 or len(ch) == 0 then
-    return ""
-  end if
-
-  // Fast repeat via doubling (O(log n) concatenations).
-  output = ""
-  piece = ch
-  n = count
-  while n > 0
-    if (n & 1) == 1 then
-      output = output + piece
-    end if
-    n = n >> 1
-    if n > 0 then
-      piece = piece + piece
-    end if
-  end while
-  return output
+  return stringRepeat(ch, count)
 end function
 
 /*
@@ -111,51 +93,39 @@ function quote(s)
 
   src = bytes(s)
   n = len(src)
-  extra = 0
+  bld = sb.StringBuilder.withCapacity(n + 8)
+  bld.appendString("\"")
+  runStart = 0
   i = 0
   while i < n
     c = src[i]
-    if c == 92 or c == 34 or c == 10 or c == 13 or c == 9 then
-      extra = extra + 1
-    end if
-    i = i + 1
-  end while
-
-  output = bytes(n + extra + 2, 0)
-  output[0] = 34
-  pos = 1
-  i = 0
-  while i < n
-    c = src[i]
+    esc = ""
     if c == 92 then
-      output[pos] = 92
-      output[pos + 1] = 92
-      pos = pos + 2
+      esc = "\\\\"
     else if c == 34 then
-      output[pos] = 92
-      output[pos + 1] = 34
-      pos = pos + 2
+      esc = "\\\""
     else if c == 10 then
-      output[pos] = 92
-      output[pos + 1] = 110
-      pos = pos + 2
+      esc = "\\n"
     else if c == 13 then
-      output[pos] = 92
-      output[pos + 1] = 114
-      pos = pos + 2
+      esc = "\\r"
     else if c == 9 then
-      output[pos] = 92
-      output[pos + 1] = 116
-      pos = pos + 2
-    else
-      output[pos] = c
-      pos = pos + 1
+      esc = "\\t"
+    end if
+    if len(esc) > 0 then
+      if i > runStart then
+        bld.appendSlice(s, runStart, i - runStart)
+      end if
+      bld.appendString(esc)
+      runStart = i + 1
     end if
     i = i + 1
   end while
 
-  output[pos] = 34
-  return decode(output)
+  if runStart < n then
+    bld.appendSlice(s, runStart, n - runStart)
+  end if
+  bld.appendString("\"")
+  return bld.toString()
 end function
 
 /*

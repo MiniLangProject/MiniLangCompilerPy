@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-04-10T20:15:12.090142Z",
-  "count": 215,
+  "generated_utc": "2026-04-13T05:52:32.819144Z",
+  "count": 217,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -1097,6 +1097,24 @@
       "kwargs": {},
       "hex": "4c891df9ffffff",
       "asm": "mov qword [rip+L], r11"
+    },
+    {
+      "name": "mov_rip_qword_r8",
+      "args": [
+        "L"
+      ],
+      "kwargs": {},
+      "hex": "4c8905f9ffffff",
+      "asm": "mov qword [rip+L], r8"
+    },
+    {
+      "name": "mov_rip_qword_r9",
+      "args": [
+        "L"
+      ],
+      "kwargs": {},
+      "hex": "4c890df9ffffff",
+      "asm": "mov qword [rip+L], r9"
     },
     {
       "name": "mov_rip_qword_rax",

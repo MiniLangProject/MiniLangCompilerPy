@@ -3639,7 +3639,32 @@ class CodegenStmt:
             # (argument validation + allocation) and are therefore not first-class here.
             'decode': (1, 2, 'fn_decode'), 'decodeZ': (1, 1, 'fn_decodeZ'), 'decode16Z': (1, 1, 'fn_decode16Z'),
             'hex': (1, 1, 'fn_hex'), 'fromHex': (1, 1, 'fn_fromHex'), 'slice': (3, 3, 'fn_slice'),
-            'copyBytes': (5, 5, 'fn_builtin_copyBytes'), 'fillBytes': (4, 4, 'fn_builtin_fillBytes'),
+            'bytesHash': (1, 1, 'fn_bytes_hash'),
+            'stringHash': (1, 1, 'fn_string_hash'),
+            'bytesStartsWith': (2, 2, 'fn_bytes_startswith'),
+            'bytesEndsWith': (2, 2, 'fn_bytes_endswith'),
+            'bytesIndexOf': (3, 3, 'fn_bytes_indexof'),
+            'bytesLastIndexOf': (2, 2, 'fn_bytes_lastindexof'),
+            'bytesCompare': (2, 2, 'fn_bytes_compare'),
+            'str': (1, 1, 'fn_value_to_string'),
+            'stringSlice': (3, 3, 'fn_string_slice'),
+            'stringIndexOf': (3, 3, 'fn_string_indexof'),
+            'stringLastIndexOf': (2, 2, 'fn_string_lastindexof'),
+            'stringStartsWith': (2, 2, 'fn_string_startswith'),
+            'stringEndsWith': (2, 2, 'fn_string_endswith'),
+            'stringRepeat': (2, 2, 'fn_string_repeat'),
+            'stringTrimLeftAscii': (1, 1, 'fn_string_ltrim_ascii'),
+            'stringTrimRightAscii': (1, 1, 'fn_string_rtrim_ascii'),
+            'stringTrimAscii': (1, 1, 'fn_string_trim_ascii'),
+            'stringIsBlankAscii': (1, 1, 'fn_string_is_blank_ascii'),
+            'stringReverse': (1, 1, 'fn_string_reverse'),
+            'stringToLowerAscii': (1, 1, 'fn_string_to_lower_ascii'),
+            'stringToUpperAscii': (1, 1, 'fn_string_to_upper_ascii'),
+            'stringEqualsIgnoreCaseAscii': (2, 2, 'fn_string_eq_ignore_case_ascii'),
+            'stringJoin': (2, 2, 'fn_string_join'),
+            'copyBytes': (5, 5, 'fn_builtin_copyBytes'),
+            'copyStringBytes': (5, 5, 'fn_builtin_copyStringBytes'),
+            'fillBytes': (4, 4, 'fn_builtin_fillBytes'),
 
             'gc_collect': (0, 0, 'fn_builtin_gc_collect'),
 
@@ -4457,8 +4482,12 @@ class CodegenStmt:
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
         builtin_callees = {'try', "input", "len", "toNumber", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
-            "decode16Z", "hex", "fromHex", "slice", "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed",
-            "heap_bytes_reserved", "heap_free_bytes", "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
+            "decode16Z", "hex", "fromHex", "slice", "bytesHash", "stringHash", "bytesStartsWith", "bytesEndsWith", "bytesIndexOf", "bytesLastIndexOf", "bytesCompare", "str", "stringSlice", "stringIndexOf", "stringLastIndexOf", "stringStartsWith", "stringEndsWith",
+            "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
+            "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
+            "copyStringBytes",
+            "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed", "heap_bytes_reserved", "heap_free_bytes",
+            "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
         allowed_function_names = set(getattr(self, "user_functions", {}).keys())
         # Struct type identifiers are not variables; they may be used as callees (Point(...))

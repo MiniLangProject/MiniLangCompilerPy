@@ -717,6 +717,30 @@ class Asm:
         self.emit32(0)
         self.patches.append((p, label, "rip32"))
 
+    def mov_rip_qword_r8(self, label: str) -> None:
+        """Emit `MOV` instruction helper.
+
+        Args:
+            label: Label name.
+        """
+        # mov [rip+disp32], r8
+        self.emit(b"\x4C\x89\x05")
+        p = self.pos
+        self.emit32(0)
+        self.patches.append((p, label, "rip32"))
+
+    def mov_rip_qword_r9(self, label: str) -> None:
+        """Emit `MOV` instruction helper.
+
+        Args:
+            label: Label name.
+        """
+        # mov [rip+disp32], r9
+        self.emit(b"\x4C\x89\x0D")
+        p = self.pos
+        self.emit32(0)
+        self.patches.append((p, label, "rip32"))
+
     def lea_rdx_rip(self, label: str) -> None:
         """Emit `LEA` instruction helper.
 

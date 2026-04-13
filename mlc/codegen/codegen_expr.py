@@ -4048,6 +4048,233 @@ class CodegenExpr:
                 a.call('fn_fromHex')
                 return
 
+            # Builtin str(x) -> string
+            if callee_name == 'str' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_value_to_string')
+                return
+
+            # Native string helpers
+            if callee_name == 'stringSlice' and len(e.args) == 3:
+                tmp_off = self.alloc_expr_temps(24)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                self.emit_expr(e.args[2])
+                a.mov_rsp_disp32_rax(tmp_off + 16)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.mov_r64_membase_disp('r8', 'rsp', tmp_off + 16)
+                a.call('fn_string_slice')
+                self.free_expr_temps(24)
+                return
+
+            if callee_name == 'bytesStartsWith' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_bytes_startswith')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'bytesHash' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_bytes_hash')
+                return
+
+            if callee_name == 'stringHash' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_hash')
+                return
+
+            if callee_name == 'bytesEndsWith' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_bytes_endswith')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'bytesIndexOf' and len(e.args) == 3:
+                tmp_off = self.alloc_expr_temps(24)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                self.emit_expr(e.args[2])
+                a.mov_rsp_disp32_rax(tmp_off + 16)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.mov_r64_membase_disp('r8', 'rsp', tmp_off + 16)
+                a.call('fn_bytes_indexof')
+                self.free_expr_temps(24)
+                return
+
+            if callee_name == 'bytesLastIndexOf' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_bytes_lastindexof')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'bytesCompare' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_bytes_compare')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringIndexOf' and len(e.args) == 3:
+                tmp_off = self.alloc_expr_temps(24)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                self.emit_expr(e.args[2])
+                a.mov_rsp_disp32_rax(tmp_off + 16)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.mov_r64_membase_disp('r8', 'rsp', tmp_off + 16)
+                a.call('fn_string_indexof')
+                self.free_expr_temps(24)
+                return
+
+            if callee_name == 'stringLastIndexOf' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_lastindexof')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringStartsWith' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_startswith')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringEndsWith' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_endswith')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringRepeat' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_repeat')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringTrimLeftAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_ltrim_ascii')
+                return
+
+            if callee_name == 'stringTrimRightAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_rtrim_ascii')
+                return
+
+            if callee_name == 'stringTrimAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_trim_ascii')
+                return
+
+            if callee_name == 'stringIsBlankAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_is_blank_ascii')
+                return
+
+            if callee_name == 'stringReverse' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_reverse')
+                return
+
+            if callee_name == 'stringToLowerAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_to_lower_ascii')
+                return
+
+            if callee_name == 'stringToUpperAscii' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_string_to_upper_ascii')
+                return
+
+            if callee_name == 'stringEqualsIgnoreCaseAscii' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_eq_ignore_case_ascii')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'stringJoin' and len(e.args) == 2:
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_string_join')
+                self.free_expr_temps(16)
+                return
+
             # Builtin slice(bytes, off, len) -> bytes (copy)
             if callee_name == 'slice':
                 if len(e.args) != 3:

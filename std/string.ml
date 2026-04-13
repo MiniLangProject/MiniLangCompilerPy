@@ -16,6 +16,8 @@ limitations under the License.
 
 package std.string
 
+import std.string_builder as sb
+
 // ------------------------------------------------------------
 // std.string
 // String utilities built from core language features:
@@ -230,32 +232,7 @@ input: string s, int count
 returns: string repeated
 */
 function repeat(s, count)
-  if typeof(s) != "string" then
-    return
-  end if
-  if typeof(count) != "int" then
-    return
-  end if
-  if count <= 0 then
-    return ""
-  end if
-
-  sb = bytes(s)
-  sl = len(sb)
-  if sl == 0 then
-    return ""
-  end if
-
-  total = sl * count
-  output = bytes(total, 0)
-  pos = 0
-  i = 0
-  while i < count
-    copyBytes(output, pos, sb, 0, sl)
-    pos = pos + sl
-    i = i + 1
-  end while
-  return _decodeOrEmpty(output)
+  return stringRepeat(s, count)
 end function
 
 /*
@@ -264,46 +241,7 @@ input: string s, int start, int length
 returns: string substring
 */
 function substr(s, start, length)
-  if typeof(s) != "string" then
-    return
-  end if
-  if typeof(start) != "int" then
-    return
-  end if
-  if typeof(length) != "int" then
-    return
-  end if
-
-  n = len(s)
-
-  // normalize start
-  i = start
-  if i < 0 then
-    i = i + n
-  end if
-  if i < 0 then
-    i = 0
-  end if
-  if i > n then
-    i = n
-  end if
-
-  // normalize length
-  l = length
-  if l <= 0 then
-    return ""
-  end if
-
-  if i + l > n then
-    l = n - i
-  end if
-  if l <= 0 then
-    return ""
-  end if
-
-  sb = bytes(s)
-  output = slice(sb, i, l)
-  return _decodeOrEmpty(output)
+  return stringSlice(s, start, length)
 end function
 
 /*
@@ -312,30 +250,7 @@ input: string s, string prefix
 returns: bool startsWith
 */
 function startsWith(s, prefix)
-  if typeof(s) != "string" then
-    return false
-  end if
-  if typeof(prefix) != "string" then
-    return false
-  end if
-
-  hb = bytes(s)
-  nb = bytes(prefix)
-  n = len(hb)
-  m = len(nb)
-  if m == 0 then
-    return true
-  end if
-  if m > n then
-    return false
-  end if
-
-  for i = 0 to(m - 1)
-    if hb[i] != nb[i] then
-      return false
-    end if
-  end for
-  return true
+  return stringStartsWith(s, prefix)
 end function
 
 /*
@@ -344,31 +259,7 @@ input: string s, string suffix
 returns: bool endsWith
 */
 function endsWith(s, suffix)
-  if typeof(s) != "string" then
-    return false
-  end if
-  if typeof(suffix) != "string" then
-    return false
-  end if
-
-  hb = bytes(s)
-  nb = bytes(suffix)
-  n = len(hb)
-  m = len(nb)
-  if m == 0 then
-    return true
-  end if
-  if m > n then
-    return false
-  end if
-
-  start = n - m
-  for i = 0 to(m - 1)
-    if hb[start + i] != nb[i] then
-      return false
-    end if
-  end for
-  return true
+  return stringEndsWith(s, suffix)
 end function
 
 /*
@@ -386,34 +277,7 @@ function indexOf(s, needle, start)
   if typeof(start) != "int" then
     return
   end if
-
-  hb = bytes(s)
-  nb = bytes(needle)
-  n = len(hb)
-  m = len(nb)
-
-  i0 = start
-  if i0 < 0 then
-    i0 = 0
-  end if
-  if i0 > n then
-    i0 = n
-  end if
-
-  // empty needle
-  if m == 0 then
-    return i0
-  end if
-
-  if m > n then
-    return -1
-  end if
-
-  last = n - m
-  if i0 > last then
-    return -1
-  end if
-  return _indexOfBytes(hb, nb, i0)
+  return stringIndexOf(s, needle, start)
 end function
 
 /*
@@ -428,20 +292,7 @@ function lastIndexOf(s, needle)
   if typeof(needle) != "string" then
     return
   end if
-
-  hb = bytes(s)
-  nb = bytes(needle)
-  n = len(hb)
-  m = len(nb)
-
-  if m == 0 then
-    return n
-  end if
-  if m > n then
-    return -1
-  end if
-
-  return _lastIndexOfBytes(hb, nb)
+  return stringLastIndexOf(s, needle)
 end function
 
 /*
@@ -450,7 +301,7 @@ input: string s, string needle
 returns: bool contains
 */
 function contains(s, needle)
-  idx = std.string.indexOf(s, needle, 0)
+  idx = stringIndexOf(s, needle, 0)
   if typeof(idx) == "void" then
     return false
   end if
@@ -463,28 +314,7 @@ input: string s
 returns: string trimmed
 */
 function ltrim(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-
-  i = 0
-  while i < n
-    if not _isWhitespaceByte(sb[i]) then
-      break
-    end if
-    i = i + 1
-  end while
-
-  if i == 0 then
-    return s
-  end if
-  return _decodeOrEmpty(slice(sb, i, n - i))
+  return stringTrimLeftAscii(s)
 end function
 
 /*
@@ -493,31 +323,7 @@ input: string s
 returns: string trimmed
 */
 function rtrim(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-
-  i = n - 1
-  while i >= 0
-    if not _isWhitespaceByte(sb[i]) then
-      break
-    end if
-    i = i - 1
-  end while
-
-  if i == n - 1 then
-    return s
-  end if
-  if i < 0 then
-    return ""
-  end if
-  return _decodeOrEmpty(slice(sb, 0, i + 1))
+  return stringTrimRightAscii(s)
 end function
 
 /*
@@ -526,35 +332,7 @@ input: string s
 returns: string trimmed
 */
 function trim(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-
-  left = 0
-  while left < n and _isWhitespaceByte(sb[left])
-    left = left + 1
-  end while
-
-  if left >= n then
-    return ""
-  end if
-
-  right = n - 1
-  while right >= left and _isWhitespaceByte(sb[right])
-    right = right - 1
-  end while
-
-  if left == 0 and right == n - 1 then
-    return s
-  end if
-
-  return _decodeOrEmpty(slice(sb, left, right - left + 1))
+  return stringTrimAscii(s)
 end function
 
 /*
@@ -563,19 +341,7 @@ input: string s
 returns: bool isBlank
 */
 function isBlank(s)
-  if typeof(s) != "string" then
-    return false
-  end if
-  sb = bytes(s)
-  n = len(sb)
-  i = 0
-  while i < n
-    if not _isWhitespaceByte(sb[i]) then
-      return false
-    end if
-    i = i + 1
-  end while
-  return true
+  return stringIsBlankAscii(s)
 end function
 
 /*
@@ -601,15 +367,13 @@ function split(s, sep)
     return val
   end if
 
-  hb = bytes(s)
-  nb = bytes(sep)
-  n = len(hb)
-  sl = len(nb)
+  n = len(s)
+  sl = len(sep)
 
   count = 1
   i = 0
   while i <= n - sl
-    p = _indexOfBytes(hb, nb, i)
+    p = stringIndexOf(s, sep, i)
     if p < 0 then
       break
     end if
@@ -621,12 +385,12 @@ function split(s, sep)
   i = 0
   oi = 0
   while true
-    p = _indexOfBytes(hb, nb, i)
+    p = stringIndexOf(s, sep, i)
     if p < 0 then
-      val[oi] = _decodeOrEmpty(slice(hb, i, n - i))
+      val[oi] = stringSlice(s, i, n - i)
       break
     end if
-    val[oi] = _decodeOrEmpty(slice(hb, i, p - i))
+    val[oi] = stringSlice(s, i, p - i)
     oi = oi + 1
     i = p + sl
   end while
@@ -640,54 +404,7 @@ input: array<string> parts, string sep
 returns: string joined
 */
 function join(parts, sep)
-  if typeof(parts) != "array" then
-    return
-  end if
-  if typeof(sep) != "string" then
-    return
-  end if
-
-  n = len(parts)
-  if n == 0 then
-    return ""
-  end if
-
-  sepBytes = bytes(sep)
-  sepLen = len(sepBytes)
-  partBytes = array(n)
-  totalLen = 0
-
-  for i = 0 to(n - 1)
-    if typeof(parts[i]) != "string" then
-      return
-    end if
-    pb = bytes(parts[i])
-    partBytes[i] = pb
-    totalLen = totalLen + len(pb)
-    if i > 0 then
-      totalLen = totalLen + sepLen
-    end if
-  end for
-
-  if totalLen == 0 then
-    return ""
-  end if
-
-  output = bytes(totalLen, 0)
-  pos = 0
-  for i = 0 to(n - 1)
-    if i > 0 and sepLen > 0 then
-      copyBytes(output, pos, sepBytes, 0, sepLen)
-      pos = pos + sepLen
-    end if
-    pb = partBytes[i]
-    plen = len(pb)
-    if plen > 0 then
-      copyBytes(output, pos, pb, 0, plen)
-      pos = pos + plen
-    end if
-  end for
-  return _decodeOrEmpty(output)
+  return stringJoin(parts, sep)
 end function
 
 /*
@@ -709,60 +426,36 @@ function replaceAll(s, needle, repl)
   if len(needle) == 0 then
     return s
   end if
-
-  hb = bytes(s)
-  nb = bytes(needle)
-  rb = bytes(repl)
-  n = len(hb)
-  nl = len(nb)
-  rl = len(rb)
-
-  count = 0
-  i = 0
-  while i <= n - nl
-    p = _indexOfBytes(hb, nb, i)
-    if p < 0 then
-      break
-    end if
-    count = count + 1
-    i = p + nl
-  end while
-
-  if count == 0 then
+  n = len(s)
+  nl = len(needle)
+  first = stringIndexOf(s, needle, 0)
+  if first < 0 then
     return s
   end if
 
-  totalLen = n + count * (rl - nl)
-  if totalLen == 0 then
-    return ""
-  end if
-
-  output = bytes(totalLen, 0)
-  pos = 0
+  bld = sb.StringBuilder.withCapacity(n)
   i = 0
   while true
-    p = _indexOfBytes(hb, nb, i)
+    p = stringIndexOf(s, needle, i)
     if p < 0 then
       tailLen = n - i
       if tailLen > 0 then
-        copyBytes(output, pos, hb, i, tailLen)
+        bld.appendSlice(s, i, tailLen)
       end if
       break
     end if
 
     segLen = p - i
     if segLen > 0 then
-      copyBytes(output, pos, hb, i, segLen)
-      pos = pos + segLen
+      bld.appendSlice(s, i, segLen)
     end if
-    if rl > 0 then
-      copyBytes(output, pos, rb, 0, rl)
-      pos = pos + rl
+    if len(repl) > 0 then
+      bld.appendString(repl)
     end if
     i = p + nl
   end while
 
-  return _decodeOrEmpty(output)
+  return bld.toString()
 end function
 
 /*
@@ -785,7 +478,7 @@ function replaceFirst(s, needle, repl)
     return s
   end if
 
-  p = std.string.indexOf(s, needle, 0)
+  p = stringIndexOf(s, needle, 0)
   if typeof(p) == "void" then
     return
   end if
@@ -795,10 +488,19 @@ function replaceFirst(s, needle, repl)
 
   n = len(s)
   nl = len(needle)
-
-  left = std.string.substr(s, 0, p)
-  right = std.string.substr(s, p + nl, n -(p + nl))
-  return left + repl + right
+  bld = sb.StringBuilder.withCapacity(n)
+  if p > 0 then
+    bld.appendSlice(s, 0, p)
+  end if
+  if len(repl) > 0 then
+    bld.appendString(repl)
+  end if
+  tailOff = p + nl
+  tailLen = n - tailOff
+  if tailLen > 0 then
+    bld.appendSlice(s, tailOff, tailLen)
+  end if
+  return bld.toString()
 end function
 
 /*
@@ -817,16 +519,13 @@ function countOf(s, needle)
   if len(needle) == 0 then
     return 0
   end if
-
-  hb = bytes(s)
-  nb = bytes(needle)
-  n = len(hb)
-  nl = len(nb)
+  n = len(s)
+  nl = len(needle)
 
   count = 0
   i = 0
   while i <= n - nl
-    p = _indexOfBytes(hb, nb, i)
+    p = stringIndexOf(s, needle, i)
     if p < 0 then
       break
     end if
@@ -852,22 +551,7 @@ input: string s
 returns: string reversed
 */
 function reverse(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-  output = bytes(n, 0)
-  i = 0
-  while i < n
-    output[i] = sb[n - 1 - i]
-    i = i + 1
-  end while
-  return _decodeOrEmpty(output)
+  return stringReverse(s)
 end function
 
 // ------------------------------------------------------------
@@ -919,22 +603,7 @@ input: string s
 returns: string lower
 */
 function toLowerAscii(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-  output = bytes(n, 0)
-  i = 0
-  while i < n
-    output[i] = _lowerAsciiByte(sb[i])
-    i = i + 1
-  end while
-  return _decodeOrEmpty(output)
+  return stringToLowerAscii(s)
 end function
 
 /*
@@ -943,22 +612,7 @@ input: string s
 returns: string upper
 */
 function toUpperAscii(s)
-  if typeof(s) != "string" then
-    return
-  end if
-
-  sb = bytes(s)
-  n = len(sb)
-  if n == 0 then
-    return ""
-  end if
-  output = bytes(n, 0)
-  i = 0
-  while i < n
-    output[i] = _upperAsciiByte(sb[i])
-    i = i + 1
-  end while
-  return _decodeOrEmpty(output)
+  return stringToUpperAscii(s)
 end function
 
 /*
@@ -967,27 +621,7 @@ input: string a, string b
 returns: bool equalsIgnoreCase
 */
 function equalsIgnoreCaseAscii(a, b)
-  if typeof(a) != "string" then
-    return false
-  end if
-  if typeof(b) != "string" then
-    return false
-  end if
-
-  ab = bytes(a)
-  bb = bytes(b)
-  n = len(ab)
-  if n != len(bb) then
-    return false
-  end if
-  i = 0
-  while i < n
-    if _lowerAsciiByte(ab[i]) != _lowerAsciiByte(bb[i]) then
-      return false
-    end if
-    i = i + 1
-  end while
-  return true
+  return stringEqualsIgnoreCaseAscii(a, b)
 end function
 
 

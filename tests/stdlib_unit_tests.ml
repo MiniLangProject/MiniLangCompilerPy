@@ -17,6 +17,7 @@
 import std.assert as a
 import std.core as c
 import std.string as s
+import std.string_builder as sb
 import std.bytes as b
 import std.encoding.hex as hx
 import std.encoding.base64 as b64
@@ -84,6 +85,11 @@ function test_core_assert_result()
 end function
 
 function test_string_hex_bytes()
+  chk(a.assertEq(str(123), "123", "string: str int"))
+  chk(a.assertEq(str(true), "true", "string: str bool"))
+  chk(a.assertEq(str("abc"), "abc", "string: str string"))
+  chk(a.assertEq(s.repeat("ab", 3), "ababab", "string: repeat"))
+  chk(a.assertEq(s.substr("hello", 1, 3), "ell", "string: substr"))
   chk(a.assertEq(s.trim("  hi  "), "hi", "string: trim"))
   chk(a.assertTrue(s.startsWith("hello", "he"), "string: startsWith"))
   chk(a.assertTrue(s.endsWith("hello", "lo"), "string: endsWith"))
@@ -93,11 +99,13 @@ function test_string_hex_bytes()
   chk(a.assertEq(parts[1], "b", "string: split item"))
   chk(a.assertEq(s.join(["a", "b"], "-"), "a-b", "string: join"))
   chk(a.assertEq(s.replaceAll("aaab", "a", "x"), "xxxb", "string: replaceAll"))
+  chk(a.assertEq(s.replaceFirst("aaab", "a", "x"), "xaab", "string: replaceFirst"))
   longHay = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxabcdefghijklmno---abcdefghijklmno"
   longNeedle = "abcdefghijklmno"
   chk(a.assertEq(s.indexOf(longHay, longNeedle, 0), 32, "string: indexOf long first"))
   chk(a.assertEq(s.indexOf(longHay, longNeedle, 33), 50, "string: indexOf long next"))
   chk(a.assertEq(s.lastIndexOf(longHay, longNeedle), 50, "string: lastIndexOf long"))
+  chk(a.assertTrue(s.contains(longHay, longNeedle), "string: contains"))
 
   // new string helpers
   chk(a.assertTrue(s.isBlank(" \t\r\n"), "string: isBlank"))
@@ -122,10 +130,17 @@ function test_string_hex_bytes()
   chk(a.assertTrue(b.equals(fromHex("0011"), fromHex("00 11")), "bytes: equals"))
   chk(a.assertTrue(b.ctEquals(fromHex("deadbeef"), fromHex("DE AD BE EF")), "bytes: ctEquals"))
   chk(a.assertFalse(b.ctEquals(fromHex("00"), fromHex("00 00")), "bytes: ctEquals len mismatch"))
+  chk(a.assertTrue(b.startsWith(fromHex("00112233"), fromHex("0011")), "bytes: startsWith"))
+  chk(a.assertTrue(b.endsWith(fromHex("00112233"), fromHex("2233")), "bytes: endsWith"))
   bh = bytes(longHay)
   bn = bytes(longNeedle)
+  chk(a.assertEq(b.indexOf(fromHex("0011221122"), fromHex("1122"), 0), 1, "bytes: indexOf short first"))
+  chk(a.assertEq(b.lastIndexOf(fromHex("0011221122"), fromHex("1122")), 3, "bytes: lastIndexOf short last"))
   chk(a.assertEq(b.indexOf(bh, bn, 0), 32, "bytes: indexOf long first"))
   chk(a.assertEq(b.indexOf(bh, bn, 33), 50, "bytes: indexOf long next"))
+  chk(a.assertEq(b.compare(fromHex("0011"), fromHex("0011")), 0, "bytes: compare eq"))
+  chk(a.assertEq(b.compare(fromHex("0011"), fromHex("0012")), -1, "bytes: compare lt"))
+  chk(a.assertEq(b.compare(fromHex("0013"), fromHex("0012")), 1, "bytes: compare gt"))
   fillBuf = bytes(6, 0)
   b.fill(fillBuf, 0xAB)
   chk(a.assertEq(hex(fillBuf), "abababababab", "bytes: fill"))
@@ -152,6 +167,30 @@ function test_string_hex_bytes()
   chk(a.assertEq(hex(x3), "ff11dd33", "bytes: xor"))
   b.xorInPlace(x1, x2)
   chk(a.assertEq(hex(x1), "ff11dd33", "bytes: xorInPlace"))
+end function
+
+function test_string_builder()
+  bld = sb.StringBuilder.new()
+  chk(a.assertEq(bld.len(), 0, "stringBuilder: len initial"))
+  bld.appendString("hello")
+  bld.appendString(" ")
+  bld.append(123)
+  chk(a.assertEq(bld.toString(), "hello 123", "stringBuilder: append"))
+  bld.appendLine("!")
+  chk(a.assertEq(bld.toString(), "hello 123!\n", "stringBuilder: appendLine"))
+  bld.clear()
+  chk(a.assertEq(bld.len(), 0, "stringBuilder: len clear"))
+  chk(a.assertEq(bld.toString(), "", "stringBuilder: clear"))
+
+  bld2 = sb.StringBuilder.withCapacity(2)
+  bld2.appendString("ab")
+  bld2.appendString("cd")
+  bld2.appendString("ef")
+  chk(a.assertEq(bld2.toString(), "abcdef", "stringBuilder: growth"))
+
+  bld3 = sb.StringBuilder.new()
+  bld3.appendSlice("abcdef", 1, 3)
+  chk(a.assertEq(bld3.toString(), "bcd", "stringBuilder: appendSlice"))
 end function
 
 function test_array_sort_random()
@@ -244,6 +283,7 @@ function test_math_fmt_time()
   chk(a.assertEq(fmt.padRight("x", 3, "."), "x..", "fmt: padRight"))
   chk(a.assertEq(fmt.center("x", 3, "."), ".x.", "fmt: center"))
   chk(a.assertEq(fmt.quote("a\"b"), "\"a\\\"b\"", "fmt: quote"))
+  chk(a.assertEq(fmt.quote("a\\b\n"), "\"a\\\\b\\n\"", "fmt: quote escapes"))
   chk(a.assertEq(fmt.repeat("ab", 3), "ababab", "fmt: repeat"))
 
   t1 = t.ticks()
@@ -436,6 +476,11 @@ function test_base64_ds()
   chk(a.assertEq(mp.get(1), "x", "hashmap: get"))
   chk(a.assertTrue(mp.delete(1), "hashmap: delete"))
   chk(a.assertFalse(mp.has(1), "hashmap: has after delete"))
+  chk(a.assertTrue(mp.set("alpha", 123), "hashmap: string set"))
+  chk(a.assertTrue(mp.has("alpha"), "hashmap: string has"))
+  chk(a.assertEq(mp.get("alpha"), 123, "hashmap: string get"))
+  chk(a.assertTrue(mp.delete("alpha"), "hashmap: string delete"))
+  chk(a.assertFalse(mp.has("alpha"), "hashmap: string has after delete"))
 
   hs = hset.HashSet.new()
   chk(a.assertTrue(hs.add(10), "set: add"))
@@ -603,6 +648,7 @@ function main(args)
 
   test_core_assert_result()
   test_string_hex_bytes()
+  test_string_builder()
   test_array_sort_random()
   test_math_fmt_time()
   test_fs_io()

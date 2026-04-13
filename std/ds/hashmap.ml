@@ -20,13 +20,10 @@ package std.ds.hashmap
 // std.ds.hashmap
 // Open-addressing hash map (linear probing).
 //
-// Supported key types (by design):
+// Supported key types:
 // - int
 // - bytes
-//
-// Rationale: the native backend currently has no builtin `encode(string)->bytes`
-// or `ord(char)`; hashing strings would require extra runtime support.
-// If you need a string-keyed map today, implement it as a linear map on arrays.
+// - string
 //
 // Semantics:
 // - get(k) returns `void` if not found or on type errors.
@@ -84,24 +81,8 @@ function _mix32(x)
 end function
 
 /*
-computes FNV-1a 32-bit hash over bytes
-input: bytes b
-returns: int hashU32
-*/
-function _fnv1a32_bytes(b)
-  // FNV-1a 32-bit over bytes
-  h = 2166136261
-  n = len(b)
-  for i = 0 to(n - 1)
-    h =(h ^ b[i]) & 0xFFFFFFFF
-    h =(h * 16777619) & 0xFFFFFFFF
-  end for
-  return h & 0xFFFFFFFF
-end function
-
-/*
-hashes a supported key type (int|bytes)
-input: int|bytes k
+hashes a supported key type (int|bytes|string)
+input: int|bytes|string k
 returns: int hashU32 (or void)
 */
 function _hashKey(k)
@@ -110,14 +91,17 @@ function _hashKey(k)
     return _mix32(k)
   end if
   if t == "bytes" then
-    return _fnv1a32_bytes(k)
+    return bytesHash(k)
+  end if
+  if t == "string" then
+    return stringHash(k)
   end if
   return
 end function
 
 /*
 finds a slot index for lookup/insert
-input: array keys, array states, int cap, int|bytes key, bool forInsert
+input: array keys, array states, int cap, int|bytes|string key, bool forInsert
 returns: int index (or -1)
 */
 function _findSlot(keys, states, cap, key, forInsert)
@@ -270,12 +254,12 @@ end function
 
 /*
 inserts or updates a key/value pair
-input: int|bytes key, any value
+input: int|bytes|string key, any value
 returns: bool ok
 */
 function set(key, value)
   kt = typeof(key)
-  if kt != "int" and kt != "bytes" then
+  if kt != "int" and kt != "bytes" and kt != "string" then
     return false
   end if
 
@@ -299,12 +283,12 @@ end function
 
 /*
 checks if a key exists
-input: int|bytes key
+input: int|bytes|string key
 returns: bool present
 */
 function has(key)
   kt = typeof(key)
-  if kt != "int" and kt != "bytes" then
+  if kt != "int" and kt != "bytes" and kt != "string" then
     return false
   end if
   idx = _findSlot(this.keys, this.states, this.cap, key, false)
@@ -313,12 +297,12 @@ end function
 
 /*
 gets value by key
-input: int|bytes key
+input: int|bytes|string key
 returns: any value (or void)
 */
 function get(key)
   kt = typeof(key)
-  if kt != "int" and kt != "bytes" then
+  if kt != "int" and kt != "bytes" and kt != "string" then
     return
   end if
   idx = _findSlot(this.keys, this.states, this.cap, key, false)
@@ -330,7 +314,7 @@ end function
 
 /*
 gets value by key or returns fallback
-input: int|bytes key, any fallback
+input: int|bytes|string key, any fallback
 returns: any valueOrFallback
 */
 function getOr(key, fallback)
@@ -343,12 +327,12 @@ end function
 
 /*
 removes a key from the map
-input: int|bytes key
+input: int|bytes|string key
 returns: bool removed
 */
 function remove(key)
   kt = typeof(key)
-  if kt != "int" and kt != "bytes" then
+  if kt != "int" and kt != "bytes" and kt != "string" then
     return false
   end if
   idx = _findSlot(this.keys, this.states, this.cap, key, false)
@@ -365,7 +349,7 @@ end function
 
 /*
 alias for remove(key) to match common naming in the stdlib/tests
-input: int|bytes key
+input: int|bytes|string key
 returns: bool removed
 */
 function delete(key)

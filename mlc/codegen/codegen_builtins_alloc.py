@@ -1446,6 +1446,1370 @@ Returns:
         a.mark(l_fail_void)
         _emit_addstr_error(lbl_msg_void)
 
+    def emit_string_slice_function(self) -> None:
+        """Emit fn_string_slice(string, off, len) -> string.
+
+        Mirrors std.string.substr semantics:
+        - invalid types -> void
+        - negative start counts from the end
+        - start is clamped into [0, len(s)]
+        - len <= 0 yields ""
+        - overly large len is clamped to the remaining tail
+        """
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark('fn_string_slice')
+        a.sub_rsp_imm8(0x48)
+
+        lid = self.new_label_id()
+        l_fail = f"strslice_fail_{lid}"
+        l_off_nonneg = f"strslice_off_nonneg_{lid}"
+        l_off_ge0 = f"strslice_off_ge0_{lid}"
+        l_off_ok = f"strslice_off_ok_{lid}"
+        l_len_pos = f"strslice_len_pos_{lid}"
+        l_len_clamped = f"strslice_len_clamped_{lid}"
+        l_need_copy = f"strslice_need_copy_{lid}"
+        l_done = f"strslice_done_{lid}"
+
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r11d", "rax", 0)
+        a.cmp_r32_imm("r11d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_membase_disp_r64("rsp", 0x20, "rax")
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+
+        a.mov_r64_r64("rax", "rdx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_INT)
+        a.jcc("ne", l_fail)
+        a.sar_r64_imm8("rax", 3)
+        a.cmp_r64_imm("rax", 0)
+        a.jcc("ge", l_off_nonneg)
+        a.add_r64_r64("rax", "r9")
+        a.mark(l_off_nonneg)
+        a.cmp_r64_imm("rax", 0)
+        a.jcc("ge", l_off_ge0)
+        a.xor_r32_r32("eax", "eax")
+        a.mark(l_off_ge0)
+        a.cmp_r64_r64("rax", "r9")
+        a.jcc("le", l_off_ok)
+        a.mov_r64_r64("rax", "r9")
+        a.mark(l_off_ok)
+        a.mov_membase_disp_r64("rsp", 0x28, "rax")
+
+        a.mov_r64_r64("rax", "r8")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_INT)
+        a.jcc("ne", l_fail)
+        a.sar_r64_imm8("rax", 3)
+        a.cmp_r64_imm("rax", 0)
+        a.jcc("g", l_len_pos)
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+        a.mark(l_len_pos)
+        a.cmp_r64_imm("rax", 0x7FFFFFFF)
+        a.jcc("g", l_fail)
+        a.mov_membase_disp_r32("rsp", 0x30, "eax")
+
+        a.mov_r64_membase_disp("rax", "rsp", 0x28)
+        a.mov_r64_r64("r11", "r9")
+        a.sub_r64_r64("r11", "rax")
+        a.mov_r32_membase_disp("r10d", "rsp", 0x30)
+        a.cmp_r64_r64("r10", "r11")
+        a.jcc("le", l_len_clamped)
+        a.mov_r32_r32("r10d", "r11d")
+        a.mark(l_len_clamped)
+        a.test_r32_r32("r10d", "r10d")
+        a.jcc("g", l_need_copy)
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_need_copy)
+        a.mov_r64_membase_disp("r11", "rsp", 0x28)
+        a.test_r32_r32("r11d", "r11d")
+        a.jcc("ne", l_need_copy + "_full")
+        a.cmp_r32_r32("r10d", "r9d")
+        a.jcc("ne", l_need_copy + "_full")
+        a.mov_r64_membase_disp("rax", "rsp", 0x20)
+        a.jmp(l_done)
+        a.mark(l_need_copy + "_full")
+
+        a.mov_membase_disp_r32("rsp", 0x34, "r10d")
+        a.mov_r32_r32("ecx", "r10d")
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x34)
+        a.mov_membase_disp_r32("r11", 4, "edx")
+
+        a.mov_membase_disp_r64("rsp", 0x38, "r11")
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r64_membase_disp("r9", "rsp", 0x28)
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.lea_r64_mem_bis("rdx", "r10", "r9", 1, 8)
+        a.mov_r32_membase_disp("r8d", "rsp", 0x34)
+        a.call("fn_copy_bytes")
+        a.mov_r64_membase_disp("r11", "rsp", 0x38)
+        a.mov_r32_membase_disp("r10d", "rsp", 0x34)
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.add_r64_r64("rax", "r10")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_rax_r11()
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x48)
+        a.ret()
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.add_rsp_imm8(0x48)
+        a.ret()
+
+    def emit_string_indexof_function(self) -> None:
+        """Emit fn_string_indexof(string, needle, start) -> int|void."""
+        a = self.asm
+        a.mark("fn_string_indexof")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"stridx_fail_{lid}"
+        l_not_found = f"stridx_not_found_{lid}"
+        l_start_nonneg = f"stridx_start_nonneg_{lid}"
+        l_start_in_range = f"stridx_start_in_range_{lid}"
+        l_prepare = f"stridx_prepare_{lid}"
+        l_outer = f"stridx_outer_{lid}"
+        l_inner = f"stridx_inner_{lid}"
+        l_found = f"stridx_found_{lid}"
+        l_done = f"stridx_done_{lid}"
+
+        a.mov_r64_r64("r11", "rcx")
+        a.mov_r64_r64("rax", "r11")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r11", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "r11", 4)
+
+        a.mov_r64_r64("r10", "rdx")
+        a.mov_r64_r64("rax", "r10")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r10", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+
+        a.mov_r64_r64("rax", "r8")
+        a.mov_r64_r64("rdx", "rax")
+        a.and_r64_imm("rdx", 7)
+        a.cmp_r64_imm("rdx", TAG_INT)
+        a.jcc("ne", l_fail)
+        a.sar_r64_imm8("r8", 3)
+        a.cmp_r64_imm("r8", 0)
+        a.jcc("ge", l_start_nonneg)
+        a.xor_r32_r32("r8d", "r8d")
+        a.mark(l_start_nonneg)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("le", l_start_in_range)
+        a.mov_r64_r64("r8", "r9")
+        a.mark(l_start_in_range)
+
+        a.mov_r32_membase_disp("edx", "r10", 4)
+        a.mov_membase_disp_r32("rsp", 0x20, "edx")
+        a.test_r32_r32("edx", "edx")
+        a.jcc("ne", l_prepare)
+        a.mov_r64_r64("rax", "r8")
+        a.shl_r64_imm8("rax", 3)
+        a.or_r64_imm8("rax", TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_prepare)
+        a.cmp_r32_r32("edx", "r9d")
+        a.jcc("g", l_not_found)
+        a.mov_r32_r32("eax", "r9d")
+        a.sub_r32_r32("eax", "edx")
+        a.mov_membase_disp_r32("rsp", 0x24, "eax")
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("g", l_not_found)
+        a.mov_r32_r32("r9d", "r8d")
+
+        a.mark(l_outer)
+        a.mov_r32_membase_disp("eax", "rsp", 0x24)
+        a.cmp_r32_r32("r9d", "eax")
+        a.jcc("g", l_not_found)
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_inner)
+        a.mov_r32_membase_disp("ecx", "rsp", 0x20)
+        a.cmp_r32_r32("r8d", "ecx")
+        a.jcc("ge", l_found)
+        a.mov_r64_r64("rax", "r9")
+        a.add_r64_r64("rax", "r8")
+        a.lea_r64_mem_bis("rdx", "r11", "rax", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rdx", 0)
+        a.lea_r64_mem_bis("rax", "r10", "r8", 1, 8)
+        a.movzx_r32_membase_disp("eax", "rax", 0)
+        a.cmp_r32_r32("edx", "eax")
+        a.jcc("ne", l_inner + "_miss")
+        a.inc_r32("r8d")
+        a.jmp(l_inner)
+
+        a.mark(l_inner + "_miss")
+        a.inc_r32("r9d")
+        a.jmp(l_outer)
+
+        a.mark(l_found)
+        a.mov_r64_r64("rax", "r9")
+        a.shl_r64_imm8("rax", 3)
+        a.or_r64_imm8("rax", TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_not_found)
+        a.mov_rax_imm64(enc_int(-1))
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_lastindexof_function(self) -> None:
+        """Emit fn_string_lastindexof(string, needle) -> int|void."""
+        a = self.asm
+        a.mark("fn_string_lastindexof")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"strridx_fail_{lid}"
+        l_not_found = f"strridx_not_found_{lid}"
+        l_prepare = f"strridx_prepare_{lid}"
+        l_outer = f"strridx_outer_{lid}"
+        l_inner = f"strridx_inner_{lid}"
+        l_found = f"strridx_found_{lid}"
+        l_done = f"strridx_done_{lid}"
+
+        a.mov_r64_r64("r11", "rcx")
+        a.mov_r64_r64("rax", "r11")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r11", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "r11", 4)
+
+        a.mov_r64_r64("r10", "rdx")
+        a.mov_r64_r64("rax", "r10")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r10", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("edx", "r10", 4)
+        a.mov_membase_disp_r32("rsp", 0x20, "edx")
+        a.test_r32_r32("edx", "edx")
+        a.jcc("ne", l_prepare)
+        a.mov_r64_r64("rax", "r9")
+        a.shl_r64_imm8("rax", 3)
+        a.or_r64_imm8("rax", TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_prepare)
+        a.cmp_r32_r32("edx", "r9d")
+        a.jcc("g", l_not_found)
+        a.mov_r32_r32("eax", "r9d")
+        a.sub_r32_r32("eax", "edx")
+        a.mov_membase_disp_r32("rsp", 0x24, "eax")
+        a.mov_r32_r32("r9d", "eax")
+
+        a.mark(l_outer)
+        a.cmp_r32_imm("r9d", 0)
+        a.jcc("l", l_not_found)
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_inner)
+        a.mov_r32_membase_disp("ecx", "rsp", 0x20)
+        a.cmp_r32_r32("r8d", "ecx")
+        a.jcc("ge", l_found)
+        a.mov_r64_r64("rax", "r9")
+        a.add_r64_r64("rax", "r8")
+        a.lea_r64_mem_bis("rdx", "r11", "rax", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rdx", 0)
+        a.lea_r64_mem_bis("rax", "r10", "r8", 1, 8)
+        a.movzx_r32_membase_disp("eax", "rax", 0)
+        a.cmp_r32_r32("edx", "eax")
+        a.jcc("ne", l_inner + "_miss")
+        a.inc_r32("r8d")
+        a.jmp(l_inner)
+
+        a.mark(l_inner + "_miss")
+        a.dec_r32("r9d")
+        a.jmp(l_outer)
+
+        a.mark(l_found)
+        a.mov_r64_r64("rax", "r9")
+        a.shl_r64_imm8("rax", 3)
+        a.or_r64_imm8("rax", TAG_INT)
+        a.jmp(l_done)
+
+        a.mark(l_not_found)
+        a.mov_rax_imm64(enc_int(-1))
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_startswith_function(self) -> None:
+        """Emit fn_string_startswith(string, prefix) -> bool."""
+        a = self.asm
+        a.mark("fn_string_startswith")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_false = f"strsw_false_{lid}"
+        l_true = f"strsw_true_{lid}"
+        l_done = f"strsw_done_{lid}"
+
+        a.mov_r64_r64("r8", "rcx")
+        a.mov_r64_r64("r9", "rdx")
+        a.mov_r64_r64("rax", "r8")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r64_r64("rax", "r9")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r9", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("e", l_true)
+
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.mov_r32_membase_disp("r11d", "r9", 4)
+        a.test_r32_r32("r11d", "r11d")
+        a.jcc("e", l_true)
+        a.cmp_r32_r32("r11d", "r10d")
+        a.jcc("g", l_false)
+        a.lea_r64_membase_disp("rcx", "r8", 8)
+        a.lea_r64_membase_disp("rdx", "r9", 8)
+        a.mov_r32_r32("r8d", "r11d")
+        a.call("fn_mem_eq_bytes")
+        a.jmp(l_done)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_endswith_function(self) -> None:
+        """Emit fn_string_endswith(string, suffix) -> bool."""
+        a = self.asm
+        a.mark("fn_string_endswith")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_false = f"strew_false_{lid}"
+        l_true = f"strew_true_{lid}"
+        l_done = f"strew_done_{lid}"
+
+        a.mov_r64_r64("r8", "rcx")
+        a.mov_r64_r64("r9", "rdx")
+        a.mov_r64_r64("rax", "r8")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r64_r64("rax", "r9")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r9", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("e", l_true)
+
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.mov_r32_membase_disp("r11d", "r9", 4)
+        a.test_r32_r32("r11d", "r11d")
+        a.jcc("e", l_true)
+        a.cmp_r32_r32("r11d", "r10d")
+        a.jcc("g", l_false)
+        a.lea_r64_membase_disp("rcx", "r8", 8)
+        a.sub_r64_r64("r10", "r11")
+        a.add_r64_r64("rcx", "r10")
+        a.lea_r64_membase_disp("rdx", "r9", 8)
+        a.mov_r32_r32("r8d", "r11d")
+        a.call("fn_mem_eq_bytes")
+        a.jmp(l_done)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_repeat_function(self) -> None:
+        """Emit fn_string_repeat(string, count) -> string."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark("fn_string_repeat")
+        a.sub_rsp_imm8(0x48)
+
+        lid = self.new_label_id()
+        l_fail = f"strrep_fail_{lid}"
+        l_count_ok = f"strrep_count_ok_{lid}"
+        l_count_pos = f"strrep_count_pos_{lid}"
+        l_have_total = f"strrep_have_total_{lid}"
+        l_loop = f"strrep_loop_{lid}"
+        l_done = f"strrep_done_{lid}"
+
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r11d", "rax", 0)
+        a.cmp_r32_imm("r11d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_membase_disp_r64("rsp", 0x20, "rax")
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("ne", l_count_ok)
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_count_ok)
+        a.mov_r64_r64("rax", "rdx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_INT)
+        a.jcc("ne", l_fail)
+        a.sar_r64_imm8("rax", 3)
+        a.cmp_r64_imm("rax", 0)
+        a.jcc("g", l_count_pos)
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_count_pos)
+        a.cmp_r64_imm("rax", 0x7FFFFFFF)
+        a.jcc("g", l_fail)
+        a.mov_membase_disp_r32("rsp", 0x28, "eax")
+
+        a.mov_r64_r64("r10", "rax")
+        a.mov_r64_r64("rax", "r9")
+        a.imul_r64_r64("rax", "r10")
+        a.cmp_r64_imm("rax", 0x7FFFFFFF)
+        a.jcc("g", l_fail)
+        a.mov_membase_disp_r32("rsp", 0x30, "eax")
+        a.mark(l_have_total)
+
+        a.mov_r32_membase_disp("ecx", "rsp", 0x30)
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x30)
+        a.mov_membase_disp_r32("r11", 4, "edx")
+        a.mov_membase_disp_r64("rsp", 0x38, "r11")
+
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.mov_membase_disp_r64("rsp", 0x40, "rax")
+
+        a.mark(l_loop)
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.test_r32_r32("eax", "eax")
+        a.jcc("e", l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x38)
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r64_membase_disp("rcx", "rsp", 0x40)
+        a.lea_r64_membase_disp("rdx", "r10", 8)
+        a.mov_r32_membase_disp("r8d", "r10", 4)
+        a.call("fn_copy_bytes")
+        a.mov_r64_membase_disp("rax", "rsp", 0x40)
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r32_membase_disp("edx", "r10", 4)
+        a.add_r64_r64("rax", "rdx")
+        a.mov_membase_disp_r64("rsp", 0x40, "rax")
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.dec_r32("eax")
+        a.mov_membase_disp_r32("rsp", 0x28, "eax")
+        a.jmp(l_loop)
+
+        a.mark(l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x38)
+        a.mov_r32_membase_disp("r10d", "rsp", 0x30)
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.add_r64_r64("rax", "r10")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x48)
+        a.ret()
+
+    def emit_string_ltrim_ascii_function(self) -> None:
+        """Emit fn_string_ltrim_ascii(string) -> string."""
+        a = self.asm
+        a.mark("fn_string_ltrim_ascii")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"strltrim_fail_{lid}"
+        l_scan = f"strltrim_scan_{lid}"
+        l_inc = f"strltrim_inc_{lid}"
+        l_found = f"strltrim_found_{lid}"
+        l_done = f"strltrim_done_{lid}"
+
+        a.mov_r64_r64("r11", "rcx")
+        a.mov_r64_r64("rax", "r11")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r11", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "r11", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+        a.xor_r32_r32("r8d", "r8d")
+        a.mark(l_scan)
+        a.cmp_r32_r32("r8d", "r9d")
+        a.jcc("ge", l_found)
+        a.lea_r64_mem_bis("rax", "r11", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 32)
+        a.jcc("e", l_inc)
+        a.cmp_r32_imm("edx", 9)
+        a.jcc("e", l_inc)
+        a.cmp_r32_imm("edx", 10)
+        a.jcc("e", l_inc)
+        a.cmp_r32_imm("edx", 13)
+        a.jcc("ne", l_found)
+        a.mark(l_inc)
+        a.inc_r32("r8d")
+        a.jmp(l_scan)
+
+        a.mark(l_found)
+        a.test_r32_r32("r8d", "r8d")
+        a.jcc("e", l_done + "_same")
+        a.cmp_r32_r32("r8d", "r9d")
+        a.jcc("e", l_done + "_empty")
+        a.mov_r64_r64("rcx", "r11")
+        a.mov_r64_r64("rdx", "r8")
+        a.shl_r64_imm8("rdx", 3)
+        a.or_r64_imm8("rdx", TAG_INT)
+        a.mov_r32_r32("r10d", "r9d")
+        a.sub_r32_r32("r10d", "r8d")
+        a.mov_r64_r64("r8", "r10")
+        a.shl_r64_imm8("r8", 3)
+        a.or_r64_imm8("r8", TAG_INT)
+        a.call("fn_string_slice")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_rtrim_ascii_function(self) -> None:
+        """Emit fn_string_rtrim_ascii(string) -> string."""
+        a = self.asm
+        a.mark("fn_string_rtrim_ascii")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"strrtrim_fail_{lid}"
+        l_scan = f"strrtrim_scan_{lid}"
+        l_dec = f"strrtrim_dec_{lid}"
+        l_done = f"strrtrim_done_{lid}"
+
+        a.mov_r64_r64("r11", "rcx")
+        a.mov_r64_r64("rax", "r11")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r11", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "r11", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+        a.mov_r32_r32("r8d", "r9d")
+        a.dec_r32("r8d")
+
+        a.mark(l_scan)
+        a.cmp_r32_imm("r8d", 0)
+        a.jcc("l", l_done + "_empty")
+        a.lea_r64_mem_bis("rax", "r11", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 32)
+        a.jcc("e", l_dec)
+        a.cmp_r32_imm("edx", 9)
+        a.jcc("e", l_dec)
+        a.cmp_r32_imm("edx", 10)
+        a.jcc("e", l_dec)
+        a.cmp_r32_imm("edx", 13)
+        a.jcc("ne", l_done + "_check")
+        a.mark(l_dec)
+        a.dec_r32("r8d")
+        a.jmp(l_scan)
+
+        a.mark(l_done + "_check")
+        a.mov_r32_r32("eax", "r9d")
+        a.dec_r32("eax")
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("e", l_done + "_same")
+        a.mov_r64_r64("rcx", "r11")
+        a.xor_r32_r32("edx", "edx")
+        a.or_r64_imm8("rdx", TAG_INT)
+        a.inc_r64("r8")
+        a.shl_r64_imm8("r8", 3)
+        a.or_r64_imm8("r8", TAG_INT)
+        a.call("fn_string_slice")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_trim_ascii_function(self) -> None:
+        """Emit fn_string_trim_ascii(string) -> string."""
+        a = self.asm
+        a.mark("fn_string_trim_ascii")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_fail = f"strtrim_fail_{lid}"
+        l_left = f"strtrim_left_{lid}"
+        l_left_inc = f"strtrim_left_inc_{lid}"
+        l_right = f"strtrim_right_{lid}"
+        l_right_dec = f"strtrim_right_dec_{lid}"
+        l_done = f"strtrim_done_{lid}"
+
+        a.mov_r64_r64("r11", "rcx")
+        a.mov_r64_r64("rax", "r11")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r11", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "r11", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_left)
+        a.cmp_r32_r32("r8d", "r9d")
+        a.jcc("ge", l_done + "_empty")
+        a.lea_r64_mem_bis("rax", "r11", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 32)
+        a.jcc("e", l_left_inc)
+        a.cmp_r32_imm("edx", 9)
+        a.jcc("e", l_left_inc)
+        a.cmp_r32_imm("edx", 10)
+        a.jcc("e", l_left_inc)
+        a.cmp_r32_imm("edx", 13)
+        a.jcc("ne", l_right)
+        a.mark(l_left_inc)
+        a.inc_r32("r8d")
+        a.jmp(l_left)
+
+        a.mark(l_right)
+        a.mov_r32_r32("r10d", "r9d")
+        a.dec_r32("r10d")
+        a.mark(l_right + "_loop")
+        a.cmp_r32_r32("r10d", "r8d")
+        a.jcc("l", l_done + "_empty")
+        a.lea_r64_mem_bis("rax", "r11", "r10", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 32)
+        a.jcc("e", l_right_dec)
+        a.cmp_r32_imm("edx", 9)
+        a.jcc("e", l_right_dec)
+        a.cmp_r32_imm("edx", 10)
+        a.jcc("e", l_right_dec)
+        a.cmp_r32_imm("edx", 13)
+        a.jcc("ne", l_done + "_check")
+        a.mark(l_right_dec)
+        a.dec_r32("r10d")
+        a.jmp(l_right + "_loop")
+
+        a.mark(l_done + "_check")
+        a.test_r32_r32("r8d", "r8d")
+        a.jcc("ne", l_done + "_slice")
+        a.mov_r32_r32("eax", "r9d")
+        a.dec_r32("eax")
+        a.cmp_r32_r32("r10d", "eax")
+        a.jcc("e", l_done + "_same")
+
+        a.mark(l_done + "_slice")
+        a.mov_r64_r64("rcx", "r11")
+        a.mov_r64_r64("rdx", "r8")
+        a.shl_r64_imm8("rdx", 3)
+        a.or_r64_imm8("rdx", TAG_INT)
+        a.mov_r64_r64("rax", "r10")
+        a.sub_r64_r64("rax", "r8")
+        a.inc_r64("rax")
+        a.mov_r64_r64("r8", "rax")
+        a.shl_r64_imm8("r8", 3)
+        a.or_r64_imm8("r8", TAG_INT)
+        a.call("fn_string_slice")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_is_blank_ascii_function(self) -> None:
+        """Emit fn_string_is_blank_ascii(string) -> bool."""
+        a = self.asm
+        a.mark("fn_string_is_blank_ascii")
+
+        lid = self.new_label_id()
+        l_false = f"strblank_false_{lid}"
+        l_true = f"strblank_true_{lid}"
+        l_loop = f"strblank_loop_{lid}"
+
+        a.mov_r64_r64("r8", "rcx")
+        a.mov_r64_r64("rax", "r8")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("r9d", "r8", 4)
+        a.xor_r32_r32("ecx", "ecx")
+        a.mark(l_loop)
+        a.cmp_r32_r32("ecx", "r9d")
+        a.jcc("ge", l_true)
+        a.lea_r64_mem_bis("rax", "r8", "rcx", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 32)
+        a.jcc("e", l_loop + "_next")
+        a.cmp_r32_imm("edx", 9)
+        a.jcc("e", l_loop + "_next")
+        a.cmp_r32_imm("edx", 10)
+        a.jcc("e", l_loop + "_next")
+        a.cmp_r32_imm("edx", 13)
+        a.jcc("ne", l_false)
+        a.mark(l_loop + "_next")
+        a.inc_r32("ecx")
+        a.jmp(l_loop)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+        a.ret()
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.ret()
+
+    def emit_string_reverse_function(self) -> None:
+        """Emit fn_string_reverse(string) -> string."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark("fn_string_reverse")
+        a.sub_rsp_imm8(0x38)
+
+        lid = self.new_label_id()
+        l_fail = f"strrev_fail_{lid}"
+        l_loop = f"strrev_loop_{lid}"
+        l_done = f"strrev_done_{lid}"
+
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r11d", "rax", 0)
+        a.cmp_r32_imm("r11d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+        a.cmp_r32_imm("r9d", 1)
+        a.jcc("e", l_done + "_same")
+
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_membase_disp_r64("rsp", 0x20, "rax")
+        a.mov_membase_disp_r32("rsp", 0x28, "r9d")
+        a.mov_r32_r32("ecx", "r9d")
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x28)
+        a.mov_membase_disp_r32("r11", 4, "edx")
+        a.mov_membase_disp_r64("rsp", 0x30, "r11")
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_loop)
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("ge", l_loop + "_done")
+        a.mov_r32_r32("r10d", "eax")
+        a.dec_r32("r10d")
+        a.sub_r32_r32("r10d", "r8d")
+        a.mov_r64_membase_disp("r11", "rsp", 0x20)
+        a.lea_r64_mem_bis("rax", "r11", "r10", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.lea_r64_mem_bis("rax", "r11", "r8", 1, 8)
+        a.mov_membase_disp_r8("rax", 0, "dl")
+        a.inc_r32("r8d")
+        a.jmp(l_loop)
+
+        a.mark(l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.mov_r32_membase_disp("r10d", "rsp", 0x28)
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.add_r64_r64("rax", "r10")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_r64_r64("rax", "rcx")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+    def emit_string_to_lower_ascii_function(self) -> None:
+        """Emit fn_string_to_lower_ascii(string) -> string."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark("fn_string_to_lower_ascii")
+        a.sub_rsp_imm8(0x38)
+
+        lid = self.new_label_id()
+        l_fail = f"strlower_fail_{lid}"
+        l_scan = f"strlower_scan_{lid}"
+        l_has_change = f"strlower_has_change_{lid}"
+        l_loop = f"strlower_loop_{lid}"
+        l_done = f"strlower_done_{lid}"
+
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r11d", "rax", 0)
+        a.cmp_r32_imm("r11d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+
+        a.xor_r32_r32("r8d", "r8d")
+        a.mark(l_scan)
+        a.cmp_r32_r32("r8d", "r9d")
+        a.jcc("ge", l_done + "_same")
+        a.lea_r64_mem_bis("r10", "rax", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "r10", 0)
+        a.cmp_r32_imm("edx", 65)
+        a.jcc("b", l_scan + "_next")
+        a.cmp_r32_imm("edx", 90)
+        a.jcc("be", l_has_change)
+        a.mark(l_scan + "_next")
+        a.inc_r32("r8d")
+        a.jmp(l_scan)
+
+        a.mark(l_has_change)
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_membase_disp_r64("rsp", 0x20, "rax")
+        a.mov_membase_disp_r32("rsp", 0x28, "r9d")
+        a.mov_r32_r32("ecx", "r9d")
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x28)
+        a.mov_membase_disp_r32("r11", 4, "edx")
+        a.mov_membase_disp_r64("rsp", 0x30, "r11")
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.mov_r64_membase_disp("rdx", "rsp", 0x20)
+        a.lea_r64_membase_disp("rdx", "rdx", 8)
+        a.mov_r32_membase_disp("r8d", "rsp", 0x28)
+        a.call("fn_copy_bytes")
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_loop)
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("ge", l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.lea_r64_mem_bis("r10", "r11", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "r10", 0)
+        a.cmp_r32_imm("edx", 65)
+        a.jcc("b", l_loop + "_next")
+        a.cmp_r32_imm("edx", 90)
+        a.jcc("a", l_loop + "_next")
+        a.add_r32_imm("edx", 32)
+        a.mov_membase_disp_r8("r10", 0, "dl")
+        a.mark(l_loop + "_next")
+        a.inc_r32("r8d")
+        a.jmp(l_loop)
+
+        a.mark(l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.mov_r32_membase_disp("r10d", "rsp", 0x28)
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.add_r64_r64("rax", "r10")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_r64_r64("rax", "rcx")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+    def emit_string_to_upper_ascii_function(self) -> None:
+        """Emit fn_string_to_upper_ascii(string) -> string."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark("fn_string_to_upper_ascii")
+        a.sub_rsp_imm8(0x38)
+
+        lid = self.new_label_id()
+        l_fail = f"strupper_fail_{lid}"
+        l_scan = f"strupper_scan_{lid}"
+        l_has_change = f"strupper_has_change_{lid}"
+        l_loop = f"strupper_loop_{lid}"
+        l_done = f"strupper_done_{lid}"
+
+        a.mov_r64_r64("rax", "rcx")
+        a.mov_r64_r64("r10", "rax")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r11d", "rax", 0)
+        a.cmp_r32_imm("r11d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "rax", 4)
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_done + "_empty")
+
+        a.xor_r32_r32("r8d", "r8d")
+        a.mark(l_scan)
+        a.cmp_r32_r32("r8d", "r9d")
+        a.jcc("ge", l_done + "_same")
+        a.lea_r64_mem_bis("r10", "rax", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "r10", 0)
+        a.cmp_r32_imm("edx", 97)
+        a.jcc("b", l_scan + "_next")
+        a.cmp_r32_imm("edx", 122)
+        a.jcc("be", l_has_change)
+        a.mark(l_scan + "_next")
+        a.inc_r32("r8d")
+        a.jmp(l_scan)
+
+        a.mark(l_has_change)
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_membase_disp_r64("rsp", 0x20, "rax")
+        a.mov_membase_disp_r32("rsp", 0x28, "r9d")
+        a.mov_r32_r32("ecx", "r9d")
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x28)
+        a.mov_membase_disp_r32("r11", 4, "edx")
+        a.mov_membase_disp_r64("rsp", 0x30, "r11")
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.mov_r64_membase_disp("rdx", "rsp", 0x20)
+        a.lea_r64_membase_disp("rdx", "rdx", 8)
+        a.mov_r32_membase_disp("r8d", "rsp", 0x28)
+        a.call("fn_copy_bytes")
+        a.xor_r32_r32("r8d", "r8d")
+
+        a.mark(l_loop)
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("ge", l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.lea_r64_mem_bis("r10", "r11", "r8", 1, 8)
+        a.movzx_r32_membase_disp("edx", "r10", 0)
+        a.cmp_r32_imm("edx", 97)
+        a.jcc("b", l_loop + "_next")
+        a.cmp_r32_imm("edx", 122)
+        a.jcc("a", l_loop + "_next")
+        a.sub_r32_imm("edx", 32)
+        a.mov_membase_disp_r8("r10", 0, "dl")
+        a.mark(l_loop + "_next")
+        a.inc_r32("r8d")
+        a.jmp(l_loop)
+
+        a.mark(l_loop + "_done")
+        a.mov_r64_membase_disp("r11", "rsp", 0x30)
+        a.mov_r32_membase_disp("r10d", "rsp", 0x28)
+        a.lea_r64_membase_disp("rax", "r11", 8)
+        a.add_r64_r64("rax", "r10")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_rax_r11()
+        a.jmp(l_done)
+
+        a.mark(l_done + "_same")
+        a.mov_r64_r64("rax", "rcx")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+    def emit_string_eq_ignore_case_ascii_function(self) -> None:
+        """Emit fn_string_eq_ignore_case_ascii(a, b) -> bool."""
+        a = self.asm
+        a.mark("fn_string_eq_ignore_case_ascii")
+        a.sub_rsp_imm8(0x28)
+
+        lid = self.new_label_id()
+        l_false = f"streqic_false_{lid}"
+        l_true = f"streqic_true_{lid}"
+        l_loop = f"streqic_loop_{lid}"
+        l_done = f"streqic_done_{lid}"
+
+        a.mov_r64_r64("r8", "rcx")
+        a.mov_r64_r64("r9", "rdx")
+        a.mov_r64_r64("rax", "r8")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r64_r64("rax", "r9")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+        a.mov_r32_membase_disp("eax", "r9", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_false)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("e", l_true)
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.mov_r32_membase_disp("r11d", "r9", 4)
+        a.cmp_r32_r32("r10d", "r11d")
+        a.jcc("ne", l_false)
+        a.xor_r32_r32("ecx", "ecx")
+
+        a.mark(l_loop)
+        a.cmp_r32_r32("ecx", "r10d")
+        a.jcc("ge", l_true)
+        a.lea_r64_mem_bis("rax", "r8", "rcx", 1, 8)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
+        a.cmp_r32_imm("edx", 65)
+        a.jcc("b", l_loop + "_aok")
+        a.cmp_r32_imm("edx", 90)
+        a.jcc("a", l_loop + "_aok")
+        a.add_r32_imm("edx", 32)
+        a.mark(l_loop + "_aok")
+        a.lea_r64_mem_bis("rax", "r9", "rcx", 1, 8)
+        a.movzx_r32_membase_disp("eax", "rax", 0)
+        a.cmp_r32_imm("eax", 65)
+        a.jcc("b", l_loop + "_bok")
+        a.cmp_r32_imm("eax", 90)
+        a.jcc("a", l_loop + "_bok")
+        a.add_r32_imm("eax", 32)
+        a.mark(l_loop + "_bok")
+        a.cmp_r32_r32("eax", "edx")
+        a.jcc("ne", l_false)
+        a.inc_r32("ecx")
+        a.jmp(l_loop)
+
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+        a.jmp(l_done)
+
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+
+        a.mark(l_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+    def emit_string_join_function(self) -> None:
+        """Emit fn_string_join(array<string>, sep) -> string."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark("fn_string_join")
+        a.push_reg("rbx")
+        a.push_reg("r13")
+        a.push_reg("r14")
+        a.sub_rsp_imm8(0x40)
+
+        lid = self.new_label_id()
+        l_fail = f"strjoin_fail_{lid}"
+        l_len_loop = f"strjoin_len_loop_{lid}"
+        l_copy_loop = f"strjoin_copy_loop_{lid}"
+        l_done = f"strjoin_done_{lid}"
+
+        a.mov_r64_r64("r8", "rcx")
+        a.mov_r64_r64("r9", "rdx")
+        a.mov_r64_r64("rax", "r8")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.cmp_r32_imm("eax", OBJ_ARRAY)
+        a.jcc("e", l_done + "_arr_ok")
+        a.cmp_r32_imm("eax", OBJ_ARRAY_IMM)
+        a.jcc("ne", l_fail)
+        a.mark(l_done + "_arr_ok")
+        a.mov_r64_r64("rax", "r9")
+        a.and_r64_imm("rax", 7)
+        a.cmp_r64_imm("rax", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("eax", "r9", 0)
+        a.cmp_r32_imm("eax", OBJ_STRING)
+        a.jcc("ne", l_fail)
+
+        a.mov_rip_qword_r8("gc_tmp2")
+        a.mov_rip_qword_r9("gc_tmp3")
+        a.mov_membase_disp_r64("rsp", 0x20, "r8")
+        a.mov_membase_disp_r64("rsp", 0x28, "r9")
+
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.test_r32_r32("r10d", "r10d")
+        a.jcc("e", l_done + "_empty")
+        a.mov_r32_membase_disp("r11d", "r9", 4)
+        a.xor_r32_r32("ecx", "ecx")
+        a.xor_r32_r32("eax", "eax")
+
+        a.mark(l_len_loop)
+        a.cmp_r32_r32("ecx", "r10d")
+        a.jcc("ge", l_len_loop + "_done")
+        a.mov_r64_mem_bis("rdx", "r8", "rcx", 8, 8)
+        a.mov_r64_r64("r9", "rdx")
+        a.and_r64_imm("r9", 7)
+        a.cmp_r64_imm("r9", TAG_PTR)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("r9d", "rdx", 0)
+        a.cmp_r32_imm("r9d", OBJ_STRING)
+        a.jcc("ne", l_fail)
+        a.mov_r32_membase_disp("edx", "rdx", 4)
+        a.add_r32_r32("eax", "edx")
+        a.cmp_r32_imm("ecx", 0)
+        a.jcc("e", l_len_loop + "_next")
+        a.mov_r64_membase_disp("rdx", "rsp", 0x28)
+        a.mov_r32_membase_disp("edx", "rdx", 4)
+        a.add_r32_r32("eax", "edx")
+        a.mark(l_len_loop + "_next")
+        a.cmp_r32_imm("eax", 0x7FFFFFFF)
+        a.jcc("g", l_fail)
+        a.inc_r32("ecx")
+        a.mov_r64_membase_disp("r8", "rsp", 0x20)
+        a.jmp(l_len_loop)
+
+        a.mark(l_len_loop + "_done")
+        a.test_r32_r32("eax", "eax")
+        a.jcc("e", l_done + "_empty")
+        a.mov_membase_disp_r32("rsp", 0x30, "eax")
+        a.mov_r32_r32("ecx", "eax")
+        a.add_r32_imm("ecx", 9)
+        a.call("fn_alloc")
+
+        a.mov_r64_r64("r14", "rax")
+        a.mov_membase_disp_imm32("r14", 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp("edx", "rsp", 0x30)
+        a.mov_membase_disp_r32("r14", 4, "edx")
+        a.xor_r64_r64("r13", "r13")
+        a.xor_r32_r32("ebx", "ebx")
+
+        a.mark(l_copy_loop)
+        a.mov_r64_membase_disp("r8", "rsp", 0x20)
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.cmp_r32_r32("ebx", "r10d")
+        a.jcc("ge", l_copy_loop + "_done")
+
+        a.cmp_r32_imm("ebx", 0)
+        a.jcc("e", l_copy_loop + "_no_sep")
+        a.mov_r64_membase_disp("rdx", "rsp", 0x28)
+        a.mov_r32_membase_disp("r10d", "rdx", 4)
+        a.test_r32_r32("r10d", "r10d")
+        a.jcc("e", l_copy_loop + "_no_sep")
+        a.mov_membase_disp_r32("rsp", 0x30, "r10d")
+        a.lea_r64_membase_disp("rcx", "r14", 8)
+        a.add_r64_r64("rcx", "r13")
+        a.lea_r64_membase_disp("rdx", "rdx", 8)
+        a.mov_r32_r32("r8d", "r10d")
+        a.call("fn_copy_bytes")
+        a.mov_r32_membase_disp("r10d", "rsp", 0x30)
+        a.add_r64_r64("r13", "r10")
+        a.mark(l_copy_loop + "_no_sep")
+
+        a.mov_r64_membase_disp("r8", "rsp", 0x20)
+        a.mov_r64_mem_bis("rdx", "r8", "rbx", 8, 8)
+        a.mov_r32_membase_disp("r10d", "rdx", 4)
+        a.test_r32_r32("r10d", "r10d")
+        a.jcc("e", l_copy_loop + "_next")
+        a.mov_membase_disp_r32("rsp", 0x30, "r10d")
+        a.lea_r64_membase_disp("rcx", "r14", 8)
+        a.add_r64_r64("rcx", "r13")
+        a.lea_r64_membase_disp("rdx", "rdx", 8)
+        a.mov_r32_r32("r8d", "r10d")
+        a.call("fn_copy_bytes")
+        a.mov_r32_membase_disp("r10d", "rsp", 0x30)
+        a.add_r64_r64("r13", "r10")
+        a.mark(l_copy_loop + "_next")
+        a.inc_r32("ebx")
+        a.jmp(l_copy_loop)
+
+        a.mark(l_copy_loop + "_done")
+        a.lea_r64_membase_disp("rax", "r14", 8)
+        a.add_r64_r64("rax", "r13")
+        a.mov_membase_disp_imm8("rax", 0, 0)
+        a.mov_r64_r64("rax", "r14")
+        a.jmp(l_done)
+
+        a.mark(l_done + "_empty")
+        a.lea_rax_rip("obj_empty_string")
+        a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+
+        a.mark(l_done)
+        a.mov_r11_rax()
+        a.mov_rax_imm64(enc_void())
+        a.mov_rip_qword_rax("gc_tmp2")
+        a.mov_rip_qword_rax("gc_tmp3")
+        a.mov_rax_r11()
+        a.add_rsp_imm8(0x40)
+        a.pop_reg("r14")
+        a.pop_reg("r13")
+        a.pop_reg("rbx")
+        a.ret()
+
     def emit_array_add_function(self) -> None:
         """
         Emit fn_add_array(a,b) -> concatenated array.
