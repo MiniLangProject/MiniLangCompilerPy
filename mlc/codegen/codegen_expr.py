@@ -769,6 +769,10 @@ class CodegenExpr:
             a.mov_rax_imm64(enc_void())
             return
 
+        if t == "double":
+            self.emit_force_xmm0_to_float_value()
+            return
+
         if t == "bool":
             # rax = 0/!=0  => TAG_BOOL
             a.test_r64_r64("rax", "rax")
@@ -1033,25 +1037,37 @@ class CodegenExpr:
                 a.mov_membase_disp_r64("rsp", roots_off + i * 8, "rax")
 
             wbuf = None
-            if self._abi_ty_to_str(abi_ty).strip().lower() in ("wstr", "wstring"):
+            abi_name = self._abi_ty_to_str(abi_ty).strip().lower()
+            if abi_name in ("wstr", "wstring"):
                 wbuf = wpool[i % len(wpool)]
 
-            self._emit_extern_arg_to_native(abi_ty, fail_label, e.pos, wbuf_label=wbuf)  # RAX = native
+            if abi_name == "double":
+                self.emit_to_double_xmm(0, fail_label)
+                a.movsd_membase_disp_xmm("rsp", self.call_temp_base + i * 8, "xmm0")
+            else:
+                self._emit_extern_arg_to_native(abi_ty, fail_label, e.pos, wbuf_label=wbuf)  # RAX = native
 
-            # Store native args GC-safe as TAG_INT on stack.
-            a.shl_rax_imm8(3)
-            a.or_rax_imm8(TAG_INT)
-            a.mov_membase_disp_r64("rsp", self.call_temp_base + i * 8, "rax")
+                # Store native args GC-safe as TAG_INT on stack.
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+                a.mov_membase_disp_r64("rsp", self.call_temp_base + i * 8, "rax")
 
         # Move first 4 args into registers (Windows x64 ABI), rest into outgoing stack args.
         regs = ["rcx", "rdx", "r8", "r9"]
+        xregs = ["xmm0", "xmm1", "xmm2", "xmm3"]
         for i in range(min(4, len(params))):
-            a.mov_r64_membase_disp(regs[i], "rsp", self.call_temp_base + i * 8)
-            a.sar_r64_imm8(regs[i], 3)
+            abi_name = self._abi_ty_to_str(params[i]).strip().lower()
+            if abi_name == "double":
+                a.movsd_xmm_membase_disp(xregs[i], "rsp", self.call_temp_base + i * 8)
+            else:
+                a.mov_r64_membase_disp(regs[i], "rsp", self.call_temp_base + i * 8)
+                a.sar_r64_imm8(regs[i], 3)
 
         for i in range(4, len(params)):
+            abi_name = self._abi_ty_to_str(params[i]).strip().lower()
             a.mov_r64_membase_disp("rax", "rsp", self.call_temp_base + i * 8)
-            a.sar_r64_imm8("rax", 3)
+            if abi_name != "double":
+                a.sar_r64_imm8("rax", 3)
             a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "rax")
 
         # Call through the imported function pointer.
@@ -1157,15 +1173,25 @@ class CodegenExpr:
             for i, abi_ty in enumerate(params):
                 a.mov_r64_membase_disp('rax', 'rsp', tag_off + i * 8)
                 wbuf = None
-                if self._abi_ty_to_str(abi_ty).strip().lower() in ('wstr', 'wstring'):
+                abi_name = self._abi_ty_to_str(abi_ty).strip().lower()
+                if abi_name in ('wstr', 'wstring'):
                     wbuf = wpool[i % len(wpool)]
-                self._emit_extern_arg_to_native(abi_ty, l_fail, pos, wbuf_label=wbuf)
-                a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
+                if abi_name == 'double':
+                    self.emit_to_double_xmm(0, l_fail)
+                    a.movsd_membase_disp_xmm('rsp', native_off + i * 8, 'xmm0')
+                else:
+                    self._emit_extern_arg_to_native(abi_ty, l_fail, pos, wbuf_label=wbuf)
+                    a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
 
             # Marshal args to Win64 ABI: RCX/RDX/R8/R9 + outgoing stack slots.
             regs = ['rcx', 'rdx', 'r8', 'r9']
+            xregs = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
             for i in range(min(4, nargs)):
-                a.mov_r64_membase_disp(regs[i], 'rsp', native_off + i * 8)
+                abi_name = self._abi_ty_to_str(params[i]).strip().lower()
+                if abi_name == 'double':
+                    a.movsd_xmm_membase_disp(xregs[i], 'rsp', native_off + i * 8)
+                else:
+                    a.mov_r64_membase_disp(regs[i], 'rsp', native_off + i * 8)
 
             for i in range(4, nargs):
                 a.mov_r64_membase_disp('rax', 'rsp', native_off + i * 8)

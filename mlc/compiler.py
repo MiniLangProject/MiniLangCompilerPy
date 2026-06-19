@@ -818,6 +818,7 @@ class ExternSig:
 # Keep in sync with CodegenExpr._emit_extern_arg_to_native / _emit_extern_ret_from_native.
 _EXTERN_ABI_TYPES = {
     "int", "i64", "u64", "i32", "u32", "i16", "u16", "i8", "u8",
+    "double",
     "bool",
     "ptr", "pointer",
     "cstr", "cstring",
@@ -830,6 +831,7 @@ _EXTERN_RET_TYPES = {
     "void", "none",
     "bool",
     "int", "i64", "u64", "i32", "u32", "i16", "u16", "i8", "u8",
+    "double",
     "ptr", "pointer",
     "cstr", "wstr",
 }
