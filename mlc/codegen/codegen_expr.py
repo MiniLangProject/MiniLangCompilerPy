@@ -352,6 +352,147 @@ class CodegenExpr:
             return 'obj_type_void'
         return None
 
+    def _native_callback_qname_of(self, expr: Any) -> Optional[str]:
+        """Resolve a compile-time function name for nativeCallback(fn, mode)."""
+        ml = self.ml
+        if expr is None:
+            return None
+        if isinstance(expr, ml.Var):
+            return self._qualify_identifier(str(getattr(expr, 'name', '')), expr)
+        if not (hasattr(ml, 'Member') and isinstance(expr, ml.Member)):
+            return None
+
+        def _parts(node: Any) -> Optional[List[str]]:
+            if isinstance(node, ml.Var):
+                nm = str(getattr(node, 'name', ''))
+                return nm.split('.') if nm else None
+            if hasattr(ml, 'Member') and isinstance(node, ml.Member):
+                tgt = getattr(node, 'target', None)
+                if tgt is None:
+                    tgt = getattr(node, 'obj', None)
+                base = _parts(tgt)
+                if base is None:
+                    return None
+                nm2 = getattr(node, 'name', None)
+                if nm2 is None:
+                    nm2 = getattr(node, 'field', None)
+                if nm2 is None:
+                    return None
+                return base + [str(nm2)]
+            return None
+
+        parts = _parts(expr)
+        if not parts:
+            return None
+        return self._apply_import_alias(".".join(parts))
+
+    def _qname_with_prefixes_for_native_callback(self, qn: str) -> List[str]:
+        cands: List[str] = [qn]
+        qpref = str(getattr(self, 'current_qname_prefix', '') or '')
+        fpref = str(getattr(self, 'current_file_prefix', '') or '')
+        if qpref and not qpref.endswith('.'):
+            qpref += '.'
+        if fpref and not fpref.endswith('.'):
+            fpref += '.'
+        if qpref and not qn.startswith(qpref):
+            cands.append(qpref + qn)
+        if fpref and not qn.startswith(fpref):
+            cands.append(fpref + qn)
+        return cands
+
+    def _native_callback_resolve_user_fn(self, expr: Any) -> str:
+        qn = self._native_callback_qname_of(expr)
+        if not qn:
+            return ""
+        qn = self._apply_import_alias(str(qn))
+        if qn in (getattr(self, 'user_functions', {}) or {}):
+            return qn
+        for cand in self._qname_with_prefixes_for_native_callback(qn):
+            cand = str(cand)
+            if cand in (getattr(self, 'user_functions', {}) or {}):
+                return cand
+        return ""
+
+    def _emit_native_callback_ret_lresult(self, l_zero: str, l_done: str) -> None:
+        """Convert a MiniLang callback return value in RAX to native LRESULT."""
+        a = self.asm
+        a.mov_r64_r64("r11", "rax")
+        a.and_r64_imm("r11", 7)
+        a.cmp_r64_imm("r11", TAG_INT)
+        a.jcc("e", l_zero + "_int")
+        a.cmp_r64_imm("r11", TAG_BOOL)
+        a.jcc("e", l_zero + "_bool")
+        a.xor_r32_r32("eax", "eax")
+        a.jmp(l_done)
+
+        a.mark(l_zero + "_int")
+        a.sar_r64_imm8("rax", 3)
+        a.jmp(l_done)
+
+        a.mark(l_zero + "_bool")
+        a.shr_r64_imm8("rax", 3)
+        a.jmp(l_done)
+
+    def _emit_native_callback_wndproc(self, fn_qn: str, node: Any) -> None:
+        """Emit a native Win64 WNDPROC callback thunk for a top-level MiniLang function."""
+        fn = (getattr(self, 'user_functions', {}) or {}).get(str(fn_qn))
+        if fn is None:
+            raise self.error(f"nativeCallback: unknown function '{fn_qn}'", node)
+        arity = len(getattr(fn, 'params', []) or [])
+        if arity != 4:
+            raise self.error(f"nativeCallback: wndproc callback '{fn_qn}' must accept exactly 4 parameters", node)
+
+        a = self.asm
+        lid = self.new_label_id()
+        cb_lbl = f"native_cb_wndproc_{lid}"
+        after_lbl = f"native_cb_after_{lid}"
+        ret_zero_lbl = f"native_cb_ret_{lid}"
+        ret_done_lbl = f"native_cb_ret_done_{lid}"
+
+        a.lea_rax_rip(cb_lbl)
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.jmp(after_lbl)
+
+        a.mark(cb_lbl)
+        a.push_reg("rbx")
+        a.push_reg("rbp")
+        a.push_reg("rsi")
+        a.push_reg("rdi")
+        a.push_reg("r12")
+        a.push_reg("r13")
+        a.push_reg("r14")
+        a.push_reg("r15")
+        a.sub_rsp_imm8(40)
+
+        # Convert WNDPROC(HWND, UINT, WPARAM, LPARAM) to MiniLang int values.
+        a.shl_r64_imm8("rcx", 3)
+        a.or_r64_imm8("rcx", TAG_INT)
+        a.shl_r64_imm8("rdx", 3)
+        a.or_r64_imm8("rdx", TAG_INT)
+        a.shl_r64_imm8("r8", 3)
+        a.or_r64_imm8("r8", TAG_INT)
+        a.shl_r64_imm8("r9", 3)
+        a.or_r64_imm8("r9", TAG_INT)
+        a.mov_r64_imm64("r10", enc_void())
+        a.call("fn_user_" + str(fn_qn))
+
+        self._emit_native_callback_ret_lresult(ret_zero_lbl, ret_done_lbl)
+
+        a.mark(ret_done_lbl)
+        a.add_rsp_imm8(40)
+        a.pop_reg("r15")
+        a.pop_reg("r14")
+        a.pop_reg("r13")
+        a.pop_reg("r12")
+        a.pop_reg("rdi")
+        a.pop_reg("rsi")
+        a.pop_reg("rbp")
+        a.pop_reg("rbx")
+        a.ret()
+
+        a.mark(after_lbl)
+
     def _emit_make_error_const(self, code: int, message: str) -> None:
         """Allocate and return an `error(code, message)` value in RAX.
 
@@ -5095,6 +5236,72 @@ class CodegenExpr:
                 self.emit_expr(e.args[0])
                 setattr(self, '_errprop_suppression', old_sup)
                 return
+
+            # Builtin nativeBytesPtr(bytes) -> native pointer to the bytes payload.
+            if callee_name == 'nativeBytesPtr':
+                if len(e.args) != 1:
+                    raise self.error("nativeBytesPtr() expects 1 argument", e)
+                self.emit_expr(e.args[0])
+                lid_nb = self.new_label_id()
+                l_ok_nb = f"native_bytes_ptr_ok_{lid_nb}"
+                l_null_nb = f"native_bytes_ptr_null_{lid_nb}"
+                a.mov_r64_r64("r11", "rax")
+                a.and_r64_imm("r11", 7)
+                a.cmp_r64_imm("r11", TAG_PTR)
+                a.jcc("ne", l_null_nb)
+                a.mov_r32_membase_disp("r11d", "rax", 0)
+                a.cmp_r32_imm("r11d", OBJ_BYTES)
+                a.jcc("ne", l_null_nb)
+                a.lea_r64_membase_disp("rax", "rax", 8)
+                a.jmp(l_ok_nb)
+                a.mark(l_null_nb)
+                a.xor_eax_eax()
+                a.mark(l_ok_nb)
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+                return
+
+            # Builtin nativeRawValue(value) -> MiniLang int containing the raw tagged value.
+            if callee_name == 'nativeRawValue':
+                if len(e.args) != 1:
+                    raise self.error("nativeRawValue() expects 1 argument", e)
+                self.emit_expr(e.args[0])
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+                return
+
+            # Builtin nativeValueFromRaw(int) -> MiniLang value represented by that raw word.
+            if callee_name == 'nativeValueFromRaw':
+                if len(e.args) != 1:
+                    raise self.error("nativeValueFromRaw() expects 1 argument", e)
+                self.emit_expr(e.args[0])
+                lid_nv = self.new_label_id()
+                l_ok_nv = f"native_value_from_raw_ok_{lid_nv}"
+                l_done_nv = f"native_value_from_raw_done_{lid_nv}"
+                a.mov_r64_r64("r11", "rax")
+                a.and_r64_imm("r11", 7)
+                a.cmp_r64_imm("r11", TAG_INT)
+                a.jcc("e", l_ok_nv)
+                a.mov_rax_imm64(enc_void())
+                a.jmp(l_done_nv)
+                a.mark(l_ok_nv)
+                a.sar_r64_imm8("rax", 3)
+                a.mark(l_done_nv)
+                return
+
+            # Builtin nativeCallback(fn, "wndproc") -> native function pointer.
+            if callee_name == 'nativeCallback':
+                if len(e.args) != 2:
+                    raise self.error("nativeCallback() expects 2 arguments", e)
+                fn_qn = self._native_callback_resolve_user_fn(e.args[0])
+                if not fn_qn:
+                    raise self.error("nativeCallback: first argument must be a top-level MiniLang function", e)
+                mode_cv = self._opt_try_const_value(e.args[1])
+                mode = str(mode_cv).lower() if isinstance(mode_cv, str) else ""
+                if mode == "wndproc":
+                    self._emit_native_callback_wndproc(fn_qn, e)
+                    return
+                raise self.error(f"nativeCallback: unsupported callback ABI '{mode}'", e)
 
             # Builtin toNumber(x)
             if callee_name == 'toNumber' and len(e.args) == 1:

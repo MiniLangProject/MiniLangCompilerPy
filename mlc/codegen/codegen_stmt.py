@@ -4486,6 +4486,7 @@ class CodegenStmt:
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
             "copyStringBytes",
+            "nativeBytesPtr", "nativeRawValue", "nativeValueFromRaw", "nativeCallback",
             "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed", "heap_bytes_reserved", "heap_free_bytes",
             "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
@@ -4563,6 +4564,10 @@ class CodegenStmt:
                         for aa in e.args:
                             analyze_expr(aa, allow_func_ident=True)
 
+                    elif cal == "nativeCallback":
+
+                        for idx, aa in enumerate(e.args):
+                            analyze_expr(aa, allow_func_ident=(idx == 0))
 
                     else:
 

@@ -3047,6 +3047,9 @@ def main() -> int:
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
+    native_bytes_ptr_ml = find_file_by_name(tests_root, "native_bytes_ptr_smoke.ml")
+    native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
+    native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     ns_main = find_file_by_name(tests_root, "main.ml")
     # Prefer the ns/import main if multiple main.ml exist.
     ns_main = find_ml_containing(tests_root, "=== NS/IMPORT BASIC ===") or ns_main
@@ -3222,6 +3225,39 @@ def main() -> int:
                                         geom_ml=geom_ml, testlib_ml=testlib_ml))
 
     tests.append(lambda: test_extern_namespaced(name="extern: namespaced + import-as alias", mlc_runner=mlc_runner))
+
+    if native_bytes_ptr_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="native interop: nativeBytesPtr",
+            mlc_runner=mlc_runner,
+            ml_path=native_bytes_ptr_ml,
+            must_contain=["=== NATIVE BYTES PTR ===", "nativeBytesPtr payload write [OK]", "=== DONE ==="],
+        ))
+    else:
+        tests.append(lambda: TestResult(name="native interop: nativeBytesPtr", status="SKIP",
+                                        details="native_bytes_ptr_smoke.ml not found"))
+
+    if native_raw_value_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="native interop: raw value roundtrip",
+            mlc_runner=mlc_runner,
+            ml_path=native_raw_value_ml,
+            must_contain=["=== NATIVE RAW VALUE ===", "nativeValueFromRaw roundtrip [OK]", "=== DONE ==="],
+        ))
+    else:
+        tests.append(lambda: TestResult(name="native interop: raw value roundtrip", status="SKIP",
+                                        details="native_raw_value_smoke.ml not found"))
+
+    if native_callback_wndproc_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="native interop: WNDPROC callback",
+            mlc_runner=mlc_runner,
+            ml_path=native_callback_wndproc_ml,
+            must_contain=["=== NATIVE CALLBACK WNDPROC ===", "nativeCallback wndproc result [OK]", "=== DONE ==="],
+        ))
+    else:
+        tests.append(lambda: TestResult(name="native interop: WNDPROC callback", status="SKIP",
+                                        details="native_callback_wndproc_smoke.ml not found"))
 
     # Runtime: array(size[, fill]) initializer forms
     tests.append(lambda: test_array_initializer_builtin(
