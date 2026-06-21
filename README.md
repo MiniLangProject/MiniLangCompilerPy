@@ -1093,7 +1093,7 @@ Rules:
 - Harmless import cycles are supported, and self-imports are ignored. Cycles that create unsafe cross-module initialization reads are diagnosed at runtime during module initialization.
 - `import ... as <alias>` is supported: it creates a compile-time alias for the imported module’s `package` name, so you can write e.g. `g.add()` instead of `geom.vec.add()`. The imported file must declare `package ...`.
 - Alias names must be valid identifiers and must not be reserved (`try`, `error`).
-- If an imported file declares `package foo.bar`, its location must match that package when resolved via a stable root (importing directory or `-I` root): the file should be found as `foo/bar.ml` under that root. (Absolute-path imports skip this check.)
+- If an imported file declares `package foo.bar`, its location must match that package when resolved via a stable root (importing directory or `-I` root): the file should be found as `foo/bar.ml` under that root. Absolute-path imports and aliased explicit file imports (`import "path/file.ml" as X`) skip this location check, which is useful for code-behind files.
 
 
 ### package (top-level only)

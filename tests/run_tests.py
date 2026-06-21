@@ -956,6 +956,50 @@ def test_import_package_path_mismatch(*, name: str, mlc_runner: Path) -> TestRes
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
+def test_import_alias_file_skips_package_path_check(*, name: str, mlc_runner: Path) -> TestResult:
+    """`import "file.ml" as alias` may import code-behind files outside package-shaped paths."""
+    with tempfile.TemporaryDirectory(prefix="mltests_") as td:
+        td_path = Path(td)
+
+        impl_dir = td_path / "feature-codebehind"
+        impl_dir.mkdir(parents=True, exist_ok=True)
+        impl = impl_dir / "app.ml"
+        impl.write_text(
+            "\n".join([
+                "package app_impl",
+                "",
+                "function answer()",
+                "  return 42",
+                "end function",
+            ]) + "\n",
+            encoding="utf-8",
+        )
+
+        impl_abs = str(impl.resolve()).replace("\\", "\\\\")
+        main_ml = td_path / "main_alias_file.ml"
+        main_ml.write_text(
+            "\n".join([
+                f'import "{impl_abs}" as CodeBehind',
+                "",
+                "function main(args)",
+                "  print CodeBehind.answer()",
+                "  return 0",
+                "end function",
+            ]) + "\n",
+            encoding="utf-8",
+        )
+
+        return test_program_expect_exit(
+            name=name,
+            mlc_runner=mlc_runner,
+            ml_path=main_ml,
+            expected_exit=0,
+            must_contain=["42"],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+        )
+
+
 def test_import_ambiguous_include_paths(*, name: str, mlc_runner: Path) -> TestResult:
     """Ensure ambiguous include paths are rejected with a clear error message."""
     # If both the importing directory and an include root provide the same module, the compiler should reject it as ambiguous.
@@ -3153,6 +3197,8 @@ def main() -> int:
                                                              mlc_runner=mlc_runner))
     tests.append(
         lambda: test_import_package_path_mismatch(name="import: package/path mismatch rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_import_alias_file_skips_package_path_check(
+        name="import: aliased file import skips package-path check", mlc_runner=mlc_runner))
     tests.append(lambda: test_import_include_paths(name="import: include paths (-I)", mlc_runner=mlc_runner))
     tests.append(lambda: test_import_ambiguous_include_paths(name="import: ambiguous include paths rejected",
                                                              mlc_runner=mlc_runner))

@@ -681,7 +681,11 @@ def load_modules_recursive(
                 # when the file was resolved via a stable root (importer-dir or -I include root).
                 declared_pkg = packages.get(child)
                 expected_pkg = _expected_package_for_file(child, resolved_kind=res_kind, resolved_root=res_root)
-                if declared_pkg and expected_pkg and declared_pkg != expected_pkg:
+                # Explicit file imports with an alias are commonly used as implementation/code-behind
+                # imports. In that mode the alias names the package for the importer, so the file is
+                # allowed to live outside a package-shaped folder tree.
+                alias_for_file_import = bool(getattr(st, "alias", None)) and not isinstance(getattr(st, "module", None), str)
+                if declared_pkg and expected_pkg and declared_pkg != expected_pkg and not alias_for_file_import:
                     root_disp = _pretty_path(res_root, entry_root) if res_root else str(res_root)
                     ce = CompileError(
                         f"File declares package {declared_pkg}, but was found as {expected_pkg} (root: {root_disp}): {child}",
