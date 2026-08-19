@@ -30,7 +30,7 @@ MEM_RESERVE_GRANULARITY = 0x10000  # 64 KiB (VirtualAlloc allocation granularity
 HEAP_SIZE_DEFAULT = 0x02000000  # 32 MiB fixed heap (reserved+committed)
 # Backward-compatible aliases (some code paths may still reference these names)
 HEAP_COMMIT_DEFAULT = HEAP_SIZE_DEFAULT
-HEAP_RESERVE_DEFAULT = 0x80000000  # 2 GiB default reserve (cheap on 64-bit)
+HEAP_RESERVE_DEFAULT = 0x100000000  # 4 GiB default reserve (cheap on 64-bit; matches self-hosted backend)
 HEAP_RESERVE_MIN = HEAP_SIZE_DEFAULT
 
 # Heap growth (commits are page-based; min step avoids too many VirtualAlloc calls)

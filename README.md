@@ -2,6 +2,11 @@
 
 MiniLang (`.ml`) is a small, dynamically typed language that compiles to a native Windows x64 console executable (PE32+) via the Win64 compiler tool (`mlc_win64.py`).
 
+This Python implementation is the bootstrap/reference compiler. Its normal
+monolithic build path is kept byte-for-byte output-compatible with the
+self-hosted MiniLang compiler in `MiniLangCompilerML`; see
+[Compiler parity and self-hosting](COMPILER_PARITY.md).
+
 It is completely developed with the help of generative AI (ChatGPT version >= 5.2)
 
 ---
@@ -39,6 +44,7 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
 - [16. Syntax Reference (short)](#16-syntax-reference-short)
 - [17. Examples](#17-examples)
 - [Native compiler status](#native-compiler-status)
+- [Compiler parity and self-hosting](#compiler-parity-and-self-hosting)
 
 ---
 
@@ -96,11 +102,11 @@ end function
 
 ```bash
 python mlc_win64.py input.ml output.exe [options]
+```
 
 Notes:
 - Flags can appear before or after the positional arguments.
 - On non-Windows hosts you can still compile, but running the resulting `.exe` requires Wine.
-```
 
 Common options:
 
@@ -201,6 +207,20 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
+
+### Compiler parity and self-hosting
+
+For identical source files, include roots and compiler options, this compiler
+and the self-hosted compiler's normal monolithic path emit byte-identical PE
+files. The checked language suite, AES KAT and native raw-value smoke programs
+all match by SHA-256.
+
+The compiler executables themselves are not expected to match: the production
+self-build uses the MiniLang-only `.mlo` object pipeline, which has no Python
+counterpart and produces a differently laid-out compiler PE. Both compiler
+variants nevertheless emit the same tested target executables. Exact hashes,
+test counts, boundaries and reproduction commands are recorded in
+[COMPILER_PARITY.md](COMPILER_PARITY.md).
 
 
 ---

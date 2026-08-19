@@ -42,16 +42,24 @@ class CodegenCore:
 
         def _pretty_script(p: str) -> str:
             """Prefer a short, stable display path (relative to entry root when possible)."""
+            def _canonical_std_path(value: str) -> str:
+                norm = str(value).replace('\\', '/')
+                marker = '/std/'
+                idx = norm.rfind(marker)
+                if idx >= 0:
+                    return norm[idx + 1:]
+                return norm
+
             try:
                 rp = os.path.realpath(os.path.abspath(p))
                 rr = os.path.realpath(os.path.abspath(self.entry_root)) if self.entry_root else ""
                 if rr:
                     rel = os.path.relpath(rp, rr)
                     if not rel.startswith('..' + os.sep) and rel != '..':
-                        return rel.replace('\\', '/')
-                return rp.replace('\\', '/')
+                        return _canonical_std_path(rel)
+                return _canonical_std_path(rp)
             except Exception:
-                return str(p).replace('\\', '/')
+                return _canonical_std_path(p)
 
         # Expose helper for other mixins.
         self._pretty_script = _pretty_script

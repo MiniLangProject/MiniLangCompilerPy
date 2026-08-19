@@ -75,6 +75,8 @@ const DWORD_SIZE = 4
 const IO_BUF_SIZE = 4096
 const DELETE_RETRY_COUNT = 30
 const DELETE_RETRY_SLEEP_MS = 5
+const WRITE_RETRY_COUNT = 30
+const WRITE_RETRY_SLEEP_MS = 10
 
 extern function CreateFileW(
 path as wstr,
@@ -115,6 +117,7 @@ extern function DeleteFileW(path as wstr) from "kernel32.dll" returns bool
 extern function CopyFileW(existingPath as wstr, newPath as wstr, failIfExists as bool) from "kernel32.dll" returns bool
 extern function MoveFileW(existingPath as wstr, newPath as wstr) from "kernel32.dll" returns bool
 extern function GetFileAttributesW(path as wstr) from "kernel32.dll" returns u32
+extern function GetLastError() from "kernel32.dll" returns u32
 
 // Directory enumeration (FindFirstFileW/FindNextFileW)
 const FIND_DATA_SIZE = 592
@@ -345,6 +348,29 @@ function delete(path)
   return false
 end function
 
+function _openWriteAlways(path)
+  last_error = 0
+  i = 0
+  while i < std.fs.WRITE_RETRY_COUNT
+    h = CreateFileW(
+      path,
+      std.fs.Access.GENERIC_WRITE,
+      std.fs.Share.FILE_SHARE_READ + std.fs.Share.FILE_SHARE_DELETE,
+      0,
+      std.fs.Creation.CREATE_ALWAYS,
+      std.fs.FileAttr.FILE_ATTRIBUTE_NORMAL,
+      0,
+    )
+    if h != std.fs.INVALID_HANDLE_VALUE then
+      return h
+    end if
+    last_error = GetLastError()
+    Sleep(std.fs.WRITE_RETRY_SLEEP_MS)
+    i = i + 1
+  end while
+  return _fsErr("CreateFileW failed last_error=" + last_error)
+end function
+
 /*
 write all bytes to a file (overwrites if it exists)
 input: string path, bytes data
@@ -355,9 +381,9 @@ function writeAllBytes(path, data)
     return _fsErr("writeAllBytes: invalid args")
   end if
 
-  h = CreateFileW(path, std.fs.Access.GENERIC_WRITE, std.fs.Share.NONE, 0, std.fs.Creation.CREATE_ALWAYS, std.fs.FileAttr.FILE_ATTRIBUTE_NORMAL, 0)
-  if h == std.fs.INVALID_HANDLE_VALUE then
-    return _fsErr("writeAllBytes: CreateFileW failed")
+  h = _openWriteAlways(path)
+  if typeof(h) == "error" then
+    return _fsErr("writeAllBytes: " + h.message)
   end if
 
   n = len(data)
@@ -462,9 +488,9 @@ function writeAllText(path, text)
     return _fsErr("writeAllText: invalid args")
   end if
 
-  h = CreateFileW(path, std.fs.Access.GENERIC_WRITE, std.fs.Share.NONE, 0, std.fs.Creation.CREATE_ALWAYS, std.fs.FileAttr.FILE_ATTRIBUTE_NORMAL, 0)
-  if h == std.fs.INVALID_HANDLE_VALUE then
-    return _fsErr("writeAllText: CreateFileW failed")
+  h = _openWriteAlways(path)
+  if typeof(h) == "error" then
+    return _fsErr("writeAllText: " + h.message)
   end if
 
   n = len(text)

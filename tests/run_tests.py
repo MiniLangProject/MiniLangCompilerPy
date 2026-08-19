@@ -315,6 +315,31 @@ def run_exe(exe_path: Path, *, exe_args: Optional[list[str]] = None, timeout_s: 
     return run_cmd(cmd, cwd=exe_path.parent, timeout_s=timeout_s)
 
 
+def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
+    """The documented listing flags must create a non-empty PE/data listing."""
+    with tempfile.TemporaryDirectory(prefix="mltests_asm_") as td:
+        td_path = Path(td)
+        src = td_path / "listing_smoke.ml"
+        exe = td_path / "listing_smoke.exe"
+        listing = td_path / "listing_smoke.asm"
+        src.write_text('function main(args)\n  print "listing"\n  return 0\nend function\n', encoding="utf-8")
+        cr = compile_native(
+            mlc_runner,
+            src,
+            exe,
+            extra_args=["--asm", "--asm-out", str(listing), "--asm-data", "--asm-pe"],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details="listing compile failed", stdout=cr.stdout, stderr=cr.stderr)
+        if not listing.is_file():
+            return TestResult(name=name, status="FAIL", details="compiler did not create the requested listing")
+        text = listing.read_text(encoding="utf-8", errors="replace")
+        missing = [marker for marker in (".text", ".rdata", ".idata") if marker not in text]
+        if missing:
+            return TestResult(name=name, status="FAIL", details="listing misses: " + ", ".join(missing), stdout=cr.stdout)
+        return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
+
+
 # -----------------------------
 # Individual tests
 # -----------------------------
@@ -3094,6 +3119,7 @@ def main() -> int:
     native_bytes_ptr_ml = find_file_by_name(tests_root, "native_bytes_ptr_smoke.ml")
     native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
+    global_function_rebind_ml = find_file_by_name(tests_root, "global_function_rebind.ml")
     ns_main = find_file_by_name(tests_root, "main.ml")
     # Prefer the ns/import main if multiple main.ml exist.
     ns_main = find_ml_containing(tests_root, "=== NS/IMPORT BASIC ===") or ns_main
@@ -3151,6 +3177,44 @@ def main() -> int:
 
     tests.append(lambda: test_member_call_arity_error_message(
         name="diagnostics: member-call arity reports expected", mlc_runner=mlc_runner))
+
+    tests.append(lambda: test_program_no_fail(
+        name="runtime: rebound global function uses replacement",
+        mlc_runner=mlc_runner,
+        ml_path=global_function_rebind_ml,
+        must_contain=["global function rebind [OK]"],
+    ) if global_function_rebind_ml is not None else TestResult(
+        name="runtime: rebound global function uses replacement",
+        status="SKIP",
+        details="global_function_rebind.ml not found",
+    ))
+
+    tests.append(lambda: test_asm_listing_cli(name="CLI: assembly/PE/data listing", mlc_runner=mlc_runner))
+
+    tests.append(lambda: test_program_no_fail(
+        name="extern ABI: out annotation preserves callable arity",
+        mlc_runner=mlc_runner,
+        ml_path=tests_root / "extern_abi_validation_valid.ml",
+        must_contain=["extern out ABI [OK]"],
+    ))
+    tests.append(lambda: test_compile_expected_fail(
+        name="extern ABI: invalid struct field rejected",
+        mlc_runner=mlc_runner,
+        entry_ml=tests_root / "extern_abi_validation_bad_field.ml",
+        must_contain_err="unsupported field type",
+    ))
+    tests.append(lambda: test_compile_expected_fail(
+        name="extern ABI: out parameters must be trailing",
+        mlc_runner=mlc_runner,
+        entry_ml=tests_root / "extern_abi_validation_bad_out_order.ml",
+        must_contain_err="out-parameters must appear at the end",
+    ))
+    tests.append(lambda: test_compile_expected_fail(
+        name="extern ABI: unsupported parameter type rejected",
+        mlc_runner=mlc_runner,
+        entry_ml=tests_root / "extern_abi_validation_bad_param.ml",
+        must_contain_err="unsupported ABI type",
+    ))
 
     if aes_ml is not None:
         tests.append(lambda: test_aes_kat(name="aes128_ecb_nist_kat.ml (AES-128 ECB NIST KAT)", mlc_runner=mlc_runner,

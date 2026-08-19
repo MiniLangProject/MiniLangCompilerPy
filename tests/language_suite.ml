@@ -982,6 +982,29 @@ assertEq(a1[1], 2, "array concat second")
 assertEq(a1[2], 3, "array concat third")
 assertEq(a1[4], 5, "array concat last")
 
+// fixed-size array initializer builtin
+aInit1 = array(4)
+assertEq(len(aInit1), 4, "array(size) len")
+assertTrue(aInit1[0] is void, "array(size) default void")
+assertTrue(aInit1[3] is void, "array(size) default void end")
+
+aInit2 = array(3, "hi")
+assertEq(len(aInit2), 3, "array(size, fill) len")
+assertEq(aInit2[0], "hi", "array(size, fill) item0")
+assertEq(aInit2[2], "hi", "array(size, fill) item2")
+
+aInitErr1 = try(array(-1))
+assertEq(typeof(aInitErr1), "error", "array(size) invalid negative -> error")
+assertEq(aInitErr1.code, 1307, "array(size) invalid negative error code")
+
+aInitErr2 = try(array("x"))
+assertEq(typeof(aInitErr2), "error", "array(size) invalid type -> error")
+assertEq(aInitErr2.code, 1307, "array(size) invalid type error code")
+
+aInitErr3 = try(array(2147483648))
+assertEq(typeof(aInitErr3), "error", "array(size) invalid too large -> error")
+assertEq(aInitErr3.code, 1307, "array(size) invalid too large error code")
+
 // ------------------------------------------------------------
 // VALUE EQUALITY (ARRAYS): deep equality
 // ------------------------------------------------------------
@@ -1860,6 +1883,8 @@ print "=== ERROR + try() ==="
 // value-enum: `is` should work (membership check)
 vx = VColor.red
 assertEq(vx is VColor, true, "value-enum: is VColor")
+vmixed = Mixed.Z
+assertEq(vmixed is Mixed, true, "value-enum: string member is Mixed")
 
 // enum equality extensions: ordinal comparisons + cross-enum
 a = EOne.A
