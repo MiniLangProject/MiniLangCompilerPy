@@ -116,9 +116,17 @@ Returns:
         a.mark(l_nonempty)
 
         # allocate size = 8 + len + 1 = len + 9
+        # R9 is volatile under the Windows x64 ABI and fn_alloc is free to
+        # overwrite it. Preserve the effective input length in the caller's
+        # local slot above the 32-byte shadow space before making the call.
+        # Reusing a clobbered R9D here previously assigned multi-gigabyte
+        # lengths to short interactive input strings and exhausted the heap on
+        # the first subsequent concatenation.
+        a.mov_membase_disp_r32('rsp', 0x20, 'r9d')
         a.mov_r32_r32("ecx", "r9d")  # mov ecx,r9d
         a.add_r32_imm("ecx", 9)  # add ecx,9
         a.call('fn_alloc')
+        a.mov_r32_membase_disp('r9d', 'rsp', 0x20)
 
         # r11 = base
         a.mov_r11_rax()

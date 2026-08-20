@@ -114,18 +114,20 @@ class CmdResult:
     stderr: str
 
 
-def run_cmd(cmd: list[str], *, cwd: Optional[Path] = None, timeout_s: int = 120) -> CmdResult:
+def run_cmd(cmd: list[str], *, cwd: Optional[Path] = None, timeout_s: int = 120,
+            stdin_text: Optional[str] = None) -> CmdResult:
     """Run a subprocess command and capture its output.
 
     Args:
         cmd: Command and arguments.
         cwd: Optional working directory.
         timeout_s: Optional timeout in seconds.
+        stdin_text: Optional UTF-8 text supplied to the child process.
 
     Returns:
         CmdResult containing exit code, stdout and stderr."""
     p = subprocess.run(cmd, cwd=str(cwd) if cwd is not None else None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                       text=True, encoding="utf-8", errors="replace", timeout=timeout_s, )
+                       input=stdin_text, text=True, encoding="utf-8", errors="replace", timeout=timeout_s, )
     return CmdResult(cmd=cmd, returncode=p.returncode, stdout=p.stdout, stderr=p.stderr)
 
 
@@ -291,13 +293,15 @@ def compile_native(mlc_runner: Path, input_ml: Path, output_exe: Path, *, extra_
     return run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=timeout_s)
 
 
-def run_exe(exe_path: Path, *, exe_args: Optional[list[str]] = None, timeout_s: int = 180) -> CmdResult:
+def run_exe(exe_path: Path, *, exe_args: Optional[list[str]] = None, timeout_s: int = 180,
+            stdin_text: Optional[str] = None) -> CmdResult:
     """Run a compiled executable and capture its output.
 
     Args:
         exe_path: Path to the executable.
         exe_args: Optional list of command-line arguments.
         timeout_s: Timeout in seconds for the run step.
+        stdin_text: Optional UTF-8 text supplied to the executable.
 
     Returns:
         CmdResult containing exit code, stdout and stderr.
@@ -312,7 +316,7 @@ def run_exe(exe_path: Path, *, exe_args: Optional[list[str]] = None, timeout_s: 
         cmd = [str(exe_path)] + args
     else:
         cmd = [find_wine() or "wine", str(exe_path)] + args
-    return run_cmd(cmd, cwd=exe_path.parent, timeout_s=timeout_s)
+    return run_cmd(cmd, cwd=exe_path.parent, timeout_s=timeout_s, stdin_text=stdin_text)
 
 
 def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
@@ -346,7 +350,9 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 
 def test_program_no_fail(*, name: str, mlc_runner: Path, ml_path: Path, must_contain: list[str],
-                         timeout_compile_s: int = 240, timeout_run_s: int = 240, extra_args: Optional[list[str]] = None, ) -> TestResult:
+                         timeout_compile_s: int = 240, timeout_run_s: int = 240,
+                         extra_args: Optional[list[str]] = None,
+                         stdin_text: Optional[str] = None) -> TestResult:
     """Compile and run the full language suite program.
 
     Returns:
@@ -360,7 +366,7 @@ def test_program_no_fail(*, name: str, mlc_runner: Path, ml_path: Path, must_con
             return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
                               stdout=cr.stdout, stderr=cr.stderr, )
 
-        rr = run_exe(exe, timeout_s=timeout_run_s)
+        rr = run_exe(exe, timeout_s=timeout_run_s, stdin_text=stdin_text)
         if rr.returncode == 999:
             return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
         if rr.returncode != 0:
@@ -3181,6 +3187,7 @@ def main() -> int:
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
     thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
     type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
+    input_length_regression_ml = find_file_by_name(tests_root, "input_length_regression.ml")
     thread_invalid_entry_ml = find_file_by_name(tests_root, "thread_invalid_entry.ml")
     thread_invalid_synchronized_local_ml = find_file_by_name(tests_root, "thread_invalid_synchronized_local.ml")
     global_function_rebind_ml = find_file_by_name(tests_root, "global_function_rebind.ml")
@@ -3202,6 +3209,17 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="language_suite.ml (full language suite)", status="SKIP",
                                         details="language_suite.ml not found"))
+
+    if input_length_regression_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="input ABI: allocator preserves interactive line length",
+            mlc_runner=mlc_runner, ml_path=input_length_regression_ml,
+            must_contain=["[OK] input ABI length"], stdin_text="show tables;\n",
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(
+            name="input ABI: allocator preserves interactive line length",
+            status="SKIP", details="input_length_regression.ml not found"))
 
     # Stdlib unit tests (std.core/std.assert/native error handling)
     if std_test_ml is not None:
