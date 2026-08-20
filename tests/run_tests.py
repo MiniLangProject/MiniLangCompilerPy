@@ -3119,6 +3119,10 @@ def main() -> int:
     native_bytes_ptr_ml = find_file_by_name(tests_root, "native_bytes_ptr_smoke.ml")
     native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
+    thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
+    threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
+    thread_invalid_entry_ml = find_file_by_name(tests_root, "thread_invalid_entry.ml")
+    thread_invalid_synchronized_local_ml = find_file_by_name(tests_root, "thread_invalid_synchronized_local.ml")
     global_function_rebind_ml = find_file_by_name(tests_root, "global_function_rebind.ml")
     ns_main = find_file_by_name(tests_root, "main.ml")
     # Prefer the ns/import main if multiple main.ml exist.
@@ -3148,6 +3152,44 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="stdlib_unit_tests.ml (stdlib unit)", status="SKIP",
                                         details="stdlib_unit_tests.ml not found"))
+
+    if thread_features_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="thread_features.ml (native threads + synchronization)",
+            mlc_runner=mlc_runner, ml_path=thread_features_ml,
+            must_contain=["[OK] synchronized worker output",
+                          "[OK] native threads, global GC heap and synchronization"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="thread_features.ml (native threads + synchronization)", status="SKIP",
+                                        details="thread_features.ml not found"))
+
+    if threading_stdlib_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="threading_stdlib.ml (thread-safe stdlib)",
+            mlc_runner=mlc_runner, ml_path=threading_stdlib_ml,
+            must_contain=["[OK] thread-safe stdlib collections and synchronization primitives"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="threading_stdlib.ml (thread-safe stdlib)", status="SKIP",
+                                        details="threading_stdlib.ml not found"))
+
+    if thread_invalid_entry_ml is not None:
+        tests.append(lambda: test_compile_expected_fail(
+            name="threads: entry function arity rejected", mlc_runner=mlc_runner,
+            entry_ml=thread_invalid_entry_ml, must_contain_err="must have zero parameters"))
+    else:
+        tests.append(lambda: TestResult(name="threads: entry function arity rejected", status="SKIP",
+                                        details="thread_invalid_entry.ml not found"))
+
+    if thread_invalid_synchronized_local_ml is not None:
+        tests.append(lambda: test_compile_expected_fail(
+            name="synchronization: local declaration rejected", mlc_runner=mlc_runner,
+            entry_ml=thread_invalid_synchronized_local_ml,
+            must_contain_err="synchronized variables may only be declared at top level or in a namespace"))
+    else:
+        tests.append(lambda: TestResult(name="synchronization: local declaration rejected", status="SKIP",
+                                        details="thread_invalid_synchronized_local.ml not found"))
 
     # Periodic GC smoke test (allocation-pressure trigger)
     if gc_periodic_ml is not None:

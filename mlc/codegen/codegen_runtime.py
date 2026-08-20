@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from ..constants import (CALLSTAT_STRUCT_ID, ERROR_STRUCT_ID, GC_BLOCK_SIZE_MASK, GC_HEADER_SIZE, GC_OFF_BLOCK_SIZE,
                          OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BUILTIN, OBJ_BYTES, OBJ_CLOSURE, OBJ_FLOAT, OBJ_FUNCTION, OBJ_STRING, OBJ_STRUCT,
-                         OBJ_STRUCTTYPE, TAG_BOOL, TAG_ENUM, TAG_FLOAT, TAG_INT, TAG_PTR, TAG_VOID, )
+                         OBJ_STRUCTTYPE, OBJ_THREAD, TAG_BOOL, TAG_ENUM, TAG_FLOAT, TAG_INT, TAG_PTR, TAG_VOID, )
 from ..tools import enc_bool, enc_int, enc_void
 
 
@@ -1568,6 +1568,7 @@ class CodegenRuntime:
         l_flt = f"tof_flt_{lid}"
         l_bytes = f"tof_bytes_{lid}"
         l_fun = f"tof_fun_{lid}"
+        l_thread = f"tof_thread_{lid}"
         l_sti = f"tof_sti_{lid}"
         l_stt = f"tof_stt_{lid}"
         l_unk = f"tof_unk_{lid}"
@@ -1634,6 +1635,8 @@ class CodegenRuntime:
         a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_BUILTIN)
         a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_THREAD)
+        a.jcc('e', l_thread)
         a.cmp_r32_imm("edx", OBJ_STRUCT)
         a.jcc('e', l_sti)
 
@@ -1659,6 +1662,10 @@ class CodegenRuntime:
 
         a.mark(l_fun)
         a.lea_rax_rip('obj_type_function')
+        a.ret()
+
+        a.mark(l_thread)
+        a.lea_rax_rip('obj_type_thread')
         a.ret()
 
         a.mark(l_sti)
@@ -1708,6 +1715,7 @@ class CodegenRuntime:
         l_flt = f"tna_flt_{lid}"
         l_bytes = f"tna_bytes_{lid}"
         l_fun = f"tna_fun_{lid}"
+        l_thread = f"tna_thread_{lid}"
         l_sti = f"tna_sti_{lid}"
         l_stt = f"tna_stt_{lid}"
         l_unk = f"tna_unk_{lid}"
@@ -1794,6 +1802,8 @@ class CodegenRuntime:
         a.jcc('e', l_fun)
         a.cmp_r32_imm("edx", OBJ_BUILTIN)
         a.jcc('e', l_fun)
+        a.cmp_r32_imm("edx", OBJ_THREAD)
+        a.jcc('e', l_thread)
         a.cmp_r32_imm("edx", OBJ_STRUCT)
         a.jcc('e', l_sti)
         a.cmp_r32_imm("edx", OBJ_STRUCTTYPE)
@@ -1818,6 +1828,10 @@ class CodegenRuntime:
 
         a.mark(l_fun)
         a.lea_rax_rip('obj_type_function')
+        a.ret()
+
+        a.mark(l_thread)
+        a.lea_rax_rip('obj_type_thread')
         a.ret()
 
         a.mark(l_sti)

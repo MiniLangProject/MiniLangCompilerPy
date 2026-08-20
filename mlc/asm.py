@@ -183,6 +183,35 @@ class Asm:
         """
         self.buf += u32(x)
 
+    # NT_TIB.ArbitraryUserPointer is application-owned and lives at gs:[0x28]
+    # on Win64. MiniLang uses it as the current managed-thread context pointer.
+    def mov_rax_gs_qword_28(self) -> None:
+        self.emit(bytes((0x65, 0x48, 0x8B, 0x04, 0x25, 0x28, 0x00, 0x00, 0x00)))
+
+    def mov_r11_gs_qword_28(self) -> None:
+        self.emit(bytes((0x65, 0x4C, 0x8B, 0x1C, 0x25, 0x28, 0x00, 0x00, 0x00)))
+
+    def mov_r10_gs_qword_28(self) -> None:
+        self.emit(bytes((0x65, 0x4C, 0x8B, 0x14, 0x25, 0x28, 0x00, 0x00, 0x00)))
+
+    def mov_gs_qword_28_rax(self) -> None:
+        self.emit(bytes((0x65, 0x48, 0x89, 0x04, 0x25, 0x28, 0x00, 0x00, 0x00)))
+
+    @staticmethod
+    def _gc_tmp_context_offset(label: str) -> Optional[int]:
+        """Return the per-thread context offset for ``gc_tmp0`` .. ``gc_tmp7``.
+
+        The public RIP-relative helpers historically addressed process-global
+        temporary GC roots. Keeping the routing here lets all existing codegen
+        sites become thread-local without introducing register-clobbering
+        helper calls around every allocation sequence.
+        """
+        if isinstance(label, str) and len(label) == 7 and label.startswith("gc_tmp"):
+            digit = label[-1]
+            if "0" <= digit <= "7":
+                return 56 + (ord(digit) - ord("0")) * 8
+        return None
+
     def emit64(self, x: int) -> None:
         """Append a 64-bit little-endian integer to the output buffer.
 
@@ -662,6 +691,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_r64_membase_disp("rax", "r10", tmp_off)
+            self.pop_reg("r10")
+            return
         # mov rax, [rip+disp32]
         self.emit(b"\x48\x8B\x05")
         p = self.pos
@@ -674,6 +710,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_r64_membase_disp("rdx", "r10", tmp_off)
+            self.pop_reg("r10")
+            return
         # mov rdx, [rip+disp32]
         # encoding: 48 8B 15 <disp32>
         self.emit(b"\x48\x8B\x15")
@@ -687,6 +730,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_membase_disp_r64("r10", tmp_off, "rax")
+            self.pop_reg("r10")
+            return
         # mov [rip+disp32], rax
         self.emit(b"\x48\x89\x05")
         p = self.pos
@@ -699,6 +749,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_membase_disp_r64("r10", tmp_off, "rdx")
+            self.pop_reg("r10")
+            return
         # mov [rip+disp32], rdx
         self.emit(b"\x48\x89\x15")
         p = self.pos
@@ -711,6 +768,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_membase_disp_r64("r10", tmp_off, "r11")
+            self.pop_reg("r10")
+            return
         # mov [rip+disp32], r11
         self.emit(b"\x4C\x89\x1D")
         p = self.pos
@@ -723,6 +787,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_membase_disp_r64("r10", tmp_off, "r8")
+            self.pop_reg("r10")
+            return
         # mov [rip+disp32], r8
         self.emit(b"\x4C\x89\x05")
         p = self.pos
@@ -735,6 +806,13 @@ class Asm:
         Args:
             label: Label name.
         """
+        tmp_off = self._gc_tmp_context_offset(label)
+        if tmp_off is not None:
+            self.push_reg("r10")
+            self.mov_r10_gs_qword_28()
+            self.mov_membase_disp_r64("r10", tmp_off, "r9")
+            self.pop_reg("r10")
+            return
         # mov [rip+disp32], r9
         self.emit(b"\x4C\x89\x0D")
         p = self.pos
@@ -1116,6 +1194,14 @@ class Asm:
         rex_r = 1 if s >= 8 else 0
         rex_x, rex_b, tail = self._encode_mem(s, b, disp)
         self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x89" + tail)
+
+    def lock_cmpxchg_membase_disp_r32(self, base: str, disp: int, src: str) -> None:
+        """Atomically compare EAX with dword [base+disp] and exchange from src."""
+        s = self._rid_any(src)
+        b = self._rid_any(base)
+        rex_r = 1 if s >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
+        self.emit(b"\xF0" + self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB1" + tail)
 
     def mov_r8_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.

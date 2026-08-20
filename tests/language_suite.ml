@@ -1972,6 +1972,22 @@ vlen = try(len_of_void())
 assertEq(typeof(vlen), "error", "void: len(void) raises error")
 assertEq(vlen.code, 1200, "void: len(void) code")
 
+function divide_void_left()
+  return void / 1
+end function
+
+function divide_void_right()
+  return 1 / void
+end function
+
+vdivLeft = try(divide_void_left())
+assertEq(typeof(vdivLeft), "error", "void: left division operand raises error")
+assertEq(vdivLeft.code, 1200, "void: left division operand code")
+
+vdivRight = try(divide_void_right())
+assertEq(typeof(vdivRight), "error", "void: right division operand raises error")
+assertEq(vdivRight.code, 1200, "void: right division operand code")
+
 print "=== INLINE FUNCTIONS ==="
 
 function inline add2(a, b)

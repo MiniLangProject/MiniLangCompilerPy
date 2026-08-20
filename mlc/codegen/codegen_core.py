@@ -131,7 +131,7 @@ class CodegenCore:
         # Reserved identifiers (cannot be used as variable/function/param/etc. names).
         # `try(...)` is a special-form propagation stopper.
         # `error(...)` is the built-in error struct constructor.
-        self.reserved_identifiers: set[str] = {"try", "error"}
+        self.reserved_identifiers: set[str] = {"try", "error", "Thread"}
 
         # Built-in struct names (reserved). Used by declaration collector to avoid
         # assigning huge user struct IDs when ERROR_STRUCT_ID is large.
@@ -198,6 +198,7 @@ class CodegenCore:
         self.rdata.add_obj_string('obj_type_function', 'function')
         self.rdata.add_obj_string('obj_type_struct', 'struct')
         self.rdata.add_obj_string('obj_type_error', 'error')
+        self.rdata.add_obj_string('obj_type_thread', 'thread')
         self.rdata.add_obj_string('obj_type_unknown', 'unknown')
         # Hex lookup table (for hex()/fromHex())
         self.rdata.add_bytes('hex_tbl', b"0123456789abcdef")
@@ -273,6 +274,8 @@ class CodegenCore:
         # Pool used by CodegenExpr extern helpers (wstr conversions)
         self.ext_widebuf_labels = ['widebuf', 'widebuf1', 'widebuf2', 'widebuf3']
         self.data.add_bytes('inbuf', b"\x00" * INBUF_SIZE)
+        if hasattr(self, 'ensure_thread_data'):
+            self.ensure_thread_data()
         # a label pointing to end of buffer (same section)
         # We'll create it as a u64 placeholder overwritten by relocation math at runtime is not needed.
         # Instead, label it as current offset (which equals intbuf+32).
@@ -281,7 +284,10 @@ class CodegenCore:
         # Imports (filled later)
         self.imports = {KERNEL32: ['GetStdHandle', 'ReadFile', 'WriteFile', 'WriteConsoleW', 'MultiByteToWideChar',
                                    'SetConsoleOutputCP', 'FreeConsole', 'ExitProcess', 'VirtualAlloc', 'VirtualFree',
-                                   'GetCommandLineW', 'LocalFree', 'WideCharToMultiByte'], MSVCRT: ['_gcvt', 'fmod'],
+                                   'GetCommandLineW', 'LocalFree', 'WideCharToMultiByte',
+                                   'CreateThread', 'WaitForSingleObject', 'CloseHandle', 'Sleep',
+                                   'InitializeCriticalSection', 'EnterCriticalSection', 'LeaveCriticalSection'],
+            MSVCRT: ['_gcvt', 'fmod'],
             'shell32.dll': ['CommandLineToArgvW'],
 
         }
@@ -479,8 +485,15 @@ class CodegenCore:
         except Exception:
             ln = None
         if isinstance(ln, int) and ln > 0:
+            lid = self.new_label_id()
+            l_skip = f'dbg_line_worker_{lid}'
+            self.asm.mov_r11_gs_qword_28()
+            self.asm.mov_r32_membase_disp('eax', 'r11', 0)
+            self.asm.test_r32_r32('eax', 'eax')
+            self.asm.jcc('ne', l_skip)
             self.asm.mov_rax_imm64(enc_int(int(ln)))
             self.asm.mov_rip_qword_rax('dbg_loc_line')
+            self.asm.mark(l_skip)
 
     # ---------- var slots ----------
 
@@ -1310,6 +1323,27 @@ class CodegenCore:
             'fn_heap_free_blocks': getattr(self, 'emit_heap_free_blocks_function', None),
             'fn_heap_grow': getattr(self, 'emit_heap_grow_function', None),
             'fn_gc_collect': getattr(self, 'emit_gc_collect_function', None),
+            'fn_sync_enter': getattr(self, 'emit_sync_enter_function', None),
+            'fn_sync_leave': getattr(self, 'emit_sync_leave_function', None),
+            'fn_gc_safepoint': getattr(self, 'emit_gc_safepoint_function', None),
+            'fn_gc_native_enter': getattr(self, 'emit_gc_native_enter_function', None),
+            'fn_gc_native_leave': getattr(self, 'emit_gc_native_leave_function', None),
+            'fn_gc_managed_exit': getattr(self, 'emit_gc_managed_exit_function', None),
+            'fn_heap_enter': getattr(self, 'emit_heap_enter_function', None),
+            'fn_heap_leave': getattr(self, 'emit_heap_leave_function', None),
+            'fn_gc_world_stop': getattr(self, 'emit_gc_world_stop_function', None),
+            'fn_gc_world_resume': getattr(self, 'emit_gc_world_resume_function', None),
+            'fn_thread_new': getattr(self, 'emit_thread_new_function', None),
+            'fn_thread_start': getattr(self, 'emit_thread_start_function', None),
+            'fn_thread_stop': getattr(self, 'emit_thread_stop_function', None),
+            'fn_thread_join': getattr(self, 'emit_thread_join_function', None),
+            'fn_thread_alive': getattr(self, 'emit_thread_alive_function', None),
+            'fn_thread_id': getattr(self, 'emit_thread_id_function', None),
+            'fn_thread_status': getattr(self, 'emit_thread_status_function', None),
+            'fn_thread_close': getattr(self, 'emit_thread_close_function', None),
+            'fn_thread_stop_requested': getattr(self, 'emit_thread_stop_requested_function', None),
+            'fn_thread_alloc': getattr(self, 'emit_thread_alloc_function', None),
+            'fn_thread_entry': getattr(self, 'emit_thread_entry_function', None),
             'fn_mem_eq_bytes': getattr(self, 'emit_mem_eq_bytes_function', None),
             'fn_bytes_hash': getattr(self, 'emit_bytes_hash_function', None),
             'fn_string_hash': getattr(self, 'emit_string_hash_function', None),
@@ -1364,7 +1398,12 @@ class CodegenCore:
             'fn_builtin_fillBytes': getattr(self, 'emit_builtin_fillBytes_function', None),
             'fn_builtin_gc_collect': getattr(self, 'emit_builtin_gc_collect_function', None),
             'fn_builtin_gc_set_limit': getattr(self, 'emit_builtin_gc_set_limit_function', None), }
-        helper_order = ['fn_cpu_init', 'fn_alloc', 'fn_heap_grow', 'fn_gc_collect', 'fn_copy_bytes', 'fn_fill_bytes',
+        helper_order = ['fn_cpu_init', 'fn_gc_safepoint', 'fn_gc_native_enter', 'fn_gc_native_leave',
+            'fn_gc_managed_exit', 'fn_heap_enter', 'fn_heap_leave', 'fn_gc_world_stop', 'fn_gc_world_resume',
+            'fn_sync_enter', 'fn_sync_leave', 'fn_thread_new', 'fn_thread_start',
+            'fn_thread_stop', 'fn_thread_join', 'fn_thread_alive', 'fn_thread_id', 'fn_thread_status',
+            'fn_thread_close', 'fn_thread_stop_requested', 'fn_thread_entry', 'fn_thread_alloc',
+            'fn_alloc', 'fn_heap_grow', 'fn_gc_collect', 'fn_copy_bytes', 'fn_fill_bytes',
             'fn_fill_qwords', 'fn_mem_eq_bytes', 'fn_bytes_hash', 'fn_string_hash',
             'fn_bytes_startswith', 'fn_bytes_endswith', 'fn_bytes_indexof', 'fn_bytes_lastindexof', 'fn_bytes_compare',
             'fn_str_eq', 'fn_string_slice', 'fn_string_indexof',

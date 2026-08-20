@@ -1488,6 +1488,21 @@ class CodegenStmt:
             return
         a = self.asm
 
+        # Cooperative cancellation safe point. Stop() never tears a native
+        # thread down while it owns a monitor or is mutating shared state.
+        if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
+            lid_stop = self.new_label_id()
+            l_continue = f'thread_safe_continue_{lid_stop}'
+            a.mov_r11_gs_qword_28()
+            a.test_r64_r64('r11', 'r11')
+            a.jcc('e', l_continue)
+            a.mov_r32_membase_disp('r11d', 'r11', 4)
+            a.cmp_r32_imm('r11d', 2)
+            a.jcc('ne', l_continue)
+            a.mov_rax_imm64(enc_void())
+            a.jmp(self.func_ret_label)
+            a.mark(l_continue)
+
         if hasattr(ml, 'NamespaceDecl') and isinstance(s, ml.NamespaceDecl):
             return
 
@@ -1569,6 +1584,19 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.Assign):
+            is_sync_decl = hasattr(ml, 'SynchronizedDecl') and isinstance(s, ml.SynchronizedDecl)
+            if is_sync_decl and bool(getattr(self, 'in_function', False)):
+                raise self.error('synchronized variables may only be declared at top level or in a namespace', s)
+
+            sync_name = str(getattr(s, 'name', ''))
+            if bool(getattr(self, 'in_function', False)):
+                gm = getattr(self, '_func_global_map', None) or {}
+                sync_name = str(gm.get(sync_name, sync_name))
+            sync_names = getattr(self, 'synchronized_globals', set()) or set()
+            is_sync_write = sync_name in sync_names
+            if is_sync_write:
+                a.call('fn_sync_enter')
+
             # Step 4: if this is a top-level/namespace initializer and constexpr-evaluable, fold it
             if not bool(getattr(self, 'in_function', False)) and _is_constexpr_expr(self.ml, getattr(s, 'expr', None)):
                 try:
@@ -1580,8 +1608,18 @@ class CodegenStmt:
                         pass
                 except Exception:
                     pass
-            self.emit_expr(s.expr)
+            if is_sync_write:
+                old_sync_depth = int(getattr(self, '_errprop_sync_depth', 0) or 0)
+                self._errprop_sync_depth = old_sync_depth + 1
+                try:
+                    self.emit_expr(s.expr)
+                finally:
+                    self._errprop_sync_depth = old_sync_depth
+            else:
+                self.emit_expr(s.expr)
             self.emit_store_var(s.name, s)
+            if is_sync_write:
+                a.call('fn_sync_leave')
             return
 
         if isinstance(s, ml.Print):
@@ -2261,6 +2299,7 @@ class CodegenStmt:
                              continue_depth=depth_before))
 
             a.mark(top)
+            self.emit_gc_safepoint_poll()
 
             # while true -> skip condition evaluation
             if tv is not True:
@@ -2309,6 +2348,7 @@ class CodegenStmt:
             self.pop_scope()
 
             a.mark(check)
+            self.emit_gc_safepoint_poll()
             if tv is True:
                 # loop ... while true
                 a.jmp(top)
@@ -2443,6 +2483,7 @@ class CodegenStmt:
             self.pop_scope()
 
             a.mark(cont)
+            self.emit_gc_safepoint_poll()
             # if var == end -> end loop
             self.emit_load_var(s.var)
             a.mov_r10_rax()
@@ -3155,7 +3196,7 @@ class CodegenStmt:
                     continue
 
                 # const / global assignments at top-level or inside namespaces
-                if _is_node(st, 'ConstDecl') or _is_node(st, 'Assign'):
+                if _is_node(st, 'ConstDecl') or _is_node(st, 'Assign') or _is_node(st, 'SynchronizedDecl'):
                     if not in_ns:
                         file_seen_nonpackage[current_file or ''] = True
                     # qualification and runtime hoisting are handled later by _flatten_runtime()
@@ -3263,6 +3304,7 @@ class CodegenStmt:
                                 body,
                                 is_static=is_static,
                                 is_inline=bool(getattr(mfn, "is_inline", False)),
+                                is_synchronized=bool(getattr(mfn, "is_synchronized", False)),
                             )
                             # preserve source position/filename if present
                             for attr in ("_pos", "_filename"):
@@ -3500,6 +3542,9 @@ class CodegenStmt:
                     nm = getattr(st, 'name', None)
                     if isinstance(nm, str) and prefix and '.' not in nm:
                         setattr(st, 'name', prefix + nm)
+                        nm = prefix + nm
+                    if hasattr(self.ml, 'SynchronizedDecl') and isinstance(st, self.ml.SynchronizedDecl):
+                        self.synchronized_globals.add(str(nm))
                     _tag_ns(st)
                     out.append(st)
                     continue
@@ -3508,6 +3553,7 @@ class CodegenStmt:
                 out.append(st)
             return out
 
+        self.synchronized_globals = set()
         program = _flatten_runtime(program)
 
         # Track which module/file owns each top-level global/const runtime binding.
@@ -3917,6 +3963,8 @@ class CodegenStmt:
         for qn, fn in (getattr(self, "user_functions", {}) or {}).items():
             if not bool(getattr(fn, "is_inline", False)):
                 continue
+            if bool(getattr(fn, 'is_synchronized', False)):
+                raise self.error('a synchronized function cannot also be inline', fn)
             stats = self._inline_analyze_function(fn)
             self.inline_function_stats[qn] = stats
             if bool(stats.get('ok', False)):
@@ -3993,8 +4041,10 @@ class CodegenStmt:
             self.emit_writefile_stderr(lbl_tr_main, tr_main_len)
             a.add_rsp_imm8(0x30)
 
-        # Initialize heap + GC globals (implemented in CodegenMemory).
-        # Heap init (bump allocator): one fixed 32 MiB heap reserved+committed at startup.
+        # Install the main managed-thread context before heap initialization;
+        # GC temporary roots are per-thread and route through gs:[0x28].
+        self.emit_sync_init()
+        # Initialize the one process-wide managed heap and collector metadata.
         self.emit_heap_init()
         a.call('fn_cpu_init')
 
@@ -4481,7 +4531,7 @@ class CodegenStmt:
         _saved_ctx_file = getattr(self, "_current_fn_file", None)
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
-        builtin_callees = {'try', "input", "len", "toNumber", "toFloat", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
+        builtin_callees = {'try', "Thread", "threadStopRequested", "threadSleep", "input", "len", "toNumber", "toFloat", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
             "decode16Z", "hex", "fromHex", "slice", "bytesHash", "stringHash", "bytesStartsWith", "bytesEndsWith", "bytesIndexOf", "bytesLastIndexOf", "bytesCompare", "str", "stringSlice", "stringIndexOf", "stringLastIndexOf", "stringStartsWith", "stringEndsWith",
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
@@ -4955,6 +5005,12 @@ class CodegenStmt:
 
         # ---- debug script/function context ----
 
+        dbg_worker_skip = f'dbg_worker_skip_{self.new_label_id()}'
+        a.mov_r11_gs_qword_28()
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', dbg_worker_skip)
+
         # Save previous debug-loc globals so the caller context is restored on return.
         # (Prevents errors after a nested call from reporting the wrong function.)
         a.mov_rax_rip_qword('dbg_loc_script')
@@ -4994,6 +5050,7 @@ class CodegenStmt:
         self.rdata.add_obj_string(lbl_fn, func_s)
         a.lea_rax_rip(lbl_fn)
         a.mov_rip_qword_rax('dbg_loc_func')
+        a.mark(dbg_worker_skip)
 
         # ---- GC shadow stack roots (Part A) ----
 
@@ -5003,6 +5060,7 @@ class CodegenStmt:
 
         # Push function root-frame record at [rsp+root_rec_off] and link it into gc_roots_head.
         self.emit_gc_push_root_frame(root_rec_off, root_base, root_static_top)
+        self.emit_gc_safepoint_poll()
 
         # Save incoming closure environment (passed in r10) in a nonvolatile register.
         a.mov_r64_r64("r14", "r10")
@@ -5172,6 +5230,8 @@ class CodegenStmt:
             a.mov_rsp_disp32_rax(env_root_off)
 
         # ---- body ----
+        if bool(getattr(fn, 'is_synchronized', False)):
+            a.call('fn_sync_enter')
         old_qpref = getattr(self, 'current_qname_prefix', '')
         _old_fn_qn = getattr(self, '_current_fn_qname', None)
         _old_fn_file = getattr(self, '_current_fn_file', None)
@@ -5211,16 +5271,24 @@ class CodegenStmt:
 
         # ---- epilogue ----
         a.mark(ret_label)
+        if bool(getattr(fn, 'is_synchronized', False)):
+            a.call('fn_sync_leave')
         # Pop GC root-frame record (must not clobber RAX return value)
         self.emit_gc_pop_root_frame(root_rec_off)
 
         # Restore previous debug-loc globals (do not clobber RAX return value).
+        dbg_restore_skip = f'dbg_restore_worker_{self.new_label_id()}'
+        a.mov_r11_gs_qword_28()
+        a.mov_r32_membase_disp('r11d', 'r11', 0)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('ne', dbg_restore_skip)
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 0)
         a.mov_rip_qword_r11('dbg_loc_script')
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 8)
         a.mov_rip_qword_r11('dbg_loc_func')
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 16)
         a.mov_rip_qword_r11('dbg_loc_line')
+        a.mark(dbg_restore_skip)
 
         # restore scope stack
         if saved_emit_stack is not None:

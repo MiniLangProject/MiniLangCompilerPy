@@ -253,7 +253,7 @@ def _is_decl_stmt(ml: Any, st: Any) -> bool:
         # extern declarations (Step 4/5)
         "ExternFunctionDef", "ExternFunctionDecl",
         # const/global bindings in libraries (Step 10)
-        'ConstDecl', 'Assign',
+        'ConstDecl', 'Assign', 'SynchronizedDecl',
     )
     if n in decl_names:
         return True
@@ -503,6 +503,15 @@ def load_modules_recursive(
         if nid in _seen:
             return
         _seen.add(nid)
+
+        # Elif clauses and a few other compound AST fields are represented as
+        # tuples containing statement lists. Traverse both container kinds so
+        # their child expressions and statements receive the same source
+        # metadata as ordinary object fields.
+        if isinstance(node, (tuple, list)):
+            for ch in node:
+                _attach_filename_recursive(ch, filename, code0, _seen=_seen)
+            return
 
         try:
             setattr(node, "_filename", filename)

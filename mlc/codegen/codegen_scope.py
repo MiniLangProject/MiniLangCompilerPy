@@ -839,8 +839,13 @@ class CodegenScope:
         if b.kind == "global":
             if b.label is None:
                 raise self.error(f"Internal error: missing global label for '{name_s}'", node)
+            is_sync = str(getattr(b, 'name', name_s)) in (getattr(self, 'synchronized_globals', set()) or set())
+            if is_sync:
+                a.call('fn_sync_enter')
             self._maybe_emit_module_init_guard_for_global_read(b, target_name=name_s, node=node)
             a.mov_rax_rip_qword(b.label)
+            if is_sync:
+                a.call('fn_sync_leave')
             return
 
         raise self.error(f"Internal error: unknown binding kind for '{name_s}'", node)

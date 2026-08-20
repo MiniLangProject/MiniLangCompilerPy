@@ -41,6 +41,7 @@ OBJ_BYTES = 10
 OBJ_CLOSURE = 11
 OBJ_ENV_LOCAL = 12
 OBJ_ARRAY_IMM = 13
+OBJ_THREAD = 14
 # ============================================================
 # Heap GC header (Mark/Sweep + Free-List)
 # ============================================================
@@ -126,3 +127,6 @@ ERR_ARRAY_INIT_SIZE = 1307
 
 # Module initialization dependency / cycle
 ERR_MODULE_INIT_CYCLE = 1400
+
+# Thread/synchronization boundary errors
+ERR_SYNCHRONIZED_VALUE = 1500

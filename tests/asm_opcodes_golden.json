@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-04-13T05:52:32.819144Z",
-  "count": 217,
+  "generated_utc": "2026-08-19T18:01:25.457515Z",
+  "count": 221,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -738,6 +738,17 @@
       "asm": "leave"
     },
     {
+      "name": "lock_cmpxchg_membase_disp_r32",
+      "args": [
+        "rbp",
+        -16,
+        "r11d"
+      ],
+      "kwargs": {},
+      "hex": "f0440fb15df0",
+      "asm": "; lock_cmpxchg_membase_disp_r32(rbp, -16, r11d)"
+    },
+    {
       "name": "mov_eax_rip_dword",
       "args": [
         "L"
@@ -745,6 +756,13 @@
       "kwargs": {},
       "hex": "8b05faffffff",
       "asm": "mov eax, dword [rip+L]"
+    },
+    {
+      "name": "mov_gs_qword_28_rax",
+      "args": [],
+      "kwargs": {},
+      "hex": "654889042528000000",
+      "asm": "; mov_gs_qword_28_rax()"
     },
     {
       "name": "mov_mem_bis_r32",
@@ -842,6 +860,13 @@
       "kwargs": {},
       "hex": "4c8bd0",
       "asm": "; mov_r10_rax()"
+    },
+    {
+      "name": "mov_r11_gs_qword_28",
+      "args": [],
+      "kwargs": {},
+      "hex": "654c8b1c2528000000",
+      "asm": "; mov_r11_gs_qword_28()"
     },
     {
       "name": "mov_r11_rax",
@@ -983,6 +1008,13 @@
       "kwargs": {},
       "hex": "41b944332211",
       "asm": "; mov_r9d_imm32(287454020)"
+    },
+    {
+      "name": "mov_rax_gs_qword_28",
+      "args": [],
+      "kwargs": {},
+      "hex": "65488b042528000000",
+      "asm": "; mov_rax_gs_qword_28()"
     },
     {
       "name": "mov_rax_imm64",

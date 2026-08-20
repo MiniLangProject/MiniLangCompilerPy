@@ -9,7 +9,7 @@ import re
 import struct
 from typing import Any, List, Optional
 
-from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION,
+from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION, OBJ_THREAD,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
@@ -654,6 +654,7 @@ class CodegenExpr:
         lidp = self.new_label_id()
         l_noerr = f"errprop_noerr_{lidp}"
         l_cold = f"errprop_cold_{lidp}"
+        sync_cleanup_depth = int(getattr(self, '_errprop_sync_depth', 0) or 0)
     
         # Check: TAG_PTR + OBJ_STRUCT + struct_id == ERROR_STRUCT_ID
         a.mov_r64_r64("r10", "rax")
@@ -666,7 +667,18 @@ class CodegenExpr:
         a.mov_r32_membase_disp("r10d", "rax", 4)
         a.cmp_r32_imm("r10d", ERROR_STRUCT_ID)
         a.jcc("ne", l_noerr)
-        if hasattr(self, 'defer_cold_block') and self.defer_cold_block(
+        if sync_cleanup_depth > 0:
+            # Synchronized assignments hold the recursive process monitor while
+            # their RHS is evaluated. Any propagated error must unwind those
+            # acquisitions before returning from the current function.
+            for _ in range(sync_cleanup_depth):
+                a.call('fn_sync_leave')
+            if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
+                a.jmp(self.func_ret_label)
+            else:
+                a.mov_r64_r64("rcx", "rax")
+                a.call('fn_unhandled_error_exit')
+        elif hasattr(self, 'defer_cold_block') and self.defer_cold_block(
             l_cold,
             lambda: (
                 a.jmp(self.func_ret_label)
@@ -1147,6 +1159,7 @@ class CodegenExpr:
 
     def _emit_extern_call(self, e: Any, callee_name: str) -> None:
         """Emit a direct call to an `extern function` via the PE import table (IAT)."""
+        self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         sig = self.extern_sigs.get(callee_name)
         if not sig:
             raise CompileError(f"Unknown extern function '{callee_name}'", getattr(e, "pos", None))
@@ -1193,6 +1206,10 @@ class CodegenExpr:
                 a.or_rax_imm8(TAG_INT)
                 a.mov_membase_disp_r64("rsp", self.call_temp_base + i * 8, "rax")
 
+        # Native code may block indefinitely. Publish a stable stack-root chain
+        # before entering it so stop-the-world GC need not wait for the OS call.
+        a.call('fn_gc_native_enter')
+
         # Move first 4 args into registers (Windows x64 ABI), rest into outgoing stack args.
         regs = ["rcx", "rdx", "r8", "r9"]
         xregs = ["xmm0", "xmm1", "xmm2", "xmm3"]
@@ -1213,6 +1230,7 @@ class CodegenExpr:
 
         # Call through the imported function pointer.
         a.call_rip_qword(self._extern_iat_label(dll, symbol))
+        a.call('fn_gc_native_leave')
 
         # Marshal return value back into MiniLang representation.
         self._emit_extern_ret_from_native(ret_ty, e.pos)
@@ -1242,6 +1260,7 @@ class CodegenExpr:
         the return value back to a tagged Value in RAX.
         """
         a = self.asm
+        self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         externs = getattr(self, 'extern_sigs', {}) or {}
         if not externs:
             return
@@ -1324,6 +1343,8 @@ class CodegenExpr:
                     self._emit_extern_arg_to_native(abi_ty, l_fail, pos, wbuf_label=wbuf)
                     a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
 
+            a.call('fn_gc_native_enter')
+
             # Marshal args to Win64 ABI: RCX/RDX/R8/R9 + outgoing stack slots.
             regs = ['rcx', 'rdx', 'r8', 'r9']
             xregs = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
@@ -1350,6 +1371,7 @@ class CodegenExpr:
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",
                         pos, )
             a.call_rip_qword(self._extern_iat_label(str(dll), str(sym)))
+            a.call('fn_gc_native_leave')
 
             # Convert return value back to a tagged MiniLang Value.
             self._emit_extern_ret_from_native(ret_ty, pos)
@@ -3727,6 +3749,67 @@ class CodegenExpr:
             if callee_expr is None:
                 callee_expr = getattr(e, 'func', None)
 
+            # Native Thread object methods. They intentionally share the member-call
+            # spelling with user structs but dispatch by the reserved OBJ_THREAD id.
+            if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
+                mname = str(getattr(callee_expr, 'name', getattr(callee_expr, 'field', '')) or '')
+                thread_methods = {
+                    'Start': (0, 'fn_thread_start'),
+                    'Stop': (0, 'fn_thread_stop'),
+                    'Join': ((0, 1), 'fn_thread_join'),
+                    'Status': (0, 'fn_thread_status'),
+                    'IsAlive': (0, 'fn_thread_alive'),
+                    'Id': (0, 'fn_thread_id'),
+                    'Close': (0, 'fn_thread_close'),
+                }
+                if mname in thread_methods:
+                    arity_spec, helper = thread_methods[mname]
+                    args = list(getattr(e, 'args', []) or [])
+                    allowed = arity_spec if isinstance(arity_spec, tuple) else (arity_spec,)
+                    if len(args) not in allowed:
+                        allowed_s = ' or '.join(str(x) for x in allowed)
+                        raise self.error(f"Thread.{mname} expects {allowed_s} arguments, got {len(args)}", e)
+                    tgt = getattr(callee_expr, 'target', getattr(callee_expr, 'obj', None))
+                    total = 1 + len(args)
+                    base = self.alloc_expr_temps(total * 8)
+                    self.emit_expr(tgt)
+                    a.mov_rsp_disp32_rax(base)
+                    for i, aa in enumerate(args):
+                        self.emit_expr(aa)
+                        a.mov_rsp_disp32_rax(base + (i + 1) * 8)
+
+                    fid = self.new_label_id()
+                    l_fail = f'thread_method_fail_{fid}'
+                    l_done = f'thread_method_done_{fid}'
+                    a.mov_r64_membase_disp('rcx', 'rsp', base)
+                    a.mov_r64_r64('r11', 'rcx')
+                    a.and_r64_imm('r11', 7)
+                    a.cmp_r64_imm('r11', TAG_PTR)
+                    a.jcc('ne', l_fail)
+                    a.mov_r32_membase_disp('r11d', 'rcx', 0)
+                    a.cmp_r32_imm('r11d', OBJ_THREAD)
+                    a.jcc('ne', l_fail)
+
+                    if mname == 'Join':
+                        if args:
+                            a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
+                            a.mov_r64_r64('r11', 'rdx')
+                            a.and_r64_imm('r11', 7)
+                            a.cmp_r64_imm('r11', TAG_INT)
+                            a.jcc('ne', l_fail)
+                            a.sar_r64_imm8('rdx', 3)
+                        else:
+                            a.mov_r32_imm32('edx', 0xFFFFFFFF)
+                    a.call(helper)
+                    a.jmp(l_done)
+                    a.mark(l_fail)
+                    self._emit_make_error_const(ERR_METHOD_NOT_FOUND,
+                                                f"No matching Thread method '{mname}' for receiver")
+                    a.mark(l_done)
+                    self._emit_auto_errprop()
+                    self.free_expr_temps(total * 8)
+                    return
+
             # --- OOP-style struct methods: obj.method(args...)  (implicit `this`) ---
             # Compiled as dynamic dispatch on receiver.struct_id -> direct call of the hoisted method function.
             if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
@@ -3896,6 +3979,55 @@ class CodegenExpr:
             # We use `void` (not a null pointer) so that if a `this` access slips through,
             # runtime errors are safer than a null dereference.
             call_args = list(getattr(e, 'args', []) or [])
+
+            # Thread(function): real OS thread with an isolated worker heap.
+            # The entry point is intentionally capture-free and has zero parameters.
+            if callee_name == 'Thread':
+                if len(call_args) != 1:
+                    raise self.error(f"Thread expects exactly 1 function, got {len(call_args)}", e)
+                fn_qn = _qname_of(call_args[0])
+                fn_def = (getattr(self, 'user_functions', {}) or {}).get(str(fn_qn)) if fn_qn else None
+                if fn_def is None:
+                    raise self.error('Thread expects a top-level function name', call_args[0])
+                if len(getattr(fn_def, 'params', []) or []) != 0:
+                    raise self.error(f"Thread entry function '{fn_qn}' must have zero parameters", call_args[0])
+                if getattr(fn_def, '_ml_captures', set()):
+                    raise self.error(f"Thread entry function '{fn_qn}' must not capture local variables", call_args[0])
+                code_name = getattr(fn_def, '_ml_codegen_name', fn_qn)
+                a.lea_rax_rip(f'fn_user_{code_name}')
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_thread_new')
+                return
+
+            if callee_name == 'threadStopRequested':
+                if call_args:
+                    raise self.error('threadStopRequested expects no arguments', e)
+                a.call('fn_thread_stop_requested')
+                return
+
+            if callee_name == 'threadSleep':
+                if len(call_args) != 1:
+                    raise self.error(f"threadSleep expects 1 argument, got {len(call_args)}", e)
+                self.emit_expr(call_args[0])
+                lid = self.new_label_id()
+                l_ok = f'thsleep_ok_{lid}'
+                a.mov_r64_r64('r11', 'rax')
+                a.and_r64_imm('r11', 7)
+                a.cmp_r64_imm('r11', TAG_INT)
+                a.jcc('e', l_ok)
+                self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, 'threadSleep expects an integer millisecond value')
+                self._emit_auto_errprop()
+                a.mark(l_ok)
+                a.sar_rax_imm8(3)
+                a.mov_r32_r32('r12d', 'eax')
+                self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
+                a.call('fn_gc_native_enter')
+                a.mov_r32_r32('ecx', 'r12d')
+                a.mov_rax_rip_qword('iat_Sleep')
+                a.call_rax()
+                a.call('fn_gc_native_leave')
+                a.mov_rax_imm64(enc_void())
+                return
 
             def _fn_uses_this(fn_node) -> bool:
                 # Conservative AST scan for Var('this') in the function body. Cached on node.
@@ -4083,14 +4215,7 @@ class CodegenExpr:
             #   heap_bytes_committed() = heap_end - heap_base
             #   heap_bytes_reserved()  = heap_reserve_end - heap_base
             if callee_name in ('heap_bytes_committed', 'heap_bytes_reserved') and len(e.args) == 0:
-                if callee_name == 'heap_bytes_committed':
-                    a.mov_rax_rip_qword('heap_end')
-                else:
-                    a.mov_rax_rip_qword('heap_reserve_end')
-                a.mov_rdx_rip_qword('heap_base')
-                a.sub_r64_r64('rax', 'rdx')  # bytes
-                a.shl_r64_imm8('rax', 3)  # tag
-                a.or_rax_imm8(TAG_INT)
+                a.call(f'fn_{callee_name}')
                 return
 
             # Builtin input() / input(prompt)

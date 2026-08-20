@@ -94,7 +94,7 @@ class Token:
 KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "false", "and", "or", "not", "function",
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
-            "out", "static", "inline", "void", "is",}
+            "out", "static", "inline", "synchronized", "void", "is",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
@@ -290,6 +290,12 @@ class Assign(Stmt):
 
 
 @dataclass
+class SynchronizedDecl(Assign):
+    """Process-shared scalar protected by MiniLang's recursive monitor."""
+    pass
+
+
+@dataclass
 class ConstDecl(Stmt):
     name: str
     expr: Expr
@@ -356,6 +362,7 @@ class FunctionDef(Stmt):
     body: List[Stmt]
     is_static: bool = False
     is_inline: bool = False
+    is_synchronized: bool = False
 
 
 @dataclass
@@ -991,6 +998,14 @@ class Parser:
             expr = self.parse_expr()
             return self._attach_pos(ConstDecl(name_tok.value, expr), start_pos)
 
+        # synchronized name = expr  (process-shared scalar)
+        if t.kind == "KW" and t.value == "synchronized":
+            self.advance()
+            name_tok = self.expect("IDENT")
+            self.expect("OP", "=")
+            expr = self.parse_expr()
+            return self._attach_pos(SynchronizedDecl(name_tok.value, expr), start_pos)
+
         # print expr
         if t.kind == "KW" and t.value == "print":
             self.advance()
@@ -1112,13 +1127,21 @@ class Parser:
 
             return self._attach_pos(ExternFunctionDef(name_tok.value, params, dll, symbol, ret_ty), start_pos)
 
-        # function [inline] name(params)
+        # function [inline] [synchronized] name(params)
         if t.kind == "KW" and t.value == "function":
             self.advance()
             is_inline = False
-            if self.peek().kind == "KW" and self.peek().value == "inline":
-                is_inline = True
-                self.advance()
+            is_synchronized = False
+            while self.peek().kind == "KW" and self.peek().value in ("inline", "synchronized"):
+                modifier = self.advance().value
+                if modifier == "inline":
+                    if is_inline:
+                        raise ParseError("duplicate function modifier 'inline'", self.peek().pos)
+                    is_inline = True
+                else:
+                    if is_synchronized:
+                        raise ParseError("duplicate function modifier 'synchronized'", self.peek().pos)
+                    is_synchronized = True
             name_tok = self.expect("IDENT")
             self.expect("LPAREN")
             # Allow multiline parameter lists and a trailing comma.
@@ -1131,7 +1154,8 @@ class Parser:
             finally:
                 self._func_depth -= 1
             self.expect_end_of("function")
-            return self._attach_pos(FunctionDef(name_tok.value, params, body, is_inline=is_inline), start_pos)
+            return self._attach_pos(FunctionDef(name_tok.value, params, body, is_inline=is_inline,
+                                                 is_synchronized=is_synchronized), start_pos)
 
         # struct
         if t.kind == "KW" and t.value == "struct":
@@ -1166,9 +1190,17 @@ class Parser:
                         self.advance()
 
                     is_inline = False
-                    if self.peek().kind == "KW" and self.peek().value == "inline":
-                        is_inline = True
-                        self.advance()
+                    is_synchronized = False
+                    while self.peek().kind == "KW" and self.peek().value in ("inline", "synchronized"):
+                        modifier = self.advance().value
+                        if modifier == "inline":
+                            if is_inline:
+                                raise ParseError("duplicate function modifier 'inline'", self.peek().pos)
+                            is_inline = True
+                        else:
+                            if is_synchronized:
+                                raise ParseError("duplicate function modifier 'synchronized'", self.peek().pos)
+                            is_synchronized = True
 
                     m_name_tok = self.expect("IDENT")
                     self.expect("LPAREN")
@@ -1184,7 +1216,9 @@ class Parser:
                     self.expect_end_of("function")
 
                     methods.append(
-                        self._attach_pos(FunctionDef(m_name_tok.value, m_params, m_body, is_static=is_static, is_inline=is_inline), m_start))
+                        self._attach_pos(FunctionDef(m_name_tok.value, m_params, m_body, is_static=is_static,
+                                                     is_inline=is_inline,
+                                                     is_synchronized=is_synchronized), m_start))
                     continue
 
                 # field (allow comma-separated lists + trailing commas)

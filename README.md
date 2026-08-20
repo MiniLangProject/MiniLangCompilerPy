@@ -30,6 +30,8 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
   - [8.6 break / continue](#86-break--continue)
   - [8.7 switch / case](#87-switch--case)
 - [9. Functions](#9-functions)
+  - [9.1 Native threads & synchronization](#91-native-threads--synchronization)
+  - [9.2 Thread-safe standard-library types](#92-thread-safe-standard-library-types)
 - [10. struct](#10-struct)
 - [11. enum](#11-enum)
 - [12. Modules, namespace & import](#12-modules-namespace--import)
@@ -212,8 +214,9 @@ Notes:
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The checked language suite, AES KAT and native raw-value smoke programs
-all match by SHA-256.
+files. The current 13-program parity matrix covers the language/standard-library
+suites, GC stress, extern/native interop, global rebinding and threading; every
+pair matches by SHA-256.
 
 The compiler executables themselves are not expected to match: the production
 self-build uses the MiniLang-only `.mlo` object pipeline, which has no Python
@@ -414,6 +417,25 @@ score = 100
 ```
 
 Variables do not need to be declared.
+
+### Synchronized variables
+
+Use `synchronized` for a shared global binding:
+
+```ml
+synchronized counter = 0
+```
+
+Synchronized variables may only be declared at top level or in a namespace.
+Every read and write uses the runtime's process-wide recursive monitor. For an
+assignment such as `counter = counter + 1`, the lock covers the complete
+read/modify/write operation.
+
+The binding may contain any MiniLang value, including strings, arrays, bytes,
+structs, functions and thread objects. The monitor protects access to the
+binding; it does not automatically protect later mutations of an object stored
+in it. Wrap compound object operations in a synchronized function or use a
+thread-safe collection.
 
 ### const (write-once bindings)
 
@@ -816,6 +838,162 @@ print add3(
 )
 ```
 
+### 9.1 Native threads & synchronization
+
+`Thread(function)` creates a real Win32 thread object without starting it. Its
+entry point must be a top-level, zero-argument, capture-free function:
+
+```ml
+synchronized jobsDone = 0
+
+function worker()
+  global jobsDone
+  // allocations enter the process-wide managed heap
+  scratch = array(1024, 0)
+  jobsDone = jobsDone + 1
+end function
+
+t = Thread(worker)
+print t.Status()  // Created
+print t.Start()   // true
+print t.Join()    // true; waits indefinitely
+print t.Status()  // Completed
+print t.Close()   // closes the native thread handle
+```
+
+Thread methods:
+
+- `Start()` starts a newly created thread once and returns `bool`.
+- `Stop()` atomically requests cooperative cancellation and returns whether a
+  running thread changed to `StopRequested`.
+- `Join()` waits indefinitely; `Join(timeoutMs)` waits at most the given number
+  of milliseconds. Both return `true` only when the thread terminated.
+- `Status()` returns `Created`, `Running`, `StopRequested`, `Completed`,
+  `Stopped`, or `Failed`.
+- `IsAlive()` is true for `Running` and `StopRequested`.
+- `Id()` returns the native thread id (`0` before a successful start).
+- `Close()` closes the native handle after termination. Status metadata remains
+  valid; its small control page is retained until process exit.
+
+Worker helpers:
+
+- `threadStopRequested()` reports whether the current worker was asked to stop
+  (and returns `false` on the main thread).
+- `threadSleep(milliseconds)` calls the native sleep primitive.
+
+`Stop()` is safe and cooperative: the compiler inserts cancellation checks at
+statement boundaries. It never uses asynchronous thread termination. Long
+native calls may finish before cancellation is observed, but a thread in a
+blocking native call does not prevent another thread from collecting garbage.
+
+All threads allocate into one process-wide, non-moving managed heap. Allocation,
+heap growth, free-list access and collection are serialized internally. Each OS
+thread owns only its native stack plus a private GC root chain and temporary
+root slots. Collection is cooperative stop-the-world: generated function and
+loop safepoints park managed threads, while threads inside known native calls
+publish a stable root chain. The collector traces global roots and every
+registered thread context before sweeping.
+
+Each thread context also retains its four most recent allocation results as
+handoff roots. This closes the short lifetime gap while nested object graphs
+are being assembled, before a precise stack or global root owns them. These
+slots are GC metadata; they are not a private managed heap.
+
+Consequently, an object created by a worker remains valid after that worker
+terminates whenever it is still reachable from a global, another live object,
+a thread result or another registered root. `heap_bytes_used()`,
+`heap_bytes_committed()` and `heap_bytes_reserved()` report the same global heap
+from every thread. `Thread.Close()` releases the native handle and clears roots
+owned by the thread object; it does not invalidate objects published elsewhere.
+
+Use a synchronized function when a whole critical section must be serialized:
+
+```ml
+function synchronized updateSharedState()
+  global jobsDone
+  jobsDone = jobsDone + 1
+end function
+```
+
+All synchronized variables and synchronized functions currently share one
+recursive process-wide monitor. Managed object identity is shared across
+threads; no copy is made when a reference is published. Concurrent writes to
+the same object, array slot or unsynchronized global are data races. Use a
+synchronized function, a synchronized binding or the primitives/collections in
+the next section to define the required critical section. Console and other
+process-wide I/O should also be serialized when multiple workers can use it.
+
+### 9.2 Thread-safe standard-library types
+
+`std.threading` exposes native process-wide synchronization objects:
+
+- `Lock.new()` creates a recursive Win32 mutex. Methods are `acquire()`,
+  `tryAcquire()`, `acquireFor(timeoutMs)`, `release()`, `isClosed()` and
+  `close()`. `Acquire`, `TryAcquire`, `AcquireFor` and `Release` aliases are
+  also available.
+- `Semaphore.new(initialCount, maximumCount)` provides `acquire()`,
+  `tryAcquire()`, `acquireFor(timeoutMs)`, `release()`,
+  `releaseMany(count)`, `isClosed()` and `close()`.
+- `Event.new(manualReset, initialState)` provides `wait()`, `tryWait()`,
+  `waitFor(timeoutMs)`, `set()`, `reset()`, `isClosed()` and `close()`.
+
+All waits return `bool`; a timeout is reported as `false`. A lock acquired after
+`WAIT_ABANDONED` is treated as successfully acquired and must be released.
+
+The collection modules serialize access to managed backing arrays in the global
+heap:
+
+- `std.ds.concurrent_list.ThreadSafeList`: `new`, `withCapacity`, `fromArray`,
+  `add`/`push`, `addAll`, `get`, `set`, `insert`, `removeAt`, `pop`, `popOr`,
+  `first`, `last`, `len`/`count`, `reserve`, `clear`, `toArray`, `close`.
+- `std.ds.concurrent_hashmap.ThreadSafeHashMap`: `new`, `withCapacity`, `set`,
+  `get`, `getOr`, `has`, `remove`/`delete`, `count`/`len`, `clear`,
+  `keysArray`, `valuesArray`, `entriesArray`, `increment`, `close`.
+  `increment(key, delta)` is an atomic integer read/modify/write and initializes
+  a missing key with `delta`.
+
+Collection values may be arbitrary MiniLang values, including nested arrays and
+structs, and retain object identity instead of being deep-copied. Map keys may
+be `int`, `string` or `bytes`; unsupported key types return `false` from
+mutating methods. Snapshot methods return ordinary managed arrays. As with any
+container, a lock protects the collection operation, not an unsynchronized
+mutation later performed through an object reference returned by `get()`.
+
+```ml
+import std.threading as threading
+import std.ds.concurrent_list as concurrentList
+import std.ds.concurrent_hashmap as concurrentMap
+
+gate = threading.Semaphore.new(0, 1)
+jobs = concurrentList.ThreadSafeList.new()
+counts = concurrentMap.ThreadSafeHashMap.new()
+
+function worker()
+  gate.acquire()
+  jobs.add("done")             // same managed value is visible to all threads
+  counts.increment("done", 1) // atomic
+end function
+
+t = Thread(worker)
+t.Start()
+gate.release()
+t.Join()
+print jobs.get(0)
+print counts.get("done")
+t.Close()
+
+// Only after all operations and waiters are finished:
+jobs.close()
+counts.close()
+gate.close()
+```
+
+Create shared objects before starting their users and keep their global
+references alive. `close()` is a lifecycle operation, not a concurrent method:
+call it only after all worker operations, lock holders and waiters have ended.
+Because cancellation is cooperative, a worker blocked in a native wait can
+observe `Stop()` only after that wait returns.
+
 ### Function values (function pointers)
 
 Functions are **first-class values**. A function name evaluates to a pointer to that function and can be:
@@ -1182,9 +1360,12 @@ Common modules (subset; evolves over time):
 - **std.time**: monotonic `ticks()` / `sleep(ms)`, Win32 wall-clock wrappers `std.time.win32.GetLocalTime()` / `GetSystemTime()` (returns `SystemTime`), plus `Date/Time/DateTime` helpers
 - **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io)); plus basic directory helpers (`isDir/isFile/listDir/joinPath`)
 - **std.net**: TCP/UDP networking
+- **std.threading**: native `Lock`, `Semaphore` and `Event`
+- **std.ds.concurrent_list**, **std.ds.concurrent_hashmap**: process-shared,
+  thread-safe managed collections that preserve object identity
 
 There is no separate `std.result` module anymore. MiniLang stdlib code uses the native `error(...)` propagation model plus `try(...)` where explicit handling is needed.
-- **std.ds.\***: stack/queue/hashmap/set
+- **std.ds.\***: list/stack/queue/hashmap/set and concurrent collections
 
 Stdlib APIs that can fail (I/O, networking, parsing, …) use MiniLang's native `error(...)` system. In practice this means a function either returns its normal value or an `error` value that automatically propagates unless you intercept it with `try(...)`.
 
@@ -1763,11 +1944,13 @@ Statements are separated by newlines or `;`.
 
 - `print <expr>`
 - `const <ident> = <expr>` (native compiler; top-level/namespace requires `constexpr`)
+- `synchronized <ident> = <expr>` (top-level/namespace shared binding)
 - `<lvalue> = <expr>`
   - `<ident> = ...`
   - `<expr>.<field> = ...`
   - `<expr>[<index>] = ...` (multiline indexing allowed)
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
+- `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
 - (native) optional entrypoint: `function main(args) ... end function`
 - `return` / `return <expr>` / `return;` (and bare `return` directly before `end/else/case` in inline blocks)
 - `global x, y, z` (inside functions; native compiler only; trailing comma optional; names may be qualified like `foo.bar.x`)
@@ -1792,6 +1975,7 @@ Statements are separated by newlines or `;`.
 - literals: number, string, `true/false`, `[ ... ]` (multiline + trailing comma allowed)
 - variable: `name`
 - call: `f(a,b)` (multiline args + trailing comma allowed)
+- native thread: `Thread(topLevelFunction)`; methods `Start`, `Stop`, `Join`, `Status`, `IsAlive`, `Id`, `Close`
 - index: `arr[i]`
 - member: `obj.field`
 - unary: `-x`, `not x`, `~x`
@@ -1875,6 +2059,7 @@ What works:
 - core types: int, float, bool, string, array, bytes, void
 - control flow: `if/else`, `while`, `loop ... while ... end loop`, `for ... to`, `for each ... in`, `switch/case`, `break`/`break n`, `continue`
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
+- real Win32 threads with cooperative cancellation, status/join APIs, private stacks, a process-wide thread-safe GC heap, synchronized globals and synchronized functions
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
 - `main(args)` entrypoint (argv[1..] as `array<string>`, `return int` -> process exit code)
 - `global` declarations inside functions (required for accessing globals from a function; resolves to package/namespace-qualified globals; missing globals are auto-created as `void`)
