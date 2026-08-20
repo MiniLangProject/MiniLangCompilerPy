@@ -2790,6 +2790,64 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
 
+def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime and listing regressions for the cross-compiler optimization bundle."""
+    src = mlc_runner.parent / "tests" / "codegen_optimizations.ml"
+    if not src.exists():
+        return TestResult(name=name, status="FAIL", details=f"missing fixture: {src}")
+
+    with tempfile.TemporaryDirectory(prefix="mltests_codegen_opt_") as td:
+        td_path = Path(td)
+        exe = td_path / "codegen_optimizations.exe"
+        asm_path = td_path / "codegen_optimizations.asm"
+        cr = compile_native(mlc_runner, src, exe, timeout_s=180,
+                            extra_args=['--asm', '--asm-out', str(asm_path)])
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
+        if rr.returncode != 0 or "[OK] codegen optimizations" not in normalize_out(rr.stdout):
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing")
+
+        listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
+
+        def function_block(fn_name: str) -> str:
+            marker = f"fn_user_{fn_name}:"
+            start = listing.find(marker)
+            if start < 0:
+                return ""
+            end = listing.find("\nfn_user_", start + len(marker))
+            return listing[start:] if end < 0 else listing[start:end]
+
+        # Direct-only inline code can disappear, but address-taken functions
+        # and post-budget fallback targets must retain callable native bodies.
+        if "fn_user_pruned_add:" in listing:
+            return TestResult(name=name, status="FAIL", details="direct-only inline body was not pruned")
+        for fn_name in ("kept_add", "budget_add"):
+            if not function_block(fn_name):
+                return TestResult(name=name, status="FAIL",
+                                  details=f"required fallback body fn_user_{fn_name} is missing")
+
+        leaf_asm = function_block("leaf_frame")
+        if not leaf_asm or "gcclr_loop_" in leaf_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="tiny root frame did not use the straight-line prologue")
+
+        loop_asm = function_block("const_loop")
+        if (not loop_asm or "for_top_" not in loop_asm
+                or "__for_end_" in loop_asm or "__for_step_" in loop_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="constant-bound loop retained dynamic end/step state")
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
 def test_immediate_array_runtime(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime regression: immediate arrays stay semantically identical and upgrade on pointer stores."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -3439,6 +3497,8 @@ def main() -> int:
                                                                  mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_small_const_for_unroll(name="codegen: small const for loops unrolled",
                                                              mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_optimization_bundle(name="codegen: optimization bundle regressions",
+                                                          mlc_runner=mlc_runner))
     tests.append(lambda: test_immediate_array_runtime(name="arrays: immediate layout + upgrade semantics", mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_literal_query_fastpaths(name="codegen: literal len/typeof/typeName fast paths",
                                                               mlc_runner=mlc_runner))

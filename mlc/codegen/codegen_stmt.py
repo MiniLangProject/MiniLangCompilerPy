@@ -667,6 +667,121 @@ class CodegenStmt:
         step = 1 if start_i <= end_i else -1
         return list(range(int(start_i), int(end_i) + step, step))
 
+    def _infer_known_int_names(self, fn: Any) -> set[str]:
+        """Infer function-local names that can only contain tagged integers.
+
+        This is deliberately a small, whole-function type lattice. Parameters,
+        globals, synchronized values, captures, and shadowed loop variables are
+        excluded. The result is therefore safe to use for removing repeated
+        runtime tag/type dispatch in arithmetic expressions.
+        """
+        cached = getattr(fn, '_ml_known_int_names', None)
+        if isinstance(cached, set):
+            return set(cached)
+
+        ml = self.ml
+        assignments: dict[str, list[Any]] = {}
+        loop_bounds: dict[str, list[tuple[Any, Any]]] = {}
+        loop_names: set[str] = set()
+        normal_names: set[str] = set()
+        excluded: set[str] = set(str(x) for x in (getattr(fn, 'params', []) or []))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
+
+        def walk(stmts: list[Any]) -> None:
+            for st in stmts or []:
+                if isinstance(st, getattr(ml, 'FunctionDef', ())):
+                    continue
+                if isinstance(st, getattr(ml, 'GlobalDecl', ())):
+                    excluded.update(str(x) for x in (getattr(st, 'names', []) or []))
+                    continue
+                if isinstance(st, getattr(ml, 'Assign', ())):
+                    name = str(getattr(st, 'name', '') or '')
+                    if name and '.' not in name:
+                        assignments.setdefault(name, []).append(getattr(st, 'expr', None))
+                        normal_names.add(name)
+                if isinstance(st, getattr(ml, 'For', ())):
+                    name = str(getattr(st, 'var', '') or '')
+                    if name:
+                        loop_names.add(name)
+                        loop_bounds.setdefault(name, []).append(
+                            (getattr(st, 'start', None), getattr(st, 'end', None)))
+                    walk(list(getattr(st, 'body', []) or []))
+                    continue
+                if self._is_foreach_stmt(st):
+                    excluded.add(str(self._foreach_var_name(st)))
+                    walk(list(getattr(st, 'body', []) or []))
+                    continue
+                if isinstance(st, getattr(ml, 'If', ())):
+                    walk(list(getattr(st, 'then_body', []) or []))
+                    for _, body in getattr(st, 'elifs', []) or []:
+                        walk(list(body or []))
+                    walk(list(getattr(st, 'else_body', []) or []))
+                elif isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()))):
+                    walk(list(getattr(st, 'body', []) or []))
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for cs in getattr(st, 'cases', []) or []:
+                        walk(list(getattr(cs, 'body', []) or []))
+                    walk(list(getattr(st, 'default_body', []) or []))
+
+        walk(list(getattr(fn, 'body', []) or []))
+        # A fresh for-variable shadowing a normal local cannot be represented by
+        # a name-only fact without ambiguity.
+        excluded.update(loop_names.intersection(normal_names))
+        candidates = (set(assignments) | set(loop_bounds)) - excluded
+
+        def expr_is_int(expr: Any, known: set[str]) -> bool:
+            if expr is None:
+                return False
+            try:
+                cv = self._opt_try_const_value(expr)
+                if isinstance(cv, int) and not isinstance(cv, bool):
+                    return True
+            except Exception:
+                pass
+            if isinstance(expr, getattr(ml, 'Var', ())):
+                return str(getattr(expr, 'name', '') or '') in known
+            if isinstance(expr, getattr(ml, 'Unary', ())):
+                return str(getattr(expr, 'op', '')) in ('-', '~') and expr_is_int(
+                    getattr(expr, 'right', None), known)
+            if isinstance(expr, getattr(ml, 'Bin', ())):
+                op = str(getattr(expr, 'op', ''))
+                left = getattr(expr, 'left', None)
+                right = getattr(expr, 'right', None)
+                if op in ('+', '-', '*', '&', '|', '^'):
+                    return expr_is_int(left, known) and expr_is_int(right, known)
+                if op == '%':
+                    rv = self._opt_try_const_value(right)
+                    return (isinstance(rv, int) and not isinstance(rv, bool)
+                            and int(rv) != 0 and expr_is_int(left, known))
+                if op in ('<<', '>>'):
+                    rv = self._opt_try_const_value(right)
+                    return (isinstance(rv, int) and not isinstance(rv, bool)
+                            and int(rv) >= 0 and expr_is_int(left, known))
+            return False
+
+        changed = True
+        while changed:
+            changed = False
+            for name in list(candidates):
+                ok = True
+                for rhs in assignments.get(name, []):
+                    if not expr_is_int(rhs, candidates):
+                        ok = False
+                        break
+                if ok:
+                    for start, end in loop_bounds.get(name, []):
+                        if not (expr_is_int(start, candidates) and expr_is_int(end, candidates)):
+                            ok = False
+                            break
+                if not ok:
+                    candidates.remove(name)
+                    changed = True
+
+        setattr(fn, '_ml_known_int_names', set(candidates))
+        return set(candidates)
+
     def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
         ml = self.ml
         if expr is None:
@@ -805,6 +920,119 @@ class CodegenStmt:
                 int(stats['cost']) <= 64)
         setattr(fn, '_ml_inline_stats', stats)
         return stats
+
+    def _analyze_inline_only_functions(self, program: List[Any]) -> set[str]:
+        """Find inline functions whose address is never used as a value.
+
+        Final pruning is intentionally deferred until after code emission: a
+        function is removed only when it was really expanded and no rel32/rip32
+        patch still targets its native entry label.
+        """
+        if bool(getattr(self, 'call_profile', False)):
+            return set()
+        ml = self.ml
+        inline_names = set((getattr(self, 'inline_functions', {}) or {}).keys())
+        if not inline_names:
+            return set()
+
+        # Dynamic struct dispatch takes method addresses internally.
+        for methods in (getattr(self, 'struct_methods', {}) or {}).values():
+            for qn in (methods or {}).values():
+                inline_names.discard(str(qn))
+        inline_names.discard(str(getattr(self, 'main_function', '') or ''))
+        address_taken: set[str] = set()
+
+        def member_name(expr: Any) -> Optional[str]:
+            if isinstance(expr, getattr(ml, 'Var', ())):
+                return str(getattr(expr, 'name', '') or '')
+            if isinstance(expr, getattr(ml, 'Member', ())):
+                base = member_name(getattr(expr, 'target', None))
+                if not base:
+                    return None
+                return base + '.' + str(getattr(expr, 'name', '') or '')
+            return None
+
+        def resolve(expr: Any, owner: Any) -> set[str]:
+            raw = member_name(expr)
+            if not raw:
+                return set()
+            raw = self._apply_import_alias(raw)
+            candidates: list[str] = [raw]
+            if '.' not in raw:
+                oqn = str(getattr(owner, 'name', '') or '') if owner is not None else ''
+                if '.' in oqn:
+                    candidates.append(oqn.rsplit('.', 1)[0] + '.' + raw)
+                ofile = getattr(owner, '_filename', None) if owner is not None else getattr(expr, '_filename', None)
+                fpref = (getattr(self, 'file_prefix_map', {}) or {}).get(ofile, '') if isinstance(ofile, str) else ''
+                if fpref:
+                    candidates.append(str(fpref) + raw)
+                suffix = '.' + raw
+                candidates.extend(qn for qn in inline_names if qn.endswith(suffix))
+            return {qn for qn in candidates if qn in inline_names}
+
+        def scan_expr(expr: Any, owner: Any, *, direct_callee: bool = False) -> None:
+            if expr is None:
+                return
+            if isinstance(expr, (getattr(ml, 'Var', ()), getattr(ml, 'Member', ()))):
+                hits = resolve(expr, owner)
+                # Only a unique compile-time callee can be consumed entirely by
+                # the inline expander. Ambiguity/value use keeps native code.
+                if not (direct_callee and len(hits) == 1):
+                    address_taken.update(hits)
+                if isinstance(expr, getattr(ml, 'Member', ())) and not hits:
+                    scan_expr(getattr(expr, 'target', None), owner)
+                return
+            if isinstance(expr, getattr(ml, 'Call', ())):
+                callee = getattr(expr, 'callee', None)
+                hits = resolve(callee, owner)
+                if len(hits) == 1:
+                    scan_expr(callee, owner, direct_callee=True)
+                else:
+                    scan_expr(callee, owner)
+                for arg in getattr(expr, 'args', []) or []:
+                    scan_expr(arg, owner)
+                return
+            for attr in ('left', 'right', 'expr', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
+                child = getattr(expr, attr, None)
+                if child is not None and child is not expr:
+                    scan_expr(child, owner)
+            for attr in ('args', 'items', 'values'):
+                for child in getattr(expr, attr, []) or []:
+                    scan_expr(child, owner)
+
+        def scan_stmts(stmts: List[Any], owner: Any) -> None:
+            for st in stmts or []:
+                if isinstance(st, getattr(ml, 'FunctionDef', ())):
+                    # Top-level bodies are scanned separately. Nested functions
+                    # still need their dependency/value-use scan here.
+                    if getattr(st, '_ml_parent_fn', None) is not None:
+                        scan_stmts(list(getattr(st, 'body', []) or []), st)
+                    continue
+                for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
+                    scan_expr(getattr(st, attr, None), owner)
+                if isinstance(st, getattr(ml, 'If', ())):
+                    scan_stmts(list(getattr(st, 'then_body', []) or []), owner)
+                    for cond, body in getattr(st, 'elifs', []) or []:
+                        scan_expr(cond, owner)
+                        scan_stmts(list(body or []), owner)
+                    scan_stmts(list(getattr(st, 'else_body', []) or []), owner)
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for cs in getattr(st, 'cases', []) or []:
+                        for value in getattr(cs, 'values', []) or []:
+                            scan_expr(value, owner)
+                        scan_expr(getattr(cs, 'range_start', None), owner)
+                        scan_expr(getattr(cs, 'range_end', None), owner)
+                        scan_stmts(list(getattr(cs, 'body', []) or []), owner)
+                    scan_stmts(list(getattr(st, 'default_body', []) or []), owner)
+                else:
+                    scan_stmts(list(getattr(st, 'body', []) or []), owner)
+
+        scan_stmts(program, None)
+        for fn in (getattr(self, 'user_functions', {}) or {}).values():
+            scan_stmts(list(getattr(fn, 'body', []) or []), fn)
+        for fn in (getattr(self, 'nested_user_functions', {}) or {}).values():
+            scan_stmts(list(getattr(fn, 'body', []) or []), fn)
+        return inline_names - address_taken
 
     # ------------------------------------------------------------
     # Step 6 (Closures) — Analysis only (6.0/6.1)
@@ -2395,6 +2623,11 @@ class CodegenStmt:
                 self.pop_scope()
                 return
 
+            const_start = self._opt_try_const_int(getattr(s, 'start', None))
+            const_end = self._opt_try_const_int(getattr(s, 'end', None))
+            const_bounds = const_start is not None and const_end is not None
+            const_step = (1 if int(const_start) <= int(const_end) else -1) if const_bounds else None
+
             # inclusive for, supports up/down
             top = f"for_top_{a.pos}"
             cont = f"for_cont_{a.pos}"
@@ -2453,27 +2686,30 @@ class CodegenStmt:
             self.emit_expr(s.start)
             self.emit_store_var(s.var, s)
 
-            # store end
-            self.emit_expr(s.end)
-            _state_store_qword_rax(end_slot)
+            # A compile-time bound needs neither a rooted state slot nor a
+            # runtime direction test. Dynamic bounds retain the general path.
+            if not const_bounds:
+                self.emit_expr(s.end)
+                _state_store_qword_rax(end_slot)
 
             # determine step based on start <= end
             # compare tagged var and end (monotonic)
-            self.emit_load_var(s.var)
-            a.mov_r10_rax()
-            _state_load_qword_rax(end_slot)
-            a.cmp_r64_r64("rax", "r10")  # cmp rax, r10  (end ? start)
-            # if end >= start => step=+1 else -1
-            lbl_step_pos = f"for_step_pos_{a.pos}"
-            lbl_step_done = f"for_step_done_{a.pos}"
-            a.jcc('ge', lbl_step_pos)
-            a.mov_rax_imm64(enc_int(-1))
-            _state_store_qword_rax(step_slot)
-            a.jmp(lbl_step_done)
-            a.mark(lbl_step_pos)
-            a.mov_rax_imm64(enc_int(1))
-            _state_store_qword_rax(step_slot)
-            a.mark(lbl_step_done)
+            if not const_bounds:
+                self.emit_load_var(s.var)
+                a.mov_r10_rax()
+                _state_load_qword_rax(end_slot)
+                a.cmp_r64_r64("rax", "r10")  # cmp rax, r10  (end ? start)
+                # if end >= start => step=+1 else -1
+                lbl_step_pos = f"for_step_pos_{a.pos}"
+                lbl_step_done = f"for_step_done_{a.pos}"
+                a.jcc('ge', lbl_step_pos)
+                a.mov_rax_imm64(enc_int(-1))
+                _state_store_qword_rax(step_slot)
+                a.jmp(lbl_step_done)
+                a.mark(lbl_step_pos)
+                a.mov_rax_imm64(enc_int(1))
+                _state_store_qword_rax(step_slot)
+                a.mark(lbl_step_done)
 
             a.mark(top)
             # body
@@ -2486,17 +2722,31 @@ class CodegenStmt:
             self.emit_gc_safepoint_poll()
             # if var == end -> end loop
             self.emit_load_var(s.var)
-            a.mov_r10_rax()
-            _state_load_qword_rax(end_slot)
-            a.cmp_rax_r10()
+            if const_bounds:
+                encoded_end = enc_int(int(const_end))
+                if -(1 << 31) <= encoded_end <= (1 << 31) - 1:
+                    a.cmp_r64_imm("rax", encoded_end)
+                else:
+                    a.mov_r64_imm64("r10", encoded_end)
+                    a.cmp_rax_r10()
+            else:
+                a.mov_r10_rax()
+                _state_load_qword_rax(end_slot)
+                a.cmp_rax_r10()
             a.jcc('e', end)
 
-            # var = var + step (tag-add) => (a+b)-1
+            # var = var + step. A known direction changes the tagged value by
+            # exactly +/-8 and avoids the second state load.
             self.emit_load_var(s.var)
-            a.mov_r10_rax()
-            _state_load_qword_rax(step_slot)
-            a.add_rax_r10()
-            a.sub_rax_imm8(1)
+            if const_step == 1:
+                a.add_rax_imm8(8)
+            elif const_step == -1:
+                a.sub_rax_imm8(8)
+            else:
+                a.mov_r10_rax()
+                _state_load_qword_rax(step_slot)
+                a.add_rax_r10()
+                a.sub_rax_imm8(1)
             self.emit_store_var(s.var, s)
 
             a.jmp(top)
@@ -3969,6 +4219,7 @@ class CodegenStmt:
             self.inline_function_stats[qn] = stats
             if bool(stats.get('ok', False)):
                 self.inline_functions[qn] = fn
+        self.inline_only_functions = self._analyze_inline_only_functions(program)
 
         # ------------------------------------------------------------
         # Stack layout sizing (visible calls + hidden calls inside inline bodies)
@@ -3996,7 +4247,9 @@ class CodegenStmt:
         out_stack_args = max(0, max_call_args_main - 4)
         out_reserve = max(8, out_stack_args * 8)
         self.call_temp_base = align_up(0x20 + out_reserve, 16)
-        call_temp_bytes = align_up(max(0x40, max_call_args_main * 8), 16)
+        # Reserve exactly the spill capacity required by the largest call.
+        # Zero-argument code needs no permanently scanned call-temp roots.
+        call_temp_bytes = align_up(max_call_args_main * 8, 16)
         self.expr_temp_base = self.call_temp_base + call_temp_bytes
         self.expr_temp_top = 0
 
@@ -4359,16 +4612,38 @@ class CodegenStmt:
         # entry stub (see above) so they share the entry frame/scratch area.
         # We intentionally do not emit standalone call/ret bodies here yet.
 
-        # User function bodies appended.
-        #
-        # With first-class functions / indirect calls, we can no longer soundly prune
-        # user functions based on static reachability. We therefore emit *all* user
-        # functions so taking their address and calling via values always works.
+        # User function bodies appended. Address-taken functions always retain a
+        # native entry. Direct-only inline functions are deferred until we know
+        # whether actual expansion and the 4 KiB budget left any native patches.
+        inline_only_pending = set(getattr(self, 'inline_only_functions', set()) or set())
         for nm in sorted(self.user_functions.keys()):
+            if nm in inline_only_pending:
+                continue
             self.emit_user_function(self.user_functions[nm])
 
         for nm in sorted(getattr(self, 'nested_user_functions', {}).keys()):
             self.emit_user_function(self.nested_user_functions[nm])
+
+        while inline_only_pending:
+            patch_targets = {str(p[1]) for p in (getattr(self.asm, 'patches', []) or [])
+                             if isinstance(p, tuple) and len(p) >= 2}
+            needed = [nm for nm in sorted(inline_only_pending)
+                      if int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(nm, 0) or 0) <= 0
+                      or f'fn_user_{nm}' in patch_targets]
+            if not needed:
+                break
+            for nm in needed:
+                self.emit_user_function(self.user_functions[nm])
+                inline_only_pending.discard(nm)
+
+        # Static first-class objects for pruned functions are unreachable by the
+        # address-use analysis. Remove only their code-address relocations; the
+        # inert object bytes keep deterministic data/label layout for later items.
+        if inline_only_pending:
+            skipped_targets = {f'fn_user_{nm}' for nm in inline_only_pending}
+            self.rdata.patches = [p for p in (getattr(self.rdata, 'patches', []) or [])
+                                  if not (isinstance(p, tuple) and len(p) >= 2 and str(p[1]) in skipped_targets)]
+        self.pruned_inline_functions = set(inline_only_pending)
 
         # Extern stubs appended (stub-only externs as OBJ_BUILTIN values).
         if hasattr(self, 'emit_extern_stubs'):
@@ -4453,6 +4728,11 @@ class CodegenStmt:
                 return m
             if isinstance(e, ml.Index):
                 return max(max_calls_expr(e.target), max_calls_expr(e.index))
+            if hasattr(ml, 'Member') and isinstance(e, ml.Member):
+                target = getattr(e, 'target', None)
+                if target is None:
+                    target = getattr(e, 'obj', None)
+                return max_calls_expr(target)
             if isinstance(e, getattr(ml, 'StructInit', ())):
                 for v in e.values:
                     m = max(m, max_calls_expr(v))
@@ -4465,9 +4745,23 @@ class CodegenStmt:
             for st in stmts:
                 if isinstance(st, ml.Assign):
                     m = max(m, max_calls_expr(st.expr))
+                elif hasattr(ml, 'SynchronizedDecl') and isinstance(st, ml.SynchronizedDecl):
+                    m = max(m, max_calls_expr(getattr(st, 'expr', None)))
+                elif hasattr(ml, 'ConstDecl') and isinstance(st, ml.ConstDecl):
+                    m = max(m, max_calls_expr(getattr(st, 'expr', None)))
                 elif isinstance(st, ml.Print):
                     m = max(m, max_calls_expr(st.expr))
                 elif isinstance(st, ml.ExprStmt):
+                    m = max(m, max_calls_expr(st.expr))
+                elif hasattr(ml, 'SetMember') and isinstance(st, ml.SetMember):
+                    target = getattr(st, 'obj', None)
+                    if target is None:
+                        target = getattr(st, 'target', None)
+                    m = max(m, max_calls_expr(target))
+                    m = max(m, max_calls_expr(getattr(st, 'expr', None)))
+                elif isinstance(st, ml.SetIndex):
+                    m = max(m, max_calls_expr(st.target))
+                    m = max(m, max_calls_expr(st.index))
                     m = max(m, max_calls_expr(st.expr))
                 elif isinstance(st, ml.If):
                     m = max(m, max_calls_expr(st.cond))
@@ -4928,7 +5222,8 @@ class CodegenStmt:
 
         # call-temp slots: spill evaluated call arguments
         call_temp_base = params_base + len(fn.params) * 8
-        call_temp_bytes = align_up(max(0x40, max_call_args * 8), 16)
+        # Keep the always-published GC prefix to the call arity actually used.
+        call_temp_bytes = align_up(max_call_args * 8, 16)
 
         # expression temp arena starts after call-temp area
         expr_temp_base = call_temp_base + call_temp_bytes
@@ -5075,6 +5370,7 @@ class CodegenStmt:
         old_ett = self.expr_temp_top
         old_root_rec = getattr(self, '_current_root_rec_off', None)
         old_root_static_qwords = int(getattr(self, '_current_root_static_qwords', 0) or 0)
+        old_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
 
         # Save/override scope stack for real emission (function-local only)
         saved_emit_stack = getattr(self, "_scope_stack", None)
@@ -5089,6 +5385,7 @@ class CodegenStmt:
         self.expr_temp_top = 0
         self._current_root_rec_off = root_rec_off
         self._current_root_static_qwords = (root_static_top - root_base) // 8
+        self._known_int_names = self._infer_known_int_names(fn)
 
         if saved_emit_stack is not None:
             base_globals = {}
@@ -5306,6 +5603,7 @@ class CodegenStmt:
         self.expr_temp_top = old_ett
         self._current_root_rec_off = old_root_rec
         self._current_root_static_qwords = old_root_static_qwords
+        self._known_int_names = old_known_int_names
 
         a.add_rsp_imm32(frame_size)
         a.pop_r15()

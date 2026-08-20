@@ -116,6 +116,37 @@ def _assemble_with_nasm(lines: list[str]) -> bytes:
 
 
 class TestAsmOpcodeVectors(unittest.TestCase):
+    def test_short_backward_branches(self) -> None:
+        """Resolved loop back-edges use rel8; unresolved forward edges stay rel32."""
+        import sys
+
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+
+        a = Asm()
+        a.mark("loop")
+        a.nop()
+        a.jmp("loop")
+        self.assertEqual(a.finalize(), bytes.fromhex("90ebfd"))
+
+        a = Asm()
+        a.mark("loop")
+        a.nop()
+        a.jcc("ne", "loop")
+        self.assertEqual(a.finalize(), bytes.fromhex("9075fd"))
+
+        a = Asm()
+        a.jmp("later")
+        a.nop()
+        a.mark("later")
+        self.assertEqual(a.finalize(), bytes.fromhex("e90100000090"))
+
+        a = Asm()
+        a.jcc("e", "later")
+        a.nop()
+        a.mark("later")
+        self.assertEqual(a.finalize(), bytes.fromhex("0f840100000090"))
+
     def test_vectors_match_golden(self) -> None:
         golden = _load_golden()
         vectors = golden.get("vectors", [])

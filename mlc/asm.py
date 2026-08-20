@@ -451,6 +451,16 @@ class Asm:
         Args:
             label: Label name.
         """
+        # Back-edges are already resolved when they are emitted. Prefer the
+        # two-byte rel8 form when possible; forward edges keep their rel32
+        # fixup because their final distance is not known yet.
+        target = self.labels.get(str(label))
+        if target is not None:
+            disp8 = int(target) - (self.pos + 2)
+            if -128 <= disp8 <= 127:
+                self.emit(b"\xEB" + bytes([disp8 & 0xFF]))
+                return
+
         start = self.pos
         self.emit(b"\xE9")
         p = self.pos
@@ -481,6 +491,16 @@ class Asm:
                   "o": 0x80, "no": 0x81, }
         if cc not in cc_map:
             raise ValueError(f"Unknown jcc: {cc}")
+
+        target = self.labels.get(str(label))
+        if target is not None:
+            disp8 = int(target) - (self.pos + 2)
+            if -128 <= disp8 <= 127:
+                # Short Jcc opcodes are 0x70 + the low nibble of the near
+                # 0F 8x opcode.
+                self.emit(bytes([0x70 | (cc_map[cc] & 0x0F), disp8 & 0xFF]))
+                return
+
         start = self.pos
         self.emit(b"\x0F" + bytes([cc_map[cc]]))
         p = self.pos

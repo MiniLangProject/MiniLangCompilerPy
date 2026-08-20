@@ -278,6 +278,144 @@ class CodegenExpr:
             return int(v)
         return None
 
+    def _opt_expr_known_int(self, e: Any) -> bool:
+        """Return whether local type flow proves that `e` is a tagged int."""
+        ml = self.ml
+        if e is None:
+            return False
+        cv = self._opt_try_const_value(e)
+        if isinstance(cv, int) and not isinstance(cv, bool):
+            return True
+        if isinstance(e, getattr(ml, 'Var', ())):
+            name = str(getattr(e, 'name', '') or '')
+            if name not in (getattr(self, '_known_int_names', set()) or set()):
+                return False
+            try:
+                b = self.resolve_binding(name)
+            except Exception:
+                b = None
+            return (b is not None and getattr(b, 'kind', None) in ('local', 'param')
+                    and not bool(getattr(b, 'boxed', False)))
+        if isinstance(e, getattr(ml, 'Unary', ())):
+            return str(getattr(e, 'op', '')) in ('-', '~') and self._opt_expr_known_int(
+                getattr(e, 'right', None))
+        if isinstance(e, getattr(ml, 'Bin', ())):
+            op = str(getattr(e, 'op', ''))
+            if op in ('+', '-', '*', '%', '&', '|', '^', '<<', '>>'):
+                return self._opt_expr_known_int(getattr(e, 'left', None)) and self._opt_expr_known_int(
+                    getattr(e, 'right', None))
+        return False
+
+    def _opt_emit_known_int_binop(self, op: str, lhs_const: Optional[int],
+                                  rhs_const: Optional[int]) -> bool:
+        """Emit a binary operation whose two operands in r10/r11 are proven ints."""
+        a = self.asm
+        if op == '+':
+            if rhs_const == 1:
+                a.mov_rax_r10()
+                a.add_rax_imm8(8)
+            elif rhs_const == -1:
+                a.mov_rax_r10()
+                a.sub_rax_imm8(8)
+            elif lhs_const == 1:
+                a.mov_rax_r11()
+                a.add_rax_imm8(8)
+            elif lhs_const == -1:
+                a.mov_rax_r11()
+                a.sub_rax_imm8(8)
+            else:
+                a.mov_rax_r10()
+                a.add_r64_r64('rax', 'r11')
+                a.sub_rax_imm8(1)
+            return True
+        if op == '-':
+            a.mov_rax_r10()
+            if rhs_const == 1:
+                a.sub_rax_imm8(8)
+            elif rhs_const == -1:
+                a.add_rax_imm8(8)
+            else:
+                a.sub_rax_r11()
+                a.add_rax_imm8(1)
+            return True
+        if op == '*':
+            a.mov_rax_r10()
+            a.sar_rax_imm8(3)
+            a.sar_r64_imm8('r11', 3)
+            a.imul_r64_r64('rax', 'r11')
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            return True
+        if op == '%':
+            lid = self.new_label_id()
+            l_ok = f'known_mod_ok_{lid}'
+            l_fail = f'known_mod_fail_{lid}'
+            l_done = f'known_mod_done_{lid}'
+            a.mov_rax_r10()
+            a.sar_rax_imm8(3)
+            a.sar_r64_imm8('r11', 3)
+            a.test_r64_r64('r11', 'r11')
+            a.jcc('e', l_fail)
+            a.cqo()
+            a.idiv_r64('r11')
+            a.test_r64_r64('rdx', 'rdx')
+            a.jcc('e', l_ok)
+            a.mov_r64_r64('rax', 'rdx')
+            a.xor_r64_r64('rax', 'r11')
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('ge', l_ok)
+            a.add_r64_r64('rdx', 'r11')
+            a.mark(l_ok)
+            a.mov_r64_r64('rax', 'rdx')
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            a.jmp(l_done)
+            a.mark(l_fail)
+            a.mov_rax_imm64(enc_void())
+            a.mark(l_done)
+            return True
+        if op in ('&', '|', '^'):
+            a.mov_rax_r10()
+            if op == '&':
+                a.and_r64_r64('rax', 'r11')
+            elif op == '|':
+                a.or_r64_r64('rax', 'r11')
+            else:
+                a.xor_r64_r64('rax', 'r11')
+                a.or_rax_imm8(TAG_INT)
+            return True
+        if op in ('<<', '>>'):
+            lid = self.new_label_id()
+            l_fail = f'known_shift_fail_{lid}'
+            l_done = f'known_shift_done_{lid}'
+            a.mov_rax_r10()
+            a.sar_rax_imm8(3)
+            a.mov_r64_r64('rcx', 'r11')
+            a.sar_r64_imm8('rcx', 3)
+            a.cmp_r64_imm('rcx', 0)
+            a.jcc('l', l_fail)
+            a.and_r64_imm('rcx', 63)
+            if op == '<<':
+                a.shl_r64_cl('rax')
+            else:
+                a.sar_r64_cl('rax')
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            a.jmp(l_done)
+            a.mark(l_fail)
+            a.mov_rax_imm64(enc_void())
+            a.mark(l_done)
+            return True
+        if op in ('==', '!=', '<', '<=', '>', '>='):
+            cc = {'==': 'e', '!=': 'ne', '<': 'l', '<=': 'le', '>': 'g', '>=': 'ge'}[op]
+            a.cmp_r64_r64('r10', 'r11')
+            a.setcc_al(cc)
+            a.movzx_eax_al()
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_BOOL)
+            return True
+        return False
+
     def _opt_emit_const_value(self, v: Any) -> None:
         """Emit a folded constant into RAX."""
         a = self.asm
@@ -1481,6 +1619,8 @@ class CodegenExpr:
             self.emit_expr(arg)
             a.mov_rsp_disp32_rax(param_base + i * 8)
 
+        inline_body_start = a.pos
+
         lid = self.new_label_id()
         l_end = f"inline_end_{lid}"
 
@@ -1564,6 +1704,13 @@ class CodegenExpr:
             # Default fallthrough return value: void.
             a.mov_rax_imm64(enc_void())
             a.mark(l_end)
+
+            emitted = max(0, int(a.pos) - int(inline_body_start))
+            totals = getattr(self, '_inline_emitted_bytes', None)
+            if not isinstance(totals, dict):
+                totals = {}
+                self._inline_emitted_bytes = totals
+            totals[callee_name] = int(totals.get(callee_name, 0) or 0) + emitted
 
         finally:
             # Restore compiler state.
@@ -2465,6 +2612,15 @@ class CodegenExpr:
 
             lhs_const_int = self._opt_try_const_int(getattr(e, 'left', None))
             rhs_const_int = self._opt_try_const_int(getattr(e, 'right', None))
+
+            # Straight-line local type flow can prove many accumulator/index
+            # expressions to be integers. In that case, bypass the large
+            # dynamic numeric/string/array dispatch trees entirely.
+            if (self._opt_expr_known_int(getattr(e, 'left', None))
+                    and self._opt_expr_known_int(getattr(e, 'right', None))
+                    and self._opt_emit_known_int_binop(str(getattr(e, 'op', '')),
+                                                      lhs_const_int, rhs_const_int)):
+                return
 
             # -------------------------
             # Numeric ops (int + float)
@@ -5580,7 +5736,11 @@ class CodegenExpr:
                     return
 
             # Inline function expansion (direct calls only).
-            if callee_name is not None and callee_name in (getattr(self, 'inline_functions', {}) or {}):
+            inline_used = (int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(callee_name, 0) or 0)
+                           if callee_name is not None else 0)
+            if (callee_name is not None
+                    and inline_used < 4096
+                    and callee_name in (getattr(self, 'inline_functions', {}) or {})):
                 b = None
                 try:
                     b = self.resolve_binding(callee_name)

@@ -1,0 +1,119 @@
+import std.assert as t
+
+function inline pruned_add(x)
+  return x + 1
+end function
+
+function inline kept_add(x)
+  return x + 2
+end function
+
+function inline budget_add(x)
+  return x + 1
+end function
+
+function leaf_frame()
+  x = 41
+  return x + 1
+end function
+
+function int_flow()
+  i = 0
+  total = 0
+  while i < 100
+    total = total + i
+    i = i + 1
+  end while
+  return total
+end function
+
+function const_loop()
+  total = 0
+  for i = 0 to 64
+    total = total + i
+  end for
+  return total
+end function
+
+function int_ops()
+  x = 123
+  y = 7
+  return ((x % y) << 2) | 1
+end function
+
+function float_fallback()
+  x = 1.0
+  return x + 2
+end function
+
+struct Slot
+  value,
+end struct
+
+function tenth(a, b, c, d, e, f, g, h, i, j)
+  return j
+end function
+
+function main(args)
+  t.assertEq(pruned_add(41), 42, "single-use inline function")
+
+  f = kept_add
+  t.assertEq(f(40), 42, "address-taken inline function")
+
+  budget_total = 0
+  budget_total = budget_total + budget_add(0)
+  budget_total = budget_total + budget_add(1)
+  budget_total = budget_total + budget_add(2)
+  budget_total = budget_total + budget_add(3)
+  budget_total = budget_total + budget_add(4)
+  budget_total = budget_total + budget_add(5)
+  budget_total = budget_total + budget_add(6)
+  budget_total = budget_total + budget_add(7)
+  budget_total = budget_total + budget_add(8)
+  budget_total = budget_total + budget_add(9)
+  budget_total = budget_total + budget_add(10)
+  budget_total = budget_total + budget_add(11)
+  budget_total = budget_total + budget_add(12)
+  budget_total = budget_total + budget_add(13)
+  budget_total = budget_total + budget_add(14)
+  budget_total = budget_total + budget_add(15)
+  budget_total = budget_total + budget_add(16)
+  budget_total = budget_total + budget_add(17)
+  budget_total = budget_total + budget_add(18)
+  budget_total = budget_total + budget_add(19)
+  budget_total = budget_total + budget_add(20)
+  budget_total = budget_total + budget_add(21)
+  budget_total = budget_total + budget_add(22)
+  budget_total = budget_total + budget_add(23)
+  budget_total = budget_total + budget_add(24)
+  budget_total = budget_total + budget_add(25)
+  budget_total = budget_total + budget_add(26)
+  budget_total = budget_total + budget_add(27)
+  budget_total = budget_total + budget_add(28)
+  budget_total = budget_total + budget_add(29)
+  budget_total = budget_total + budget_add(30)
+  budget_total = budget_total + budget_add(31)
+  budget_total = budget_total + budget_add(32)
+  budget_total = budget_total + budget_add(33)
+  budget_total = budget_total + budget_add(34)
+  budget_total = budget_total + budget_add(35)
+  budget_total = budget_total + budget_add(36)
+  budget_total = budget_total + budget_add(37)
+  budget_total = budget_total + budget_add(38)
+  budget_total = budget_total + budget_add(39)
+  t.assertEq(budget_total, 820, "native inline expansion budget fallback")
+
+  t.assertEq(leaf_frame(), 42, "small root-frame prologue")
+  t.assertEq(int_flow(), 4950, "local integer type flow")
+  t.assertEq(const_loop(), 2080, "constant-bound loop fast path")
+  t.assertEq(int_ops(), 17, "integer operator fast paths")
+  t.assertEq(float_fallback(), 3.0, "non-integer arithmetic fallback")
+  slot = Slot(0)
+  slot.value = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  t.assertEq(slot.value, 10, "member assignment call-arity sizing")
+  indexed = [0]
+  indexed[0] = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 11)
+  t.assertEq(indexed[0], 11, "index assignment call-arity sizing")
+  print "[OK] codegen optimizations"
+  return 0
+end function

@@ -321,6 +321,14 @@ class CodegenMemory:
         if root_count <= 0:
             return
 
+        # Tiny frames are both smaller and faster as straight-line stores.  In
+        # particular, this avoids saving all incoming argument registers just
+        # to clear the environment slot of a leaf function.
+        if root_count <= 4:
+            for i in range(root_count):
+                a.mov_membase_disp_imm32("rsp", int(root_base) + i * 8, enc_void(), qword=True)
+            return
+
         # A compact counted loop keeps large function prologues from exploding
         # into hundreds of individual stores. The incoming arg registers are
         # still live here, so preserve them in shadow-space scratch first.

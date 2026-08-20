@@ -324,6 +324,9 @@ class CodegenCore:
         self._inline_param_stack: list[dict[str, int]] = []
         # Detect recursion/mutual recursion during inlining.
         self._inline_call_stack: list[str] = []
+        # Track actual native expansion size per callee. Small dynamic ASTs can
+        # still expand into large type/error dispatch sequences.
+        self._inline_emitted_bytes: dict[str, int] = {}
 
         # ------------------------------------------------------------
         # Lexical scope support (CodegenScope mixin)
@@ -526,13 +529,9 @@ class CodegenCore:
         if size <= 0:
             return
 
-        start = self.expr_temp_base + (self.expr_temp_top - size)
-        imm = enc_void()  # TAG_VOID
-
-        for disp in range(start, start + size, 8):
-            # 48 C7 84 24 disp32 imm32  => mov qword ptr [rsp+disp32], imm32
-            self.asm.mov_membase_disp_imm32("rsp", disp, imm, qword=True)
-
+        # Shrink the published root prefix first. Slots above the new count are
+        # invisible to the collector, so clearing them is redundant. A later
+        # allocation initializes a slot to void before republishing it.
         self.expr_temp_top -= size
         if self.expr_temp_top < 0:
             self.expr_temp_top = 0

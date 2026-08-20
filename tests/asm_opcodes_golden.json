@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-08-19T18:01:25.457515Z",
-  "count": 221,
+  "generated_utc": "2026-08-20T03:09:11.663088Z",
+  "count": 222,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -531,7 +531,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f87faffffff",
+      "hex": "77fe",
       "asm": "; ja(L)"
     },
     {
@@ -540,7 +540,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f83faffffff",
+      "hex": "73fe",
       "asm": "; jae(L)"
     },
     {
@@ -549,7 +549,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f82faffffff",
+      "hex": "72fe",
       "asm": "; jb(L)"
     },
     {
@@ -558,7 +558,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f86faffffff",
+      "hex": "76fe",
       "asm": "; jbe(L)"
     },
     {
@@ -568,7 +568,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f84faffffff",
+      "hex": "74fe",
       "asm": "je L"
     },
     {
@@ -577,7 +577,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f84faffffff",
+      "hex": "74fe",
       "asm": "; je(L)"
     },
     {
@@ -586,7 +586,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f8ffaffffff",
+      "hex": "7ffe",
       "asm": "; jg(L)"
     },
     {
@@ -595,7 +595,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f8dfaffffff",
+      "hex": "7dfe",
       "asm": "; jge(L)"
     },
     {
@@ -604,7 +604,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f8cfaffffff",
+      "hex": "7cfe",
       "asm": "; jl(L)"
     },
     {
@@ -613,7 +613,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f8efaffffff",
+      "hex": "7efe",
       "asm": "; jle(L)"
     },
     {
@@ -622,7 +622,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "e9fbffffff",
+      "hex": "ebfe",
       "asm": "jmp L"
     },
     {
@@ -640,7 +640,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f85faffffff",
+      "hex": "75fe",
       "asm": "; jne(L)"
     },
     {
@@ -649,7 +649,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f85faffffff",
+      "hex": "75fe",
       "asm": "; jnz(L)"
     },
     {
@@ -658,7 +658,7 @@
         "L"
       ],
       "kwargs": {},
-      "hex": "0f84faffffff",
+      "hex": "74fe",
       "asm": "; jz(L)"
     },
     {
@@ -853,6 +853,13 @@
       "kwargs": {},
       "hex": "33c04889442420",
       "asm": "; mov_qword_ptr_rsp20_rax_zero()"
+    },
+    {
+      "name": "mov_r10_gs_qword_28",
+      "args": [],
+      "kwargs": {},
+      "hex": "654c8b142528000000",
+      "asm": "; mov_r10_gs_qword_28()"
     },
     {
       "name": "mov_r10_rax",

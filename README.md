@@ -214,7 +214,7 @@ Notes:
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The current 13-program parity matrix covers the language/standard-library
+files. The current 14-program parity matrix covers the language/standard-library
 suites, GC stress, extern/native interop, global rebinding and threading; every
 pair matches by SHA-256.
 
@@ -820,6 +820,12 @@ Current behavior / limits:
 - Inline recursion / mutual recursion is rejected.
 - `return <expr>` returns from the *inline call* (the call yields the return value).
 - The inline expansion uses an isolated scope so it won't clobber caller locals.
+- Eligibility is deliberately cost-bounded, and each callee has a 4096-byte
+  native expansion budget. Later call sites fall back to its normal callable
+  body instead of allowing unbounded code growth.
+- If every emitted use was expanded and the function was never used as a
+  value, its otherwise unreachable native body is omitted. Address-taken,
+  recursive, non-expanded and profiling-visible functions always keep it.
 
 
 ### Function calls
@@ -2087,7 +2093,22 @@ Heap sizing flags:
 
 Optimizations (always-on, conservative):
 - **Constant pooling**: identical `.rdata` constants are stored once and referenced by multiple sites.
-- **Peephole optimization** in the asm emitter (local rewrites only; no control-flow changes).
+- **Bounded inlining and inline-only pruning**: eligible direct calls expand up
+  to 4096 generated native bytes per callee; a callable fallback body is kept
+  whenever an address or non-expanded call can reach it.
+- **Local integer type flow**: locals proven to remain integers use direct
+  tagged arithmetic, bitwise, shift and comparison sequences. Ambiguous,
+  captured, synchronized, global and floating-point values retain the generic
+  dynamic path.
+- **Loop specialization**: small constant `for` loops can be unrolled; larger
+  constant-bound loops compare against an immediate limit and avoid dynamic
+  end/direction state.
+- **GC-root liveness and prologues**: expression roots are unpublished as soon
+  as their lifetime ends, call spills are sized to actual arity, and tiny root
+  frames use straight-line initialization.
+- **Branch/peephole optimization**: resolved backward edges use x64 short
+  branches when in range, jumps to the immediately following label disappear,
+  and local redundant instruction patterns are folded.
 - **Helper pruning**: only referenced `fn_*` runtime helpers are emitted.
 
 GC flags:
