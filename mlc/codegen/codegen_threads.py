@@ -6,9 +6,9 @@ from ..constants import ERROR_STRUCT_ID, OBJ_STRUCT, OBJ_THREAD, TAG_PTR
 from ..tools import enc_bool, enc_void
 
 
-# Every OS thread has a small native context. Managed objects never live here;
-# all of them belong to the one process-wide GC heap. The context only anchors
-# the thread's stack-root chain, temporary roots and cooperative GC state.
+# Every OS thread has a small native context. Managed objects themselves live
+# in the process-wide GC heap; tagged references stored here are published GC
+# roots for the entry argument, logical id, result and temporary values.
 THREAD_TYPE = 0
 THREAD_STATUS = 4
 THREAD_HANDLE = 8
@@ -21,7 +21,10 @@ THREAD_TMP0 = 56
 THREAD_NEXT = 120
 THREAD_GC_STATE = 128
 THREAD_ALLOC_CURSOR = 136
-THREAD_CONTEXT_SIZE = 144
+THREAD_ARG = 144
+THREAD_LOGICAL_ID = 152
+THREAD_ARITY = 160
+THREAD_CONTEXT_SIZE = 168
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -76,6 +79,9 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_NEXT, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_RUNNING, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_ALLOC_CURSOR, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_LOGICAL_ID, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_ARITY, 0, qword=False)
         a.mov_rip_qword_rax('thread_contexts_head')
         a.xor_r32_r32('eax', 'eax')
         a.mov_rip_qword_rax('gc_requested')
@@ -421,11 +427,14 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_new_function(self) -> None:
+        """RCX=entry code, EDX=entry arity, R8=logical id; returns context."""
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_thread_new')
-        a.sub_rsp_imm8(0x48)
+        a.sub_rsp_imm8(0x58)
         a.mov_membase_disp_r64('rsp', 0x38, 'rcx')
+        a.mov_membase_disp_r64('rsp', 0x40, 'rdx')
+        a.mov_membase_disp_r64('rsp', 0x48, 'r8')
         a.xor_r32_r32('ecx', 'ecx')
         a.mov_r32_imm32('edx', THREAD_CONTEXT_SIZE)
         a.mov_r8d_imm32(0x3000)  # MEM_RESERVE | MEM_COMMIT
@@ -447,6 +456,11 @@ class CodegenThreads:
             a.mov_membase_disp_imm32('rax', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_ALLOC_CURSOR, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x48)
+        a.mov_membase_disp_r64('rax', THREAD_LOGICAL_ID, 'r11')
+        a.mov_r32_membase_disp('r11d', 'rsp', 0x40)
+        a.mov_membase_disp_r32('rax', THREAD_ARITY, 'r11d')
         # Contexts remain registered for the process lifetime. Close() clears
         # their managed roots, so registration itself cannot retain user data.
         a.lea_rax_rip('gc_coord_monitor')
@@ -464,10 +478,11 @@ class CodegenThreads:
         a.call_rax()
         a.mov_r64_membase_disp('rax', 'rsp', 0x30)
         a.mark(l_done)
-        a.add_rsp_imm8(0x48)
+        a.add_rsp_imm8(0x58)
         a.ret()
 
     def emit_thread_start_function(self) -> None:
+        """RCX=context, RDX=tagged argument, R8D=argument count; returns bool."""
         self.used_helpers.add('fn_thread_entry')
         a = self.asm
         a.mark('fn_thread_start')
@@ -475,12 +490,17 @@ class CodegenThreads:
         a.mov_membase_disp_r64('rsp', 0x30, 'rcx')
         lid = self.new_label_id()
         l_not_created = f'thstart_not_created_{lid}'
+        l_wrong_arity = f'thstart_wrong_arity_{lid}'
         l_create_fail = f'thstart_create_fail_{lid}'
         l_done = f'thstart_done_{lid}'
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
         a.cmp_r32_imm('eax', THREAD_CREATED)
         a.jcc('ne', l_not_created)
+        a.mov_r32_membase_disp('eax', 'rcx', THREAD_ARITY)
+        a.cmp_r32_r32('eax', 'r8d')
+        a.jcc('ne', l_wrong_arity)
         a.mov_membase_disp_imm32('rcx', THREAD_STOP, 0, qword=False)
+        a.mov_membase_disp_r64('rcx', THREAD_ARG, 'rdx')
         a.mov_membase_disp_imm32('rcx', THREAD_STATUS, THREAD_RUNNING, qword=False)
         a.xor_r32_r32('eax', 'eax')
         a.mov_membase_disp_r64('rsp', 0x20, 'rax')  # creation flags
@@ -503,6 +523,8 @@ class CodegenThreads:
         a.mark(l_create_fail)
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
         a.mov_membase_disp_imm32('r11', THREAD_STATUS, THREAD_FAILED, qword=False)
+        a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
+        a.mark(l_wrong_arity)
         a.mark(l_not_created)
         a.mov_rax_imm64(enc_bool(False))
         a.mark(l_done)
@@ -593,6 +615,43 @@ class CodegenThreads:
         a.or_rax_imm8(1)
         a.ret()
 
+    def emit_thread_logical_id_function(self) -> None:
+        a = self.asm
+        a.mark('fn_thread_logical_id')
+        a.mov_r64_membase_disp('rax', 'rcx', THREAD_LOGICAL_ID)
+        a.ret()
+
+    def emit_thread_set_logical_id_function(self) -> None:
+        """Set a user-defined id before Start(). RCX=context, RDX=value."""
+        a = self.asm
+        a.mark('fn_thread_set_logical_id')
+        lid = self.new_label_id()
+        l_false = f'thsetid_false_{lid}'
+        l_done = f'thsetid_done_{lid}'
+        a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
+        a.cmp_r32_imm('eax', THREAD_CREATED)
+        a.jcc('ne', l_false)
+        a.mov_membase_disp_r64('rcx', THREAD_LOGICAL_ID, 'rdx')
+        a.mov_rax_imm64(enc_bool(True))
+        a.jmp(l_done)
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.mark(l_done)
+        a.ret()
+
+    def emit_thread_result_function(self) -> None:
+        a = self.asm
+        a.mark('fn_thread_result')
+        a.mov_r64_membase_disp('rax', 'rcx', THREAD_RESULT)
+        a.ret()
+
+    def emit_thread_current_logical_id_function(self) -> None:
+        a = self.asm
+        a.mark('fn_thread_current_logical_id')
+        a.mov_r11_gs_qword_28()
+        a.mov_r64_membase_disp('rax', 'r11', THREAD_LOGICAL_ID)
+        a.ret()
+
     def emit_thread_status_function(self) -> None:
         for lbl, value in (
             ('obj_thread_created', 'Created'), ('obj_thread_running', 'Running'),
@@ -643,6 +702,8 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('r11', THREAD_HANDLE, 0, qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_CODE, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_RESULT, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_LOGICAL_ID, enc_void(), qword=True)
         for i in range(8):
             a.mov_membase_disp_imm32('r11', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_rax_imm64(enc_bool(True))
@@ -706,8 +767,12 @@ class CodegenThreads:
         # worker parked before it can touch the shared heap.
         a.call('fn_gc_native_leave')
 
-        # Invoke the capture-free, zero-argument MiniLang function.
+        # Invoke the capture-free MiniLang function with its published argument.
         a.mov_r64_imm64('r10', enc_void())
+        a.mov_r64_membase_disp('rcx', 'r12', THREAD_ARG)
+        # Once managed execution is running, the callee's parameter slot is the
+        # precise root. No safepoint exists between this clear and its prologue.
+        a.mov_membase_disp_imm32('r12', THREAD_ARG, enc_void(), qword=True)
         a.mov_r64_membase_disp('rax', 'r12', THREAD_CODE)
         a.call_rax()
         a.mov_membase_disp_r64('r12', THREAD_RESULT, 'rax')

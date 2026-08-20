@@ -1335,6 +1335,10 @@ class CodegenMemory:
         a.call(L_MARK_VALUE)
         a.mov_r64_membase_disp('rax', 'rdi', 40)  # THREAD_RESULT
         a.call(L_MARK_VALUE)
+        a.mov_r64_membase_disp('rax', 'rdi', 144)  # THREAD_ARG
+        a.call(L_MARK_VALUE)
+        a.mov_r64_membase_disp('rax', 'rdi', 152)  # THREAD_LOGICAL_ID
+        a.call(L_MARK_VALUE)
         for i in range(8):
             a.mov_r64_membase_disp('rax', 'rdi', 56 + i * 8)
             a.call(L_MARK_VALUE)

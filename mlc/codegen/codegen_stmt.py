@@ -4825,7 +4825,7 @@ class CodegenStmt:
         _saved_ctx_file = getattr(self, "_current_fn_file", None)
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
-        builtin_callees = {'try', "Thread", "threadStopRequested", "threadSleep", "input", "len", "toNumber", "toFloat", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
+        builtin_callees = {'try', "Thread", "threadStopRequested", "threadLogicalId", "threadSleep", "input", "len", "toNumber", "toFloat", "typeof", "array", "bytes", "byteBuffer", "decode", "decodeZ",
             "decode16Z", "hex", "fromHex", "slice", "bytesHash", "stringHash", "bytesStartsWith", "bytesEndsWith", "bytesIndexOf", "bytesLastIndexOf", "bytesCompare", "str", "stringSlice", "stringIndexOf", "stringLastIndexOf", "stringStartsWith", "stringEndsWith",
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
@@ -5355,7 +5355,6 @@ class CodegenStmt:
 
         # Push function root-frame record at [rsp+root_rec_off] and link it into gc_roots_head.
         self.emit_gc_push_root_frame(root_rec_off, root_base, root_static_top)
-        self.emit_gc_safepoint_poll()
 
         # Save incoming closure environment (passed in r10) in a nonvolatile register.
         a.mov_r64_r64("r14", "r10")
@@ -5429,6 +5428,10 @@ class CodegenStmt:
                 pn = p if isinstance(p, str) else str(p)
             if pn in boxed_names:
                 b.boxed = True
+
+        # Incoming managed arguments must be in the published parameter slots
+        # before the first cooperative safepoint can park this thread.
+        self.emit_gc_safepoint_poll()
 
         # ---- closure environment (Step 6.2d-1: env elision) ----
         #

@@ -32,6 +32,7 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
 - [9. Functions](#9-functions)
   - [9.1 Native threads & synchronization](#91-native-threads--synchronization)
   - [9.2 Thread-safe standard-library types](#92-thread-safe-standard-library-types)
+  - [9.3 Managed thread pools](#93-managed-thread-pools)
 - [10. struct](#10-struct)
 - [11. enum](#11-enum)
 - [12. Modules, namespace & import](#12-modules-namespace--import)
@@ -214,9 +215,9 @@ Notes:
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The current 14-program parity matrix covers the language/standard-library
-suites, GC stress, extern/native interop, global rebinding and threading; every
-pair matches by SHA-256.
+files. The current 16-program parity matrix covers the language/standard-library
+suites, GC stress, extern/native interop, global rebinding, native threads and
+managed thread pools; every pair matches by SHA-256.
 
 The compiler executables themselves are not expected to match: the production
 self-build uses the MiniLang-only `.mlo` object pipeline, which has no Python
@@ -396,6 +397,8 @@ For type checks, prefer:
 
 - `x is void` / `x is not void`
 - `x is int`, `x is string`, etc. (primitive type checks; sugar for `typeof(x) == "..."`)
+- `x is Thread` / `x is thread` (the native thread category; both spellings
+  are equivalent)
 - `x is Thing`, `x is Color`, etc. (concrete struct/enum type checks; compares the internal type id)
 
 Equality/inequality (`==`, `!=`) still works with `void` (e.g. `void == void`).
@@ -501,7 +504,7 @@ Important:
 | `<` |
 | `>=` |
 | `<=` |
-| `is <type>` | type check (primitive via `typeof`, struct/enum via internal id) |
+| `is <type>` | type check (runtime categories such as `int`/`thread` via `typeof`, struct/enum via internal id) |
 | `is not <type>` | negated type check |
 
 ### Logic
@@ -846,30 +849,44 @@ print add3(
 
 ### 9.1 Native threads & synchronization
 
-`Thread(function)` creates a real Win32 thread object without starting it. Its
-entry point must be a top-level, zero-argument, capture-free function:
+`Thread(function[, logicalId])` creates a real Win32 thread object without
+starting it. Its entry point must be a top-level, capture-free function with
+zero or one parameter. A one-parameter worker receives the exact managed value
+passed to `Start(value)`:
 
 ```ml
 synchronized jobsDone = 0
 
-function worker()
+function worker(data)
   global jobsDone
   // allocations enter the process-wide managed heap
-  scratch = array(1024, 0)
+  scratch = array(1024, data)
   jobsDone = jobsDone + 1
+  return scratch
 end function
 
-t = Thread(worker)
+t = Thread(worker, "request-worker-1")
 print t.Status()  // Created
-print t.Start()   // true
+print t.Start(42) // true
 print t.Join()    // true; waits indefinitely
 print t.Status()  // Completed
+print t.Result()  // the returned array
 print t.Close()   // closes the native thread handle
+```
+
+Threads are a first-class runtime category. Both constructor-style and
+lowercase checks are accepted, including their negated forms:
+
+```ml
+print t is Thread      // true
+print t is thread      // true
+print t is not Thread  // false
 ```
 
 Thread methods:
 
-- `Start()` starts a newly created thread once and returns `bool`.
+- `Start()` or `Start(value)` starts a newly created thread once and returns
+  `bool`. Its argument count must match the entry function's zero/one arity.
 - `Stop()` atomically requests cooperative cancellation and returns whether a
   running thread changed to `StopRequested`.
 - `Join()` waits indefinitely; `Join(timeoutMs)` waits at most the given number
@@ -878,6 +895,12 @@ Thread methods:
   `Stopped`, or `Failed`.
 - `IsAlive()` is true for `Running` and `StopRequested`.
 - `Id()` returns the native thread id (`0` before a successful start).
+- `LogicalId()` returns the user-defined logical id. `SetLogicalId(value)` can
+  replace it while the thread is still in `Created`; the constructor's optional
+  second argument sets the initial value. Logical ids do not change the native
+  Win32 id.
+- `Result()` returns the worker's result (`void` until it publishes one). Use
+  `try(t.Result())` when a failed worker returned an `error` value.
 - `Close()` closes the native handle after termination. Status metadata remains
   valid; its small control page is retained until process exit.
 
@@ -885,6 +908,8 @@ Worker helpers:
 
 - `threadStopRequested()` reports whether the current worker was asked to stop
   (and returns `false` on the main thread).
+- `threadLogicalId()` returns the logical id of the current worker (`void` on
+  the main thread).
 - `threadSleep(milliseconds)` calls the native sleep primitive.
 
 `Stop()` is safe and cooperative: the compiler inserts cancellation checks at
@@ -999,6 +1024,57 @@ references alive. `close()` is a lifecycle operation, not a concurrent method:
 call it only after all worker operations, lock holders and waiters have ended.
 Because cancellation is cooperative, a worker blocked in a native wait can
 observe `Stop()` only after that wait returns.
+
+### 9.3 Managed thread pools
+
+`std.concurrent.thread_pool` provides reusable GC-registered workers for
+request-oriented workloads such as web servers. Jobs accept one managed data
+value, retain its identity in the shared heap, and expose completion, failure
+and cancellation without terminating the reusable worker:
+
+```ml
+import std.concurrent.thread_pool as threadPool
+
+function handleRequest(request)
+  return "handled " + request
+end function
+
+pool = threadPool.ThreadPool.withQueueCapacity(8, 1024)
+job = pool.Submit(handleRequest, "/status")
+
+if typeof(job) == "void" then
+  // bounded queue is full or shutdown has begun: apply backpressure
+  return 503
+end if
+
+job.Wait()
+print job.GetStatus() // Completed, Failed, or Cancelled
+print job.GetResult()
+job.Dispose()
+
+pool.Shutdown()             // graceful: drain accepted jobs
+pool.AwaitTermination()
+pool.Dispose()
+```
+
+- `ThreadPool.new(workerCount)` uses an unbounded queue.
+- `ThreadPool.withQueueCapacity(workerCount, capacity)` bounds waiting jobs;
+  capacity `0` is unbounded. Worker counts must be between 1 and 256.
+- `Submit(function, data)` returns a `ThreadPoolJob`, or `void` after shutdown
+  or when a bounded queue is full.
+- `PendingCount()`, `WorkerCount()` and `IsShutdown()` expose pool state.
+- `Shutdown()` stops accepting work and drains the queue.
+- `ShutdownNow()` cancels queued jobs; currently running callbacks finish
+  cooperatively.
+- `AwaitTermination()` / `AwaitTerminationFor(timeoutMs)` join all workers.
+- `Dispose()` performs graceful shutdown if needed and closes native handles.
+- Jobs provide `Cancel`, `Wait`, `WaitFor`, `GetStatus`, `GetResult`, `IsDone`,
+  `IsCancelled` and `Dispose`.
+
+Pool workers receive stable logical ids such as `thread-pool-0`. Callbacks may
+allocate, trigger GC and return arbitrary managed values. A `Failed` job stores
+the callback's `error`; retrieve it with `try(job.GetResult())`. Pool disposal
+and job disposal are lifecycle operations and must not race their active users.
 
 ### Function values (function pointers)
 
@@ -1367,6 +1443,8 @@ Common modules (subset; evolves over time):
 - **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io)); plus basic directory helpers (`isDir/isFile/listDir/joinPath`)
 - **std.net**: TCP/UDP networking
 - **std.threading**: native `Lock`, `Semaphore` and `Event`
+- **std.concurrent.thread_pool**: reusable managed worker pools, bounded queues,
+  job results/cancellation and graceful or immediate shutdown
 - **std.ds.concurrent_list**, **std.ds.concurrent_hashmap**: process-shared,
   thread-safe managed collections that preserve object identity
 
@@ -1435,7 +1513,8 @@ Not allowed:
 #### typeof(x)
 Returns a string describing the type of `x`.
 
-Type strings: `int`, `float`, `bool`, `string`, `array`, `bytes`, `void`, `function`, `enum`, `struct`, `error`, `unknown`.  
+Type strings: `int`, `float`, `bool`, `string`, `array`, `bytes`, `void`,
+`function`, `enum`, `struct`, `error`, `thread`, `unknown`.
 
 ```ml
 print typeof(123)      // "int"

@@ -1600,7 +1600,7 @@ class Parser:
                 # Only apply aliases / canonicalization for non-qualified primitive names
                 ty_canon = _aliases.get(ty_l, ty_l) if "." not in ty_raw else ty_raw
 
-                _allowed = {"int", "float", "bool", "string", "array", "bytes", "function", "struct", "enum", "error", "void", "unknown"}
+                _allowed = {"int", "float", "bool", "string", "array", "bytes", "function", "struct", "enum", "error", "thread", "void", "unknown"}
 
                 start_pos = getattr(left, "_pos", None)
                 if start_pos is None:

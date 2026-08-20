@@ -3179,6 +3179,8 @@ def main() -> int:
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
+    thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
+    type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
     thread_invalid_entry_ml = find_file_by_name(tests_root, "thread_invalid_entry.ml")
     thread_invalid_synchronized_local_ml = find_file_by_name(tests_root, "thread_invalid_synchronized_local.ml")
     global_function_rebind_ml = find_file_by_name(tests_root, "global_function_rebind.ml")
@@ -3232,10 +3234,30 @@ def main() -> int:
         tests.append(lambda: TestResult(name="threading_stdlib.ml (thread-safe stdlib)", status="SKIP",
                                         details="threading_stdlib.ml not found"))
 
+    if thread_pool_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="thread_pool.ml (arguments + logical ids + worker pool)",
+            mlc_runner=mlc_runner, ml_path=thread_pool_ml,
+            must_contain=["[OK] thread arguments, logical ids and managed thread pool"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="thread_pool.ml (arguments + logical ids + worker pool)", status="SKIP",
+                                        details="thread_pool.ml not found"))
+
+    if type_checks_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="type_checks.ml (exhaustive public is-type categories)",
+            mlc_runner=mlc_runner, ml_path=type_checks_ml,
+            must_contain=["[OK] exhaustive public is-type categories"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="type_checks.ml (exhaustive public is-type categories)", status="SKIP",
+                                        details="type_checks.ml not found"))
+
     if thread_invalid_entry_ml is not None:
         tests.append(lambda: test_compile_expected_fail(
             name="threads: entry function arity rejected", mlc_runner=mlc_runner,
-            entry_ml=thread_invalid_entry_ml, must_contain_err="must have zero parameters"))
+            entry_ml=thread_invalid_entry_ml, must_contain_err="must have zero or one parameter"))
     else:
         tests.append(lambda: TestResult(name="threads: entry function arity rejected", status="SKIP",
                                         details="thread_invalid_entry.ml not found"))

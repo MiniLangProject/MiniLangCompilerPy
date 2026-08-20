@@ -3910,12 +3910,15 @@ class CodegenExpr:
             if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
                 mname = str(getattr(callee_expr, 'name', getattr(callee_expr, 'field', '')) or '')
                 thread_methods = {
-                    'Start': (0, 'fn_thread_start'),
+                    'Start': ((0, 1), 'fn_thread_start'),
                     'Stop': (0, 'fn_thread_stop'),
                     'Join': ((0, 1), 'fn_thread_join'),
                     'Status': (0, 'fn_thread_status'),
                     'IsAlive': (0, 'fn_thread_alive'),
                     'Id': (0, 'fn_thread_id'),
+                    'LogicalId': (0, 'fn_thread_logical_id'),
+                    'SetLogicalId': (1, 'fn_thread_set_logical_id'),
+                    'Result': (0, 'fn_thread_result'),
                     'Close': (0, 'fn_thread_close'),
                 }
                 if mname in thread_methods:
@@ -3946,7 +3949,16 @@ class CodegenExpr:
                     a.cmp_r32_imm('r11d', OBJ_THREAD)
                     a.jcc('ne', l_fail)
 
-                    if mname == 'Join':
+                    if mname == 'Start':
+                        if args:
+                            a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
+                            a.mov_r32_imm32('r8d', 1)
+                        else:
+                            a.mov_r64_imm64('rdx', enc_void())
+                            a.xor_r32_r32('r8d', 'r8d')
+                    elif mname == 'SetLogicalId':
+                        a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
+                    elif mname == 'Join':
                         if args:
                             a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
                             a.mov_r64_r64('r11', 'rdx')
@@ -4136,22 +4148,29 @@ class CodegenExpr:
             # runtime errors are safer than a null dereference.
             call_args = list(getattr(e, 'args', []) or [])
 
-            # Thread(function): real OS thread with an isolated worker heap.
-            # The entry point is intentionally capture-free and has zero parameters.
+            # Thread(function[, logicalId]): real OS thread over the shared heap.
+            # Entry points are capture-free and accept zero or one parameter.
             if callee_name == 'Thread':
-                if len(call_args) != 1:
-                    raise self.error(f"Thread expects exactly 1 function, got {len(call_args)}", e)
+                if len(call_args) not in (1, 2):
+                    raise self.error(f"Thread expects 1 function and an optional logical id, got {len(call_args)} arguments", e)
                 fn_qn = _qname_of(call_args[0])
                 fn_def = (getattr(self, 'user_functions', {}) or {}).get(str(fn_qn)) if fn_qn else None
                 if fn_def is None:
                     raise self.error('Thread expects a top-level function name', call_args[0])
-                if len(getattr(fn_def, 'params', []) or []) != 0:
-                    raise self.error(f"Thread entry function '{fn_qn}' must have zero parameters", call_args[0])
+                entry_arity = len(getattr(fn_def, 'params', []) or [])
+                if entry_arity > 1:
+                    raise self.error(f"Thread entry function '{fn_qn}' must have zero or one parameter", call_args[0])
                 if getattr(fn_def, '_ml_captures', set()):
                     raise self.error(f"Thread entry function '{fn_qn}' must not capture local variables", call_args[0])
                 code_name = getattr(fn_def, '_ml_codegen_name', fn_qn)
+                if len(call_args) == 2:
+                    self.emit_expr(call_args[1])
+                    a.mov_r64_r64('r8', 'rax')
+                else:
+                    a.mov_r64_imm64('r8', enc_void())
                 a.lea_rax_rip(f'fn_user_{code_name}')
                 a.mov_r64_r64('rcx', 'rax')
+                a.mov_r32_imm32('edx', entry_arity)
                 a.call('fn_thread_new')
                 return
 
@@ -4159,6 +4178,12 @@ class CodegenExpr:
                 if call_args:
                     raise self.error('threadStopRequested expects no arguments', e)
                 a.call('fn_thread_stop_requested')
+                return
+
+            if callee_name == 'threadLogicalId':
+                if call_args:
+                    raise self.error('threadLogicalId expects no arguments', e)
+                a.call('fn_thread_current_logical_id')
                 return
 
             if callee_name == 'threadSleep':

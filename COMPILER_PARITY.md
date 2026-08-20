@@ -28,31 +28,37 @@ had identical size and SHA-256, and both executables exited successfully.
 
 | Program | Size | SHA-256 |
 | --- | ---: | --- |
-| `language_suite.ml` | 1,763,328 | `3F25612629388AE6C62B8074C84A70C8BEADF636C41D527AE08DAC674BADA8C2` |
-| `stdlib_unit_tests.ml` | 4,317,184 | `2A1A84CB0BD55FED6CA08B0529AC0201A12A39572BA7985717A884B8D222B43C` |
-| `gc_periodic_test.ml` | 169,472 | `6989C9D7D4672C216250B080E75CABEF9417B80A061AB0EC735C088DE074192A` |
-| `gc_heap_stress.ml` | 85,504 | `2880AB89CD1F3A0ECE7D58101D4297BC0BAEF84EB8D049EE90AA3A3BB47F64B7` |
-| `aes128_ecb_nist_kat.ml` | 363,520 | `16265BADB43F3578FC7BA60B62CFFA1270BDF351F7819F6FC678E4ECAA958B76` |
-| `winapi_extern_smoke.ml` | 65,536 | `C42A65E136A34D92B021F8EC965C416CFEF2D1118B9F14CF7DB2B9607C5BD6BE` |
-| `native_bytes_ptr_smoke.ml` | 87,040 | `B6AFE1BDBD6D2F1C26387E5797B74EE635545D7F811CD3C33DE1544AA1B77CC8` |
-| `native_raw_value_smoke.ml` | 84,992 | `53BA3465F1309DE7E8099159F6153F49E70A033E80732D4D3E0AD8A1F51E9B24` |
-| `native_callback_wndproc_smoke.ml` | 90,112 | `63DFDF6DD8B0F3C41F4F42570A80CD42F3121C89ECC8E14A73C49C3D79F2726F` |
-| `global_function_rebind.ml` | 71,168 | `6BFB533BCBE83FE0F7791DE072C1FB17BDF9B8B20CC2789C335AF410DE53779E` |
-| `thread_features.ml` | 218,624 | `B1D6D80AFE2CF96F287F652A40F61C4955B6558CDC1A72268DC3093EF281D0A4` |
-| `threading_stdlib.ml` | 942,592 | `EDE3694B5A3F39FFAE5A6449CF9712B6DC3254A4E61915EA15A8F45B05BAF919` |
-| `extern_abi_validation_valid.ml` | 72,704 | `43EC5DC5985B58CBFEA268EDA5F090B81E47E315DB98827B64A16C6CAF9B2377` |
-| `codegen_optimizations.ml` | 276,992 | `A8199F963C0F7D0D84D109F2FEEAE856A93EBF52719A0351095E948BBFC30982` |
+| `language_suite.ml` | 1,763,328 | `C4AAFA667C147DA551B04585912B85FAC7CC8904A1CBDDB802B20CC1F8380ADD` |
+| `stdlib_unit_tests.ml` | 4,317,696 | `CD38657FC31FE10BA3418B48865CB7F79566B314B21E4D7DB5557C45ADC86F97` |
+| `gc_periodic_test.ml` | 169,984 | `64D0EC72ABE4AB2C100A0B84C4383C285A9D793C7EB10342BD8A5F3835AFAE74` |
+| `gc_heap_stress.ml` | 85,504 | `44645F27BB592AD5B7862BFB6B93EFF099613B5CA85CE7CCD2C7B5C9DE1D8295` |
+| `aes128_ecb_nist_kat.ml` | 363,520 | `1BA75EBC481FF6935BFC85CF78971A6EDC1AF36AC6479BBF0DEB1410CDEE2698` |
+| `winapi_extern_smoke.ml` | 65,536 | `64DFFB4946312506D7159B4D89F6DB96C7F5626686419C0B7605B02116715E2A` |
+| `native_bytes_ptr_smoke.ml` | 87,040 | `1F05701DD71853CC8314D204A8762E15D6BFCF472C21340ABFF366C5B428EBC9` |
+| `native_raw_value_smoke.ml` | 84,992 | `65E7D56D77FC634A50B8C1E93E622AB4F59F82C02AB73D45C313F16C1FA7565A` |
+| `native_callback_wndproc_smoke.ml` | 90,112 | `CC2E5146E088ADD1B2E414EE11D56E41D7C90FD905DBA6330B50C984939F6933` |
+| `global_function_rebind.ml` | 71,168 | `15A512E964736C914337BDEB81D223D550B9A73F45A6643E359CD1279933133B` |
+| `thread_features.ml` | 219,136 | `9483DFC07D22A29B186EDDD2D6F89FB199002671342133D17AB7A8904B49179F` |
+| `threading_stdlib.ml` | 943,104 | `A7B1B39CBBA1A67A7915BD95FC35A5A984A6646C19A6093B407EF52A3B24F75D` |
+| `extern_abi_validation_valid.ml` | 72,704 | `F11F9C6CB1FE673BDA524EC015FD49E8DFDE4AF420CD19C2B6056FA6C157D0D1` |
+| `codegen_optimizations.ml` | 276,992 | `0317BBB0B4EC449EC4618269FDA57DE07D5A4133370BB682F57A08A8514AA7E1` |
+| `thread_pool.ml` | 690,176 | `B1B37083DE44F9EDE55A168F241845CE659EAB885DD7F5897B3A338A9C99B200` |
+| `type_checks.ml` | 144,896 | `61B6FED70395A88F4640823E6A55525AF95E83523C2B104D4877937FE7299E87` |
 
 This coverage includes imports and the standard library, closures, inline
 functions, structs, enums, GC, extern declarations, native interop, real Win32
 threads, one process-wide managed heap, per-thread stacks and GC root chains,
 cooperative stop-the-world collection, synchronization primitives and
-thread-safe collections that preserve shared object identity.
+thread-safe collections that preserve shared object identity, one-value thread
+arguments, logical thread ids and managed worker pools with backpressure.
+It also exhaustively covers every public `is` runtime category, including
+case-insensitive `Thread`/`thread` checks and their negated forms.
 
-All 25 files below `std/` also have matching relative paths and byte-for-byte
+All 26 files below `std/` also have matching relative paths and byte-for-byte
 identical contents in both repositories. This includes the new
 `std.threading`, `std.concurrent.shared_value`,
-`std.ds.concurrent_list` and `std.ds.concurrent_hashmap` modules.
+`std.concurrent.thread_pool`, `std.ds.concurrent_list` and
+`std.ds.concurrent_hashmap` modules.
 
 ## Bootstrap and self-build stages
 
@@ -61,14 +67,14 @@ same heap and GC options for this comparison.
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Python-built MiniLang compiler | 54,920,192 | `79C27CFD764EC4891BF229B00FF4F3CC445156CDE359D2EDA376FF7E3102C638` |
-| MiniLang self-build through `build.ps1` / `.mlo` | 55,520,768 | `BE0F6005E8750D0514CFD166D85BA4F61FAF04B8320932052F9029411F4409C6` |
+| Python-built MiniLang compiler | 55,112,192 | `0E6E2283186853BB30D5BD4D5BDF25262DE5631B2570F60B7B0B598D7B5B0362` |
+| MiniLang self-build through `build.ps1` / `.mlo` | 55,714,816 | `E1A3D99E9A73E41147DC41AC53D3B684FE794B4ABEDFDCCF7FD4EB9CD63B3A4A` |
 
-The compiler images differ by 600,576 bytes. Both images subsequently compiled
-`language_suite.ml` to the same 1,763,328-byte target with SHA-256
-`3F25612629388AE6C62B8074C84A70C8BEADF636C41D527AE08DAC674BADA8C2`.
+The compiler images differ by 602,624 bytes. Both images subsequently compiled
+`type_checks.ml` to the same 144,896-byte target with SHA-256
+`61B6FED70395A88F4640823E6A55525AF95E83523C2B104D4877937FE7299E87`.
 Two consecutive MiniLang object-pipeline self-build stages were byte-identical
-at 55,520,768 bytes with the hash shown above, so that supported self-host path
+at 55,714,816 bytes with the hash shown above, so that supported self-host path
 does reach a binary fixed point.
 
 A monolithic self-build was also attempted with the same options. It exhausted
@@ -87,11 +93,16 @@ No existing feature was removed. The synchronized surface includes:
 - `array(size[, fill])` construction;
 - global function-value rebinding;
 - inline-function lowering and eligibility checks;
-- real Win32 threads with cooperative stop/join/status operations;
+- real Win32 threads with cooperative stop/join/status operations, optional
+  one-value arguments/results and separate native/logical ids;
 - one global, thread-safe managed heap with private thread stacks and
   cooperative GC safepoints;
 - synchronized globals of any value type and synchronized functions;
 - native locks, semaphores and events plus thread-safe list/hash-map types;
+- reusable managed thread pools with bounded/unbounded queues, job lifecycle,
+  backpressure and graceful/immediate shutdown;
+- `Thread` as a first-class, case-insensitive `is` runtime category, verified
+  together with every other public primitive, struct and enum category;
 - closures, captures, boxed variables and environment hops;
 - `foreach`, `switch`, namespaces and module initialization;
 - explicit-value enums, struct construction and constant folding;
@@ -124,11 +135,11 @@ contract.
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 81, FAIL 0, SKIP 0
-MiniLang harness:  PASS 80, FAIL 0
-Additional ML:     assembly-listing smoke and both sprite repros passed
-Thread stress:     thread_features PASS 100/100 processes (1,000 publication/GC rounds)
-                   threading_stdlib PASS 25/25 processes
+Python harness:    PASS 83, FAIL 0, SKIP 0
+MiniLang harness:  PASS 82, FAIL 0
+ML opcode smoke:   synchronized golden vectors and direct encoder passed
+Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
+                   managed argument publication/GC PASS 30/30 processes
 ```
 
 The counters differ because the Python runner counts host-side tests
