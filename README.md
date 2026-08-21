@@ -215,7 +215,7 @@ Notes:
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The current 19-program parity matrix covers the language/standard-library
+files. The current 23-program parity matrix covers the language/standard-library
 suites, GC stress, compiler-GC liveness, extern/native interop, global rebinding,
 native threads and managed thread pools; every pair matches by SHA-256.
 
@@ -225,6 +225,19 @@ counterpart and produces a differently laid-out compiler PE. Both compiler
 variants nevertheless emit the same tested target executables. Exact hashes,
 test counts, boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
+
+The sibling self-hosted compiler also supports `--profile-compiler` for
+wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
+vectors, a prebuilt per-module function index and sparse read-only support-label
+indexes so object clones do not copy the complete support `.data`/`.rdata`.
+These are self-host implementation details and do not change the language or
+the normal cross-compiler target-byte contract.
+
+On the current 112-module / 656-object MiniQuake benchmark, the Python
+monolithic compiler completes in 69.089 seconds; the optimized self-hosted
+object pipeline takes 420.095 seconds and produces a runnable PE. Its profile
+attributes 283.657 seconds to object emission, 74.829 seconds to label
+resolution and 19.515 seconds to patch application.
 
 
 ---

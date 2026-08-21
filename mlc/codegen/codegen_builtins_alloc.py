@@ -961,17 +961,23 @@ Returns:
 """
         a = self.asm
         a.mark('fn_box_float')
-        # Align stack + shadow space for the internal call (Windows x64 ABI)
-        a.sub_rsp_imm8(0x28)
+        # Align stack + shadow space for the internal call (Windows x64 ABI),
+        # plus one raw-double spill slot.  XMM0 is volatile: fn_alloc may run a
+        # full collection and call OS synchronization helpers before returning.
+        # Keeping the payload only in XMM0 therefore produced a correctly
+        # tagged OBJ_FLOAT with a corrupted numeric payload.
+        a.sub_rsp_imm8(0x38)
+        a.movsd_membase_disp_xmm('rsp', 0x20, 'xmm0')
         # allocate 16 bytes
         a.mov_rcx_imm32(16)
         a.call('fn_alloc')
+        a.movsd_xmm_membase_disp('xmm0', 'rsp', 0x20)
         # [rax] = OBJ_FLOAT, [rax+4]=0
         a.mov_membase_disp_imm32("rax", 0, 4, qword=False)  # mov dword [rax],OBJ_FLOAT
         a.mov_membase_disp_imm32("rax", 4, 0, qword=False)
         # store f64
         a.movsd_membase_disp_xmm("rax", 8, "xmm0")  # movsd [rax+8],xmm0
-        a.add_rsp_imm8(0x28)
+        a.add_rsp_imm8(0x38)
         a.ret()
 
     def emit_value_to_string_function(self) -> None:

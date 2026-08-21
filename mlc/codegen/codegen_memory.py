@@ -1208,6 +1208,24 @@ class CodegenMemory:
         a.mov_rax_rip_qword('gc_mark_bits_base')
         a.mov_r64_r64("rsi", "rax")
 
+        # Start every mark phase from a genuinely empty bitmap.  Clearing only
+        # the bits of block headers visited by the sweep is insufficient: a
+        # stale/interior Value can pass the defensive header plausibility checks
+        # and set a bit for an aligned address that is not currently a block
+        # header.  If a later free-list split creates a real object at that
+        # address, the stale bit makes gc_mark_value treat the new object as
+        # already scanned, losing all of its children.  One bitmap byte covers
+        # 64 heap bytes, so clearing the used prefix is small compared with the
+        # heap sweep that follows.
+        a.mov_rax_rip_qword('heap_ptr')
+        a.sub_r64_r64("rax", "rbp")
+        a.add_r64_imm("rax", 63)
+        a.shr_r64_imm8("rax", 6)
+        a.mov_r64_r64("rcx", "rax")
+        a.mov_r64_r64("rdi", "rsi")
+        a.xor_r32_r32("eax", "eax")
+        a.rep_stosb()
+
         # gc_mark_top = 0
         a.mov_rax_imm64(0)
         a.mov_rip_qword_rax('gc_mark_top')

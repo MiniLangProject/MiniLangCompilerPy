@@ -2899,6 +2899,52 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
 
+def test_codegen_box_float_safepoint_spill(*, name: str, mlc_runner: Path) -> TestResult:
+    """fn_box_float must preserve its volatile XMM0 input across fn_alloc."""
+    src = mlc_runner.parent / "tests" / "gc_box_float_safepoint.ml"
+    if not src.exists():
+        return TestResult(name=name, status="FAIL", details=f"missing fixture: {src}")
+
+    with tempfile.TemporaryDirectory(prefix="mltests_box_float_") as td:
+        td_path = Path(td)
+        exe = td_path / "gc_box_float_safepoint.exe"
+        asm_path = td_path / "gc_box_float_safepoint.asm"
+        cr = compile_native(
+            mlc_runner, src, exe, timeout_s=180,
+            extra_args=[
+                '--asm', '--asm-out', str(asm_path),
+                '--gc-limit', '1', '--heap-reserve', '64m',
+                '--heap-commit', '1m', '--heap-grow', '1m',
+            ],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        if rr.returncode != 0 or "[OK] gc_box_float_safepoint: PASS" not in normalize_out(rr.stdout):
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing")
+
+        listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
+        start = listing.find("fn_box_float:")
+        end = listing.find("\nfn_", start + len("fn_box_float:"))
+        block = "" if start < 0 else listing[start:(None if end < 0 else end)]
+        spill = "movsd_membase_disp_xmm(rsp, 32, xmm0)"
+        alloc = "call fn_alloc"
+        reload = "movsd_xmm_membase_disp(xmm0, rsp, 32)"
+        spill_pos = block.find(spill)
+        alloc_pos = block.find(alloc)
+        reload_pos = block.find(reload)
+        if not (0 <= spill_pos < alloc_pos < reload_pos):
+            return TestResult(name=name, status="FAIL",
+                              details="fn_box_float does not spill/reload XMM0 around fn_alloc")
+
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
 def test_immediate_array_runtime(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime regression: immediate arrays stay semantically identical and upgrade on pointer stores."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -3225,6 +3271,9 @@ def main() -> int:
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
+    gc_reference_write_roots_ml = find_file_by_name(tests_root, "gc_reference_write_roots.ml")
+    gc_nested_graph_roots_ml = find_file_by_name(tests_root, "gc_nested_graph_roots.ml")
+    gc_float_call_roots_ml = find_file_by_name(tests_root, "gc_float_call_roots.ml")
     native_bytes_ptr_ml = find_file_by_name(tests_root, "native_bytes_ptr_smoke.ml")
     native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
@@ -3377,6 +3426,54 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="gc_periodic_test.ml (gc periodic)", status="SKIP",
                                         details="gc_periodic_test.ml not found"))
+
+    if gc_reference_write_roots_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="gc_reference_write_roots.ml (constructor/member/array roots)",
+            mlc_runner=mlc_runner,
+            ml_path=gc_reference_write_roots_ml,
+            must_contain=["[OK] gc_reference_write_roots: PASS"],
+            timeout_compile_s=120,
+            timeout_run_s=120,
+            extra_args=["--gc-limit", "1", "--heap-reserve", "16m",
+                        "--heap-commit", "64k", "--heap-grow", "64k"],
+        ))
+    else:
+        tests.append(lambda: TestResult(
+            name="gc_reference_write_roots.ml (constructor/member/array roots)",
+            status="SKIP", details="gc_reference_write_roots.ml not found"))
+
+    if gc_nested_graph_roots_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="gc_nested_graph_roots.ml (BSP-shaped deep graph roots)",
+            mlc_runner=mlc_runner,
+            ml_path=gc_nested_graph_roots_ml,
+            must_contain=["[OK] gc_nested_graph_roots: PASS"],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+            extra_args=["--gc-limit", "4m", "--heap-reserve", "256m",
+                        "--heap-commit", "4m", "--heap-grow", "4m"],
+        ))
+    else:
+        tests.append(lambda: TestResult(
+            name="gc_nested_graph_roots.ml (BSP-shaped deep graph roots)",
+            status="SKIP", details="gc_nested_graph_roots.ml not found"))
+
+    if gc_float_call_roots_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="gc_float_call_roots.ml (boxed float graph and bitmap reuse)",
+            mlc_runner=mlc_runner,
+            ml_path=gc_float_call_roots_ml,
+            must_contain=["[OK] gc_float_call_roots: PASS"],
+            timeout_compile_s=180,
+            timeout_run_s=180,
+            extra_args=["--gc-limit", "1", "--heap-reserve", "64m",
+                        "--heap-commit", "1m", "--heap-grow", "1m"],
+        ))
+    else:
+        tests.append(lambda: TestResult(
+            name="gc_float_call_roots.ml (boxed float graph and bitmap reuse)",
+            status="SKIP", details="gc_float_call_roots.ml not found"))
 
     # New error/try semantics (unhandled errors + reserved identifiers)
     tests.append(lambda: test_unhandled_error_top_level(name="unhandled error: top-level abort", mlc_runner=mlc_runner))
@@ -3617,7 +3714,9 @@ def main() -> int:
     tests.append(lambda: test_codegen_small_const_for_unroll(name="codegen: small const for loops unrolled",
                                                              mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_optimization_bundle(name="codegen: optimization bundle regressions",
-                                                          mlc_runner=mlc_runner))
+                                                           mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_box_float_safepoint_spill(
+        name="codegen: box-float XMM0 safepoint spill", mlc_runner=mlc_runner))
     tests.append(lambda: test_immediate_array_runtime(name="arrays: immediate layout + upgrade semantics", mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_literal_query_fastpaths(name="codegen: literal len/typeof/typeName fast paths",
                                                               mlc_runner=mlc_runner))

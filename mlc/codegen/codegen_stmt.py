@@ -2793,16 +2793,25 @@ class CodegenStmt:
                         raise self.error('Internal compiler error: missing emit_store_existing_global (Step 5).', s)
                     return
 
-            # Struct field write fallback (runtime checked)
-            # Evaluate object expression first (may include calls), keep in non-volatile reg r12
+            # Struct field write fallback (runtime checked).
+            #
+            # The RHS may allocate and trigger a precise collection.  A native
+            # non-volatile register is not a managed GC root, so keeping the
+            # target only in r12 lets a temporary target be reclaimed and its
+            # block reused while the RHS is still being evaluated.  Publish the
+            # target in the expression-temp root range, just like SetIndex does.
             self.emit_expr(obj_expr)
-            a.mov_r64_r64("r12", "rax")
+            target_off = self.alloc_expr_temps(8)
+            a.mov_rsp_disp32_rax(target_off)
 
             # Evaluate value, keep in non-volatile reg r13
-            self.reserve_expr_temp_regs("r12")
             self.emit_expr(getattr(s, 'expr', None))
-            self.release_expr_temp_regs("r12")
             a.mov_r64_r64("r13", "rax")
+
+            # No allocating operation follows: restore the target and shrink
+            # the published temporary-root range before the checked store.
+            a.mov_r64_membase_disp("r12", "rsp", target_off)
+            self.free_expr_temps(8)
 
             fid = self.new_label_id()
             l_fail = f"setm_fail_{fid}"
@@ -4338,6 +4347,19 @@ class CodegenStmt:
         # Initialize the one process-wide managed heap and collector metadata.
         self.emit_heap_init()
         a.call('fn_cpu_init')
+
+        # Top-level module initializers execute inline in this entry frame and
+        # use the same expression-temp arena as normal functions.  Publish that
+        # arena as a precise root frame before emitting/evaluating any module
+        # initializer.  Without this frame, a constructor such as
+        # `Outer(makeChild(), ...)` can lose the newly allocated Outer while an
+        # allocating argument is evaluated.
+        entry_root_base = self.call_temp_base
+        entry_root_static_top = self.expr_temp_base
+        self.emit_gc_clear_root_slots(entry_root_base, entry_root_static_top)
+        self.emit_gc_push_root_frame(root_rec_off, entry_root_base, entry_root_static_top)
+        self._current_root_rec_off = root_rec_off
+        self._current_root_static_qwords = (entry_root_static_top - entry_root_base) // 8
 
         # Point global function names at immutable OBJ_FUNCTION objects in .rdata.
         voidv = enc_void()

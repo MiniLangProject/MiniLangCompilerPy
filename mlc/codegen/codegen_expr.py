@@ -3476,9 +3476,15 @@ class CodegenExpr:
             a.mov_rcx_imm32(size)
             a.call('fn_alloc')
 
-            # Keep the array base in a non-volatile temp reg when possible while
-            # retaining a rooted home slot for nested allocations inside elements.
-            base_tmp = self.alloc_expr_value_temp()
+            # An element may expand an inline function body.  Statement code in
+            # that body is allowed to use r12/r13/r14 as scratch registers and
+            # does not form an ABI call boundary that restores them.  A dirty
+            # ExprValueTemp is spilled before calls, but keeping ``tmp.reg`` set
+            # would make the reload below prefer a subsequently clobbered
+            # register over its valid, published home slot.  Keep managed array
+            # bases in the shadow-rooted stack slot for the entire arbitrary
+            # element evaluation instead.
+            base_tmp = self.alloc_expr_value_temp(prefer_reg=False)
             self.expr_value_temp_store_rax(base_tmp)
 
             # base pointer in r11 for header writes
