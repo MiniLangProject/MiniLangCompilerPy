@@ -94,7 +94,7 @@ class Token:
 KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "false", "and", "or", "not", "function",
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
-            "out", "static", "inline", "synchronized", "void", "is",}
+            "out", "static", "inline", "synchronized", "void", "is", "defer",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
@@ -239,6 +239,12 @@ class Member(Expr):
     name: str
 
 
+@dataclass
+class DeferredCapture(Expr):
+    """Compiler-internal expression that reloads a captured defer operand."""
+    offset: int
+
+
 # Statements
 @dataclass
 class Stmt:
@@ -368,6 +374,14 @@ class FunctionDef(Stmt):
 @dataclass
 class Return(Stmt):
     expr: Optional[Expr]
+
+
+@dataclass
+class Defer(Stmt):
+    expr: Call
+    site_id: int = -1
+    offsets: List[int] = field(default_factory=list)
+    capture_kind: str = ""
 
 
 @dataclass
@@ -1056,6 +1070,19 @@ class Parser:
             if nxt.kind == "KW" and nxt.value in ("end", "else", "case", "default"):
                 return self._attach_pos(Return(None), start_pos)
             return self._attach_pos(Return(self.parse_expr()), start_pos)
+
+        # defer call(...)
+        #
+        # The call operands are evaluated when this statement is reached; the
+        # call itself runs in LIFO order when the surrounding function exits.
+        if t.kind == "KW" and t.value == "defer":
+            if self._func_depth <= 0:
+                raise ParseError("'defer' is only allowed inside functions", t.pos)
+            self.advance()
+            expr = self.parse_expr()
+            if not isinstance(expr, Call):
+                raise ParseError("'defer' expects a function or method call", start_pos)
+            return self._attach_pos(Defer(expr), start_pos)
 
         # extern function / extern struct (native compiler)
         if t.kind == "KW" and t.value == "extern":

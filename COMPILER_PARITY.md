@@ -51,6 +51,8 @@ had identical size and SHA-256, and both executables exited successfully.
 | `member_callable_direct.ml` | 74,240 | `E7BB9F9784CE7A335E28E8F57715A03E8CDD9836E61288A8CB36D40CE212D73E` |
 | `codegen_phase_gc.ml` | 466,432 | `3303AEABD5607CF614755764798531D1EDF95715C8DB2600893F07D534E9A98D` |
 | `compiler_gc_liveness.ml` (`--gc-limit 1m`) | 165,376 | `D53E124E6105691AEE16FD859AF21EFBBDFB0BCEC113F46C2ED38E2AC4B61FA9` |
+| `defer_features.ml` | 83,456 | `5BB15FB39983A1752CA7C33900CB9B85E3E404046F21B0927FC11137DC1F4B56` |
+| `extern_out_runtime.ml` | 74,240 | `A6E02746D93EE638E314ADC535EA314EE15BD413C5D52C680B82CCCE3DE86211` |
 
 This coverage includes imports and the standard library, closures, inline
 functions, structs, enums, GC, extern declarations, native interop, real Win32
@@ -76,16 +78,16 @@ same heap and GC options for this comparison.
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Python-built MiniLang compiler | 53,053,440 | `8DA51A2E4F8BD9E845F38532329194747264ED21B22676C9EBD3DCE1C9CAAD61` |
-| MiniLang self-build through `build.ps1` / `.mlo` | 53,514,752 | `1C15CC446E1A15C16CE84938B6961A287245750FD4072501313409BEFC5E9F05` |
+| Python-built MiniLang compiler | 54,276,608 | `E87580A31690233D7BEBF0234A82C844E05207A08302FE845A5B35E80A03C0A6` |
+| MiniLang self-build through `build.ps1` / `.mlo` | 54,773,248 | `64283A3A46E43B16BE910B5DD254BF350781E522C8F3B7879086FC0344546119` |
 
 The compiler images differ because the supported self-build is linked from
-`.mlo` objects while the Python bootstrap emits one monolithic image. Both subsequently compiled
-`type_checks.ml` to the same 143,360-byte target with SHA-256
-`DF9E884456F25C90D384B18AF46BBB7F00E760683FF8E56D384BDB2E40748633`.
-Two consecutive MiniLang object-pipeline self-build stages were byte-identical
-at 53,514,752 bytes with the hash shown above, so that supported self-host path
-does reach a binary fixed point.
+`.mlo` objects while the Python bootstrap emits one monolithic image. Both
+subsequently compiled `language_suite.ml`, `defer_features.ml` and
+`extern_out_runtime.ml` to the byte-identical target hashes listed above. Two
+consecutive current MiniLang object-pipeline self-build stages were
+byte-identical at 54,773,248 bytes with the hash shown above, so the supported
+self-host path reaches a binary fixed point.
 
 A monolithic self-build was also attempted with the earlier 4 GiB bootstrap
 heap and exhausted it before producing an executable. Self-builds
@@ -99,6 +101,12 @@ No existing feature was removed. The synchronized surface includes:
 
 - aliased explicit-file and relative imports;
 - stricter extern ABI validation and positive/negative fixtures;
+- native scalar/managed-struct marshaling for omitted trailing `out`
+  parameters, including BOOL failure propagation;
+- LIFO `defer` cleanup with call-time captures on return, fall-through and
+  automatic error propagation;
+- TOML project manifests with content-validated incremental artifact caching
+  and optional self-hosted `.mlo` builds;
 - native bytes pointers, raw-value conversion and callback smoke coverage;
 - `array(size[, fill])` construction;
 - global function-value rebinding;
@@ -164,25 +172,31 @@ object-emission reduction. A consecutive second self-build took 230.850
 seconds; both 52,948,992-byte compiler images were byte-identical with SHA-256
 `0325E633D03B2BBAACBEB47F503CB0E774580D3F9CB0F5F6E7047FD64387F9B3`.
 
-After the subsequent GC-root parity synchronization, the current source was
-validated again through two consecutive self-host stages. They completed in
+After the earlier GC-root parity synchronization, that source revision was
+validated through two consecutive self-host stages. They completed in
 162.501 and 208.573 seconds and produced identical 53,514,752-byte compiler
 images with SHA-256
 `1C15CC446E1A15C16CE84938B6961A287245750FD4072501313409BEFC5E9F05`.
+
+With `defer`, managed extern-out marshaling and project manifests included, the
+final two fully current stages took 326.648 and 278.837 seconds, emitted 293
+objects each and were byte-identical at 54,773,248 bytes with SHA-256
+`64283A3A46E43B16BE910B5DD254BF350781E522C8F3B7879086FC0344546119`.
 
 ## Tests
 
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 91, FAIL 0, SKIP 0
-MiniLang harness:  PASS 90, FAIL 0
+Python harness:    PASS 94, FAIL 0, SKIP 0
+MiniLang harness:  PASS 93, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
                    managed argument publication/GC PASS 30/30 processes
 ```
 
-The current MiniQuake regression was also rebuilt end to end through the
+The most recent MiniQuake regression (before the three language/tooling
+additions documented above) was rebuilt end to end through the
 MiniLang `.mlo` object pipeline: 112 modules / 656 objects linked successfully
 in 420.095 seconds. Planning took 35.109 seconds, object emission 283.657
 seconds and the fresh linker process 99.250 seconds; label resolution and patch
@@ -191,7 +205,7 @@ resulting 59,706,880-byte PE has SHA-256
 `2CDD41475932CCC2A2EFBF2FCAAF36844DDD1AE96577E2D55CA57FE5595B9A2F`;
 its `--help` runtime smoke exited with code 0. The matching Python monolithic
 build took 69.089 seconds, leaving a measured 6.08x self-host gap. Object-pipeline
-layout is outside the cross-compiler byte-identity contract, while all 23
+layout is outside the cross-compiler byte-identity contract, while all 25
 current monolithic parity targets above matched exactly.
 
 The counters differ because the Python runner counts host-side tests

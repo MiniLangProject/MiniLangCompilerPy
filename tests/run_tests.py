@@ -344,6 +344,43 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
+def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
+    """A manifest build must compile, run, restore, and invalidate safely."""
+    with tempfile.TemporaryDirectory(prefix="mltests_project_") as td:
+        root = Path(td)
+        source = root / "main.ml"
+        output = root / "build" / "app.exe"
+        manifest = root / "minilang.toml"
+        source.write_text('print "manifest v1 [OK]"\n', encoding="utf-8")
+        manifest.write_text(
+            '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
+            'incremental = true\ncache_dir = ".cache"\n', encoding="utf-8")
+        cmd = [sys.executable, str(mlc_runner), "--project", str(manifest)]
+        first = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if first.returncode != 0 or not output.is_file():
+            return TestResult(name=name, status="FAIL", details="initial manifest build failed",
+                              stdout=first.stdout, stderr=first.stderr)
+        output.unlink()
+        hit = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if hit.returncode != 0 or "cache hit" not in normalize_out(hit.stdout).lower() or not output.is_file():
+            return TestResult(name=name, status="FAIL", details="cache restore failed",
+                              stdout=hit.stdout, stderr=hit.stderr)
+        run1 = run_exe(output)
+        if run1.returncode != 0 or "manifest v1 [OK]" not in normalize_out(run1.stdout):
+            return TestResult(name=name, status="FAIL", details="restored program failed", stdout=run1.stdout,
+                              stderr=run1.stderr)
+        source.write_text('print "manifest v2 [OK]"\n', encoding="utf-8")
+        changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if changed.returncode != 0 or "cache hit" in normalize_out(changed.stdout).lower():
+            return TestResult(name=name, status="FAIL", details="source change did not invalidate cache",
+                              stdout=changed.stdout, stderr=changed.stderr)
+        run2 = run_exe(output)
+        if run2.returncode != 0 or "manifest v2 [OK]" not in normalize_out(run2.stdout):
+            return TestResult(name=name, status="FAIL", details="rebuilt program is stale", stdout=run2.stdout,
+                              stderr=run2.stderr)
+        return TestResult(name=name, status="PASS", stdout=changed.stdout, stderr=changed.stderr)
+
+
 # -----------------------------
 # Individual tests
 # -----------------------------
@@ -3506,6 +3543,15 @@ def main() -> int:
     ))
 
     tests.append(lambda: test_asm_listing_cli(name="CLI: assembly/PE/data listing", mlc_runner=mlc_runner))
+    tests.append(lambda: test_project_manifest_cli(name="CLI: project manifest + incremental cache",
+                                                   mlc_runner=mlc_runner))
+
+    tests.append(lambda: test_program_no_fail(
+        name="defer: LIFO, capture, conditional and return cleanup",
+        mlc_runner=mlc_runner,
+        ml_path=tests_root / "defer_features.ml",
+        must_contain=["77", "20", "30", "10"],
+    ))
 
     tests.append(lambda: test_program_no_fail(
         name="extern ABI: out annotation preserves callable arity",
@@ -3530,6 +3576,12 @@ def main() -> int:
         mlc_runner=mlc_runner,
         entry_ml=tests_root / "extern_abi_validation_bad_param.ml",
         must_contain_err="unsupported ABI type",
+    ))
+    tests.append(lambda: test_program_no_fail(
+        name="extern ABI: implicit struct out value",
+        mlc_runner=mlc_runner,
+        ml_path=tests_root / "extern_out_runtime.ml",
+        must_contain=["true", "int"],
     ))
 
     if aes_ml is not None:

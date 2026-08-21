@@ -836,6 +836,11 @@ class CodegenStmt:
             return 2 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
         if isinstance(st, getattr(ml, 'Return', ())):
             return 1 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
+            # A deferred call needs a real function epilogue and must never be
+            # expanded into the caller's inline-return label.
+            stats['has_nested_fn'] = True
+            return 24 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
         if isinstance(st, getattr(ml, 'SetMember', ())):
             return 6 + self._inline_collect_expr_stats(getattr(st, 'obj', None), stats) + self._inline_collect_expr_stats(
                 getattr(st, 'expr', None), stats)
@@ -1208,6 +1213,8 @@ class CodegenStmt:
                     stmt_list(getattr(st, 'default_body', []) or [])
                 elif hasattr(ml, 'Return') and isinstance(st, ml.Return):
                     expr(getattr(st, 'expr', None))
+                elif hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
+                    expr(getattr(st, 'expr', None))
 
         stmt_list(stmts)
         return used
@@ -1417,6 +1424,12 @@ class CodegenStmt:
                     continue
 
                 if hasattr(ml, 'Return') and isinstance(st, ml.Return):
+                    rr: set[str] = set()
+                    expr_reads(getattr(st, 'expr', None), rr)
+                    note_reads(rr)
+                    continue
+
+                if hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
                     rr: set[str] = set()
                     expr_reads(getattr(st, 'expr', None), rr)
                     note_reads(rr)
@@ -1660,6 +1673,187 @@ class CodegenStmt:
             if not hasattr(self, "_scope_stack") or not self._scope_stack:
                 raise self.error("Internal error: scope stack not initialized", fn)
             self._scope_stack[-1][name] = b
+
+    def _collect_defer_sites(self, fn: Any) -> list[Any]:
+        """Collect defer sites in execution order and reject repeated loop sites."""
+        ml = self.ml
+        sites: list[Any] = []
+
+        def walk(stmts: list[Any], in_loop: bool = False) -> None:
+            for st in list(stmts or []):
+                if hasattr(ml, 'FunctionDef') and isinstance(st, ml.FunctionDef):
+                    continue
+                if hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
+                    if in_loop:
+                        raise self.error("'defer' inside a loop is not supported; move it into a helper function", st)
+                    call = getattr(st, 'expr', None)
+                    if not isinstance(call, ml.Call):
+                        raise self.error("'defer' expects a function or method call", st)
+                    st.site_id = len(sites)
+                    sites.append(st)
+                    continue
+                if isinstance(st, ml.If):
+                    walk(st.then_body, in_loop)
+                    for _cond, body in st.elifs:
+                        walk(body, in_loop)
+                    walk(st.else_body, in_loop)
+                elif isinstance(st, (ml.While, ml.DoWhile, ml.For)) or self._is_foreach_stmt(st):
+                    walk(list(getattr(st, 'body', []) or []), True)
+                elif isinstance(st, ml.Switch):
+                    for cs in st.cases:
+                        walk(cs.body, in_loop)
+                    walk(st.default_body, in_loop)
+
+        walk(list(getattr(fn, 'body', []) or []), False)
+        return sites
+
+    def _defer_static_callee(self, callee: Any) -> bool:
+        """Whether a deferred callee is a compile-time symbol, not a value."""
+        ml = self.ml
+        if isinstance(callee, ml.Var):
+            raw = str(getattr(callee, 'name', '') or '')
+            candidates = [raw]
+            try:
+                aliased = self._apply_import_alias(raw)
+                if aliased not in candidates:
+                    candidates.append(aliased)
+            except Exception:
+                pass
+            for pref_name in ('current_qname_prefix', 'current_file_prefix'):
+                pref = str(getattr(self, pref_name, '') or '')
+                if pref:
+                    if not pref.endswith('.'):
+                        pref += '.'
+                    candidates.extend(pref + qn for qn in list(candidates))
+            pools = ('user_functions', 'extern_sigs', 'struct_fields')
+            if any(qn in (getattr(self, pool, {}) or {}) for qn in candidates for pool in pools):
+                return True
+            # A lexical binding is a first-class callable and must be frozen.
+            try:
+                if self.resolve_binding(raw) is not None:
+                    return False
+            except Exception:
+                pass
+            return True
+
+        if not isinstance(callee, ml.Member):
+            return False
+
+        parts: list[str] = []
+        cur = callee
+        while isinstance(cur, ml.Member):
+            parts.append(str(cur.name))
+            cur = cur.target
+        if not isinstance(cur, ml.Var):
+            return False
+        parts.append(str(cur.name))
+        raw = '.'.join(reversed(parts))
+        try:
+            raw = self._apply_import_alias(raw)
+        except Exception:
+            pass
+        candidates = [raw]
+        for pref_name in ('current_qname_prefix', 'current_file_prefix'):
+            pref = str(getattr(self, pref_name, '') or '')
+            if pref:
+                if not pref.endswith('.'):
+                    pref += '.'
+                candidates.append(pref + raw)
+        pools = ('user_functions', 'extern_sigs', 'struct_fields')
+        return any(qn in (getattr(self, pool, {}) or {}) for qn in candidates for pool in pools)
+
+    def _emit_defer_registration(self, stmt: Any) -> None:
+        ml = self.ml
+        call = stmt.expr
+        offsets = list(getattr(stmt, 'offsets', []) or [])
+        if len(offsets) != len(call.args) + 2:
+            raise self.error('Internal compiler error: invalid defer frame layout', stmt)
+
+        callee = call.callee
+        if self._defer_static_callee(callee):
+            kind = 'static'
+            captures = [None] + list(call.args)
+        elif isinstance(callee, ml.Member):
+            kind = 'member'
+            captures = [callee.target] + list(call.args)
+        else:
+            kind = 'dynamic'
+            captures = [callee] + list(call.args)
+        stmt.capture_kind = kind
+
+        # Slot zero is the active flag; remaining slots freeze callee/receiver
+        # and arguments before the site becomes active.
+        for i, operand in enumerate(captures):
+            if operand is None:
+                self.asm.mov_rax_imm64(enc_void())
+            else:
+                self.emit_expr(operand)
+            self.asm.mov_rsp_disp32_rax(offsets[i + 1])
+        self.asm.mov_rax_imm64(enc_bool(True))
+        self.asm.mov_rsp_disp32_rax(offsets[0])
+
+    def _defer_replay_call(self, stmt: Any) -> Any:
+        ml = self.ml
+        call = stmt.expr
+        offsets = list(stmt.offsets)
+
+        def captured(off: int) -> Any:
+            node = ml.DeferredCapture(int(off))
+            setattr(node, '_pos', getattr(stmt, '_pos', None))
+            setattr(node, '_filename', getattr(stmt, '_filename', None))
+            return node
+
+        kind = str(getattr(stmt, 'capture_kind', '') or '')
+        if kind == 'static':
+            callee = call.callee
+        elif kind == 'member':
+            callee = ml.Member(captured(offsets[1]), call.callee.name)
+        else:
+            callee = captured(offsets[1])
+        replay = ml.Call(callee, [captured(offsets[i + 2]) for i in range(len(call.args))])
+        setattr(replay, '_pos', getattr(stmt, '_pos', None))
+        setattr(replay, '_filename', getattr(stmt, '_filename', None))
+        setattr(replay, '_line', getattr(stmt, '_line', None))
+        return replay
+
+    def _emit_defer_cleanup(self, sites: list[Any], ret_off: int) -> None:
+        """Run active sites in LIFO order while preserving/propagating errors."""
+        a = self.asm
+        a.mov_rsp_disp32_rax(ret_off)
+        old_suppression = int(getattr(self, '_errprop_suppression', 0) or 0)
+        self._errprop_suppression = old_suppression + 1
+        try:
+            for stmt in reversed(sites):
+                skip = f"defer_skip_{self.new_label_id()}"
+                noerr = f"defer_noerr_{self.new_label_id()}"
+                active_off = int(stmt.offsets[0])
+                a.mov_rax_rsp_disp32(active_off)
+                a.cmp_rax_imm8(enc_bool(True))
+                a.jcc('ne', skip)
+                # Clear before invoking user code so this cleanup cannot replay
+                # the same site if a future non-local exit mechanism is added.
+                a.mov_rax_imm64(enc_void())
+                a.mov_rsp_disp32_rax(active_off)
+                self.emit_expr(self._defer_replay_call(stmt))
+
+                # A deferred call's error replaces the pending result, but all
+                # earlier deferred calls still run.
+                a.mov_r64_r64('r10', 'rax')
+                a.and_r64_imm('r10', 7)
+                a.cmp_r64_imm('r10', TAG_PTR)
+                a.jcc('ne', noerr)
+                a.mov_r32_membase_disp('r10d', 'rax', 0)
+                a.cmp_r32_imm('r10d', OBJ_STRUCT)
+                a.jcc('ne', noerr)
+                a.mov_r32_membase_disp('r10d', 'rax', 4)
+                a.cmp_r32_imm('r10d', ERROR_STRUCT_ID)
+                a.jcc('ne', noerr)
+                a.mov_rsp_disp32_rax(ret_off)
+                a.mark(noerr)
+                a.mark(skip)
+        finally:
+            self._errprop_suppression = old_suppression
+        a.mov_rax_rsp_disp32(ret_off)
 
     def emit_stmt(self, s: Any) -> None:
         ml = self.ml
@@ -3350,6 +3544,12 @@ class CodegenStmt:
             a.jmp(self.func_ret_label)
             return
 
+        if hasattr(ml, 'Defer') and isinstance(s, ml.Defer):
+            if not self.in_function:
+                raise self.error("'defer' outside function", s)
+            self._emit_defer_registration(s)
+            return
+
         # extern function ... (top-level only; declaration-only)
         if hasattr(ml, 'ExternFunctionDef') and isinstance(s, ml.ExternFunctionDef):
             if bool(getattr(self, 'in_function', False)):
@@ -4155,6 +4355,15 @@ class CodegenStmt:
             if isinstance(e, self.ml.Call):
                 call_arity = len(e.args)
                 try:
+                    ext_qn = _expr_to_qualname(ml, e.callee)
+                    if isinstance(ext_qn, str):
+                        ext_qn = self._apply_import_alias(ext_qn)
+                    ext_sig = (getattr(self, 'extern_sigs', {}) or {}).get(ext_qn)
+                    if isinstance(ext_sig, dict):
+                        call_arity = max(call_arity, len(list(ext_sig.get('params', []) or [])))
+                except Exception:
+                    pass
+                try:
                     cal = e.callee
                     if isinstance(cal, self.ml.Member):
                         mname = getattr(cal, 'name', None)
@@ -4244,6 +4453,8 @@ class CodegenStmt:
                 elif isinstance(ss, self.ml.Return):
                     if ss.expr is not None:
                         m = max(m, max_calls_expr(ss.expr))
+                elif hasattr(self.ml, 'Defer') and isinstance(ss, self.ml.Defer):
+                    m = max(m, max_calls_expr(ss.expr))
                 elif isinstance(ss, (self.ml.Break, self.ml.Continue, self.ml.FunctionDef)):
                     pass
             return m
@@ -4748,6 +4959,8 @@ class CodegenStmt:
         if not isinstance(fn, ml.FunctionDef):
             return
 
+        defer_sites = self._collect_defer_sites(fn)
+
         # ---- maximum call arity inside this function ----
         def max_calls_expr(e):
             m = 0
@@ -4763,6 +4976,15 @@ class CodegenStmt:
 
             if isinstance(e, ml.Call):
                 call_arity = len(e.args)
+                try:
+                    ext_qn = _expr_to_qualname(ml, e.callee)
+                    if isinstance(ext_qn, str):
+                        ext_qn = self._apply_import_alias(ext_qn)
+                    ext_sig = (getattr(self, 'extern_sigs', {}) or {}).get(ext_qn)
+                    if isinstance(ext_sig, dict):
+                        call_arity = max(call_arity, len(list(ext_sig.get('params', []) or [])))
+                except Exception:
+                    pass
                 try:
                     cal = e.callee
                     if hasattr(ml, 'Member') and isinstance(cal, ml.Member):
@@ -4856,6 +5078,8 @@ class CodegenStmt:
                         m = max(m, max_calls_stmts(cs.body))
                     m = max(m, max_calls_stmts(st.default_body))
                 elif isinstance(st, ml.Return):
+                    m = max(m, max_calls_expr(st.expr))
+                elif hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
                     m = max(m, max_calls_expr(st.expr))
                 elif isinstance(st, ml.FunctionDef):
                     # ignore nested defs (unsupported in native)
@@ -5116,6 +5340,9 @@ class CodegenStmt:
                 if isinstance(st, ml.Return):
                     analyze_expr(st.expr)
                     continue
+                if hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
+                    analyze_expr(st.expr)
+                    continue
                 if isinstance(st, ml.If):
                     analyze_expr(st.cond)
                     # then
@@ -5283,6 +5510,18 @@ class CodegenStmt:
 
         # call-temp slots: spill evaluated call arguments
         call_temp_base = params_base + len(fn.params) * 8
+        defer_ret_off = -1
+        if defer_sites:
+            # The pending return plus every active flag/captured operand are part
+            # of the published GC root prefix.
+            defer_ret_off = call_temp_base
+            defer_cursor = defer_ret_off + 8
+            for site in defer_sites:
+                call = site.expr
+                slot_count = len(call.args) + 2  # active + callee/receiver + args
+                site.offsets = [defer_cursor + i * 8 for i in range(slot_count)]
+                defer_cursor += slot_count * 8
+            call_temp_base = defer_cursor
         # Keep the always-published GC prefix to the call arity actually used.
         call_temp_bytes = align_up(max_call_args * 8, 16)
 
@@ -5303,6 +5542,7 @@ class CodegenStmt:
 
         fn_label = f"fn_user_{code_name}"
         ret_label = f"fn_ret_{code_name}"
+        defer_label = f"fn_defer_{code_name}" if defer_sites else ret_label
 
         a.mark(fn_label)
 
@@ -5443,7 +5683,7 @@ class CodegenStmt:
         self.in_function = True
         self.func_param_offsets = {}
         self.func_local_offsets = {}
-        self.func_ret_label = ret_label
+        self.func_ret_label = defer_label
         self.call_temp_base = call_temp_base
         self.expr_temp_base = expr_temp_base
         self.expr_temp_top = 0
@@ -5632,7 +5872,12 @@ class CodegenStmt:
 
         # Default return void
         a.mov_rax_imm64(enc_void())
-        a.jmp(ret_label)
+        a.jmp(defer_label)
+
+        if defer_sites:
+            a.mark(defer_label)
+            self._emit_defer_cleanup(defer_sites, defer_ret_off)
+            a.jmp(ret_label)
 
         self.emit_deferred_cold_blocks()
         self.pop_cold_block_scope()

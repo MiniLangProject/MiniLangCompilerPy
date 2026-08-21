@@ -18,6 +18,7 @@ from mlc.codegen import Codegen
 from .errors import CompileError, Diagnostic, MultiCompileError
 from .frontend import load_minilang_frontend, parse_program, normalize_code_for_tokenizer
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
+from .project import ProjectError, expand_project_args, fingerprint as project_fingerprint, restore as project_restore, store as project_store
 from .tools import u32, u64
 
 
@@ -1778,12 +1779,20 @@ def _parse_asm_cols(spec: Optional[str]) -> tuple[bool, bool, bool]:
 
 
 def main(argv: List[str]) -> int:
+    try:
+        argv, project_build = expand_project_args(argv)
+    except ProjectError as e:
+        print(f"ProjectError: {e}")
+        return 2
+
     parser = argparse.ArgumentParser(
         prog='mlc_win64.py',
         description='MiniLang native compiler (Windows x64)',
     )
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output .exe file')
+    parser.add_argument('--object-pipeline', action='store_true',
+                        help='accepted for project parity; Python emits the equivalent monolithic image')
 
     parser.add_argument('-I', '--import-path', dest='include_dirs', action='append', default=[], metavar='DIR',
                         help='Add DIR to import search paths (may be repeated).')
@@ -1831,6 +1840,8 @@ def main(argv: List[str]) -> int:
 
     inp = args.input
     out = args.output
+    if project_build is not None:
+        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 
     include_dirs: List[str] = []
     for d in getattr(args, 'include_dirs', []) or []:
@@ -1845,6 +1856,18 @@ def main(argv: List[str]) -> int:
     if not os.path.isfile(inp):
         print(f'Input file not found: {inp}')
         return 1
+
+    project_digest = ""
+    project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels)
+    if project_cache_enabled:
+        try:
+            project_digest = project_fingerprint(project_build, inp, include_dirs)
+            if project_restore(project_build, project_digest, out):
+                print(f"OK: cache hit; restored {out}")
+                return 0
+        except OSError as e:
+            print(f"ProjectError: cannot fingerprint project: {e}")
+            return 2
 
     # resolve listing columns
     try:
@@ -1993,6 +2016,12 @@ def main(argv: List[str]) -> int:
 
         # Non-position exceptions: keep it clean (or print traceback if you have a flag)
         print(f"{kind}: {e}")
+        return 2
+
+    try:
+        project_store(project_build if project_cache_enabled else None, project_digest, out)
+    except OSError as e:
+        print(f"ProjectError: cannot update incremental cache: {e}")
         return 2
 
     print(f"OK: wrote {out} (native x64 PE, MiniLang python compiler version v1.0)")

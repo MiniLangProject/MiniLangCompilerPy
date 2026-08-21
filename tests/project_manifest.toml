@@ -1,0 +1,8 @@
+[project]
+entry = "project_manifest_main.ml"
+output = "../build/project_manifest_test.exe"
+include = [".."]
+subsystem = "console"
+object_pipeline = false
+incremental = true
+cache_dir = "../build/project-manifest-cache"

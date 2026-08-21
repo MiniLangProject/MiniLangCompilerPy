@@ -894,7 +894,12 @@ class CodegenExpr:
         On type mismatch, jumps to `fail_label`.
         """
         a = self.asm
-        t = self._abi_ty_to_str(abi_ty).strip().lower()
+        raw_t = self._abi_ty_to_str(abi_ty).strip()
+        t = raw_t.lower()
+        if raw_t in (getattr(self, 'extern_structs', {}) or {}):
+            # Explicit struct out arguments use a caller-provided native pointer;
+            # omitted struct outs are lowered to compiler-owned stack storage.
+            t = 'ptr'
 
         # r10 = tag (low 3 bits)
         a.mov_r64_r64("r10", "rax")
@@ -1295,6 +1300,50 @@ class CodegenExpr:
 
         raise CompileError(f"Unsupported extern return type '{self._abi_ty_to_str(ret_ty) or str(ret_ty)}'", pos)
 
+    def _emit_extern_out_from_stack(self, abi_ty: Any, stack_off: int, pos: Any) -> None:
+        """Load one implicit out value from native stack storage into RAX."""
+        a = self.asm
+        ty_raw = self._abi_ty_to_str(abi_ty).strip()
+        ty = ty_raw.lower()
+        ext = (getattr(self, 'extern_structs', {}) or {}).get(ty_raw)
+        if ext is None:
+            # Qualified names are case-sensitive, scalar ABI names are not.
+            ext = (getattr(self, 'extern_structs', {}) or {}).get(str(abi_ty))
+
+        if isinstance(ext, dict):
+            names = list(ext.get('fields', []) or ext.get('names', []) or ext.get('field_names', []) or [])
+            types = list(ext.get('types', []) or ext.get('field_types', []) or [])
+            offsets = list(ext.get('offsets', []) or [])
+            sid = int((getattr(self, 'struct_id', {}) or {}).get(ty_raw, 0) or 0)
+            if sid == 0 or len(names) != len(types) or len(names) != len(offsets):
+                raise CompileError(f"Invalid extern struct layout for '{ty_raw}'", pos)
+            base_off = self.alloc_expr_temps(8)
+            a.mov_rcx_imm32(8 + len(names) * 8)
+            a.call('fn_alloc')
+            a.mov_rsp_disp32_rax(base_off)
+            a.mov_r11_rax()
+            a.mov_membase_disp_imm32('r11', 0, OBJ_STRUCT, qword=False)
+            a.mov_membase_disp_imm32('r11', 4, sid, qword=False)
+            for i, (fty, foff) in enumerate(zip(types, offsets)):
+                self._emit_extern_out_from_stack(fty, int(stack_off) + int(foff), pos)
+                a.mov_r64_membase_disp('r11', 'rsp', base_off)
+                a.mov_membase_disp_r64('r11', 8 + i * 8, 'rax')
+            a.mov_rax_rsp_disp32(base_off)
+            self.free_expr_temps(8)
+            return
+
+        if ty == 'double':
+            a.movsd_xmm_membase_disp('xmm0', 'rsp', int(stack_off))
+            self.emit_force_xmm0_to_float_value()
+            return
+        if ty in ('i32', 'u32', 'bool'):
+            a.mov_r32_membase_disp('eax', 'rsp', int(stack_off))
+        else:
+            a.mov_rax_rsp_disp32(int(stack_off))
+        if ty in ('bytes', 'buffer', 'bytebuffer'):
+            ty = 'ptr'
+        self._emit_extern_ret_from_native(ty, pos)
+
     def _emit_extern_call(self, e: Any, callee_name: str) -> None:
         """Emit a direct call to an `extern function` via the PE import table (IAT)."""
         threaded_native = bool(getattr(self, 'native_threads_possible', True))
@@ -1309,9 +1358,15 @@ class CodegenExpr:
         dll = sig.get("dll", "")
         symbol = sig.get("symbol", callee_name)
 
-        if len(e.args) != len(params):
+        if len(e.args) > len(params):
             raise CompileError(
                 f"Extern call arity mismatch: {callee_name} expects {len(params)} args, got {len(e.args)}", e.pos, )
+
+        given = len(e.args)
+        omitted = list(range(given, len(params)))
+        if any(not (isinstance(params[i], dict) and bool(params[i].get('out', False))) for i in omitted):
+            raise CompileError(
+                f"Extern call arity mismatch: {callee_name} expects {len(params)} args, got {given}", e.pos, )
 
         a = self.asm
         fail_label = f"L_extern_fail_{self.new_label_id()}"
@@ -1319,8 +1374,25 @@ class CodegenExpr:
         done_label = f"L_extern_done_{self.new_label_id()}"
 
         # Root-stash original MiniLang arg values so later arg evaluation can't GC-free them.
-        roots_size = max(0, len(params) * 8)
+        roots_size = max(0, given * 8)
         roots_off = self.alloc_expr_temps(roots_size) if roots_size else 0
+
+        out_offsets: dict[int, int] = {}
+        out_sizes: dict[int, int] = {}
+        out_bytes = 0
+        for i in omitted:
+            ty_raw = self._abi_ty_to_str(params[i]).strip()
+            layout = (getattr(self, 'extern_structs', {}) or {}).get(ty_raw)
+            size = int((layout or {}).get('size', 8) or 8) if isinstance(layout, dict) else 8
+            align = int((layout or {}).get('align', 8) or 8) if isinstance(layout, dict) else min(size, 8)
+            out_bytes = align_up(out_bytes, max(1, align))
+            out_offsets[i] = out_bytes
+            out_sizes[i] = max(1, size)
+            out_bytes += max(8, align_up(size, 8))
+        out_base = self.alloc_expr_temps(out_bytes) if out_bytes else 0
+        if out_bytes:
+            for zoff in range(0, out_bytes, 8):
+                a.mov_membase_disp_imm32('rsp', out_base + zoff, 0, qword=True)
 
         # Pick stable temp wide buffers for wstr args.
         wpool = getattr(self, "ext_widebuf_labels", None) or ["widebuf"]
@@ -1345,6 +1417,14 @@ class CodegenExpr:
                 a.shl_rax_imm8(3)
                 a.or_rax_imm8(TAG_INT)
                 a.mov_membase_disp_r64("rsp", self.call_temp_base + i * 8, "rax")
+
+        # Omitted trailing out parameters receive pointers to zeroed, thread-local
+        # native storage in the current MiniLang stack frame.
+        for i in omitted:
+            a.lea_r64_membase_disp('rax', 'rsp', out_base + out_offsets[i])
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            a.mov_membase_disp_r64('rsp', self.call_temp_base + i * 8, 'rax')
 
         # Native code may block indefinitely. Publish a stable stack-root chain
         # before entering it so stop-the-world GC need not wait for the OS call.
@@ -1374,8 +1454,40 @@ class CodegenExpr:
         if threaded_native:
             a.call('fn_gc_native_leave')
 
-        # Marshal return value back into MiniLang representation.
-        self._emit_extern_ret_from_native(ret_ty, e.pos)
+        # Marshal either the native return value (legacy/full-arity call) or the
+        # implicitly allocated out values. A false BOOL return is treated as a
+        # failed out operation, which matches the common Win32 API convention.
+        if omitted:
+            out_ok = f"L_extern_out_ok_{self.new_label_id()}"
+            if self._abi_ty_to_str(ret_ty).strip().lower() == 'bool':
+                a.test_r64_r64('rax', 'rax')
+                a.jcc('ne', out_ok)
+                self._emit_make_error_const(
+                    ERR_EXTERN_CONVERSION,
+                    f"Extern out call failed: {callee_name} returned false",
+                )
+                a.jmp(cleanup_label)
+                a.mark(out_ok)
+
+            if len(omitted) == 1:
+                oi = omitted[0]
+                self._emit_extern_out_from_stack(params[oi], out_base + out_offsets[oi], e.pos)
+            else:
+                arr_root = self.alloc_expr_temps(8)
+                a.mov_rcx_imm32(8 + len(omitted) * 8)
+                a.call('fn_alloc')
+                a.mov_rsp_disp32_rax(arr_root)
+                a.mov_r11_rax()
+                a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+                a.mov_membase_disp_imm32('r11', 4, len(omitted), qword=False)
+                for j, oi in enumerate(omitted):
+                    self._emit_extern_out_from_stack(params[oi], out_base + out_offsets[oi], e.pos)
+                    a.mov_r64_membase_disp('r11', 'rsp', arr_root)
+                    a.mov_membase_disp_r64('r11', 8 + j * 8, 'rax')
+                a.mov_rax_rsp_disp32(arr_root)
+                self.free_expr_temps(8)
+        else:
+            self._emit_extern_ret_from_native(ret_ty, e.pos)
         a.jmp(cleanup_label)
 
         a.mark(fail_label)
@@ -1383,6 +1495,8 @@ class CodegenExpr:
                                     f"Extern call failed: {callee_name} (argument type mismatch or conversion failure)", )
 
         a.mark(cleanup_label)
+        if out_bytes:
+            self.free_expr_temps(out_bytes)
         if roots_size:
             self.free_expr_temps(roots_size)
 
@@ -1827,6 +1941,13 @@ class CodegenExpr:
         """Emit code so that RAX contains the Value."""
         ml = self.ml
         a = self.asm
+
+        # Internal operand used by the defer epilogue.  It deliberately bypasses
+        # name lookup: the value was captured in a GC-visible function-frame slot
+        # when the defer statement was reached.
+        if hasattr(ml, 'DeferredCapture') and isinstance(e, ml.DeferredCapture):
+            a.mov_rax_rsp_disp32(int(getattr(e, 'offset', 0) or 0))
+            return
 
         # Step 4: constant folding (safe subset).
         try:
@@ -5881,9 +6002,21 @@ class CodegenExpr:
                     b = None
                 if b is None or getattr(b, "kind", None) == "global":
                     sig = self.extern_sigs.get(callee_name) or {}
-                    expected = len(list(sig.get("params", []) or []))
-                    if len(call_args) != expected:
-                        raise self.error(f"Extern {callee_name} expects {expected} args, got {len(call_args)}", e)
+                    ext_params = list(sig.get("params", []) or [])
+                    expected = len(ext_params)
+                    required = expected
+                    while required > 0:
+                        p = ext_params[required - 1]
+                        if not (isinstance(p, dict) and bool(p.get('out', False))):
+                            break
+                        required -= 1
+                    if not (required <= len(call_args) <= expected):
+                        want = str(expected) if required == expected else f"{required}..{expected}"
+                        raise self.error(f"Extern {callee_name} expects {want} args, got {len(call_args)}", e)
+                    if len(call_args) < expected:
+                        self._emit_extern_call(e, callee_name)
+                        self._emit_auto_errprop()
+                        return
 
             # Indirect call: evaluate callee expression to a function value and call via code_ptr.
             #
