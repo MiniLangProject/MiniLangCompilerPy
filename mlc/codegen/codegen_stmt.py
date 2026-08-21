@@ -922,12 +922,18 @@ class CodegenStmt:
         return stats
 
     def _analyze_inline_only_functions(self, program: List[Any]) -> set[str]:
-        """Find inline functions whose address is never used as a value.
+        """Return functions eligible for native-body pruning.
 
-        Final pruning is intentionally deferred until after code emission: a
-        function is removed only when it was really expanded and no rel32/rip32
-        patch still targets its native entry label.
+        Native-body pruning is deliberately disabled. A source-level address
+        scan cannot prove that imported aliases, callable objects and late
+        post-budget fallbacks are unreachable. Keeping the small out-of-line
+        body preserves bounded inlining while making every callable relocation
+        safe by construction.
         """
+        return set()
+
+        # Retained as dormant analysis code so pruning can only be reconsidered
+        # together with a relocation-complete reachability proof.
         if bool(getattr(self, 'call_profile', False)):
             return set()
         ml = self.ml
@@ -4612,9 +4618,10 @@ class CodegenStmt:
         # entry stub (see above) so they share the entry frame/scratch area.
         # We intentionally do not emit standalone call/ret bodies here yet.
 
-        # User function bodies appended. Address-taken functions always retain a
-        # native entry. Direct-only inline functions are deferred until we know
-        # whether actual expansion and the 4 KiB budget left any native patches.
+        # User function bodies appended. Inline expansion is still bounded and
+        # active, but every function retains a callable native fallback body.
+        # _analyze_inline_only_functions() deliberately returns an empty set:
+        # source-level pruning cannot safely prove all code/data relocations.
         inline_only_pending = set(getattr(self, 'inline_only_functions', set()) or set())
         for nm in sorted(self.user_functions.keys()):
             if nm in inline_only_pending:

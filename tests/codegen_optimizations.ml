@@ -12,6 +12,16 @@ function inline budget_add(x)
   return x + 1
 end function
 
+function inline loop_inline(n)
+  i = 0
+  total = 0
+  while i < n
+    total = total + i
+    i = i + 1
+  end while
+  return total
+end function
+
 function leaf_frame()
   x = 41
   return x + 1
@@ -52,6 +62,14 @@ end struct
 
 function tenth(a, b, c, d, e, f, g, h, i, j)
   return j
+end function
+
+function inline hidden_wide_call(x)
+  return tenth(x, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+end function
+
+function narrow_inline_caller()
+  return hidden_wide_call(1)
 end function
 
 function main(args)
@@ -102,6 +120,7 @@ function main(args)
   budget_total = budget_total + budget_add(38)
   budget_total = budget_total + budget_add(39)
   t.assertEq(budget_total, 820, "native inline expansion budget fallback")
+  t.assertEq(loop_inline(7), 21, "complex inline fallback body")
 
   t.assertEq(leaf_frame(), 42, "small root-frame prologue")
   t.assertEq(int_flow(), 4950, "local integer type flow")
@@ -111,6 +130,7 @@ function main(args)
   slot = Slot(0)
   slot.value = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
   t.assertEq(slot.value, 10, "member assignment call-arity sizing")
+  t.assertEq(narrow_inline_caller(), 10, "hidden inline call-arity sizing")
   indexed = [0]
   indexed[0] = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 11)
   t.assertEq(indexed[0], 11, "index assignment call-arity sizing")

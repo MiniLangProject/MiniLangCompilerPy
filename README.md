@@ -215,9 +215,9 @@ Notes:
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The current 16-program parity matrix covers the language/standard-library
-suites, GC stress, extern/native interop, global rebinding, native threads and
-managed thread pools; every pair matches by SHA-256.
+files. The current 19-program parity matrix covers the language/standard-library
+suites, GC stress, compiler-GC liveness, extern/native interop, global rebinding,
+native threads and managed thread pools; every pair matches by SHA-256.
 
 The compiler executables themselves are not expected to match: the production
 self-build uses the MiniLang-only `.mlo` object pipeline, which has no Python
@@ -826,9 +826,12 @@ Current behavior / limits:
 - Eligibility is deliberately cost-bounded, and each callee has a 4096-byte
   native expansion budget. Later call sites fall back to its normal callable
   body instead of allowing unbounded code growth.
-- If every emitted use was expanded and the function was never used as a
-  value, its otherwise unreachable native body is omitted. Address-taken,
-  recursive, non-expanded and profiling-visible functions always keep it.
+- Caller stack sizing includes the widest call inside every eligible inline
+  body. Such a call is hidden from the caller's own AST, but still needs the
+  same outgoing-argument and GC-rooted call-temp space after expansion.
+- Every inline function retains a normal callable body. This deliberately
+  trades a small amount of executable size for relocation safety across
+  imported aliases, first-class callable values and late budget fallbacks.
 
 
 ### Function calls
@@ -2172,9 +2175,10 @@ Heap sizing flags:
 
 Optimizations (always-on, conservative):
 - **Constant pooling**: identical `.rdata` constants are stored once and referenced by multiple sites.
-- **Bounded inlining and inline-only pruning**: eligible direct calls expand up
-  to 4096 generated native bytes per callee; a callable fallback body is kept
-  whenever an address or non-expanded call can reach it.
+- **Bounded inlining with safe fallback bodies**: eligible direct calls expand
+  up to 4096 generated native bytes per callee; every function retains a normal
+  callable body so imported aliases, data references and later calls remain
+  valid.
 - **Local integer type flow**: locals proven to remain integers use direct
   tagged arithmetic, bitwise, shift and comparison sequences. Ambiguous,
   captured, synchronized, global and floating-point values retain the generic

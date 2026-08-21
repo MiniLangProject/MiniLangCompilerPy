@@ -2831,25 +2831,44 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
             end = listing.find("\nfn_user_", start + len(marker))
             return listing[start:] if end < 0 else listing[start:end]
 
-        # Direct-only inline code can disappear, but address-taken functions
-        # and post-budget fallback targets must retain callable native bodies.
-        if "fn_user_pruned_add:" in listing:
-            return TestResult(name=name, status="FAIL", details="direct-only inline body was not pruned")
-        for fn_name in ("kept_add", "budget_add"):
+        # Inlining remains active, but every inline function must retain a
+        # callable fallback body. Source-level body pruning can miss imported
+        # aliases, data relocations and late post-budget fallbacks.
+        for fn_name in ("pruned_add", "kept_add", "budget_add", "loop_inline"):
             if not function_block(fn_name):
                 return TestResult(name=name, status="FAIL",
-                                  details=f"required fallback body fn_user_{fn_name} is missing")
+                                  details=f"safe inline fallback body fn_user_{fn_name} is missing")
 
         leaf_asm = function_block("leaf_frame")
-        if not leaf_asm or "gcclr_loop_" in leaf_asm:
+        if not leaf_asm or "gcclr_loop_" not in leaf_asm:
             return TestResult(name=name, status="FAIL",
-                              details="tiny root frame did not use the straight-line prologue")
+                              details="hidden inline call arity did not expand the caller root frame")
 
         loop_asm = function_block("const_loop")
         if (not loop_asm or "for_top_" not in loop_asm
                 or "__for_end_" in loop_asm or "__for_step_" in loop_asm):
             return TestResult(name=name, status="FAIL",
                               details="constant-bound loop retained dynamic end/step state")
+
+        small_src = mlc_runner.parent / "tests" / "root_frame_small.ml"
+        small_exe = td_path / "root_frame_small.exe"
+        small_asm_path = td_path / "root_frame_small.asm"
+        small_cr = compile_native(mlc_runner, small_src, small_exe, timeout_s=180,
+                                  extra_args=['--asm', '--asm-out', str(small_asm_path)])
+        if small_cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details="small root-frame compile failed",
+                              stdout=small_cr.stdout, stderr=small_cr.stderr)
+        small_rr = run_exe(small_exe, timeout_s=180)
+        if small_rr.returncode != 0 or not small_asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="small root-frame regression program failed",
+                              stdout=small_rr.stdout, stderr=small_rr.stderr)
+        small_listing = normalize_out(small_asm_path.read_text(encoding="utf-8", errors="replace"))
+        small_start = small_listing.find("fn_user_leaf_frame:")
+        small_end = small_listing.find("\nfn_user_", small_start + 1)
+        small_leaf = "" if small_start < 0 else small_listing[small_start:(None if small_end < 0 else small_end)]
+        if not small_leaf or "gcclr_loop_" in small_leaf:
+            return TestResult(name=name, status="FAIL",
+                              details="tiny root frame did not use the straight-line prologue")
 
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
@@ -3187,6 +3206,9 @@ def main() -> int:
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
     thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
     type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
+    member_callable_direct_ml = find_file_by_name(tests_root, "member_callable_direct.ml")
+    codegen_phase_gc_ml = find_file_by_name(tests_root, "codegen_phase_gc.ml")
+    compiler_gc_liveness_ml = find_file_by_name(tests_root, "compiler_gc_liveness.ml")
     input_length_regression_ml = find_file_by_name(tests_root, "input_length_regression.ml")
     thread_invalid_entry_ml = find_file_by_name(tests_root, "thread_invalid_entry.ml")
     thread_invalid_synchronized_local_ml = find_file_by_name(tests_root, "thread_invalid_synchronized_local.ml")
@@ -3271,6 +3293,37 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="type_checks.ml (exhaustive public is-type categories)", status="SKIP",
                                         details="type_checks.ml not found"))
+
+    if member_callable_direct_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="member_callable_direct.ml (callable struct member)",
+            mlc_runner=mlc_runner, ml_path=member_callable_direct_ml,
+            must_contain=["[OK] callable struct member"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="member_callable_direct.ml (callable struct member)", status="SKIP",
+                                        details="member_callable_direct.ml not found"))
+
+    if codegen_phase_gc_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="codegen_phase_gc.ml (phased compiler GC roots)",
+            mlc_runner=mlc_runner, ml_path=codegen_phase_gc_ml,
+            must_contain=["[OK] phased codegen"],
+            timeout_compile_s=180, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="codegen_phase_gc.ml (phased compiler GC roots)", status="SKIP",
+                                        details="codegen_phase_gc.ml not found"))
+
+    if compiler_gc_liveness_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="compiler_gc_liveness.ml (target/compiler GC isolation)",
+            mlc_runner=mlc_runner, ml_path=compiler_gc_liveness_ml,
+            must_contain=["[OK] compiler GC liveness"],
+            timeout_compile_s=180, timeout_run_s=120,
+            extra_args=["--gc-limit", "1m"]))
+    else:
+        tests.append(lambda: TestResult(name="compiler_gc_liveness.ml (target/compiler GC isolation)", status="SKIP",
+                                        details="compiler_gc_liveness.ml not found"))
 
     if thread_invalid_entry_ml is not None:
         tests.append(lambda: test_compile_expected_fail(
