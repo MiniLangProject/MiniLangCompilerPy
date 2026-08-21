@@ -1,13 +1,16 @@
-# MiniLang (ML) - Documentation
+# MiniLang - Python Reference Compiler
 
-MiniLang (`.ml`) is a small, dynamically typed language that compiles to a native Windows x64 console executable (PE32+) via the Win64 compiler tool (`mlc_win64.py`).
+MiniLang (`.ml`) is a small, dynamically typed language that compiles to a
+native Windows x64 executable (PE32+) with `mlc_win64.py`. Console applications
+are the default; `--subsystem windows` emits a GUI-subsystem executable.
 
 This Python implementation is the bootstrap/reference compiler. Its normal
 monolithic build path is kept byte-for-byte output-compatible with the
 self-hosted MiniLang compiler in `MiniLangCompilerML`; see
 [Compiler parity and self-hosting](COMPILER_PARITY.md).
 
-It is completely developed with the help of generative AI (ChatGPT version >= 5.2)
+Both compiler implementations and their documentation were developed with the
+assistance of generative AI.
 
 ---
 
@@ -30,6 +33,8 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
   - [8.6 break / continue](#86-break--continue)
   - [8.7 switch / case](#87-switch--case)
 - [9. Functions](#9-functions)
+  - [Deferred cleanup (`defer`)](#deferred-cleanup-defer)
+  - [Inline functions (`inline`)](#inline-functions-inline)
   - [9.1 Native threads & synchronization](#91-native-threads--synchronization)
   - [9.2 Thread-safe standard-library types](#92-thread-safe-standard-library-types)
   - [9.3 Managed thread pools](#93-managed-thread-pools)
@@ -40,9 +45,9 @@ It is completely developed with the help of generative AI (ChatGPT version >= 5.
   - [13.1 Stdlib modules (std.*)](#131-stdlib-modules-std)
   - [13.2 Builtins: basics](#132-builtins-basics)
   - [13.3 Bytes / Encoding / File I/O](#133-bytes--encoding--file-io)
-  - [13.4 Heap / GC debug](#134-heap--gc-debug-native-compiler)
+  - [13.4 Heap / GC debug](#134-heap--gc-debug)
   - [13.5 Call profiling (optional)](#135-call-profiling-optional)
-- [14. extern](#14-extern-native-compiler)
+- [14. extern](#14-extern)
 - [15. Error handling: `error` & `try`](#15-error-handling-error--try)
 - [16. Syntax Reference (short)](#16-syntax-reference-short)
 - [17. Examples](#17-examples)
@@ -123,6 +128,8 @@ Common options:
   - or `--asm-no-addr`, `--asm-no-opcodes`, `--asm-no-code`
 - `--asm-data` include `.rdata/.data/.idata` dumps (**constants and imports**)
 - `--asm-pe` include a PE32+ header + section table dump in the listing
+- `--dump-labels <path>` write a raw section/helper/label dump for parity
+  debugging
 
 **Diagnostics**
 - `--keep-going` continue after the first error and report multiple diagnostics
@@ -140,6 +147,14 @@ Common options:
 **Profiling / tracing**
 - `--profile-calls` instrument user functions with call counters; enables `callStats()`
 - `--trace-calls` print each entered function name to stderr (runtime trace)
+
+**Output**
+- `--subsystem console` / `cui` selects the default console subsystem
+- `--subsystem windows` / `window` / `gui` selects the Windows GUI subsystem
+
+**Cross-compiler build compatibility**
+- `--object-pipeline` is accepted so project commands can be shared with the
+  self-hosted compiler; the Python compiler still emits its monolithic image
 
 Tip: `python mlc_win64.py --help` prints the full option list.
 
@@ -173,20 +188,37 @@ cache_dir = ".minilang-cache"
 compiler_args = ["--heap-reserve", "1g"]
 ```
 
-All paths are relative to the manifest. `entry` (or its alias `input`) and
-`output` are required. `include`/`import_paths` and `compiler_args` are arrays
-of strings. Unknown fields and wrong field types are errors instead of being
-silently ignored. Command-line arguments after the manifest are appended; use
-`--no-incremental` to force a clean build.
+All paths are relative to the manifest. The supported project fields are:
 
-The incremental cache is conservative. Its fingerprint covers the manifest,
-effective compiler arguments, the compiler implementation and every `.ml`
+| Field | Meaning |
+| --- | --- |
+| `entry` / `input` | required entry `.ml` file |
+| `output` | required output `.exe` path |
+| `include` / `import_paths` | array of import roots |
+| `subsystem` | `console` or `windows` (aliases accepted by the CLI) |
+| `object_pipeline` | request the self-hosted `.mlo` pipeline |
+| `incremental` | enable the exact-hit artifact cache (default `true`) |
+| `cache_dir` | cache directory (default `.minilang-cache`) |
+| `compiler_args` | array of additional compiler arguments |
+
+Unknown project fields and wrong field types are errors. Command-line
+arguments after the manifest are appended; use `--no-incremental` to bypass
+the cache for one build. Python 3.11 or newer is required for `--project`.
+
+For manifests that must work with both compilers, use the conservative TOML
+subset shown above: a `[project]` table, quoted strings, booleans, and
+single-line arrays of quoted strings. Keep comments on their own lines. The
+Python implementation uses `tomllib`; the self-hosted implementation has a
+small purpose-built parser for this shared subset.
+
+The incremental cache is deliberately conservative. Its fingerprint covers the
+manifest, effective compiler arguments, compiler identity and every `.ml`
 source below the entry/include roots. An exact hit restores the already linked
-executable; any relevant change performs a full build and atomically replaces
-the cached artifact. Listing and label-dump builds bypass the cache. The Python
-compiler accepts `object_pipeline` for manifest compatibility and emits its
-equivalent monolithic image; the self-hosted compiler uses the retained `.mlo`
-pipeline when the field is true.
+executable. Any relevant change performs a full build; this is artifact caching,
+not per-module incremental compilation. Listing and label-dump builds bypass
+the cache. The Python compiler accepts `object_pipeline` for manifest
+compatibility and emits the equivalent monolithic image; the self-hosted
+compiler uses its retained `.mlo` pipeline when the field is true.
 
 ### Formatting (mlfmt)
 
@@ -246,6 +278,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
+- Latest complete run for this revision: **94 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -269,12 +302,10 @@ indexes so object clones do not copy the complete support `.data`/`.rdata`.
 These are self-host implementation details and do not change the language or
 the normal cross-compiler target-byte contract.
 
-On the most recent 112-module / 656-object MiniQuake benchmark (before the
-`defer`/FFI/manifest additions), the Python
-monolithic compiler completes in 69.089 seconds; the optimized self-hosted
-object pipeline takes 420.095 seconds and produces a runnable PE. Its profile
-attributes 283.657 seconds to object emission, 74.829 seconds to label
-resolution and 19.515 seconds to patch application.
+The last recorded 112-module / 656-object MiniQuake benchmark predates the
+`defer`/managed-FFI/project-manifest revision: the Python monolithic compiler
+took 69.089 seconds and the self-hosted object pipeline took 420.095 seconds.
+Treat these as historical measurements, not promises for later revisions.
 
 The current self-host source also reaches a binary fixed point: two consecutive
 293-object `.mlo` stages took 326.648 and 278.837 seconds and produced identical
@@ -496,7 +527,7 @@ thread-safe collection.
 
 ### const (write-once bindings)
 
-**Native compiler:** supported (top-level and inside functions).  
+Supported at top level, in namespaces, and inside functions.
 
 ```ml
 const PI = 3.14159
@@ -546,7 +577,9 @@ Important:
   - number + number -> number
   - array + array -> array concatenation
   - bytes + bytes -> bytes concatenation
-  - otherwise -> string concatenation (both sides are converted to strings automatically; there is currently no `str()` builtin)
+  - otherwise -> string concatenation (both sides are converted to strings automatically)
+
+Use `str(value)` when an explicit string conversion is clearer.
 
 ### Comparisons
 
@@ -892,13 +925,17 @@ function inline clamp01(x)
 end function
 ```
 
-When you write a **direct** call like `clamp01(v)`, the compiler expands the callee body at the call site (no call/ret overhead).
+For an eligible **direct** call such as `clamp01(v)`, the compiler expands the
+callee body at the call site (no call/ret overhead). `inline` is a bounded
+optimization request, not a guarantee.
 
 Current behavior / limits:
 - Only supported for **top-level functions** and **struct methods** (`function inline ...`).
+- `inline` and `synchronized` are mutually exclusive on the same function.
 - Only **direct calls** are inlined. Calls through a variable (e.g. `f = clamp01; f(v)`) are not inlined.
 - Inline bodies must not capture variables (no closures / env hops / boxed captures).
-- Inline bodies must not contain nested `function` definitions.
+- Bodies containing loops, `switch`, nested functions, or `defer` are not
+  eligible and use the normal callable body instead.
 - Inline recursion / mutual recursion is rejected.
 - `return <expr>` returns from the *inline call* (the call yields the return value).
 - The inline expansion uses an isolated scope so it won't clobber caller locals.
@@ -1210,8 +1247,7 @@ Notes:
 - `typeof(add)` is `"function"`.
 - Inline expansion applies only to **direct** calls (e.g. `add(1,2)`), not to indirect calls like `fn(1,2)`.
 
-Native compiler:
-- Direct **and** indirect calls are supported (functions are values; you can store/pass/call them).
+Direct **and** indirect calls are supported.
 
 
 ### Program entry: main(args)
@@ -1252,10 +1288,6 @@ print fact(5)
 
 ### Scoping
 
-
-
-
-Native compiler:
 - Lexical block scopes inside functions (variables are introduced on first assignment in the current block; shadowing is allowed).
 - Functions are first-class values (you can store them in variables, pass them around, and call indirectly).
 - Nested functions + closures are supported (captured vars are boxed and stored in an environment frame).
@@ -1304,8 +1336,6 @@ end function
 
 ## 10. struct
 
-Native compiler backend: supported.
-
 ```ml
 struct Person
   name
@@ -1319,7 +1349,9 @@ print p.age
 ```
 
 ### Methods (OOP-style)
-**Inline methods:** You can also write `function inline name(...)` inside a `struct` to force full body inlining for direct calls (see [9. Functions](#9-functions)).
+**Inline methods:** You can also write `function inline name(...)` inside a
+`struct` to request the same bounded direct-call expansion described in
+[9. Functions](#9-functions).
 
 
 You can define **instance methods** and **static methods** inside a struct.
@@ -1346,17 +1378,17 @@ b = Box.make(123)
 b.show()
 ```
 
-Native notes:
+Notes:
 
 - Struct constructors are calls: `Person(arg0, arg1, ...)` (argument count must match the field count).
 - Field reads/writes are supported: `p.name`, `p.age = ...`.
-- The native backend currently has no exceptions: type errors typically evaluate to `void` (reads) or become no-ops (writes).
+- Statically known constructor, method, and field mistakes are diagnosed during
+  compilation; dynamic invalid operations follow the runtime's normal
+  `error`/`void` behavior.
 
 ---
 
 ## 11. enum
-
-Native compiler backend: supported (ordinal enums + optional explicit values).
 
 Ordinal enums currently support up to **65536 variants per enum** and up to **65535 ordinal-enum types** in one program.
 
@@ -1399,7 +1431,7 @@ The native compiler supports **compile-time** composition:
 - `import` merges other `.ml` files into the program before code generation.
 
 
-### namespace (top-level only)
+### namespace
 
 ```ml
 namespace geom
@@ -1521,25 +1553,25 @@ import std.fs as fs
 
 The stdlib is compiled together with your program (there is no separate link step). Most “systems” features are **Windows-oriented** because the native backend targets Windows x64.
 
-Common modules (subset; evolves over time):
+The current library contains 26 source modules, byte-for-byte identical in both
+compiler repositories:
 
-- **std.core**: small helpers (e.g. `min/max/clamp`, …)
-- **std.assert**: assertions for tests and small programs
-- **std.string**: string utilities (`trim`, `split`, `join`, `replaceAll`, …)
-- **std.bytes**: bytes helpers (`concat`, `equals`, `ctEquals` (constant-time-ish), …)
-- **std.encoding.hex**, **std.encoding.base64**: encoding helpers
-- **std.array**, **std.sort**, **std.random**, **std.math**, **std.fmt**
-- **std.time**: monotonic `ticks()` / `sleep(ms)`, Win32 wall-clock wrappers `std.time.win32.GetLocalTime()` / `GetSystemTime()` (returns `SystemTime`), plus `Date/Time/DateTime` helpers
-- **std.fs**: file system & file I/O (see [13.3](#133-bytes--encoding--file-io)); plus basic directory helpers (`isDir/isFile/listDir/joinPath`)
-- **std.net**: TCP/UDP networking
-- **std.threading**: native `Lock`, `Semaphore` and `Event`
-- **std.concurrent.thread_pool**: reusable managed worker pools, bounded queues,
-  job results/cancellation and graceful or immediate shutdown
-- **std.ds.concurrent_list**, **std.ds.concurrent_hashmap**: process-shared,
-  thread-safe managed collections that preserve object identity
+- **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
+  `std.random`, `std.fmt`
+- **Text and bytes:** `std.string`, `std.string_builder`, `std.bytes`,
+  `std.encoding.hex`, `std.encoding.base64`
+- **System APIs:** `std.time`, `std.fs`, `std.net`
+- **Collections:** `std.ds.list`, `std.ds.stack`, `std.ds.queue`,
+  `std.ds.hashmap`, `std.ds.set`
+- **Concurrency:** `std.threading`, `std.concurrent.thread_pool`,
+  `std.ds.concurrent_list`, `std.ds.concurrent_hashmap`
+- **Compatibility helpers:** `std.result` provides `Option` and `Result`;
+  `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec.
 
-There is no separate `std.result` module anymore. MiniLang stdlib code uses the native `error(...)` propagation model plus `try(...)` where explicit handling is needed.
-- **std.ds.\***: list/stack/queue/hashmap/set and concurrent collections
+New code should normally use native `error(...)` propagation with `try(...)`
+instead of `std.result.Result`. Managed objects already share one process-wide
+heap, so `std.concurrent.shared_value` is not needed for ordinary communication
+between MiniLang threads.
 
 Stdlib APIs that can fail (I/O, networking, parsing, …) use MiniLang's native `error(...)` system. In practice this means a function either returns its normal value or an `error` value that automatically propagates unless you intercept it with `try(...)`.
 
@@ -1563,7 +1595,7 @@ print len("abc")   // 3
 print len(bytes(4)) // 4
 ```
 
-Native compiler behavior (current): unsupported types return `0` (no exceptions yet).
+Current runtime behavior: unsupported types return `0`.
 
 #### array(size[, fill])
 Creates an array with a fixed size and optional fill value.
@@ -1593,12 +1625,32 @@ b = toNumber("3.14")    // 3.14 (float)
 c = toNumber(10)        // 10
 ```
 
-Native compiler behavior (current): invalid inputs return `void` (no exceptions yet).
+Current runtime behavior: invalid inputs return `void`.
 
 Not allowed:
 - `toNumber(true/false)`
 - `toNumber(void)`
 - non-parsable strings
+
+#### toFloat(x)
+
+Converts an int, float, or numeric string to a float. Invalid inputs return
+`void`. Unlike `toNumber`, an integral input still produces a `float`.
+
+```ml
+print typeof(toFloat(2))     // "float"
+print toFloat("3.5")         // 3.5
+```
+
+#### str(x)
+
+Converts a printable MiniLang value to a string. String concatenation uses the
+same conversion implicitly.
+
+```ml
+print str(123)   // "123"
+print str(true)  // "true"
+```
 
 #### typeof(x)
 Returns a string describing the type of `x`.
@@ -1654,15 +1706,15 @@ See **Chapter 15** for full details.
 
 ### 13.3 Bytes / Encoding / File I/O
 
-Native compiler backend: **bytes() / byteBuffer() supported**. File I/O is provided via the stdlib module `std.fs` (see “File I/O” below).
+File I/O is provided via the stdlib module `std.fs` (see “File I/O” below).
 
 #### bytes(...) / byteBuffer(...)
 Creates a mutable `bytes` buffer.
 
-Native compiler backend (current):
 - `bytes(size[, fill])` and `byteBuffer(size[, fill])` allocate `size` bytes, filled with `fill` (default 0).
 
-- `bytes(...)` supports additional forms: `bytes()` (empty), `bytes(string)` (UTF-8), `bytes(list[int])`, and `bytes(bytes)` (copy).
+- `bytes(...)` supports additional forms: `bytes()` (empty), `bytes(string)`
+  (UTF-8), `bytes(array<int>)`, and `bytes(bytes)` (copy).
 - `byteBuffer(size)` is a legacy alias (1 argument only). Use `bytes(size[, fill])` if you need a fill value.
 
 ```ml
@@ -1676,13 +1728,9 @@ print buf[0]      // 255
 #### decode(bytes[, encoding]) -> string
 Decodes a byte buffer to a string.
 
-- Accepts `bytes()` (and legacy `list[int]`).
-- Honors `encoding` using Python's codec names (e.g. `"utf-8"`, `"latin-1"`, ...).
-
-Native compiler backend (current):
-- Expects a `bytes` object.
-- Treats the payload as UTF-8.
-- If `encoding` is provided it must be a string, but the value is currently ignored (UTF-8 only).
+- Expects a `bytes` object and decodes its complete payload as UTF-8.
+- If `encoding` is provided it must be a string, but its content is currently
+  ignored. Encodings other than UTF-8 are not implemented.
 
 ```ml
 b = bytes(3)
@@ -1720,7 +1768,7 @@ print hex(b) // "0011aaff"
 #### fromHex(string) -> bytes
 Parses a hexadecimal string into a `bytes` object. Accepts an optional leading `0x` / `0X` prefix,
 case-insensitive hex digits, and ignores common separators: spaces, tabs, newlines, `_`, `-`, `:`.
-Native compiler behavior (current): invalid input returns `void` (no exceptions yet).
+Current runtime behavior: invalid input returns `void`.
 
 ```ml
 b = fromHex("00 11 aa ff")
@@ -1752,7 +1800,7 @@ Notes:
 #### slice(bytes, offset, length) -> bytes
 Returns a new `bytes` object containing a copy of `length` bytes starting at `offset`.
 
-Rules (native compiler backend, current):
+Rules:
 - `offset` and `length` must be integers.
 - `offset` may be negative (like indexing): `offset < 0` means `offset += len(bytes)`.
 - Bounds are **strict** (no clamping): requires `0 <= offset <= len(bytes)` and `0 <= length` and `offset + length <= len(bytes)`.
@@ -1768,7 +1816,7 @@ print hex(slice(b, -2, 2))  // "4455"
 #### copyBytes(dst, dstOff, src, srcOff, len) -> void
 Copies raw bytes from one `bytes` object into another.
 
-Rules (native compiler backend, current):
+Rules:
 - `dst` and `src` must be `bytes`.
 - `dstOff`, `srcOff`, and `len` must be non-negative integers.
 - The effective copy length is clamped to the remaining tail room of both buffers:
@@ -1786,7 +1834,7 @@ print hex(dst) // "0022334400"
 #### fillBytes(dst, off, len, fill) -> void
 Fills a range inside a `bytes` object with a repeated byte value.
 
-Rules (native compiler backend, current):
+Rules:
 - `dst` must be `bytes`.
 - `off` and `len` must be non-negative integers.
 - `fill` must be an integer in the range `0..255`.
@@ -1798,6 +1846,17 @@ b = bytes(6, 0)
 fillBytes(b, 2, 10, 0xAB)
 print hex(b) // "0000abababab"
 ```
+
+#### Low-level string and bytes helpers
+
+The runtime also exposes the primitives used to implement `std.string`,
+`std.string_builder`, `std.bytes`, and hash maps: `stringHash`, `bytesHash`,
+`stringSlice`, `stringIndexOf`, `stringLastIndexOf`, `stringStartsWith`,
+`stringEndsWith`, `stringRepeat`, the ASCII trim/case/reverse helpers,
+`stringEqualsIgnoreCaseAscii`, `stringJoin`, `bytesStartsWith`, `bytesEndsWith`,
+`bytesIndexOf`, `bytesLastIndexOf`, `bytesCompare`, and `copyStringBytes`.
+Application code should normally prefer the checked wrappers in the
+corresponding `std.*` modules.
 
 #### File I/O
 The native runtime currently does not expose low-level file-handle builtins.
@@ -1828,7 +1887,7 @@ end if
 
 ### 13.4 Heap / GC debug
 
-Native compiler only (for debugging / validating the runtime).
+These builtins are intended for debugging and validating the generated runtime.
 
 #### heap_count()
 Returns the number of *currently live* heap blocks (objects that are not marked as `free`).
@@ -1853,17 +1912,13 @@ Returns the number of blocks currently in the free-list.
 Runs the mark/sweep collector and returns `void`.
 
 #### gc_set_limit(limitBytes)
-Sets the allocation threshold for the **periodic** GC trigger and returns `void`.
+Sets the allocation threshold for the **periodic** GC trigger and returns
+`void`.
 
-Rules (native compiler backend, current):
-- A positive integer enables periodic GC with that byte limit.
-- `limitBytes <= 0` disables the periodic trigger.
-- Non-integer input also disables the periodic trigger.
-- The runtime resets the current periodic-allocation counter when the limit is changed.
-
-Notes:
-- This only affects the periodic GC trigger. GC on allocation failure / OOM-retry still remains active.
-- This is mainly useful for debugging, stress tests, and GC behavior tuning.
+- A positive integer enables periodic collection with that byte limit.
+- Zero, a negative value, or a non-integer disables the periodic trigger.
+- The allocation-failure/OOM retry collector remains enabled.
+- The current periodic-allocation counter is reset when the limit changes.
 
 Notes (when does GC run?):
 - The GC runs **automatically** when an allocation cannot be satisfied and the heap can’t grow further; the runtime triggers a `fn_gc_collect` once and retries the allocation.
@@ -1915,18 +1970,21 @@ Parameter forms:
 - `<name> as <type>` (named, type-checked)
 - `out <type>` / `out <name> as <type>` (**experimental**, see below)
 
-Supported ABI types (inputs):
-- `int` / `i64` / `u64` / `i32` / `u32` / `i16` / `u16` / `i8` / `u8`
+Supported ABI types for direct-call inputs:
+- `int` / `i64` / `u64` / `i32` / `u32`
 - `double`
 - `bool` (accepts `bool` or `int` at the call site)
-- `ptr` (accepts `ptr`, `int`, or `void`; `void` becomes `NULL`)
-- `cstr` (MiniLang `string` → `char*` UTF-8; `void` becomes `NULL`)
-- `wstr` (MiniLang `string` → `wchar_t*` UTF-16LE; `void` becomes `NULL`)
-- `bytes` (MiniLang `bytes` → pointer to the payload; `void` becomes `NULL`)
+- `ptr` / `pointer` (accepts a native pointer value, `int`, or `void`;
+  `void` becomes `NULL`)
+- `cstr` / `cstring` (MiniLang `string` → `char*` UTF-8; `void` becomes `NULL`)
+- `wstr` / `wstring` (MiniLang `string` → `wchar_t*` UTF-16LE; `void` becomes `NULL`)
+- `bytes` / `buffer` / `bytebuffer` (MiniLang `bytes` → pointer to its
+  mutable payload; `void` becomes `NULL`)
 
 Supported return types:
-- `void`
-- `int` / `i64` / `u64` / `i32` / `u32` / `i16` / `u16` / `i8` / `u8` / `ptr`
+- `void` / `none`
+- `int` / `i64` / `u64` / `i32` / `u32`
+- `ptr` / `pointer`
 - `double`
 - `bool`
 - `cstr` (reads a NUL-terminated `char*` and converts to a MiniLang `string`; `NULL` → `void`)
@@ -1998,9 +2056,12 @@ end struct
 
 Layouts use Win64 C-style sequential placement, natural field alignment and a
 maximum alignment of eight bytes. Supported fields are `i8/u8`, `i16/u16`,
-`i32/u32`, `i64/u64`, `int`, `bool` (Win32 `BOOL`) and `ptr`. Structs returned
+`i32/u32`, `i64/u64`, `int`, `bool` (Win32 `BOOL`) and `ptr/pointer`. Structs returned
 through an implicit `out` parameter are copied into a normal GC-managed
-MiniLang struct, so they remain valid after the native call returns.
+MiniLang struct, so they remain valid after the native call returns. Automatic
+managed-field marshaling currently supports `int/i64/u64`, `i32/u32`,
+`bool`, and `ptr`; for layouts containing `i8/u8` or `i16/u16`, pass
+an explicit `bytes` buffer and decode those fields in MiniLang.
 
 ### out parameters (experimental)
 
@@ -2133,7 +2194,7 @@ ParseError: unexpected token
 Statements are separated by newlines or `;`.
 
 - `print <expr>`
-- `const <ident> = <expr>` (native compiler; top-level/namespace requires `constexpr`)
+- `const <ident> = <expr>` (top-level/namespace requires `constexpr`)
 - `synchronized <ident> = <expr>` (top-level/namespace shared binding)
 - `<lvalue> = <expr>`
   - `<ident> = ...`
@@ -2141,10 +2202,10 @@ Statements are separated by newlines or `;`.
   - `<expr>[<index>] = ...` (multiline indexing allowed)
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
 - `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
-- (native) optional entrypoint: `function main(args) ... end function`
+- optional entrypoint: `function main(args) ... end function`
 - `return` / `return <expr>` / `return;` (and bare `return` directly before `end/else/case` in inline blocks)
 - `defer <call-expression>` (inside functions; LIFO cleanup on every function exit)
-- `global x, y, z` (inside functions; native compiler only; trailing comma optional; names may be qualified like `foo.bar.x`)
+- `global x, y, z` (inside functions; trailing comma optional; names may be qualified like `foo.bar.x`)
 - `if <expr> then ... end if` (block or inline)
 - `while <expr> ... end while`
 - `loop ... while <expr> end loop` (legacy: `loop ... end loop while <expr>`)
@@ -2210,7 +2271,7 @@ nums = [1,2,3,4]
 print sum(nums)
 ```
 
-### 17.3 Struct + switch (works in native compiler)
+### 17.3 Struct + switch
 
 ```ml
 struct User
@@ -2244,13 +2305,18 @@ print r
 ```
 ## Native compiler status
 
-The Windows x64 native backend generates a PE32+ console executable.
+The Windows x64 native backend generates deterministic PE32+ executables for
+the console (default) or Windows GUI subsystem.
 
 What works:
 - core types: int, float, bool, string, array, bytes, void
 - control flow: `if/else`, `while`, `loop ... while ... end loop`, `for ... to`, `for each ... in`, `switch/case`, `break`/`break n`, `continue`
+- LIFO deferred cleanup with `defer`, including return/fall-through/error exits
+- bounded source-level `inline` functions with callable fallback bodies
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
-- real Win32 threads with cooperative cancellation, status/join APIs, private stacks, a process-wide thread-safe GC heap, synchronized globals and synchronized functions
+- real Win32 threads with cooperative cancellation, data/result handoff,
+  native and logical ids, status/join APIs, private stacks, a process-wide
+  thread-safe GC heap, synchronized globals/functions and managed thread pools
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
 - `main(args)` entrypoint (argv[1..] as `array<string>`, `return int` -> process exit code)
 - `global` declarations inside functions (required for accessing globals from a function; resolves to package/namespace-qualified globals; missing globals are auto-created as `void`)
@@ -2260,8 +2326,14 @@ What works:
 - `package` + `import` (compile-time multi-file merge; imported modules support runtime-initialized globals, self-import ignore, and harmless import cycles)
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
-- `extern function` via the PE import table (IAT)
-- builtins / special forms: `len`, `input`, `toNumber`, `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`, `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`, `copyBytes`, `fillBytes`, `nativeBytesPtr`, `nativeRawValue`, `nativeValueFromRaw`, `nativeCallback`,
+- `extern function` via the PE import table (IAT), ABI-layout
+  `extern struct`, omitted trailing `out` parameters and Win64 callbacks
+- TOML project manifests with conservative exact-hit artifact caching
+- builtins / special forms: `len`, `input`, `toNumber`, `toFloat`, `str`,
+  `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`,
+  `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`, `copyBytes`,
+  `fillBytes`, native string/bytes helpers, `Thread` and its worker helpers,
+  `nativeBytesPtr`, `nativeRawValue`, `nativeValueFromRaw`, `nativeCallback`,
   plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`, `gc_set_limit`, `callStats`
 
 Debugging / listings:
