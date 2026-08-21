@@ -1297,7 +1297,9 @@ class CodegenExpr:
 
     def _emit_extern_call(self, e: Any, callee_name: str) -> None:
         """Emit a direct call to an `extern function` via the PE import table (IAT)."""
-        self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
+        threaded_native = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_native:
+            self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         sig = self.extern_sigs.get(callee_name)
         if not sig:
             raise CompileError(f"Unknown extern function '{callee_name}'", getattr(e, "pos", None))
@@ -1346,7 +1348,8 @@ class CodegenExpr:
 
         # Native code may block indefinitely. Publish a stable stack-root chain
         # before entering it so stop-the-world GC need not wait for the OS call.
-        a.call('fn_gc_native_enter')
+        if threaded_native:
+            a.call('fn_gc_native_enter')
 
         # Move first 4 args into registers (Windows x64 ABI), rest into outgoing stack args.
         regs = ["rcx", "rdx", "r8", "r9"]
@@ -1368,7 +1371,8 @@ class CodegenExpr:
 
         # Call through the imported function pointer.
         a.call_rip_qword(self._extern_iat_label(dll, symbol))
-        a.call('fn_gc_native_leave')
+        if threaded_native:
+            a.call('fn_gc_native_leave')
 
         # Marshal return value back into MiniLang representation.
         self._emit_extern_ret_from_native(ret_ty, e.pos)
@@ -1398,7 +1402,9 @@ class CodegenExpr:
         the return value back to a tagged Value in RAX.
         """
         a = self.asm
-        self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
+        threaded_native = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_native:
+            self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         externs = getattr(self, 'extern_sigs', {}) or {}
         if not externs:
             return
@@ -1481,7 +1487,8 @@ class CodegenExpr:
                     self._emit_extern_arg_to_native(abi_ty, l_fail, pos, wbuf_label=wbuf)
                     a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
 
-            a.call('fn_gc_native_enter')
+            if threaded_native:
+                a.call('fn_gc_native_enter')
 
             # Marshal args to Win64 ABI: RCX/RDX/R8/R9 + outgoing stack slots.
             regs = ['rcx', 'rdx', 'r8', 'r9']
@@ -1509,7 +1516,8 @@ class CodegenExpr:
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",
                         pos, )
             a.call_rip_qword(self._extern_iat_label(str(dll), str(sym)))
-            a.call('fn_gc_native_leave')
+            if threaded_native:
+                a.call('fn_gc_native_leave')
 
             # Convert return value back to a tagged MiniLang Value.
             self._emit_extern_ret_from_native(ret_ty, pos)
@@ -4201,12 +4209,15 @@ class CodegenExpr:
                 a.mark(l_ok)
                 a.sar_rax_imm8(3)
                 a.mov_r32_r32('r12d', 'eax')
-                self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
-                a.call('fn_gc_native_enter')
+                threaded_native = bool(getattr(self, 'native_threads_possible', True))
+                if threaded_native:
+                    self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
+                    a.call('fn_gc_native_enter')
                 a.mov_r32_r32('ecx', 'r12d')
                 a.mov_rax_rip_qword('iat_Sleep')
                 a.call_rax()
-                a.call('fn_gc_native_leave')
+                if threaded_native:
+                    a.call('fn_gc_native_leave')
                 a.mov_rax_imm64(enc_void())
                 return
 

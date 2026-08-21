@@ -92,6 +92,9 @@ class CodegenCore:
         # This lets us emit only the helpers that are needed by the compiled program.
         self.used_helpers = set()
         self._emitted_helpers = set()
+        # emit_program replaces this conservative default with a closed-program
+        # scan before emitting any runtime code.
+        self.native_threads_possible = True
         self._expr_temp_reg_order = ("r12", "r13", "r14")
         self._expr_temp_reg_live: list[ExprValueTemp] = []
         self._expr_temp_reg_live_by_reg: Dict[str, ExprValueTemp] = {}
@@ -488,15 +491,19 @@ class CodegenCore:
         except Exception:
             ln = None
         if isinstance(ln, int) and ln > 0:
-            lid = self.new_label_id()
-            l_skip = f'dbg_line_worker_{lid}'
-            self.asm.mov_r11_gs_qword_28()
-            self.asm.mov_r32_membase_disp('eax', 'r11', 0)
-            self.asm.test_r32_r32('eax', 'eax')
-            self.asm.jcc('ne', l_skip)
+            threaded_debug = bool(getattr(self, 'native_threads_possible', True))
+            l_skip = None
+            if threaded_debug:
+                lid = self.new_label_id()
+                l_skip = f'dbg_line_worker_{lid}'
+                self.asm.mov_r11_gs_qword_28()
+                self.asm.mov_r32_membase_disp('eax', 'r11', 0)
+                self.asm.test_r32_r32('eax', 'eax')
+                self.asm.jcc('ne', l_skip)
             self.asm.mov_rax_imm64(enc_int(int(ln)))
             self.asm.mov_rip_qword_rax('dbg_loc_line')
-            self.asm.mark(l_skip)
+            if l_skip is not None:
+                self.asm.mark(l_skip)
 
     # ---------- var slots ----------
 

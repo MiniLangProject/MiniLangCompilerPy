@@ -839,7 +839,8 @@ class CodegenScope:
         if b.kind == "global":
             if b.label is None:
                 raise self.error(f"Internal error: missing global label for '{name_s}'", node)
-            is_sync = str(getattr(b, 'name', name_s)) in (getattr(self, 'synchronized_globals', set()) or set())
+            is_sync = (bool(getattr(self, 'native_threads_possible', True))
+                       and str(getattr(b, 'name', name_s)) in (getattr(self, 'synchronized_globals', set()) or set()))
             if is_sync:
                 a.call('fn_sync_enter')
             self._maybe_emit_module_init_guard_for_global_read(b, target_name=name_s, node=node)

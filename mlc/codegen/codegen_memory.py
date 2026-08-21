@@ -372,13 +372,18 @@ class CodegenMemory:
         self.ensure_gc_data()
         a = self.asm
         root_count = (root_top - root_base) // 8
-        a.mov_r11_gs_qword_28()
+        threaded_roots = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_roots:
+            a.mov_r11_gs_qword_28()
 
         # record:
         #   +0  next (previous head)
         #   +8  base (rsp + root_base)
         #  +16  count (qwords)
-        a.mov_r64_membase_disp('rax', 'r11', 48)
+        if threaded_roots:
+            a.mov_r64_membase_disp('rax', 'r11', 48)
+        else:
+            a.mov_rax_rip_qword('gc_roots_head')
         a.mov_rsp_disp32_rax(root_rec_off + 0)
 
         a.lea_r64_membase_disp("rax", "rsp", root_base)  # lea rax,[rsp+root_base]
@@ -388,7 +393,10 @@ class CodegenMemory:
         a.mov_rsp_disp32_rax(root_rec_off + 16)
 
         a.lea_r64_membase_disp("rax", "rsp", root_rec_off)  # lea rax,[rsp+root_rec_off]
-        a.mov_membase_disp_r64('r11', 48, 'rax')
+        if threaded_roots:
+            a.mov_membase_disp_r64('r11', 48, 'rax')
+        else:
+            a.mov_rip_qword_rax('gc_roots_head')
 
     def emit_gc_pop_root_frame(self, root_rec_off: int) -> None:
         """
@@ -401,9 +409,12 @@ class CodegenMemory:
         """
         self.ensure_gc_data()
         a = self.asm
-        a.mov_r11_gs_qword_28()
         a.mov_r64_membase_disp("rdx", "rsp", root_rec_off + 0)
-        a.mov_membase_disp_r64('r11', 48, 'rdx')
+        if bool(getattr(self, 'native_threads_possible', True)):
+            a.mov_r11_gs_qword_28()
+            a.mov_membase_disp_r64('r11', 48, 'rdx')
+        else:
+            a.mov_rip_qword_rdx('gc_roots_head')
 
     def emit_alloc_function(self) -> None:
         """
@@ -459,8 +470,10 @@ class CodegenMemory:
         # save original requested payload bytes (RCX) for OOM diagnostics
         a.mov_r64_r64("rax", "rcx")
         a.mov_rsp_disp32_rax(0x38)
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
-        a.call('fn_heap_enter')
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+            a.call('fn_heap_enter')
 
         # ------------------------------------------------------------
         # Heap sanity / self-heal
@@ -774,16 +787,17 @@ class CodegenMemory:
         # return payload ptr = cur + GC_HEADER_SIZE
         a.mov_r64_r64("rax", "r8")
         a.add_rax_imm8(GC_HEADER_SIZE)
-        # Keep the most recent four allocation results as per-thread handoff
-        # roots. This covers nested construction until the caller has published
-        # the object into its precise stack/global root.
-        a.mov_r11_gs_qword_28()
-        a.mov_r32_membase_disp("r10d", "r11", 136)
-        a.and_r64_imm("r10", 3)
-        a.mov_mem_bis_r64("r11", "r10", 8, 88, "rax")
-        a.inc_r32("r10d")
-        a.mov_membase_disp_r32("r11", 136, "r10d")
-        a.call('fn_heap_leave')
+        if threaded_heap:
+            # Keep recent allocation results as per-thread handoff roots until
+            # the caller publishes them into a precise stack/global root.
+            a.mov_r11_gs_qword_28()
+            a.mov_r32_membase_disp("r10d", "r11", 136)
+            a.and_r64_imm("r10", 3)
+            a.mov_mem_bis_r64("r11", "r10", 8, 88, "rax")
+            a.inc_r32("r10d")
+            a.mov_membase_disp_r32("r11", 136, "r10d")
+        if threaded_heap:
+            a.call('fn_heap_leave')
         a.add_rsp_imm8(0x48)
         a.ret()
 
@@ -992,14 +1006,16 @@ class CodegenMemory:
         # return payload ptr = header_base + GC_HEADER_SIZE
         a.mov_r64_r64("rax", "rdx")
         a.add_rax_imm8(GC_HEADER_SIZE)
-        a.mov_r11_gs_qword_28()
-        a.mov_r32_membase_disp("r10d", "r11", 136)
-        a.and_r64_imm("r10", 3)
-        a.mov_mem_bis_r64("r11", "r10", 8, 88, "rax")
-        a.inc_r32("r10d")
-        a.mov_membase_disp_r32("r11", 136, "r10d")
+        if threaded_heap:
+            a.mov_r11_gs_qword_28()
+            a.mov_r32_membase_disp("r10d", "r11", 136)
+            a.and_r64_imm("r10", 3)
+            a.mov_mem_bis_r64("r11", "r10", 8, 88, "rax")
+            a.inc_r32("r10d")
+            a.mov_membase_disp_r32("r11", 136, "r10d")
 
-        a.call('fn_heap_leave')
+        if threaded_heap:
+            a.call('fn_heap_leave')
         a.add_rsp_imm8(0x48)
         a.ret()
 
@@ -1121,7 +1137,9 @@ class CodegenMemory:
         # Decommit only if at least this many bytes can be released (avoid thrashing)
         shrink_threshold = int(cfg.get('shrink_threshold_bytes') or (4 << 20))  # 4 MiB
 
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave', 'fn_gc_world_stop', 'fn_gc_world_resume'})
+        threaded_gc = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_gc:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave', 'fn_gc_world_stop', 'fn_gc_world_resume'})
         a.mark('fn_gc_collect')
 
         # Save non-volatile regs we use
@@ -1139,8 +1157,9 @@ class CodegenMemory:
         a.sub_rsp_imm8(0x28)
         # Serialize heap metadata, then cooperatively park every other managed
         # thread before examining roots or object graphs.
-        a.call('fn_heap_enter')
-        a.call('fn_gc_world_stop')
+        if threaded_gc:
+            a.call('fn_heap_enter')
+            a.call('fn_gc_world_stop')
 
         lid = self.new_label_id()
         L_MARK_VALUE = f"gc_mark_value_{lid}"
@@ -1317,35 +1336,42 @@ class CodegenMemory:
 
         a.mark(L_BODY)
 
+        # Shared runtime helper scratch remains part of the precise root set.
+        for i in range(8):
+            a.mov_rax_rip_qword(f'gc_tmp{i}')
+            a.call(L_MARK_VALUE)
+
         # Mark roots: globals (var slots)
         for lbl in getattr(self, 'scope_global_slots', getattr(self, 'global_slots', [])):
             a.mov_rax_rip_qword(lbl)
             a.call(L_MARK_VALUE)
 
-        # Mark roots from every registered thread context. Contexts themselves
-        # are native records; managed code/result/temp values and each stack's
-        # precise shadow-root chain are traced explicitly.
         a.mark(L_ROOT_FRAMES)
-        a.mov_rax_rip_qword('thread_contexts_head')
-        a.mov_r64_r64('rdi', 'rax')
-        a.mark(L_CONTEXT_LOOP)
-        a.test_r64_r64('rdi', 'rdi')
-        a.jcc('e', L_MARK_LOOP)
-        a.mov_r64_membase_disp('rax', 'rdi', 24)  # THREAD_CODE
-        a.call(L_MARK_VALUE)
-        a.mov_r64_membase_disp('rax', 'rdi', 40)  # THREAD_RESULT
-        a.call(L_MARK_VALUE)
-        a.mov_r64_membase_disp('rax', 'rdi', 144)  # THREAD_ARG
-        a.call(L_MARK_VALUE)
-        a.mov_r64_membase_disp('rax', 'rdi', 152)  # THREAD_LOGICAL_ID
-        a.call(L_MARK_VALUE)
-        for i in range(8):
-            a.mov_r64_membase_disp('rax', 'rdi', 56 + i * 8)
+        if threaded_gc:
+            # Trace every registered thread context and its private root chain.
+            a.mov_rax_rip_qword('thread_contexts_head')
+            a.mov_r64_r64('rdi', 'rax')
+            a.mark(L_CONTEXT_LOOP)
+            a.test_r64_r64('rdi', 'rdi')
+            a.jcc('e', L_MARK_LOOP)
+            a.mov_r64_membase_disp('rax', 'rdi', 24)
             a.call(L_MARK_VALUE)
-        a.mov_r64_membase_disp('r13', 'rdi', 48)  # THREAD_ROOTS
+            a.mov_r64_membase_disp('rax', 'rdi', 40)
+            a.call(L_MARK_VALUE)
+            a.mov_r64_membase_disp('rax', 'rdi', 144)
+            a.call(L_MARK_VALUE)
+            a.mov_r64_membase_disp('rax', 'rdi', 152)
+            a.call(L_MARK_VALUE)
+            for i in range(8):
+                a.mov_r64_membase_disp('rax', 'rdi', 56 + i * 8)
+                a.call(L_MARK_VALUE)
+            a.mov_r64_membase_disp('r13', 'rdi', 48)
+        else:
+            a.mov_rax_rip_qword('gc_roots_head')
+            a.mov_r64_r64('r13', 'rax')
         a.mark(L_ROOT_FRAME_LOOP)
         a.test_r64_r64("r13", "r13")  # test r13, r13
-        a.jcc('e', L_CONTEXT_NEXT)
+        a.jcc('e', L_CONTEXT_NEXT if threaded_gc else L_MARK_LOOP)
 
         # r14 = [r13+8]  (base)
         a.mov_r64_membase_disp("r14", "r13", 8)  # mov r14, [r13+8]
@@ -1369,9 +1395,10 @@ class CodegenMemory:
         a.mov_r64_r64("r13", "rax")  # mov r13, rax
         a.jmp(L_ROOT_FRAME_LOOP)
 
-        a.mark(L_CONTEXT_NEXT)
-        a.mov_r64_membase_disp('rdi', 'rdi', 120)  # THREAD_NEXT
-        a.jmp(L_CONTEXT_LOOP)
+        if threaded_gc:
+            a.mark(L_CONTEXT_NEXT)
+            a.mov_r64_membase_disp('rdi', 'rdi', 120)
+            a.jmp(L_CONTEXT_LOOP)
 
         # ------------------------------------------------------------
         # Mark loop: pop objects and scan children
@@ -1853,8 +1880,9 @@ class CodegenMemory:
         a.mov_rip_qword_rax('gc_bytes_since')
         a.mov_rip_qword_rax('gc_young_bytes_since')
 
-        a.call('fn_gc_world_resume')
-        a.call('fn_heap_leave')
+        if threaded_gc:
+            a.call('fn_gc_world_resume')
+            a.call('fn_heap_leave')
 
         # restore stack (shadow space + alignment)
         a.add_rsp_imm8(0x28)
@@ -1992,11 +2020,14 @@ class CodegenMemory:
         blocks whose inline size word does not carry the free-block flag.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_count')
-        a.sub_rsp_imm8(0x28)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x28)
+            a.call('fn_heap_enter')
 
         lid = self.new_label_id()
         L_LOOP = f"heap_count_loop_{lid}"
@@ -2039,8 +2070,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r8')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x28)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x28)
         a.ret()
 
     def emit_heap_bytes_used_function(self) -> None:
@@ -2048,11 +2080,14 @@ class CodegenMemory:
         Returns (heap_ptr - heap_base) as a tagged int.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_bytes_used')
-        a.sub_rsp_imm8(0x28)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x28)
+            a.call('fn_heap_enter')
         a.mov_rax_rip_qword('heap_ptr')
         a.mov_r10_rax()
         a.mov_rax_rip_qword('heap_base')
@@ -2060,8 +2095,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r10')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x28)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x28)
         a.ret()
 
     def emit_heap_bytes_committed_function(self) -> None:
@@ -2070,11 +2106,14 @@ class CodegenMemory:
         Returns (heap_end - heap_base) as a tagged int.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_bytes_committed')
-        a.sub_rsp_imm8(0x28)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x28)
+            a.call('fn_heap_enter')
         a.mov_rax_rip_qword('heap_end')
         a.mov_r10_rax()
         a.mov_rax_rip_qword('heap_base')
@@ -2082,8 +2121,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r10')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x28)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x28)
         a.ret()
 
     def emit_heap_bytes_reserved_function(self) -> None:
@@ -2092,11 +2132,14 @@ class CodegenMemory:
         Returns (heap_reserve_end - heap_base) as a tagged int.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_bytes_reserved')
-        a.sub_rsp_imm8(0x28)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x28)
+            a.call('fn_heap_enter')
         a.mov_rax_rip_qword('heap_reserve_end')
         a.mov_r10_rax()
         a.mov_rax_rip_qword('heap_base')
@@ -2104,8 +2147,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r10')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x28)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x28)
         a.ret()
 
     def emit_heap_free_blocks_function(self) -> None:
@@ -2120,12 +2164,15 @@ class CodegenMemory:
         - Hard caps iterations to avoid infinite loops on cycles.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_free_blocks')
         a.push_r13()
-        a.sub_rsp_imm8(0x20)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x20)
+            a.call('fn_heap_enter')
 
         # r8 = count (u64)
         a.xor_r32_r32('r8d', 'r8d')
@@ -2182,8 +2229,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r8')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x20)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x20)
         a.pop_r13()
         a.ret()
 
@@ -2200,12 +2248,15 @@ class CodegenMemory:
         - Hard caps iterations to avoid infinite loops on cycles.
         """
         self.ensure_gc_data()
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        if threaded_heap:
+            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         a = self.asm
         a.mark('fn_heap_free_bytes')
         a.push_r13()
-        a.sub_rsp_imm8(0x20)
-        a.call('fn_heap_enter')
+        if threaded_heap:
+            a.sub_rsp_imm8(0x20)
+            a.call('fn_heap_enter')
 
         # r8 = sum_bytes (u64)
         a.xor_r32_r32('r8d', 'r8d')
@@ -2261,8 +2312,9 @@ class CodegenMemory:
         a.mov_r64_r64('rax', 'r8')
         a.shl_rax_imm8(3)
         a.or_rax_imm8(1)  # TAG_INT
-        a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x20)
+        if threaded_heap:
+            a.call('fn_heap_leave')
+            a.add_rsp_imm8(0x20)
         a.pop_r13()
         a.ret()
 

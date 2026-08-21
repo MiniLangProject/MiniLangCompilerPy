@@ -1722,21 +1722,6 @@ class CodegenStmt:
             return
         a = self.asm
 
-        # Cooperative cancellation safe point. Stop() never tears a native
-        # thread down while it owns a monitor or is mutating shared state.
-        if bool(getattr(self, 'in_function', False)) and getattr(self, 'func_ret_label', None):
-            lid_stop = self.new_label_id()
-            l_continue = f'thread_safe_continue_{lid_stop}'
-            a.mov_r11_gs_qword_28()
-            a.test_r64_r64('r11', 'r11')
-            a.jcc('e', l_continue)
-            a.mov_r32_membase_disp('r11d', 'r11', 4)
-            a.cmp_r32_imm('r11d', 2)
-            a.jcc('ne', l_continue)
-            a.mov_rax_imm64(enc_void())
-            a.jmp(self.func_ret_label)
-            a.mark(l_continue)
-
         if hasattr(ml, 'NamespaceDecl') and isinstance(s, ml.NamespaceDecl):
             return
 
@@ -1827,7 +1812,8 @@ class CodegenStmt:
                 gm = getattr(self, '_func_global_map', None) or {}
                 sync_name = str(gm.get(sync_name, sync_name))
             sync_names = getattr(self, 'synchronized_globals', set()) or set()
-            is_sync_write = sync_name in sync_names
+            is_sync_write = (bool(getattr(self, 'native_threads_possible', True))
+                             and sync_name in sync_names)
             if is_sync_write:
                 a.call('fn_sync_enter')
 
@@ -2534,6 +2520,7 @@ class CodegenStmt:
 
             a.mark(top)
             self.emit_gc_safepoint_poll()
+            self.emit_thread_cancellation_poll()
 
             # while true -> skip condition evaluation
             if tv is not True:
@@ -2583,6 +2570,7 @@ class CodegenStmt:
 
             a.mark(check)
             self.emit_gc_safepoint_poll()
+            self.emit_thread_cancellation_poll()
             if tv is True:
                 # loop ... while true
                 a.jmp(top)
@@ -2726,6 +2714,7 @@ class CodegenStmt:
 
             a.mark(cont)
             self.emit_gc_safepoint_poll()
+            self.emit_thread_cancellation_poll()
             # if var == end -> end loop
             self.emit_load_var(s.var)
             if const_bounds:
@@ -3258,6 +3247,8 @@ class CodegenStmt:
             self.pop_scope()
 
             a.mark(cont)
+            self.emit_gc_safepoint_poll()
+            self.emit_thread_cancellation_poll()
             # i++ (reload i because body may clobber ECX)
             _state_load_dword_eax(i_slot)
             a.mov_r32_r32("ecx", "eax")  # mov ecx,eax
@@ -3362,8 +3353,49 @@ class CodegenStmt:
 
     # ---------- program ----------
 
+    def _program_uses_native_threads(self, program: List[Any]) -> bool:
+        """Conservatively detect whether this closed program can create a Thread.
+
+        Imported modules are already part of ``program``. Merely using
+        ``synchronized`` does not imply concurrent execution; the native thread
+        constructor (including a qualified/member reference) does.
+        """
+        seen: set[int] = set()
+
+        def walk(value: Any) -> bool:
+            if value is None or isinstance(value, (str, bytes, int, float, bool)):
+                return False
+            if isinstance(value, dict):
+                return any(walk(k) or walk(v) for k, v in value.items())
+            if isinstance(value, (list, tuple, set)):
+                return any(walk(v) for v in value)
+            oid = id(value)
+            if oid in seen:
+                return False
+            seen.add(oid)
+            kind = value.__class__.__name__
+            if kind in ('Var', 'Member'):
+                name = str(getattr(value, 'name', '') or '')
+                if name == 'Thread' or name.endswith('.Thread'):
+                    return True
+            try:
+                fields = vars(value)
+            except TypeError:
+                return False
+            for key, child in fields.items():
+                if str(key).startswith('_'):
+                    continue
+                if walk(child):
+                    return True
+            return False
+
+        return walk(program)
+
     def emit_program(self, program: List[Any]) -> None:
         a = self.asm
+        # Whole-program feature gating keeps TLS/GC polling and allocator
+        # synchronization out of binaries that cannot create a native thread.
+        self.native_threads_possible = self._program_uses_native_threads(program)
         # Step 10: value-enum storage (EnumName -> {Member -> Expr})
         self.value_enum_values = {}
 
@@ -5307,11 +5339,14 @@ class CodegenStmt:
 
         # ---- debug script/function context ----
 
-        dbg_worker_skip = f'dbg_worker_skip_{self.new_label_id()}'
-        a.mov_r11_gs_qword_28()
-        a.mov_r32_membase_disp('eax', 'r11', 0)
-        a.test_r32_r32('eax', 'eax')
-        a.jcc('ne', dbg_worker_skip)
+        threaded_debug = bool(getattr(self, 'native_threads_possible', True))
+        dbg_worker_skip = None
+        if threaded_debug:
+            dbg_worker_skip = f'dbg_worker_skip_{self.new_label_id()}'
+            a.mov_r11_gs_qword_28()
+            a.mov_r32_membase_disp('eax', 'r11', 0)
+            a.test_r32_r32('eax', 'eax')
+            a.jcc('ne', dbg_worker_skip)
 
         # Save previous debug-loc globals so the caller context is restored on return.
         # (Prevents errors after a nested call from reporting the wrong function.)
@@ -5352,7 +5387,8 @@ class CodegenStmt:
         self.rdata.add_obj_string(lbl_fn, func_s)
         a.lea_rax_rip(lbl_fn)
         a.mov_rip_qword_rax('dbg_loc_func')
-        a.mark(dbg_worker_skip)
+        if dbg_worker_skip is not None:
+            a.mark(dbg_worker_skip)
 
         # ---- GC shadow stack roots (Part A) ----
 
@@ -5439,6 +5475,7 @@ class CodegenStmt:
         # Incoming managed arguments must be in the published parameter slots
         # before the first cooperative safepoint can park this thread.
         self.emit_gc_safepoint_poll()
+        self.emit_thread_cancellation_poll()
 
         # ---- closure environment (Step 6.2d-1: env elision) ----
         #
@@ -5537,7 +5574,9 @@ class CodegenStmt:
             a.mov_rsp_disp32_rax(env_root_off)
 
         # ---- body ----
-        if bool(getattr(fn, 'is_synchronized', False)):
+        synchronized_runtime = (bool(getattr(self, 'native_threads_possible', True))
+                                and bool(getattr(fn, 'is_synchronized', False)))
+        if synchronized_runtime:
             a.call('fn_sync_enter')
         old_qpref = getattr(self, 'current_qname_prefix', '')
         _old_fn_qn = getattr(self, '_current_fn_qname', None)
@@ -5578,24 +5617,27 @@ class CodegenStmt:
 
         # ---- epilogue ----
         a.mark(ret_label)
-        if bool(getattr(fn, 'is_synchronized', False)):
+        if synchronized_runtime:
             a.call('fn_sync_leave')
         # Pop GC root-frame record (must not clobber RAX return value)
         self.emit_gc_pop_root_frame(root_rec_off)
 
         # Restore previous debug-loc globals (do not clobber RAX return value).
-        dbg_restore_skip = f'dbg_restore_worker_{self.new_label_id()}'
-        a.mov_r11_gs_qword_28()
-        a.mov_r32_membase_disp('r11d', 'r11', 0)
-        a.test_r32_r32('r11d', 'r11d')
-        a.jcc('ne', dbg_restore_skip)
+        dbg_restore_skip = None
+        if threaded_debug:
+            dbg_restore_skip = f'dbg_restore_worker_{self.new_label_id()}'
+            a.mov_r11_gs_qword_28()
+            a.mov_r32_membase_disp('r11d', 'r11', 0)
+            a.test_r32_r32('r11d', 'r11d')
+            a.jcc('ne', dbg_restore_skip)
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 0)
         a.mov_rip_qword_r11('dbg_loc_script')
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 8)
         a.mov_rip_qword_r11('dbg_loc_func')
         a.mov_r64_membase_disp("r11", "rsp", dbg_save_base + 16)
         a.mov_rip_qword_r11('dbg_loc_line')
-        a.mark(dbg_restore_skip)
+        if dbg_restore_skip is not None:
+            a.mark(dbg_restore_skip)
 
         # restore scope stack
         if saved_emit_stack is not None:

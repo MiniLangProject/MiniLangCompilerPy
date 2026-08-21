@@ -957,6 +957,14 @@ synchronized function, a synchronized binding or the primitives/collections in
 the next section to define the required critical section. Console and other
 process-wide I/O should also be serialized when multiple workers can use it.
 
+For closed programs that never reference `Thread`, the compiler selects a
+single-thread fast path. Generated hot code then omits cancellation and GC
+safepoint polls, thread-local root/debug handoffs, managed/native transition
+wrappers and allocator/world-lock traffic. Programs that can construct a
+`Thread` retain the fully synchronized shared-heap runtime above; after all
+workers have exited, uncontended allocation also bypasses the heap lock again.
+This selection is automatic and does not change source semantics.
+
 ### 9.2 Thread-safe standard-library types
 
 `std.threading` exposes native process-wide synchronization objects:

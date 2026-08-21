@@ -2823,6 +2823,32 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
 
         listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
 
+        # A closed program without Thread must not pay the native-thread tax.
+        # Keep this structural check next to the runtime optimization fixture so
+        # per-statement cancellation, GC polling or allocator locking cannot
+        # silently regress single-threaded generated code again.
+        for marker in (
+            "thread_cancel_done_",
+            "gc_poll_done_",
+            "dbg_worker_",
+            "dbg_line_worker_",
+            "gc_context_loop_",
+            "fn_heap_enter:",
+            "fn_heap_leave:",
+            "fn_gc_native_enter:",
+            "fn_gc_native_leave:",
+            "fn_gc_safepoint:",
+        ):
+            if marker in listing:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"thread-free program retained generated-code overhead: {marker}")
+        alloc_start = listing.find("fn_alloc:")
+        alloc_end = listing.find("\nfn_", alloc_start + len("fn_alloc:"))
+        alloc_block = "" if alloc_start < 0 else listing[alloc_start:(None if alloc_end < 0 else alloc_end)]
+        if not alloc_block or "call fn_heap_enter" in alloc_block or "call fn_heap_leave" in alloc_block:
+            return TestResult(name=name, status="FAIL",
+                              details="thread-free allocator retained heap synchronization")
+
         def function_block(fn_name: str) -> str:
             marker = f"fn_user_{fn_name}:"
             start = listing.find(marker)

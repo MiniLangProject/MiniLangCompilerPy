@@ -24,7 +24,8 @@ THREAD_ALLOC_CURSOR = 136
 THREAD_ARG = 144
 THREAD_LOGICAL_ID = 152
 THREAD_ARITY = 160
-THREAD_CONTEXT_SIZE = 168
+THREAD_HEAP_BYPASS_DEPTH = 168
+THREAD_CONTEXT_SIZE = 176
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -62,6 +63,8 @@ class CodegenThreads:
             d.add_u64('thread_contexts_head', 0)
         if 'gc_requested' not in d.labels:
             d.add_u64('gc_requested', 0)
+        if 'managed_thread_count' not in d.labels:
+            d.add_u64('managed_thread_count', 1)
 
     def emit_sync_init(self) -> None:
         self.ensure_thread_data()
@@ -82,9 +85,12 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_LOGICAL_ID, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ARITY, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
         a.mov_rip_qword_rax('thread_contexts_head')
         a.xor_r32_r32('eax', 'eax')
         a.mov_rip_qword_rax('gc_requested')
+        a.mov_rax_imm64(1)
+        a.mov_rip_qword_rax('managed_thread_count')
         for monitor in ('sync_monitor', 'heap_monitor', 'gc_coord_monitor'):
             a.lea_rax_rip(monitor)
             a.mov_r64_r64('rcx', 'rax')
@@ -93,6 +99,8 @@ class CodegenThreads:
 
     def emit_gc_safepoint_poll(self) -> None:
         """Emit a cheap cooperative GC poll at a compiler-known safe boundary."""
+        if not bool(getattr(self, 'native_threads_possible', True)):
+            return
         self.used_helpers.add('fn_gc_safepoint')
         a = self.asm
         done = f'gc_poll_done_{self.new_label_id()}'
@@ -101,6 +109,44 @@ class CodegenThreads:
         a.jcc('e', done)
         a.call('fn_gc_safepoint')
         a.mark(done)
+
+    def emit_thread_cancellation_poll(self) -> None:
+        """Cooperatively stop workers at function and loop boundaries."""
+        if not bool(getattr(self, 'native_threads_possible', True)):
+            return
+        if not bool(getattr(self, 'in_function', False)) or not getattr(self, 'func_ret_label', None):
+            return
+        a = self.asm
+        lid = self.new_label_id()
+        done = f'thread_cancel_done_{lid}'
+        a.mov_r11_gs_qword_28()
+        a.test_r64_r64('r11', 'r11')
+        a.jcc('e', done)
+        a.mov_r32_membase_disp('r10d', 'r11', THREAD_TYPE)
+        a.cmp_r32_imm('r10d', OBJ_THREAD)
+        a.jcc('ne', done)
+        a.mov_r32_membase_disp('r10d', 'r11', THREAD_STATUS)
+        a.cmp_r32_imm('r10d', THREAD_STOP_REQUESTED)
+        a.jcc('ne', done)
+        a.mov_rax_imm64(enc_void())
+        a.jmp(self.func_ret_label)
+        a.mark(done)
+
+    def _emit_managed_thread_count_delta(self, delta: int) -> None:
+        """Atomically add +/-1 to the active managed-thread count."""
+        a = self.asm
+        lid = self.new_label_id()
+        retry = f'managed_thread_count_retry_{lid}'
+        a.lea_r11_rip('managed_thread_count')
+        a.mark(retry)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.mov_r32_r32('edx', 'eax')
+        if int(delta) >= 0:
+            a.inc_r32('edx')
+        else:
+            a.dec_r32('edx')
+        a.lock_cmpxchg_membase_disp_r32('r11', 0, 'edx')
+        a.jcc('ne', retry)
 
     def emit_gc_safepoint_function(self) -> None:
         self.ensure_thread_data()
@@ -259,6 +305,20 @@ class CodegenThreads:
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_heap_enter')
+        lid_fast = self.new_label_id()
+        l_locked = f'heap_enter_locked_{lid_fast}'
+        # A single active managed thread cannot race heap metadata. Remember
+        # the bypass in TLS so fn_heap_leave remains correct if another worker
+        # terminates while a genuinely locked outer operation is still active.
+        a.mov_rax_rip_qword('managed_thread_count')
+        a.cmp_r64_imm('rax', 1)
+        a.jcc('a', l_locked)
+        a.mov_r11_gs_qword_28()
+        a.mov_r32_membase_disp('r10d', 'r11', THREAD_HEAP_BYPASS_DEPTH)
+        a.inc_r32('r10d')
+        a.mov_membase_disp_r32('r11', THREAD_HEAP_BYPASS_DEPTH, 'r10d')
+        a.ret()
+        a.mark(l_locked)
         a.sub_rsp_imm8(0x28)
         lid = self.new_label_id()
         l_retry = f'heap_enter_retry_{lid}'
@@ -301,6 +361,16 @@ class CodegenThreads:
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_heap_leave')
+        lid = self.new_label_id()
+        l_locked = f'heap_leave_locked_{lid}'
+        a.mov_r11_gs_qword_28()
+        a.mov_r32_membase_disp('r10d', 'r11', THREAD_HEAP_BYPASS_DEPTH)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_locked)
+        a.dec_r32('r10d')
+        a.mov_membase_disp_r32('r11', THREAD_HEAP_BYPASS_DEPTH, 'r10d')
+        a.ret()
+        a.mark(l_locked)
         a.sub_rsp_imm8(0x38)
         a.mov_membase_disp_r64('rsp', 0x20, 'rax')
         a.movsd_membase_disp_xmm('rsp', 0x28, 'xmm0')
@@ -461,6 +531,7 @@ class CodegenThreads:
         a.mov_membase_disp_r64('rax', THREAD_LOGICAL_ID, 'r11')
         a.mov_r32_membase_disp('r11d', 'rsp', 0x40)
         a.mov_membase_disp_r32('rax', THREAD_ARITY, 'r11d')
+        a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
         # Contexts remain registered for the process lifetime. Close() clears
         # their managed roots, so registration itself cannot retain user data.
         a.lea_rax_rip('gc_coord_monitor')
@@ -502,6 +573,8 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rcx', THREAD_STOP, 0, qword=False)
         a.mov_membase_disp_r64('rcx', THREAD_ARG, 'rdx')
         a.mov_membase_disp_imm32('rcx', THREAD_STATUS, THREAD_RUNNING, qword=False)
+        # Count the worker before CreateThread can enter managed execution.
+        self._emit_managed_thread_count_delta(1)
         a.xor_r32_r32('eax', 'eax')
         a.mov_membase_disp_r64('rsp', 0x20, 'rax')  # creation flags
         a.lea_r64_membase_disp('rax', 'rsp', 0x40)  # thread id destination
@@ -524,6 +597,7 @@ class CodegenThreads:
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
         a.mov_membase_disp_imm32('r11', THREAD_STATUS, THREAD_FAILED, qword=False)
         a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
+        self._emit_managed_thread_count_delta(-1)
         a.mark(l_wrong_arity)
         a.mark(l_not_created)
         a.mov_rax_imm64(enc_bool(False))
@@ -806,6 +880,7 @@ class CodegenThreads:
         # the context inactive; its published result remains a registered root
         # until Close() clears it.
         a.call('fn_gc_managed_exit')
+        self._emit_managed_thread_count_delta(-1)
         a.xor_r32_r32('eax', 'eax')
         a.mov_gs_qword_28_rax()
         a.add_rsp_imm8(0x28)
