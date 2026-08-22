@@ -2337,6 +2337,8 @@ class CodegenMemory:
         a.ret()
 
     def emit_heap_grow_function(self) -> None:
+        """Emit committed-heap growth within the process-wide reservation."""
+
         self.ensure_gc_data()
         a = self.asm
         a.mark("fn_heap_grow")

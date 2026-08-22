@@ -25,6 +25,8 @@ end function
 
 import std.string as s
 
+// Native Win32 file and directory operations with value-or-error results.
+
 // ------------------------------------------------------------
 // std.fs (native Win32)
 // Declaration-only: only imports/externs/functions.
@@ -37,11 +39,13 @@ import std.string as s
 const INVALID_HANDLE_VALUE = -1
 const INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
 
+// Win32 generic access masks accepted by File.open().
 enum Access
   GENERIC_READ = 0x80000000
   GENERIC_WRITE = 0x40000000
 end enum
 
+// Win32 file-sharing modes accepted by File.open().
 enum Share
   NONE = 0
   FILE_SHARE_READ = 0x00000001
@@ -49,6 +53,7 @@ enum Share
   FILE_SHARE_DELETE = 0x00000004
 end enum
 
+// Win32 creation dispositions accepted by File.open().
 enum Creation
   CREATE_NEW = 1
   CREATE_ALWAYS = 2
@@ -57,6 +62,7 @@ enum Creation
   TRUNCATE_EXISTING = 5
 end enum
 
+// Common Win32 file attribute flags.
 enum FileAttr
   FILE_ATTRIBUTE_READONLY = 0x00000001
   FILE_ATTRIBUTE_HIDDEN = 0x00000002
@@ -208,6 +214,7 @@ function joinPath(base, name)
   return base + "\\" + name
 end function
 
+// Decode the UTF-16 filename field of a WIN32_FIND_DATAW buffer.
 function _findDataName(buf)
   if typeof(buf) != "bytes" then
     return
@@ -219,6 +226,7 @@ function _findDataName(buf)
   return decode16Z(nameBuf)
 end function
 
+// Grow an internal string buffer geometrically for directory enumeration.
 function _growStringArray(items, need)
   if typeof(items) != "array" then
     return
@@ -245,6 +253,7 @@ function _growStringArray(items, need)
   return grown
 end function
 
+// Trim an internal buffer to exactly its initialized elements.
 function _takeStringArray(items, count)
   if typeof(items) != "array" then
     return
@@ -348,6 +357,7 @@ function delete(path)
   return false
 end function
 
+// Open a file for replacement, creating it when necessary.
 function _openWriteAlways(path)
   last_error = 0
   i = 0
@@ -746,5 +756,3 @@ function readAllLines(path)
 
   return lines
 end function
-
-

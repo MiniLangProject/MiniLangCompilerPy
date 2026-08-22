@@ -59,6 +59,7 @@ function _nextPow2(n)
   return c
 end function
 
+// Mutable growable sequence with indexed insertion and removal.
 struct List
   buf
   size

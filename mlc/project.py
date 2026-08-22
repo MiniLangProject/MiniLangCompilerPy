@@ -17,11 +17,13 @@ except ImportError:  # pragma: no cover - Python 3.11+ is supported.
 
 
 class ProjectError(ValueError):
-    pass
+    """Raised when a project manifest or incremental cache is invalid."""
 
 
 @dataclass(frozen=True)
 class ProjectBuild:
+    """Validated project configuration carried through compilation and caching."""
+
     manifest: Path
     cache_dir: Path
     incremental: bool
@@ -29,10 +31,14 @@ class ProjectBuild:
 
     @property
     def state_path(self) -> Path:
+        """Return the digest metadata path inside the project cache."""
+
         return self.cache_dir / "build.state"
 
     @property
     def artifact_path(self) -> Path:
+        """Return the cached executable path inside the project cache."""
+
         return self.cache_dir / "build.exe"
 
 
@@ -137,6 +143,8 @@ def _iter_ml_files(roots: Iterable[Path], excluded: Path) -> Iterable[Path]:
 
 
 def fingerprint(project: ProjectBuild, input_path: str, include_dirs: Sequence[str]) -> str:
+    """Hash effective arguments plus all reachable project and compiler sources."""
+
     h = hashlib.sha256()
     h.update(b"MiniLang-project-cache-v1\0")
     h.update("\0".join(project.expanded_args).encode("utf-8"))
@@ -163,6 +171,8 @@ def fingerprint(project: ProjectBuild, input_path: str, include_dirs: Sequence[s
 
 
 def restore(project: Optional[ProjectBuild], digest: str, output_path: str) -> bool:
+    """Restore a cached artifact only when its recorded digest matches exactly."""
+
     if project is None or not project.incremental:
         return False
     try:
@@ -179,6 +189,8 @@ def restore(project: Optional[ProjectBuild], digest: str, output_path: str) -> b
 
 
 def store(project: Optional[ProjectBuild], digest: str, output_path: str) -> None:
+    """Atomically replace the cached artifact and its validation digest."""
+
     if project is None or not project.incremental:
         return
     project.cache_dir.mkdir(parents=True, exist_ok=True)

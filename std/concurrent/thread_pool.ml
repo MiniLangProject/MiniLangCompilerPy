@@ -7,6 +7,10 @@ package std.concurrent.thread_pool
 
 import std.threading as threading
 
+// Managed worker pool with optional queue backpressure. Jobs, callbacks and
+// results stay in the process-wide GC heap; the native workers only own stacks.
+
+// Job states are stable strings so callers can persist and compare them.
 const JOB_QUEUED = "Queued"
 const JOB_RUNNING = "Running"
 const JOB_COMPLETED = "Completed"
@@ -16,6 +20,7 @@ const JOB_CANCELLED = "Cancelled"
 const MAX_WORKERS = 256
 const SIGNAL_MAXIMUM = 0x7FFFFFFF
 
+// Handle for one submitted callback and its eventual result.
 struct ThreadPoolJob
   guard
   done
@@ -25,6 +30,7 @@ struct ThreadPoolJob
   result
   closed
 
+  // Create a queued job owned by the pool until it reaches a terminal state.
   static function new(callback, data)
     guard = threading.Lock.new()
     done = threading.Event.new(true, false)
@@ -39,6 +45,7 @@ struct ThreadPoolJob
     )
   end function
 
+  // Atomically claim a queued job for exactly one worker.
   function _begin()
     if not this.guard.acquire() then return false end if
     ok = false
@@ -50,6 +57,7 @@ struct ThreadPoolJob
     return ok
   end function
 
+  // Run the callback and publish either its value or captured error.
   function _execute()
     callback = this.callback
     data = this.data
@@ -72,6 +80,7 @@ struct ThreadPoolJob
     return true
   end function
 
+  // Cancel a job only while it is still queued.
   function cancel()
     if not this.guard.acquire() then return false end if
     if this.closed or this.status != JOB_QUEUED then
@@ -86,16 +95,19 @@ struct ThreadPoolJob
     return true
   end function
 
+  // Wait indefinitely for a terminal job state.
   function wait()
     if this.closed then return false end if
     return this.done.wait()
   end function
 
+  // Wait up to the requested number of milliseconds.
   function waitFor(milliseconds)
     if this.closed then return false end if
     return this.done.waitFor(milliseconds)
   end function
 
+  // Return a stable JOB_* status snapshot under the job lock.
   function getStatus()
     if not this.guard.acquire() then return JOB_FAILED end if
     value = this.status
@@ -103,6 +115,7 @@ struct ThreadPoolJob
     return value
   end function
 
+  // Return the callback result; failures are represented as error values.
   function getResult()
     if not this.guard.acquire() then return end if
     value = this.result
@@ -110,15 +123,18 @@ struct ThreadPoolJob
     return value
   end function
 
+  // Report whether the job reached any terminal state.
   function isDone()
     value = this.getStatus()
     return value == JOB_COMPLETED or value == JOB_FAILED or value == JOB_CANCELLED
   end function
 
+  // Report whether cancellation won before execution started.
   function isCancelled()
     return this.getStatus() == JOB_CANCELLED
   end function
 
+  // Release synchronization handles after the job has finished.
   function close()
     if not this.guard.acquire() then return false end if
     if this.closed or not this.isDone() then
@@ -135,6 +151,7 @@ struct ThreadPoolJob
     return doneOk and guardOk
   end function
 
+  // PascalCase aliases mirror the native Thread API naming style.
   function Cancel() return this.cancel() end function
   function Wait() return this.wait() end function
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
@@ -145,6 +162,7 @@ struct ThreadPoolJob
   function Dispose() return this.close() end function
 end struct
 
+// Workers exit only after shutdown was requested and the queue is drained.
 function _poolIsStopping(pool)
   if not pool.guard.acquire() then return true end if
   value = pool.stopping and pool.queuedCount == 0
@@ -152,6 +170,7 @@ function _poolIsStopping(pool)
   return value
 end function
 
+// Compact an already-locked queue after enough consumed slots accumulate.
 function _poolCompactLocked(pool)
   if pool.queueHead < 64 or pool.queueHead * 2 < len(pool.queue) then return end if
   remaining = pool.queuedCount
@@ -165,6 +184,7 @@ function _poolCompactLocked(pool)
   pool.queueHead = 0
 end function
 
+// Remove and return one queued job while preserving FIFO order.
 function _poolTake(pool)
   if not pool.guard.acquire() then return end if
   job = void
@@ -179,6 +199,7 @@ function _poolTake(pool)
   return job
 end function
 
+// Native worker entrypoint shared by all threads in a pool.
 function _threadPoolWorker(pool)
   while true
     if not pool.signal.acquire() then return end if
@@ -193,6 +214,7 @@ function _threadPoolWorker(pool)
   end while
 end function
 
+// Fixed-size worker set backed by an optionally bounded FIFO queue.
 struct ThreadPool
   guard
   signal
@@ -206,10 +228,12 @@ struct ThreadPool
   stopped
   closed
 
+  // Create an unbounded pool with workerCount native workers.
   static function new(workerCount)
     return ThreadPool.withQueueCapacity(workerCount, 0)
   end function
 
+  // Create a pool whose zero capacity means an unbounded pending queue.
   static function withQueueCapacity(workerCount, queueCapacity)
     if typeof(workerCount) != "int" or workerCount <= 0 or workerCount > MAX_WORKERS then
       return error(1630, "thread-pool worker count must be between 1 and 256")
@@ -255,6 +279,7 @@ struct ThreadPool
     return pool
   end function
 
+  // Queue a callback and return its job handle, or void when rejected.
   function submit(callback, data)
     job = ThreadPoolJob.new(callback, data)
     if not this.guard.acquire() then return end if
@@ -280,6 +305,7 @@ struct ThreadPool
     return job
   end function
 
+  // Return the number of jobs that have not yet been claimed by workers.
   function pendingCount()
     if not this.guard.acquire() then return 0 end if
     value = this.queuedCount
@@ -287,10 +313,12 @@ struct ThreadPool
     return value
   end function
 
+  // Return the fixed number of native workers created with this pool.
   function workerCount()
     return len(this.workers)
   end function
 
+  // Report whether the pool has stopped accepting new jobs.
   function isShutdown()
     if not this.guard.acquire() then return true end if
     value = not this.accepting
@@ -298,6 +326,7 @@ struct ThreadPool
     return value
   end function
 
+  // Stop accepting jobs and drain the existing queue before worker exit.
   function shutdown()
     if not this.guard.acquire() then return false end if
     if this.closed or this.stopping then
@@ -311,6 +340,7 @@ struct ThreadPool
     return this.signal.releaseMany(count)
   end function
 
+  // Stop accepting jobs and cancel every job that is still queued.
   function stop()
     if not this.guard.acquire() then return false end if
     if this.closed or this.stopping then
@@ -333,10 +363,12 @@ struct ThreadPool
     return this.signal.releaseMany(count)
   end function
 
+  // Wait indefinitely for all workers after shutdown has begun.
   function join()
     return this.joinFor(0xFFFFFFFF)
   end function
 
+  // Wait for each worker with the supplied per-worker timeout.
   function joinFor(milliseconds)
     if typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
     if not this.isShutdown() then return false end if
@@ -351,6 +383,7 @@ struct ThreadPool
     return true
   end function
 
+  // Shut down, join and release all worker and synchronization handles.
   function close()
     if this.closed then return false end if
     if not this.isShutdown() then this.shutdown() end if
@@ -368,6 +401,7 @@ struct ThreadPool
     return signalOk and guardOk
   end function
 
+  // PascalCase aliases provide the conventional pool API surface.
   function Submit(callback, data) return this.submit(callback, data) end function
   function PendingCount() return this.pendingCount() end function
   function WorkerCount() return this.workerCount() end function

@@ -16,6 +16,8 @@ limitations under the License.
 
 package std.math
 
+// Numeric predicates, integer helpers and native transcendental functions.
+
 /*
 checks whether a value is a numeric type
 input: any x

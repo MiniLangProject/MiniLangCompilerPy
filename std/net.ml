@@ -18,6 +18,7 @@ package std.net
 
 const NET_ERR = 200
 
+// Construct a consistent networking argument or socket error.
 function _netErr(msg)
   return error(NET_ERR, msg)
 end function

@@ -18,6 +18,8 @@ package std.fmt
 
 import std.string_builder as sb
 
+// Small allocation-conscious helpers for padding, centering and quoting text.
+
 /*
 repeats a string `ch` exactly `count` times
 input: string ch, int count

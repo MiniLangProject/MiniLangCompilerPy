@@ -18,8 +18,11 @@ package std.time
 import std.string as s
 import std.fmt as fmt
 
+// Monotonic timing, durations, calendar values and local/UTC Win32 conversion.
+
 const TIME_ERR = 300
 
+// Construct a consistent date/time validation error.
 function _timeErr(msg)
   return error(TIME_ERR, msg)
 end function
@@ -39,6 +42,7 @@ Native Win32 time helpers + small calendar/date/time library.
 
 const SYSTEMTIME_SIZE = 16
 
+// Managed representation of the Win32 SYSTEMTIME fields.
 struct SystemTime
   year,
   month,
@@ -50,6 +54,7 @@ struct SystemTime
   millisecond,
 end struct
 
+// Decode one little-endian 16-bit field from a native structure buffer.
 function _u16le(b, off)
   /*
   read an unsigned 16-bit little-endian value from a byte buffer
@@ -59,6 +64,7 @@ function _u16le(b, off)
   return b[off] + b[off + 1] * 256
 end function
 
+// Convert a 16-byte SYSTEMTIME buffer into a managed value.
 function _decodeSystemTime(buf)
   /*
   decode a Win32 SYSTEMTIME buffer into a std.time.SystemTime struct
@@ -188,6 +194,7 @@ struct Date
   day,
 end struct
 
+// Time-of-day value with millisecond precision.
 struct Time
   hour,
   minute,
@@ -195,6 +202,7 @@ struct Time
   millisecond,
 end struct
 
+// Calendar date plus time-of-day with millisecond precision.
 struct DateTime
   date,
   time,
@@ -203,6 +211,7 @@ end struct
 // Ordinal day count for 1970-01-01, with 0001-01-01 as day 0.
 const UNIX_EPOCH_ORDINAL = 719162
 
+// Normalize integer-like values for calendar arithmetic.
 function _toInt(x)
   /*
   convert a value to int if possible
@@ -222,6 +231,7 @@ function _toInt(x)
   return
 end function
 
+// Integer division that truncates toward zero.
 function _idiv(a, b)
   /*
   integer floor division for ints (using '%' semantics)
@@ -265,6 +275,7 @@ function _pad4(n)
   return fmt.padLeft("" + n, 4, "0")
 end function
 
+// Calendar-date construction, validation and arithmetic.
 namespace date
   /*
   check if a year is a leap year (Gregorian rules)
@@ -536,6 +547,7 @@ namespace date
   end function
 end namespace
 
+// Time-of-day construction, formatting and arithmetic.
 namespace clock
   /*
   validate a time quadruple (hour, minute, second, millisecond)
@@ -706,6 +718,7 @@ namespace clock
   end function
 end namespace
 
+// Combined local/UTC date-time conversion and arithmetic.
 namespace datetime
   /*
   validate a DateTime struct

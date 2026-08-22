@@ -1,6 +1,4 @@
-"""
-MiniLang -> x86-64 machine code generation for Windows (PE32+).
-"""
+"""Expression, call, constant-folding and native-interop lowering to x86-64."""
 
 from __future__ import annotations
 
@@ -19,6 +17,7 @@ _F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
 
 class CodegenExpr:
+    """Lower MiniLang expressions, calls, constants and native interop to x64."""
 
     # ------------------------------------------------------------
     # Optimizer Step 4: constant folding (safe subset)

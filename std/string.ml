@@ -41,10 +41,12 @@ function _isWhitespace(ch)
   return ch == " " or ch == "\t" or ch == "\n" or ch == "\r"
 end function
 
+// Recognize the ASCII whitespace set used by trim and blank checks.
 function _isWhitespaceByte(v)
   return v == 32 or v == 9 or v == 10 or v == 13
 end function
 
+// Lowercase one ASCII byte without locale-dependent behavior.
 function _lowerAsciiByte(v)
   if v >= 65 and v <= 90 then
     return v + 32
@@ -52,6 +54,7 @@ function _lowerAsciiByte(v)
   return v
 end function
 
+// Uppercase one ASCII byte without locale-dependent behavior.
 function _upperAsciiByte(v)
   if v >= 97 and v <= 122 then
     return v - 32
@@ -59,6 +62,7 @@ function _upperAsciiByte(v)
   return v
 end function
 
+// Decode bytes and normalize failed/void results to an empty string.
 function _decodeOrEmpty(b)
   if typeof(b) != "bytes" then
     return
@@ -69,6 +73,7 @@ function _decodeOrEmpty(b)
   return decode(b)
 end function
 
+// Use direct scanning for short byte strings.
 function _indexOfBytesNaive(hay, needle, start)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1
@@ -114,6 +119,7 @@ function _indexOfBytesNaive(hay, needle, start)
   return -1
 end function
 
+// Select the optimized forward substring search implementation.
 function _indexOfBytes(hay, needle, start)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1
@@ -184,6 +190,7 @@ function _indexOfBytes(hay, needle, start)
   return -1
 end function
 
+// Search backward for the final byte-string occurrence.
 function _lastIndexOfBytes(hay, needle)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1

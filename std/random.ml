@@ -27,6 +27,7 @@ const U32_MASK = 0xFFFFFFFF
 const DEFAULT_SEED = 0x6d2b79f5
 const U32_RANGE_FLOAT = 4294967296.0
 
+// Deterministic per-instance pseudorandom number generator.
 struct RNG
   state
 

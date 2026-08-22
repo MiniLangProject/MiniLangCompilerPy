@@ -149,11 +149,13 @@ function _findSlot(keys, states, cap, key, forInsert)
   return -1
 end function
 
+// Detached key/value pair returned by entry-oriented operations.
 struct Entry
   key
   value
 end struct
 
+// Open-addressing map with deterministic hashing for supported key types.
 struct HashMap
   cap
   size

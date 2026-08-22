@@ -1,5 +1,7 @@
-"""
-MiniLang -> x86-64 machine code generation for Windows (PE32+).
+"""Statement lowering and whole-program analysis for the native backend.
+
+The pass performs declaration planning, bounded inlining, closure/capture
+analysis, cleanup lowering and deterministic function/module emission.
 """
 
 from __future__ import annotations
@@ -66,7 +68,7 @@ def _is_constexpr_expr(ml: Any, expr: Any) -> bool:
 
 
 class _ConstEvalError(Exception):
-    pass
+    """Internal signal that a candidate expression is not safely constant."""
 
 
 def _truthy(v: Any) -> bool:
@@ -397,6 +399,8 @@ def _set_const_binding_value(cg: Any, b: VarBinding, pyv: Any) -> None:
 
 
 class CodegenStmt:
+    """Lower statements and orchestrate whole-program planning and emission."""
+
     _FOR_UNROLL_MAX_TRIPS = 6
     _FOR_UNROLL_MAX_BODY_STMTS = 12
 
@@ -1856,6 +1860,8 @@ class CodegenStmt:
         a.mov_rax_rsp_disp32(ret_off)
 
     def emit_stmt(self, s: Any) -> None:
+        """Lower one statement using the current lexical and cleanup state."""
+
         ml = self.ml
 
         # Track per-file package prefix for implicit name resolution.
@@ -3601,6 +3607,8 @@ class CodegenStmt:
         return walk(program)
 
     def emit_program(self, program: List[Any]) -> None:
+        """Plan and emit a complete closed MiniLang program."""
+
         a = self.asm
         # Whole-program feature gating keeps TLS/GC polling and allocator
         # synchronization out of binaries that cannot create a native thread.

@@ -29,14 +29,17 @@ extern function ResetEvent(handle as ptr) from "kernel32.dll" returns bool
 extern function WaitForSingleObject(handle as ptr, milliseconds as u32) from "kernel32.dll" returns u32
 extern function CloseHandle(handle as ptr) from "kernel32.dll" returns bool
 
+// Treat an abandoned mutex as acquired, matching Win32 ownership semantics.
 function _waitSucceeded(result)
   return result == WAIT_OBJECT_0 or result == WAIT_ABANDONED
 end function
 
+// Re-entrant native mutex. Every successful acquire must be released.
 struct Lock
   handle
   closed
 
+  // Create an initially unowned native mutex.
   static function new()
     h = CreateMutexW(void, false, void)
     if h == 0 then
@@ -45,11 +48,13 @@ struct Lock
     return Lock(h, false)
   end function
 
+  // Block until the current thread owns the mutex.
   function acquire()
     if this.closed then return false end if
     return _waitSucceeded(WaitForSingleObject(this.handle, INFINITE))
   end function
 
+  // Wait at most the requested number of milliseconds for ownership.
   function acquireFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
       return false
@@ -57,19 +62,23 @@ struct Lock
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
   end function
 
+  // Attempt immediate acquisition without blocking.
   function tryAcquire()
     return this.acquireFor(0)
   end function
 
+  // Release one acquisition held by the current thread.
   function release()
     if this.closed then return false end if
     return ReleaseMutex(this.handle)
   end function
 
+  // Report whether the native handle has been closed.
   function isClosed()
     return this.closed
   end function
 
+  // Close the mutex handle after all users have stopped accessing it.
   function close()
     if this.closed then return false end if
     ok = CloseHandle(this.handle)
@@ -88,11 +97,13 @@ struct Lock
   function IsClosed() return this.isClosed() end function
 end struct
 
+// Counting semaphore with a fixed maximum permit count.
 struct Semaphore
   handle
   maximumCount
   closed
 
+  // Create a semaphore with validated initial and maximum permit counts.
   static function new(initialCount, maximumCount)
     if typeof(initialCount) != "int" or typeof(maximumCount) != "int" then
       return error(1601, "semaphore counts must be integers")
@@ -107,11 +118,13 @@ struct Semaphore
     return Semaphore(h, maximumCount, false)
   end function
 
+  // Block until one permit can be consumed.
   function acquire()
     if this.closed then return false end if
     return _waitSucceeded(WaitForSingleObject(this.handle, INFINITE))
   end function
 
+  // Consume one permit within the requested timeout.
   function acquireFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
       return false
@@ -119,14 +132,17 @@ struct Semaphore
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
   end function
 
+  // Attempt to consume one permit without blocking.
   function tryAcquire()
     return this.acquireFor(0)
   end function
 
+  // Return one permit to the semaphore.
   function release()
     return this.releaseMany(1)
   end function
 
+  // Return multiple permits in one native operation.
   function releaseMany(count)
     if this.closed or typeof(count) != "int" or count <= 0 then
       return false
@@ -134,10 +150,12 @@ struct Semaphore
     return ReleaseSemaphore(this.handle, count, void)
   end function
 
+  // Report whether the native handle has been closed.
   function isClosed()
     return this.closed
   end function
 
+  // Close the handle after no thread can wait on it again.
   function close()
     if this.closed then return false end if
     ok = CloseHandle(this.handle)
@@ -148,6 +166,7 @@ struct Semaphore
     return ok
   end function
 
+  // PascalCase aliases mirror the native Thread API.
   function Acquire() return this.acquire() end function
   function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
   function TryAcquire() return this.tryAcquire() end function
@@ -156,11 +175,13 @@ struct Semaphore
   function IsClosed() return this.isClosed() end function
 end struct
 
+// Win32 manual- or auto-reset event for one-to-many notifications.
 struct Event
   handle
   manualReset
   closed
 
+  // Create an event with explicit reset mode and initial signal state.
   static function new(manualReset, initialState)
     if typeof(manualReset) != "bool" or typeof(initialState) != "bool" then
       return error(1602, "event flags must be booleans")
@@ -172,11 +193,13 @@ struct Event
     return Event(h, manualReset, false)
   end function
 
+  // Wait indefinitely until the event is signaled.
   function wait()
     if this.closed then return false end if
     return _waitSucceeded(WaitForSingleObject(this.handle, INFINITE))
   end function
 
+  // Wait until signaled or until the timeout expires.
   function waitFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
       return false
@@ -184,24 +207,29 @@ struct Event
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
   end function
 
+  // Test the signal state without blocking.
   function tryWait()
     return this.waitFor(0)
   end function
 
+  // Signal the event and release the applicable waiters.
   function set()
     if this.closed then return false end if
     return SetEvent(this.handle)
   end function
 
+  // Return a manual-reset event to the nonsignaled state.
   function reset()
     if this.closed then return false end if
     return ResetEvent(this.handle)
   end function
 
+  // Report whether the native handle has been closed.
   function isClosed()
     return this.closed
   end function
 
+  // Close the event after no thread can wait on it again.
   function close()
     if this.closed then return false end if
     ok = CloseHandle(this.handle)
@@ -212,6 +240,7 @@ struct Event
     return ok
   end function
 
+  // PascalCase aliases mirror the native Thread API.
   function Wait() return this.wait() end function
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
   function TryWait() return this.tryWait() end function

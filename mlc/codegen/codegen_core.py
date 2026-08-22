@@ -1,5 +1,7 @@
-"""
-MiniLang -> x86-64 machine code generation for Windows (PE32+).
+"""Shared MiniLang backend state and low-level emission coordination.
+
+This mixin owns labels, runtime-helper reachability, temporary GC roots,
+diagnostics and call bookkeeping used by the expression and statement passes.
 """
 
 from __future__ import annotations
@@ -17,6 +19,8 @@ from ..tools import align_up, enc_int, enc_void
 
 
 class ExprValueTemp:
+    """GC-visible spill slot optionally mirrored in a nonvolatile register."""
+
     __slots__ = ("off", "reg", "dirty")
 
     def __init__(self, off: int, reg: Optional[str]) -> None:
@@ -26,6 +30,8 @@ class ExprValueTemp:
 
 
 class CodegenCore:
+    """Own shared backend state, labels, helper tracking and call emission."""
+
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
                  extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False, trace_calls: bool = False,

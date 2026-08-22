@@ -16,6 +16,10 @@ limitations under the License.
 
 package std.string_builder
 
+// Mutable UTF-8 builder used where repeated immutable concatenation would copy
+// the growing prefix on every append.
+
+// Round capacities to powers of two so repeated appends grow geometrically.
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 16
@@ -30,15 +34,18 @@ function _nextPow2(n)
   return c
 end function
 
+// Mutable UTF-8 byte builder for append-heavy string construction.
 struct StringBuilder
   buf
   lenBytes
   capacity
 
+  // Create an empty builder with a practical default capacity.
   static function new()
     return std.string_builder.StringBuilder.withCapacity(64)
   end function
 
+  // Create an empty builder with at least cap bytes of capacity.
   static function withCapacity(cap)
     if typeof(cap) != "int" then
       cap = 64
@@ -50,14 +57,17 @@ struct StringBuilder
     return std.string_builder.StringBuilder(bytes(cap, 0), 0, cap)
   end function
 
+  // Return the number of UTF-8 bytes currently stored.
   function len()
     return this.lenBytes
   end function
 
+  // Reset the logical length while retaining allocated capacity.
   function clear()
     this.lenBytes = 0
   end function
 
+  // Ensure room for at least extra additional bytes.
   function reserve(extra)
     if typeof(extra) != "int" then
       return
@@ -79,6 +89,7 @@ struct StringBuilder
     this.capacity = newCap
   end function
 
+  // Append a string without creating an intermediate concatenation.
   function appendString(s)
     if typeof(s) != "string" then
       return
@@ -92,6 +103,7 @@ struct StringBuilder
     this.lenBytes = this.lenBytes + sl
   end function
 
+  // Append a clamped byte slice; negative offsets count from the end.
   function appendSlice(s, offset, length)
     if typeof(s) != "string" then
       return
@@ -132,6 +144,7 @@ struct StringBuilder
     this.lenBytes = this.lenBytes + take
   end function
 
+  // Convert a value with str() and append its textual representation.
   function append(value)
     sv = str(value)
     if typeof(sv) != "string" then
@@ -140,11 +153,13 @@ struct StringBuilder
     this.appendString(sv)
   end function
 
+  // Append a value followed by a newline byte.
   function appendLine(value)
     this.append(value)
     this.appendString("\n")
   end function
 
+  // Materialize exactly the initialized bytes as an immutable string.
   function toString()
     if this.lenBytes <= 0 then
       return ""

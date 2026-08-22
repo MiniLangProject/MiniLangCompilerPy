@@ -38,10 +38,12 @@ function _isWs(ch)
   return ch == " " or ch == "\t" or ch == "\n" or ch == "\r"
 end function
 
+// Recognize ASCII whitespace permitted inside encoded input.
 function _isWsByte(v)
   return v == 32 or v == 9 or v == 10 or v == 13
 end function
 
+// Remove permitted whitespace and reject non-string input.
 function _cleanBytes(text)
   if typeof(text) != "string" then
     return
@@ -70,6 +72,7 @@ function _cleanBytes(text)
   return slice(output, 0, oi)
 end function
 
+// Decode a validated block or return the canonical empty bytes value.
 function _decodeOrEmpty(b)
   if typeof(b) != "bytes" then
     return
@@ -80,6 +83,7 @@ function _decodeOrEmpty(b)
   return decode(b)
 end function
 
+// Convert one Base64 alphabet byte to its six-bit value.
 function _valByte(v)
   if v >= 65 and v <= 90 then
     return v - 65

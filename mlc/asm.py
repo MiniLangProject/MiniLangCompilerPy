@@ -36,9 +36,11 @@ class TraceEntry:
 
 
 class Asm:
+    """Deterministic x86-64 instruction stream with labels and relocations."""
+
     def __init__(self):
-        """Internal encoder/helper used by instruction emitters.
-        """
+        """Create an empty encoder with optional trace/listing support."""
+
         self.buf = bytearray()
         self.labels: Dict[str, int] = {}
         # patches: (pos_of_disp32, label, kind)
@@ -2988,6 +2990,8 @@ class Asm:
     def write_listing(self, path: Optional[str] = None, *, base_addr: int = 0,
                       label_addr_map: Optional[Dict[str, int]] = None, show_addr: Optional[bool] = None,
                       show_bytes: Optional[bool] = None, show_text: Optional[bool] = None, ) -> None:
+        """Write a deterministic mixed address/opcode/source assembly listing."""
+
         if path is None:
             path = self._listing_path
         if not path:

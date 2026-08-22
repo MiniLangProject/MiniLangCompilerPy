@@ -18,8 +18,11 @@ package std.encoding.hex
 
 import std.string as s
 
+// Lower/uppercase hexadecimal encoding plus strict, error-preserving decoding.
+
 const HEX_ERR = 210
 
+// Construct a consistent hexadecimal validation error.
 function _hexErr(msg)
   return error(HEX_ERR, msg)
 end function

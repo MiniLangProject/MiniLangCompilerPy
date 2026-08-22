@@ -45,6 +45,8 @@ class CodegenThreads:
     """Runtime emitters shared by Thread(...), thread methods and synchronization."""
 
     def ensure_thread_data(self) -> None:
+        """Materialize global monitors, main context and GC counters once."""
+
         d = self.data
         if 'sync_monitor' not in d.labels:
             d.pad_align(8)
@@ -67,6 +69,8 @@ class CodegenThreads:
             d.add_u64('managed_thread_count', 1)
 
     def emit_sync_init(self) -> None:
+        """Initialize the main thread context and process-wide monitors."""
+
         self.ensure_thread_data()
         a = self.asm
         # The main thread participates in the same per-thread root protocol as
@@ -98,6 +102,8 @@ class CodegenThreads:
             a.call_rax()
 
     def emit_gc_safepoint_poll(self) -> None:
+        """Emit a cheap conditional call to the cooperative GC slow path."""
+
         """Emit a cheap cooperative GC poll at a compiler-known safe boundary."""
         if not bool(getattr(self, 'native_threads_possible', True)):
             return
@@ -204,6 +210,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_gc_native_enter_function(self) -> None:
+        """Emit the transition that marks a worker outside managed code."""
+
         self.used_helpers.add('fn_gc_safepoint')
         self.ensure_thread_data()
         a = self.asm
@@ -237,6 +245,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_gc_native_leave_function(self) -> None:
+        """Emit re-entry into managed code, parking first when required."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_gc_native_leave')
@@ -283,6 +293,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_gc_managed_exit_function(self) -> None:
+        """Emit removal of a terminating worker from GC participation."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_gc_managed_exit')
@@ -301,6 +313,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_heap_enter_function(self) -> None:
+        """Emit re-entrant serialization for shared-heap mutation."""
+
         self.used_helpers.update({'fn_gc_safepoint', 'fn_gc_native_enter'})
         self.ensure_thread_data()
         a = self.asm
@@ -358,6 +372,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_heap_leave_function(self) -> None:
+        """Emit release of the heap monitor at outermost nesting depth."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_heap_leave')
@@ -384,6 +400,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_gc_world_stop_function(self) -> None:
+        """Emit the collector path that parks every other managed worker."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_gc_world_stop')
@@ -445,6 +463,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_gc_world_resume_function(self) -> None:
+        """Emit clearing of the GC request so parked workers can resume."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_gc_world_resume')
@@ -465,6 +485,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_sync_enter_function(self) -> None:
+        """Emit entry into the monitor used by synchronized constructs."""
+
         self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         self.ensure_thread_data()
         a = self.asm
@@ -482,6 +504,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_sync_leave_function(self) -> None:
+        """Emit exit from the monitor used by synchronized constructs."""
+
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_sync_leave')
@@ -606,6 +630,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_stop_function(self) -> None:
+        """Emit cooperative stop-request publication for a Thread object."""
+
         a = self.asm
         a.mark('fn_thread_stop')
         lid = self.new_label_id()
@@ -664,6 +690,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_alive_function(self) -> None:
+        """Emit the lifecycle-state test behind Thread.IsAlive()."""
+
         a = self.asm
         a.mark('fn_thread_alive')
         lid = self.new_label_id()
@@ -682,6 +710,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_id_function(self) -> None:
+        """Emit retrieval of a Thread object's native operating-system id."""
+
         a = self.asm
         a.mark('fn_thread_id')
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_ID)
@@ -690,6 +720,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_logical_id_function(self) -> None:
+        """Emit retrieval of a Thread object's managed logical id."""
+
         a = self.asm
         a.mark('fn_thread_logical_id')
         a.mov_r64_membase_disp('rax', 'rcx', THREAD_LOGICAL_ID)
@@ -714,12 +746,16 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_result_function(self) -> None:
+        """Emit retrieval of the tagged callback result."""
+
         a = self.asm
         a.mark('fn_thread_result')
         a.mov_r64_membase_disp('rax', 'rcx', THREAD_RESULT)
         a.ret()
 
     def emit_thread_current_logical_id_function(self) -> None:
+        """Emit retrieval of the current worker's managed logical id."""
+
         a = self.asm
         a.mark('fn_thread_current_logical_id')
         a.mov_r11_gs_qword_28()
@@ -727,6 +763,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_status_function(self) -> None:
+        """Emit conversion of a lifecycle state to its stable status string."""
+
         for lbl, value in (
             ('obj_thread_created', 'Created'), ('obj_thread_running', 'Running'),
             ('obj_thread_stop_requested', 'StopRequested'), ('obj_thread_completed', 'Completed'),
@@ -755,6 +793,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_close_function(self) -> None:
+        """Emit native-handle cleanup after a Thread has terminated."""
+
         a = self.asm
         a.mark('fn_thread_close')
         a.sub_rsp_imm8(0x38)
@@ -789,6 +829,8 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_stop_requested_function(self) -> None:
+        """Emit the current worker's cooperative cancellation check."""
+
         a = self.asm
         a.mark('fn_thread_stop_requested')
         lid = self.new_label_id()
@@ -816,6 +858,8 @@ class CodegenThreads:
         a.jmp('fn_alloc')
 
     def emit_thread_entry_function(self) -> None:
+        """Emit the Win32-to-managed callback bridge and result publication."""
+
         self.used_helpers.update({'fn_gc_native_leave', 'fn_gc_managed_exit'})
         a = self.asm
         a.mark('fn_thread_entry')

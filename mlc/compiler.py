@@ -1,6 +1,4 @@
-"""
-High level compilation entry points (compile_to_exe / CLI main).
-"""
+"""High-level module loading, ABI validation, PE compilation and CLI entrypoints."""
 
 from __future__ import annotations
 
@@ -156,6 +154,8 @@ def _pretty_path(p: str, root: str) -> str:
 
 @dataclass(frozen=True)
 class _ImportEdge:
+    """One module-graph edge retained for cycle and resolution diagnostics."""
+
     importer: str          # absolute path of importing file
     requested: str         # normalized requested path (e.g. "foo/bar.ml")
     resolved: str          # absolute resolved path
@@ -821,6 +821,8 @@ def load_modules_recursive(
 
 @dataclass(frozen=True)
 class ExternSig:
+    """Normalized native ABI signature used by validation and code generation."""
+
     qname: str
     dll: str
     symbol: str
@@ -1340,6 +1342,8 @@ def compile_to_exe(
     trace_calls: bool = False,
     subsystem: int = 3,
 ) -> None:
+    """Compile one MiniLang entry file and its imports to a native x64 PE."""
+
     ml = load_minilang_frontend(input_ml)
     source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs, keep_going=keep_going, max_errors=max_errors)
 
@@ -1783,6 +1787,8 @@ def _parse_asm_cols(spec: Optional[str]) -> tuple[bool, bool, bool]:
 
 
 def main(argv: List[str]) -> int:
+    """Run the command-line compiler and return a process exit code."""
+
     if len(argv) == 2 and argv[1] in {"-version", "--version"}:
         print(COMPILER_VERSION_TEXT)
         return 0

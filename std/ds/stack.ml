@@ -135,6 +135,7 @@ function _stateFromArray(values)
   return st
 end function
 
+// LIFO stack with geometric backing-array growth.
 struct Stack
   data
 

@@ -17,19 +17,26 @@
 import std.fs as fs
 import std.time as time
 
+// Standalone formatter for MiniLang source files. It tokenizes layout-sensitive
+// constructs conservatively and writes normalized whitespace without changing
+// statement order or expression spelling.
+
 // ------------------------------------------------------------
 // ByteBuilder
 // ------------------------------------------------------------
+// Capacity-backed byte sink used to avoid quadratic output concatenation.
 struct ByteBuilder
   buf
   n
 end struct
 
+// Create an empty builder with a practical minimum capacity.
 function bb_new(cap)
   if cap < 16 then cap = 16 end if
   return ByteBuilder(bytes(cap), 0)
 end function
 
+// Grow geometrically until more additional bytes fit.
 function bb_ensure(bb, more)
   need = bb.n + more
   cap = len(bb.buf)

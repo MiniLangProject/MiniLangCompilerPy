@@ -25,22 +25,26 @@ extern function VirtualFree(address as ptr, size as int, freeType as u32) from "
 extern function MoveFromBytes(destination as ptr, source as bytes, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
 extern function MovePointers(destination as ptr, source as ptr, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
 
+// Allocate a writable unmanaged block and return its native address.
 function allocate(size)
   if typeof(size) != "int" or size <= 0 then return 0 end if
   return VirtualAlloc(void, size, MEM_COMMIT_RESERVE, PAGE_READWRITE)
 end function
 
+// Release a block previously returned by allocate().
 function free(address)
   if typeof(address) != "int" or address == 0 then return false end if
   return VirtualFree(address, 0, MEM_RELEASE)
 end function
 
+// Copy count bytes between two unmanaged addresses.
 function move(destination, source, count)
   if count <= 0 then return true end if
   MovePointers(destination, source, count)
   return true
 end function
 
+// Encode one signed 64-bit integer in little-endian order.
 function _writeI64(buffer, offset, value)
   i = 0
   while i < 8
@@ -49,6 +53,7 @@ function _writeI64(buffer, offset, value)
   end while
 end function
 
+// Decode one signed little-endian 64-bit integer without unsigned overflow.
 function _readI64(buffer, offset)
   // Seed with a signed high byte so the final value is sign-extended without
   // ever constructing an out-of-range unsigned 64-bit MiniLang integer.
@@ -62,18 +67,21 @@ function _readI64(buffer, offset)
   return value
 end function
 
+// Store a signed 64-bit integer at an unmanaged address.
 function writeI64At(address, value)
   buffer = bytes(8, 0)
   _writeI64(buffer, 0, value)
   MoveFromBytes(address, buffer, 8)
 end function
 
+// Read a signed 64-bit integer from an unmanaged address.
 function readI64At(address)
   buffer = bytes(8, 0)
   MovePointers(nativeBytesPtr(buffer), address, 8)
   return _readI64(buffer, 0)
 end function
 
+// Report whether the legacy snapshot codec supports this value category.
 function isShareable(value)
   t = typeof(value)
   return t == "void" or t == "int" or t == "bool" or t == "string" or t == "bytes"
@@ -109,6 +117,7 @@ function encode(value)
   return [true, valueType, pointer, n]
 end function
 
+// Release the payload owned by an encoded string or bytes snapshot.
 function releaseEncoded(encoded)
   if typeof(encoded) != "array" or len(encoded) < 4 then return false end if
   t = encoded[1]
@@ -118,6 +127,7 @@ function releaseEncoded(encoded)
   return true
 end function
 
+// Write encoded metadata into a RECORD_SIZE native record.
 function writeEncodedAt(address, encoded)
   if typeof(encoded) != "array" or len(encoded) < 4 or not encoded[0] then
     return false
@@ -130,17 +140,20 @@ function writeEncodedAt(address, encoded)
   return true
 end function
 
+// Zero a native record without releasing any referenced payload.
 function clearRecordAt(address)
   buffer = bytes(RECORD_SIZE, 0)
   MoveFromBytes(address, buffer, RECORD_SIZE)
 end function
 
+// Read the type, payload pointer and length fields from a native record.
 function _metadataAt(address)
   buffer = bytes(RECORD_SIZE, 0)
   MovePointers(nativeBytesPtr(buffer), address, RECORD_SIZE)
   return [_readI64(buffer, 0), _readI64(buffer, 8), _readI64(buffer, 16)]
 end function
 
+// Materialize a managed value from one native snapshot record.
 function readAt(address)
   metadata = _metadataAt(address)
   t = metadata[0]
@@ -157,6 +170,7 @@ function readAt(address)
   return output
 end function
 
+// Release an owned payload and clear its native record.
 function destroyAt(address)
   metadata = _metadataAt(address)
   t = metadata[0]

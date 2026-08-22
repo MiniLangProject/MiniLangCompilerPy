@@ -126,6 +126,7 @@ function andThen(f)
 end function
 end struct
 
+// Explicit success/error container for APIs that avoid automatic propagation.
 struct Result
   ok
   value

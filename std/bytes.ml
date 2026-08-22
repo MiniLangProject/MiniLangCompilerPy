@@ -18,12 +18,16 @@ package std.bytes
 
 const BYTES_ERR = 211
 
+// Construct a consistent argument/range error for this module.
 function _bytesErr(msg)
   return error(BYTES_ERR, msg)
 end function
 
 
 import std.encoding.hex as hx
+
+// Byte-sequence allocation, slicing, comparison, encoding and endian-aware
+// integer I/O. Functions validate types and avoid implicit string conversion.
 
 // ------------------------------------------------------------
 // std.bytes
@@ -40,6 +44,7 @@ function alloc(size)
   return bytes(size)
 end function
 
+// Allocate size bytes initialized to the low eight bits of fill.
 function allocFill(size, fill)
   if typeof(size) != "int" then
     return
@@ -53,6 +58,7 @@ function allocFill(size, fill)
   return bytes(size, fill)
 end function
 
+// Return a detached copy of a bytes value.
 function copy(b)
   if typeof(b) != "bytes" then
     return
@@ -60,6 +66,7 @@ function copy(b)
   return slice(b, 0, len(b))
 end function
 
+// Return a clamped slice, or void when the input is not bytes.
 function sub(b, offset, length)
   // wrapper for builtin slice(bytes, offset, length)
   if typeof(b) != "bytes" then
@@ -74,6 +81,7 @@ function sub(b, offset, length)
   return slice(b, offset, length)
 end function
 
+// Return an exact validated slice or a descriptive error value.
 function subOrError(b, offset, length)
   if typeof(b) != "bytes" then
     return _bytesErr("bytes.subOrError expects bytes")
@@ -109,6 +117,7 @@ function subOrError(b, offset, length)
 end function
 
 
+// Concatenate two byte sequences into newly allocated storage.
 function concat(a, b)
   if typeof(a) != "bytes" then
     return
@@ -119,6 +128,7 @@ function concat(a, b)
   return a + b
 end function
 
+// Compare two byte sequences with ordinary early-exit semantics.
 function equals(a, b)
   if typeof(a) != "bytes" then
     return false
@@ -129,6 +139,7 @@ function equals(a, b)
   return a == b
 end function
 
+// Compare equal-length sequences without data-dependent early exit.
 function ctEquals(a, b)
   /*
   Constant-time-ish equality check for bytes.
@@ -169,6 +180,7 @@ function ctEquals(a, b)
   return diff == 0
 end function
 
+// Replace every byte in b with the low eight bits of value.
 function fill(b, value)
   if typeof(b) != "bytes" then
     return
@@ -185,6 +197,7 @@ function fill(b, value)
   fillBytes(b, 0, n, value)
 end function
 
+// Report whether b begins with prefix.
 function startsWith(b, prefix)
   if typeof(b) != "bytes" then
     return false
@@ -195,6 +208,7 @@ function startsWith(b, prefix)
   return bytesStartsWith(b, prefix)
 end function
 
+// Report whether b ends with suffix.
 function endsWith(b, suffix)
   if typeof(b) != "bytes" then
     return false
@@ -205,6 +219,7 @@ function endsWith(b, suffix)
   return bytesEndsWith(b, suffix)
 end function
 
+// Use direct scanning for short inputs where preprocessing would cost more.
 function _indexOfNaive(hay, needle, start)
   if typeof(hay) != "bytes" then
     return
@@ -255,6 +270,7 @@ function _indexOfNaive(hay, needle, start)
   return -1
 end function
 
+// Find the first needle occurrence at or after start, or return -1.
 function indexOf(hay, needle, start)
   if typeof(hay) != "bytes" then
     return
@@ -268,6 +284,7 @@ function indexOf(hay, needle, start)
   return bytesIndexOf(hay, needle, start)
 end function
 
+// Find the final needle occurrence, or return -1.
 function lastIndexOf(hay, needle)
   if typeof(hay) != "bytes" then
     return
@@ -278,6 +295,7 @@ function lastIndexOf(hay, needle)
   return bytesLastIndexOf(hay, needle)
 end function
 
+// Return a lexicographic three-way comparison result.
 function compare(a, b)
   if typeof(a) != "bytes" then
     return
@@ -288,14 +306,17 @@ function compare(a, b)
   return bytesCompare(a, b)
 end function
 
+// Encode bytes as lowercase hexadecimal text.
 function toHex(b)
   return hx.encode(b)
 end function
 
+// Decode hexadecimal text, returning void on invalid input.
 function fromHex(s)
   return hx.decode(s)
 end function
 
+// Decode hexadecimal text, preserving validation failures as errors.
 function fromHexOrError(s)
   if typeof(s) != "string" then
     return _bytesErr("bytes.fromHexOrError expects a string")
@@ -308,10 +329,12 @@ function fromHexOrError(s)
 end function
 
 
+// Decode UTF-8 bytes, returning void on invalid input.
 function decodeUtf8(b)
   return decode(b)
 end function
 
+// Decode UTF-8 bytes, preserving validation failures as errors.
 function decodeUtf8OrError(b)
   if typeof(b) != "bytes" then
     return _bytesErr("bytes.decodeUtf8OrError expects bytes")
@@ -324,11 +347,13 @@ function decodeUtf8OrError(b)
 end function
 
 
+// Decode UTF-8 bytes up to the first zero terminator.
 function decodeUtf8Z(b)
   // Wrapper around builtin decodeZ(bytes)
   return decodeZ(b)
 end function
 
+// Decode little-endian UTF-16 bytes up to the first zero code unit.
 function decodeUtf16Z(b)
   // Wrapper around builtin decode16Z(bytes)
   return decode16Z(b)
@@ -342,10 +367,12 @@ function _bytes_ok(b)
   return typeof(b) == "bytes"
 end function
 
+// Centralize integer validation for binary read/write offsets.
 function _int_ok(x)
   return typeof(x) == "int"
 end function
 
+// Validate that a fixed-width access fits completely inside a buffer.
 function _check_range(off, need, n)
   if off < 0 then
     return false
@@ -359,6 +386,7 @@ function _check_range(off, need, n)
   return true
 end function
 
+// Write one unsigned byte and return the next offset.
 function writeU8(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -380,6 +408,7 @@ function writeU8(b, off, value)
   return true
 end function
 
+// Read one unsigned byte or return a range/type error.
 function readU8(b, off)
   if not _bytes_ok(b) then
     return
@@ -394,6 +423,7 @@ function readU8(b, off)
   return b[off] & 0xFF
 end function
 
+// Write an unsigned 16-bit integer in little-endian order.
 function writeU16LE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -416,6 +446,7 @@ function writeU16LE(b, off, value)
   return true
 end function
 
+// Write an unsigned 16-bit integer in big-endian order.
 function writeU16BE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -438,6 +469,7 @@ function writeU16BE(b, off, value)
   return true
 end function
 
+// Read an unsigned little-endian 16-bit integer.
 function readU16LE(b, off)
   if not _bytes_ok(b) then
     return
@@ -454,6 +486,7 @@ function readU16LE(b, off)
   return lo |(hi << 8)
 end function
 
+// Read an unsigned big-endian 16-bit integer.
 function readU16BE(b, off)
   if not _bytes_ok(b) then
     return
@@ -470,6 +503,7 @@ function readU16BE(b, off)
   return (hi << 8) | lo
 end function
 
+// Write an unsigned 32-bit integer in little-endian order.
 function writeU32LE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -494,6 +528,7 @@ function writeU32LE(b, off, value)
   return true
 end function
 
+// Write an unsigned 32-bit integer in big-endian order.
 function writeU32BE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -518,6 +553,7 @@ function writeU32BE(b, off, value)
   return true
 end function
 
+// Read an unsigned little-endian 32-bit integer.
 function readU32LE(b, off)
   if not _bytes_ok(b) then
     return
@@ -536,6 +572,7 @@ function readU32LE(b, off)
   return b0 |(b1 << 8) |(b2 << 16) |(b3 << 24)
 end function
 
+// Read an unsigned big-endian 32-bit integer.
 function readU32BE(b, off)
   if not _bytes_ok(b) then
     return
@@ -554,6 +591,7 @@ function readU32BE(b, off)
   return (b0 << 24) |(b1 << 16) |(b2 << 8) | b3
 end function
 
+// Return the bytewise XOR of two equal-length sequences.
 function xor(a, b)
   if typeof(a) != "bytes" then
     return
@@ -576,6 +614,7 @@ function xor(a, b)
 end function
 
 
+// XOR b into a in place; both sequences must have equal length.
 function xorInPlace(a, b)
   if typeof(a) != "bytes" then
     return

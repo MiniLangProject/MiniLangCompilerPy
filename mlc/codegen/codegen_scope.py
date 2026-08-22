@@ -56,6 +56,8 @@ def _sanitize_ident(name: str) -> str:
 
 @dataclass
 class VarBinding:
+    """Resolved binding with storage, capture and compile-time-constant metadata."""
+
     id: int
     name: str
     kind: str  # "global" | "local" | "param"

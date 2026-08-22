@@ -79,10 +79,14 @@ class BssBuilder:
     """
 
     def __init__(self) -> None:
+        """Create an empty zero-initialized section plan."""
+
         self.size: int = 0
         self.labels: Dict[str, int] = {}
 
     def pad_align(self, align: int = 8) -> None:
+        """Advance the virtual size to the requested alignment boundary."""
+
         pad = (-self.size) % align
         if pad:
             self.size += pad

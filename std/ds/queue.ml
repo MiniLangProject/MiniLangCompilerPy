@@ -58,6 +58,7 @@ function _nextPow2(n)
   return c
 end function
 
+// FIFO queue backed by a compacting growable array.
 struct Queue
   buf
   head
