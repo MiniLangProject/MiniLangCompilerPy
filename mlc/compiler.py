@@ -22,6 +22,10 @@ from .project import ProjectError, expand_project_args, fingerprint as project_f
 from .tools import u32, u64
 
 
+COMPILER_VERSION = "1.0.0"
+COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
+
+
 # Reserved identifiers cannot be used as `import ... as <alias>` (and are generally
 # protected elsewhere in codegen).
 _RESERVED_IDENTIFIERS = {"try", "error"}
@@ -1779,6 +1783,10 @@ def _parse_asm_cols(spec: Optional[str]) -> tuple[bool, bool, bool]:
 
 
 def main(argv: List[str]) -> int:
+    if len(argv) == 2 and argv[1] in {"-version", "--version"}:
+        print(COMPILER_VERSION_TEXT)
+        return 0
+
     try:
         argv, project_build = expand_project_args(argv)
     except ProjectError as e:
@@ -1787,8 +1795,9 @@ def main(argv: List[str]) -> int:
 
     parser = argparse.ArgumentParser(
         prog='mlc_win64.py',
-        description='MiniLang native compiler (Windows x64)',
+        description=f'MiniLang native compiler {COMPILER_VERSION} (Windows x64)',
     )
+    parser.add_argument('-version', '--version', action='version', version=COMPILER_VERSION_TEXT)
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output .exe file')
     parser.add_argument('--object-pipeline', action='store_true',
@@ -2024,7 +2033,7 @@ def main(argv: List[str]) -> int:
         print(f"ProjectError: cannot update incremental cache: {e}")
         return 2
 
-    print(f"OK: wrote {out} (native x64 PE, MiniLang python compiler version v1.0)")
+    print(f"OK: wrote {out} (native x64 PE, MiniLang Python compiler {COMPILER_VERSION})")
     if args.asm:
         asm_path = args.asm_out or (os.path.splitext(out)[0] + ".asm")
         print(f"OK: wrote {asm_path}")

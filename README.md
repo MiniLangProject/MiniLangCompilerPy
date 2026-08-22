@@ -1,5 +1,10 @@
 # MiniLang - Python Reference Compiler
 
+Current stable release: **1.0.0**.
+
+Release 1.0.0 and later are source-only: generated `.exe` files are not
+tracked in Git and are not attached to GitHub releases.
+
 MiniLang (`.ml`) is a small, dynamically typed language that compiles to a
 native Windows x64 executable (PE32+) with `mlc_win64.py`. Console applications
 are the default; `--subsystem windows` emits a GUI-subsystem executable.
@@ -110,6 +115,7 @@ end function
 
 ```bash
 python mlc_win64.py input.ml output.exe [options]
+python mlc_win64.py -version
 ```
 
 Notes:
@@ -156,7 +162,9 @@ Common options:
 - `--object-pipeline` is accepted so project commands can be shared with the
   self-hosted compiler; the Python compiler still emits its monolithic image
 
-Tip: `python mlc_win64.py --help` prints the full option list.
+`python mlc_win64.py -version` and `--version` both print
+`MiniLang Compiler 1.0.0`. `python mlc_win64.py --help` prints the full option
+list.
 
 Notes (current implementation):
 - Targets Windows x64 console (PE32+).
@@ -278,7 +286,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **94 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **95 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -307,9 +315,9 @@ The last recorded 112-module / 656-object MiniQuake benchmark predates the
 took 69.089 seconds and the self-hosted object pipeline took 420.095 seconds.
 Treat these as historical measurements, not promises for later revisions.
 
-The current self-host source also reaches a binary fixed point: two consecutive
-293-object `.mlo` stages took 326.648 and 278.837 seconds and produced identical
-54,773,248-byte compiler images. See the parity report for the exact hash.
+The 1.0.0 self-host source reaches a binary fixed point: two consecutive
+293-object `.mlo` stages took 185.140 and 240.518 seconds and produced identical
+54,789,120-byte compiler images. See the parity report for the exact hash.
 
 
 ---

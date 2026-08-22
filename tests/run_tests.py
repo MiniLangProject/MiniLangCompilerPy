@@ -344,6 +344,22 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
+def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
+    """Both documented version switches must print the stable release version."""
+    expected = "MiniLang Compiler 1.0.0"
+    outputs: list[str] = []
+    for flag in ("-version", "--version"):
+        result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
+        outputs.append(result.stdout)
+        if result.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"{flag} exited with {result.returncode}",
+                              stdout=result.stdout, stderr=result.stderr)
+        if normalize_out(result.stdout).strip() != expected:
+            return TestResult(name=name, status="FAIL", details=f"unexpected {flag} output",
+                              stdout=result.stdout, stderr=result.stderr)
+    return TestResult(name=name, status="PASS", stdout="".join(outputs))
+
+
 def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """A manifest build must compile, run, restore, and invalidate safely."""
     with tempfile.TemporaryDirectory(prefix="mltests_project_") as td:
@@ -3335,6 +3351,9 @@ def main() -> int:
     testlib_ml = find_file_by_name(tests_root, "testlib.ml")
 
     tests: list[Callable[[], TestResult]] = []
+
+    tests.append(lambda: test_compiler_version_cli(
+        name="compiler CLI reports version 1.0.0", mlc_runner=mlc_runner))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,

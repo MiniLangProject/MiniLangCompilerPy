@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 21 August 2026 against the matching revisions of:
+Verified on 22 August 2026 against the matching 1.0.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -78,16 +78,20 @@ same heap and GC options for this comparison.
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Python-built MiniLang compiler | 54,276,608 | `E87580A31690233D7BEBF0234A82C844E05207A08302FE845A5B35E80A03C0A6` |
-| MiniLang self-build through `build.ps1` / `.mlo` | 54,773,248 | `64283A3A46E43B16BE910B5DD254BF350781E522C8F3B7879086FC0344546119` |
+| Python-built MiniLang compiler | 54,292,992 | `D28204311865D2B432BE119A7F8F91FDD538D8DD3E8CBEAF8E2F6E14A360482E` |
+| MiniLang self-build through `build.ps1` / `.mlo` | 54,789,120 | `3FA2ECE14316FCF2B7419C49E21CF232618623512F5363CB2F210750935B382E` |
 
 The compiler images differ because the supported self-build is linked from
 `.mlo` objects while the Python bootstrap emits one monolithic image. Both
 subsequently compiled `language_suite.ml`, `defer_features.ml` and
 `extern_out_runtime.ml` to the byte-identical target hashes listed above. Two
 consecutive current MiniLang object-pipeline self-build stages were
-byte-identical at 54,773,248 bytes with the hash shown above, so the supported
+byte-identical at 54,789,120 bytes with the hash shown above, so the supported
 self-host path reaches a binary fixed point.
+
+Both compilers report `MiniLang Compiler 1.0.0` for `-version` and
+`--version`. The repositories and GitHub releases are source-only; generated
+compiler and test executables are intentionally excluded.
 
 A monolithic self-build was also attempted with the earlier 4 GiB bootstrap
 heap and exhausted it before producing an executable. Self-builds
@@ -178,17 +182,17 @@ validated through two consecutive self-host stages. They completed in
 images with SHA-256
 `1C15CC446E1A15C16CE84938B6961A287245750FD4072501313409BEFC5E9F05`.
 
-With `defer`, managed extern-out marshaling and project manifests included, the
-final two fully current stages took 326.648 and 278.837 seconds, emitted 293
-objects each and were byte-identical at 54,773,248 bytes with SHA-256
-`64283A3A46E43B16BE910B5DD254BF350781E522C8F3B7879086FC0344546119`.
+With all 1.0.0 features included, the final two release stages took 185.140 and
+240.518 seconds, emitted 293 objects each and were byte-identical at 54,789,120
+bytes with SHA-256
+`3FA2ECE14316FCF2B7419C49E21CF232618623512F5363CB2F210750935B382E`.
 
 ## Tests
 
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 94, FAIL 0, SKIP 0
+Python harness:    PASS 95, FAIL 0, SKIP 0
 MiniLang harness:  PASS 93, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
@@ -221,6 +225,7 @@ cd MiniLangCompilerPy
 python .\mlc_win64.py .\tests\language_suite.ml .\build\suite-py.exe -I .
 
 cd ..\MiniLangCompilerML
+.\build.ps1
 .\build\mlc_win64.exe .\tests\language_suite.ml .\build\suite-ml.exe -I .
 
 $pythonHash = (Get-FileHash ..\MiniLangCompilerPy\build\suite-py.exe -Algorithm SHA256).Hash
