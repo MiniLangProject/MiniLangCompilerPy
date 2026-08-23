@@ -5115,6 +5115,8 @@ class CodegenStmt:
         saved_stack = getattr(self, "_scope_stack", None)
         saved_declared = getattr(self, "_scope_declared", None)
         saved_in_fn = getattr(self, "in_function", False)
+        saved_qname_prefix = getattr(self, "current_qname_prefix", "")
+        saved_file_prefix = getattr(self, "current_file_prefix", "")
         _saved_ctx_file = getattr(self, "_current_fn_file", None)
         _saved_ctx_qname = getattr(self, "_current_fn_qname", None)
         # Builtin call identifiers are not variables; they may be used as callees without prior assignment.
@@ -5455,9 +5457,13 @@ class CodegenStmt:
                 fn_file = getattr(fn, '_filename', None)
                 if isinstance(fn_file, str) and fn_file:
                     self._current_fn_file = fn_file
+                    prefix_map = getattr(self, "file_prefix_map", {}) or {}
+                    if isinstance(prefix_map, dict):
+                        self.current_file_prefix = prefix_map.get(fn_file, "") or ""
                 fn_qn = getattr(fn, 'name', None)
                 if isinstance(fn_qn, str) and fn_qn:
                     self._current_fn_qname = fn_qn
+                    self.current_qname_prefix = fn_qn.rsplit(".", 1)[0] + "." if "." in fn_qn else ""
             except Exception:
                 pass
 
@@ -5485,6 +5491,8 @@ class CodegenStmt:
                 self._scope_stack = saved_stack
             if saved_declared is not None:
                 self._scope_declared = saved_declared
+            self.current_qname_prefix = saved_qname_prefix
+            self.current_file_prefix = saved_file_prefix
             self._current_fn_file = _saved_ctx_file
             self._current_fn_qname = _saved_ctx_qname
             self.in_function = saved_in_fn

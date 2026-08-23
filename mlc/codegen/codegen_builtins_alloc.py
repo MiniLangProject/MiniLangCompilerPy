@@ -1140,40 +1140,88 @@ Returns:
         a.jmp(l_done)
 
         # --- int -> decimal string (allocate) ---
+        #
+        # Format directly into the newly allocated string.  The former path
+        # called fn_int_to_dec(), whose process-global ``intbuf`` was overwritten
+        # by concurrent native threads between conversion and the following
+        # allocation/copy.  Besides corrupting display text, this could turn a
+        # database path such as ``t21.tbl`` into ``t62.tbl``.  Keeping the tagged
+        # input in the caller frame across fn_alloc and emitting digits into the
+        # owned object makes ordinary int stringification thread-local.
         a.mark(l_int)
-        # fn_int_to_dec(rcx=value) -> rax=ptr, edx=len
-        a.mov_r64_r64("rcx", "rax")  # mov rcx,rax
-        a.call('fn_int_to_dec')
+        int_count_nonzero = f"v2s_int_count_nonzero_{lid}"
+        int_count_loop = f"v2s_int_count_loop_{lid}"
+        int_count_done = f"v2s_int_count_done_{lid}"
+        int_digits_positive = f"v2s_int_digits_positive_{lid}"
+        int_digits_loop = f"v2s_int_digits_loop_{lid}"
+        int_digits_done = f"v2s_int_digits_done_{lid}"
 
-        # SAVE across fn_alloc (fn_alloc clobbers r10/r11)
-        a.mov_membase_disp_r64("rsp", 32, "rax")  # mov [rsp+0x20],rax   ; ptr
-        a.mov_membase_disp_r32("rsp", 40, "edx")  # mov [rsp+0x28],edx   ; len (u32)
+        # Preserve the tagged value as a valid precise-GC root.
+        a.mov_membase_disp_r64("rsp", 32, "rax")
+        a.mov_r64_r64("r10", "rax")
+        a.sar_r64_imm8("r10", 3)
+        a.mov_r64_r64("r11", "r10")
+        a.xor_r32_r32("r9d", "r9d")
+        a.test_r64_r64("r11", "r11")
+        a.jcc('ge', int_count_nonzero)
+        a.neg_r64("r11")
+        a.inc_r32("r9d")  # sign
+        a.mark(int_count_nonzero)
+        a.test_r64_r64("r11", "r11")
+        a.jcc('nz', int_count_loop)
+        a.inc_r32("r9d")  # zero has one digit
+        a.jmp(int_count_done)
+        a.mark(int_count_loop)
+        a.mov_r64_r64("rax", "r11")
+        a.xor_r32_r32("edx", "edx")
+        a.mov_r32_imm32("r8d", 10)
+        a.div_r64("r8")
+        a.mov_r64_r64("r11", "rax")
+        a.inc_r32("r9d")
+        a.test_r64_r64("r11", "r11")
+        a.jcc('nz', int_count_loop)
+        a.mark(int_count_done)
+        a.mov_membase_disp_r32("rsp", 40, "r9d")
 
-        # r9d = len (reload from EDX now)
-        a.mov_r32_r32("r9d", "edx")  # mov r9d,edx
-
-        # ecx = len + 9
-        a.mov_r32_r32("ecx", "edx")  # mov ecx,edx
+        # ecx = payload length + object header + NUL
+        a.mov_r32_r32("ecx", "r9d")
         a.add_r32_imm("ecx", 9)  # add ecx,9
         a.call('fn_alloc')
 
-        # RESTORE src ptr + len (fn_alloc may clobber volatile regs)
-        a.mov_r64_membase_disp("r10", "rsp", 32)  # mov r10,[rsp+0x20]
-        a.mov_r32_membase_disp("r9d", "rsp", 40)  # mov r9d,[rsp+0x28]
-
-        # header
-        a.mov_membase_disp_imm32("rax", 0, OBJ_STRING, qword=False)  # mov dword [rax],OBJ_STRING
-        a.mov_membase_disp_r32("rax", 4, "r9d")  # mov [rax+4],r9d
+        # Restore the input and length after the allocator's volatile clobbers.
+        a.mov_r64_membase_disp("r10", "rsp", 32)
+        a.sar_r64_imm8("r10", 3)
+        a.mov_r32_membase_disp("r9d", "rsp", 40)
+        a.mov_membase_disp_imm32("rax", 0, OBJ_STRING, qword=False)
+        a.mov_membase_disp_r32("rax", 4, "r9d")
         a.mov_membase_disp_r64("rsp", 32, "rax")
-        a.lea_r64_membase_disp("rcx", "rax", 8)
-        a.mov_r64_r64("rdx", "r10")
-        a.mov_r32_r32("r8d", "r9d")
-        a.call('fn_copy_bytes')
+        a.lea_r64_membase_disp("r11", "rax", 8)
+        a.add_r64_r64("r11", "r9")
+        a.mov_membase_disp_imm8("r11", 0, 0)
+
+        a.test_r64_r64("r10", "r10")
+        a.jcc('nz', int_digits_positive)
+        a.dec_r64("r11")
+        a.mov_membase_disp_imm8("r11", 0, 0x30)
+        a.jmp(int_digits_done)
+        a.mark(int_digits_positive)
+        a.jcc('ge', int_digits_loop)
         a.mov_r64_membase_disp("rax", "rsp", 32)
-        a.mov_r32_membase_disp("r9d", "rax", 4)
-        a.lea_r64_membase_disp("r10", "rax", 8)
-        a.add_r64_r64("r10", "r9")
-        a.mov_membase_disp_imm8("r10", 0, 0)
+        a.mov_membase_disp_imm8("rax", 8, 0x2D)
+        a.neg_r64("r10")
+        a.mark(int_digits_loop)
+        a.mov_r64_r64("rax", "r10")
+        a.xor_r32_r32("edx", "edx")
+        a.mov_r32_imm32("r8d", 10)
+        a.div_r64("r8")
+        a.add_r8_imm8("dl", 48)
+        a.dec_r64("r11")
+        a.mov_membase_disp_r8("r11", 0, "dl")
+        a.mov_r64_r64("r10", "rax")
+        a.test_r64_r64("r10", "r10")
+        a.jcc('nz', int_digits_loop)
+        a.mark(int_digits_done)
+        a.mov_r64_membase_disp("rax", "rsp", 32)
         a.jmp(l_done)
 
         a.mark(l_float_imm)
@@ -1185,48 +1233,29 @@ Returns:
         a.mark(l_float)
         self.emit_to_double_xmm(0, l_uns)
         a.mark(l_float_fmt)
+        # Allocate the destination first and let _gcvt write into that owned
+        # object's payload.  The former process-global ``floatbuf`` had the same
+        # cross-thread overwrite window as intbuf.
+        a.movsd_membase_disp_xmm("rsp", 32, "xmm0")
+        a.mov_rcx_imm32(72)  # 8-byte header plus a 64-byte _gcvt buffer
+        a.call('fn_alloc')
+        a.mov_membase_disp_r64("rsp", 40, "rax")
+        a.movsd_xmm_membase_disp("xmm0", "rsp", 32)
         # edx = digits (15)
         a.mov_r32_imm32("edx", 15)
-        # r8 = &floatbuf
-        a.lea_r8_rip('floatbuf')
+        # r8 = allocated string payload
+        a.lea_r64_membase_disp("r8", "rax", 8)
         # call _gcvt(xmm0, edx, r8)
         a.mov_rax_rip_qword('iat__gcvt')
         a.call_rax()
 
-        # SAVE c-string pointer across fn_alloc (fn_alloc clobbers r10/r11)
-        a.mov_membase_disp_r64("rsp", 32, "rax")  # mov [rsp+0x20],rax
-
-        # strlen(rcx=rax) -> edx=len
+        # strlen(rcx=payload) -> edx=len
         a.mov_r64_r64("rcx", "rax")  # mov rcx,rax
         a.call('fn_strlen')
-
-        # save len
-        a.mov_membase_disp_r32("rsp", 40, "edx")  # mov [rsp+0x28],edx
-
-        # r9d = len
-        a.mov_r32_r32("r9d", "edx")  # mov r9d,edx
-        # ecx = len + 9
-        a.mov_r32_r32("ecx", "edx")  # mov ecx,edx
-        a.add_r32_imm("ecx", 9)  # add ecx,9
-        a.call('fn_alloc')
-
-        # RESTORE src ptr + len after alloc
-        a.mov_r64_membase_disp("r11", "rsp", 32)  # mov r11,[rsp+0x20]
-        a.mov_r32_membase_disp("r9d", "rsp", 40)  # mov r9d,[rsp+0x28]
-
-        # header
+        a.mov_r32_r32("r9d", "edx")
+        a.mov_r64_membase_disp("rax", "rsp", 40)
         a.mov_membase_disp_imm32("rax", 0, OBJ_STRING, qword=False)
-        a.mov_membase_disp_r32("rax", 4, "r9d")  # [rax+4]=r9d
-        a.mov_membase_disp_r64("rsp", 32, "rax")
-        a.lea_r64_membase_disp("rcx", "rax", 8)
-        a.mov_r64_r64("rdx", "r11")
-        a.mov_r32_r32("r8d", "r9d")
-        a.call('fn_copy_bytes')
-        a.mov_r64_membase_disp("rax", "rsp", 32)
-        a.mov_r32_membase_disp("r9d", "rax", 4)
-        a.lea_r64_membase_disp("r10", "rax", 8)
-        a.add_r64_r64("r10", "r9")
-        a.mov_membase_disp_imm8("r10", 0, 0)
+        a.mov_membase_disp_r32("rax", 4, "r9d")
         a.jmp(l_done)
 
         # --- unsupported -> <unsupported> ---

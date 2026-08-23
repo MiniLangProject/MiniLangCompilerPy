@@ -3666,6 +3666,12 @@ def main() -> int:
     tests.append(lambda: test_import_self_ignored(name="import: self-import ignored", mlc_runner=mlc_runner))
     tests.append(lambda: test_module_init_order(name="module init: import order + before main", mlc_runner=mlc_runner))
     tests.append(lambda: test_module_init_once_in_cycle(name="module init: once per module in cycle", mlc_runner=mlc_runner))
+    tests.append(lambda: test_program_no_fail(
+        name="package globals: explicit writer and implicit readers",
+        mlc_runner=mlc_runner,
+        ml_path=tests_root / "package_global_resolution" / "main.ml",
+        must_contain=["package global resolution [OK]"],
+    ))
 
     # Negative: imported module must be declaration-only
     if lib_bad is not None:

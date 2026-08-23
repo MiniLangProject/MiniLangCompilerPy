@@ -3,12 +3,18 @@ synchronized synchronizedCount = 0
 synchronized sharedHeapCount = 0
 synchronized unwindCount = 0
 synchronized heapPublishCount = 0
+synchronized stringificationFailures = 0
 synchronized sharedText = ""
 synchronized publishedObjects = []
 
 struct PublishedBox
   number
   payload
+end struct
+
+struct StringifyTask
+  value
+  expected
 end struct
 
 function synchronized bumpSynchronizedFunction()
@@ -90,6 +96,21 @@ function outputWorker()
   printFromWorker()
 end function
 
+function synchronized recordStringificationFailure()
+  global stringificationFailures
+  stringificationFailures = stringificationFailures + 1
+end function
+
+function stringifyWorker(task)
+  for iteration = 0 to 9999
+    actual = "table-t" + task.value + ".tbl"
+    if actual != task.expected then
+      recordStringificationFailure()
+      return
+    end if
+  end for
+end function
+
 function main(args)
   neverStarted = Thread(worker)
   if neverStarted.Status() != "Created" then return 1 end if
@@ -169,6 +190,38 @@ function main(args)
   output = Thread(outputWorker)
   if not output.Start() or not output.Join() then return 34 end if
   if output.Status() != "Completed" or not output.Close() then return 35 end if
+
+  stringifyThreads = [
+    Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker),
+    Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker)
+  ]
+  stringifyTasks = [
+    StringifyTask(21, "table-t21.tbl"), StringifyTask(62, "table-t62.tbl"),
+    StringifyTask(105, "table-t105.tbl"), StringifyTask(-7, "table-t-7.tbl"),
+    StringifyTask(4096, "table-t4096.tbl"), StringifyTask(99991, "table-t99991.tbl"),
+    StringifyTask(-123456, "table-t-123456.tbl"), StringifyTask(7000001, "table-t7000001.tbl")
+  ]
+  for index = 0 to 7
+    if not stringifyThreads[index].Start(stringifyTasks[index]) then return 45 end if
+  end for
+  for each stringifyThread in stringifyThreads
+    if not stringifyThread.Join(30000) or stringifyThread.Status() != "Completed" then return 46 end if
+    if not stringifyThread.Close() then return 47 end if
+  end for
+  if stringificationFailures != 0 then return 48 end if
+  floatThreads = [Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker), Thread(stringifyWorker)]
+  floatTasks = [
+    StringifyTask(1.5, "table-t1.5.tbl"), StringifyTask(-25.125, "table-t-25.125.tbl"),
+    StringifyTask(0.25, "table-t0.25.tbl"), StringifyTask(4096.75, "table-t4096.75.tbl")
+  ]
+  for index = 0 to 3
+    if not floatThreads[index].Start(floatTasks[index]) then return 49 end if
+  end for
+  for each floatThread in floatThreads
+    if not floatThread.Join(30000) or floatThread.Status() != "Completed" then return 50 end if
+    if not floatThread.Close() then return 51 end if
+  end for
+  if stringificationFailures != 0 then return 52 end if
 
   print "[OK] native threads, global GC heap and synchronization"
   return 0
