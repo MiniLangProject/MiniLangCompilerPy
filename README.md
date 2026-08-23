@@ -160,7 +160,8 @@ Common options:
 
 **Cross-compiler build compatibility**
 - `--object-pipeline` is accepted so project commands can be shared with the
-  self-hosted compiler; the Python compiler still emits its monolithic image
+  self-hosted compiler. Python emits the equivalent monolithic image; the
+  self-hosted canonical `.mlo` pipeline produces the same final PE bytes
 
 `python mlc_win64.py -version` and `--version` both print
 `MiniLang Compiler 1.0.0`. `python mlc_win64.py --help` prints the full option
@@ -286,7 +287,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **95 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **97 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -296,28 +297,34 @@ files. The current 25-program parity matrix covers the language/standard-library
 suites, GC stress, compiler-GC liveness, extern/native interop, global rebinding,
 native threads and managed thread pools; every pair matches by SHA-256.
 
-The compiler executables themselves are not expected to match: the production
-self-build uses the MiniLang-only `.mlo` object pipeline, which has no Python
-counterpart and produces a differently laid-out compiler PE. Both compiler
-variants nevertheless emit the same tested target executables. Exact hashes,
-test counts, boundaries and reproduction commands are recorded in
+The production self-build uses the MiniLang-only `.mlo` object pipeline. Its
+canonical layout is covered by automated byte-identity gates against both the
+normal self-hosted path and the Python bootstrap. Exact hashes, test counts,
+boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
 
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
-vectors, a prebuilt per-module function index and sparse read-only support-label
-indexes so object clones do not copy the complete support `.data`/`.rdata`.
-These are self-host implementation details and do not change the language or
-the normal cross-compiler target-byte contract.
+vectors, isolated semantic function batches and shared append-only section
+builders while spilling completed assembler fragments. Canonical section order
+keeps the linked image inside the normal cross-compiler target-byte contract.
 
-The last recorded 112-module / 656-object MiniQuake benchmark predates the
-`defer`/managed-FFI/project-manifest revision: the Python monolithic compiler
-took 69.089 seconds and the self-hosted object pipeline took 420.095 seconds.
-Treat these as historical measurements, not promises for later revisions.
+For the current MiniQuake revision, this compiler took 63.713 seconds, the
+corrected self-hosted monolithic compiler took 978.854 seconds and the
+canonical self-hosted `.mlo` build took 561.666 seconds. The `.mlo`
+measurement includes 426.781 seconds for 492 function fragments, 3.516 seconds
+for runtime helpers and 114.219 seconds in the fresh linker process. All three
+builds produced the same 56,537,600-byte PE with SHA-256
+`39552E607826FD652529198664026A1D9FC66828359D17A748D95C6EE9B36BD7`.
+The object writer preserves the stream-wide inline budget across fragments and
+filters local `fn_ret_*` / `fn_defer_*` labels out of helper discovery. The
+older 420.095-second non-canonical `.mlo` measurement remains historical.
 
-The 1.0.0 self-host source reaches a binary fixed point: the latest two
-301-object `.mlo` stages took 181.644 and 470.513 seconds and produced identical
-54,650,368-byte compiler images. See the parity report for the exact hash.
+The released 1.0.0 self-host source reached a binary fixed point. Earlier
+301-object timing and hash measurements remain in the parity report as
+historical data. For the current source, the parity report distinguishes
+measured target-output identity from historical full compiler-image
+fixed-point results.
 
 
 ---

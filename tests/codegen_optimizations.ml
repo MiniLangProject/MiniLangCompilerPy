@@ -106,6 +106,34 @@ function narrow_inline_caller()
   return hidden_wide_call(1)
 end function
 
+// A qualified explicit global must not consume a phantom local stack slot.
+// The structural listing test also checks the compact disp8 temp access.
+namespace qualified_global_layout
+  value = 0
+
+  function identity(x)
+    return x
+  end function
+
+  function writeAndCall(x, y)
+    global value
+    value = y
+    return identity(x)
+  end function
+end namespace
+
+// These callers sort after main and cross multiple eight-function object
+// batches. Their shared callee budget must stay cumulative across fragments.
+function zz_budget_caller01() return budget_add(41) end function
+function zz_budget_caller02() return budget_add(41) end function
+function zz_budget_caller03() return budget_add(41) end function
+function zz_budget_caller04() return budget_add(41) end function
+function zz_budget_caller05() return budget_add(41) end function
+function zz_budget_caller06() return budget_add(41) end function
+function zz_budget_caller07() return budget_add(41) end function
+function zz_budget_caller08() return budget_add(41) end function
+function zz_budget_caller09() return budget_add(41) end function
+
 function main(args)
   t.assertEq(pruned_add(41), 42, "single-use inline function")
 
@@ -170,6 +198,9 @@ function main(args)
   indexed = [0]
   indexed[0] = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 11)
   t.assertEq(indexed[0], 11, "index assignment call-arity sizing")
+  t.assertEq(qualified_global_layout.writeAndCall(42, 7), 42, "qualified global stack layout")
+  t.assertEq(qualified_global_layout.value, 7, "qualified global write")
+  t.assertEq(zz_budget_caller09(), 42, "inline budget survives object batches")
   print "[OK] codegen optimizations"
   return 0
 end function

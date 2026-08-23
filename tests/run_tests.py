@@ -360,6 +360,31 @@ def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     return TestResult(name=name, status="PASS", stdout="".join(outputs))
 
 
+def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResult:
+    """The compatibility flag must preserve the Python compiler's target bytes."""
+    with tempfile.TemporaryDirectory(prefix="mltests_object_compat_") as td:
+        td_path = Path(td)
+        source = td_path / "object_compat.ml"
+        normal_exe = td_path / "normal.exe"
+        object_exe = td_path / "object.exe"
+        source.write_text(
+            "function add(a, b)\n  return a + b\nend function\n"
+            "function main(args)\n  print add(2, 3)\n  return 0\nend function\n",
+            encoding="utf-8",
+        )
+        normal = compile_native(mlc_runner, source, normal_exe)
+        if normal.returncode != 0:
+            return TestResult(name=name, status="FAIL", details="normal compile failed",
+                              stdout=normal.stdout, stderr=normal.stderr)
+        object_build = compile_native(mlc_runner, source, object_exe, extra_args=["--object-pipeline"])
+        if object_build.returncode != 0:
+            return TestResult(name=name, status="FAIL", details="compatibility-flag compile failed",
+                              stdout=object_build.stdout, stderr=object_build.stderr)
+        if normal_exe.read_bytes() != object_exe.read_bytes():
+            return TestResult(name=name, status="FAIL", details="--object-pipeline changed target bytes")
+        return TestResult(name=name, status="PASS", stdout=normal.stdout + object_build.stdout)
+
+
 def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """A manifest build must compile, run, restore, and invalidate safely."""
     with tempfile.TemporaryDirectory(prefix="mltests_project_") as td:
@@ -3383,6 +3408,8 @@ def main() -> int:
 
     tests.append(lambda: test_compiler_version_cli(
         name="compiler CLI reports version 1.0.0", mlc_runner=mlc_runner))
+    tests.append(lambda: test_object_pipeline_compat_cli(
+        name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,

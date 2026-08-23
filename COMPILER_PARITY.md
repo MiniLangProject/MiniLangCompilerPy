@@ -7,19 +7,20 @@ Verified on 23 August 2026 against the matching 1.0.0 revisions of:
 
 ## Compatibility result
 
-There are two separate compatibility claims:
+There are two compatibility claims:
 
 1. **Target-output parity:** for the same sources, include-root order and
-   compiler options, both normal monolithic compiler paths emit byte-identical
-   Windows x64 PE files.
-2. **Compiler-image identity:** a compiler PE built by Python and a compiler PE
-   built through the MiniLang-only `.mlo` self-build pipeline are not
-   byte-identical. They remain behaviorally compatible and emit the same tested
-   target files.
+   compiler options, the Python compiler, the normal self-hosted path and the
+   self-hosted `.mlo` pipeline emit byte-identical Windows x64 PE files.
+2. **Compiler-image layout contract:** compiler sources use the same canonical
+   entry/function/support and section layout as every other target. Historical
+   full fixed-point measurements are listed separately from current automated
+   and MiniQuake target-output measurements.
 
-The second point is expected because Python has no `.mlo` object/link pipeline.
-Intermediate `.mlo` files and the layout of the compiler linked from them are
-therefore outside the cross-compiler byte-identity contract.
+Python accepts `--object-pipeline` for project/CLI parity and emits its
+equivalent monolithic image. The serialized `.mlo` files remain an internal
+self-host implementation detail; the final linked PE is part of the same
+byte-identity contract.
 
 ## Verified target binaries
 
@@ -71,7 +72,7 @@ identical contents in both repositories. This includes the new
 `std.concurrent.thread_pool`, `std.ds.concurrent_list` and
 `std.ds.concurrent_hashmap` modules.
 
-## Bootstrap and self-build stages
+## Historical pre-canonical bootstrap and self-build stages
 
 The same `MiniLangCompilerML/mlc_win64.ml` source tree was compiled with the
 same heap and GC options for this comparison.
@@ -81,23 +82,20 @@ same heap and GC options for this comparison.
 | Python-built MiniLang compiler | 54,161,920 | `92363D1BC22A2B7EA648C189A563B6EC86B9BBCDF1D5861DA29D528593B1FC3C` |
 | MiniLang self-build through `build.ps1` / `.mlo` | 54,650,368 | `C6365921E6112AEEEA7F32DFF9E846A1AD358448582C72A6579EFAB6F67E4B00` |
 
-The compiler images differ because the supported self-build is linked from
-`.mlo` objects while the Python bootstrap emits one monolithic image. Both
-subsequently compiled `language_suite.ml`, `defer_features.ml` and
-`extern_out_runtime.ml` to the byte-identical target hashes listed above. Two
-consecutive current MiniLang object-pipeline self-build stages were
-byte-identical at 54,650,368 bytes with the hash shown above, so the supported
-self-host path reaches a binary fixed point.
+The table above records the last release artifact comparison before canonical
+object layout was introduced. Current `.mlo` linking concatenates fragments in
+the exact monolithic entry/function/support and section order, shares the
+global constant pools, and therefore no longer introduces an image-layout
+difference. The historical compiler-image rows are retained for comparison;
+they are not presented as a fresh fixed-point measurement of this revision.
 
 Both compilers report `MiniLang Compiler 1.0.0` for `-version` and
 `--version`. The repositories and GitHub releases are source-only; generated
 compiler and test executables are intentionally excluded.
 
-A monolithic self-build was also attempted with the earlier 4 GiB bootstrap
-heap and exhausted it before producing an executable. Self-builds
-must therefore use `MiniLangCompilerML/build.ps1`, which deliberately enables
-the memory-bounded object pipeline. A byte-identical monolithic bootstrap fixed
-point is not currently claimed.
+Self-builds should continue to use `MiniLangCompilerML/build.ps1`, which keeps
+the large assembler graph bounded by spilling canonical `.mlo` fragments. The
+memory-management strategy no longer changes the resulting compiler image.
 
 ## Parity work included in this revision
 
@@ -147,6 +145,11 @@ bytes indexing, invariant hoists, eliminated in-range loop checks, retained
 negative-index normalization, all inline fallback bodies and both the small and
 expanded loop/root forms.
 
+Canonical object batches also carry the cumulative inline byte budget and call
+accounting from one fragment to the next. Local `fn_ret_*` and `fn_defer_*`
+control-flow labels are excluded from runtime-helper discovery. The shared
+optimization fixture crosses multiple object batches to guard this state.
+
 The self-hosted compiler additionally retains `.mlo` production/linking,
 `--object-pipeline`, assembly/PE/data listings and its direct encoder helpers.
 
@@ -158,20 +161,23 @@ paged byte/array builders, chunked/indexed `.rdata` and `.data` label tables,
 chunked section-relocation records, direct 32/64-bit assembler emission,
 pre-sized label maps and generational text-fixup resolution. Each bounded phase
 scans only newly emitted patches; unresolved forward references are revisited
-once after helper emission instead of after every function batch. The parsed AST and active codegen graph are explicit roots across
-automatic and manual compiler collections. Compiler GC cadence is independent
-of the target's `--gc-limit`. These are implementation details of the
+once after helper emission instead of after every function batch. The parsed
+AST and active codegen graph are explicit roots through function emission and
+are released before the support-helper tail. The compiler's internal periodic
+GC limit is 3 GiB for large canonical builds and remains independent of the
+target's `--gc-limit`. These are implementation details of the
 self-hosted compiler, not additions to the language-level compatibility
 contract.
 
-The current append/clone optimization pass additionally replaces the growing
+The append optimization pass additionally replaces the growing
 function, global, scope and local arrays with geometrically growing internal
-vectors, builds the per-module function index once, and uses sparse read-only
-support-label indexes for `.mlo` object clones. Support bytes and support label
-arrays are no longer copied into every short-lived function object. Forced full
-collections are amortized across 64 objects/four modules; the automatic
-compiler heap limit remains the safety net. `--profile-compiler` exposes the
-phase timings without affecting generated target bytes.
+vectors and builds the per-module function index once. The canonical object
+writer isolates short-lived function-analysis batches while advancing shared,
+append-only read-only/data/BSS builders and constant pools. Fragment boundaries
+therefore cannot alter data order or deduplication, and prior section state is
+never copied merely to append the next delta.
+`--profile-compiler` exposes phase timings without affecting generated target
+bytes.
 
 On the same compiler source and heap flags, an instrumented object-pipeline
 self-build improved from 336.073 seconds (286.172 seconds object emission) to
@@ -186,8 +192,8 @@ validated through two consecutive self-host stages. They completed in
 images with SHA-256
 `1C15CC446E1A15C16CE84938B6961A287245750FD4072501313409BEFC5E9F05`.
 
-With the current type-flow, invariant-hoisting and bounds-check pass included,
-the latest two stages took 181.644 and 470.513 seconds, emitted 301 objects each
+With the type-flow, invariant-hoisting and bounds-check pass included, the last
+pre-canonical two stages took 181.644 and 470.513 seconds, emitted 301 objects each
 and were byte-identical at 54,650,368 bytes with SHA-256
 `C6365921E6112AEEEA7F32DFF9E846A1AD358448582C72A6579EFAB6F67E4B00`.
 
@@ -196,25 +202,33 @@ and were byte-identical at 54,650,368 bytes with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 96, FAIL 0, SKIP 0
+Python harness:    PASS 97, FAIL 0, SKIP 0
 MiniLang harness:  PASS 94, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
                    managed argument publication/GC PASS 30/30 processes
 ```
 
-The most recent MiniQuake regression (before the three language/tooling
-additions documented above) was rebuilt end to end through the
-MiniLang `.mlo` object pipeline: 112 modules / 656 objects linked successfully
-in 420.095 seconds. Planning took 35.109 seconds, object emission 283.657
-seconds and the fresh linker process 99.250 seconds; label resolution and patch
-application accounted for 74.829 and 19.515 seconds of the linker phase. The
-resulting 59,706,880-byte PE has SHA-256
-`2CDD41475932CCC2A2EFBF2FCAAF36844DDD1AE96577E2D55CA57FE5595B9A2F`;
-its `--help` runtime smoke exited with code 0. The matching Python monolithic
-build took 69.089 seconds, leaving a measured 6.08x self-host gap. Object-pipeline
-layout is outside the cross-compiler byte-identity contract, while all 25
-current monolithic parity targets above matched exactly.
+The current MiniQuake regression was rebuilt through all three paths. Python
+took 63.713 seconds, the corrected self-hosted monolithic compiler took 978.854
+seconds and the canonical self-hosted `.mlo` pipeline took 561.666 seconds.
+All resulting PEs are 56,537,600 bytes and have SHA-256
+`39552E607826FD652529198664026A1D9FC66828359D17A748D95C6EE9B36BD7`.
+The comparison exposed and fixed a self-host analysis bug: an explicit
+qualified `global` write was temporarily counted as a phantom local, shifting
+later stack slots and lengthening disp8 accesses to disp32. The shared
+optimization fixture now covers the qualified global write and both compilers
+emit the same fixture hash.
+
+The current canonical `.mlo` timing consists of 426.781 seconds for all 492
+function fragments, 3.516 seconds for runtime-helper emission and 114.219
+seconds in the fresh linker process. The earlier hour-long support tail was
+caused by 3,934 local return labels being misclassified as helpers; exact local
+label filtering reduced that phase to seconds. The same run exposed and fixed
+an object-boundary reset of the cumulative inline budget. Automated
+optimization/module-initialization gates and the completed MiniQuake build now
+establish measured three-way byte identity. The older 112-module / 656-object
+`.mlo` run completed in 420.095 seconds and remains a historical measurement.
 
 The counters differ because the Python runner counts host-side tests
 individually while the MiniLang harness groups several checks into compiled
@@ -234,7 +248,9 @@ cd ..\MiniLangCompilerML
 
 $pythonHash = (Get-FileHash ..\MiniLangCompilerPy\build\suite-py.exe -Algorithm SHA256).Hash
 $miniLangHash = (Get-FileHash .\build\suite-ml.exe -Algorithm SHA256).Hash
-$pythonHash -eq $miniLangHash
+.\build\mlc_win64.exe .\tests\language_suite.ml .\build\suite-mlo.exe -I . --object-pipeline
+$objectHash = (Get-FileHash .\build\suite-mlo.exe -Algorithm SHA256).Hash
+($pythonHash -eq $miniLangHash) -and ($miniLangHash -eq $objectHash)
 ```
 
 The final expression must be `True`. Equality is guaranteed only when source
