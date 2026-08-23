@@ -384,14 +384,21 @@ class CodegenScope:
         name = self._coerce_name(name)
         in_fn = bool(getattr(self, "in_function", False))
         func_globals = getattr(self, "_func_globals", set())
+        func_global_map = getattr(self, "_func_global_map", {})
+        mapped_name = None
+        if in_fn and isinstance(func_global_map, dict):
+            candidate = func_global_map.get(name)
+            if isinstance(candidate, str) and candidate:
+                mapped_name = candidate
+        lookup_name = mapped_name or name
         for scope in reversed(self._scope_stack):
-            b = scope.get(name)
+            b = scope.get(lookup_name)
             if b is None:
                 continue
             if in_fn and getattr(b, "kind", None) == "global":
                 # Only allow writing to *unqualified* globals explicitly declared via `global x`.
                 # Qualified names (contain a dot) are explicit and may always be written.
-                if "." not in name:
+                if mapped_name is None and "." not in name:
                     if not (isinstance(func_globals, set) and name in func_globals):
                         continue
             return b

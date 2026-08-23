@@ -19,6 +19,16 @@ function main(args)
     print "[FAIL] concatenation after input"
     return 1
   end if
+  second = input()
+  if second != "\\q" then
+    print "[FAIL] redirected second line was discarded"
+    return 1
+  end if
+  exhausted = input()
+  if typeof(exhausted) != "void" then
+    print "[FAIL] redirected EOF was not reported"
+    return 1
+  end if
   print "[OK] input ABI length"
   return 0
 end function

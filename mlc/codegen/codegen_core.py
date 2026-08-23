@@ -336,6 +336,10 @@ class CodegenCore:
         # Track actual native expansion size per callee. Small dynamic ASTs can
         # still expand into large type/error dispatch sequences.
         self._inline_emitted_bytes: dict[str, int] = {}
+        # Conservative per-function representation facts and active proven
+        # loop-index/container relationships used by optimized lowering.
+        self._known_value_types: dict[str, str] = {}
+        self._loop_index_fast_stack: list[dict[str, Any]] = []
 
         # ------------------------------------------------------------
         # Lexical scope support (CodegenScope mixin)

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 22 August 2026 against the matching 1.0.0 revisions of:
+Verified on 23 August 2026 against the matching 1.0.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -28,31 +28,31 @@ had identical size and SHA-256, and both executables exited successfully.
 
 | Program | Size | SHA-256 |
 | --- | ---: | --- |
-| `language_suite.ml` | 1,677,824 | `F9CEA6409801E380CF75910F8787BD9CAC6A992E2EB76D1D12076715A06E9E9C` |
-| `stdlib_unit_tests.ml` | 4,015,104 | `0D4ADCCC86B05628A88182436075D65656A25A5CABD4B253A4DF331B334CA902` |
-| `gc_periodic_test.ml` | 162,816 | `2B35AC3DF135B27D7EB0254ED53F29697EA6C060E4C2316ABE4284920D854287` |
-| `gc_heap_stress.ml` | 83,968 | `5B0D13ABB45078E48960D4F056BA47D91914192CED5C3E82C0F573120F65AE9B` |
-| `gc_box_float_safepoint.ml` | 376,832 | `B132A3B930898EA7E3B1AAAD85C47F006AF973E31DBD6761FD108A50AB605D55` |
-| `gc_float_call_roots.ml` | 426,496 | `38E460E46EA32FB55971F533944D0AC0056B21808C62F48117DBB934E178DA27` |
-| `gc_nested_graph_roots.ml` | 275,456 | `6A0661D8BA259ABC1DD0AAE750E04082F812CBE9FA3CE558DBC66BF495A7A8D9` |
-| `gc_reference_write_roots.ml` | 133,120 | `82F922E01CF3BAE597785C12C76F999F369491ADE324438D02C574EF5087DD35` |
-| `aes128_ecb_nist_kat.ml` | 338,432 | `C78B946F22B022AB54242F03368D4ECE02D5ED460275B7DAA064F4524B4CD307` |
-| `winapi_extern_smoke.ml` | 64,512 | `1583B4C6CF73B38947D2A70CEEC1115793CCD0460DE0C520E97E3E2AE1052BC8` |
-| `native_bytes_ptr_smoke.ml` | 84,480 | `E2465D781EB5BC912A68BAB6B165B32A406A1947048A431A3948D6E10568677C` |
-| `native_raw_value_smoke.ml` | 82,944 | `8B863F87376AA3A8C78B178569D25A22CDBAA60F4A28C7763807D86B9929E4B6` |
-| `native_callback_wndproc_smoke.ml` | 88,064 | `0C78C4815B2F548C54A7AB13A61117BC8B4C40D475AF77ECEAABDE8D760C34E7` |
-| `global_function_rebind.ml` | 69,632 | `264042565E63A487B73DAA9AD4AF2794F55EA3B9A2E3CE80B1C25172A852F99B` |
-| `thread_features.ml` | 214,528 | `EE9B539BF5FC03BC85717BD10937E97D1318D6AB8F8044132B7456337C46C8DD` |
-| `threading_stdlib.ml` | 925,184 | `DDA9E4EA3F12483AF9592DCB3874EA3D5A106632FA70763AED23576E08EBAE5A` |
-| `extern_abi_validation_valid.ml` | 71,168 | `7390B62DD0A9642CB8AEF9FE3DF427A1BDADBAF9E26AD56D38F8812604985FC5` |
-| `codegen_optimizations.ml` | 274,944 | `A13344BE58B8E58B866E91AF89AEB697BDCF54182F3E408EF80ABB222E8DC217` |
-| `thread_pool.ml` | 677,376 | `E5B905022ABC231FB50996380086EFD2275F5324F85FD4D26F09A56583F195CA` |
-| `type_checks.ml` | 143,360 | `DF9E884456F25C90D384B18AF46BBB7F00E760683FF8E56D384BDB2E40748633` |
-| `member_callable_direct.ml` | 74,240 | `E7BB9F9784CE7A335E28E8F57715A03E8CDD9836E61288A8CB36D40CE212D73E` |
-| `codegen_phase_gc.ml` | 466,432 | `3303AEABD5607CF614755764798531D1EDF95715C8DB2600893F07D534E9A98D` |
-| `compiler_gc_liveness.ml` (`--gc-limit 1m`) | 165,376 | `D53E124E6105691AEE16FD859AF21EFBBDFB0BCEC113F46C2ED38E2AC4B61FA9` |
-| `defer_features.ml` | 83,456 | `5BB15FB39983A1752CA7C33900CB9B85E3E404046F21B0927FC11137DC1F4B56` |
-| `extern_out_runtime.ml` | 74,240 | `A6E02746D93EE638E314ADC535EA314EE15BD413C5D52C680B82CCCE3DE86211` |
+| `language_suite.ml` | 1,611,264 | `EFAB37BAE26C94D37F86251DF06A3C9C2BA8B5EFF783C036D4103F3134FAB39A` |
+| `stdlib_unit_tests.ml` | 3,762,688 | `FCD7C73C89A485D248B7CAD91903BFEFDB8036E1A88705646A914DA12058FA3E` |
+| `gc_periodic_test.ml` | 161,280 | `4876C18B4E367688A26090E6EC947921E1543EB60052618E063C794DACC78E99` |
+| `gc_heap_stress.ml` | 83,456 | `F466A0EE8CE26C2BD71D365C600CECBF8F00152F655323A95FB02119BE51D718` |
+| `gc_box_float_safepoint.ml` | 365,056 | `EF8DFCFB90DD57D2E9778DCFE6715DA1E6A0E1CBDE240F0BB8D891C68F062A72` |
+| `gc_float_call_roots.ml` | 411,648 | `F505F887117B069766A88A1311C84F516B7005F7A3662E9999BA2288121C996B` |
+| `gc_nested_graph_roots.ml` | 271,872 | `F2F7C04AD3E0F907EDBB25D4E0959FA8E314DD6CD0BFD1FA17B3CFED360DF07B` |
+| `gc_reference_write_roots.ml` | 132,608 | `4C1AA70AA4501458C576AA6F619BBCDD41542FDC3AE1F2A8AD5F537D4ED25355` |
+| `aes128_ecb_nist_kat.ml` | 331,776 | `D257F6F7F75036384DB08F6AA22C9D9CCDCAF9CA1E7146B245A799CA2B0A08F4` |
+| `winapi_extern_smoke.ml` | 64,512 | `944BA64C4D8C5A27CCE8E17ADB0E0A7683D128D13D3EEC0F08526B255AA19564` |
+| `native_bytes_ptr_smoke.ml` | 84,480 | `2F2D64A74A5258B6A633A9354D8D39AC825A8030E4C350C2471E9351AD60676C` |
+| `native_raw_value_smoke.ml` | 82,944 | `1615B1278569E998597F4E2C2317513E9BA9ABE368846D7FB5FAEC7F4D6AE21F` |
+| `native_callback_wndproc_smoke.ml` | 86,528 | `82FC4B0ECA563535841D8ED1EA1A2446E30E18A0FB52A11A09552BBC690419E3` |
+| `global_function_rebind.ml` | 69,120 | `A3D4661966A7AC7E7E57DC11FD7C1C39E7499DD8C49D1B49489F225DB72B1891` |
+| `thread_features.ml` | 239,104 | `AC62897033463B3E33BACC25B77E160A76ED71EFD74B1D9499742AAC16EF93C9` |
+| `threading_stdlib.ml` | 908,800 | `89AFECFE6DF68134D54B7F914DB7275A466615F3A9ED0455C1FB025D2DB12D19` |
+| `extern_abi_validation_valid.ml` | 70,656 | `05387489F45AEE34BF227E4965281A93137159AB84B7C4BA09565A32920EE6D8` |
+| `codegen_optimizations.ml` | 285,696 | `AA54ABD78DF049A976E895E85911354CBAAB7318556469F56C188D61C07EA385` |
+| `thread_pool.ml` | 656,896 | `294AF95CD24BDD72DFBF0258F05C9B21A8542BB097531049F4E92571B601EBE2` |
+| `type_checks.ml` | 135,680 | `CABA11CACCCC9A15946172085489C50D0452AD15E2EF20F5B4EC7A8C7F8A4BCA` |
+| `member_callable_direct.ml` | 72,704 | `99EB4C4FD38EBBCB82A8EA994E9F815C31C59BED2C0B0117246DC032C69BD886` |
+| `codegen_phase_gc.ml` | 404,480 | `70D9F9145CFAA29716E72160B760DDA31B992A56750D6A000AB87ED7A4622D03` |
+| `compiler_gc_liveness.ml` (`--gc-limit 1m`) | 164,864 | `0A6617023A0EB39691AEAE6BB8CBF2749E2C745550FE431603B1B61578C3B3E4` |
+| `defer_features.ml` | 83,456 | `D5ADFC76E2BD6FA08AE1313CBA75D38C77FD48FDA0A0D9A231C5EF23ABB069C7` |
+| `extern_out_runtime.ml` | 74,240 | `A3317E95D46637027B7DBD6BCF493D6ED3CE1FBB84C618FD27E693371834168D` |
 
 This coverage includes imports and the standard library, closures, inline
 functions, structs, enums, GC, extern declarations, native interop, real Win32
@@ -78,15 +78,15 @@ same heap and GC options for this comparison.
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Python-built MiniLang compiler | 54,292,992 | `D28204311865D2B432BE119A7F8F91FDD538D8DD3E8CBEAF8E2F6E14A360482E` |
-| MiniLang self-build through `build.ps1` / `.mlo` | 54,789,120 | `3FA2ECE14316FCF2B7419C49E21CF232618623512F5363CB2F210750935B382E` |
+| Python-built MiniLang compiler | 54,161,920 | `92363D1BC22A2B7EA648C189A563B6EC86B9BBCDF1D5861DA29D528593B1FC3C` |
+| MiniLang self-build through `build.ps1` / `.mlo` | 54,650,368 | `C6365921E6112AEEEA7F32DFF9E846A1AD358448582C72A6579EFAB6F67E4B00` |
 
 The compiler images differ because the supported self-build is linked from
 `.mlo` objects while the Python bootstrap emits one monolithic image. Both
 subsequently compiled `language_suite.ml`, `defer_features.ml` and
 `extern_out_runtime.ml` to the byte-identical target hashes listed above. Two
 consecutive current MiniLang object-pipeline self-build stages were
-byte-identical at 54,789,120 bytes with the hash shown above, so the supported
+byte-identical at 54,650,368 bytes with the hash shown above, so the supported
 self-host path reaches a binary fixed point.
 
 Both compilers report `MiniLang Compiler 1.0.0` for `-version` and
@@ -134,14 +134,18 @@ No existing feature was removed. The synchronized surface includes:
 
 Generated-code optimization is synchronized as part of the same parity
 contract: both backends use the same inline expansion budget with unconditional
-callable fallback bodies, local integer flow, constant-loop lowering,
+callable fallback bodies, local representation flow for integers, floats,
+booleans, strings, arrays, bytes and concrete structs, constant-loop lowering,
+loop-invariant container-base hoisting, proven bounds-check elimination,
 GC-root/prologue sizing and short-back-edge selection. Stack sizing also
 accounts for calls hidden inside eligible inline bodies, so an expanded wide
 call cannot overwrite caller locals, debug saves or the root-frame record. The shared
 `tests/codegen_optimizations.ml` fixture covers optimized behavior and fallback
-semantics, including a narrow caller around a hidden ten-argument call; listing
-checks additionally verify that all inline fallback bodies and both the small
-and expanded loop/root forms remain.
+semantics, including a narrow caller around a hidden ten-argument call. Listing
+checks additionally verify float/bool/struct fast paths, specialized array and
+bytes indexing, invariant hoists, eliminated in-range loop checks, retained
+negative-index normalization, all inline fallback bodies and both the small and
+expanded loop/root forms.
 
 The self-hosted compiler additionally retains `.mlo` production/linking,
 `--object-pipeline`, assembly/PE/data listings and its direct encoder helpers.
@@ -182,18 +186,18 @@ validated through two consecutive self-host stages. They completed in
 images with SHA-256
 `1C15CC446E1A15C16CE84938B6961A287245750FD4072501313409BEFC5E9F05`.
 
-With all 1.0.0 features included, the final two release stages took 185.140 and
-240.518 seconds, emitted 293 objects each and were byte-identical at 54,789,120
-bytes with SHA-256
-`3FA2ECE14316FCF2B7419C49E21CF232618623512F5363CB2F210750935B382E`.
+With the current type-flow, invariant-hoisting and bounds-check pass included,
+the latest two stages took 181.644 and 470.513 seconds, emitted 301 objects each
+and were byte-identical at 54,650,368 bytes with SHA-256
+`C6365921E6112AEEEA7F32DFF9E846A1AD358448582C72A6579EFAB6F67E4B00`.
 
 ## Tests
 
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 95, FAIL 0, SKIP 0
-MiniLang harness:  PASS 93, FAIL 0
+Python harness:    PASS 96, FAIL 0, SKIP 0
+MiniLang harness:  PASS 94, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
                    managed argument publication/GC PASS 30/30 processes

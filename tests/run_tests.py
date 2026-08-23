@@ -2929,6 +2929,35 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
             return TestResult(name=name, status="FAIL",
                               details="constant-bound loop retained dynamic end/step state")
 
+        flow_asm = function_block("extended_type_flow")
+        flow_markers = (
+            "numeric_float_fast_",
+            "bool_condition_fast_",
+            "struct_member_fast_",
+            "struct_setmember_fast_",
+            "loop_invariant_base_array_",
+            "loop_invariant_base_bytes_",
+            "idx_fast_array_",
+            "idx_fast_bytes_",
+            "idx_fast_bounds_elided_",
+            "seti_fast_bytes_",
+            "seti_fast_bounds_elided_",
+        )
+        missing_flow = [marker for marker in flow_markers if marker not in flow_asm]
+        if not flow_asm or missing_flow:
+            return TestResult(name=name, status="FAIL",
+                              details="extended type-flow/BCE lowering is missing: " + ", ".join(missing_flow))
+        if "idx_fast_oob_" in flow_asm or "seti_fast_oob_" in flow_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="proven fixed-length loop retained bounds checks")
+
+        negative_index_asm = function_block("fixed_negative_index")
+        if ("idx_fast_array_" not in negative_index_asm
+                or "idx_fast_nonnegative_" not in negative_index_asm
+                or "idx_fast_oob_" not in negative_index_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="negative fixed index incorrectly elided normalization/bounds checks")
+
         small_src = mlc_runner.parent / "tests" / "root_frame_small.ml"
         small_exe = td_path / "root_frame_small.exe"
         small_asm_path = td_path / "root_frame_small.asm"
@@ -3365,13 +3394,13 @@ def main() -> int:
 
     if input_length_regression_ml is not None:
         tests.append(lambda: test_program_no_fail(
-            name="input ABI: allocator preserves interactive line length",
+            name="input ABI: preserves redirected lines and reports EOF",
             mlc_runner=mlc_runner, ml_path=input_length_regression_ml,
-            must_contain=["[OK] input ABI length"], stdin_text="show tables;\n",
+            must_contain=["[OK] input ABI length"], stdin_text="show tables;\r\n\\q\r\n",
             timeout_compile_s=120, timeout_run_s=120))
     else:
         tests.append(lambda: TestResult(
-            name="input ABI: allocator preserves interactive line length",
+            name="input ABI: preserves redirected lines and reports EOF",
             status="SKIP", details="input_length_regression.ml not found"))
 
     # Stdlib unit tests (std.core/std.assert/native error handling)

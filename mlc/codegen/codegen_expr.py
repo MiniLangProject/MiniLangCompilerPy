@@ -305,6 +305,199 @@ class CodegenExpr:
                     getattr(e, 'right', None))
         return False
 
+    @staticmethod
+    def _opt_value_type_base(type_name: Optional[str]) -> Optional[str]:
+        if not isinstance(type_name, str) or not type_name:
+            return None
+        return type_name.split(':', 1)[0]
+
+    @staticmethod
+    def _opt_value_type_exact_length(type_name: Optional[str]) -> Optional[int]:
+        if not isinstance(type_name, str) or ':' not in type_name:
+            return None
+        base, raw = type_name.split(':', 1)
+        if base not in ('array', 'bytes'):
+            return None
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return None
+        return value if value >= 0 else None
+
+    def _opt_expr_known_type(self, e: Any) -> Optional[str]:
+        """Return a conservative local representation fact for an expression."""
+        ml = self.ml
+        if e is None:
+            return None
+        if isinstance(e, getattr(ml, 'Num', ())):
+            value = getattr(e, 'value', None)
+            return 'int' if isinstance(value, int) and not isinstance(value, bool) else 'float'
+        if isinstance(e, getattr(ml, 'Bool', ())):
+            return 'bool'
+        if isinstance(e, getattr(ml, 'Str', ())):
+            return 'string'
+        if isinstance(e, getattr(ml, 'ArrayLit', ())):
+            return f"array:{len(list(getattr(e, 'items', []) or []))}"
+        if isinstance(e, getattr(ml, 'Var', ())):
+            name = str(getattr(e, 'name', '') or '')
+            fact = (getattr(self, '_known_value_types', {}) or {}).get(name)
+            if not isinstance(fact, str):
+                return None
+            try:
+                binding = self.resolve_binding(name)
+            except Exception:
+                binding = None
+            if binding is None or getattr(binding, 'kind', None) not in ('local', 'param'):
+                return None
+            if bool(getattr(binding, 'boxed', False)):
+                return None
+            return fact
+        if isinstance(e, getattr(ml, 'IsType', ())):
+            return 'bool'
+        if isinstance(e, getattr(ml, 'Unary', ())):
+            op = str(getattr(e, 'op', '') or '')
+            rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
+            if op == 'not' and rb:
+                return 'bool'
+            if op == '~' and rb == 'int':
+                return 'int'
+            if op == '-' and rb == 'int':
+                return 'int'
+            if op == '-' and rb in ('float', 'number'):
+                return 'number'
+            return None
+        if isinstance(e, getattr(ml, 'Bin', ())):
+            op = str(getattr(e, 'op', '') or '')
+            lb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'left', None)))
+            rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
+            if op in ('==', '!='):
+                return 'bool'
+            if op in ('<', '<=', '>', '>=') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                return 'bool'
+            if op in ('and', 'or') and lb and rb:
+                return 'bool'
+            if op in ('&', '|', '^', '<<', '>>') and lb == rb == 'int':
+                return 'int'
+            if op in ('+', '-', '*', '%') and lb == rb == 'int':
+                return 'int'
+            if op in ('+', '-', '*', '/', '%') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                return 'number'
+            return None
+        if isinstance(e, getattr(ml, 'Index', ())):
+            base = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'target', None)))
+            if base == 'bytes':
+                return 'int'
+            if base == 'string':
+                return 'string'
+        return None
+
+    def _opt_known_index_plan(self, e: Any) -> Optional[dict[str, Any]]:
+        """Plan a type-specialized index read and any proven loop hoist."""
+        ml = self.ml
+        target = getattr(e, 'target', None)
+        index = getattr(e, 'index', None)
+        if not isinstance(target, getattr(ml, 'Var', ())):
+            return None
+        fact = self._opt_expr_known_type(target)
+        kind = self._opt_value_type_base(fact)
+        index_kind = self._opt_value_type_base(self._opt_expr_known_type(index))
+        if kind not in ('array', 'bytes', 'string') or index_kind != 'int':
+            return None
+        try:
+            target_binding = self.resolve_binding(str(getattr(target, 'name', '') or ''))
+        except Exception:
+            target_binding = None
+        if target_binding is None:
+            return None
+
+        plan: dict[str, Any] = {'kind': kind, 'base_slot': None, 'bounds_proven': False}
+        if isinstance(index, getattr(ml, 'Var', ())):
+            try:
+                index_binding = self.resolve_binding(str(getattr(index, 'name', '') or ''))
+            except Exception:
+                index_binding = None
+            if index_binding is not None:
+                for loop in reversed(list(getattr(self, '_loop_index_fast_stack', []) or [])):
+                    if int(loop.get('index_id', -1)) != int(getattr(index_binding, 'id', -2)):
+                        continue
+                    spec = (loop.get('targets', {}) or {}).get(int(getattr(target_binding, 'id', -1)))
+                    if isinstance(spec, dict) and spec.get('kind') == kind:
+                        plan['base_slot'] = spec.get('base_slot')
+                        plan['bounds_proven'] = bool(spec.get('bounds_proven', False))
+                        return plan
+
+        exact_len = self._opt_value_type_exact_length(fact)
+        const_index = self._opt_try_const_int(index)
+        if isinstance(exact_len, int) and isinstance(const_index, int):
+            # Negative indices need the runtime length-based normalization even
+            # when their eventual slot is statically in range.
+            plan['bounds_proven'] = 0 <= const_index < exact_len
+        return plan
+
+    def _opt_emit_known_index(self, e: Any, plan: dict[str, Any]) -> None:
+        """Emit an index read with statically selected container layout."""
+        a = self.asm
+        kind = str(plan.get('kind', ''))
+        base_slot = plan.get('base_slot')
+        bounds_proven = bool(plan.get('bounds_proven', False))
+        lid = self.new_label_id()
+        l_oob = f'idx_fast_oob_{lid}'
+        l_done = f'idx_fast_done_{lid}'
+        a.mark(f'idx_fast_{kind}_{lid}')
+        if bounds_proven:
+            a.mark(f'idx_fast_bounds_elided_{lid}')
+
+        spill = None
+        if isinstance(base_slot, int):
+            a.mov_r64_membase_disp('r11', 'rsp', base_slot)
+        else:
+            self.emit_expr(getattr(e, 'target', None))
+            spill = self.alloc_expr_temps(8)
+            a.mov_rsp_disp32_rax(spill)
+
+        self.emit_expr(getattr(e, 'index', None))
+        a.mov_r64_r64('rcx', 'rax')
+        a.sar_r64_imm8('rcx', 3)
+
+        if isinstance(spill, int):
+            a.mov_r64_membase_disp('r11', 'rsp', spill)
+            self.free_expr_temps(8)
+
+        if not bounds_proven:
+            a.mov_r32_membase_disp('edx', 'r11', 4)
+            l_nonnegative = f'idx_fast_nonnegative_{lid}'
+            a.cmp_r32_imm('ecx', 0)
+            a.jcc('ge', l_nonnegative)
+            a.add_r32_r32('ecx', 'edx')
+            a.mark(l_nonnegative)
+            a.cmp_r32_imm('ecx', 0)
+            a.jcc('l', l_oob)
+            a.cmp_r32_r32('ecx', 'edx')
+            a.jcc('ge', l_oob)
+
+        if kind == 'array':
+            a.mov_r64_mem_bis('rax', 'r11', 'rcx', 8, 8)
+        elif kind == 'bytes':
+            a.lea_r64_mem_bis('rax', 'r11', 'rcx', 1, 8)
+            a.movzx_r32_membase_disp('eax', 'rax', 0)
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+        else:
+            a.lea_r64_mem_bis('rax', 'r11', 'rcx', 1, 8)
+            a.movzx_r32_membase_disp('eax', 'rax', 0)
+            a.lea_r11_rip('obj_char_table')
+            a.shl_rax_imm8(4)
+            a.add_r64_r64('rax', 'r11')
+
+        if not bounds_proven:
+            a.jmp(l_done)
+            a.mark(l_oob)
+            if hasattr(self, 'emit_dbg_line'):
+                self.emit_dbg_line(e)
+            self._emit_make_error_const(ERR_INDEX_OOB, 'Array index out of bounds')
+            self._emit_auto_errprop()
+            a.mark(l_done)
+
     def _opt_emit_known_int_binop(self, op: str, lhs_const: Optional[int],
                                   rhs_const: Optional[int]) -> bool:
         """Emit a binary operation whose two operands in r10/r11 are proven ints."""
@@ -415,6 +608,83 @@ class CodegenExpr:
             return True
         return False
 
+    def _opt_emit_known_float_binop(self, e: Any) -> bool:
+        """Emit arithmetic/comparisons when type flow proves a float operand.
+
+        An exact float fact guarantees that the generic string/bytes/array and
+        non-numeric fallbacks are unreachable. The remaining conversion still
+        accepts an int/number peer and both immediate and boxed float layouts.
+        """
+        op = str(getattr(e, 'op', '') or '')
+        if op not in ('+', '-', '*', '/', '%', '==', '!=', '<', '<=', '>', '>='):
+            return False
+        lhs = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'left', None)))
+        rhs = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
+        numeric = {'int', 'float', 'number'}
+        if lhs not in numeric or rhs not in numeric or 'float' not in (lhs, rhs):
+            return False
+
+        a = self.asm
+        lid = self.new_label_id()
+        l_fail = f'numeric_float_fail_{lid}'
+        l_done = f'numeric_float_done_{lid}'
+        a.mark(f'numeric_float_fast_{lid}')
+        a.mov_rax_r10()
+        self.emit_to_double_xmm(0, l_fail)
+        a.mov_rax_r11()
+        self.emit_to_double_xmm(1, l_fail)
+
+        if op in ('/', '%'):
+            a.xorpd_xmm_xmm('xmm2', 'xmm2')
+            a.ucomisd_xmm_xmm('xmm1', 'xmm2')
+            a.jcc('e', l_fail)
+
+        if op == '+':
+            a.addsd_xmm_xmm('xmm0', 'xmm1')
+        elif op == '-':
+            a.subsd_xmm_xmm('xmm0', 'xmm1')
+        elif op == '*':
+            a.mulsd_xmm_xmm('xmm0', 'xmm1')
+        elif op == '/':
+            a.divsd_xmm_xmm('xmm0', 'xmm1')
+        elif op == '%':
+            a.movapd_xmm_xmm('xmm3', 'xmm0')
+            a.divsd_xmm_xmm('xmm0', 'xmm1')
+            a.roundsd_xmm_xmm_imm8('xmm2', 'xmm0', 1)
+            a.mulsd_xmm_xmm('xmm2', 'xmm1')
+            a.subsd_xmm_xmm('xmm3', 'xmm2')
+            a.movapd_xmm_xmm('xmm0', 'xmm3')
+        else:
+            a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+            if op == '==':
+                a.setcc_al('e')
+                a.setcc_r8('dl', 'p')
+                a.xor_r8_imm8('dl', 1)
+                a.and_r8_r8('al', 'dl')
+            elif op == '!=':
+                a.setcc_al('ne')
+                a.setcc_r8('dl', 'p')
+                a.or_r8_r8('al', 'dl')
+            else:
+                cc = {'<': 'b', '<=': 'be', '>': 'a', '>=': 'ae'}[op]
+                a.setcc_al(cc)
+                a.setcc_r8('dl', 'p')
+                a.xor_r8_imm8('dl', 1)
+                a.and_r8_r8('al', 'dl')
+            a.movzx_eax_al()
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_BOOL)
+            a.jmp(l_done)
+
+        if op in ('+', '-', '*', '/', '%'):
+            self.emit_normalize_xmm0_to_value()
+            a.jmp(l_done)
+
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.mark(l_done)
+        return True
+
     def _opt_emit_const_value(self, v: Any) -> None:
         """Emit a folded constant into RAX."""
         a = self.asm
@@ -487,6 +757,25 @@ class CodegenExpr:
             return 'obj_type_array'
         if hasattr(ml, 'VoidLit') and isinstance(e, ml.VoidLit):
             return 'obj_type_void'
+        fact = self._opt_expr_known_type(e)
+        base = self._opt_value_type_base(fact)
+        primitive_labels = {
+            'int': 'obj_type_int',
+            'float': 'obj_type_float',
+            'bool': 'obj_type_bool',
+            'string': 'obj_type_string',
+            'array': 'obj_type_array',
+            'bytes': 'obj_type_bytes',
+        }
+        if base in primitive_labels:
+            return primitive_labels[base]
+        if base == 'struct' and isinstance(fact, str) and ':' in fact:
+            qname = fact.split(':', 1)[1]
+            if detailed:
+                label = (getattr(self, 'typename_struct_by_qname', {}) or {}).get(qname)
+                if isinstance(label, str) and label:
+                    return label
+            return 'obj_type_struct'
         return None
 
     def _native_callback_qname_of(self, expr: Any) -> Optional[str]:
@@ -1764,6 +2053,8 @@ class CodegenExpr:
         saved_ctx_file = getattr(self, '_current_fn_file', None)
         saved_ctx_qn = getattr(self, '_current_fn_qname', None)
         saved_inline_alloc = bool(getattr(self, '_inline_alloc_enabled', False))
+        saved_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
+        saved_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
         try:
             # Isolate scope stack: globals + fresh inline root scope.
@@ -1790,6 +2081,10 @@ class CodegenExpr:
             self.in_function = True
             self.func_ret_label = l_end
             self._inline_alloc_enabled = True
+            # Inline parameters are dynamically typed and the isolated inline
+            # scope does not run the full function analysis pass.
+            self._known_value_types = {}
+            self._loop_index_fast_stack = []
 
             # Use the callee's qualification context for unqualified name resolution.
             try:
@@ -1843,6 +2138,8 @@ class CodegenExpr:
             self.current_file_prefix = saved_filepref
             self._current_fn_file = saved_ctx_file
             self._current_fn_qname = saved_ctx_qn
+            self._known_value_types = saved_known_value_types
+            self._loop_index_fast_stack = saved_loop_index_fast_stack
 
             self._decl_site_bindings = saved_decl_site
             self._function_locals = saved_fn_locals
@@ -2369,6 +2666,25 @@ class CodegenExpr:
                 tgt = getattr(e, 'obj', None)
             if tgt is None:
                 raise self.error("Invalid member access node", e)
+
+            # A local initialized exclusively by one concrete struct
+            # constructor has a fixed field layout. Resolve the field offset at
+            # compile time instead of emitting tag/object/id dispatch.
+            known_struct = self._opt_expr_known_type(tgt)
+            field_fast = getattr(e, 'name', None)
+            if field_fast is None:
+                field_fast = getattr(e, 'field', None)
+            if (isinstance(known_struct, str) and known_struct.startswith('struct:')
+                    and isinstance(field_fast, str)):
+                struct_qname = known_struct.split(':', 1)[1]
+                fields_fast = (getattr(self, 'struct_fields', {}) or {}).get(struct_qname)
+                if isinstance(fields_fast, list) and field_fast in fields_fast:
+                    a.mark(f'struct_member_fast_{self.new_label_id()}')
+                    self.emit_expr(tgt)
+                    field_index = fields_fast.index(field_fast)
+                    a.mov_r64_membase_disp('rax', 'rax', 8 + field_index * 8)
+                    return
+
             self.emit_expr(tgt)
 
             fid = self.new_label_id()
@@ -2748,6 +3064,8 @@ class CodegenExpr:
                     and self._opt_expr_known_int(getattr(e, 'right', None))
                     and self._opt_emit_known_int_binop(str(getattr(e, 'op', '')),
                                                       lhs_const_int, rhs_const_int)):
+                return
+            if self._opt_emit_known_float_binop(e):
                 return
 
             # -------------------------
@@ -3637,6 +3955,11 @@ class CodegenExpr:
             return
 
         if isinstance(e, ml.Index):
+            fast_index = self._opt_known_index_plan(e)
+            if isinstance(fast_index, dict):
+                self._opt_emit_known_index(e, fast_index)
+                return
+
             lid = self.new_label_id()
             l_arr = f"idx_arr_{lid}"
             l_bytes = f"idx_bytes_{lid}"
@@ -5766,6 +6089,7 @@ class CodegenExpr:
                 arg = e.args[0]
                 known_lbl = self._opt_try_known_type_label(arg, detailed=False)
                 if isinstance(known_lbl, str) and known_lbl:
+                    a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return
                 arg_name = _qname_of(arg)
@@ -5797,6 +6121,7 @@ class CodegenExpr:
                 arg = e.args[0]
                 known_lbl = self._opt_try_known_type_label(arg, detailed=True)
                 if isinstance(known_lbl, str) and known_lbl:
+                    a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return
                 arg_name = _qname_of(arg)

@@ -66,52 +66,91 @@ Returns:
         # fn_input is itself a *callee* (called from MiniLang code),
         # so at entry RSP is typically 8 mod 16. We fix alignment and
         # reserve shadow space for the WinAPI calls inside this helper.
-        a.sub_rsp_imm8(0x28)
+        # Keep a handle and byte count above the WinAPI shadow space. Reading a
+        # byte at a time is deliberate: ReadFile on a redirected pipe may return
+        # several logical lines at once, and the old implementation discarded
+        # everything after the first newline. Interactive SQL shells then lost
+        # queued commands and spun forever after the pipe reached EOF.
+        a.sub_rsp_imm8(0x38)
 
         # GetStdHandle(STD_INPUT_HANDLE=-10)
         a.mov_rcx_imm32(0xFFFFFFF6)
         a.mov_rax_rip_qword('iat_GetStdHandle')
         a.call_rax()
+        a.mov_membase_disp_r64('rsp', 0x28, 'rax')
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_membase_disp_r32('rsp', 0x30, 'eax')
 
-        # ReadFile(handle, inbuf, 4095, &bytesRead, NULL)
-        a.mov_r64_r64("rcx", "rax")  # mov rcx,rax
+        lid = self.new_label_id()
+        l_read_top = f"in_read_top_{lid}"
+        l_read_ok = f"in_read_ok_{lid}"
+        l_eof = f"in_eof_{lid}"
+        l_finish = f"in_finish_{lid}"
+        l_increment = f"in_increment_{lid}"
+        l_return_empty = f"in_return_empty_{lid}"
+
+        a.mark(l_read_top)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x30)
+        a.cmp_r32_imm('eax', INPUT_READ_MAX)
+        a.jcc('ge', l_finish)
+
+        # ReadFile(handle, inbuf + length, 1, &bytesRead, NULL)
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x28)
         a.lea_rax_rip('inbuf')
-        a.mov_rdx_rax()
-        a.mov_r8d_imm32(INPUT_READ_MAX)
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x30)
+        a.add_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rdx', 'rax')
+        a.mov_r8d_imm32(1)
         a.lea_r9_rip('bytesRead')
         a.mov_qword_ptr_rsp20_rax_zero()
         a.mov_rax_rip_qword('iat_ReadFile')
         a.call_rax()
-
-        lid = self.new_label_id()
-        l_read_ok = f"in_read_ok_{lid}"
-
-        # if ReadFile failed -> bytesRead = 0
         a.test_r32_r32("eax", "eax")  # test eax,eax
         a.jcc('ne', l_read_ok)
-        a.xor_r32_r32("eax", "eax")  # xor eax,eax
-        a.mov_rip_dword_eax('bytesRead')
+        a.jmp(l_eof)
         a.mark(l_read_ok)
-
-        # r9d = bytesRead
         a.mov_eax_rip_dword('bytesRead')
-        a.mov_r32_r32("r9d", "eax")  # mov r9d,eax
+        a.cmp_r32_imm('eax', 0)
+        a.jcc('e', l_eof)
 
-        # scan for first CR/LF, set r9d = effective length
+        # LF terminates the logical line. CR is consumed but not retained, so a
+        # Windows CRLF pair produces exactly one input result.
         a.lea_rax_rip('inbuf')
-        a.mov_r64_r64('rcx', 'rax')
-        a.mov_r32_r32('edx', 'r9d')
-        a.mov_r32_imm32('r8d', 10)
-        a.mov_r32_imm32('r9d', 13)
-        a.call('fn_scan_byte2_bytes')
-        a.mov_r32_r32('r9d', 'edx')
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x30)
+        a.add_r64_r64('rax', 'rcx')
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.cmp_r32_imm('eax', 10)
+        a.jcc('e', l_finish)
+        a.cmp_r32_imm('eax', 13)
+        a.jcc('ne', l_increment)
+        a.jmp(l_read_top)
+
+        a.mark(l_increment)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x30)
+        a.add_r32_imm('eax', 1)
+        a.mov_membase_disp_r32('rsp', 0x30, 'eax')
+        a.jmp(l_read_top)
+
+        # EOF is distinct from a user-entered blank line. MiniLang callers can
+        # detect it with typeof(value) != "string" and terminate cleanly.
+        a.mark(l_eof)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x30)
+        a.cmp_r32_imm('eax', 0)
+        a.jcc('ne', l_finish)
+        a.mov_rax_imm64(enc_void())
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+        a.mark(l_finish)
+        a.mov_r32_membase_disp('r9d', 'rsp', 0x30)
 
         # Empty input/result -> shared immutable empty string.
         l_nonempty = f"in_nonempty_{lid}"
         a.cmp_r32_imm("r9d", 0)
         a.jcc('ne', l_nonempty)
+        a.mark(l_return_empty)
         a.lea_rax_rip('obj_empty_string')
-        a.add_rsp_imm8(0x28)
+        a.add_rsp_imm8(0x38)
         a.ret()
         a.mark(l_nonempty)
 
@@ -151,7 +190,7 @@ Returns:
 
         # return base
         a.mov_rax_r11()
-        a.add_rsp_imm8(0x28)
+        a.add_rsp_imm8(0x38)
         a.ret()
 
     def emit_decode_function(self) -> None:

@@ -786,6 +786,561 @@ class CodegenStmt:
         setattr(fn, '_ml_known_int_names', set(candidates))
         return set(candidates)
 
+    @staticmethod
+    def _value_type_base(type_name: Optional[str]) -> Optional[str]:
+        """Return the representation category from a local type-flow fact."""
+        if not isinstance(type_name, str) or not type_name:
+            return None
+        return type_name.split(':', 1)[0]
+
+    @staticmethod
+    def _value_type_exact_length(type_name: Optional[str]) -> Optional[int]:
+        """Return a statically proven container length encoded in a type fact."""
+        if not isinstance(type_name, str) or ':' not in type_name:
+            return None
+        base, raw = type_name.split(':', 1)
+        if base not in ('array', 'bytes'):
+            return None
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return None
+        return value if value >= 0 else None
+
+    def _infer_known_value_types(self, fn: Any) -> dict[str, str]:
+        """Infer conservative representation facts for initialized local names.
+
+        The native backend is dynamically typed, so these facts are only used
+        when every write in the function preserves the same representation
+        category. A candidate also needs an unconditional function-body
+        initializer (loop variables are initialized by their loop prologue).
+        Parameters, globals, captures, synchronized values and boxed locals are
+        deliberately excluded.
+        """
+        cached = getattr(fn, '_ml_known_value_types', None)
+        if isinstance(cached, dict):
+            return dict(cached)
+
+        ml = self.ml
+        assignments: dict[str, list[Any]] = {}
+        direct_initializers: list[tuple[str, Any]] = []
+        loop_names: set[str] = set()
+        normal_names: set[str] = set()
+        excluded: set[str] = set(str(x) for x in (getattr(fn, 'params', []) or []))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
+        excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
+
+        def record_assignment(st: Any, *, direct: bool) -> None:
+            name = str(getattr(st, 'name', '') or '')
+            if not name or '.' in name:
+                return
+            if hasattr(ml, 'SynchronizedDecl') and isinstance(st, ml.SynchronizedDecl):
+                excluded.add(name)
+                return
+            assignments.setdefault(name, []).append(getattr(st, 'expr', None))
+            normal_names.add(name)
+            if direct:
+                direct_initializers.append((name, getattr(st, 'expr', None)))
+
+        def walk(stmts: list[Any], *, direct: bool = False) -> None:
+            for st in stmts or []:
+                if isinstance(st, getattr(ml, 'FunctionDef', ())):
+                    continue
+                if isinstance(st, getattr(ml, 'GlobalDecl', ())):
+                    excluded.update(str(x) for x in (getattr(st, 'names', []) or []))
+                    continue
+                if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()))):
+                    record_assignment(st, direct=direct)
+                if isinstance(st, getattr(ml, 'For', ())):
+                    name = str(getattr(st, 'var', '') or '')
+                    if name:
+                        loop_names.add(name)
+                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                    continue
+                if self._is_foreach_stmt(st):
+                    excluded.add(str(self._foreach_var_name(st)))
+                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                    continue
+                if isinstance(st, getattr(ml, 'If', ())):
+                    walk(list(getattr(st, 'then_body', []) or []), direct=False)
+                    for _, body in getattr(st, 'elifs', []) or []:
+                        walk(list(body or []), direct=False)
+                    walk(list(getattr(st, 'else_body', []) or []), direct=False)
+                elif isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()))):
+                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for cs in getattr(st, 'cases', []) or []:
+                        walk(list(getattr(cs, 'body', []) or []), direct=False)
+                    walk(list(getattr(st, 'default_body', []) or []), direct=False)
+
+        walk(list(getattr(fn, 'body', []) or []), direct=True)
+        excluded.update(loop_names.intersection(normal_names))
+
+        # Function-wide facts are only safe when the unconditional initializer
+        # dominates every read. MiniLang predeclares locals, so a read before
+        # the first assignment observes void and must retain dynamic lowering.
+        tracked_names = set(assignments) | set(loop_names)
+        read_before_init: set[str] = set()
+
+        def scan_read_expr(expr: Any, initialized: set[str]) -> None:
+            if expr is None:
+                return
+            if isinstance(expr, getattr(ml, 'Var', ())):
+                name = str(getattr(expr, 'name', '') or '')
+                if name in tracked_names and name not in initialized:
+                    read_before_init.add(name)
+                return
+            for attr in ('left', 'right', 'expr', 'target', 'index', 'callee', 'obj'):
+                scan_read_expr(getattr(expr, attr, None), initialized)
+            for attr in ('args', 'items', 'values'):
+                values = getattr(expr, attr, None)
+                if isinstance(values, dict):
+                    values = list(values.values())
+                for value in list(values or []):
+                    if isinstance(value, (list, tuple)) and len(value) >= 2:
+                        scan_read_expr(value[1], initialized)
+                    else:
+                        scan_read_expr(value, initialized)
+
+        def scan_read_order(stmts: list[Any], initialized: set[str], *, direct: bool) -> None:
+            for st in stmts or []:
+                if isinstance(st, (getattr(ml, 'FunctionDef', ()), getattr(ml, 'GlobalDecl', ()))):
+                    continue
+                if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()),
+                                   getattr(ml, 'SynchronizedDecl', ()))):
+                    scan_read_expr(getattr(st, 'expr', None), initialized)
+                    if direct:
+                        initialized.add(str(getattr(st, 'name', '') or ''))
+                    continue
+                if isinstance(st, getattr(ml, 'For', ())):
+                    scan_read_expr(getattr(st, 'start', None), initialized)
+                    scan_read_expr(getattr(st, 'end', None), initialized)
+                    inner = set(initialized)
+                    inner.add(str(getattr(st, 'var', '') or ''))
+                    scan_read_order(list(getattr(st, 'body', []) or []), inner, direct=False)
+                    continue
+                if self._is_foreach_stmt(st):
+                    scan_read_expr(getattr(st, 'iterable', None), initialized)
+                    inner = set(initialized)
+                    inner.add(str(self._foreach_var_name(st)))
+                    scan_read_order(list(getattr(st, 'body', []) or []), inner, direct=False)
+                    continue
+                for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
+                    scan_read_expr(getattr(st, attr, None), initialized)
+                if isinstance(st, getattr(ml, 'If', ())):
+                    scan_read_order(list(getattr(st, 'then_body', []) or []), set(initialized), direct=False)
+                    for cond, branch in getattr(st, 'elifs', []) or []:
+                        scan_read_expr(cond, initialized)
+                        scan_read_order(list(branch or []), set(initialized), direct=False)
+                    scan_read_order(list(getattr(st, 'else_body', []) or []), set(initialized), direct=False)
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for case in getattr(st, 'cases', []) or []:
+                        scan_read_order(list(getattr(case, 'body', []) or []), set(initialized), direct=False)
+                    scan_read_order(list(getattr(st, 'default_body', []) or []), set(initialized), direct=False)
+                else:
+                    scan_read_order(list(getattr(st, 'body', []) or []), set(initialized), direct=False)
+
+        scan_read_order(list(getattr(fn, 'body', []) or []), set(), direct=True)
+        excluded.update(read_before_init)
+
+        def callee_qname(expr: Any) -> Optional[str]:
+            if isinstance(expr, getattr(ml, 'Var', ())):
+                raw = str(getattr(expr, 'name', '') or '')
+            elif isinstance(expr, getattr(ml, 'Member', ())):
+                parts: list[str] = []
+                cur = expr
+                while isinstance(cur, getattr(ml, 'Member', ())):
+                    parts.append(str(getattr(cur, 'name', '') or ''))
+                    cur = getattr(cur, 'target', None)
+                if not isinstance(cur, getattr(ml, 'Var', ())):
+                    return None
+                parts.append(str(getattr(cur, 'name', '') or ''))
+                raw = '.'.join(reversed(parts))
+            else:
+                return None
+            if not raw:
+                return None
+            try:
+                aliased = self._apply_import_alias(raw)
+            except Exception:
+                aliased = raw
+            pools = getattr(self, 'struct_fields', {}) or {}
+            if aliased in pools:
+                return aliased
+            try:
+                qualified = self._qualify_identifier(aliased, expr, kind='struct')
+            except Exception:
+                qualified = aliased
+            if qualified in pools:
+                return qualified
+            suffix = '.' + aliased
+            hits = sorted(str(x) for x in pools if str(x).endswith(suffix))
+            return hits[0] if len(hits) == 1 else None
+
+        def infer_expr(expr: Any, known: dict[str, str]) -> Optional[str]:
+            if expr is None:
+                return None
+            if isinstance(expr, getattr(ml, 'Num', ())):
+                value = getattr(expr, 'value', None)
+                return 'int' if isinstance(value, int) and not isinstance(value, bool) else 'float'
+            if isinstance(expr, getattr(ml, 'Bool', ())):
+                return 'bool'
+            if isinstance(expr, getattr(ml, 'Str', ())):
+                return 'string'
+            if isinstance(expr, getattr(ml, 'ArrayLit', ())):
+                return f"array:{len(list(getattr(expr, 'items', []) or []))}"
+            if isinstance(expr, getattr(ml, 'Var', ())):
+                return known.get(str(getattr(expr, 'name', '') or ''))
+            if isinstance(expr, getattr(ml, 'IsType', ())):
+                return 'bool'
+            if isinstance(expr, getattr(ml, 'Unary', ())):
+                op = str(getattr(expr, 'op', '') or '')
+                rt = infer_expr(getattr(expr, 'right', None), known)
+                rb = self._value_type_base(rt)
+                if op == 'not' and rb:
+                    return 'bool'
+                if op == '~' and rb == 'int':
+                    return 'int'
+                if op == '-' and rb == 'int':
+                    return 'int'
+                if op == '-' and rb in ('float', 'number'):
+                    return 'number'
+                return None
+            if isinstance(expr, getattr(ml, 'Bin', ())):
+                op = str(getattr(expr, 'op', '') or '')
+                lt = infer_expr(getattr(expr, 'left', None), known)
+                rt = infer_expr(getattr(expr, 'right', None), known)
+                lb = self._value_type_base(lt)
+                rb = self._value_type_base(rt)
+                if op in ('==', '!='):
+                    return 'bool'
+                if op in ('<', '<=', '>', '>=') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                    return 'bool'
+                if op in ('and', 'or') and lb and rb:
+                    return 'bool'
+                if op in ('&', '|', '^', '<<', '>>') and lb == rb == 'int':
+                    return 'int'
+                if op in ('+', '-', '*', '%') and lb == rb == 'int':
+                    return 'int'
+                if op in ('+', '-', '*', '/', '%') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                    return 'number'
+                return None
+            if isinstance(expr, getattr(ml, 'Index', ())):
+                tb = self._value_type_base(infer_expr(getattr(expr, 'target', None), known))
+                if tb == 'bytes':
+                    return 'int'
+                if tb == 'string':
+                    return 'string'
+                return None
+            if isinstance(expr, getattr(ml, 'Call', ())):
+                name = callee_qname(getattr(expr, 'callee', None))
+                raw = None
+                cal = getattr(expr, 'callee', None)
+                if isinstance(cal, getattr(ml, 'Var', ())):
+                    raw = str(getattr(cal, 'name', '') or '')
+                args = list(getattr(expr, 'args', []) or [])
+                if raw in ('len',):
+                    return 'int'
+                if raw in ('typeof', 'typeName'):
+                    return 'string'
+                if raw in ('bytes', 'byteBuffer'):
+                    if len(args) == 0:
+                        return 'bytes:0'
+                    if len(args) in (1, 2):
+                        try:
+                            size = self._opt_try_const_int(args[0])
+                        except Exception:
+                            size = None
+                        if isinstance(size, int) and size >= 0:
+                            return f'bytes:{size}'
+                    return 'bytes'
+                if name:
+                    return 'struct:' + name
+            return None
+
+        initialized_names = {name for name, _ in direct_initializers} | set(loop_names)
+        candidates = ((set(assignments) | set(loop_names)) & initialized_names) - excluded
+        facts: dict[str, str] = {name: 'int' for name in loop_names if name in candidates}
+
+        # Seed from unconditional initializers, then propagate through local
+        # aliases and induction updates until no new fact is discovered.
+        for name, expr in direct_initializers:
+            if name not in candidates or name in facts:
+                continue
+            fact = infer_expr(expr, facts)
+            if fact:
+                facts[name] = fact
+
+        for _ in range(max(1, len(candidates) + 1)):
+            changed = False
+            for name in sorted(candidates):
+                values = assignments.get(name, [])
+                if not values:
+                    continue
+                inferred = [infer_expr(expr, facts) for expr in values]
+                if any(x is None for x in inferred):
+                    continue
+                bases = {self._value_type_base(x) for x in inferred}
+                merged: Optional[str] = None
+                if len(set(inferred)) == 1:
+                    merged = inferred[0]
+                elif bases <= {'int', 'float', 'number'}:
+                    merged = 'number'
+                elif len(bases) == 1 and next(iter(bases), None) in ('array', 'bytes', 'string'):
+                    merged = next(iter(bases))
+                if merged and facts.get(name) != merged:
+                    facts[name] = merged
+                    changed = True
+            if not changed:
+                break
+
+        # Final validation removes optimistic seeds whose later writes are not
+        # representationally known, cascading through dependent locals.
+        changed = True
+        while changed:
+            changed = False
+            for name in list(facts):
+                if name in loop_names and name not in assignments:
+                    continue
+                values = assignments.get(name, [])
+                inferred = [infer_expr(expr, facts) for expr in values]
+                if not values or any(x is None for x in inferred):
+                    del facts[name]
+                    changed = True
+                    continue
+                bases = {self._value_type_base(x) for x in inferred}
+                valid = (len(set(inferred)) == 1 or bases <= {'int', 'float', 'number'} or
+                         (len(bases) == 1 and next(iter(bases), None) in ('array', 'bytes', 'string')))
+                if not valid:
+                    del facts[name]
+                    changed = True
+
+        setattr(fn, '_ml_known_value_types', dict(facts))
+        return dict(facts)
+
+    def _for_index_hoist_plans(self, loop: Any, index_binding: Any) -> list[dict[str, Any]]:
+        """Find fixed-layout containers safely indexed by this inclusive loop."""
+        ml = self.ml
+        if not bool(getattr(self, 'in_function', False)) or index_binding is None:
+            return []
+        index_name = str(getattr(loop, 'var', '') or '')
+        if not index_name:
+            return []
+
+        def expr_children(expr: Any) -> list[Any]:
+            if expr is None:
+                return []
+            out: list[Any] = []
+            for attr in ('left', 'right', 'expr', 'target', 'index', 'callee', 'obj'):
+                child = getattr(expr, attr, None)
+                if child is not None:
+                    out.append(child)
+            out.extend(list(getattr(expr, 'args', []) or []))
+            out.extend(list(getattr(expr, 'items', []) or []))
+            return out
+
+        target_exprs: dict[str, Any] = {}
+        mutated: set[str] = set()
+
+        def scan_expr(expr: Any) -> None:
+            if expr is None:
+                return
+            if isinstance(expr, getattr(ml, 'Index', ())):
+                target = getattr(expr, 'target', None)
+                index = getattr(expr, 'index', None)
+                if (isinstance(target, getattr(ml, 'Var', ())) and
+                        isinstance(index, getattr(ml, 'Var', ())) and
+                        str(getattr(index, 'name', '') or '') == index_name):
+                    target_exprs.setdefault(str(getattr(target, 'name', '') or ''), target)
+            for child in expr_children(expr):
+                scan_expr(child)
+
+        def scan_stmts(stmts: list[Any]) -> None:
+            for st in stmts or []:
+                if isinstance(st, getattr(ml, 'FunctionDef', ())):
+                    continue
+                if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()))):
+                    name = str(getattr(st, 'name', '') or '')
+                    if name:
+                        mutated.add(name)
+                if isinstance(st, getattr(ml, 'SetIndex', ())):
+                    target = getattr(st, 'target', None)
+                    index = getattr(st, 'index', None)
+                    if (isinstance(target, getattr(ml, 'Var', ())) and
+                            isinstance(index, getattr(ml, 'Var', ())) and
+                            str(getattr(index, 'name', '') or '') == index_name):
+                        target_exprs.setdefault(str(getattr(target, 'name', '') or ''), target)
+                for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
+                    scan_expr(getattr(st, attr, None))
+                if isinstance(st, getattr(ml, 'If', ())):
+                    scan_stmts(list(getattr(st, 'then_body', []) or []))
+                    for cond, body in getattr(st, 'elifs', []) or []:
+                        scan_expr(cond)
+                        scan_stmts(list(body or []))
+                    scan_stmts(list(getattr(st, 'else_body', []) or []))
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for case in getattr(st, 'cases', []) or []:
+                        for value in getattr(case, 'values', []) or []:
+                            scan_expr(value)
+                        scan_expr(getattr(case, 'range_start', None))
+                        scan_expr(getattr(case, 'range_end', None))
+                        scan_stmts(list(getattr(case, 'body', []) or []))
+                    scan_stmts(list(getattr(st, 'default_body', []) or []))
+                else:
+                    scan_stmts(list(getattr(st, 'body', []) or []))
+
+        scan_stmts(list(getattr(loop, 'body', []) or []))
+        if index_name in mutated:
+            return []
+
+        start_value = self._opt_try_const_int(getattr(loop, 'start', None))
+        if not isinstance(start_value, int) or start_value < 0:
+            return []
+
+        def end_proves_bounds(target_name: str, exact_len: int) -> bool:
+            end_expr = getattr(loop, 'end', None)
+            end_value = self._opt_try_const_int(end_expr)
+            if isinstance(end_value, int):
+                return start_value <= end_value < exact_len
+            if not isinstance(end_expr, getattr(ml, 'Bin', ())) or str(getattr(end_expr, 'op', '')) != '-':
+                return False
+            if self._opt_try_const_int(getattr(end_expr, 'right', None)) != 1 or start_value != 0 or exact_len <= 0:
+                return False
+            left = getattr(end_expr, 'left', None)
+            if not isinstance(left, getattr(ml, 'Call', ())):
+                return False
+            callee = getattr(left, 'callee', None)
+            if not isinstance(callee, getattr(ml, 'Var', ())) or str(getattr(callee, 'name', '')) != 'len':
+                return False
+            args = list(getattr(left, 'args', []) or [])
+            return (len(args) == 1 and isinstance(args[0], getattr(ml, 'Var', ())) and
+                    str(getattr(args[0], 'name', '') or '') == target_name)
+
+        plans: list[dict[str, Any]] = []
+        for target_name in sorted(target_exprs):
+            if not target_name or target_name in mutated:
+                continue
+            fact = (getattr(self, '_known_value_types', {}) or {}).get(target_name)
+            kind = self._value_type_base(fact)
+            exact_len = self._value_type_exact_length(fact)
+            if kind not in ('array', 'bytes') or not isinstance(exact_len, int):
+                continue
+            if not end_proves_bounds(target_name, exact_len):
+                continue
+            try:
+                binding = self.resolve_binding(target_name)
+            except Exception:
+                binding = None
+            if binding is None or getattr(binding, 'kind', None) not in ('local', 'param'):
+                continue
+            plans.append({
+                'target_id': int(getattr(binding, 'id', -1)),
+                'target_expr': target_exprs[target_name],
+                'kind': kind,
+                'bounds_proven': True,
+            })
+        return plans
+
+    def _opt_emit_known_setindex(self, stmt: Any, plan: dict[str, Any]) -> None:
+        """Emit a fixed-layout array/bytes store using local type-flow facts."""
+        a = self.asm
+        kind = str(plan.get('kind', ''))
+        if kind not in ('array', 'bytes'):
+            raise self.error('Internal error: unsupported specialized index store', stmt)
+        base_slot = plan.get('base_slot')
+        bounds_proven = bool(plan.get('bounds_proven', False))
+        lid = self.new_label_id()
+        l_rhs_void = f'seti_fast_rhs_void_{lid}'
+        l_oob = f'seti_fast_oob_{lid}'
+        l_bad_byte = f'seti_fast_bad_byte_{lid}'
+        l_done = f'seti_fast_done_{lid}'
+        a.mark(f'seti_fast_{kind}_{lid}')
+        if bounds_proven:
+            a.mark(f'seti_fast_bounds_elided_{lid}')
+
+        own_base = None
+        if not isinstance(base_slot, int):
+            self.emit_expr(getattr(stmt, 'target', None))
+            own_base = self.alloc_expr_temps(8)
+            a.mov_rsp_disp32_rax(own_base)
+
+        self.emit_expr(getattr(stmt, 'index', None))
+        idx_slot = self.alloc_expr_temps(8)
+        a.mov_rsp_disp32_rax(idx_slot)
+        self.emit_expr(getattr(stmt, 'expr', None))
+        a.mov_r64_r64('r10', 'rax')
+
+        a.mov_r64_membase_disp('r11', 'rsp', int(base_slot if isinstance(base_slot, int) else own_base))
+        a.mov_rax_rsp_disp32(idx_slot)
+        self.free_expr_temps(8 + (8 if isinstance(own_base, int) else 0))
+
+        a.cmp_r64_imm('r10', enc_void())
+        a.jcc('e', l_rhs_void)
+        a.mov_r64_r64('rcx', 'rax')
+        a.sar_r64_imm8('rcx', 3)
+
+        if not bounds_proven:
+            a.mov_r32_membase_disp('edx', 'r11', 4)
+            l_nonnegative = f'seti_fast_nonnegative_{lid}'
+            a.cmp_r32_imm('ecx', 0)
+            a.jcc('ge', l_nonnegative)
+            a.add_r32_r32('ecx', 'edx')
+            a.mark(l_nonnegative)
+            a.cmp_r32_imm('ecx', 0)
+            a.jcc('l', l_oob)
+            a.cmp_r32_r32('ecx', 'edx')
+            a.jcc('ge', l_oob)
+
+        if kind == 'array':
+            l_store = f'seti_fast_array_store_{lid}'
+            a.mov_r32_membase_disp('edx', 'r11', 0)
+            a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
+            a.jcc('ne', l_store)
+            a.mov_r64_r64('r8', 'r10')
+            a.and_r64_imm('r8', 7)
+            a.cmp_r64_imm('r8', TAG_PTR)
+            a.jcc('ne', l_store)
+            a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+            a.mark(l_store)
+            a.mov_mem_bis_r64('r11', 'rcx', 8, 8, 'r10')
+            a.jmp(l_done)
+        else:
+            a.mov_r64_r64('r8', 'r10')
+            a.and_r64_imm('r8', 7)
+            a.cmp_r64_imm('r8', TAG_INT)
+            a.jcc('ne', l_bad_byte)
+            a.mov_r64_r64('rax', 'r10')
+            a.sar_r64_imm8('rax', 3)
+            a.cmp_r64_imm('rax', 0)
+            a.jcc('l', l_bad_byte)
+            a.cmp_r64_imm('rax', 255)
+            a.jcc('g', l_bad_byte)
+            a.lea_r64_mem_bis('r8', 'r11', 'rcx', 1, 8)
+            a.mov_membase_disp_r8('r8', 0, 'al')
+            a.jmp(l_done)
+
+        a.mark(l_rhs_void)
+        self.emit_dbg_line(stmt)
+        self._emit_make_error_const(ERR_VOID_OP, 'Cannot assign void via index')
+        self._emit_auto_errprop()
+        a.jmp(l_done)
+
+        if not bounds_proven:
+            a.mark(l_oob)
+            self.emit_dbg_line(stmt)
+            self._emit_make_error_const(ERR_INDEX_OOB, 'Array index out of bounds')
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+        if kind == 'bytes':
+            a.mark(l_bad_byte)
+            self.emit_dbg_line(stmt)
+            self._emit_make_error_const(ERR_VOID_OP, 'Byte value must be an int in range 0..255')
+            self._emit_auto_errprop()
+
+        a.mark(l_done)
+
     def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
         ml = self.ml
         if expr is None:
@@ -2456,20 +3011,24 @@ class CodegenStmt:
                 next_lbl = f"if_next_{lid}_{i}"
                 self.emit_expr(cond)
 
-                # Strict-void: using `void` as condition must raise an error.
-                # (We intentionally keep `emit_jmp_if_false_rax` permissive for other call sites.)
-                l_cond_ok = f"if_cond_ok_{lid}_{i}"
-                a.mov_r64_r64("r10", "rax")
-                a.and_r64_imm("r10", 7)
-                a.cmp_r64_imm("r10", TAG_VOID)
-                a.jcc('ne', l_cond_ok)
-                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
-                self._emit_auto_errprop()
-                # If not propagated (top-level), still treat as false to continue control-flow safely.
-                a.jmp(next_lbl)
-                a.mark(l_cond_ok)
-
-                self.emit_jmp_if_false_rax(next_lbl)
+                if self._opt_value_type_base(self._opt_expr_known_type(cond)) == 'bool':
+                    a.mark(f'bool_condition_fast_{self.new_label_id()}')
+                    a.cmp_r64_imm('rax', enc_bool(False))
+                    a.jcc('e', next_lbl)
+                else:
+                    # Strict-void: using `void` as condition must raise an error.
+                    # (We intentionally keep `emit_jmp_if_false_rax` permissive for other call sites.)
+                    l_cond_ok = f"if_cond_ok_{lid}_{i}"
+                    a.mov_r64_r64("r10", "rax")
+                    a.and_r64_imm("r10", 7)
+                    a.cmp_r64_imm("r10", TAG_VOID)
+                    a.jcc('ne', l_cond_ok)
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                    self._emit_auto_errprop()
+                    # If not propagated (top-level), still treat as false to continue control-flow safely.
+                    a.jmp(next_lbl)
+                    a.mark(l_cond_ok)
+                    self.emit_jmp_if_false_rax(next_lbl)
                 self.push_scope()
                 self._emit_stmt_list(body)
                 self.pop_scope()
@@ -2726,19 +3285,23 @@ class CodegenStmt:
             if tv is not True:
                 self.emit_expr(s.cond)
 
-                # Strict-void: using `void` as condition must raise an error.
-                l_wcond_ok = f"while_cond_ok_{a.pos}"
-                a.mov_r64_r64("r10", "rax")
-                a.and_r64_imm("r10", 7)
-                a.cmp_r64_imm("r10", TAG_VOID)
-                a.jcc('ne', l_wcond_ok)
-                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
-                self._emit_auto_errprop()
-                # If not propagated, exit the loop.
-                a.jmp(end)
-                a.mark(l_wcond_ok)
-
-                self.emit_jmp_if_false_rax(end)
+                if self._opt_value_type_base(self._opt_expr_known_type(s.cond)) == 'bool':
+                    a.mark(f'bool_condition_fast_{self.new_label_id()}')
+                    a.cmp_r64_imm('rax', enc_bool(False))
+                    a.jcc('e', end)
+                else:
+                    # Strict-void: using `void` as condition must raise an error.
+                    l_wcond_ok = f"while_cond_ok_{a.pos}"
+                    a.mov_r64_r64("r10", "rax")
+                    a.and_r64_imm("r10", 7)
+                    a.cmp_r64_imm("r10", TAG_VOID)
+                    a.jcc('ne', l_wcond_ok)
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                    self._emit_auto_errprop()
+                    # If not propagated, exit the loop.
+                    a.jmp(end)
+                    a.mark(l_wcond_ok)
+                    self.emit_jmp_if_false_rax(end)
 
             self.push_scope()
             self._emit_stmt_list(getattr(s, 'body', []) or [])
@@ -2780,19 +3343,23 @@ class CodegenStmt:
             else:
                 self.emit_expr(s.cond)
 
-                # Strict-void: using `void` as condition must raise an error.
-                l_dwcond_ok = f"dowhile_cond_ok_{a.pos}"
-                a.mov_r64_r64("r10", "rax")
-                a.and_r64_imm("r10", 7)
-                a.cmp_r64_imm("r10", TAG_VOID)
-                a.jcc('ne', l_dwcond_ok)
-                self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
-                self._emit_auto_errprop()
-                # If not propagated, exit the loop.
-                a.jmp(end)
-                a.mark(l_dwcond_ok)
-
-                self.emit_jmp_if_false_rax(end)
+                if self._opt_value_type_base(self._opt_expr_known_type(s.cond)) == 'bool':
+                    a.mark(f'bool_condition_fast_{self.new_label_id()}')
+                    a.cmp_r64_imm('rax', enc_bool(False))
+                    a.jcc('e', end)
+                else:
+                    # Strict-void: using `void` as condition must raise an error.
+                    l_dwcond_ok = f"dowhile_cond_ok_{a.pos}"
+                    a.mov_r64_r64("r10", "rax")
+                    a.and_r64_imm("r10", 7)
+                    a.cmp_r64_imm("r10", TAG_VOID)
+                    a.jcc('ne', l_dwcond_ok)
+                    self._emit_make_error_const(ERR_VOID_OP, "Cannot use void as condition")
+                    self._emit_auto_errprop()
+                    # If not propagated, exit the loop.
+                    a.jmp(end)
+                    a.mark(l_dwcond_ok)
+                    self.emit_jmp_if_false_rax(end)
                 a.jmp(top)
 
             a.mark(end)
@@ -2831,8 +3398,9 @@ class CodegenStmt:
             depth_outer = self.scope_depth
             self.push_scope()
             loop_depth = self.scope_depth
+            loop_index_binding = None
             if hasattr(self, "declare_fresh_binding"):
-                self.declare_fresh_binding(s.var, node=s)
+                loop_index_binding = self.declare_fresh_binding(s.var, node=s)
 
             self.break_stack.append(
                 BreakableCtx(kind='loop', break_label=end, continue_label=cont, break_depth=depth_outer,
@@ -2863,6 +3431,22 @@ class CodegenStmt:
 
             end_slot = state_slots[end_name]
             step_slot = state_slots[step_name]
+
+            # Hoist invariant fixed-layout container bases into published root
+            # slots. The loop context lets index lowering remove target/type,
+            # index-tag and bounds checks when the inclusive range is proven.
+            index_hoists = self._for_index_hoist_plans(s, loop_index_binding)
+            hoist_targets: dict[int, dict[str, Any]] = {}
+            for hoist in index_hoists:
+                base_slot = self.alloc_expr_temps(8)
+                self.emit_expr(hoist['target_expr'])
+                a.mov_rsp_disp32_rax(base_slot)
+                a.mark(f"loop_invariant_base_{hoist['kind']}_{self.new_label_id()}")
+                hoist_targets[int(hoist['target_id'])] = {
+                    'kind': hoist['kind'],
+                    'base_slot': base_slot,
+                    'bounds_proven': bool(hoist.get('bounds_proven', False)),
+                }
 
             def _state_store_qword_rax(slot) -> None:
                 if state_stack:
@@ -2907,10 +3491,15 @@ class CodegenStmt:
 
             a.mark(top)
             # body
+            self._loop_index_fast_stack.append({
+                'index_id': int(getattr(loop_index_binding, 'id', -1)),
+                'targets': hoist_targets,
+            })
             self.push_scope()
             for st in s.body:
                 self.emit_stmt(st)
             self.pop_scope()
+            self._loop_index_fast_stack.pop()
 
             a.mark(cont)
             self.emit_gc_safepoint_poll()
@@ -2946,6 +3535,9 @@ class CodegenStmt:
 
             a.jmp(top)
             a.mark(end)
+
+            if hoist_targets:
+                self.free_expr_temps(len(hoist_targets) * 8)
 
             self.break_stack.pop()
             self.pop_scope()
@@ -2991,6 +3583,22 @@ class CodegenStmt:
                         self.emit_store_existing_global(full, s)
                     else:
                         raise self.error('Internal compiler error: missing emit_store_existing_global (Step 5).', s)
+                    return
+
+            known_struct = self._opt_expr_known_type(obj_expr)
+            if isinstance(known_struct, str) and known_struct.startswith('struct:'):
+                struct_qname = known_struct.split(':', 1)[1]
+                fields_fast = (getattr(self, 'struct_fields', {}) or {}).get(struct_qname)
+                if isinstance(fields_fast, list) and field in fields_fast:
+                    a.mark(f'struct_setmember_fast_{self.new_label_id()}')
+                    self.emit_expr(obj_expr)
+                    target_fast_off = self.alloc_expr_temps(8)
+                    a.mov_rsp_disp32_rax(target_fast_off)
+                    self.emit_expr(getattr(s, 'expr', None))
+                    a.mov_r64_r64('r13', 'rax')
+                    a.mov_r64_membase_disp('r12', 'rsp', target_fast_off)
+                    self.free_expr_temps(8)
+                    a.mov_membase_disp_r64('r12', 8 + fields_fast.index(field) * 8, 'r13')
                     return
 
             # Struct field write fallback (runtime checked).
@@ -3051,6 +3659,11 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.SetIndex):
+            fast_store = self._opt_known_index_plan(s)
+            if isinstance(fast_store, dict) and fast_store.get('kind') in ('array', 'bytes'):
+                self._opt_emit_known_setindex(s, fast_store)
+                return
+
             # target[index] = expr (strict)
             # Runtime errors on invalid target/index/rhs (catchable via try()).
 
@@ -5691,6 +6304,8 @@ class CodegenStmt:
         old_root_rec = getattr(self, '_current_root_rec_off', None)
         old_root_static_qwords = int(getattr(self, '_current_root_static_qwords', 0) or 0)
         old_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
+        old_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
+        old_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
         # Save/override scope stack for real emission (function-local only)
         saved_emit_stack = getattr(self, "_scope_stack", None)
@@ -5706,6 +6321,8 @@ class CodegenStmt:
         self._current_root_rec_off = root_rec_off
         self._current_root_static_qwords = (root_static_top - root_base) // 8
         self._known_int_names = self._infer_known_int_names(fn)
+        self._known_value_types = self._infer_known_value_types(fn)
+        self._loop_index_fast_stack = []
 
         if saved_emit_stack is not None:
             base_globals = {}
@@ -5939,6 +6556,8 @@ class CodegenStmt:
         self._current_root_rec_off = old_root_rec
         self._current_root_static_qwords = old_root_static_qwords
         self._known_int_names = old_known_int_names
+        self._known_value_types = old_known_value_types
+        self._loop_index_fast_stack = old_loop_index_fast_stack
 
         a.add_rsp_imm32(frame_size)
         a.pop_r15()

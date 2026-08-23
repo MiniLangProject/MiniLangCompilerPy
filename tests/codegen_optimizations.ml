@@ -60,6 +60,40 @@ struct Slot
   value,
 end struct
 
+struct FlowPoint
+  x,
+  y,
+end struct
+
+function extended_type_flow()
+  values = [1, 2, 3, 4, 5, 6, 7, 8]
+  data = bytes(8, 0)
+  point = FlowPoint(40, 0)
+  gate = true
+  left = 1.5
+  right = 2.5
+  total = 0
+
+  // Both loops exceed the small-loop unroll budget. Their fixed-length
+  // containers can therefore exercise invariant-base hoisting and BCE.
+  for i = 0 to len(values) - 1
+    total = total + values[i]
+  end for
+  for j = 0 to len(data) - 1
+    data[j] = j + 1
+    total = total + data[j]
+  end for
+
+  if gate then total = total + point.x end if
+  point.y = 8
+  return total + point.y + (left + right)
+end function
+
+function fixed_negative_index()
+  values = [11, 22]
+  return values[-1]
+end function
+
 function tenth(a, b, c, d, e, f, g, h, i, j)
   return j
 end function
@@ -127,6 +161,8 @@ function main(args)
   t.assertEq(const_loop(), 2080, "constant-bound loop fast path")
   t.assertEq(int_ops(), 17, "integer operator fast paths")
   t.assertEq(float_fallback(), 3.0, "non-integer arithmetic fallback")
+  t.assertEq(extended_type_flow(), 124, "extended local type flow and loop BCE")
+  t.assertEq(fixed_negative_index(), 22, "negative fixed index keeps normalization")
   slot = Slot(0)
   slot.value = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
   t.assertEq(slot.value, 10, "member assignment call-arity sizing")
