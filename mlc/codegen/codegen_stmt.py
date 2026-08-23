@@ -5738,6 +5738,8 @@ class CodegenStmt:
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
             "copyStringBytes",
+            "nativeCrc32c", "nativeCrc32", "bytesConstantTimeEquals",
+            "runtimeCpuFeatures", "runtimeCpuActiveFeatures", "runtimeCpuSetMask",
             "nativeBytesPtr", "nativeRawValue", "nativeValueFromRaw", "nativeCallback",
             "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed", "heap_bytes_reserved", "heap_free_bytes",
             "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }

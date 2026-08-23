@@ -5130,6 +5130,59 @@ class CodegenExpr:
                 self.free_expr_temps(16)
                 return
 
+            # Native checksum, constant-time comparison and CPU-dispatch hooks.
+            # These are special forms rather than first-class builtins so
+            # programs that do not use them do not pull their runtime helpers
+            # or lookup tables into the final PE.
+            if callee_name in ('nativeCrc32c', 'nativeCrc32'):
+                if len(e.args) != 4:
+                    raise self.error(f'{callee_name}() expects exactly 4 arguments', e)
+                tmp_off = self.alloc_expr_temps(32)
+                for i, arg in enumerate(e.args):
+                    self.emit_expr(arg)
+                    a.mov_rsp_disp32_rax(tmp_off + i * 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.mov_r64_membase_disp('r8', 'rsp', tmp_off + 16)
+                a.mov_r64_membase_disp('r9', 'rsp', tmp_off + 24)
+                a.call('fn_native_crc32c' if callee_name == 'nativeCrc32c' else 'fn_native_crc32')
+                self.free_expr_temps(32)
+                return
+
+            if callee_name == 'bytesConstantTimeEquals':
+                if len(e.args) != 2:
+                    raise self.error('bytesConstantTimeEquals() expects exactly 2 arguments', e)
+                tmp_off = self.alloc_expr_temps(16)
+                self.emit_expr(e.args[0])
+                a.mov_rsp_disp32_rax(tmp_off)
+                self.emit_expr(e.args[1])
+                a.mov_rsp_disp32_rax(tmp_off + 8)
+                a.mov_r64_membase_disp('rcx', 'rsp', tmp_off)
+                a.mov_r64_membase_disp('rdx', 'rsp', tmp_off + 8)
+                a.call('fn_bytes_constant_time_eq')
+                self.free_expr_temps(16)
+                return
+
+            if callee_name == 'runtimeCpuFeatures':
+                if len(e.args) != 0:
+                    raise self.error('runtimeCpuFeatures() expects no arguments', e)
+                a.call('fn_runtime_cpu_features')
+                return
+
+            if callee_name == 'runtimeCpuActiveFeatures':
+                if len(e.args) != 0:
+                    raise self.error('runtimeCpuActiveFeatures() expects no arguments', e)
+                a.call('fn_runtime_cpu_active_features')
+                return
+
+            if callee_name == 'runtimeCpuSetMask':
+                if len(e.args) != 1:
+                    raise self.error('runtimeCpuSetMask() expects exactly 1 argument', e)
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_runtime_cpu_set_mask')
+                return
+
             if callee_name == 'stringRepeat' and len(e.args) == 2:
                 tmp_off = self.alloc_expr_temps(16)
                 self.emit_expr(e.args[0])

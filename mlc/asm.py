@@ -1756,6 +1756,16 @@ class Asm:
         rex_b = 1 if s >= 8 else 0
         self.emit(self._rex(w=1, r=rex_r, b=rex_b) + b"\x23" + self._modrm(3, d, s))
 
+    def and_r32_r32(self, dst: str, src: str) -> None:
+        """Emit ``AND r32, r32``."""
+        d = self.gpr(dst)
+        s = self.gpr(src)
+        if d.size != 32 or s.size != 32:
+            raise ValueError("and_r32_r32 requires (r32, r32)")
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s.id >= 8 else 0
+        self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x23" + self._modrm(3, d.id, s.id))
+
     def or_r64_r64(self, dst: str, src: str) -> None:
         """Emit `OR` instruction helper.
 
@@ -1768,6 +1778,16 @@ class Asm:
         rex_r = 1 if d >= 8 else 0
         rex_b = 1 if s >= 8 else 0
         self.emit(self._rex(w=1, r=rex_r, b=rex_b) + b"\x0B" + self._modrm(3, d, s))
+
+    def or_r32_r32(self, dst: str, src: str) -> None:
+        """Emit ``OR r32, r32``."""
+        d = self.gpr(dst)
+        s = self.gpr(src)
+        if d.size != 32 or s.size != 32:
+            raise ValueError("or_r32_r32 requires (r32, r32)")
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s.id >= 8 else 0
+        self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x0B" + self._modrm(3, d.id, s.id))
 
     def and_r8_r8(self, dst8: str, src8: str) -> None:
         """Emit `AND` instruction helper.
@@ -2076,6 +2096,41 @@ class Asm:
         rex_r = 1 if d.id >= 8 else 0
         rex_b = 1 if s.id >= 8 else 0
         self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x0F\xBC" + self._modrm(3, d.id, s.id))
+
+    def bsr_r32_r32(self, dst32: str, src32: str) -> None:
+        """Emit ``BSR r32, r32`` for reverse SIMD match-mask scans."""
+        d = self.gpr(dst32)
+        s = self.gpr(src32)
+        if d.size != 32 or s.size != 32:
+            raise ValueError("bsr_r32_r32 requires (r32, r32)")
+        rex_r = 1 if d.id >= 8 else 0
+        rex_b = 1 if s.id >= 8 else 0
+        self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x0F\xBD" + self._modrm(3, d.id, s.id))
+
+    def crc32_r64_membase_disp(self, dst64: str, base: str, disp: int = 0) -> None:
+        """Emit SSE4.2 ``CRC32 r64, qword [base+disp]``.
+
+        The caller must dispatch on CPUID.SSE4.2 before executing this helper's
+        output.  The instruction implements reflected CRC-32C (Castagnoli),
+        never CRC-32/IEEE.
+        """
+        d = self.gpr(dst64)
+        if d.size != 64:
+            raise ValueError("crc32_r64_membase_disp requires a 64-bit destination")
+        b = self._rid_any(base)
+        rex_r = 1 if d.id >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
+        self.emit(b"\xF2" + self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x38\xF1" + tail)
+
+    def crc32_r32_membase_disp8(self, dst32: str, base: str, disp: int = 0) -> None:
+        """Emit SSE4.2 ``CRC32 r32, byte [base+disp]``."""
+        d = self.gpr(dst32)
+        if d.size != 32:
+            raise ValueError("crc32_r32_membase_disp8 requires a 32-bit destination")
+        b = self._rid_any(base)
+        rex_r = 1 if d.id >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
+        self.emit(b"\xF2" + self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x38\xF0" + tail)
 
     # ---------------------------------------------------------------------
     # inc/dec/neg, mul/div

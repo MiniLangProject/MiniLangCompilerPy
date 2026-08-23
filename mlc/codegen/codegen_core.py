@@ -244,7 +244,12 @@ class CodegenCore:
         self.data.add_u64('dbg_loc_script', enc_void())
         self.data.add_u64('dbg_loc_func', enc_void())
         self.data.add_u64('dbg_loc_line', enc_int(0))
-        self.data.add_u32('cpu_has_avx2', 0)
+        # CPU capabilities are detected once by fn_cpu_init.  The active mask
+        # may be reduced by tests/benchmarks to exercise portable fallbacks.
+        # Bit layout: SSE2, SSE4.2, AVX, AVX2, AES-NI, PCLMULQDQ, SHA.
+        self.data.add_u32('cpu_features_detected', 0)
+        self.data.add_u32('cpu_features_active', 0)
+        self.data.add_u32('cpu_has_avx2', 0)  # legacy fast-path flag
         #   the heap globals (heap_base/heap_end/...), leading to spurious
         #   "MiniLang heap exhausted" errors with nonsense committed values.
         # - By placing heap/GC globals at the start of .data, overruns hit
@@ -1319,6 +1324,9 @@ class CodegenCore:
         """Emit only the internal runtime helpers that were referenced (fn_*)."""
         emitters = {'fn_int_to_dec': getattr(self, 'emit_int_to_dec_function', None),
             'fn_cpu_init': getattr(self, 'emit_cpu_init_function', None),
+            'fn_runtime_cpu_features': getattr(self, 'emit_runtime_cpu_features_function', None),
+            'fn_runtime_cpu_active_features': getattr(self, 'emit_runtime_cpu_active_features_function', None),
+            'fn_runtime_cpu_set_mask': getattr(self, 'emit_runtime_cpu_set_mask_function', None),
             'fn_strlen': getattr(self, 'emit_strlen_function', None),
             'fn_alloc': getattr(self, 'emit_alloc_function', None),
             'fn_init_argvw': getattr(self, 'emit_init_argvw_function', None),
@@ -1365,6 +1373,15 @@ class CodegenCore:
             'fn_thread_alloc': getattr(self, 'emit_thread_alloc_function', None),
             'fn_thread_entry': getattr(self, 'emit_thread_entry_function', None),
             'fn_mem_eq_bytes': getattr(self, 'emit_mem_eq_bytes_function', None),
+            'fn_bytes_constant_time_eq': getattr(self, 'emit_bytes_constant_time_eq_function', None),
+            'fn_find_byte_forward': getattr(self, 'emit_find_byte_forward_function', None),
+            'fn_find_byte_reverse': getattr(self, 'emit_find_byte_reverse_function', None),
+            'fn_mem_indexof': getattr(self, 'emit_mem_indexof_function', None),
+            'fn_mem_lastindexof': getattr(self, 'emit_mem_lastindexof_function', None),
+            'fn_crc32c_update_raw': getattr(self, 'emit_crc32c_update_raw_function', None),
+            'fn_crc32_update_raw': getattr(self, 'emit_crc32_update_raw_function', None),
+            'fn_native_crc32c': getattr(self, 'emit_native_crc32c_function', None),
+            'fn_native_crc32': getattr(self, 'emit_native_crc32_function', None),
             'fn_bytes_hash': getattr(self, 'emit_bytes_hash_function', None),
             'fn_string_hash': getattr(self, 'emit_string_hash_function', None),
             'fn_bytes_startswith': getattr(self, 'emit_bytes_startswith_function', None),
@@ -1418,7 +1435,8 @@ class CodegenCore:
             'fn_builtin_fillBytes': getattr(self, 'emit_builtin_fillBytes_function', None),
             'fn_builtin_gc_collect': getattr(self, 'emit_builtin_gc_collect_function', None),
             'fn_builtin_gc_set_limit': getattr(self, 'emit_builtin_gc_set_limit_function', None), }
-        helper_order = ['fn_cpu_init', 'fn_gc_safepoint', 'fn_gc_native_enter', 'fn_gc_native_leave',
+        helper_order = ['fn_cpu_init', 'fn_runtime_cpu_features', 'fn_runtime_cpu_active_features',
+            'fn_runtime_cpu_set_mask', 'fn_gc_safepoint', 'fn_gc_native_enter', 'fn_gc_native_leave',
             'fn_gc_managed_exit', 'fn_heap_enter', 'fn_heap_leave', 'fn_gc_world_stop', 'fn_gc_world_resume',
             'fn_sync_enter', 'fn_sync_leave', 'fn_thread_new', 'fn_thread_start',
             'fn_thread_stop', 'fn_thread_join', 'fn_thread_alive', 'fn_thread_id',
@@ -1426,7 +1444,10 @@ class CodegenCore:
             'fn_thread_result', 'fn_thread_status',
             'fn_thread_close', 'fn_thread_stop_requested', 'fn_thread_entry', 'fn_thread_alloc',
             'fn_alloc', 'fn_heap_grow', 'fn_gc_collect', 'fn_copy_bytes', 'fn_fill_bytes',
-            'fn_fill_qwords', 'fn_mem_eq_bytes', 'fn_bytes_hash', 'fn_string_hash',
+            'fn_fill_qwords', 'fn_mem_eq_bytes', 'fn_bytes_constant_time_eq',
+            'fn_find_byte_forward', 'fn_find_byte_reverse', 'fn_mem_indexof', 'fn_mem_lastindexof',
+            'fn_crc32c_update_raw', 'fn_crc32_update_raw', 'fn_native_crc32c', 'fn_native_crc32',
+            'fn_bytes_hash', 'fn_string_hash',
             'fn_bytes_startswith', 'fn_bytes_endswith', 'fn_bytes_indexof', 'fn_bytes_lastindexof', 'fn_bytes_compare',
             'fn_str_eq', 'fn_string_slice', 'fn_string_indexof',
             'fn_string_lastindexof', 'fn_string_startswith',

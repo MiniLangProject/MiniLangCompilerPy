@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-08-20T03:09:11.663088Z",
-  "count": 222,
+  "generated_utc": "2026-08-23T19:42:35.011627Z",
+  "count": 227,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -136,6 +136,16 @@
       "asm": "; and_r32_imm(r11d, 287454020)"
     },
     {
+      "name": "and_r32_r32",
+      "args": [
+        "r11d",
+        "r10d"
+      ],
+      "kwargs": {},
+      "hex": "4523da",
+      "asm": "; and_r32_r32(r11d, r10d)"
+    },
+    {
       "name": "and_r64_imm",
       "args": [
         "r11",
@@ -203,6 +213,16 @@
       "kwargs": {},
       "hex": "450fbcda",
       "asm": "; bsf_r32_r32(r11d, r10d)"
+    },
+    {
+      "name": "bsr_r32_r32",
+      "args": [
+        "r11d",
+        "r10d"
+      ],
+      "kwargs": {},
+      "hex": "450fbdda",
+      "asm": "; bsr_r32_r32(r11d, r10d)"
     },
     {
       "name": "call",
@@ -379,6 +399,28 @@
       "kwargs": {},
       "hex": "4899",
       "asm": "; cqo()"
+    },
+    {
+      "name": "crc32_r32_membase_disp8",
+      "args": [
+        "r11d",
+        "rbp",
+        -16
+      ],
+      "kwargs": {},
+      "hex": "f2440f38f05df0",
+      "asm": "; crc32_r32_membase_disp8(r11d, rbp, -16)"
+    },
+    {
+      "name": "crc32_r64_membase_disp",
+      "args": [
+        "r11",
+        "rbp",
+        -16
+      ],
+      "kwargs": {},
+      "hex": "f24c0f38f15df0",
+      "asm": "; crc32_r64_membase_disp(r11, rbp, -16)"
     },
     {
       "name": "cvtsd2ss_xmm_xmm",
@@ -1345,6 +1387,16 @@
       "kwargs": {},
       "hex": "4181cb44332211",
       "asm": "; or_r32_imm(r11d, 287454020)"
+    },
+    {
+      "name": "or_r32_r32",
+      "args": [
+        "r11d",
+        "r10d"
+      ],
+      "kwargs": {},
+      "hex": "450bda",
+      "asm": "; or_r32_r32(r11d, r10d)"
     },
     {
       "name": "or_r64_imm",

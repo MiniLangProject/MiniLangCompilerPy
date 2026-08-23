@@ -3377,6 +3377,10 @@ def main() -> int:
                                                                                                   "=== BASIC (INT/BOOL) ==="))
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
+    checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
+    simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
+    crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
+    object_entry_inline_ml = find_file_by_name(tests_root, "object_entry_inline.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
     gc_reference_write_roots_ml = find_file_by_name(tests_root, "gc_reference_write_roots.ml")
     gc_nested_graph_roots_ml = find_file_by_name(tests_root, "gc_nested_graph_roots.ml")
@@ -3439,6 +3443,19 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="stdlib_unit_tests.ml (stdlib unit)", status="SKIP",
                                         details="stdlib_unit_tests.ml not found"))
+
+    for test_name, test_path, marker in [
+        ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
+        ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
+        ("crypto_cng.ml (CNG vectors and authentication)", crypto_cng_ml, "[OK] CNG crypto"),
+        ("object_entry_inline.ml (entry initializer inline)", object_entry_inline_ml, "[OK] object entry inline"),
+    ]:
+        if test_path is not None:
+            tests.append(lambda n=test_name, p=test_path, m=marker: test_program_no_fail(
+                name=n, mlc_runner=mlc_runner, ml_path=p, must_contain=[m],
+                timeout_compile_s=180, timeout_run_s=180))
+        else:
+            tests.append(lambda n=test_name: TestResult(name=n, status="SKIP", details="test source not found"))
 
     if thread_features_ml is not None:
         tests.append(lambda: test_program_no_fail(

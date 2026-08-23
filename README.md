@@ -1568,7 +1568,7 @@ import std.fs as fs
 
 The stdlib is compiled together with your program (there is no separate link step). Most “systems” features are **Windows-oriented** because the native backend targets Windows x64.
 
-The current library contains 26 source modules, byte-for-byte identical in both
+The current library contains 32 source modules, byte-for-byte identical in both
 compiler repositories:
 
 - **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
@@ -1580,6 +1580,9 @@ compiler repositories:
   `std.ds.hashmap`, `std.ds.set`
 - **Concurrency:** `std.threading`, `std.concurrent.thread_pool`,
   `std.ds.concurrent_list`, `std.ds.concurrent_hashmap`
+- **Native primitives:** `std.cpu`, `std.checksum.crc32c`,
+  `std.checksum.crc32`, `std.crypto`, `std.crypto.aes_gcm`,
+  `std.crypto._cng` (internal backend)
 - **Compatibility helpers:** `std.result` provides `Option` and `Result`;
   `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec.
 
@@ -2393,3 +2396,22 @@ Optimizations (always-on, conservative):
 GC flags:
 - `--gc-limit <size>` overrides the periodic GC threshold (default: `1m` in the current backend).
 - `--no-gc-periodic` disables periodic GC triggering (GC runs only on allocation failure / OOM path).
+
+## Native checksums, cryptography, and SIMD search
+
+The standard library includes reusable CRC-32C/CRC-32, Windows CNG
+cryptography, and CPU-dispatched byte/string search. Public wrappers live in
+`std.checksum.*`, `std.crypto`, `std.crypto.aes_gcm`, and `std.cpu`;
+checksum helpers and their lookup tables are emitted only when referenced,
+while search accelerates the existing first-class string/bytes builtins.
+
+CRC-32C uses SSE4.2 when available and a bit-identical software fallback.
+Search uses AVX2, SSE2, or scalar candidate scans while preserving byte-indexed
+string semantics. Cryptography is backed by Windows CNG and includes
+AES-256-GCM, SHA-256/384, HMAC, HKDF, X25519, system CSPRNG,
+constant-time byte comparison, and best-effort secure erasure.
+
+See [the native primitives guide](docs/NATIVE_PRIMITIVES.md) for API details,
+polynomials, dispatch controls, and security assumptions. Focused tests live in
+`tests/checksum_runtime.ml`, `tests/crypto_cng.ml`, and
+`tests/simd_search.ml`; reproducible measurements live in `benchmarks/`.

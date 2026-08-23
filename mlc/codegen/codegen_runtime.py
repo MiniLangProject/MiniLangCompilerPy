@@ -26,50 +26,177 @@ class CodegenRuntime:
     """
 
     def emit_cpu_init_function(self) -> None:
-        """Probe optional SIMD features once at startup."""
+        """Probe x86 capabilities once and publish detected/active masks.
+
+        Feature bits are deliberately runtime-owned so every hot path performs
+        only a cheap mask test.  AVX/AVX2 are enabled only when both CPUID and
+        XGETBV confirm operating-system YMM-state support.
+        """
         a = self.asm
         a.mark('fn_cpu_init')
 
         lid = self.new_label_id()
-        l_no = f"cpuinit_no_{lid}"
+        l_have_leaf1 = f"cpuinit_leaf1_{lid}"
+        l_no_sse2 = f"cpuinit_no_sse2_{lid}"
+        l_no_sse42 = f"cpuinit_no_sse42_{lid}"
+        l_no_aes = f"cpuinit_no_aes_{lid}"
+        l_no_pclmul = f"cpuinit_no_pclmul_{lid}"
+        l_no_avx = f"cpuinit_no_avx_{lid}"
+        l_leaf7 = f"cpuinit_leaf7_{lid}"
+        l_no_avx2 = f"cpuinit_no_avx2_{lid}"
+        l_no_sha = f"cpuinit_no_sha_{lid}"
+        l_store = f"cpuinit_store_{lid}"
         l_done = f"cpuinit_done_{lid}"
 
         a.push_reg('rbx')
+        a.xor_r32_r32('r9d', 'r9d')
         a.xor_r32_r32('eax', 'eax')
         a.xor_r32_r32('ecx', 'ecx')
         a.cpuid()
-        a.cmp_r32_imm('eax', 7)
-        a.jcc('b', l_no)
+        a.mov_r32_r32('r11d', 'eax')
+        a.cmp_r32_imm('r11d', 1)
+        a.jcc('ae', l_have_leaf1)
+        a.jmp(l_store)
 
+        a.mark(l_have_leaf1)
         a.mov_r32_imm32('eax', 1)
         a.xor_r32_r32('ecx', 'ecx')
         a.cpuid()
+
+        # SSE2 (leaf 1 EDX bit 26).
+        a.mov_r32_r32('r8d', 'edx')
+        a.and_r32_imm('r8d', 1 << 26)
+        a.jcc('e', l_no_sse2)
+        a.or_r32_imm('r9d', 1)
+        a.mark(l_no_sse2)
+
+        # SSE4.2 / CRC32 (leaf 1 ECX bit 20).
+        a.mov_r32_r32('r8d', 'ecx')
+        a.and_r32_imm('r8d', 1 << 20)
+        a.jcc('e', l_no_sse42)
+        a.or_r32_imm('r9d', 2)
+        a.mark(l_no_sse42)
+
+        # AES-NI and PCLMULQDQ are exposed for future intrinsic dispatch.
+        a.mov_r32_r32('r8d', 'ecx')
+        a.and_r32_imm('r8d', 1 << 25)
+        a.jcc('e', l_no_aes)
+        a.or_r32_imm('r9d', 16)
+        a.mark(l_no_aes)
+        a.mov_r32_r32('r8d', 'ecx')
+        a.and_r32_imm('r8d', 1 << 1)
+        a.jcc('e', l_no_pclmul)
+        a.or_r32_imm('r9d', 32)
+        a.mark(l_no_pclmul)
+
+        # AVX requires CPU AVX + OSXSAVE and XCR0.XMM/YMM state.
         a.mov_r32_r32('r10d', 'ecx')
         a.and_r32_imm('r10d', (1 << 27) | (1 << 28))
         a.cmp_r32_imm('r10d', (1 << 27) | (1 << 28))
-        a.jcc('ne', l_no)
+        a.jcc('ne', l_no_avx)
 
         a.xor_r32_r32('ecx', 'ecx')
         a.xgetbv()
         a.and_r32_imm('eax', 0x6)
         a.cmp_r32_imm('eax', 0x6)
-        a.jcc('ne', l_no)
+        a.jcc('ne', l_no_avx)
+        a.or_r32_imm('r9d', 4)
+        a.mark(l_no_avx)
 
+        a.mark(l_leaf7)
+        a.cmp_r32_imm('r11d', 7)
+        a.jcc('b', l_store)
         a.mov_r32_imm32('eax', 7)
         a.xor_r32_r32('ecx', 'ecx')
         a.cpuid()
-        a.mov_r32_r32('eax', 'ebx')
-        a.shr_r32_imm8('eax', 5)
-        a.and_r32_imm('eax', 1)
-        a.mov_rip_dword_eax('cpu_has_avx2')
-        a.jmp(l_done)
 
-        a.mark(l_no)
-        a.xor_r32_r32('eax', 'eax')
+        # AVX2 is usable only when the AVX state test above passed.
+        a.mov_r32_r32('r8d', 'r9d')
+        a.and_r32_imm('r8d', 4)
+        a.jcc('e', l_no_avx2)
+        a.mov_r32_r32('r8d', 'ebx')
+        a.and_r32_imm('r8d', 1 << 5)
+        a.jcc('e', l_no_avx2)
+        a.or_r32_imm('r9d', 8)
+        a.mark(l_no_avx2)
+
+        a.mov_r32_r32('r8d', 'ebx')
+        a.and_r32_imm('r8d', 1 << 29)
+        a.jcc('e', l_no_sha)
+        a.or_r32_imm('r9d', 64)
+        a.mark(l_no_sha)
+
+        a.mark(l_store)
+        a.mov_r32_r32('eax', 'r9d')
+        a.mov_rip_dword_eax('cpu_features_detected')
+        a.mov_rip_dword_eax('cpu_features_active')
+        a.shr_r32_imm8('eax', 3)
+        a.and_r32_imm('eax', 1)
         a.mov_rip_dword_eax('cpu_has_avx2')
 
         a.mark(l_done)
         a.pop_reg('rbx')
+        a.ret()
+
+    def emit_runtime_cpu_features_function(self) -> None:
+        """Return the detected feature bitmask as a tagged MiniLang int."""
+        a = self.asm
+        a.mark('fn_runtime_cpu_features')
+        a.mov_eax_rip_dword('cpu_features_detected')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.ret()
+
+    def emit_runtime_cpu_active_features_function(self) -> None:
+        """Return the currently active dispatch mask as a tagged int."""
+        a = self.asm
+        a.mark('fn_runtime_cpu_active_features')
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.ret()
+
+    def emit_runtime_cpu_set_mask_function(self) -> None:
+        """Mask detected features for deterministic fallback tests.
+
+        A negative mask restores all detected features.  Unsupported bits can
+        never be enabled because the requested mask is ANDed with detection.
+        The previous active mask is returned.
+        """
+        a = self.asm
+        a.mark('fn_runtime_cpu_set_mask')
+        lid = self.new_label_id()
+        l_fail = f'cpumask_fail_{lid}'
+        l_requested = f'cpumask_requested_{lid}'
+        l_store = f'cpumask_store_{lid}'
+
+        a.mov_r64_r64('r8', 'rcx')
+        a.and_r64_imm('r8', 7)
+        a.cmp_r64_imm('r8', TAG_INT)
+        a.jcc('ne', l_fail)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.mov_r32_r32('r11d', 'eax')
+        a.sar_r64_imm8('rcx', 3)
+        a.cmp_r64_imm('rcx', 0)
+        a.jcc('ge', l_requested)
+        a.mov_eax_rip_dword('cpu_features_detected')
+        a.jmp(l_store)
+        a.mark(l_requested)
+        a.mov_eax_rip_dword('cpu_features_detected')
+        a.and_r32_r32('eax', 'ecx')
+        a.mark(l_store)
+        a.mov_rip_dword_eax('cpu_features_active')
+        a.mov_r32_r32('r10d', 'eax')
+        a.shr_r32_imm8('r10d', 3)
+        a.and_r32_imm('r10d', 1)
+        a.mov_r32_r32('eax', 'r10d')
+        a.mov_rip_dword_eax('cpu_has_avx2')
+        a.mov_r32_r32('eax', 'r11d')
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.ret()
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
         a.ret()
 
     def emit_mem_eq_bytes_function(self) -> None:
@@ -84,6 +211,7 @@ class CodegenRuntime:
         l_avx_check = f"memeq_avx_check_{lid}"
         l_avx_loop = f"memeq_avx_loop_{lid}"
         l_avx_done = f"memeq_avx_done_{lid}"
+        l_sse_check = f"memeq_sse_check_{lid}"
         l_sse_loop = f"memeq_sse_loop_{lid}"
         l_tail = f"memeq_tail_{lid}"
         l_tail_loop = f"memeq_tail_loop_{lid}"
@@ -100,9 +228,9 @@ class CodegenRuntime:
 
         a.mov_eax_rip_dword('cpu_has_avx2')
         a.test_r32_r32('eax', 'eax')
-        a.jcc('e', l_sse_loop)
+        a.jcc('e', l_sse_check)
         a.cmp_r32_imm('r11d', 32)
-        a.jcc('b', l_sse_loop)
+        a.jcc('b', l_sse_check)
 
         a.mark(l_avx_check)
         a.cmp_r32_imm('r11d', 32)
@@ -123,6 +251,10 @@ class CodegenRuntime:
         a.mark(l_avx_done)
         a.vzeroupper()
 
+        a.mark(l_sse_check)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 1)
+        a.jcc('e', l_tail)
         a.mark(l_sse_loop)
         a.cmp_r32_imm('r11d', 16)
         a.jcc('b', l_tail)
@@ -164,6 +296,532 @@ class CodegenRuntime:
 
         a.mark(l_done)
         a.ret()
+
+    def emit_bytes_constant_time_eq_function(self) -> None:
+        """Emit bytesConstantTimeEquals(a, b) without value-dependent exits."""
+        a = self.asm
+        a.mark('fn_bytes_constant_time_eq')
+        lid = self.new_label_id()
+        l_false = f'cteq_false_{lid}'
+        l_loop = f'cteq_loop_{lid}'
+        l_finish = f'cteq_finish_{lid}'
+        l_true = f'cteq_true_{lid}'
+        l_done = f'cteq_done_{lid}'
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('r10', 'rdx')
+        for reg in ('r9', 'r10'):
+            a.mov_r64_r64('rax', reg)
+            a.and_r64_imm('rax', 7)
+            a.cmp_r64_imm('rax', TAG_PTR)
+            a.jcc('ne', l_false)
+            a.mov_r32_membase_disp('eax', reg, 0)
+            a.cmp_r32_imm('eax', OBJ_BYTES)
+            a.jcc('ne', l_false)
+        a.mov_r32_membase_disp('r11d', 'r9', 4)
+        a.mov_r32_membase_disp('eax', 'r10', 4)
+        a.cmp_r32_r32('r11d', 'eax')
+        a.jcc('ne', l_false)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.xor_r32_r32('edx', 'edx')
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_true)
+        a.mark(l_loop)
+        a.lea_r64_mem_bis('rax', 'r9', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('r8d', 'rax', 0)
+        a.lea_r64_mem_bis('rax', 'r10', 'rcx', 1, 8)
+        a.movzx_r32_membase_disp('eax', 'rax', 0)
+        a.xor_r32_r32('eax', 'r8d')
+        a.or_r32_r32('edx', 'eax')
+        a.inc_r32('ecx')
+        a.cmp_r32_r32('ecx', 'r11d')
+        a.jcc('b', l_loop)
+        a.mark(l_finish)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('e', l_true)
+        a.mark(l_false)
+        a.mov_rax_imm64(enc_bool(False))
+        a.jmp(l_done)
+        a.mark(l_true)
+        a.mov_rax_imm64(enc_bool(True))
+        a.mark(l_done)
+        a.ret()
+
+    def _ensure_byte_search_table(self) -> None:
+        """Materialize 256 AVX-width byte splats for dynamic byte searches."""
+        if 'byte_broadcast_table' in getattr(self.rdata, 'labels', {}):
+            return
+        self.rdata.add_bytes('byte_broadcast_table', b''.join(bytes((i,)) * 32 for i in range(256)))
+
+    def emit_find_byte_forward_function(self) -> None:
+        """Emit raw find-byte helper: (ptr, length, byte) -> int32 index/-1."""
+        self._ensure_byte_search_table()
+        a = self.asm
+        a.mark('fn_find_byte_forward')
+        lid = self.new_label_id()
+        l_avx_loop = f'findb_avx_loop_{lid}'
+        l_avx_done = f'findb_avx_done_{lid}'
+        l_avx_found = f'findb_avx_found_{lid}'
+        l_sse = f'findb_sse_{lid}'
+        l_sse_loop = f'findb_sse_loop_{lid}'
+        l_sse_found = f'findb_sse_found_{lid}'
+        l_scalar = f'findb_scalar_{lid}'
+        l_scalar_loop = f'findb_scalar_loop_{lid}'
+        l_scalar_found = f'findb_scalar_found_{lid}'
+        l_miss = f'findb_miss_{lid}'
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r32_r32('r11d', 'edx')
+        a.and_r32_imm('r8d', 0xFF)
+        a.shl_r64_imm8('r8', 5)
+        a.lea_rax_rip('byte_broadcast_table')
+        a.add_r64_r64('r8', 'rax')
+        a.xor_r32_r32('ecx', 'ecx')
+
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 8)
+        a.jcc('e', l_sse)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('b', l_sse)
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r8', 0)
+        a.mark(l_avx_loop)
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r9', 0)
+        a.vpcmpeqb_ymm_ymm_ymm('ymm0', 'ymm0', 'ymm1')
+        a.vpmovmskb_r32_ymm('eax', 'ymm0')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_avx_found)
+        a.add_r64_imm('r9', 32)
+        a.add_r32_imm('ecx', 32)
+        a.sub_r32_imm('r11d', 32)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('ae', l_avx_loop)
+        a.mark(l_avx_done)
+        a.vzeroupper()
+        a.jmp(l_sse)
+        a.mark(l_avx_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'ecx')
+        a.vzeroupper()
+        a.ret()
+
+        a.mark(l_sse)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 1)
+        a.jcc('e', l_scalar)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('b', l_scalar)
+        a.movdqu_xmm_membase_disp('xmm1', 'r8', 0)
+        a.mark(l_sse_loop)
+        a.movdqu_xmm_membase_disp('xmm0', 'r9', 0)
+        a.pcmpeqb_xmm_xmm('xmm0', 'xmm1')
+        a.pmovmskb_r32_xmm('eax', 'xmm0')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_sse_found)
+        a.add_r64_imm('r9', 16)
+        a.add_r32_imm('ecx', 16)
+        a.sub_r32_imm('r11d', 16)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('ae', l_sse_loop)
+        a.jmp(l_scalar)
+        a.mark(l_sse_found)
+        a.bsf_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'ecx')
+        a.ret()
+
+        a.mark(l_scalar)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_miss)
+        a.movzx_r32_membase_disp('r8d', 'r8', 0)
+        a.mark(l_scalar_loop)
+        a.cmp_r8_membase_disp('r8b', 'r9', 0)
+        a.jcc('e', l_scalar_found)
+        a.inc_r64('r9')
+        a.inc_r32('ecx')
+        a.dec_r32('r11d')
+        a.jcc('ne', l_scalar_loop)
+        a.mark(l_miss)
+        a.mov_r32_imm32('eax', 0xFFFFFFFF)
+        a.ret()
+        a.mark(l_scalar_found)
+        a.mov_r32_r32('eax', 'ecx')
+        a.ret()
+
+    def emit_find_byte_reverse_function(self) -> None:
+        """Emit raw reverse find-byte helper: (ptr, length, byte) -> index/-1."""
+        self._ensure_byte_search_table()
+        a = self.asm
+        a.mark('fn_find_byte_reverse')
+        lid = self.new_label_id()
+        l_avx_loop = f'rfindb_avx_loop_{lid}'
+        l_avx_found = f'rfindb_avx_found_{lid}'
+        l_sse = f'rfindb_sse_{lid}'
+        l_sse_loop = f'rfindb_sse_loop_{lid}'
+        l_sse_found = f'rfindb_sse_found_{lid}'
+        l_scalar = f'rfindb_scalar_{lid}'
+        l_scalar_loop = f'rfindb_scalar_loop_{lid}'
+        l_scalar_found = f'rfindb_scalar_found_{lid}'
+        l_miss = f'rfindb_miss_{lid}'
+
+        a.mov_r64_r64('r9', 'rcx')
+        a.add_r64_r64('r9', 'rdx')
+        a.mov_r32_r32('r11d', 'edx')
+        a.and_r32_imm('r8d', 0xFF)
+        a.shl_r64_imm8('r8', 5)
+        a.lea_rax_rip('byte_broadcast_table')
+        a.add_r64_r64('r8', 'rax')
+
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 8)
+        a.jcc('e', l_sse)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('b', l_sse)
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r8', 0)
+        a.mark(l_avx_loop)
+        a.sub_r64_imm('r9', 32)
+        a.sub_r32_imm('r11d', 32)
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r9', 0)
+        a.vpcmpeqb_ymm_ymm_ymm('ymm0', 'ymm0', 'ymm1')
+        a.vpmovmskb_r32_ymm('eax', 'ymm0')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_avx_found)
+        a.cmp_r32_imm('r11d', 32)
+        a.jcc('ae', l_avx_loop)
+        a.vzeroupper()
+        a.jmp(l_sse)
+        a.mark(l_avx_found)
+        a.bsr_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'r11d')
+        a.vzeroupper()
+        a.ret()
+
+        a.mark(l_sse)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 1)
+        a.jcc('e', l_scalar)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('b', l_scalar)
+        a.movdqu_xmm_membase_disp('xmm1', 'r8', 0)
+        a.mark(l_sse_loop)
+        a.sub_r64_imm('r9', 16)
+        a.sub_r32_imm('r11d', 16)
+        a.movdqu_xmm_membase_disp('xmm0', 'r9', 0)
+        a.pcmpeqb_xmm_xmm('xmm0', 'xmm1')
+        a.pmovmskb_r32_xmm('eax', 'xmm0')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_sse_found)
+        a.cmp_r32_imm('r11d', 16)
+        a.jcc('ae', l_sse_loop)
+        a.jmp(l_scalar)
+        a.mark(l_sse_found)
+        a.bsr_r32_r32('eax', 'eax')
+        a.add_r32_r32('eax', 'r11d')
+        a.ret()
+
+        a.mark(l_scalar)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_miss)
+        a.movzx_r32_membase_disp('r8d', 'r8', 0)
+        a.mark(l_scalar_loop)
+        a.dec_r64('r9')
+        a.dec_r32('r11d')
+        a.cmp_r8_membase_disp('r8b', 'r9', 0)
+        a.jcc('e', l_scalar_found)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('ne', l_scalar_loop)
+        a.mark(l_miss)
+        a.mov_r32_imm32('eax', 0xFFFFFFFF)
+        a.ret()
+        a.mark(l_scalar_found)
+        a.mov_r32_r32('eax', 'r11d')
+        a.ret()
+
+    def emit_mem_indexof_function(self) -> None:
+        """Emit raw pattern search using SIMD candidate discovery."""
+        a = self.asm
+        a.mark('fn_mem_indexof')
+        a.sub_rsp_imm8(0x58)
+        lid = self.new_label_id()
+        l_loop = f'memidx_loop_{lid}'
+        l_miss = f'memidx_miss_{lid}'
+        l_found = f'memidx_found_{lid}'
+        l_done = f'memidx_done_{lid}'
+
+        a.mov_membase_disp_r64('rsp', 0x20, 'rcx')
+        a.mov_membase_disp_r32('rsp', 0x28, 'edx')
+        a.mov_membase_disp_r64('rsp', 0x30, 'r8')
+        a.mov_membase_disp_r32('rsp', 0x38, 'r9d')
+        a.test_r32_r32('r9d', 'r9d')
+        a.jcc('e', l_found)
+        a.cmp_r32_r32('r9d', 'edx')
+        a.jcc('a', l_miss)
+        a.mov_r32_r32('eax', 'edx')
+        a.sub_r32_r32('eax', 'r9d')
+        a.mov_membase_disp_r32('rsp', 0x40, 'eax')
+        a.mov_membase_disp_imm32('rsp', 0x44, 0, qword=False)
+        a.mark(l_loop)
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x20)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x44)
+        a.add_r64_r64('rcx', 'rax')
+        a.mov_r32_membase_disp('edx', 'rsp', 0x40)
+        a.sub_r32_r32('edx', 'eax')
+        a.inc_r32('edx')
+        a.mov_r64_membase_disp('r8', 'rsp', 0x30)
+        a.movzx_r32_membase_disp('r8d', 'r8', 0)
+        a.call('fn_find_byte_forward')
+        a.cmp_r32_imm('eax', 0xFFFFFFFF)
+        a.jcc('e', l_miss)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x44)
+        a.add_r32_r32('eax', 'ecx')
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x20)
+        a.add_r64_r64('rcx', 'rax')
+        a.mov_r64_membase_disp('rdx', 'rsp', 0x30)
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x38)
+        a.call('fn_mem_eq_bytes')
+        a.cmp_r64_imm('rax', enc_bool(True))
+        a.jcc('e', l_done)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.inc_r32('eax')
+        a.mov_membase_disp_r32('rsp', 0x44, 'eax')
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x40)
+        a.cmp_r32_r32('eax', 'ecx')
+        a.jcc('be', l_loop)
+        a.jmp(l_miss)
+        a.mark(l_found)
+        a.xor_r32_r32('eax', 'eax')
+        a.jmp(l_done)
+        a.mark(l_miss)
+        a.mov_r32_imm32('eax', 0xFFFFFFFF)
+        a.mark(l_done)
+        # mem-equality returns a tagged bool; reload the candidate on success.
+        a.cmp_r64_imm('rax', enc_bool(True))
+        l_return = f'memidx_return_{lid}'
+        a.jcc('ne', l_return)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.mark(l_return)
+        a.add_rsp_imm8(0x58)
+        a.ret()
+
+    def emit_mem_lastindexof_function(self) -> None:
+        """Emit raw reverse pattern search, preserving overlapping matches."""
+        a = self.asm
+        a.mark('fn_mem_lastindexof')
+        a.sub_rsp_imm8(0x58)
+        lid = self.new_label_id()
+        l_loop = f'memridx_loop_{lid}'
+        l_miss = f'memridx_miss_{lid}'
+        l_empty = f'memridx_empty_{lid}'
+        l_success = f'memridx_success_{lid}'
+        l_done = f'memridx_done_{lid}'
+
+        a.mov_membase_disp_r64('rsp', 0x20, 'rcx')
+        a.mov_membase_disp_r32('rsp', 0x28, 'edx')
+        a.mov_membase_disp_r64('rsp', 0x30, 'r8')
+        a.mov_membase_disp_r32('rsp', 0x38, 'r9d')
+        a.test_r32_r32('r9d', 'r9d')
+        a.jcc('e', l_empty)
+        a.cmp_r32_r32('r9d', 'edx')
+        a.jcc('a', l_miss)
+        a.mov_r32_r32('eax', 'edx')
+        a.sub_r32_r32('eax', 'r9d')
+        a.inc_r32('eax')
+        a.mov_membase_disp_r32('rsp', 0x40, 'eax')
+        a.mark(l_loop)
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x20)
+        a.mov_r32_membase_disp('edx', 'rsp', 0x40)
+        a.mov_r64_membase_disp('r8', 'rsp', 0x30)
+        a.movzx_r32_membase_disp('r8d', 'r8', 0)
+        a.call('fn_find_byte_reverse')
+        a.cmp_r32_imm('eax', 0xFFFFFFFF)
+        a.jcc('e', l_miss)
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x20)
+        a.add_r64_r64('rcx', 'rax')
+        a.mov_r64_membase_disp('rdx', 'rsp', 0x30)
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x38)
+        a.call('fn_mem_eq_bytes')
+        a.cmp_r64_imm('rax', enc_bool(True))
+        a.jcc('e', l_success)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.mov_membase_disp_r32('rsp', 0x40, 'eax')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_loop)
+        a.jmp(l_miss)
+        a.mark(l_empty)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x28)
+        a.jmp(l_done)
+        a.mark(l_success)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.jmp(l_done)
+        a.mark(l_miss)
+        a.mov_r32_imm32('eax', 0xFFFFFFFF)
+        a.mark(l_done)
+        a.add_rsp_imm8(0x58)
+        a.ret()
+
+    @staticmethod
+    def _crc_table(poly: int) -> bytes:
+        """Build a reflected 256-entry CRC table for the generated runtime."""
+        out = bytearray()
+        for value in range(256):
+            crc = value
+            for _ in range(8):
+                crc = (crc >> 1) ^ (poly if (crc & 1) else 0)
+            out += int(crc & 0xFFFFFFFF).to_bytes(4, 'little')
+        return bytes(out)
+
+    def _ensure_crc_tables(self) -> None:
+        if 'crc32c_table' not in getattr(self.rdata, 'labels', {}):
+            self.rdata.add_bytes('crc32c_table', self._crc_table(0x82F63B78))
+        if 'crc32_table' not in getattr(self.rdata, 'labels', {}):
+            self.rdata.add_bytes('crc32_table', self._crc_table(0xEDB88320))
+
+    def emit_crc32c_update_raw_function(self) -> None:
+        """Emit raw CRC-32C update with SSE4.2 and table fallbacks."""
+        self._ensure_crc_tables()
+        a = self.asm
+        a.mark('fn_crc32c_update_raw')
+        lid = self.new_label_id()
+        l_sw = f'crc32c_sw_{lid}'
+        l_hw_q = f'crc32c_hw_q_{lid}'
+        l_hw_b = f'crc32c_hw_b_{lid}'
+        l_sw_loop = f'crc32c_sw_loop_{lid}'
+        l_finish = f'crc32c_finish_{lid}'
+        a.mov_r32_r32('eax', 'ecx')
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r32_r32('r10d', 'r8d')
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 2)
+        a.jcc('e', l_sw)
+        a.mov_r32_r32('eax', 'ecx')
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.mark(l_hw_q)
+        a.cmp_r32_imm('r10d', 8)
+        a.jcc('b', l_hw_b)
+        a.crc32_r64_membase_disp('rax', 'r9', 0)
+        a.add_r64_imm('r9', 8)
+        a.sub_r32_imm('r10d', 8)
+        a.jmp(l_hw_q)
+        a.mark(l_hw_b)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_finish)
+        a.crc32_r32_membase_disp8('eax', 'r9', 0)
+        a.inc_r64('r9')
+        a.dec_r32('r10d')
+        a.jmp(l_hw_b)
+        a.mark(l_sw)
+        a.mov_r32_r32('eax', 'ecx')
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.lea_r11_rip('crc32c_table')
+        a.mark(l_sw_loop)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_finish)
+        a.movzx_r32_membase_disp('edx', 'r9', 0)
+        a.xor_r32_r32('edx', 'eax')
+        a.and_r32_imm('edx', 0xFF)
+        a.shr_r32_imm8('eax', 8)
+        a.mov_r32_mem_bis('edx', 'r11', 'rdx', 4, 0)
+        a.xor_r32_r32('eax', 'edx')
+        a.inc_r64('r9')
+        a.dec_r32('r10d')
+        a.jmp(l_sw_loop)
+        a.mark(l_finish)
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.ret()
+
+    def emit_crc32_update_raw_function(self) -> None:
+        """Emit table-driven reflected CRC-32/IEEE update."""
+        self._ensure_crc_tables()
+        a = self.asm
+        a.mark('fn_crc32_update_raw')
+        lid = self.new_label_id()
+        l_loop = f'crc32_sw_loop_{lid}'
+        l_finish = f'crc32_finish_{lid}'
+        a.mov_r32_r32('eax', 'ecx')
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r32_r32('r10d', 'r8d')
+        a.lea_r11_rip('crc32_table')
+        a.mark(l_loop)
+        a.test_r32_r32('r10d', 'r10d')
+        a.jcc('e', l_finish)
+        a.movzx_r32_membase_disp('edx', 'r9', 0)
+        a.xor_r32_r32('edx', 'eax')
+        a.and_r32_imm('edx', 0xFF)
+        a.shr_r32_imm8('eax', 8)
+        a.mov_r32_mem_bis('edx', 'r11', 'rdx', 4, 0)
+        a.xor_r32_r32('eax', 'edx')
+        a.inc_r64('r9')
+        a.dec_r32('r10d')
+        a.jmp(l_loop)
+        a.mark(l_finish)
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.ret()
+
+    def _emit_native_crc_wrapper(self, label: str, raw_label: str) -> None:
+        """Validate tagged CRC arguments once, then enter the raw hot path."""
+        a = self.asm
+        a.mark(label)
+        a.sub_rsp_imm8(0x38)
+        lid = self.new_label_id()
+        l_fail = f'{label}_fail_{lid}'
+        l_done = f'{label}_done_{lid}'
+
+        a.mov_r64_r64('rax', 'rcx')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_INT)
+        a.jcc('ne', l_fail)
+        a.sar_r64_imm8('rcx', 3)
+        a.cmp_r64_imm('rcx', 0)
+        a.jcc('l', l_fail)
+        a.mov_r64_imm64('r10', 0xFFFFFFFF)
+        a.cmp_r64_r64('rcx', 'r10')
+        a.jcc('a', l_fail)
+        a.mov_membase_disp_r32('rsp', 0x20, 'ecx')
+
+        a.mov_r64_r64('rax', 'rdx')
+        a.and_r64_imm('rax', 7)
+        a.cmp_r64_imm('rax', TAG_PTR)
+        a.jcc('ne', l_fail)
+        a.mov_r32_membase_disp('eax', 'rdx', 0)
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('ne', l_fail)
+        a.mov_membase_disp_r64('rsp', 0x28, 'rdx')
+        a.mov_r32_membase_disp('r11d', 'rdx', 4)
+
+        for reg in ('r8', 'r9'):
+            a.mov_r64_r64('rax', reg)
+            a.and_r64_imm('rax', 7)
+            a.cmp_r64_imm('rax', TAG_INT)
+            a.jcc('ne', l_fail)
+            a.sar_r64_imm8(reg, 3)
+            a.cmp_r64_imm(reg, 0)
+            a.jcc('l', l_fail)
+        a.mov_r64_r64('rax', 'r8')
+        a.add_r64_r64('rax', 'r9')
+        a.cmp_r64_r64('rax', 'r11')
+        a.jcc('a', l_fail)
+        a.mov_membase_disp_r32('rsp', 0x30, 'r9d')
+        a.mov_r64_membase_disp('rdx', 'rsp', 0x28)
+        a.lea_r64_mem_bis('rdx', 'rdx', 'r8', 1, 8)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x20)
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x30)
+        a.call(raw_label)
+        a.shl_r64_imm8('rax', 3)
+        a.or_r64_imm8('rax', TAG_INT)
+        a.jmp(l_done)
+        a.mark(l_fail)
+        a.mov_rax_imm64(enc_void())
+        a.mark(l_done)
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+    def emit_native_crc32c_function(self) -> None:
+        self._emit_native_crc_wrapper('fn_native_crc32c', 'fn_crc32c_update_raw')
+
+    def emit_native_crc32_function(self) -> None:
+        self._emit_native_crc_wrapper('fn_native_crc32', 'fn_crc32_update_raw')
 
     def emit_bytes_hash_function(self) -> None:
         """Emit fn_bytes_hash(bytes) -> int|void."""
@@ -419,40 +1077,20 @@ class CodegenRuntime:
         a.mark(l_prepare)
         a.cmp_r32_r32('edx', 'r9d')
         a.jcc('g', l_not_found)
+        a.mov_membase_disp_r32('rsp', 0x24, 'r8d')
+        a.lea_r64_mem_bis('rcx', 'r11', 'r8', 1, 8)
         a.mov_r32_r32('eax', 'r9d')
-        a.sub_r32_r32('eax', 'edx')
-        a.mov_membase_disp_r32('rsp', 0x24, 'eax')
-        a.cmp_r32_r32('r8d', 'eax')
-        a.jcc('g', l_not_found)
-        a.mov_r32_r32('r9d', 'r8d')
-
-        a.mark(l_outer)
-        a.mov_r32_membase_disp('eax', 'rsp', 0x24)
-        a.cmp_r32_r32('r9d', 'eax')
-        a.jcc('g', l_not_found)
-        a.xor_r32_r32('r8d', 'r8d')
-
-        a.mark(l_inner)
-        a.mov_r32_membase_disp('ecx', 'rsp', 0x20)
-        a.cmp_r32_r32('r8d', 'ecx')
-        a.jcc('ge', l_found)
-        a.mov_r64_r64('rax', 'r9')
-        a.add_r64_r64('rax', 'r8')
-        a.lea_r64_mem_bis('rdx', 'r11', 'rax', 1, 8)
-        a.movzx_r32_membase_disp('edx', 'rdx', 0)
-        a.lea_r64_mem_bis('rax', 'r10', 'r8', 1, 8)
-        a.movzx_r32_membase_disp('eax', 'rax', 0)
-        a.cmp_r32_r32('edx', 'eax')
-        a.jcc('ne', l_inner + '_miss')
-        a.inc_r32('r8d')
-        a.jmp(l_inner)
-
-        a.mark(l_inner + '_miss')
-        a.inc_r32('r9d')
-        a.jmp(l_outer)
+        a.sub_r32_r32('eax', 'r8d')
+        a.mov_r32_r32('edx', 'eax')
+        a.lea_r64_membase_disp('r8', 'r10', 8)
+        a.mov_r32_membase_disp('r9d', 'rsp', 0x20)
+        a.call('fn_mem_indexof')
+        a.cmp_r32_imm('eax', 0xFFFFFFFF)
+        a.jcc('e', l_not_found)
+        a.mov_r32_membase_disp('r9d', 'rsp', 0x24)
+        a.add_r32_r32('eax', 'r9d')
 
         a.mark(l_found)
-        a.mov_r64_r64('rax', 'r9')
         a.shl_r64_imm8('rax', 3)
         a.or_r64_imm8('rax', TAG_INT)
         a.jmp(l_done)
@@ -513,37 +1151,15 @@ class CodegenRuntime:
         a.mark(l_prepare)
         a.cmp_r32_r32('edx', 'r9d')
         a.jcc('g', l_not_found)
-        a.mov_r32_r32('eax', 'r9d')
-        a.sub_r32_r32('eax', 'edx')
-        a.mov_membase_disp_r32('rsp', 0x24, 'eax')
-        a.mov_r32_r32('r9d', 'eax')
-
-        a.mark(l_outer)
-        a.cmp_r32_imm('r9d', 0)
-        a.jcc('l', l_not_found)
-        a.xor_r32_r32('r8d', 'r8d')
-
-        a.mark(l_inner)
-        a.mov_r32_membase_disp('ecx', 'rsp', 0x20)
-        a.cmp_r32_r32('r8d', 'ecx')
-        a.jcc('ge', l_found)
-        a.mov_r64_r64('rax', 'r9')
-        a.add_r64_r64('rax', 'r8')
-        a.lea_r64_mem_bis('rdx', 'r11', 'rax', 1, 8)
-        a.movzx_r32_membase_disp('edx', 'rdx', 0)
-        a.lea_r64_mem_bis('rax', 'r10', 'r8', 1, 8)
-        a.movzx_r32_membase_disp('eax', 'rax', 0)
-        a.cmp_r32_r32('edx', 'eax')
-        a.jcc('ne', l_inner + '_miss')
-        a.inc_r32('r8d')
-        a.jmp(l_inner)
-
-        a.mark(l_inner + '_miss')
-        a.dec_r32('r9d')
-        a.jmp(l_outer)
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.mov_r32_r32('edx', 'r9d')
+        a.lea_r64_membase_disp('r8', 'r10', 8)
+        a.mov_r32_membase_disp('r9d', 'rsp', 0x20)
+        a.call('fn_mem_lastindexof')
+        a.cmp_r32_imm('eax', 0xFFFFFFFF)
+        a.jcc('e', l_not_found)
 
         a.mark(l_found)
-        a.mov_r64_r64('rax', 'r9')
         a.shl_r64_imm8('rax', 3)
         a.or_r64_imm8('rax', TAG_INT)
         a.jmp(l_done)
