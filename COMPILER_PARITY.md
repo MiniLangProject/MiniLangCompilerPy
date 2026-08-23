@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 23 August 2026 against the matching 1.0.0 revisions of:
+Verified on 24 August 2026 against the matching 1.1.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -22,10 +22,31 @@ equivalent monolithic image. The serialized `.mlo` files remain an internal
 self-host implementation detail; the final linked PE is part of the same
 byte-identity contract.
 
-## Verified target binaries
+## 1.1.0 release fixed point
 
-The following files were rebuilt from scratch with both compilers. Each pair
-had identical size and SHA-256, and both executables exited successfully.
+The release compiler was rebuilt through the complete trust chain. All stages
+report `MiniLang Compiler 1.1.0`.
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 55,712,256 | `3453273F217CBD24BC38777B4AF5255AC1117C6E00DB803DFC0C94654212A8EE` |
+| Stage 2, built by Stage 1 | 55,712,256 | `431C7E74BB0A200EA17BB1831D726C8CB5755DB3008A07687916375E717AD71F` |
+| Stage 3, built by Stage 2 | 55,712,256 | `431C7E74BB0A200EA17BB1831D726C8CB5755DB3008A07687916375E717AD71F` |
+
+Stage 2 and Stage 3 are byte-identical, establishing the self-hosted fixed
+point. The equally sized Python bootstrap image has a different layout; it is
+the bootstrap input, not the fixed-point claim.
+
+The representative `language_suite.ml` target was then built by Python, by the
+Stage 3 monolithic path and by the Stage 3 `.mlo` path. All three files ran
+successfully and were byte-identical: 1,620,480 bytes, SHA-256
+`6E7BF4DCA93339C95B6EB4587613918053EE827A178A4055124599978FF94C67`.
+
+## Historical regression binary record
+
+The following exact hashes record the earlier broad parity pass. The programs
+remain in the automated suites; the table is retained as a reproducible
+historical record rather than relabelled with unmeasured release hashes.
 
 | Program | Size | SHA-256 |
 | --- | ---: | --- |
@@ -66,11 +87,10 @@ case-insensitive `Thread`/`thread` checks and their negated forms.
 Compiler-scale coverage crosses repeated phased collections and verifies that
 target GC options cannot alter compiler-internal collection or target bytes.
 
-All 26 files below `std/` also have matching relative paths and byte-for-byte
-identical contents in both repositories. This includes the new
-`std.threading`, `std.concurrent.shared_value`,
-`std.concurrent.thread_pool`, `std.ds.concurrent_list` and
-`std.ds.concurrent_hashmap` modules.
+All 32 files below `std/` also have matching relative paths and byte-for-byte
+identical contents in both repositories. This includes `std.threading`, the
+concurrent collection modules, CPU feature dispatch, CRC-32/CRC-32C checksum
+modules and the CNG-backed cryptography modules.
 
 ## Historical pre-canonical bootstrap and self-build stages
 
@@ -89,7 +109,7 @@ global constant pools, and therefore no longer introduces an image-layout
 difference. The historical compiler-image rows are retained for comparison;
 they are not presented as a fresh fixed-point measurement of this revision.
 
-Both compilers report `MiniLang Compiler 1.0.0` for `-version` and
+Both compilers report `MiniLang Compiler 1.1.0` for `-version` and
 `--version`. The repositories and GitHub releases are source-only; generated
 compiler and test executables are intentionally excluded.
 
@@ -202,33 +222,29 @@ and were byte-identical at 54,650,368 bytes with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 97, FAIL 0, SKIP 0
+Python harness:    PASS 101, FAIL 0, SKIP 0
 MiniLang harness:  PASS 94, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
-Thread stress:     thread_pool PASS 60/60 processes (30 per compiler output)
-                   managed argument publication/GC PASS 30/30 processes
+Outer ML gates:    CRC/SIMD/CNG, ABI, object parity, listings and repros passed
 ```
 
-The current MiniQuake regression was rebuilt through all three paths. Python
-took 63.713 seconds, the corrected self-hosted monolithic compiler took 978.854
-seconds and the canonical self-hosted `.mlo` pipeline took 561.666 seconds.
-All resulting PEs are 56,537,600 bytes and have SHA-256
-`39552E607826FD652529198664026A1D9FC66828359D17A748D95C6EE9B36BD7`.
-The comparison exposed and fixed a self-host analysis bug: an explicit
-qualified `global` write was temporarily counted as a phantom local, shifting
-later stack slots and lengthening disp8 accesses to disp32. The shared
-optimization fixture now covers the qualified global write and both compilers
-emit the same fixture hash.
+The 1.1.0 MiniQuake acceptance input was a frozen 142-file source snapshot from
+commit `1036b1c3b551d00de777c67293d262a6cc5c2739` plus 18 dirty worktree
+entries. Its source-tree SHA-256 was
+`9EE5DD4ACC9DAAC7D6A810DA497D7DA385A80D2934A4EE2EC2DE0D897A44B285`.
+Python compiled it in 67.528 seconds, the self-hosted monolithic path in
+2,024.375 seconds and the canonical `.mlo` pipeline in 431.789 seconds. The
+`.mlo` path is 4.69 times faster than the self-hosted monolith; Python remains
+6.39 times faster than `.mlo` on this input.
 
-The current canonical `.mlo` timing consists of 426.781 seconds for all 492
-function fragments, 3.516 seconds for runtime-helper emission and 114.219
-seconds in the fresh linker process. The earlier hour-long support tail was
-caused by 3,934 local return labels being misclassified as helpers; exact local
-label filtering reduced that phase to seconds. The same run exposed and fixed
-an object-boundary reset of the cumulative inline budget. Automated
-optimization/module-initialization gates and the completed MiniQuake build now
-establish measured three-way byte identity. The older 112-module / 656-object
-`.mlo` run completed in 420.095 seconds and remains a historical measurement.
+All three outputs are byte-identical 57,005,568-byte PE files with SHA-256
+`3071B78B6F2C72B8C3036E5D62010831758F6EA3E7FFA3F6AF908BB9756003B3`.
+The `.mlo` run emitted 494 function fragments in 361.500 seconds, runtime
+helpers in 3.781 seconds and completed its fresh-process link in 42.375
+seconds. Retail Quake `id1` data passed a 120-frame runtime smoke and a
+120-frame deterministic compatibility trace with rolling hash `74dc3dc9`.
+The same target completed 1,000 E1M1 headless frames in 712 ms and 1,000
+rendered frames in 5,995 ms, approximately 1,404.5 frames/s and 166.8 FPS.
 
 The counters differ because the Python runner counts host-side tests
 individually while the MiniLang harness groups several checks into compiled
