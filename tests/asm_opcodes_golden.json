@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated_utc": "2026-08-23T19:42:35.011627Z",
-  "count": 227,
+  "count": 228,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -1284,6 +1284,16 @@
       "kwargs": {},
       "hex": "664d0f6eca",
       "asm": "; movq_xmm_r64(xmm9, r10)"
+    },
+    {
+      "name": "movq_r64_xmm",
+      "args": [
+        "r10",
+        "xmm9"
+      ],
+      "kwargs": {},
+      "hex": "664d0f7eca",
+      "asm": "; movq_r64_xmm(r10, xmm9)"
     },
     {
       "name": "movsd_membase_disp_xmm",

@@ -37,6 +37,26 @@ function int_flow()
   return total
 end function
 
+function promoted_leaf(value)
+  i = 0
+  total = 0
+  while i < 3
+    total = total + value
+    i = i + 1
+  end while
+  return total
+end function
+
+function promoted_across_user_call()
+  i = 0
+  total = 0
+  while i < 5
+    total = total + promoted_leaf(i)
+    i = i + 1
+  end while
+  return total
+end function
+
 function const_loop()
   total = 0
   for i = 0 to 64
@@ -49,6 +69,11 @@ function int_ops()
   x = 123
   y = 7
   return ((x % y) << 2) | 1
+end function
+
+function constant_strength_reduction()
+  x = 123
+  return (x * 8) + (x % 16) + (x >> 2) + (x + 123)
 end function
 
 function float_fallback()
@@ -64,6 +89,23 @@ struct FlowPoint
   x,
   y,
 end struct
+
+struct MethodPoint
+  value,
+
+  function inline bumped(delta)
+    return this.value + delta
+  end function
+
+  function scaled(factor)
+    return this.value * factor
+  end function
+end struct
+
+function known_method_calls()
+  point = MethodPoint(21)
+  return point.bumped(1) + point.scaled(2)
+end function
 
 function extended_type_flow()
   values = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -186,8 +228,11 @@ function main(args)
 
   t.assertEq(leaf_frame(), 42, "small root-frame prologue")
   t.assertEq(int_flow(), 4950, "local integer type flow")
+  t.assertEq(promoted_across_user_call(), 30, "promoted locals survive promoted user call")
   t.assertEq(const_loop(), 2080, "constant-bound loop fast path")
   t.assertEq(int_ops(), 17, "integer operator fast paths")
+  t.assertEq(constant_strength_reduction(), 1271, "constant integer strength reduction")
+  t.assertEq(known_method_calls(), 64, "known struct method devirtualization and inlining")
   t.assertEq(float_fallback(), 3.0, "non-integer arithmetic fallback")
   t.assertEq(extended_type_flow(), 124, "extended local type flow and loop BCE")
   t.assertEq(fixed_negative_index(), 22, "negative fixed index keeps normalization")

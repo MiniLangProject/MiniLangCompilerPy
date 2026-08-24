@@ -2983,6 +2983,30 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
             return TestResult(name=name, status="FAIL",
                               details="negative fixed index incorrectly elided normalization/bounds checks")
 
+        method_asm = function_block("known_method_calls")
+        if (not method_asm or "call fn_user_MethodPoint.scaled" not in method_asm
+                or "call fn_user_MethodPoint.bumped" in method_asm
+                or "mcall_ic_" in method_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="known struct method call retained dynamic dispatch or missed inline/direct lowering")
+
+        strength_asm = function_block("constant_strength_reduction")
+        if not strength_asm or "idiv r11" in strength_asm or "imul rax" in strength_asm or ", cl" in strength_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="constant integer multiply/modulo/shift retained expensive generic instructions")
+
+        promoted_asm = function_block("int_flow")
+        if not promoted_asm or "movq_r64_xmm(rax, xmm6)" not in promoted_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="hot primitive loop local was not promoted to an ABI-preserved register")
+
+        promoted_call_asm = function_block("promoted_across_user_call")
+        if (not promoted_call_asm or "call fn_user_promoted_leaf" not in promoted_call_asm
+                or "movdqu_membase_disp_xmm(rsp" not in promoted_call_asm
+                or "movdqu_xmm_membase_disp(xmm6, rsp" not in promoted_call_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="promoted local ABI save/restore was not retained across a user call")
+
         small_src = mlc_runner.parent / "tests" / "root_frame_small.ml"
         small_exe = td_path / "root_frame_small.exe"
         small_asm_path = td_path / "root_frame_small.asm"

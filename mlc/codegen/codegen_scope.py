@@ -78,6 +78,9 @@ class VarBinding:
     const_value_py: Any = None
     const_value_encoded: int | None = None
     const_value_label: str | None = None
+    # Proven immediate-only locals may retain their current tagged value in an
+    # ABI-preserved XMM register while keeping the stack slot as a canonical home.
+    promoted_xmm: str | None = None
 
 
 class CodegenScope:
@@ -839,6 +842,10 @@ class CodegenScope:
         if b.kind in ("param", "local"):
             if b.offset is None:
                 raise self.error(f"Internal error: unresolved stack slot for '{name_s}'", node)
+            promoted_xmm = getattr(b, 'promoted_xmm', None)
+            if isinstance(promoted_xmm, str) and promoted_xmm:
+                a.movq_r64_xmm('rax', promoted_xmm)
+                return
             a.mov_rax_rsp_disp32(b.offset)
             # boxed local/param: slot contains cell pointer; load cell[0]
             if getattr(b, 'boxed', False):
@@ -934,6 +941,9 @@ class CodegenScope:
                 a.mov_membase_disp_r64('r11', 8, 'rax')
                 return
             a.mov_rsp_disp32_rax(b.offset)
+            promoted_xmm = getattr(b, 'promoted_xmm', None)
+            if isinstance(promoted_xmm, str) and promoted_xmm:
+                a.movq_xmm_r64(promoted_xmm, 'rax')
             return
 
         if b.kind == "global":

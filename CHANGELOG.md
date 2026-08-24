@@ -16,8 +16,11 @@ All notable changes to the MiniLang compiler are documented here.
   content-validated incremental builds.
 - Added CPU feature detection, native byte-search primitives, CRC-32,
   hardware-dispatched CRC-32C and Windows CNG cryptography helpers.
-- Improved generated-code optimization, global/object initialization and the
-  memory-bounded self-hosted `.mlo` pipeline without changing target bytes.
+- Improved generated-code optimization with known-struct method
+  devirtualization/inlining, hot primitive XMM register homes and constant
+  integer strength reduction; also improved global/object initialization and
+  the memory-bounded self-hosted `.mlo` pipeline while preserving cross-compiler
+  target-byte parity.
 - Expanded cross-compiler, runtime, standard-library, fixed-point and large
   application regression coverage.
 

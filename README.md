@@ -2402,6 +2402,18 @@ Optimizations (always-on, conservative):
   conditions, fixed-offset struct fields and type-specialized indexing.
   Parameters, captured/boxed, synchronized, global or otherwise ambiguous
   values retain the generic checked path.
+- **Known-receiver method devirtualization**: a method call on a local whose
+  concrete struct type is proven becomes a direct call. Eligible `inline`
+  methods can then expand at the call site; ambiguous receivers retain the
+  checked polymorphic inline-cache path.
+- **Hot primitive register homes**: up to two uniquely named `int`/`bool`
+  locals written inside loops are mirrored in nonvolatile XMM6/XMM7 registers.
+  Their stack slots remain canonical for diagnostics and interop, and the full
+  128-bit caller register values are preserved according to the Win64 ABI.
+- **Constant integer strength reduction**: tagged additions/subtractions use
+  immediates, constant multiplication uses identity/negation/shift or immediate
+  multiply forms, positive power-of-two modulo uses a mask, and constant shifts
+  avoid the CL setup. Dynamic and unsafe cases retain the checked helpers.
 - **Loop specialization and bounds-check elimination**: small constant `for`
   loops can be unrolled; larger constant-bound loops avoid dynamic end/direction
   state. For a fixed-length local array or bytes value, an inclusive range

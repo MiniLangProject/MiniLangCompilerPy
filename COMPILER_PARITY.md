@@ -87,7 +87,7 @@ historical record rather than relabelled with unmeasured release hashes.
 | `thread_features.ml` | 239,104 | `AC62897033463B3E33BACC25B77E160A76ED71EFD74B1D9499742AAC16EF93C9` |
 | `threading_stdlib.ml` | 908,800 | `89AFECFE6DF68134D54B7F914DB7275A466615F3A9ED0455C1FB025D2DB12D19` |
 | `extern_abi_validation_valid.ml` | 70,656 | `05387489F45AEE34BF227E4965281A93137159AB84B7C4BA09565A32920EE6D8` |
-| `codegen_optimizations.ml` | 285,696 | `AA54ABD78DF049A976E895E85911354CBAAB7318556469F56C188D61C07EA385` |
+| `codegen_optimizations.ml` | 331,776 | `34478CFA76A8B1493B92B99C099F7ED0A5939589FB5CC045C0E667059B38B6AF` |
 | `thread_pool.ml` | 656,896 | `294AF95CD24BDD72DFBF0258F05C9B21A8542BB097531049F4E92571B601EBE2` |
 | `type_checks.ml` | 135,680 | `CABA11CACCCC9A15946172085489C50D0452AD15E2EF20F5B4EC7A8C7F8A4BCA` |
 | `member_callable_direct.ml` | 72,704 | `99EB4C4FD38EBBCB82A8EA994E9F815C31C59BED2C0B0117246DC032C69BD886` |
@@ -169,14 +169,16 @@ No existing feature was removed. The synchronized surface includes:
 - explicit-value enums, struct construction and constant folding;
 - call profiling/tracing;
 - deterministic constant/data layout and canonicalized debug paths; and
-- synchronized assembler coverage with 222 golden opcode vectors.
+- synchronized assembler coverage with 228 golden opcode vectors.
 
 Generated-code optimization is synchronized as part of the same parity
 contract: both backends use the same inline expansion budget with unconditional
 callable fallback bodies, local representation flow for integers, floats,
 booleans, strings, arrays, bytes and concrete structs, constant-loop lowering,
-loop-invariant container-base hoisting, proven bounds-check elimination,
-GC-root/prologue sizing and short-back-edge selection. Stack sizing also
+known-struct method devirtualization and inline expansion, two ABI-preserved
+XMM register homes for proven hot primitive locals, constant integer strength
+reduction, loop-invariant container-base hoisting, proven bounds-check
+elimination, GC-root/prologue sizing and short-back-edge selection. Stack sizing also
 accounts for calls hidden inside eligible inline bodies, so an expanded wide
 call cannot overwrite caller locals, debug saves or the root-frame record. The shared
 `tests/codegen_optimizations.ml` fixture covers optimized behavior and fallback
@@ -184,7 +186,11 @@ semantics, including a narrow caller around a hidden ten-argument call. Listing
 checks additionally verify float/bool/struct fast paths, specialized array and
 bytes indexing, invariant hoists, eliminated in-range loop checks, retained
 negative-index normalization, all inline fallback bodies and both the small and
-expanded loop/root forms.
+expanded loop/root forms. Structural listing checks also assert direct known
+method targets, removal of the polymorphic method cache in those paths,
+XMM-backed hot-local loads, ABI save/restore across a promoted user-function
+call and the absence of division/multiply/CL setup for the covered constant
+integer cases.
 
 Canonical object batches also carry the cumulative inline byte budget and call
 accounting from one fragment to the next. Local `fn_ret_*` and `fn_defer_*`
@@ -238,16 +244,33 @@ pre-canonical two stages took 181.644 and 470.513 seconds, emitted 301 objects e
 and were byte-identical at 54,650,368 bytes with SHA-256
 `C6365921E6112AEEEA7F32DFF9E846A1AD358448582C72A6579EFAB6F67E4B00`.
 
+With method devirtualization, hot primitive register homes and integer strength
+reduction included, consecutive self-host stages completed in 160.022 and
+128.441 seconds. They produced byte-identical 56,409,600-byte compiler images
+with SHA-256
+`DB0DB8DB532F340DC4A126D4C64EC8E8D5AF7F1D3412F2DFA5155339F8FA07DB`.
+
 ## Tests
 
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 101, FAIL 0, SKIP 0
-MiniLang harness:  PASS 94, FAIL 0
+Python harness:    PASS 103, FAIL 0, SKIP 0
+MiniLang harness:  PASS 96, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/CNG, ABI, object parity, listings and repros passed
 ```
+
+The 2026-08-24 MiniQuake check used clean commit
+`7e8d0f614f7ad33f423e88873c210b7f846bbced`. Python compiled the 142-source
+target in 66.368 seconds and the self-hosted monolithic compiler in 932.680
+seconds. Both produced the same 57,156,608-byte PE with SHA-256
+`A2E36E0A572B394FCE4A531AED4C3574E4D21A83E0F9761238DA72A0B2200923`.
+Both the previous and optimized PE passed a 120-frame retail E1M1 headless
+smoke. In an alternating two-run A/B check with 300 warm-up and 10,000 measured
+frames per run, average measured frame time fell from 12,665.0 to 12,262.5 ms,
+approximately 790 to 815 frames/s (+3.3%). Individual runs varied, so this is a
+local performance check rather than a release-grade statistical claim.
 
 The 1.1.0 MiniQuake acceptance input was a frozen 142-file source snapshot from
 commit `1036b1c3b551d00de777c67293d262a6cc5c2739` plus 18 dirty worktree

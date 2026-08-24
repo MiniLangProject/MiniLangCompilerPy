@@ -503,18 +503,16 @@ class CodegenExpr:
         """Emit a binary operation whose two operands in r10/r11 are proven ints."""
         a = self.asm
         if op == '+':
-            if rhs_const == 1:
+            if rhs_const is not None and -(1 << 28) <= rhs_const < (1 << 28):
                 a.mov_rax_r10()
-                a.add_rax_imm8(8)
-            elif rhs_const == -1:
-                a.mov_rax_r10()
-                a.sub_rax_imm8(8)
-            elif lhs_const == 1:
+                tagged_delta = int(rhs_const) * 8
+                if tagged_delta:
+                    a.add_r64_imm('rax', tagged_delta)
+            elif lhs_const is not None and -(1 << 28) <= lhs_const < (1 << 28):
                 a.mov_rax_r11()
-                a.add_rax_imm8(8)
-            elif lhs_const == -1:
-                a.mov_rax_r11()
-                a.sub_rax_imm8(8)
+                tagged_delta = int(lhs_const) * 8
+                if tagged_delta:
+                    a.add_r64_imm('rax', tagged_delta)
             else:
                 a.mov_rax_r10()
                 a.add_r64_r64('rax', 'r11')
@@ -522,32 +520,69 @@ class CodegenExpr:
             return True
         if op == '-':
             a.mov_rax_r10()
-            if rhs_const == 1:
-                a.sub_rax_imm8(8)
-            elif rhs_const == -1:
-                a.add_rax_imm8(8)
+            if rhs_const is not None and -(1 << 28) <= rhs_const < (1 << 28):
+                tagged_delta = int(rhs_const) * 8
+                if tagged_delta:
+                    a.sub_r64_imm('rax', tagged_delta)
             else:
                 a.sub_rax_r11()
                 a.add_rax_imm8(1)
             return True
         if op == '*':
-            a.mov_rax_r10()
+            const_value = rhs_const if rhs_const is not None else lhs_const
+            value_reg = 'r10' if rhs_const is not None else 'r11'
+            if const_value == 0:
+                a.mov_rax_imm64(enc_int(0))
+                return True
+            if const_value == 1:
+                a.mov_r64_r64('rax', value_reg)
+                return True
+            a.mov_r64_r64('rax', value_reg)
             a.sar_rax_imm8(3)
-            a.sar_r64_imm8('r11', 3)
-            a.imul_r64_r64('rax', 'r11')
+            if const_value is not None and -(1 << 31) <= const_value < (1 << 31):
+                factor = int(const_value)
+                if factor == -1:
+                    a.neg_r64('rax')
+                elif factor > 0 and (factor & (factor - 1)) == 0:
+                    a.shl_rax_imm8(factor.bit_length() - 1)
+                else:
+                    a.imul_r64_r64_imm('rax', 'rax', factor)
+            else:
+                other_reg = 'r11' if value_reg == 'r10' else 'r10'
+                a.sar_r64_imm8(other_reg, 3)
+                a.imul_r64_r64('rax', other_reg)
             a.shl_rax_imm8(3)
             a.or_rax_imm8(TAG_INT)
             return True
         if op == '%':
+            if rhs_const is not None:
+                divisor = int(rhs_const)
+                if divisor == 0:
+                    a.mov_rax_imm64(enc_void())
+                    return True
+                if divisor in (-1, 1):
+                    a.mov_rax_imm64(enc_int(0))
+                    return True
+                if divisor > 0 and divisor <= (1 << 31) and (divisor & (divisor - 1)) == 0:
+                    a.mov_rax_r10()
+                    a.sar_rax_imm8(3)
+                    a.and_r64_imm('rax', divisor - 1)
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_INT)
+                    return True
+
             lid = self.new_label_id()
             l_ok = f'known_mod_ok_{lid}'
             l_fail = f'known_mod_fail_{lid}'
             l_done = f'known_mod_done_{lid}'
             a.mov_rax_r10()
             a.sar_rax_imm8(3)
-            a.sar_r64_imm8('r11', 3)
-            a.test_r64_r64('r11', 'r11')
-            a.jcc('e', l_fail)
+            if rhs_const is not None and -(1 << 31) <= rhs_const < (1 << 31):
+                a.mov_r64_imm64('r11', int(rhs_const))
+            else:
+                a.sar_r64_imm8('r11', 3)
+                a.test_r64_r64('r11', 'r11')
+                a.jcc('e', l_fail)
             a.cqo()
             a.idiv_r64('r11')
             a.test_r64_r64('rdx', 'rdx')
@@ -577,6 +612,22 @@ class CodegenExpr:
                 a.or_rax_imm8(TAG_INT)
             return True
         if op in ('<<', '>>'):
+            if rhs_const is not None:
+                if rhs_const < 0:
+                    a.mov_rax_imm64(enc_void())
+                    return True
+                a.mov_rax_r10()
+                a.sar_rax_imm8(3)
+                shift = int(rhs_const) & 63
+                if shift:
+                    if op == '<<':
+                        a.shl_rax_imm8(shift)
+                    else:
+                        a.sar_rax_imm8(shift)
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+                return True
+
             lid = self.new_label_id()
             l_fail = f'known_shift_fail_{lid}'
             l_done = f'known_shift_done_{lid}'
@@ -4450,6 +4501,51 @@ class CodegenExpr:
                 if mname and (getattr(self, 'struct_methods', {}) or {}):
                     args = list(getattr(e, 'args', []) or [])
                     total = 1 + len(args)  # receiver + explicit args
+
+                    # Type flow can prove the concrete receiver for locals that
+                    # retain a struct-constructor fact. In that case the runtime
+                    # tag/type checks, struct-id dispatch and polymorphic cache
+                    # are all redundant. Besides being a cheaper direct call,
+                    # this also exposes small `function inline` methods to the
+                    # existing source-level inliner.
+                    known_type = self._opt_expr_known_type(tgt)
+                    known_qname = (known_type.split(':', 1)[1]
+                                   if isinstance(known_type, str) and known_type.startswith('struct:') else None)
+                    known_method = ((getattr(self, 'struct_methods', {}) or {}).get(known_qname, {}) or {}).get(mname)
+                    known_def = ((getattr(self, 'user_functions', {}) or {}).get(known_method)
+                                 if known_method is not None else None)
+                    if known_def is not None and len(list(getattr(known_def, 'params', []) or [])) == total:
+                        inline_used = int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(known_method, 0) or 0)
+                        if inline_used < 4096 and known_method in (getattr(self, 'inline_functions', {}) or {}):
+                            inline_call = ml.Call(callee_expr, [tgt] + args)
+                            for attr in ('_pos', '_filename'):
+                                if hasattr(e, attr):
+                                    setattr(inline_call, attr, getattr(e, attr))
+                            self._emit_inline_call(inline_call, str(known_method))
+                            self._emit_auto_errprop()
+                            return
+
+                        base = self.alloc_expr_temps(total * 8)
+                        self.emit_expr(tgt)
+                        a.mov_rsp_disp32_rax(base)
+                        for i, aa in enumerate(args):
+                            self.emit_expr(aa)
+                            a.mov_rsp_disp32_rax(base + (i + 1) * 8)
+
+                        call_regs = ('rcx', 'rdx', 'r8', 'r9')
+                        for i in range(min(total, 4)):
+                            a.mov_r64_membase_disp(call_regs[i], 'rsp', base + i * 8)
+                        for i in range(4, total):
+                            a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
+                            a.mov_membase_disp_r64('rsp', 0x20 + (i - 4) * 8, 'r11')
+
+                        a.mov_r64_imm64('r10', enc_void())
+                        a.call(f'fn_user_{known_method}')
+                        self._emit_auto_errprop()
+                        self.free_expr_temps(total * 8)
+                        for i in range(4, total):
+                            a.mov_membase_disp_imm32('rsp', 0x20 + (i - 4) * 8, enc_void(), qword=True)
+                        return
 
                     # Candidates: structs that implement this method with matching arity.
                     candidates = []

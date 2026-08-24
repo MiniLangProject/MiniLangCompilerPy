@@ -825,6 +825,7 @@ class CodegenStmt:
         assignments: dict[str, list[Any]] = {}
         direct_initializers: list[tuple[str, Any]] = []
         loop_names: set[str] = set()
+        promotion_hot_names: set[str] = set()
         normal_names: set[str] = set()
         excluded: set[str] = set(str(x) for x in (getattr(fn, 'params', []) or []))
         excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
@@ -843,7 +844,7 @@ class CodegenStmt:
             if direct:
                 direct_initializers.append((name, getattr(st, 'expr', None)))
 
-        def walk(stmts: list[Any], *, direct: bool = False) -> None:
+        def walk(stmts: list[Any], *, direct: bool = False, loop_depth: int = 0) -> None:
             for st in stmts or []:
                 if isinstance(st, getattr(ml, 'FunctionDef', ())):
                     continue
@@ -852,27 +853,30 @@ class CodegenStmt:
                     continue
                 if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()))):
                     record_assignment(st, direct=direct)
+                    if loop_depth > 0:
+                        promotion_hot_names.add(str(getattr(st, 'name', '') or ''))
                 if isinstance(st, getattr(ml, 'For', ())):
                     name = str(getattr(st, 'var', '') or '')
                     if name:
                         loop_names.add(name)
-                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                        promotion_hot_names.add(name)
+                    walk(list(getattr(st, 'body', []) or []), direct=False, loop_depth=loop_depth + 1)
                     continue
                 if self._is_foreach_stmt(st):
                     excluded.add(str(self._foreach_var_name(st)))
-                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                    walk(list(getattr(st, 'body', []) or []), direct=False, loop_depth=loop_depth + 1)
                     continue
                 if isinstance(st, getattr(ml, 'If', ())):
-                    walk(list(getattr(st, 'then_body', []) or []), direct=False)
+                    walk(list(getattr(st, 'then_body', []) or []), direct=False, loop_depth=loop_depth)
                     for _, body in getattr(st, 'elifs', []) or []:
-                        walk(list(body or []), direct=False)
-                    walk(list(getattr(st, 'else_body', []) or []), direct=False)
+                        walk(list(body or []), direct=False, loop_depth=loop_depth)
+                    walk(list(getattr(st, 'else_body', []) or []), direct=False, loop_depth=loop_depth)
                 elif isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()))):
-                    walk(list(getattr(st, 'body', []) or []), direct=False)
+                    walk(list(getattr(st, 'body', []) or []), direct=False, loop_depth=loop_depth + 1)
                 elif isinstance(st, getattr(ml, 'Switch', ())):
                     for cs in getattr(st, 'cases', []) or []:
-                        walk(list(getattr(cs, 'body', []) or []), direct=False)
-                    walk(list(getattr(st, 'default_body', []) or []), direct=False)
+                        walk(list(getattr(cs, 'body', []) or []), direct=False, loop_depth=loop_depth)
+                    walk(list(getattr(st, 'default_body', []) or []), direct=False, loop_depth=loop_depth)
 
         walk(list(getattr(fn, 'body', []) or []), direct=True)
         excluded.update(loop_names.intersection(normal_names))
@@ -1117,7 +1121,42 @@ class CodegenStmt:
                     changed = True
 
         setattr(fn, '_ml_known_value_types', dict(facts))
+        setattr(fn, '_ml_promotion_hot_names', set(x for x in promotion_hot_names if x))
         return dict(facts)
+
+    def _select_promoted_local_registers(self, fn: Any, known_types: dict[str, str]) -> list[str]:
+        """Assign up to two immediate-only locals to ABI-preserved XMM homes.
+
+        The ordinary stack slot remains authoritative for diagnostics, GC-frame
+        layout and native interop. Loads can nevertheless use the register copy;
+        every compiler-generated store updates both copies. Restricting this to
+        unique, proven int/bool locals avoids pointer rooting and shadowing issues.
+        """
+        bindings = list(getattr(self, '_function_locals', []) or [])
+        hot_names = set(getattr(fn, '_ml_promotion_hot_names', set()) or set())
+
+        counts: dict[str, int] = {}
+        for binding in bindings:
+            name = str(getattr(binding, 'name', '') or '')
+            if name:
+                counts[name] = counts.get(name, 0) + 1
+            setattr(binding, 'promoted_xmm', None)
+
+        registers = ('xmm6', 'xmm7')
+        assigned: list[str] = []
+        for binding in bindings:
+            if len(assigned) >= len(registers):
+                break
+            name = str(getattr(binding, 'name', '') or '')
+            fact = self._value_type_base(known_types.get(name))
+            if (not name or name not in hot_names or counts.get(name, 0) != 1 or fact not in ('int', 'bool')
+                    or bool(getattr(binding, 'boxed', False))
+                    or getattr(binding, 'capture_index', None) is not None):
+                continue
+            reg = registers[len(assigned)]
+            setattr(binding, 'promoted_xmm', reg)
+            assigned.append(reg)
+        return assigned
 
     def _for_index_hoist_plans(self, loop: Any, index_binding: Any) -> list[dict[str, Any]]:
         """Find fixed-layout containers safely indexed by this inclusive loop."""
@@ -6112,6 +6151,8 @@ class CodegenStmt:
             self._current_fn_qname = _saved_ctx_qname
             self.in_function = saved_in_fn
         # Now `_function_locals` contains *bindings*, not names.
+        known_value_types_for_fn = self._infer_known_value_types(fn)
+        promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
         n_locals = len(getattr(self, "_function_locals", []))
 
         # ---- stack layout ----
@@ -6125,8 +6166,14 @@ class CodegenStmt:
         dbg_save_size = 24
         dbg_save_base = 0x20 + max(out_scratch, out_stack_args * 8)
 
+        # XMM6-XMM7 are nonvolatile in the Win64 ABI. Functions that promote
+        # primitive locals save the full 128-bit caller values outside the GC
+        # root range and restore them in the shared epilogue.
+        promoted_save_base = dbg_save_base + dbg_save_size
+        promoted_save_size = len(promoted_local_regs) * 16
+
         # outgoing stack args for calls (arg5+) + scratch + debug-loc save area
-        out_reserve = max(out_scratch, out_stack_args * 8) + dbg_save_size
+        out_reserve = max(out_scratch, out_stack_args * 8) + dbg_save_size + promoted_save_size
 
         # locals start after outgoing-args area, aligned to 16 bytes
         local_base = align_up(0x20 + out_reserve, 16)
@@ -6186,6 +6233,9 @@ class CodegenStmt:
 
         # Reserve stack space (shadow + locals + temps). Must stay 16-byte aligned here.
         a.sub_rsp_imm32(frame_size)
+
+        for index, reg in enumerate(promoted_local_regs):
+            a.movdqu_membase_disp_xmm('rsp', promoted_save_base + index * 16, reg)
 
         # Runtime trace: print function name on entry (enabled with --trace-calls).
         # NOTE: emit_writefile performs Win64 calls and clobbers volatile regs.
@@ -6323,7 +6373,7 @@ class CodegenStmt:
         self._current_root_rec_off = root_rec_off
         self._current_root_static_qwords = (root_static_top - root_base) // 8
         self._known_int_names = self._infer_known_int_names(fn)
-        self._known_value_types = self._infer_known_value_types(fn)
+        self._known_value_types = dict(known_value_types_for_fn)
         self._loop_index_fast_stack = []
 
         if saved_emit_stack is not None:
@@ -6560,6 +6610,9 @@ class CodegenStmt:
         self._known_int_names = old_known_int_names
         self._known_value_types = old_known_value_types
         self._loop_index_fast_stack = old_loop_index_fast_stack
+
+        for index, reg in enumerate(promoted_local_regs):
+            a.movdqu_xmm_membase_disp(reg, 'rsp', promoted_save_base + index * 16)
 
         a.add_rsp_imm32(frame_size)
         a.pop_r15()
