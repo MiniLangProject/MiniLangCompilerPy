@@ -2017,9 +2017,9 @@ class CodegenMemory:
         a.lea_r64_membase_disp("rdx", "rbx", GC_HEADER_SIZE)
         a.mov_r32_membase_disp("ecx", "rdx", 0)
         a.test_r32_r32("ecx", "ecx")
-        a.jcc('ne', L_REBUILD_NEXT)  # Block ist am Leben -> überspringen
+        a.jcc('ne', L_REBUILD_NEXT)  # Live block: keep it out of the free list.
 
-        # --- COALESCING START (Benachbarte tote Blöcke verschmelzen) ---
+        # Coalesce adjacent dead blocks before linking one maximal free range.
         l_coal_loop = f"gc_coal_loop_{lid}"
         l_coal_done = f"gc_coal_done_{lid}"
 
@@ -2028,26 +2028,24 @@ class CodegenMemory:
         a.mov_r64_r64("r11", "rbx")
         a.add_r64_r64("r11", "r10")
 
-        # if next_block >= heap_ptr -> wir sind am Ende, stoppen
+        # Stop when the candidate successor reaches the allocated heap frontier.
         a.cmp_r64_r64("r11", "r14")
         a.jcc('ae', l_coal_done)
 
-        # Ist der nächste Block auch frei (tot)?
+        # A nonzero payload type marks a live successor and ends coalescing.
         a.lea_r64_membase_disp("rdx", "r11", GC_HEADER_SIZE)
         a.mov_r32_membase_disp("ecx", "rdx", 0)
         a.test_r32_r32("ecx", "ecx")
-        a.jcc('ne', l_coal_done)  # Nein, live -> Coalescing beenden
+        a.jcc('ne', l_coal_done)
 
-        # Ja, frei! Größe des nächsten Blocks addieren
+        # Merge the dead successor into the current block in place.
         a.mov_r64_membase_disp("rcx", "r11", 0)  # rcx = next_block.size
         a.add_r64_r64("r10", "rcx")  # r10 += rcx
-        a.mov_membase_disp_r64("rbx", 0, "r10")  # Aktuelle Header-Größe im RAM updaten
-        a.jmp(l_coal_loop)  # Weiter schauen, ob der übernächste auch frei ist!
+        a.mov_membase_disp_r64("rbx", 0, "r10")  # Publish the enlarged block size.
+        a.jmp(l_coal_loop)
 
         a.mark(l_coal_done)
-        # --- COALESCING ENDE ---
-
-        # Den (nun riesigen) zusammengefassten Block in die Free-List einhängen
+        # Link the maximal coalesced range into the rebuilt free list.
         a.mov_rax_rip_qword('gc_free_head')
         a.mov_membase_disp_r64("rbx", 8, "rax")
 
@@ -2056,7 +2054,7 @@ class CodegenMemory:
         a.mov_rip_qword_rax('gc_free_head')
 
         a.mark(L_REBUILD_NEXT)
-        a.add_r64_r64("rbx", "r10")  # Springt jetzt direkt über ALLE verschmolzenen Blöcke!
+        a.add_r64_r64("rbx", "r10")  # Skip the complete coalesced range.
         a.jmp(L_REBUILD_LOOP)
 
         a.mark(L_REBUILD_DONE)

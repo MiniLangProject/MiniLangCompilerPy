@@ -62,6 +62,22 @@ without a timeout after the fix. The dedicated back-to-back GC regression is
 also byte-identical at 112,128 bytes with SHA-256
 `F2AE65320F4A92C2EA5232B04F4CE8B83BC335DDF552870FD50DEBDD38468F82`.
 
+## Current optimizer-audit fixed point
+
+The comment, optimizer-safety and code-hygiene audit was bootstrapped again on
+24 August 2026. The compiler stabilized at the first self-hosted stage:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 56,525,824 | `5429DF4838EE38CE8C21D401EADF06DA3E5727063AB5F9B3375F7D788DBA5FA9` |
+| Stage 2, built by Stage 1 | 56,525,312 | `BA5286D04184C3C9BD74E8EAE44BD41B7FD4AF7777810B10757CDB39969E9AE6` |
+| Stage 3, built by Stage 2 | 56,525,312 | `BA5286D04184C3C9BD74E8EAE44BD41B7FD4AF7777810B10757CDB39969E9AE6` |
+
+The representative `language_suite.ml` target built by Python, by Stage 3's
+monolithic path and by its `.mlo` path is byte-identical in all three cases:
+1,622,016 bytes, SHA-256
+`AC1C08B988A0B8A8987F487B2DFB2D95553733D8F0A41DBB86F597D29F4F6029`.
+
 ## Historical regression binary record
 
 The following exact hashes record the earlier broad parity pass. The programs

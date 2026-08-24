@@ -2516,11 +2516,11 @@ class Asm:
         self.emit(b"\x66" + self._rex(r=rex_r, b=rex_b) + b"\x0F\x3A\x0B" + self._modrm(3, d, s) + bytes([imm & 0xFF]))
 
     def movq_xmm_r64(self, dst: str, src: str) -> None:
-        """Emit instruction/utility helper.
+        """Move a 64-bit GPR into the low qword of an XMM register.
 
         Args:
-            dst: Register name (e.g. 'rax', 'r10', 'eax', 'al').
-            src: Register name (e.g. 'rax', 'r10', 'eax', 'al').
+            dst: XMM destination register.
+            src: 64-bit GPR source register.
         """
         # 66 0F 6E /r  with REX.W => movq xmm, r/m64
         d = self.XMM[dst]

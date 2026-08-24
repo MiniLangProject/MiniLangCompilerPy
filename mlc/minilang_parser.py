@@ -14,6 +14,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Optional, Tuple
 
+from .tools import wrap_i61
+
 
 # ============================================================
 # Errors / Diagnostics
@@ -1486,7 +1488,7 @@ class Parser:
             self.expect_end_of("for")
             return self._attach_pos(For(varname, start, end, body), start_pos)
 
-        # Assignment oder Call-Statement
+        # Assignment or call statement.
         if t.kind == "IDENT":
             expr = self.parse_postfix()
 
@@ -1756,8 +1758,8 @@ class Parser:
                 return self._attach_pos(Num(float(t.value)), start_pos)
             # allow hex (0x..), binary (0b..); keep plain int() for decimal with leading zeros
             if re.match(r"0[xX]", t.value) or re.match(r"0[bB]", t.value):
-                return self._attach_pos(Num(int(t.value, 0)), start_pos)
-            return self._attach_pos(Num(int(t.value)), start_pos)
+                return self._attach_pos(Num(wrap_i61(int(t.value, 0))), start_pos)
+            return self._attach_pos(Num(wrap_i61(int(t.value))), start_pos)
 
         if t.kind == "STRING":
             start_pos = t.pos

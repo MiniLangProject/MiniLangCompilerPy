@@ -77,6 +77,13 @@ def enc_int(x: int) -> int:
     return ((x << 3) & 0xFFFFFFFFFFFFFFFF) | TAG_INT
 
 
+def wrap_i61(x: int) -> int:
+    """Normalize an integer to MiniLang's signed 61-bit payload domain."""
+
+    payload = int(x) & ((1 << 61) - 1)
+    return payload - (1 << 61) if payload >= (1 << 60) else payload
+
+
 def enc_bool(b: bool) -> int:
     """Encode a tagged immediate boolean value."""
 

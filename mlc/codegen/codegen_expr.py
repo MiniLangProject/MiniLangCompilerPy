@@ -11,7 +11,7 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLO
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
-from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod, try_enc_float_immediate
+from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod, try_enc_float_immediate, wrap_i61
 
 _F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
@@ -58,7 +58,8 @@ class CodegenExpr:
 
         # literals
         if isinstance(e, ml.Num):
-            return e.value
+            value = e.value
+            return wrap_i61(value) if isinstance(value, int) and not isinstance(value, bool) else value
         if hasattr(ml, 'Bool') and isinstance(e, ml.Bool):
             return bool(getattr(e, 'value', False))
         if hasattr(ml, 'Str') and isinstance(e, ml.Str):
@@ -80,7 +81,7 @@ class CodegenExpr:
             if pyv is None:
                 return self._OPT_NO
             if isinstance(pyv, (bool, int, float, str)):
-                return pyv
+                return wrap_i61(pyv) if isinstance(pyv, int) and not isinstance(pyv, bool) else pyv
             return self._OPT_NO
 
         # Member chains used as qualified names (best-effort const lookup)
@@ -134,7 +135,7 @@ class CodegenExpr:
                 if pyv is None:
                     continue
                 if isinstance(pyv, (bool, int, float, str)):
-                    return pyv
+                    return wrap_i61(pyv) if isinstance(pyv, int) and not isinstance(pyv, bool) else pyv
 
             return self._OPT_NO
 
@@ -152,12 +153,12 @@ class CodegenExpr:
                 if isinstance(rv, (int, float)):
                     r = -rv
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 return self._OPT_NO
             if op == '~':
                 if isinstance(rv, int) and not isinstance(rv, bool):
-                    return ~rv
+                    return wrap_i61(~rv)
                 return self._OPT_NO
             return self._OPT_NO
 
@@ -207,8 +208,8 @@ class CodegenExpr:
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv + rv
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 if isinstance(lv, str) and isinstance(rv, str):
                     return lv + rv
                 return self._OPT_NO
@@ -216,15 +217,15 @@ class CodegenExpr:
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv - rv
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 return self._OPT_NO
             if op == '*':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv * rv
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 return self._OPT_NO
             if op == '/':
                 # Runtime division normalizes exact ints; but also returns void on div-by-0.
@@ -234,32 +235,33 @@ class CodegenExpr:
                         return self._OPT_NO
                     r = float(lv) / float(rv)
                     if r.is_integer():
-                        return int(r)
+                        return wrap_i61(int(r))
                     return float(r)
                 return self._OPT_NO
             if op == '%':
                 if isinstance(lv, int) and isinstance(rv, int) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     if rv == 0:
                         return self._OPT_NO
-                    return lv % rv
+                    return wrap_i61(lv % rv)
                 return self._OPT_NO
 
             # bitwise (ints)
             if op in ('&', '|', '^'):
                 if isinstance(lv, int) and isinstance(rv, int) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     if op == '&':
-                        return lv & rv
+                        return wrap_i61(lv & rv)
                     if op == '|':
-                        return lv | rv
-                    return lv ^ rv
+                        return wrap_i61(lv | rv)
+                    return wrap_i61(lv ^ rv)
                 return self._OPT_NO
             if op in ('<<', '>>'):
                 if isinstance(lv, int) and isinstance(rv, int) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     if rv < 0:
                         return self._OPT_NO
+                    shift = rv & 63
                     if op == '<<':
-                        return lv << rv
-                    return lv >> rv
+                        return wrap_i61(lv << shift)
+                    return wrap_i61(lv >> shift)
                 return self._OPT_NO
 
             return self._OPT_NO
@@ -276,6 +278,17 @@ class CodegenExpr:
         if isinstance(v, float) and v.is_integer():
             return int(v)
         return None
+
+    def _opt_const_nonzero_number(self, e: Any) -> bool:
+        """Return whether constant evaluation proves a non-zero numeric value."""
+        value = self._opt_try_const_value(e)
+        return (value is not self._OPT_NO and not isinstance(value, bool)
+                and isinstance(value, (int, float)) and value != 0)
+
+    def _opt_const_nonnegative_int(self, e: Any) -> bool:
+        """Return whether constant evaluation proves a valid shift count."""
+        value = self._opt_try_const_value(e)
+        return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
     def _opt_expr_known_int(self, e: Any) -> bool:
         """Return whether local type flow proves that `e` is a tagged int."""
@@ -300,9 +313,15 @@ class CodegenExpr:
                 getattr(e, 'right', None))
         if isinstance(e, getattr(ml, 'Bin', ())):
             op = str(getattr(e, 'op', ''))
-            if op in ('+', '-', '*', '%', '&', '|', '^', '<<', '>>'):
-                return self._opt_expr_known_int(getattr(e, 'left', None)) and self._opt_expr_known_int(
-                    getattr(e, 'right', None))
+            left = getattr(e, 'left', None)
+            right = getattr(e, 'right', None)
+            operands_are_int = self._opt_expr_known_int(left) and self._opt_expr_known_int(right)
+            if op in ('+', '-', '*', '&', '|', '^'):
+                return operands_are_int
+            if op == '%':
+                return operands_are_int and self._opt_const_nonzero_number(right)
+            if op in ('<<', '>>'):
+                return operands_are_int and self._opt_const_nonnegative_int(right)
         return False
 
     @staticmethod
@@ -376,20 +395,37 @@ class CodegenExpr:
                 return 'bool'
             if op in ('and', 'or') and lb and rb:
                 return 'bool'
-            if op in ('&', '|', '^', '<<', '>>') and lb == rb == 'int':
+            right = getattr(e, 'right', None)
+            if op in ('&', '|', '^') and lb == rb == 'int':
                 return 'int'
-            if op in ('+', '-', '*', '%') and lb == rb == 'int':
+            if op in ('<<', '>>') and lb == rb == 'int' and self._opt_const_nonnegative_int(right):
                 return 'int'
-            if op in ('+', '-', '*', '/', '%') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+            if op in ('+', '-', '*') and lb == rb == 'int':
+                return 'int'
+            if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                return 'int'
+            if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                return 'number'
+            if (op in ('/', '%') and lb in ('int', 'float', 'number')
+                    and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right)):
                 return 'number'
             return None
         if isinstance(e, getattr(ml, 'Index', ())):
-            base = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'target', None)))
-            if base == 'bytes':
+            target_type = self._opt_expr_known_type(getattr(e, 'target', None))
+            base = self._opt_value_type_base(target_type)
+            exact_len = self._opt_value_type_exact_length(target_type)
+            index = self._opt_try_const_int(getattr(e, 'index', None))
+            if base == 'bytes' and exact_len is not None and index is not None and -exact_len <= index < exact_len:
                 return 'int'
-            if base == 'string':
-                return 'string'
         return None
+
+    def _opt_type_query_can_elide_evaluation(self, e: Any) -> bool:
+        """Return whether a static type query may omit evaluating its operand."""
+        ml = self.ml
+        return isinstance(e, tuple(cls for cls in (
+            getattr(ml, 'Num', None), getattr(ml, 'Bool', None),
+            getattr(ml, 'Str', None), getattr(ml, 'Var', None),
+        ) if cls is not None))
 
     def _opt_known_index_plan(self, e: Any) -> Optional[dict[str, Any]]:
         """Plan a type-specialized index read and any proven loop hoist."""
@@ -500,7 +536,12 @@ class CodegenExpr:
 
     def _opt_emit_known_int_binop(self, op: str, lhs_const: Optional[int],
                                   rhs_const: Optional[int]) -> bool:
-        """Emit a binary operation whose two operands in r10/r11 are proven ints."""
+        """Emit a binary operation whose two operands in r10/r11 are proven ints.
+
+        Constant specializations preserve the backend's 64-bit tagged wraparound,
+        Python-style modulo and x64 six-bit shift-count behavior. Immediate forms
+        are used only where the corresponding sign-extended encoding is exact.
+        """
         a = self.asm
         if op == '+':
             if rhs_const is not None and -(1 << 28) <= rhs_const < (1 << 28):
@@ -514,6 +555,7 @@ class CodegenExpr:
                 if tagged_delta:
                     a.add_r64_imm('rax', tagged_delta)
             else:
+                # Each encoded operand contains TAG_INT; remove one duplicate tag.
                 a.mov_rax_r10()
                 a.add_r64_r64('rax', 'r11')
                 a.sub_rax_imm8(1)
@@ -564,6 +606,8 @@ class CodegenExpr:
                     a.mov_rax_imm64(enc_int(0))
                     return True
                 if divisor > 0 and divisor <= (1 << 31) and (divisor & (divisor - 1)) == 0:
+                    # A low-bit mask implements Python modulo for negative
+                    # dividends as long as the divisor is positive.
                     a.mov_rax_r10()
                     a.sar_rax_imm8(3)
                     a.and_r64_imm('rax', divisor - 1)
@@ -573,16 +617,26 @@ class CodegenExpr:
 
             lid = self.new_label_id()
             l_ok = f'known_mod_ok_{lid}'
-            l_fail = f'known_mod_fail_{lid}'
-            l_done = f'known_mod_done_{lid}'
+            dynamic_divisor = rhs_const is None
+            l_fail = f'known_mod_fail_{lid}' if dynamic_divisor else None
+            l_done = f'known_mod_done_{lid}' if dynamic_divisor else None
+            l_divide = f'known_mod_divide_{lid}' if dynamic_divisor else None
             a.mov_rax_r10()
             a.sar_rax_imm8(3)
             if rhs_const is not None and -(1 << 31) <= rhs_const < (1 << 31):
                 a.mov_r64_imm64('r11', int(rhs_const))
             else:
                 a.sar_r64_imm8('r11', 3)
-                a.test_r64_r64('r11', 'r11')
-                a.jcc('e', l_fail)
+                if dynamic_divisor:
+                    a.test_r64_r64('r11', 'r11')
+                    a.jcc('e', l_fail)
+                    # idiv overflows for the minimum signed value divided by
+                    # -1, while MiniLang modulo must simply return zero.
+                    a.cmp_r64_imm('r11', -1)
+                    a.jcc('ne', l_divide)
+                    a.xor_r32_r32('edx', 'edx')
+                    a.jmp(l_ok)
+                    a.mark(l_divide)
             a.cqo()
             a.idiv_r64('r11')
             a.test_r64_r64('rdx', 'rdx')
@@ -596,10 +650,11 @@ class CodegenExpr:
             a.mov_r64_r64('rax', 'rdx')
             a.shl_rax_imm8(3)
             a.or_rax_imm8(TAG_INT)
-            a.jmp(l_done)
-            a.mark(l_fail)
-            a.mov_rax_imm64(enc_void())
-            a.mark(l_done)
+            if dynamic_divisor:
+                a.jmp(l_done)
+                a.mark(l_fail)
+                a.mov_rax_imm64(enc_void())
+                a.mark(l_done)
             return True
         if op in ('&', '|', '^'):
             a.mov_rax_r10()
@@ -618,6 +673,7 @@ class CodegenExpr:
                     return True
                 a.mov_rax_r10()
                 a.sar_rax_imm8(3)
+                # Match the masking performed by x64 variable shifts.
                 shift = int(rhs_const) & 63
                 if shift:
                     if op == '<<':
@@ -3606,6 +3662,7 @@ class CodegenExpr:
 
                 elif e.op == '%':
                     # integer modulo with Python semantics: remainder has sign of divisor
+                    l_mod_ok = f"mod_ok_{lid}"
                     a.mov_rax_r10()
                     a.sar_rax_imm8(3)
                     a.sar_r64_imm8("r11", 3)  # sar r11,3
@@ -3613,12 +3670,17 @@ class CodegenExpr:
                     # modulo by 0 -> fail (avoid CPU exception)
                     a.test_r64_r64("r11", "r11")  # test r11,r11
                     a.jcc('e', l_fail)
+                    l_mod_divide = f"mod_divide_{lid}"
+                    a.cmp_r64_imm("r11", -1)
+                    a.jcc('ne', l_mod_divide)
+                    a.xor_r32_r32("edx", "edx")
+                    a.jmp(l_mod_ok)
+                    a.mark(l_mod_divide)
                     a.cqo()  # cqo
                     a.idiv_r64("r11")  # idiv r11
 
                     # rdx = remainder (CPU remainder, sign of dividend). Adjust to Python semantics:
                     # if rdx != 0 and sign(rdx) != sign(divisor) then rdx += divisor
-                    l_mod_ok = f"mod_ok_{lid}"
                     a.test_r64_r64("rdx", "rdx")  # test rdx,rdx
                     a.jcc('e', l_mod_ok)
                     a.mov_r64_r64("rax", "rdx")  # mov rax,rdx
@@ -6238,6 +6300,8 @@ class CodegenExpr:
                 arg = e.args[0]
                 known_lbl = self._opt_try_known_type_label(arg, detailed=False)
                 if isinstance(known_lbl, str) and known_lbl:
+                    if not self._opt_type_query_can_elide_evaluation(arg):
+                        self.emit_expr(arg)
                     a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return
@@ -6270,6 +6334,8 @@ class CodegenExpr:
                 arg = e.args[0]
                 known_lbl = self._opt_try_known_type_label(arg, detailed=True)
                 if isinstance(known_lbl, str) and known_lbl:
+                    if not self._opt_type_query_can_elide_evaluation(arg):
+                        self.emit_expr(arg)
                     a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return

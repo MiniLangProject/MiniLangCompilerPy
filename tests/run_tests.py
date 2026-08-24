@@ -2893,7 +2893,8 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
         rr = run_exe(exe, timeout_s=180)
         if rr.returncode == 999:
             return TestResult(name=name, status="SKIP", details=rr.stderr, stdout=cr.stdout, stderr=rr.stderr)
-        if rr.returncode != 0 or "[OK] codegen optimizations" not in normalize_out(rr.stdout):
+        runtime_out = normalize_out(rr.stdout)
+        if rr.returncode != 0 or "[OK] codegen optimizations" not in runtime_out or "[FAIL]" in runtime_out:
             return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
                               stdout=rr.stdout, stderr=rr.stderr)
         if not asm_path.exists():
@@ -2989,6 +2990,17 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
                 or "mcall_ic_" in method_asm):
             return TestResult(name=name, status="FAIL",
                               details="known struct method call retained dynamic dispatch or missed inline/direct lowering")
+
+        wide_method_asm = function_block("known_wide_method_call")
+        if (not wide_method_asm or "call fn_user_WideMethodPoint.consume" not in wide_method_asm
+                or "mcall_ic_" in wide_method_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="wide known method call retained dynamic dispatch or lost its direct target")
+
+        invalid_bytes_asm = function_block("invalid_bytes_index")
+        if not invalid_bytes_asm or "idx_fast_bytes_" in invalid_bytes_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="fallible bytes construction received an unsafe bytes index type fact")
 
         strength_asm = function_block("constant_strength_reduction")
         if not strength_asm or "idiv r11" in strength_asm or "imul rax" in strength_asm or ", cl" in strength_asm:
@@ -3870,6 +3882,10 @@ def main() -> int:
     tests.append(
         lambda: test_import_constexpr_ok(name="import: constexpr initializers accepted", mlc_runner=mlc_runner))
     tests.append(lambda: test_const_reassign_rejected(name="const: reassign rejected", mlc_runner=mlc_runner))
+    tests.append(lambda: test_compile_expected_fail(
+        name="constexpr: boolean arithmetic rejected", mlc_runner=mlc_runner,
+        entry_ml=mlc_runner.parent / "tests" / "constexpr_bool_arithmetic_invalid.ml",
+        must_contain_err="not constexpr-evaluable"))
     tests.append(lambda: test_enum_autoinc_ignores_strings(name="enum: auto-increment ignores strings",
                                                            mlc_runner=mlc_runner))
     tests.append(lambda: test_no_newlines_required(name="syntax: newlines not required", mlc_runner=mlc_runner))

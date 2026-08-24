@@ -15,7 +15,7 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_ST
                           ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
                           ERR_PRINT_UNSUPPORTED, )
 from ..context import BreakableCtx
-from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc_float_immediate
+from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc_float_immediate, wrap_i61
 
 # ============================================================
 # Constexpr / consteval helpers (Step 3)
@@ -101,7 +101,8 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
     bin_cls = getattr(ml, 'Bin', None)
 
     if num_cls is not None and isinstance(expr, num_cls):
-        return getattr(expr, 'value', None)
+        value = getattr(expr, 'value', None)
+        return wrap_i61(value) if isinstance(value, int) and not isinstance(value, bool) else value
     if str_cls is not None and isinstance(expr, str_cls):
         return getattr(expr, 'value', None)
     if bool_cls is not None and isinstance(expr, bool_cls):
@@ -123,16 +124,13 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
         op = getattr(expr, 'op', None)
         v = _eval_constexpr(ml, getattr(expr, 'right', None), env)
         if op == '-':
-            if isinstance(v, bool):
-                v = int(v)
-            if isinstance(v, (int, float)):
-                return -v
+            if isinstance(v, (int, float)) and not isinstance(v, bool):
+                result = -v
+                return wrap_i61(result) if isinstance(result, int) else result
             raise _ConstEvalError('unary - expects number')
         if op == '~':
-            if isinstance(v, bool):
-                v = int(v)
-            if isinstance(v, int):
-                return (~v)
+            if isinstance(v, int) and not isinstance(v, bool):
+                return wrap_i61(~v)
             raise _ConstEvalError('~ expects int')
         if op == 'not':
             return (not _truthy(v))
@@ -148,12 +146,10 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
             if prev_qn not in env:
                 raise _ConstEvalError(f"enum auto-increment previous value not resolved: {prev_qn}")
             pv = env[prev_qn]
-            if isinstance(pv, bool):
-                pv = int(pv)
-            if not isinstance(pv, int):
+            if not isinstance(pv, int) or isinstance(pv, bool):
                 # Marker string expected by Step-6 regression tests.
                 raise _ConstEvalError(f"cannot auto-increment after non-int ({prev_qn})")
-            return int(pv) + 1
+            return wrap_i61(int(pv) + 1)
 
         op = getattr(expr, 'op', None)
         a = _eval_constexpr(ml, getattr(expr, 'left', None), env)
@@ -182,66 +178,65 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
 
         # arithmetic / bitwise
         if op in ('+', '-', '*', '/', '%', '|', '^', '&', '<<', '>>'):
-            # normalize bool -> int for numeric contexts
-            if isinstance(a, bool):
-                a = int(a)
-            if isinstance(b, bool):
-                b = int(b)
-
             if op == '+':
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                if (isinstance(a, (int, float)) and not isinstance(a, bool)
+                        and isinstance(b, (int, float)) and not isinstance(b, bool)):
                     r = a + b
                     # normalize exact integral float to int (matches runtime normalize)
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 if isinstance(a, str) and isinstance(b, str):
                     return a + b
                 raise _ConstEvalError('+ expects both numbers or both strings')
             if op == '-':
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                if (isinstance(a, (int, float)) and not isinstance(a, bool)
+                        and isinstance(b, (int, float)) and not isinstance(b, bool)):
                     r = a - b
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 raise _ConstEvalError('- expects numbers')
             if op == '*':
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                if (isinstance(a, (int, float)) and not isinstance(a, bool)
+                        and isinstance(b, (int, float)) and not isinstance(b, bool)):
                     r = a * b
                     if isinstance(r, float) and r.is_integer():
-                        return int(r)
-                    return r
+                        return wrap_i61(int(r))
+                    return wrap_i61(r) if isinstance(r, int) else r
                 raise _ConstEvalError('* expects numbers')
             if op == '/':
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                if (isinstance(a, (int, float)) and not isinstance(a, bool)
+                        and isinstance(b, (int, float)) and not isinstance(b, bool)):
                     if b == 0:
                         raise _ConstEvalError('division by zero')
                     r = float(a) / float(b)
                     if r.is_integer():
-                        return int(r)
+                        return wrap_i61(int(r))
                     return r
                 raise _ConstEvalError('/ expects numbers')
             if op == '%':
-                if isinstance(a, int) and isinstance(b, int):
+                if isinstance(a, int) and not isinstance(a, bool) and isinstance(b, int) and not isinstance(b, bool):
                     if b == 0:
                         raise _ConstEvalError('mod by zero')
-                    return a % b
+                    return wrap_i61(a % b)
                 raise _ConstEvalError('% expects ints')
             if op in ('|', '^', '&'):
-                if isinstance(a, int) and isinstance(b, int):
+                if isinstance(a, int) and not isinstance(a, bool) and isinstance(b, int) and not isinstance(b, bool):
                     if op == '|':
-                        return a | b
+                        return wrap_i61(a | b)
                     if op == '^':
-                        return a ^ b
-                    return a & b
+                        return wrap_i61(a ^ b)
+                    return wrap_i61(a & b)
                 raise _ConstEvalError(f"{op} expects ints")
             if op in ('<<', '>>'):
-                if isinstance(a, int) and isinstance(b, int):
+                if isinstance(a, int) and not isinstance(a, bool) and isinstance(b, int) and not isinstance(b, bool):
                     if b < 0:
                         raise _ConstEvalError('negative shift')
+                    shift = b & 63
                     if op == '<<':
-                        return a << b
-                    return a >> b
+                        return wrap_i61(a << shift)
+                    return wrap_i61(a >> shift)
                 raise _ConstEvalError('shift expects ints')
 
         raise _ConstEvalError(f"unsupported binop {op}")
@@ -1023,11 +1018,19 @@ class CodegenStmt:
                     return 'bool'
                 if op in ('and', 'or') and lb and rb:
                     return 'bool'
-                if op in ('&', '|', '^', '<<', '>>') and lb == rb == 'int':
+                right = getattr(expr, 'right', None)
+                if op in ('&', '|', '^') and lb == rb == 'int':
                     return 'int'
-                if op in ('+', '-', '*', '%') and lb == rb == 'int':
+                if op in ('<<', '>>') and lb == rb == 'int' and self._opt_const_nonnegative_int(right):
                     return 'int'
-                if op in ('+', '-', '*', '/', '%') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                if op in ('+', '-', '*') and lb == rb == 'int':
+                    return 'int'
+                if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                    return 'int'
+                if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                    return 'number'
+                if (op in ('/', '%') and lb in ('int', 'float', 'number')
+                        and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right)):
                     return 'number'
                 return None
             if isinstance(expr, getattr(ml, 'Index', ())):
@@ -1051,14 +1054,23 @@ class CodegenStmt:
                 if raw in ('bytes', 'byteBuffer'):
                     if len(args) == 0:
                         return 'bytes:0'
-                    if len(args) in (1, 2):
-                        try:
-                            size = self._opt_try_const_int(args[0])
-                        except Exception:
-                            size = None
-                        if isinstance(size, int) and size >= 0:
+                    if len(args) == 1:
+                        size = self._opt_try_const_int(args[0])
+                        if isinstance(size, int) and 0 <= size <= 0x7FFFFFFF:
                             return f'bytes:{size}'
-                    return 'bytes'
+                        arg_type = infer_expr(args[0], known)
+                        arg_base = self._value_type_base(arg_type)
+                        if arg_base == 'string':
+                            return 'bytes'
+                        if arg_base == 'bytes':
+                            return arg_type
+                    if len(args) == 2:
+                        size = self._opt_try_const_int(args[0])
+                        fill = self._opt_try_const_int(args[1])
+                        if (isinstance(size, int) and 0 <= size <= 0x7FFFFFFF
+                                and isinstance(fill, int) and 0 <= fill <= 255):
+                            return f'bytes:{size}'
+                    return None
                 if name:
                     return 'struct:' + name
             return None
@@ -4216,7 +4228,7 @@ class CodegenStmt:
             return
 
         # Unsupported statements for now
-        raise self.error(f"Unsupported statement in native compiler v0.4: {type(s).__name__}", s)
+        raise self.error(f"Unsupported statement in native backend: {type(s).__name__}", s)
 
     # ---------- program ----------
 
@@ -5626,13 +5638,6 @@ class CodegenStmt:
             m = 0
             if e is None:
                 return 0
-                # Struct member read: obj.field
-                if hasattr(ml, 'Member') and isinstance(e, ml.Member):
-                    t = getattr(e, 'target', None)
-                    if t is None:
-                        t = getattr(e, 'obj', None)
-                    analyze_expr(t)
-                    return
 
             if isinstance(e, ml.Call):
                 call_arity = len(e.args)

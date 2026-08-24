@@ -288,7 +288,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **97 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **104 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -324,12 +324,13 @@ Retail Quake data passed a 120-frame runtime smoke and deterministic trace; a
 rendered FPS. The object writer preserves the stream-wide inline budget across
 fragments and filters local return/defer labels out of helper discovery.
 
-The 1.1.0 self-host source reaches a binary fixed point: Stage 2 and Stage 3
-are byte-identical 55,712,256-byte compiler images with SHA-256
-`431C7E74BB0A200EA17BB1831D726C8CB5755DB3008A07687916375E717AD71F`.
-The Python-built Stage 1 has the same size but a different layout. The parity
-report therefore distinguishes the bootstrap image, the measured self-hosted
-fixed point and byte-identical target output explicitly.
+The current reviewed 1.1.0 self-host source reaches a binary fixed point:
+Stage 2 and Stage 3 are byte-identical 56,525,312-byte compiler images with
+SHA-256
+`BA5286D04184C3C9BD74E8EAE44BD41B7FD4AF7777810B10757CDB39969E9AE6`.
+The Python-built Stage 1 is a 56,525,824-byte bootstrap image with a different
+layout. The parity report therefore distinguishes the bootstrap image, the
+measured self-hosted fixed point and byte-identical target output explicitly.
 
 
 ---
@@ -2401,7 +2402,9 @@ Optimizations (always-on, conservative):
   direct tagged integer operations, numeric-only float arithmetic, bool
   conditions, fixed-offset struct fields and type-specialized indexing.
   Parameters, captured/boxed, synchronized, global or otherwise ambiguous
-  values retain the generic checked path.
+  values retain the generic checked path. Fallible division, modulo, shifts
+  and byte-buffer construction receive facts only when their runtime validity
+  is statically proven.
 - **Known-receiver method devirtualization**: a method call on a local whose
   concrete struct type is proven becomes a direct call. Eligible `inline`
   methods can then expand at the call site; ambiguous receivers retain the
@@ -2411,9 +2414,12 @@ Optimizations (always-on, conservative):
   Their stack slots remain canonical for diagnostics and interop, and the full
   128-bit caller register values are preserved according to the Win64 ABI.
 - **Constant integer strength reduction**: tagged additions/subtractions use
-  immediates, constant multiplication uses identity/negation/shift or immediate
-  multiply forms, positive power-of-two modulo uses a mask, and constant shifts
-  avoid the CL setup. Dynamic and unsafe cases retain the checked helpers.
+  immediates, constant multiplication uses zero/identity/negation/shift or
+  immediate multiply forms, positive power-of-two modulo uses a mask, and
+  constant shifts avoid the CL setup. Dynamic or otherwise unproven cases
+  retain the generic checked code paths. Compile-time integer evaluation wraps
+  after every operation to the signed 61-bit payload and masks nonnegative x64
+  shift counts exactly like generated code.
 - **Loop specialization and bounds-check elimination**: small constant `for`
   loops can be unrolled; larger constant-bound loops avoid dynamic end/direction
   state. For a fixed-length local array or bytes value, an inclusive range
