@@ -175,6 +175,7 @@ class CodegenThreads:
         l_done = f'gcsafe_done_{lid}'
         l_wait = f'gcsafe_wait_{lid}'
         l_recheck = f'gcsafe_recheck_{lid}'
+        l_park = f'gcsafe_park_{lid}'
         l_resume = f'gcsafe_resume_{lid}'
         a.mov_rax_rip_qword('gc_requested')
         a.test_r64_r64('rax', 'rax')
@@ -186,6 +187,7 @@ class CodegenThreads:
         a.mov_rax_rip_qword('gc_requested')
         a.test_r64_r64('rax', 'rax')
         a.jcc('e', l_resume)
+        a.mark(l_park)
         a.mov_r11_gs_qword_28()
         a.mov_membase_disp_imm32('r11', THREAD_GC_STATE, GC_THREAD_PARKED, qword=False)
         a.lea_rax_rip('gc_coord_monitor')
@@ -206,7 +208,11 @@ class CodegenThreads:
         a.call_rax()
         a.mov_rax_rip_qword('gc_requested')
         a.test_r64_r64('rax', 'rax')
-        a.jcc('ne', l_resume)
+        # A new collection may begin after this thread observed the previous
+        # request clear. Republish PARKED while holding the coordination lock;
+        # otherwise the new collector waits on a RUNNING thread that is itself
+        # waiting for gc_requested to clear.
+        a.jcc('ne', l_park)
         a.mov_r11_gs_qword_28()
         a.mov_membase_disp_imm32('r11', THREAD_GC_STATE, GC_THREAD_RUNNING, qword=False)
         a.mark(l_resume)
@@ -216,7 +222,10 @@ class CodegenThreads:
         a.call_rax()
         a.mov_rax_rip_qword('gc_requested')
         a.test_r64_r64('rax', 'rax')
-        a.jcc('ne', l_wait)
+        # Do not enter the unlocked wait loop while still published RUNNING.
+        # Reacquire the monitor first so l_park can make the transition atomic
+        # with respect to the collector's context scan.
+        a.jcc('ne', l_recheck)
         a.mark(l_done)
         a.add_rsp_imm8(0x28)
         a.ret()

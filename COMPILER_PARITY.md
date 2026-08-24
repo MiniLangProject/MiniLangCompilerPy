@@ -42,23 +42,25 @@ Stage 3 monolithic path and by the Stage 3 `.mlo` path. All three files ran
 successfully and were byte-identical: 1,620,480 bytes, SHA-256
 `6E7BF4DCA93339C95B6EB4587613918053EE827A178A4055124599978FF94C67`.
 
-## Current TLAB fixed-point verification
+## Current TLAB and safepoint fixed-point verification
 
-The post-release TLAB implementation was bootstrapped and self-compiled again
-on 24 August 2026. The compiler image stabilized after the first self-hosted
-stage:
+The post-release TLAB implementation and the back-to-back GC safepoint fix were
+bootstrapped and self-compiled again on 24 August 2026. The compiler image
+stabilized after the first self-hosted stage:
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Stage 1, built by Python | 56,073,216 | `27AB9B3E08DD6960EEBE44656CC31AC1541D4A042D9DC5CB8FA3DC2773511EBA` |
-| Stage 2, built by Stage 1 | 56,073,216 | `B16F0D91838E2AE16060055D2B483F4B78422C75C023930D670C14807D5D600E` |
-| Stage 3, built by Stage 2 | 56,073,216 | `B16F0D91838E2AE16060055D2B483F4B78422C75C023930D670C14807D5D600E` |
+| Stage 1, built by Python | 56,076,800 | `FF9ABB3004E780C7B0CF0295AB5F4CA02197CA508F2C87E51F76C5B0CE222BEE` |
+| Stage 2, built by Stage 1 | 56,076,288 | `4CA9E4030FAC128DCFCDD3AAB6D885C1E29F04DBC9A9DCD006D48EC96682907B` |
+| Stage 3, built by Stage 2 | 56,076,288 | `4CA9E4030FAC128DCFCDD3AAB6D885C1E29F04DBC9A9DCD006D48EC96682907B` |
 
-The dedicated `tlab_shared_heap.ml` target was built by Python, the Stage 3
-monolithic path and the Stage 3 `.mlo` path. All three 122,880-byte executables
-are byte-identical with SHA-256
-`A46033F9D712E70D482A95877170AF73A2B583F5CDA145BF0E62461EE7BEF2FC`
-and pass the shared-heap/refill/retirement runtime test.
+The parallel short-lived-allocation target built by Python and Stage 2 is
+byte-identical at 170,496 bytes with SHA-256
+`191A6FA983B7F9E83236E9AE970DB1174927D7D98F9AAB061AD73B9BC07DC8FB`.
+Its 24-thread, 48-million-allocation workload completed 50 consecutive runs
+without a timeout after the fix. The dedicated back-to-back GC regression is
+also byte-identical at 112,128 bytes with SHA-256
+`F2AE65320F4A92C2EA5232B04F4CE8B83BC335DDF552870FD50DEBDD38468F82`.
 
 ## Historical regression binary record
 

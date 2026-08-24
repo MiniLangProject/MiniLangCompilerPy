@@ -28,3 +28,21 @@ throughput in MiB/s, live-heap change, and committed-heap change.
 These are diagnostic measurements, not fixed pass/fail performance tests.
 Record at least five runs per revision and compare medians. A change is
 actionable only when it repeats outside ordinary run-to-run noise.
+
+## Parallel allocation churn
+
+`thread_allocation_churn.ml` starts 1, 2, 4, 8, 12 or 24 native workers behind
+a common start barrier. Every worker performs one million iterations with two
+small managed allocations while retaining only a bounded 256-entry ring. This
+exercises TLAB refills, frequent collection of short-lived graphs and
+stop-the-world coordination under server-style allocation pressure.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\thread_allocation_churn.ml .\build\thread_allocation_churn.exe
+.\build\thread_allocation_churn.exe 24
+```
+
+The program validates thread completion and result checksums, then reports the
+managed workload time, allocation count and post-collection heap counters. Run
+separate processes repeatedly; a timeout or non-zero exit is a correctness
+failure, not a performance sample.

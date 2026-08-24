@@ -3040,6 +3040,23 @@ def test_tlab_shared_heap_codegen(*, name: str, mlc_runner: Path, ml_path: Path)
         if "call fn_heap_enter" in fast_path or "call fn_heap_leave" in fast_path:
             return TestResult(name=name, status="FAIL",
                               details="TLAB cursor fast path retained central heap locking")
+
+        safepoint_start = listing.find("fn_gc_safepoint:")
+        safepoint_end = listing.find("\nfn_", safepoint_start + len("fn_gc_safepoint:"))
+        safepoint = "" if safepoint_start < 0 else listing[
+            safepoint_start:(None if safepoint_end < 0 else safepoint_end)
+        ]
+        # A resumed thread that observes an immediately following collection
+        # must reacquire the coordination monitor and republish PARKED. Jumping
+        # straight into the unlocked wait loop leaves it published RUNNING and
+        # deadlocks the collector against the waiting worker.
+        for required in (r"\bjne gcsafe_park_\d+", r"\bjne gcsafe_recheck_\d+"):
+            if re.search(required, safepoint) is None:
+                return TestResult(
+                    name=name, status="FAIL",
+                    details="GC safepoint does not republish PARKED for back-to-back collections",
+                    stdout=rr.stdout, stderr=safepoint,
+                )
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
 
@@ -3427,6 +3444,7 @@ def main() -> int:
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
     tlab_shared_heap_ml = find_file_by_name(tests_root, "tlab_shared_heap.ml")
+    gc_back_to_back_safepoint_ml = find_file_by_name(tests_root, "gc_back_to_back_safepoint.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
     thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
     type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
@@ -3514,6 +3532,17 @@ def main() -> int:
         tests.append(lambda: TestResult(
             name="tlab_shared_heap.ml (thread-local allocation buffers)", status="SKIP",
             details="tlab_shared_heap.ml not found"))
+
+    if gc_back_to_back_safepoint_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="gc_back_to_back_safepoint.ml (GC resume publication)",
+            mlc_runner=mlc_runner, ml_path=gc_back_to_back_safepoint_ml,
+            must_contain=["[OK] back-to-back GC safepoint state publication"],
+            timeout_compile_s=120, timeout_run_s=30))
+    else:
+        tests.append(lambda: TestResult(
+            name="gc_back_to_back_safepoint.ml (GC resume publication)", status="SKIP",
+            details="gc_back_to_back_safepoint.ml not found"))
 
     if threading_stdlib_ml is not None:
         tests.append(lambda: test_program_no_fail(

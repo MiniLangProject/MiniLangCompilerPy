@@ -8,6 +8,8 @@ All notable changes to the MiniLang compiler are documented here.
   per-thread stacks, cooperative stop-the-world GC and synchronization.
 - Added 64 KiB thread-local allocation buffers for lock-free small-object
   allocation in threaded programs while preserving the single global heap.
+- Fixed a rare high-CPU safepoint livelock under back-to-back collections by
+  atomically republishing resumed workers as parked for the next GC request.
 - Added thread arguments, logical thread IDs, status inspection, worker pools,
   locks, semaphores and thread-safe list, hash map and shared-value modules.
 - Added `defer`, native FFI output parameters and project manifests with

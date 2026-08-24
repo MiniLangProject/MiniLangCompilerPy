@@ -1071,6 +1071,12 @@ thread context, retires all TLAB ownership, and then sweeps the ordinary shared
 heap block chain. A terminating worker returns its unused TLAB tail to the
 central free list.
 
+When collections arrive back-to-back, a worker that observes the next request
+while resuming reacquires the coordination monitor and republishes `Parked`
+before waiting again. This keeps the collector's context scan and the worker's
+wait state consistent even during sustained allocation churn at full hardware
+thread concurrency.
+
 Each thread context also retains its four most recent allocation results as
 handoff roots. This closes the short lifetime gap while nested object graphs
 are being assembled, before a precise stack or global root owns them. These
