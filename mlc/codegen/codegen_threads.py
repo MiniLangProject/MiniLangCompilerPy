@@ -20,12 +20,21 @@ THREAD_ROOTS = 48
 THREAD_TMP0 = 56
 THREAD_NEXT = 120
 THREAD_GC_STATE = 128
-THREAD_ALLOC_CURSOR = 136
+# Cursor for the four allocation-handoff root slots at THREAD_TMP0+32.  These
+# roots bridge the few instructions between allocator return and publication
+# in a normal stack/global/object root.
+THREAD_HANDOFF_CURSOR = 136
+THREAD_ALLOC_CURSOR = THREAD_HANDOFF_CURSOR  # compatibility alias
 THREAD_ARG = 144
 THREAD_LOGICAL_ID = 152
 THREAD_ARITY = 160
 THREAD_HEAP_BYPASS_DEPTH = 168
-THREAD_CONTEXT_SIZE = 176
+# Thread-local allocation buffers are ranges carved from the process-wide GC
+# heap.  The cursor always names either the current free-tail header or END.
+THREAD_TLAB_START = 176
+THREAD_TLAB_CURSOR = 184
+THREAD_TLAB_END = 192
+THREAD_CONTEXT_SIZE = 200
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -85,11 +94,14 @@ class CodegenThreads:
             a.mov_membase_disp_imm32('rax', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_NEXT, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_RUNNING, qword=False)
-        a.mov_membase_disp_imm32('rax', THREAD_ALLOC_CURSOR, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_LOGICAL_ID, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ARITY, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
         a.mov_rip_qword_rax('thread_contexts_head')
         a.xor_r32_r32('eax', 'eax')
         a.mov_rip_qword_rax('gc_requested')
@@ -549,13 +561,16 @@ class CodegenThreads:
         for i in range(8):
             a.mov_membase_disp_imm32('rax', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=False)
-        a.mov_membase_disp_imm32('rax', THREAD_ALLOC_CURSOR, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
         a.mov_r64_membase_disp('r11', 'rsp', 0x48)
         a.mov_membase_disp_r64('rax', THREAD_LOGICAL_ID, 'r11')
         a.mov_r32_membase_disp('r11d', 'rsp', 0x40)
         a.mov_membase_disp_r32('rax', THREAD_ARITY, 'r11d')
         a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
         # Contexts remain registered for the process lifetime. Close() clears
         # their managed roots, so registration itself cannot retain user data.
         a.lea_rax_rip('gc_coord_monitor')
@@ -818,6 +833,9 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('r11', THREAD_RESULT, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_LOGICAL_ID, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TLAB_START, 0, qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TLAB_CURSOR, 0, qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TLAB_END, 0, qword=True)
         for i in range(8):
             a.mov_membase_disp_imm32('r11', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_rax_imm64(enc_bool(True))
@@ -860,7 +878,8 @@ class CodegenThreads:
     def emit_thread_entry_function(self) -> None:
         """Emit the Win32-to-managed callback bridge and result publication."""
 
-        self.used_helpers.update({'fn_gc_native_leave', 'fn_gc_managed_exit'})
+        # fn_alloc also emits the private TLAB-retirement helper used below.
+        self.used_helpers.update({'fn_gc_native_leave', 'fn_gc_managed_exit', 'fn_alloc'})
         a = self.asm
         a.mark('fn_thread_entry')
         a.push_reg('rbx')
@@ -923,6 +942,7 @@ class CodegenThreads:
         # The stack-root chain is empty after the user function epilogue. Mark
         # the context inactive; its published result remains a registered root
         # until Close() clears it.
+        a.call('tlab_retire_internal')
         a.call('fn_gc_managed_exit')
         self._emit_managed_thread_count_delta(-1)
         a.xor_r32_r32('eax', 'eax')

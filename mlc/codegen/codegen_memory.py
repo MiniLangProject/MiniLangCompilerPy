@@ -39,6 +39,21 @@ HEAP_GROW_MIN = 0x01000000  # 16 MiB
 # Allocator / free-list
 ALLOC_MIN_SPLIT = 32  # smallest remainder block when splitting free blocks (bytes)
 
+# Thread-local allocation buffers.  A TLAB is a range inside the one shared
+# heap, not a private heap.  Small objects split the range's always-valid free
+# tail without taking the process-wide heap monitor; refills and retirement use
+# the central allocator.  The duplicated context offsets are kept in sync with
+# codegen_threads.py to avoid a circular mixin import.
+TLAB_SIZE = 0x10000  # 64 KiB including GC block headers
+# Keep the lock-free path aligned with the runtime's young-object class;
+# larger arrays/strings/byte buffers retain exact central allocation handling.
+TLAB_MAX_OBJECT_SIZE = 0x100
+THREAD_HANDOFF_CURSOR_OFFSET = 136
+THREAD_HANDOFF_ROOT_BASE_OFFSET = 88
+THREAD_TLAB_START_OFFSET = 176
+THREAD_TLAB_CURSOR_OFFSET = 184
+THREAD_TLAB_END_OFFSET = 192
+
 # GC
 GC_MARK_STACK_QWORDS = 8388608  # 8388608*8 = 64 MiB mark stack for very large compiler/runtime object graphs
 GC_DEFAULT_BYTES_LIMIT = 64 << 20  # 64 MiB periodic GC trigger (if enabled)
@@ -461,16 +476,211 @@ class CodegenMemory:
                 r.add_str("oom_used", "used=", add_newline=False)
             if "oom_nl" not in r.labels:
                 r.add_str("oom_nl", "\n", add_newline=False)
+        # ------------------------------------------------------------
+        # Public TLAB wrapper
+        # ------------------------------------------------------------
+        # Small allocations split a free tail owned exclusively by the current
+        # thread.  There are no calls or safepoints while the two headers and
+        # cursor are updated, so the cooperative collector observes either the
+        # old or the new fully formatted block chain.
+        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
         a.mark("fn_alloc")
+        # Closed single-threaded programs deliberately do not initialize the
+        # GS allocation context.  Bypass TLAB code at compile time instead of
+        # treating Windows' otherwise arbitrary TEB user-pointer slot as ours.
+        if not threaded_heap:
+            a.xor_r32_r32("edx", "edx")
+            a.jmp("alloc_slow_internal")
+        lid_tlab = self.new_label_id()
+        l_tlab_refill = f"tlab_refill_{lid_tlab}"
+        l_tlab_consume = f"tlab_consume_{lid_tlab}"
+        l_tlab_return = f"tlab_return_{lid_tlab}"
+        l_tlab_refill_consume = f"tlab_refill_consume_{lid_tlab}"
+        l_tlab_refill_return = f"tlab_refill_return_{lid_tlab}"
+        l_alloc_direct = f"alloc_direct_slow_{lid_tlab}"
+
+        # r10 = aligned block bytes, including the GC header.
+        a.mov_r64_r64("r10", "rcx")
+        a.add_r64_imm("r10", GC_HEADER_SIZE + 7)
+        a.and_r64_imm("r10", -8)
+        a.cmp_r64_imm("r10", TLAB_MAX_OBJECT_SIZE)
+        a.jcc("a", l_alloc_direct)
+
+        a.mov_r11_gs_qword_28()
+        a.test_r64_r64("r11", "r11")
+        a.jcc("e", l_alloc_direct)
+        a.mov_r64_membase_disp("rax", "r11", THREAD_TLAB_CURSOR_OFFSET)
+        a.test_r64_r64("rax", "rax")
+        a.jcc("e", l_tlab_refill)
+        a.mov_r64_membase_disp("rdx", "r11", THREAD_TLAB_END_OFFSET)
+        a.cmp_r64_r64("rax", "rdx")
+        a.jcc("ae", l_tlab_refill)
+
+        # r8 = available tail bytes; rcx = remainder after this allocation.
+        a.mov_r64_r64("r8", "rdx")
+        a.sub_r64_r64("r8", "rax")
+        a.cmp_r64_r64("r8", "r10")
+        a.jcc("b", l_tlab_refill)
+        a.mov_r64_r64("rcx", "r8")
+        a.sub_r64_r64("rcx", "r10")
+        a.test_r64_r64("rcx", "rcx")
+        a.jcc("e", l_tlab_consume)
+        a.cmp_r64_imm("rcx", ALLOC_MIN_SPLIT)
+        a.jcc("b", l_tlab_consume)
+
+        # Keep the remainder parseable as a free block, but do not publish it
+        # in gc_free_head while the owning thread can still bump through it.
+        a.mov_r64_r64("rdx", "rax")
+        a.add_r64_r64("rdx", "r10")
+        a.or_r64_imm("rcx", GC_BLOCK_FREE_BIT)
+        a.mov_membase_disp_r64("rdx", 0, "rcx")
+        a.mov_membase_disp_r64("rax", 0, "r10")
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_CURSOR_OFFSET, "rdx")
+        a.jmp(l_tlab_return)
+
+        # A sub-minimum remainder is harmless tail slack in the allocated
+        # block, matching the central free-list allocator's no-split rule.
+        a.mark(l_tlab_consume)
+        a.mov_membase_disp_r64("rax", 0, "r8")
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_CURSOR_OFFSET, "rdx")
+
+        a.mark(l_tlab_return)
+        a.add_rax_imm8(GC_HEADER_SIZE)
+        # Publish the result in the existing four-slot handoff ring until the
+        # caller installs its precise managed root.
+        a.mov_r32_membase_disp("r10d", "r11", THREAD_HANDOFF_CURSOR_OFFSET)
+        a.and_r64_imm("r10", 3)
+        a.mov_mem_bis_r64("r11", "r10", 8, THREAD_HANDOFF_ROOT_BASE_OFFSET, "rax")
+        a.inc_r32("r10d")
+        a.mov_membase_disp_r32("r11", THREAD_HANDOFF_CURSOR_OFFSET, "r10d")
+        a.ret()
+
+        # Retire any undersized old tail, reserve a fresh central block, and
+        # turn its first portion into the requested object.  The central path
+        # pre-accounts the whole range for periodic/young GC pressure.
+        a.mark(l_tlab_refill)
+        a.sub_rsp_imm8(0x38)
+        a.mov_membase_disp_r64("rsp", 0x20, "r10")
+        a.call("tlab_retire_internal")
+        a.mov_rcx_imm32(TLAB_SIZE - GC_HEADER_SIZE)
+        a.mov_r32_imm32("edx", 1)  # TLAB refill / young-allocation batch
+        a.call("alloc_slow_internal")
+        a.lea_r64_membase_disp("rdx", "rax", -GC_HEADER_SIZE)  # block header
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r64_membase_disp("rcx", "rdx", 0)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.mov_r11_gs_qword_28()
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_START_OFFSET, "rdx")
+        a.mov_r64_r64("r8", "rdx")
+        a.add_r64_r64("r8", "rcx")
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_END_OFFSET, "r8")
+        a.mov_r64_r64("r9", "rcx")
+        a.sub_r64_r64("r9", "r10")
+        a.cmp_r64_imm("r9", ALLOC_MIN_SPLIT)
+        a.jcc("b", l_tlab_refill_consume)
+        a.mov_r64_r64("r8", "rdx")
+        a.add_r64_r64("r8", "r10")
+        a.mov_r64_r64("rcx", "r9")
+        a.or_r64_imm("rcx", GC_BLOCK_FREE_BIT)
+        a.mov_membase_disp_r64("r8", 0, "rcx")
+        a.mov_membase_disp_r64("rdx", 0, "r10")
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_CURSOR_OFFSET, "r8")
+        a.jmp(l_tlab_refill_return)
+
+        a.mark(l_tlab_refill_consume)
+        # RCX is the actual central block size and R8 is its end.
+        a.mov_membase_disp_r64("rdx", 0, "rcx")
+        a.mov_membase_disp_r64("r11", THREAD_TLAB_CURSOR_OFFSET, "r8")
+        a.mark(l_tlab_refill_return)
+        a.lea_r64_membase_disp("rax", "rdx", GC_HEADER_SIZE)
+        a.add_rsp_imm8(0x38)
+        a.ret()
+
+        # Large objects bypass TLABs and retain exact central-allocation
+        # accounting.  RDX=0 distinguishes them from batched refills.
+        a.mark(l_alloc_direct)
+        a.xor_r32_r32("edx", "edx")
+        a.jmp("alloc_slow_internal")
+
+        # ------------------------------------------------------------
+        # TLAB retirement
+        # ------------------------------------------------------------
+        # This private helper returns a live free tail to gc_free_head.  If a
+        # collection wins while fn_heap_enter parks us, the collector clears
+        # all TLAB cursors and rebuilds the free list; the locked recheck then
+        # avoids inserting the block twice.
+        a.mark("tlab_retire_internal")
+        if not threaded_heap:
+            a.ret()
+        lid_retire = self.new_label_id()
+        l_retire_clear = f"tlab_retire_clear_{lid_retire}"
+        l_retire_locked_empty = f"tlab_retire_locked_empty_{lid_retire}"
+        l_retire_done = f"tlab_retire_done_{lid_retire}"
+        a.sub_rsp_imm8(0x28)
+        a.mov_r11_gs_qword_28()
+        a.test_r64_r64("r11", "r11")
+        a.jcc("e", l_retire_done)
+        a.mov_r64_membase_disp("r8", "r11", THREAD_TLAB_CURSOR_OFFSET)
+        a.mov_r64_membase_disp("r9", "r11", THREAD_TLAB_END_OFFSET)
+        a.test_r64_r64("r8", "r8")
+        a.jcc("e", l_retire_clear)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("ae", l_retire_clear)
+        if threaded_heap:
+            a.call("fn_heap_enter")
+        a.mov_r11_gs_qword_28()
+        a.mov_r64_membase_disp("r8", "r11", THREAD_TLAB_CURSOR_OFFSET)
+        a.mov_r64_membase_disp("r9", "r11", THREAD_TLAB_END_OFFSET)
+        a.test_r64_r64("r8", "r8")
+        a.jcc("e", l_retire_locked_empty)
+        a.cmp_r64_r64("r8", "r9")
+        a.jcc("ae", l_retire_locked_empty)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_START_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_END_OFFSET, 0, qword=True)
+        a.mov_r64_r64("r10", "r9")
+        a.sub_r64_r64("r10", "r8")
+        a.or_r64_imm("r10", GC_BLOCK_FREE_BIT)
+        a.mov_membase_disp_r64("r8", 0, "r10")
+        a.mov_rax_rip_qword("gc_free_head")
+        a.mov_membase_disp_r64("r8", GC_OFF_NEXT_FREE, "rax")
+        a.mov_r64_r64("rax", "r8")
+        a.mov_rip_qword_rax("gc_free_head")
+        if threaded_heap:
+            a.call("fn_heap_leave")
+        a.jmp(l_retire_done)
+
+        a.mark(l_retire_locked_empty)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_START_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_END_OFFSET, 0, qword=True)
+        if threaded_heap:
+            a.call("fn_heap_leave")
+        a.jmp(l_retire_done)
+
+        a.mark(l_retire_clear)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_START_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
+        a.mov_membase_disp_imm32("r11", THREAD_TLAB_END_OFFSET, 0, qword=True)
+        a.mark(l_retire_done)
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
+        # ------------------------------------------------------------
+        # Central slow allocator
+        # ------------------------------------------------------------
+        a.mark("alloc_slow_internal")
 
         # Win64 ABI: reserve 32B shadow space + locals, keep 16-byte alignment for calls.
-        # Entry RSP is 8 mod 16. Sub 0x48 => 0 mod 16.
-        a.sub_rsp_imm8(0x48)
+        # Entry RSP is 8 mod 16. Sub 0x58 => 0 mod 16.
+        a.sub_rsp_imm8(0x58)
 
         # save original requested payload bytes (RCX) for OOM diagnostics
         a.mov_r64_r64("rax", "rcx")
         a.mov_rsp_disp32_rax(0x38)
-        threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        # RDX is set by the public wrapper: 1 means the request reserves a
+        # batch of young allocations for a TLAB, 0 means an ordinary object.
+        a.mov_membase_disp_r64("rsp", 0x48, "rdx")
         if threaded_heap:
             self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
             a.call('fn_heap_enter')
@@ -629,6 +839,7 @@ class CodegenMemory:
         l_retry = f"alloc_retry_{lid0}"
         l_periodic_done = f"alloc_periodic_done_{lid0}"
         l_young_skip = f"alloc_young_skip_{lid0}"
+        l_young_account = f"alloc_young_account_{lid0}"
         l_try_free = f"alloc_try_free_{lid0}"
         l_free_loop = f"alloc_free_loop_{lid0}"
         l_free_advance = f"alloc_free_adv_{lid0}"
@@ -666,8 +877,12 @@ class CodegenMemory:
         # Small-object pressure trigger: bias collections toward bursts of tiny
         # allocations that are likely to die young, while keeping the collector
         # semantics unchanged (still a full mark/sweep collection).
+        a.mov_r64_membase_disp("r11", "rsp", 0x48)
+        a.test_r64_r64("r11", "r11")
+        a.jcc("ne", l_young_account)
         a.cmp_r64_imm("rcx", GC_YOUNG_OBJECT_MAX_BYTES)
         a.jcc("a", l_young_skip)
+        a.mark(l_young_account)
         a.mov_rax_rip_qword("gc_young_bytes_since")
         a.mov_r64_r64("r10", "rax")
         a.add_r64_r64("r10", "rcx")
@@ -798,7 +1013,7 @@ class CodegenMemory:
             a.mov_membase_disp_r32("r11", 136, "r10d")
         if threaded_heap:
             a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x48)
+        a.add_rsp_imm8(0x58)
         a.ret()
 
         # ------------------------------------------------------------
@@ -1016,7 +1231,7 @@ class CodegenMemory:
 
         if threaded_heap:
             a.call('fn_heap_leave')
-        a.add_rsp_imm8(0x48)
+        a.add_rsp_imm8(0x58)
         a.ret()
 
     def ensure_gc_data(self) -> None:
@@ -1372,6 +1587,14 @@ class CodegenMemory:
             a.mark(L_CONTEXT_LOOP)
             a.test_r64_r64('rdi', 'rdi')
             a.jcc('e', L_MARK_LOOP)
+            # The world is stopped and heap metadata is serialized.  Retire all
+            # TLAB ownership before sweeping: their free-tail headers are
+            # already valid, and pass 2 will coalesce/link them normally.  A
+            # resumed thread must refill instead of using a range the sweep may
+            # have reclaimed or moved behind the lowered heap_ptr.
+            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_START_OFFSET, 0, qword=True)
+            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
+            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_END_OFFSET, 0, qword=True)
             a.mov_r64_membase_disp('rax', 'rdi', 24)
             a.call(L_MARK_VALUE)
             a.mov_r64_membase_disp('rax', 'rdi', 40)

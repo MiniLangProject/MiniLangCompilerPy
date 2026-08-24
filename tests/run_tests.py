@@ -3006,6 +3006,43 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
 
+def test_tlab_shared_heap_codegen(*, name: str, mlc_runner: Path, ml_path: Path) -> TestResult:
+    """Exercise TLAB runtime semantics and verify the lock-free allocator shape."""
+    with tempfile.TemporaryDirectory(prefix="mltests_tlab_") as td:
+        td_path = Path(td)
+        exe = td_path / "tlab_shared_heap.exe"
+        asm_path = td_path / "tlab_shared_heap.asm"
+        cr = compile_native(
+            mlc_runner, ml_path, exe, timeout_s=180,
+            extra_args=['--asm', '--asm-out', str(asm_path)],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        marker = "[OK] TLAB shared-heap allocation, refill and retirement"
+        if rr.returncode != 0 or marker not in normalize_out(rr.stdout):
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        if not asm_path.exists():
+            return TestResult(name=name, status="FAIL", details="compiler did not emit requested .asm listing")
+
+        listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
+        for required in ("fn_alloc:", "tlab_refill_", "tlab_retire_internal:",
+                         "fn_heap_enter:", "gc_context_loop_"):
+            if required not in listing:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"generated TLAB runtime is missing {required}")
+        alloc_start = listing.find("fn_alloc:")
+        refill_start = listing.find("tlab_refill_", alloc_start)
+        fast_path = listing[alloc_start:refill_start]
+        if "call fn_heap_enter" in fast_path or "call fn_heap_leave" in fast_path:
+            return TestResult(name=name, status="FAIL",
+                              details="TLAB cursor fast path retained central heap locking")
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
+
+
 def test_codegen_box_float_safepoint_spill(*, name: str, mlc_runner: Path) -> TestResult:
     """fn_box_float must preserve its volatile XMM0 input across fn_alloc."""
     src = mlc_runner.parent / "tests" / "gc_box_float_safepoint.ml"
@@ -3389,6 +3426,7 @@ def main() -> int:
     native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
+    tlab_shared_heap_ml = find_file_by_name(tests_root, "tlab_shared_heap.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
     thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
     type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
@@ -3467,6 +3505,15 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="thread_features.ml (native threads + synchronization)", status="SKIP",
                                         details="thread_features.ml not found"))
+
+    if tlab_shared_heap_ml is not None:
+        tests.append(lambda: test_tlab_shared_heap_codegen(
+            name="tlab_shared_heap.ml (thread-local allocation buffers)",
+            mlc_runner=mlc_runner, ml_path=tlab_shared_heap_ml))
+    else:
+        tests.append(lambda: TestResult(
+            name="tlab_shared_heap.ml (thread-local allocation buffers)", status="SKIP",
+            details="tlab_shared_heap.ml not found"))
 
     if threading_stdlib_ml is not None:
         tests.append(lambda: test_program_no_fail(

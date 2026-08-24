@@ -6,6 +6,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 - Added real Windows threads over a process-wide, thread-safe managed heap,
   per-thread stacks, cooperative stop-the-world GC and synchronization.
+- Added 64 KiB thread-local allocation buffers for lock-free small-object
+  allocation in threaded programs while preserving the single global heap.
 - Added thread arguments, logical thread IDs, status inspection, worker pools,
   locks, semaphores and thread-safe list, hash map and shared-value modules.
 - Added `defer`, native FFI output parameters and project manifests with

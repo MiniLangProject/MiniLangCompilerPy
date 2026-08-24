@@ -1056,13 +1056,20 @@ statement boundaries. It never uses asynchronous thread termination. Long
 native calls may finish before cancellation is observed, but a thread in a
 blocking native call does not prevent another thread from collecting garbage.
 
-All threads allocate into one process-wide, non-moving managed heap. Allocation,
-heap growth, free-list access and collection are serialized internally. Each OS
-thread owns only its native stack plus a private GC root chain and temporary
-root slots. Collection is cooperative stop-the-world: generated function and
-loop safepoints park managed threads, while threads inside known native calls
-publish a stable root chain. The collector traces global roots and every
-registered thread context before sweeping.
+All threads allocate into one process-wide, non-moving managed heap. Each OS
+thread owns only its native stack, a private GC root chain, temporary root slots
+and a 64 KiB thread-local allocation buffer (TLAB) carved from that shared heap.
+Objects up to 256 bytes including their GC header use a lock-free cursor fast
+path; larger objects, TLAB refills, heap growth and free-list access use the
+serialized central allocator. A TLAB is only an allocation reservation, never a
+private object heap, so references can be published between threads unchanged.
+
+Collection is cooperative stop-the-world: generated function and loop
+safepoints park managed threads, while threads inside known native calls publish
+a stable root chain. The collector traces global roots and every registered
+thread context, retires all TLAB ownership, and then sweeps the ordinary shared
+heap block chain. A terminating worker returns its unused TLAB tail to the
+central free list.
 
 Each thread context also retains its four most recent allocation results as
 handoff roots. This closes the short lifetime gap while nested object graphs
@@ -1942,13 +1949,18 @@ Sets the allocation threshold for the **periodic** GC trigger and returns
 - Zero, a negative value, or a non-integer disables the periodic trigger.
 - The allocation-failure/OOM retry collector remains enabled.
 - The current periodic-allocation counter is reset when the limit changes.
+- The calling thread's current TLAB is retired, so a new positive limit applies
+  to its next allocation rather than its next buffer refill.
 
 Notes (when does GC run?):
 - The GC runs **automatically** when an allocation cannot be satisfied and the heap can’t grow further; the runtime triggers a `fn_gc_collect` once and retries the allocation.
 - You can also trigger it manually via `gc_collect()`.
 
 Notes:
-- The allocator reuses freed blocks via a free-list and falls back to bump allocation.
+- Small objects in threaded programs use 64 KiB TLABs; the whole refill is
+  charged to periodic/young-allocation pressure once.
+- The central allocator reuses freed blocks via a free-list and falls back to
+  bump allocation.
 - If the bump pointer would exceed the committed end, the runtime commits more pages (up to the reserved limit).
 - If `--heap-shrink` is enabled, the runtime may decommit unused pages at the top of the heap after GC (trim-from-top).
 
@@ -2393,6 +2405,10 @@ Optimizations (always-on, conservative):
 - **GC-root liveness and prologues**: expression roots are unpublished as soon
   as their lifetime ends, call spills are sized to actual arity, and tiny root
   frames use straight-line initialization.
+- **Thread-local allocation buffers**: small managed objects use a lock-free
+  per-thread cursor inside 64 KiB ranges of the shared heap. Refill, retirement,
+  large objects and collection remain serialized and preserve one global object
+  identity space.
 - **Branch/peephole optimization**: resolved backward edges use x64 short
   branches when in range, jumps to the immediately following label disappear,
   and local redundant instruction patterns are folded.

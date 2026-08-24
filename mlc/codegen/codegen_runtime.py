@@ -3692,6 +3692,10 @@ class CodegenRuntime:
         - Resets gc_bytes_since and gc_young_bytes_since to 0
         - Returns VOID
         """
+        # The limit applies to the next allocation.  Retiring the caller's
+        # prepaid TLAB below prevents already-reserved bytes from postponing a
+        # deliberately tiny test/application limit until the next refill.
+        self.used_helpers.add('fn_alloc')
         a = self.asm
         a.mark('fn_builtin_gc_set_limit')
         lid = self.new_label_id()
@@ -3746,6 +3750,9 @@ class CodegenRuntime:
         a.mov_rip_qword_rax('gc_young_bytes_since')
 
         a.mark(l_done)
+        a.sub_rsp_imm8(0x28)
+        a.call('tlab_retire_internal')
+        a.add_rsp_imm8(0x28)
         a.mov_rax_imm64(enc_void())
         a.ret()
 

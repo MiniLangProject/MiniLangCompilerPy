@@ -42,6 +42,24 @@ Stage 3 monolithic path and by the Stage 3 `.mlo` path. All three files ran
 successfully and were byte-identical: 1,620,480 bytes, SHA-256
 `6E7BF4DCA93339C95B6EB4587613918053EE827A178A4055124599978FF94C67`.
 
+## Current TLAB fixed-point verification
+
+The post-release TLAB implementation was bootstrapped and self-compiled again
+on 24 August 2026. The compiler image stabilized after the first self-hosted
+stage:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 56,073,216 | `27AB9B3E08DD6960EEBE44656CC31AC1541D4A042D9DC5CB8FA3DC2773511EBA` |
+| Stage 2, built by Stage 1 | 56,073,216 | `B16F0D91838E2AE16060055D2B483F4B78422C75C023930D670C14807D5D600E` |
+| Stage 3, built by Stage 2 | 56,073,216 | `B16F0D91838E2AE16060055D2B483F4B78422C75C023930D670C14807D5D600E` |
+
+The dedicated `tlab_shared_heap.ml` target was built by Python, the Stage 3
+monolithic path and the Stage 3 `.mlo` path. All three 122,880-byte executables
+are byte-identical with SHA-256
+`A46033F9D712E70D482A95877170AF73A2B583F5CDA145BF0E62461EE7BEF2FC`
+and pass the shared-heap/refill/retirement runtime test.
+
 ## Historical regression binary record
 
 The following exact hashes record the earlier broad parity pass. The programs
@@ -81,7 +99,8 @@ functions, structs, enums, GC, extern declarations, native interop, real Win32
 threads, one process-wide managed heap, per-thread stacks and GC root chains,
 cooperative stop-the-world collection, synchronization primitives and
 thread-safe collections that preserve shared object identity, one-value thread
-arguments, logical thread ids and managed worker pools with backpressure.
+arguments, logical thread ids, 64 KiB thread-local allocation buffers and
+managed worker pools with backpressure.
 It also exhaustively covers every public `is` runtime category, including
 case-insensitive `Thread`/`thread` checks and their negated forms.
 Compiler-scale coverage crosses repeated phased collections and verifies that
