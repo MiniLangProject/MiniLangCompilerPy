@@ -14,6 +14,8 @@ Highlights:
 - deterministic PE32+/ELF64 images and Linux `.so` FFI through the System V ABI;
 - a cross-platform standard library for files, sockets, time, synchronization,
   shared values and cryptography, using Windows CNG or Linux OpenSSL 3;
+- portable platform/path/process/console services, durable random-access files,
+  UUID v4, PBKDF2, configurable sockets and a provider-neutral TLS contract;
 - CPU-dispatched checksums and native byte search;
 - faster generated code and a bounded, substantially faster self-hosted object
   pipeline; and

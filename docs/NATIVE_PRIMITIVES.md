@@ -40,7 +40,8 @@ Range and tag checks occur once before the allocation-free raw update loop.
 ## Cryptography
 
 `std.crypto` provides SHA-256, SHA-384, HMAC-SHA-256, HMAC-SHA-384,
-HKDF-SHA-256, HKDF-SHA-384, X25519, secure random bytes,
+HKDF-SHA-256, HKDF-SHA-384, PBKDF2-HMAC-SHA-256,
+PBKDF2-HMAC-SHA-384, X25519, secure random bytes,
 `constantTimeEquals`, and best-effort `secureZero`.
 `std.crypto.aes_gcm` provides AES-256-GCM `seal`/`open` and
 `encrypt`/`decrypt`.
@@ -58,6 +59,13 @@ Linux. The Windows bridge converts CNG's raw-secret byte order to RFC 7748
 order; both backends clamp a temporary private-key copy and reject an all-zero
 shared secret. Random bytes use CNG's system-preferred RNG or OpenSSL
 `RAND_bytes`.
+
+`pbkdf2Sha256(password, salt, iterations, length)` and
+`pbkdf2Sha384(password, salt, iterations, length)` validate positive iteration
+and output counts, then call CNG `BCryptDeriveKeyPBKDF2` or OpenSSL
+`PKCS5_PBKDF2_HMAC`. Password and salt are byte arrays; callers remain
+responsible for choosing a protocol-specific iteration count and wiping
+caller-owned secret buffers.
 
 Security boundaries:
 

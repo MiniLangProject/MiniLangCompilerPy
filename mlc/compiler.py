@@ -966,6 +966,16 @@ def validate_extern_sigs(
             continue
         pos = sig.get("pos")
         fn = sig.get("filename")
+        native_library = str(sig.get("dll", "") or "").strip()
+        if not native_library:
+            raise CompileError(f"extern function {qn} missing native library name", pos=pos, filename=fn)
+        if str(target).lower() == "linux-x64" and native_library.lower().endswith(".dll"):
+            raise CompileError(
+                f"extern function {qn}: Windows DLL '{native_library}' cannot be imported by the linux-x64 target; "
+                "guard the declaration with TARGET_OS or use a Linux shared library",
+                pos=pos,
+                filename=fn,
+            )
 
         params = list(sig.get("params", []) or [])
         ext_structs = extern_structs or {}

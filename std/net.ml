@@ -53,10 +53,17 @@ const SOCKET_ERROR = -1
 #if TARGET_OS == "windows"
 const SOL_SOCKET = 0xFFFF
 const SO_REUSEADDR = 0x0004
+const SO_KEEPALIVE = 0x0008
+const SO_SNDTIMEO = 0x1005
+const SO_RCVTIMEO = 0x1006
 #else
 const SOL_SOCKET = 1
 const SO_REUSEADDR = 2
+const SO_KEEPALIVE = 9
+const SO_SNDTIMEO = 21
+const SO_RCVTIMEO = 20
 #endif
+const TCP_NODELAY = 1
 
 const SD_RECEIVE = 0
 const SD_SEND = 1
@@ -293,6 +300,68 @@ function _portFromSockaddr(addr)
   return addr[2] * 256 + addr[3]
 end function
 
+function _putU32(buffer, offset, value)
+  buffer[offset] = value & 0xFF
+  buffer[offset + 1] = (value >> 8) & 0xFF
+  buffer[offset + 2] = (value >> 16) & 0xFF
+  buffer[offset + 3] = (value >> 24) & 0xFF
+end function
+
+function _putI64(buffer, offset, value)
+  i = 0
+  while i < 8
+    buffer[offset + i] = (value >> (i * 8)) & 0xFF
+    i = i + 1
+  end while
+end function
+
+function _setBooleanOption(sock, level, option, enabled, operation)
+  if not _isSockHandle(sock) or typeof(enabled) != "bool" then return _netErr(operation + ": invalid args") end if
+  raw = bytes(4, 0)
+  if enabled then raw[0] = 1 end if
+  if setsockopt(sock, level, option, raw, len(raw)) != 0 then return _netErr(operation + ": setsockopt failed (" + lastError() + ")") end if
+  return true
+end function
+
+// Enable or disable address reuse on an existing socket.
+function setReuseAddress(sock, enabled)
+  return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, enabled, "setReuseAddress")
+end function
+
+// Enable or disable TCP keepalive probes.
+function setKeepAlive(sock, enabled)
+  return _setBooleanOption(sock, SOL_SOCKET, SO_KEEPALIVE, enabled, "setKeepAlive")
+end function
+
+// Disable or enable Nagle's algorithm for latency-sensitive protocols.
+function setNoDelay(sock, enabled)
+  return _setBooleanOption(sock, IPPROTO_TCP, TCP_NODELAY, enabled, "setNoDelay")
+end function
+
+function _setTimeout(sock, option, milliseconds, operation)
+  if not _isSockHandle(sock) or typeof(milliseconds) != "int" or milliseconds < 0 then return _netErr(operation + ": invalid args") end if
+#if TARGET_OS == "windows"
+  raw = bytes(4, 0)
+  _putU32(raw, 0, milliseconds)
+#else
+  raw = bytes(16, 0)
+  _putI64(raw, 0, milliseconds / 1000)
+  _putI64(raw, 8, (milliseconds % 1000) * 1000)
+#endif
+  if setsockopt(sock, SOL_SOCKET, option, raw, len(raw)) != 0 then return _netErr(operation + ": setsockopt failed (" + lastError() + ")") end if
+  return true
+end function
+
+// Configure the maximum blocking receive duration. Zero restores no timeout.
+function setReceiveTimeout(sock, milliseconds)
+  return _setTimeout(sock, SO_RCVTIMEO, milliseconds, "setReceiveTimeout")
+end function
+
+// Configure the maximum blocking send duration. Zero restores no timeout.
+function setSendTimeout(sock, milliseconds)
+  return _setTimeout(sock, SO_SNDTIMEO, milliseconds, "setSendTimeout")
+end function
+
 // ---------------------------
 // TCP
 // ---------------------------
@@ -373,6 +442,31 @@ function tcpListen(port, backlog)
   end if
 
   return s
+end function
+
+// Create an IPv4 listener bound to an explicit dotted address.
+function tcpListenAddress(host, port, backlog)
+  if init() == false then return _netErr("net.init failed") end if
+  if typeof(port) != "int" then return _netErr("tcpListenAddress: port must be int") end if
+  if typeof(backlog) != "int" then backlog = 16 end if
+  ip = _parseIPv4(host)
+  if typeof(ip) == "void" then return _netErr("tcpListenAddress: invalid IPv4 host") end if
+  server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+  if server == INVALID_SOCKET then return _netErr("tcpListenAddress: socket failed (" + lastError() + ")") end if
+  reused = setReuseAddress(server, true)
+  if typeof(reused) == "error" then closesocket(server); return reused end if
+  address = _sockaddrIn(ip, port)
+  if bind(server, address, len(address)) != 0 then
+    code = lastError()
+    closesocket(server)
+    return _netErr("tcpListenAddress: bind failed (" + code + ")")
+  end if
+  if listen(server, backlog) != 0 then
+    code = lastError()
+    closesocket(server)
+    return _netErr("tcpListenAddress: listen failed (" + code + ")")
+  end if
+  return server
 end function
 
 /*

@@ -83,6 +83,25 @@ function hkdfSha384(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA384", 48, inputKeyMaterial, salt, info, length)
 end function
 
+function _pbkdf2(hashAlgorithm, password, salt, iterations, length)
+  if typeof(password) != "bytes" or typeof(salt) != "bytes" then return _cryptoError("PBKDF2 expects bytes") end if
+  if typeof(iterations) != "int" or iterations <= 0 or iterations > 0x7FFFFFFF then return _cryptoError("Invalid PBKDF2 iteration count") end if
+  if typeof(length) != "int" or length < 0 or length > 0x7FFFFFFF then return _cryptoError("Invalid PBKDF2 output length") end if
+  output = bytes(length, 0)
+  if not cng.pbkdf2(hashAlgorithm, password, salt, iterations, output) then return _cryptoError("PBKDF2 backend failure") end if
+  return output
+end function
+
+// Derive key material using PBKDF2-HMAC-SHA-256.
+function pbkdf2Sha256(password, salt, iterations, length)
+  return _pbkdf2("SHA256", password, salt, iterations, length)
+end function
+
+// Derive key material using PBKDF2-HMAC-SHA-384.
+function pbkdf2Sha384(password, salt, iterations, length)
+  return _pbkdf2("SHA384", password, salt, iterations, length)
+end function
+
 // Obtain cryptographically secure random bytes from the platform provider.
 function secureRandom(length)
   if typeof(length) != "int" or length < 0 or length > 0x7FFFFFFF then return _cryptoError("Invalid random length") end if

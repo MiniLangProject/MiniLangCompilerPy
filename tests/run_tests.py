@@ -396,6 +396,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
         (tests_root / "shared_value.ml", ["[OK] portable native shared-value snapshots"], []),
+        (tests_root / "platform_services.ml", ["=== PLATFORM SERVICES DONE ==="], []),
         (tests_root / "thread_features.ml",
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
     ]
@@ -1436,11 +1437,13 @@ def test_namespace_nested(*, name: str, mlc_runner: Path) -> TestResult:
 
 
 def test_compile_expected_fail(*, name: str, mlc_runner: Path, entry_ml: Path, must_contain_err: str,
-                               timeout_compile_s: int = 120, ) -> TestResult:
+                               timeout_compile_s: int = 120,
+                               extra_args: Optional[List[str]] = None, ) -> TestResult:
     """Compile a snippet that is expected to fail and validate the error marker."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
         exe = Path(td) / (entry_ml.stem + ".exe")
-        cr = compile_native(mlc_runner, entry_ml, exe, timeout_s=timeout_compile_s)
+        cr = compile_native(mlc_runner, entry_ml, exe, timeout_s=timeout_compile_s,
+                            extra_args=list(extra_args or []))
         out = normalize_out((cr.stdout or "") + "\n" + (cr.stderr or ""))
         if cr.returncode == 0:
             return TestResult(name=name, status="FAIL", details="expected compile failure, but compile succeeded",
@@ -3478,6 +3481,39 @@ def test_codegen_young_gc_heuristic_present(*, name: str, mlc_runner: Path) -> T
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr="")
 
 
+def test_codegen_gc_cli_limits_reach_data(*, name: str, mlc_runner: Path) -> TestResult:
+    """Codegen regression: parsed GC settings must initialize both pressure counters."""
+    try:
+        compiler_root = str(mlc_runner.parent)
+        if compiler_root not in sys.path:
+            sys.path.insert(0, compiler_root)
+        from mlc.codegen import Codegen
+
+        def limits(config: dict[str, object]) -> tuple[int, int]:
+            codegen = Codegen(None, "", "gc_config_probe.ml", heap_config=config)
+            codegen.ensure_gc_data()
+
+            def qword(label: str) -> int:
+                offset = codegen.data.labels[label]
+                return int.from_bytes(codegen.data.data[offset:offset + 8], "little")
+
+            return qword("gc_bytes_limit"), qword("gc_young_bytes_limit")
+
+        default_limits = limits({})
+        configured_limits = limits({"gc_bytes_limit": 96 << 20})
+        disabled_limits = limits({"gc_disable_periodic": True, "gc_bytes_limit": 96 << 20})
+        if default_limits != (64 << 20, 8 << 20):
+            return TestResult(name=name, status="FAIL", details=f"default limits changed: {default_limits}")
+        if configured_limits != (96 << 20, 96 << 20):
+            return TestResult(name=name, status="FAIL", details=f"--gc-limit ignored: {configured_limits}")
+        disabled = 0x7FFFFFFFFFFFFFFF
+        if disabled_limits != (disabled, disabled):
+            return TestResult(name=name, status="FAIL", details=f"--no-gc-periodic ignored: {disabled_limits}")
+        return TestResult(name=name, status="PASS")
+    except Exception as exc:
+        return TestResult(name=name, status="FAIL", details=f"GC config inspection failed: {exc}")
+
+
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime test: --profile-calls instruments user functions and exposes callStats()."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -3607,6 +3643,7 @@ def main() -> int:
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
     simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
     crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
+    platform_services_ml = find_file_by_name(tests_root, "platform_services.ml")
     object_entry_inline_ml = find_file_by_name(tests_root, "object_entry_inline.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
     gc_reference_write_roots_ml = find_file_by_name(tests_root, "gc_reference_write_roots.ml")
@@ -3625,6 +3662,7 @@ def main() -> int:
     codegen_phase_gc_ml = find_file_by_name(tests_root, "codegen_phase_gc.ml")
     compiler_gc_liveness_ml = find_file_by_name(tests_root, "compiler_gc_liveness.ml")
     input_length_regression_ml = find_file_by_name(tests_root, "input_length_regression.ml")
+    linux_windows_ffi_error_ml = find_file_by_name(tests_root, "linux_windows_ffi_error.ml")
     thread_invalid_entry_ml = find_file_by_name(tests_root, "thread_invalid_entry.ml")
     thread_invalid_synchronized_local_ml = find_file_by_name(tests_root, "thread_invalid_synchronized_local.ml")
     global_function_rebind_ml = find_file_by_name(tests_root, "global_function_rebind.ml")
@@ -3645,6 +3683,12 @@ def main() -> int:
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_linux_x64_target(
         name="linux-x64 ELF, argv, shared heap and native threads", mlc_runner=mlc_runner, tests_root=tests_root))
+    if linux_windows_ffi_error_ml is not None:
+        tests.append(lambda: test_compile_expected_fail(
+            name="linux-x64 rejects unguarded Windows DLL imports",
+            mlc_runner=mlc_runner, entry_ml=linux_windows_ffi_error_ml,
+            must_contain_err="cannot be imported by the linux-x64 target",
+            extra_args=["--target", "linux-x64", "-I", str(project_root)]))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,
@@ -3679,6 +3723,7 @@ def main() -> int:
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
         ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
+        ("platform_services.ml (portable OS and durable I/O)", platform_services_ml, "=== PLATFORM SERVICES DONE ==="),
         ("object_entry_inline.ml (entry initializer inline)", object_entry_inline_ml, "[OK] object entry inline"),
     ]:
         if test_path is not None:
@@ -4131,7 +4176,9 @@ def main() -> int:
     tests.append(lambda: test_codegen_literal_query_fastpaths(name="codegen: literal len/typeof/typeName fast paths",
                                                               mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_young_gc_heuristic_present(name="codegen: young-allocation gc heuristic emitted",
-                                                                 mlc_runner=mlc_runner))
+                                                                  mlc_runner=mlc_runner))
+    tests.append(lambda: test_codegen_gc_cli_limits_reach_data(name="codegen: GC CLI limits initialize runtime",
+                                                                mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None

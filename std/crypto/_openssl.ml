@@ -19,6 +19,7 @@ extern function _evpSha256() from "libcrypto.so.3" symbol "EVP_sha256" returns p
 extern function _evpSha384() from "libcrypto.so.3" symbol "EVP_sha384" returns ptr
 extern function _hmac(digest as ptr, key as ptr, keyLength as int, input as ptr, inputLength as u64, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "HMAC" returns ptr
 extern function _random(output as ptr, length as int) from "libcrypto.so.3" symbol "RAND_bytes" returns i32
+extern function _nativePbkdf2(password as ptr, passwordLength as int, salt as ptr, saltLength as int, iterations as int, digest as ptr, outputLength as int, output as ptr) from "libcrypto.so.3" symbol "PKCS5_PBKDF2_HMAC" returns i32
 
 extern function _cipherContextNew() from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_new" returns ptr
 extern function _cipherContextFree(context as ptr) from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_free" returns void
@@ -83,6 +84,18 @@ end function
 function random(output)
   if len(output) == 0 then return true end if
   ok = _random(nativeBytesPtr(output), len(output)) == 1
+  if not ok then _zero(output) end if
+  return ok
+end function
+
+// Derive PBKDF2 output through OpenSSL's constant-time HMAC implementation.
+function pbkdf2(hashAlgorithm, password, salt, iterations, output)
+  digest = _digest(hashAlgorithm)
+  if digest == 0 then return false end if
+  ok = true
+  if len(output) > 0 then
+    ok = _nativePbkdf2(nativeBytesPtr(password), len(password), nativeBytesPtr(salt), len(salt), iterations, digest, len(output), nativeBytesPtr(output)) == 1
+  end if
   if not ok then _zero(output) end if
   return ok
 end function

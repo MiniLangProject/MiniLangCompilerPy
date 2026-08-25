@@ -11,6 +11,14 @@ All notable changes to the MiniLang compiler are documented here.
   filesystem, IPv4 TCP/UDP, monotonic/calendar time, locks/semaphores/events and
   shared-value storage use native platform adapters, while cryptography selects
   Windows CNG or Linux OpenSSL 3 behind the same API.
+- Added target-neutral platform, path, process and console modules; durable
+  positional file I/O with advisory locks and atomic replacement; explicit
+  socket options and listener addresses; UUID v4; PBKDF2-SHA-256/SHA-384; and a
+  provider-neutral TLS stream contract. Linux builds now diagnose unguarded
+  Windows `.dll` imports during validation.
+- Fixed `--gc-limit` and `--no-gc-periodic` so generated runtime pressure
+  counters receive the requested values in both compilers, including the
+  unboxed signed-64-bit disable sentinel used by the self-hosted backend.
 - Fixed inactive empty lines shifting source/debug locations in the self-hosted
   conditional preprocessor, and removed quadratic label-array copying from the
   self-hosted ELF linker for large, FFI-heavy Linux programs.

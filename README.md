@@ -1688,14 +1688,15 @@ Linux. Linux images that use only libc-backed modules need no dependency beyond
 the normal x64 glibc runtime; importing `std.crypto` additionally requires the
 OpenSSL 3 runtime package.
 
-The current library contains 34 source modules, byte-for-byte identical in both
+The current library contains 41 source modules, byte-for-byte identical in both
 compiler repositories:
 
 - **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
   `std.random`, `std.fmt`
 - **Text and bytes:** `std.string`, `std.string_builder`, `std.bytes`,
   `std.encoding.hex`, `std.encoding.base64`
-- **System APIs:** `std.time`, `std.fs`, `std.net`
+- **System APIs:** `std.platform`, `std.path`, `std.process`, `std.console`,
+  `std.time`, `std.fs`, `std.io.file`, `std.net`, `std.uuid` and `std.tls`
 - **Collections:** `std.ds.list`, `std.ds.stack`, `std.ds.queue`,
   `std.ds.hashmap`, `std.ds.set`
 - **Concurrency:** `std.threading`, `std.concurrent.thread_pool`,
@@ -1706,6 +1707,14 @@ compiler repositories:
 - **Compatibility helpers:** `std.result` provides `Option` and `Result`;
   `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec;
   `std._linux_fs` is the internal POSIX filesystem backend.
+
+`std.io.file` is the durable random-access API intended for databases and
+servers: it provides positional reads/writes, truncation, flush, whole-file
+advisory locks, atomic replacement and directory synchronization. `std.tls`
+defines one provider-neutral transport contract; applications supply a native
+Schannel or OpenSSL provider rather than depending on either backend directly.
+See [Platform services](docs/PLATFORM_SERVICES.md) for the complete contracts
+and target mappings.
 
 New code should normally use native `error(...)` propagation with `try(...)`
 instead of `std.result.Result`. Managed objects already share one process-wide

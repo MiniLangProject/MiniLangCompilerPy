@@ -35,6 +35,7 @@ extern function BCryptExportKey(key as ptr, exportKey as ptr, blobType as wstr, 
 extern function BCryptSecretAgreement(privateKey as ptr, publicKey as ptr, result as bytes, flags as u32) from "bcrypt.dll" returns i32
 extern function BCryptDeriveKey(secret as ptr, kdf as wstr, parameters as ptr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
 extern function BCryptDestroySecret(secret as ptr) from "bcrypt.dll" returns i32
+extern function BCryptDeriveKeyPBKDF2(provider as ptr, password as ptr, passwordLength as u32, salt as ptr, saltLength as u32, iterations as u64, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
 
 const BCRYPT_ALG_HANDLE_HMAC_FLAG = 0x00000008
 const BCRYPT_USE_SYSTEM_PREFERRED_RNG = 0x00000002
@@ -105,6 +106,22 @@ function random(output)
   status = BCryptGenRandom(0, nativeBytesPtr(output), len(output), BCRYPT_USE_SYSTEM_PREFERRED_RNG)
   if status != 0 then _zero(output) end if
   return status == 0
+end function
+
+// Derive PBKDF2 output with the native CNG password-based KDF.
+function pbkdf2(hashAlgorithm, password, salt, iterations, output)
+  providerBytes = bytes(8, 0)
+  status = BCryptOpenAlgorithmProvider(providerBytes, hashAlgorithm, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG)
+  provider = _getPtr(providerBytes)
+  ok = status == 0 and provider != 0
+  if ok and len(output) > 0 then
+    status = BCryptDeriveKeyPBKDF2(provider, nativeBytesPtr(password), len(password), nativeBytesPtr(salt), len(salt), iterations, nativeBytesPtr(output), len(output), 0)
+    ok = status == 0
+  end if
+  if provider != 0 then BCryptCloseAlgorithmProvider(provider, 0) end if
+  _zero(providerBytes)
+  if not ok then _zero(output) end if
+  return ok
 end function
 
 // Derive HKDF output using the native CNG HKDF provider.

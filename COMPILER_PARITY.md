@@ -350,24 +350,32 @@ The 2026-08-25 conditional-compilation bootstrap produced byte-identical
 The shared nested-directive fixture compiled to identical Python, self-hosted
 monolithic and `.mlo` target bytes.
 
-The 2026-08-25 cross-platform stdlib acceptance covered the byte-identical
-34-module `std/` trees plus `stdlib_unit_tests`, `threading_stdlib`, platform
-crypto and shared-value snapshots. Every program compiled and ran on Windows
-x64 and Linux x64 with both compilers. All eight Python/self-host output pairs
-were byte-identical. Representative hashes were
-`962232EAB00AA1BD1AE9E85CD509531C850F9015D6E6BDC0402BE37218584214`
-for the 3,788,288-byte Windows stdlib suite and
-`4B5B0A99FFCDA9741E756F8EBB6DAFC06D31681A01DAA33FF249904E397626D4`
-for the 3,813,552-byte Linux suite. The complete Python harness remained at
-PASS 106/FAIL 0/SKIP 0; the complete self-hosted harness remained at PASS
-101/FAIL 0, and every outer Linux/stdlib gate passed.
+The 2026-08-25 cross-platform platform-services acceptance covered the
+byte-identical 41-module `std/` trees plus `stdlib_unit_tests`,
+`threading_stdlib`, platform crypto, shared-value snapshots and the new durable
+I/O/process/console/network/TLS-contract suite. Every program compiled and ran
+on Windows x64 and Linux x64 with both compilers. The final platform-services
+outputs were byte-identical between Python and Stage 3: the 2,022,912-byte PE
+had SHA-256
+`6D33E1751CF76C2DAE6932D09521FE06922CFBE911E106D60CF182CC51C2C3F5`;
+the 1,857,872-byte ELF had SHA-256
+`0F8257F85485D3FA1745845A8897E2E74620BC9C1CF29EE4231EB009A8F9ADD5`.
+The complete Python harness remained at PASS 108/FAIL 0/SKIP 0, and the
+complete self-hosted outer harness passed all Windows, Linux, `.mlo`, ABI and
+runtime gates.
 
-A fresh bootstrap after the Linux runtime and standard-library work converged
-at Stage 2. Stage 2 and Stage 3 were byte-identical 58,539,520-byte compiler
-images with SHA-256
-`B8A41B7D29ADF8B956F5732B500E5678E39815023776BF35DB2B6BB437A823BF`.
-The resulting Stage 3 compiler repeated the Linux stdlib-suite hash above and
-the suite ran successfully under Linux.
+A fresh bootstrap after the platform-services work converged at Stage 2.
+Stage 2 and Stage 3 were byte-identical 58,567,680-byte compiler images with
+SHA-256
+`6D209F144E38C99168976AD566B5EF40E096AF331E9F32623F3BB779486DBCF3`.
+The resulting Stage 3 compiler emitted the Windows and Linux acceptance hashes
+above, and both outputs ran successfully on their native targets.
+
+Explicit target-GC settings are also cross-compiler identical. With
+`--gc-limit 96m`, both compilers emitted the same 2,022,912-byte PE with
+SHA-256 `CDB05600CC1B8BDF266B6D0FAD87C32FC60ADBD29D1567D8AB9AD63D4E03155E`.
+With `--no-gc-periodic`, both emitted the same 1,857,872-byte ELF with SHA-256
+`4659174CCB340B0DC6F2D6425C4751C96AD9C711B0224AFA68F183E5C6958EB5`.
 
 The 2026-08-24 MiniQuake check used clean commit
 `7e8d0f614f7ad33f423e88873c210b7f846bbced`. Python compiled the 142-source

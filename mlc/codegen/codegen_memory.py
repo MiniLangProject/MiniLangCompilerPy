@@ -1262,15 +1262,33 @@ class CodegenMemory:
         if 'gc_free_head' not in d.labels:
             d.add_u64('gc_free_head', 0)
 
-        # Optional allocation counters (soft trigger)
+        # Optional allocation counters (soft trigger).  Command-line heap/GC
+        # settings arrive through heap_config.  Historically --gc-limit and
+        # --no-gc-periodic were parsed but these data initializers ignored the
+        # values, leaving every executable at the 64 MiB / 8 MiB defaults.  A
+        # large long-lived graph then paid a full mark/sweep every 8 MiB of
+        # short-lived allocation.  Keep the old defaults when no option is
+        # supplied, but make an explicit --gc-limit govern both full-GC
+        # pressure counters, matching the runtime gc_set_limit() builtin.
+        cfg = getattr(self, 'heap_config', None) or {}
+        periodic_disabled = bool(cfg.get('gc_disable_periodic', False))
+        configured_limit = cfg.get('gc_bytes_limit')
+        periodic_limit = GC_DEFAULT_BYTES_LIMIT
+        young_limit = GC_YOUNG_DEFAULT_BYTES_LIMIT
+        if configured_limit is not None:
+            periodic_limit = max(1, int(configured_limit))
+            young_limit = periodic_limit
+        if periodic_disabled:
+            periodic_limit = GC_DISABLE_PERIODIC_LIMIT
+            young_limit = GC_DISABLE_PERIODIC_LIMIT
         if 'gc_bytes_since' not in d.labels:
             d.add_u64('gc_bytes_since', 0)
         if 'gc_bytes_limit' not in d.labels:
-            d.add_u64('gc_bytes_limit', GC_DEFAULT_BYTES_LIMIT)  # default periodic GC trigger
+            d.add_u64('gc_bytes_limit', periodic_limit)
         if 'gc_young_bytes_since' not in d.labels:
             d.add_u64('gc_young_bytes_since', 0)
         if 'gc_young_bytes_limit' not in d.labels:
-            d.add_u64('gc_young_bytes_limit', GC_YOUNG_DEFAULT_BYTES_LIMIT)
+            d.add_u64('gc_young_bytes_limit', young_limit)
 
         # Temp roots (important: must not look like TAG_PTR=0)
         for i in range(8):
