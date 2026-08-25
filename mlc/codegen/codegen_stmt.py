@@ -1035,7 +1035,7 @@ class CodegenStmt:
                 return None
             if isinstance(expr, getattr(ml, 'Index', ())):
                 tb = self._value_type_base(infer_expr(getattr(expr, 'target', None), known))
-                if tb == 'bytes':
+                if tb in ('bytes', 'bytes?'):
                     return 'int'
                 if tb == 'string':
                     return 'string'
@@ -1070,7 +1070,11 @@ class CodegenStmt:
                         if (isinstance(size, int) and 0 <= size <= 0x7FFFFFFF
                                 and isinstance(fill, int) and 0 <= fill <= 255):
                             return f'bytes:{size}'
-                    return None
+                    # Keep the useful normal-path layout fact without claiming
+                    # that a fallible constructor can never return an error.
+                    # Specialized consumers of bytes? retain a runtime tag and
+                    # object-type guard before accessing the byte layout.
+                    return 'bytes?'
                 if name:
                     return 'struct:' + name
             return None
@@ -1297,13 +1301,14 @@ class CodegenStmt:
         """Emit a fixed-layout array/bytes store using local type-flow facts."""
         a = self.asm
         kind = str(plan.get('kind', ''))
-        if kind not in ('array', 'bytes'):
+        if kind not in ('array', 'bytes', 'bytes_checked'):
             raise self.error('Internal error: unsupported specialized index store', stmt)
         base_slot = plan.get('base_slot')
         bounds_proven = bool(plan.get('bounds_proven', False))
         lid = self.new_label_id()
         l_rhs_void = f'seti_fast_rhs_void_{lid}'
         l_oob = f'seti_fast_oob_{lid}'
+        l_bad_target = f'seti_fast_bad_target_{lid}'
         l_bad_byte = f'seti_fast_bad_byte_{lid}'
         l_done = f'seti_fast_done_{lid}'
         a.mark(f'seti_fast_{kind}_{lid}')
@@ -1330,6 +1335,17 @@ class CodegenStmt:
         a.jcc('e', l_rhs_void)
         a.mov_r64_r64('rcx', 'rax')
         a.sar_r64_imm8('rcx', 3)
+
+        if kind == 'bytes_checked':
+            # Preserve the generic store's target error while avoiding its
+            # dynamic array/bytes dispatch on the successful bytes path.
+            a.mov_r64_r64('r8', 'r11')
+            a.and_r64_imm('r8', 7)
+            a.cmp_r64_imm('r8', TAG_PTR)
+            a.jcc('ne', l_bad_target)
+            a.mov_r32_membase_disp('r8d', 'r11', 0)
+            a.cmp_r32_imm('r8d', OBJ_BYTES)
+            a.jcc('ne', l_bad_target)
 
         if not bounds_proven:
             a.mov_r32_membase_disp('edx', 'r11', 4)
@@ -1384,7 +1400,14 @@ class CodegenStmt:
             self._emit_auto_errprop()
             a.jmp(l_done)
 
-        if kind == 'bytes':
+        if kind == 'bytes_checked':
+            a.mark(l_bad_target)
+            self.emit_dbg_line(stmt)
+            self._emit_make_error_const(ERR_INDEX_TARGET_TYPE, 'Index assignment requires array or bytes')
+            self._emit_auto_errprop()
+            a.jmp(l_done)
+
+        if kind in ('bytes', 'bytes_checked'):
             a.mark(l_bad_byte)
             self.emit_dbg_line(stmt)
             self._emit_make_error_const(ERR_VOID_OP, 'Byte value must be an int in range 0..255')
@@ -3711,7 +3734,7 @@ class CodegenStmt:
 
         if isinstance(s, ml.SetIndex):
             fast_store = self._opt_known_index_plan(s)
-            if isinstance(fast_store, dict) and fast_store.get('kind') in ('array', 'bytes'):
+            if isinstance(fast_store, dict) and fast_store.get('kind') in ('array', 'bytes', 'bytes_checked'):
                 self._opt_emit_known_setindex(s, fast_store)
                 return
 
@@ -6155,6 +6178,33 @@ class CodegenStmt:
             self._current_fn_file = _saved_ctx_file
             self._current_fn_qname = _saved_ctx_qname
             self.in_function = saved_in_fn
+
+        def infer_with_function_context(callback):
+            """Run a function-wide optimizer pass in its package context."""
+            prior_qname_prefix = getattr(self, 'current_qname_prefix', '')
+            prior_file_prefix = getattr(self, 'current_file_prefix', '')
+            prior_fn_file = getattr(self, '_current_fn_file', None)
+            prior_fn_qname = getattr(self, '_current_fn_qname', None)
+            try:
+                fn_qname = getattr(fn, 'name', '')
+                self.current_qname_prefix = (
+                    fn_qname.rsplit('.', 1)[0] + '.'
+                    if isinstance(fn_qname, str) and '.' in fn_qname else '')
+                if isinstance(fn_qname, str) and fn_qname:
+                    self._current_fn_qname = fn_qname
+                fn_file = getattr(fn, '_filename', None)
+                if isinstance(fn_file, str) and fn_file:
+                    self._current_fn_file = fn_file
+                    prefix_map = getattr(self, 'file_prefix_map', {}) or {}
+                    if isinstance(prefix_map, dict):
+                        self.current_file_prefix = prefix_map.get(fn_file, '') or ''
+                return callback()
+            finally:
+                self.current_qname_prefix = prior_qname_prefix
+                self.current_file_prefix = prior_file_prefix
+                self._current_fn_file = prior_fn_file
+                self._current_fn_qname = prior_fn_qname
+
         # Now `_function_locals` contains *bindings*, not names.
         known_value_types_for_fn = self._infer_known_value_types(fn)
         promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
@@ -6227,6 +6277,12 @@ class CodegenStmt:
         ret_label = f"fn_ret_{code_name}"
         defer_label = f"fn_defer_{code_name}" if defer_sites else ret_label
 
+        # Keep independent functions on a stable fetch/decode boundary. Without
+        # this padding, a one-byte optimization in an early function shifts all
+        # later hot loops and can turn a local code-size win into a whole-program
+        # instruction-cache regression.
+        while a.pos & 0x0F:
+            a.nop()
         a.mark(fn_label)
 
         # Preserve nonvolatile registers we use elsewhere (RBX holds stdout handle)
@@ -6377,7 +6433,8 @@ class CodegenStmt:
         self.expr_temp_top = 0
         self._current_root_rec_off = root_rec_off
         self._current_root_static_qwords = (root_static_top - root_base) // 8
-        self._known_int_names = self._infer_known_int_names(fn)
+        self._known_int_names = infer_with_function_context(
+            lambda: self._infer_known_int_names(fn))
         self._known_value_types = dict(known_value_types_for_fn)
         self._loop_index_fast_stack = []
 

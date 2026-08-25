@@ -417,6 +417,14 @@ class CodegenExpr:
             index = self._opt_try_const_int(getattr(e, 'index', None))
             if base == 'bytes' and exact_len is not None and index is not None and -exact_len <= index < exact_len:
                 return 'int'
+            index_base = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'index', None)))
+            # Specialized indexing propagates target and bounds errors. Its
+            # normal continuation therefore has a stable result type even when
+            # the bytes constructor itself still needs a runtime type guard.
+            if base in ('bytes', 'bytes?') and index_base == 'int':
+                return 'int'
+            if base == 'string' and index_base == 'int':
+                return 'string'
         return None
 
     def _opt_type_query_can_elide_evaluation(self, e: Any) -> bool:
@@ -436,8 +444,10 @@ class CodegenExpr:
             return None
         fact = self._opt_expr_known_type(target)
         kind = self._opt_value_type_base(fact)
+        if kind == 'bytes?':
+            kind = 'bytes_checked'
         index_kind = self._opt_value_type_base(self._opt_expr_known_type(index))
-        if kind not in ('array', 'bytes', 'string') or index_kind != 'int':
+        if kind not in ('array', 'bytes', 'bytes_checked', 'string') or index_kind != 'int':
             return None
         try:
             target_binding = self.resolve_binding(str(getattr(target, 'name', '') or ''))
@@ -478,6 +488,7 @@ class CodegenExpr:
         bounds_proven = bool(plan.get('bounds_proven', False))
         lid = self.new_label_id()
         l_oob = f'idx_fast_oob_{lid}'
+        l_bad_target = f'idx_fast_bad_target_{lid}'
         l_done = f'idx_fast_done_{lid}'
         a.mark(f'idx_fast_{kind}_{lid}')
         if bounds_proven:
@@ -499,6 +510,18 @@ class CodegenExpr:
             a.mov_r64_membase_disp('r11', 'rsp', spill)
             self.free_expr_temps(8)
 
+        if kind == 'bytes_checked':
+            # A fallible bytes(...) constructor is only known to produce bytes
+            # on its normal continuation. Validate the tagged object before
+            # selecting the compact byte-layout path.
+            a.mov_r64_r64('r10', 'r11')
+            a.and_r64_imm('r10', 7)
+            a.cmp_r64_imm('r10', TAG_PTR)
+            a.jcc('ne', l_bad_target)
+            a.mov_r32_membase_disp('r10d', 'r11', 0)
+            a.cmp_r32_imm('r10d', OBJ_BYTES)
+            a.jcc('ne', l_bad_target)
+
         if not bounds_proven:
             a.mov_r32_membase_disp('edx', 'r11', 4)
             l_nonnegative = f'idx_fast_nonnegative_{lid}'
@@ -513,7 +536,7 @@ class CodegenExpr:
 
         if kind == 'array':
             a.mov_r64_mem_bis('rax', 'r11', 'rcx', 8, 8)
-        elif kind == 'bytes':
+        elif kind in ('bytes', 'bytes_checked'):
             a.lea_r64_mem_bis('rax', 'r11', 'rcx', 1, 8)
             a.movzx_r32_membase_disp('eax', 'rax', 0)
             a.shl_rax_imm8(3)
@@ -525,13 +548,24 @@ class CodegenExpr:
             a.shl_rax_imm8(4)
             a.add_r64_r64('rax', 'r11')
 
-        if not bounds_proven:
+        if not bounds_proven or kind == 'bytes_checked':
             a.jmp(l_done)
+
+        if kind == 'bytes_checked':
+            a.mark(l_bad_target)
+            if hasattr(self, 'emit_dbg_line'):
+                self.emit_dbg_line(e)
+            self._emit_make_error_const(ERR_INDEX_TARGET_TYPE, 'Indexing requires array, string, or bytes')
+            self._emit_auto_errprop()
+
+        if not bounds_proven:
             a.mark(l_oob)
             if hasattr(self, 'emit_dbg_line'):
                 self.emit_dbg_line(e)
             self._emit_make_error_const(ERR_INDEX_OOB, 'Array index out of bounds')
             self._emit_auto_errprop()
+
+        if not bounds_proven or kind == 'bytes_checked':
             a.mark(l_done)
 
     def _opt_emit_known_int_binop(self, op: str, lhs_const: Optional[int],

@@ -2902,6 +2902,12 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
 
         listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
 
+        user_offsets = [int(value, 16) for value in re.findall(
+            r"(?m)^fn_user_[^:\r\n]+: ; off=0x([0-9A-Fa-f]+)\b", listing)]
+        if not user_offsets or any((offset & 0x0F) != 0 for offset in user_offsets):
+            return TestResult(name=name, status="FAIL",
+                              details="generated user functions are not 16-byte aligned")
+
         # A closed program without Thread must not pay the native-thread tax.
         # Keep this structural check next to the runtime optimization fixture so
         # per-statement cancellation, GC polling or allocator locking cannot
@@ -2998,9 +3004,22 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
                               details="wide known method call retained dynamic dispatch or lost its direct target")
 
         invalid_bytes_asm = function_block("invalid_bytes_index")
-        if not invalid_bytes_asm or "idx_fast_bytes_" in invalid_bytes_asm:
+        if not invalid_bytes_asm or "idx_fast_bytes_checked_" not in invalid_bytes_asm:
             return TestResult(name=name, status="FAIL",
-                              details="fallible bytes construction received an unsafe bytes index type fact")
+                              details="fallible bytes construction missed its guarded specialized index path")
+
+        checked_bytes_asm = function_block("checked_bytes_roundtrip")
+        if (not checked_bytes_asm or "idx_fast_bytes_checked_" not in checked_bytes_asm
+                or "seti_fast_bytes_checked_" not in checked_bytes_asm
+                or "idx_fast_bad_target_" not in checked_bytes_asm
+                or "seti_fast_bad_target_" not in checked_bytes_asm):
+            return TestResult(name=name, status="FAIL",
+                              details="checked bytes reads/writes lost their runtime target guards")
+
+        context_enum_asm = function_block("tests.codegen_context_values.enumValueFlow")
+        if not context_enum_asm or "eq_lhs_not_bytes_" in context_enum_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="package enum constants missed function-context integer flow")
 
         strength_asm = function_block("constant_strength_reduction")
         if not strength_asm or "idiv r11" in strength_asm or "imul rax" in strength_asm or ", cl" in strength_asm:

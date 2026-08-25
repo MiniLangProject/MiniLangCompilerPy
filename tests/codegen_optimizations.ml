@@ -1,4 +1,5 @@
 import std.assert as t
+import tests.codegen_context_values as context_values
 
 const FOLDED_SHIFT = 1 << 65
 const FOLDED_WRAP = 1152921504606846975 + 1
@@ -218,6 +219,18 @@ function invalid_bytes_index()
   return data[0]
 end function
 
+function checked_bytes_roundtrip(value)
+  data = bytes(value)
+  data[0] = data[0] + 1
+  return data[0]
+end function
+
+function checked_bytes_value_flow(value)
+  data = bytes(value)
+  first = data[0]
+  return first + 1
+end function
+
 function tenth(a, b, c, d, e, f, g, h, i, j)
   return j
 end function
@@ -321,6 +334,12 @@ function main(args)
   t.assertEq(float_fallback(), 3.0, "non-integer arithmetic fallback")
   t.assertEq(extended_type_flow(), 124, "extended local type flow and loop BCE")
   t.assertEq(fixed_negative_index(), 22, "negative fixed index keeps normalization")
+  t.assertEq(checked_bytes_roundtrip("A"), 66, "checked bytes type flow read and write")
+  t.assertEq(checked_bytes_value_flow("A"), 66, "checked bytes result type flows through locals")
+  t.assertEq(typeof(try(checked_bytes_value_flow(-1))), "error", "checked bytes local flow preserves target error")
+  t.assertEq(typeof(try(invalid_bytes_index())), "error", "checked bytes type flow preserves target error")
+  t.assertEq(context_values.enumValueFlow(false), true, "package enum constants retain integer type flow")
+  t.assertEq(context_values.enumValueFlow(true), false, "package enum type flow tracks every assignment")
   slot = Slot(0)
   slot.value = tenth(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
   t.assertEq(slot.value, 10, "member assignment call-arity sizing")

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 24 August 2026 against the matching 1.1.0 revisions of:
+Verified on 25 August 2026 against the matching 1.1.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -77,6 +77,41 @@ The representative `language_suite.ml` target built by Python, by Stage 3's
 monolithic path and by its `.mlo` path is byte-identical in all three cases:
 1,622,016 bytes, SHA-256
 `AC1C08B988A0B8A8987F487B2DFB2D95553733D8F0A41DBB86F597D29F4F6029`.
+
+## Current performance-hardening fixed point
+
+The guarded fallible-bytes specialization, 16-byte user-function alignment,
+package-aware integer flow and indexed self-hosted analyses were bootstrapped
+on 25 August 2026:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 56,743,936 | `5E84848F01D6147C1EE0D7BA47FE610DBF9093E05299AF2EF029B34B594B26D2` |
+| Stage 2, built by Stage 1 | 56,743,936 | `E85E3A6EE515DC8605A10752DA953E0FBF92C5992CC354179CA7A471E11AFFEF` |
+| Stage 3, built by Stage 2 | 56,743,936 | `E85E3A6EE515DC8605A10752DA953E0FBF92C5992CC354179CA7A471E11AFFEF` |
+
+Stages 2 and 3 are byte-identical. Their object-pipeline self-builds completed
+in 283.065 and 304.742 seconds. The optimization fixture built by Python, by
+Stage 3 monolithically and through `.mlo` is byte-identical in all three cases:
+466,944 bytes, SHA-256
+`99C21E99AC0A2BC194B2C49858CA04798FC52B4AA097C5CFADDC0DF1BE2CF565`.
+The complete suites report Python 104/104 and MiniLang 97/97.
+
+The MiniSQL 1 GiB offline checker is also byte-identical when built by Python
+and by Stage 3: 23,589,888 bytes, SHA-256
+`C0A226BB6E25427A9819A5F3056919515DFB1CADD99BDA577A0F2708B9E5C8E6`.
+Seven interleaved runs measured a 3,749.1 ms median for the pre-optimization
+compiler and 3,764.9 ms for this revision (+0.42%, within run-to-run noise),
+removing the previously observed 3.5% regression.
+
+The broader MiniSQL recheck also removed the reported storage regression and
+substantially reduced the parallel-scan regression. Seven interleaved 64 MiB
+writes measured 2,891 ms with the previous
+compiler and 2,844 ms here (+1.7% throughput). At 4, 8 and 16 concurrent
+`SUM(id)` clients the remaining deltas were -1.3%, +0.2% and -2.3%; a longer
+two-client run retained a smaller -2.5% delta. The earlier consistent 5-8%
+multi-client slowdown is therefore gone, while the residual low-concurrency
+variance remains visible rather than being treated as a speedup.
 
 ## Historical regression binary record
 
@@ -193,7 +228,8 @@ callable fallback bodies, local representation flow for integers, floats,
 booleans, strings, arrays, bytes and concrete structs, constant-loop lowering,
 known-struct method devirtualization and inline expansion, two ABI-preserved
 XMM register homes for proven hot primitive locals, constant integer strength
-reduction, loop-invariant container-base hoisting, proven bounds-check
+reduction, guarded specialization of fallible byte-buffer results, 16-byte
+user-function alignment, loop-invariant container-base hoisting, proven bounds-check
 elimination, GC-root/prologue sizing and short-back-edge selection. Stack sizing also
 accounts for calls hidden inside eligible inline bodies, so an expanded wide
 call cannot overwrite caller locals, debug saves or the root-frame record. The shared
@@ -209,7 +245,8 @@ call and the absence of division/multiply/CL setup for the covered constant
 integer cases.
 
 Canonical object batches also carry the cumulative inline byte budget and call
-accounting from one fragment to the next. Local `fn_ret_*` and `fn_defer_*`
+accounting and the cumulative text offset for function alignment from one
+fragment to the next. Local `fn_ret_*` and `fn_defer_*`
 control-flow labels are excluded from runtime-helper discovery. The shared
 optimization fixture crosses multiple object batches to guard this state.
 
@@ -271,8 +308,8 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 103, FAIL 0, SKIP 0
-MiniLang harness:  PASS 96, FAIL 0
+Python harness:    PASS 104, FAIL 0, SKIP 0
+MiniLang harness:  PASS 97, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/CNG, ABI, object parity, listings and repros passed
 ```

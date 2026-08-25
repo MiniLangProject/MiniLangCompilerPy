@@ -21,6 +21,17 @@ All notable changes to the MiniLang compiler are documented here.
   integer strength reduction; also improved global/object initialization and
   the memory-bounded self-hosted `.mlo` pipeline while preserving cross-compiler
   target-byte parity.
+- Added guarded type-flow specialization for fallible `bytes(...)` results and
+  16-byte user-function alignment. This restores compact byte-processing hot
+  paths without weakening runtime errors and prevents local size wins from
+  shifting later functions onto unstable instruction-cache boundaries.
+- Replaced the self-hosted type-flow pass's repeated whole-function fixed-point
+  scans with indexed facts and a dependency worklist, keeping compiler-sized
+  source builds bounded while preserving emitted target bytes.
+- Made package-qualified enum constants available to integer-flow analysis and
+  replaced repeated self-hosted candidate-membership scans with indexed,
+  monotone validation. This restores Python/self-host target parity without
+  slowing large generated programs.
 - Expanded cross-compiler, runtime, standard-library, fixed-point and large
   application regression coverage.
 

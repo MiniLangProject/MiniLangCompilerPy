@@ -325,12 +325,18 @@ rendered FPS. The object writer preserves the stream-wide inline budget across
 fragments and filters local return/defer labels out of helper discovery.
 
 The current reviewed 1.1.0 self-host source reaches a binary fixed point:
-Stage 2 and Stage 3 are byte-identical 56,525,312-byte compiler images with
+Stage 2 and Stage 3 are byte-identical 56,743,936-byte compiler images with
 SHA-256
-`BA5286D04184C3C9BD74E8EAE44BD41B7FD4AF7777810B10757CDB39969E9AE6`.
-The Python-built Stage 1 is a 56,525,824-byte bootstrap image with a different
-layout. The parity report therefore distinguishes the bootstrap image, the
-measured self-hosted fixed point and byte-identical target output explicitly.
+`E85E3A6EE515DC8605A10752DA953E0FBF92C5992CC354179CA7A471E11AFFEF`.
+The Python-built Stage 1 has the same size and SHA-256
+`5E84848F01D6147C1EE0D7BA47FE610DBF9093E05299AF2EF029B34B594B26D2`;
+Stage 2 and Stage 3 took 283.065 and 304.742 seconds. This fixed point includes
+guarded specialization for fallible byte-buffer accesses, deterministic
+16-byte user-function alignment across monolithic and `.mlo` builds, and a
+dependency-driven type-flow worklist plus indexed package-aware integer flow.
+The parity report therefore
+distinguishes the bootstrap image, the measured self-hosted fixed point and
+byte-identical target output explicitly.
 
 
 ---
