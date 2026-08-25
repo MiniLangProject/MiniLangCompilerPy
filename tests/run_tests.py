@@ -392,10 +392,14 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
         source = root / "main.ml"
         output = root / "build" / "app.exe"
         manifest = root / "minilang.toml"
-        source.write_text('print "manifest v1 [OK]"\n', encoding="utf-8")
+        source.write_text(
+            '#option ENABLED: bool = false\n#if ENABLED\nprint "manifest v1 [OK]"\n'
+            '#else\nprint "manifest disabled [OK]"\n#endif\n',
+            encoding="utf-8",
+        )
         manifest.write_text(
             '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
-            'incremental = true\ncache_dir = ".cache"\n', encoding="utf-8")
+            'incremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = true\n', encoding="utf-8")
         cmd = [sys.executable, str(mlc_runner), "--project", str(manifest)]
         first = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if first.returncode != 0 or not output.is_file():
@@ -410,7 +414,11 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
         if run1.returncode != 0 or "manifest v1 [OK]" not in normalize_out(run1.stdout):
             return TestResult(name=name, status="FAIL", details="restored program failed", stdout=run1.stdout,
                               stderr=run1.stderr)
-        source.write_text('print "manifest v2 [OK]"\n', encoding="utf-8")
+        source.write_text(
+            '#option ENABLED: bool = false\n#if ENABLED\nprint "manifest v2 [OK]"\n'
+            '#else\nprint "manifest disabled [OK]"\n#endif\n',
+            encoding="utf-8",
+        )
         changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if changed.returncode != 0 or "cache hit" in normalize_out(changed.stdout).lower():
             return TestResult(name=name, status="FAIL", details="source change did not invalidate cache",
@@ -419,7 +427,58 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
         if run2.returncode != 0 or "manifest v2 [OK]" not in normalize_out(run2.stdout):
             return TestResult(name=name, status="FAIL", details="rebuilt program is stale", stdout=run2.stdout,
                               stderr=run2.stderr)
+        manifest.write_text(
+            '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
+            'incremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = false\n', encoding="utf-8")
+        define_changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if define_changed.returncode != 0 or "cache hit" in normalize_out(define_changed.stdout).lower():
+            return TestResult(name=name, status="FAIL", details="define change did not invalidate cache",
+                              stdout=define_changed.stdout, stderr=define_changed.stderr)
+        run3 = run_exe(output)
+        if run3.returncode != 0 or "manifest disabled [OK]" not in normalize_out(run3.stdout):
+            return TestResult(name=name, status="FAIL", details="manifest define was not applied",
+                              stdout=run3.stdout, stderr=run3.stderr)
         return TestResult(name=name, status="PASS", stdout=changed.stdout, stderr=changed.stderr)
+
+
+def test_conditional_compilation_cli(*, name: str, mlc_runner: Path, tests_root: Path) -> TestResult:
+    """Compile-time options must select code deterministically and reject bad input."""
+    with tempfile.TemporaryDirectory(prefix="mltests_conditional_") as td:
+        root = Path(td)
+        fixture = tests_root / "conditional_compilation.ml"
+        error_fixture = tests_root / "conditional_compilation_error.ml"
+        outputs: list[str] = []
+
+        for suffix, extra, marker in (
+                ("default", [], "conditional default 6 [OK]"),
+                ("enabled", ["-DFEATURE=true", '-DLABEL="enabled"'], "conditional enabled 6 [OK]")):
+            exe = root / f"{suffix}.exe"
+            compiled = compile_native(mlc_runner, fixture, exe, extra_args=extra)
+            outputs.extend((compiled.stdout, compiled.stderr))
+            if compiled.returncode != 0:
+                return TestResult(name=name, status="FAIL", details=f"{suffix} compile failed",
+                                  stdout=compiled.stdout, stderr=compiled.stderr)
+            ran = run_exe(exe)
+            outputs.extend((ran.stdout, ran.stderr))
+            if ran.returncode != 0 or marker not in normalize_out(ran.stdout):
+                return TestResult(name=name, status="FAIL", details=f"{suffix} branch was not selected",
+                                  stdout=ran.stdout, stderr=ran.stderr)
+
+        wrong_type = compile_native(mlc_runner, fixture, root / "wrong_type.exe",
+                                    extra_args=["-DFEATURE=1"])
+        if wrong_type.returncode == 0 or "expects bool, got int" not in normalize_out(
+                wrong_type.stdout + wrong_type.stderr):
+            return TestResult(name=name, status="FAIL", details="typed option mismatch was not rejected",
+                              stdout=wrong_type.stdout, stderr=wrong_type.stderr)
+
+        requested_error = compile_native(mlc_runner, error_fixture, root / "error.exe",
+                                         extra_args=["-DFAIL=true"])
+        if requested_error.returncode == 0 or "requested compile failure" not in normalize_out(
+                requested_error.stdout + requested_error.stderr):
+            return TestResult(name=name, status="FAIL", details="active #error did not fail compilation",
+                              stdout=requested_error.stdout, stderr=requested_error.stderr)
+
+        return TestResult(name=name, status="PASS", stdout="".join(outputs))
 
 
 # -----------------------------
@@ -3768,6 +3827,11 @@ def main() -> int:
     tests.append(lambda: test_asm_listing_cli(name="CLI: assembly/PE/data listing", mlc_runner=mlc_runner))
     tests.append(lambda: test_project_manifest_cli(name="CLI: project manifest + incremental cache",
                                                    mlc_runner=mlc_runner))
+    tests.append(lambda: test_conditional_compilation_cli(
+        name="conditional compilation: options, branches, diagnostics",
+        mlc_runner=mlc_runner,
+        tests_root=tests_root,
+    ))
 
     tests.append(lambda: test_program_no_fail(
         name="defer: LIFO, capture, conditional and return cleanup",

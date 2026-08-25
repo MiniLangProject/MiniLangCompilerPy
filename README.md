@@ -142,6 +142,10 @@ Common options:
 - `--keep-going` continue after the first error and report multiple diagnostics
 - `--max-errors <n>` cap the number of diagnostics when using `--keep-going` (default: 20)
 
+**Conditional compilation**
+- `-DNAME[=VALUE]` / `--define NAME[=VALUE]` override a typed source option;
+  an omitted value means `true`
+
 **Heap / GC tuning (native runtime)**
 - `--heap-reserve <size>` reserve heap address space (e.g. `256m`)
 - `--heap-commit <size>` initial committed heap bytes (e.g. `16m`)
@@ -196,6 +200,11 @@ object_pipeline = true
 incremental = true
 cache_dir = ".minilang-cache"
 compiler_args = ["--heap-reserve", "1g"]
+
+[defines]
+FEATURE_TLS = true
+SERVER_NAME = "example"
+WORKER_LIMIT = 8
 ```
 
 All paths are relative to the manifest. The supported project fields are:
@@ -210,6 +219,12 @@ All paths are relative to the manifest. The supported project fields are:
 | `incremental` | enable the exact-hit artifact cache (default `true`) |
 | `cache_dir` | cache directory (default `.minilang-cache`) |
 | `compiler_args` | array of additional compiler arguments |
+
+The optional top-level `[defines]` table accepts booleans, integers and
+strings. These values are passed to conditional compilation before any module
+is parsed. Explicit `-D` arguments after `--project` take precedence. The
+effective definitions and the manifest contents are included in the
+incremental-cache fingerprint.
 
 Unknown project fields and wrong field types are errors. Command-line
 arguments after the manifest are appended; use `--no-incremental` to bypass
@@ -229,6 +244,60 @@ not per-module incremental compilation. Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
 compiler uses its retained `.mlo` pipeline when the field is true.
+
+### Conditional compilation
+
+Conditional compilation is line-oriented and happens before tokenization and
+import resolution. It can therefore remove platform code, optional imports or
+entire declarations without changing source positions used by diagnostics.
+
+```ml
+#option TRACE_HTTP: bool = false
+#option MAX_WORKERS: int = 8
+#option PRODUCT: string = "server"
+#const LARGE_POOL = MAX_WORKERS >= 16
+
+#if TARGET_OS == "windows" and (TRACE_HTTP or LARGE_POOL)
+  import diagnostics.http_trace
+#elif PRODUCT == "server"
+  import server.logging
+#else
+  #error "unsupported product configuration"
+#endif
+```
+
+`#option NAME: bool|int|string = expression` declares a per-file typed option.
+Its default is used unless a project/CLI definition with that name exists.
+`#const NAME = expression` defines an immutable compile-time value for the
+remainder of that file. Compile-time values are available only in directives;
+they are not runtime variables and are not substituted into ordinary code.
+
+The supported directives are `#option`, `#const`, `#if`, `#elif`, `#else`,
+`#endif` and `#error`. Conditions must produce `bool`. Expressions support
+bool/int/string literals, declared values, `defined(NAME)`, `not`, `and`, `or`,
+comparisons, integer arithmetic/bitwise/shift operations and string `+`.
+Inactive branches are blanked before lexing, so their imports and syntax are
+not processed. Directives may be nested.
+
+The immutable target values are `TARGET_OS = "windows"`,
+`TARGET_ARCH = "x64"`, `POINTER_SIZE = 8` and
+`MINILANG_VERSION = "1.1.0"`. No compiler-implementation value is exposed:
+the Python and self-hosted compilers must select the same source for identical
+inputs.
+
+Examples of CLI overrides:
+
+```bash
+python mlc_win64.py app.ml app.exe -DTRACE_HTTP -DMAX_WORKERS=32
+python mlc_win64.py app.ml app.exe --define PRODUCT=desktop
+```
+
+Each source file starts with the target values plus the same external
+definitions, then evaluates its own `#option` defaults and `#const` values.
+Declare every externally configurable name with `#option`; `defined(NAME)` is
+useful for optional externally supplied flags. This is intentionally not a
+textual macro system: directives cannot rewrite tokens or inspect which
+compiler implementation is running.
 
 ### Formatting (mlfmt)
 
@@ -288,7 +357,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **104 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **105 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -2238,6 +2307,13 @@ ParseError: unexpected token
 
 ## 16. Syntax Reference (short)
 
+### Compile-time directives
+- `#option NAME: bool|int|string = <compile-expression>`
+- `#const NAME = <compile-expression>`
+- `#if <bool-expression>` / `#elif` / `#else` / `#endif`
+- `#error <string-expression>`
+- CLI override: `-DNAME[=VALUE]` or `--define NAME[=VALUE]`
+
 ### Statements
 Statements are separated by newlines or `;`.
 
@@ -2377,6 +2453,7 @@ What works:
 - `extern function` via the PE import table (IAT), ABI-layout
   `extern struct`, omitted trailing `out` parameters and Win64 callbacks
 - TOML project manifests with conservative exact-hit artifact caching
+- typed conditional compilation with CLI/project definitions and target values
 - builtins / special forms: `len`, `input`, `toNumber`, `toFloat`, `str`,
   `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`,
   `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`, `copyBytes`,

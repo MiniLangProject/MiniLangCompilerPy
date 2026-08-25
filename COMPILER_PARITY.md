@@ -201,6 +201,8 @@ No existing feature was removed. The synchronized surface includes:
   automatic error propagation;
 - TOML project manifests with content-validated incremental artifact caching
   and optional self-hosted `.mlo` builds;
+- typed conditional compilation with identical predefined target values,
+  per-file options/constants, CLI/project overrides and cache identity;
 - native bytes pointers, raw-value conversion and callback smoke coverage;
 - `array(size[, fill])` construction;
 - global function-value rebinding;
@@ -308,11 +310,17 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 104, FAIL 0, SKIP 0
-MiniLang harness:  PASS 97, FAIL 0
+Python harness:    PASS 105, FAIL 0, SKIP 0
+MiniLang harness:  PASS 101, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/CNG, ABI, object parity, listings and repros passed
 ```
+
+The 2026-08-25 conditional-compilation bootstrap produced byte-identical
+57,467,904-byte Stage 2 and Stage 3 compiler images with SHA-256
+`F0300E7F1C542204974018DF56E97155EC0BDE6BF43E32DB927BEB9139280209`.
+The shared nested-directive fixture compiled to identical Python, self-hosted
+monolithic and `.mlo` target bytes.
 
 The 2026-08-24 MiniQuake check used clean commit
 `7e8d0f614f7ad33f423e88873c210b7f846bbced`. Python compiled the 142-source

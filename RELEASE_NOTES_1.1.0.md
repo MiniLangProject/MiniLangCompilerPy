@@ -8,6 +8,8 @@ Highlights:
 - native Windows threads, synchronization and thread-safe collections;
 - a process-wide managed heap with per-thread stacks and cooperative GC;
 - `defer`, expanded FFI support and incremental project builds;
+- typed conditional compilation with source options, CLI/project overrides and
+  nested target-dependent branches;
 - CPU-dispatched checksums, native byte search and Windows CNG cryptography;
 - faster generated code and a bounded, substantially faster self-hosted object
   pipeline; and

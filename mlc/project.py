@@ -65,6 +65,30 @@ def _string_list(value: Any, field: str) -> List[str]:
     return list(value)
 
 
+def _define_args(value: Any) -> List[str]:
+    """Convert a TOML defines table into deterministic typed CLI arguments."""
+    if value is None:
+        return []
+    if not isinstance(value, dict):
+        raise ProjectError("project defines must be a table")
+    result: List[str] = []
+    for name in sorted(value):
+        if not isinstance(name, str) or not name or not (name[0].isalpha() or name[0] == "_") or not all(
+                ch.isalnum() or ch == "_" for ch in name):
+            raise ProjectError(f"invalid compile definition name: {name!r}")
+        item = value[name]
+        if isinstance(item, bool):
+            encoded = "true" if item else "false"
+        elif isinstance(item, int):
+            encoded = str(item)
+        elif isinstance(item, str):
+            encoded = '"' + item.replace("\\", "\\\\").replace('"', '\\"') + '"'
+        else:
+            raise ProjectError(f"compile definition {name} must be bool, int, or string")
+        result.extend(["-D", f"{name}={encoded}"])
+    return result
+
+
 def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[ProjectBuild]]:
     """Expand ``--project FILE`` into the ordinary compiler command line."""
     raw = list(argv)
@@ -94,6 +118,8 @@ def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[Projec
     output = _path(base, cfg.get("output"), "output")
     includes = _string_list(cfg.get("include", cfg.get("import_paths", [])), "include")
     compiler_args = _string_list(cfg.get("compiler_args", []), "compiler_args")
+    top_level_defines = parsed.get("defines")
+    define_args = _define_args(top_level_defines)
     incremental = cfg.get("incremental", True)
     object_pipeline = cfg.get("object_pipeline", False)
     if not isinstance(incremental, bool):
@@ -111,6 +137,7 @@ def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[Projec
         expanded.extend(["--subsystem", subsystem])
     if object_pipeline:
         expanded.append("--object-pipeline")
+    expanded.extend(define_args)
     expanded.extend(compiler_args)
 
     extra = raw[3:]

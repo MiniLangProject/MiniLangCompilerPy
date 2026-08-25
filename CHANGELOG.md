@@ -14,6 +14,9 @@ All notable changes to the MiniLang compiler are documented here.
   locks, semaphores and thread-safe list, hash map and shared-value modules.
 - Added `defer`, native FFI output parameters and project manifests with
   content-validated incremental builds.
+- Added typed, nested conditional compilation with `#option`, `#const`,
+  `#if/#elif/#else/#endif`, `#error`, CLI `-D` overrides and manifest
+  `[defines]`, while preserving Python/self-host target-byte parity.
 - Added CPU feature detection, native byte-search primitives, CRC-32,
   hardware-dispatched CRC-32C and Windows CNG cryptography helpers.
 - Improved generated-code optimization with known-struct method

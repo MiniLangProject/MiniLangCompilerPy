@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from mlc.codegen import Codegen
 from .errors import CompileError, Diagnostic, MultiCompileError
 from .frontend import load_minilang_frontend, parse_program, normalize_code_for_tokenizer
+from .minilang_parser import ParseError, parse_compile_define_specs
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
 from .project import ProjectError, expand_project_args, fingerprint as project_fingerprint, restore as project_restore, store as project_store
 from .tools import u32, u64
@@ -1341,10 +1342,14 @@ def compile_to_exe(
     call_profile: bool = False,
     trace_calls: bool = False,
     subsystem: int = 3,
+    compile_defines: Optional[Dict[str, bool | int | str]] = None,
 ) -> None:
     """Compile one MiniLang entry file and its imports to a native x64 PE."""
 
     ml = load_minilang_frontend(input_ml)
+    configure_defines = getattr(ml, "set_compile_defines", None)
+    if callable(configure_defines):
+        configure_defines(compile_defines or {})
     source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs, keep_going=keep_going, max_errors=max_errors)
 
     extern_sigs = collect_extern_sigs(ml, program, packages_by_file)
@@ -1811,6 +1816,8 @@ def main(argv: List[str]) -> int:
 
     parser.add_argument('-I', '--import-path', dest='include_dirs', action='append', default=[], metavar='DIR',
                         help='Add DIR to import search paths (may be repeated).')
+    parser.add_argument('-D', '--define', dest='compile_defines', action='append', default=[], metavar='NAME[=VALUE]',
+                        help='Set a typed conditional-compilation value (may be repeated).')
 
     parser.add_argument('--keep-going', action='store_true', help='continue after errors and report multiple diagnostics')
     parser.add_argument('--max-errors', type=int, default=20, help='maximum diagnostics to report with --keep-going (default: 20)')
@@ -1871,6 +1878,12 @@ def main(argv: List[str]) -> int:
     if not os.path.isfile(inp):
         print(f'Input file not found: {inp}')
         return 1
+
+    try:
+        compile_defines = parse_compile_define_specs(getattr(args, 'compile_defines', []) or [])
+    except (ValueError, ParseError) as e:
+        print(f'CompileOptionError: {e}')
+        return 2
 
     project_digest = ""
     project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels)
@@ -1939,6 +1952,7 @@ def main(argv: List[str]) -> int:
             keep_going=bool(getattr(args, "keep_going", False)),
             max_errors=int(getattr(args, "max_errors", 20) or 20),
             subsystem=int(getattr(args, "subsystem", 3) or 3),
+            compile_defines=compile_defines,
         )
 
     except MultiCompileError as me:

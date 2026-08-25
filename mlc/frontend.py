@@ -213,14 +213,18 @@ def parse_program(minilang_mod: Any, input_path: str) -> tuple[str, Any]:
         code = f.read()
 
     code = normalize_code_for_tokenizer(code)
+    source_for_tokens = code
+    preprocess = getattr(minilang_mod, "preprocess_compile_directives", None)
+    if callable(preprocess):
+        source_for_tokens = preprocess(code, input_path)
 
     # Current signature: Parser(tokens, source, filename)
     try:
         try:
-            program = minilang_mod.Parser(minilang_mod.tokenize(code), code, input_path, ).parse_program()
+            program = minilang_mod.Parser(minilang_mod.tokenize(source_for_tokens), code, input_path, ).parse_program()
         except TypeError:
             # Legacy signature: Parser(tokens)
-            program = minilang_mod.Parser(minilang_mod.tokenize(code)).parse_program()
+            program = minilang_mod.Parser(minilang_mod.tokenize(source_for_tokens)).parse_program()
     except Exception as e:
         # Ensure position-bearing frontend errors (especially ParseError) carry
         # filename + the *normalized* source, so diagnostics point to the correct
@@ -255,9 +259,23 @@ def parse_program_keepgoing(
 
     code = normalize_code_for_tokenizer(code)
 
+    source_for_tokens = code
+    preprocess = getattr(minilang_mod, "preprocess_compile_directives", None)
+    if callable(preprocess):
+        try:
+            source_for_tokens = preprocess(code, input_path)
+        except Exception as e:
+            if getattr(e, "pos", None) is not None and type(e).__name__ in ("ParseError",):
+                try:
+                    setattr(e, "filename", input_path)
+                    setattr(e, "source", code)
+                except Exception:
+                    pass
+            return code, [], [e]
+
     # Tokenizer errors can't be recovered from in a meaningful way; report and return.
     try:
-        toks = minilang_mod.tokenize(code)
+        toks = minilang_mod.tokenize(source_for_tokens)
     except Exception as e:
         if getattr(e, "pos", None) is not None and type(e).__name__ in ("ParseError",):
             try:

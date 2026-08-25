@@ -1786,3 +1786,361 @@ class Parser:
             return self._attach_pos(Var(t.value), start_pos)
 
         raise ParseError(f"Unexpected expression: {t.kind}:{t.value}", t.pos)
+
+
+# ============================================================
+# Typed conditional-compilation directives
+# ============================================================
+
+_COMPILE_PREDEFINED = {
+    "TARGET_OS": "windows",
+    "TARGET_ARCH": "x64",
+    "POINTER_SIZE": 8,
+    "MINILANG_VERSION": "1.1.0",
+}
+_compile_external_defines: dict[str, bool | int | str] = {}
+
+
+def _compile_value_type(value: Any) -> Optional[str]:
+    """Return the source-level type of one supported compile-time value."""
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int):
+        return "int"
+    if isinstance(value, str):
+        return "string"
+    return None
+
+
+def _compile_valid_name(name: str) -> bool:
+    return re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name or "") is not None
+
+
+def _parse_cli_compile_value(text: str) -> bool | int | str:
+    raw = str(text).strip()
+    if raw == "true":
+        return True
+    if raw == "false":
+        return False
+    if re.fullmatch(r"-?(?:0[xX][0-9A-Fa-f]+|0[bB][01]+|[0-9]+)", raw):
+        sign = -1 if raw.startswith("-") else 1
+        digits = raw[1:] if sign < 0 else raw
+        base = 0 if digits.lower().startswith(("0x", "0b")) else 10
+        return wrap_i61(sign * int(digits, base))
+    if raw[0].isdigit() or (raw.startswith("-") and len(raw) > 1 and raw[1].isdigit()):
+        parsed_number = _parse_compile_expression(raw, "<command-line>", 0)
+        value = _eval_compile_expression(parsed_number, {}, "<command-line>", 0)
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError("invalid numeric compile definition")
+        return value
+    if len(raw) >= 2 and raw[0] == '"' and raw[-1] == '"':
+        parsed = _parse_compile_expression(raw, "<command-line>", 0)
+        if not isinstance(parsed, Str):
+            raise ValueError("quoted compile definition must be a string")
+        return parsed.value
+    if not raw:
+        raise ValueError("compile definition value must not be empty")
+    return raw
+
+
+def parse_compile_define_specs(specs: Any) -> dict[str, bool | int | str]:
+    """Parse repeated ``-DNAME=value`` arguments into typed values."""
+    result: dict[str, bool | int | str] = {}
+    for item in list(specs or []):
+        raw = str(item)
+        if "=" in raw:
+            name, value_text = raw.split("=", 1)
+            value = _parse_cli_compile_value(value_text)
+        else:
+            name, value = raw, True
+        name = name.strip()
+        if not _compile_valid_name(name):
+            raise ValueError(f"invalid compile definition name: {name!r}")
+        if name in _COMPILE_PREDEFINED:
+            raise ValueError(f"predefined compile value {name} cannot be overridden")
+        result[name] = value
+    return result
+
+
+def set_compile_defines(values: Any) -> None:
+    """Install external compile definitions for subsequent file parses."""
+    global _compile_external_defines
+    normalized: dict[str, bool | int | str] = {}
+    for name, value in dict(values or {}).items():
+        if not _compile_valid_name(str(name)):
+            raise ValueError(f"invalid compile definition name: {name!r}")
+        if str(name) in _COMPILE_PREDEFINED:
+            raise ValueError(f"predefined compile value {name} cannot be overridden")
+        if _compile_value_type(value) is None:
+            raise ValueError(f"compile definition {name} must be bool, int, or string")
+        normalized[str(name)] = value
+    _compile_external_defines = normalized
+
+
+def _parse_compile_expression(text: str, filename: str, base_pos: int) -> Expr:
+    try:
+        parser = Parser(tokenize(text), text, filename)
+        expr = parser.parse_expr()
+        parser.skip_stmt_seps()
+        if parser.peek().kind != "EOF":
+            raise ParseError("Trailing tokens after compile-time expression", parser.peek().pos)
+        return expr
+    except ParseError as exc:
+        exc.pos = base_pos + int(getattr(exc, "pos", 0) or 0)
+        exc.filename = filename
+        raise
+
+
+def _eval_compile_expression(expr: Expr, env: dict[str, bool | int | str], filename: str,
+                             base_pos: int) -> bool | int | str:
+    pos = base_pos + int(getattr(expr, "_pos", 0) or 0)
+
+    if isinstance(expr, Bool):
+        return expr.value
+    if isinstance(expr, Num):
+        if isinstance(expr.value, int) and not isinstance(expr.value, bool):
+            return expr.value
+        raise ParseError("compile-time values do not support floats", pos)
+    if isinstance(expr, Str):
+        return expr.value
+    if isinstance(expr, Var):
+        if expr.name not in env:
+            raise ParseError(f"unknown compile-time value: {expr.name}", pos)
+        return env[expr.name]
+    if isinstance(expr, Call) and isinstance(expr.callee, Var) and expr.callee.name == "defined":
+        if len(expr.args) != 1 or not isinstance(expr.args[0], (Var, Str)):
+            raise ParseError("defined(...) expects one name or string", pos)
+        name = expr.args[0].name if isinstance(expr.args[0], Var) else expr.args[0].value
+        return name in env
+    if isinstance(expr, Unary):
+        value = _eval_compile_expression(expr.right, env, filename, base_pos)
+        if expr.op == "not" and isinstance(value, bool):
+            return not value
+        if expr.op == "-" and isinstance(value, int) and not isinstance(value, bool):
+            return wrap_i61(-value)
+        if expr.op == "~" and isinstance(value, int) and not isinstance(value, bool):
+            return wrap_i61(~value)
+        raise ParseError(f"invalid compile-time unary operation: {expr.op}", pos)
+    if isinstance(expr, Bin):
+        left = _eval_compile_expression(expr.left, env, filename, base_pos)
+        if expr.op == "and":
+            if not isinstance(left, bool):
+                raise ParseError("compile-time 'and' expects booleans", pos)
+            if not left:
+                return False
+            right = _eval_compile_expression(expr.right, env, filename, base_pos)
+            if not isinstance(right, bool):
+                raise ParseError("compile-time 'and' expects booleans", pos)
+            return right
+        if expr.op == "or":
+            if not isinstance(left, bool):
+                raise ParseError("compile-time 'or' expects booleans", pos)
+            if left:
+                return True
+            right = _eval_compile_expression(expr.right, env, filename, base_pos)
+            if not isinstance(right, bool):
+                raise ParseError("compile-time 'or' expects booleans", pos)
+            return right
+
+        right = _eval_compile_expression(expr.right, env, filename, base_pos)
+        if expr.op in ("==", "!="):
+            equal = type(left) is type(right) and left == right
+            return equal if expr.op == "==" else not equal
+        if expr.op in ("<", "<=", ">", ">="):
+            if type(left) is not type(right) or isinstance(left, bool) or not isinstance(left, (int, str)):
+                raise ParseError(f"compile-time '{expr.op}' expects matching int or string operands", pos)
+            return {"<": left < right, "<=": left <= right,
+                    ">": left > right, ">=": left >= right}[expr.op]
+        if expr.op == "+" and isinstance(left, str) and isinstance(right, str):
+            return left + right
+        if (not isinstance(left, int) or isinstance(left, bool) or
+                not isinstance(right, int) or isinstance(right, bool)):
+            raise ParseError(f"compile-time '{expr.op}' expects integer operands", pos)
+        if expr.op == "+":
+            return wrap_i61(left + right)
+        if expr.op == "-":
+            return wrap_i61(left - right)
+        if expr.op == "*":
+            return wrap_i61(left * right)
+        if expr.op == "%":
+            if right == 0:
+                raise ParseError("compile-time modulo by zero", pos)
+            return wrap_i61(left % right)
+        if expr.op in ("&", "|", "^"):
+            return wrap_i61({"&": left & right, "|": left | right, "^": left ^ right}[expr.op])
+        if expr.op in ("<<", ">>"):
+            if right < 0:
+                raise ParseError("negative compile-time shift count", pos)
+            return wrap_i61(left << (right & 63) if expr.op == "<<" else left >> (right & 63))
+        raise ParseError(f"unsupported compile-time operation: {expr.op}", pos)
+
+    raise ParseError("unsupported compile-time expression", pos)
+
+
+def _compile_eval(text: str, env: dict[str, bool | int | str], filename: str,
+                  base_pos: int) -> bool | int | str:
+    expr = _parse_compile_expression(text, filename, base_pos)
+    return _eval_compile_expression(expr, env, filename, base_pos)
+
+
+def _scan_compile_block_comment(line: str, in_block: bool) -> bool:
+    """Track active-code block comments so commented directives stay inert."""
+    i = 0
+    in_string = False
+    escaped = False
+    while i < len(line):
+        if in_block:
+            end = line.find("*/", i)
+            if end < 0:
+                return True
+            in_block = False
+            i = end + 2
+            continue
+        ch = line[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            i += 1
+            continue
+        if ch == '"':
+            in_string = True
+            i += 1
+            continue
+        if line.startswith("//", i):
+            return False
+        if line.startswith("/*", i):
+            in_block = True
+            i += 2
+            continue
+        i += 1
+    return in_block
+
+
+def preprocess_compile_directives(code: str, filename: str = "<source>") -> str:
+    """Evaluate typed line directives and preserve every original source offset."""
+    # Most source files do not use conditional compilation. Avoid allocating a
+    # second full-size source string on that overwhelmingly common path.
+    if re.search(r"(?m)^[ \t]*#", code) is None:
+        return code
+    env: dict[str, bool | int | str] = dict(_COMPILE_PREDEFINED)
+    env.update(_compile_external_defines)
+    external_names = set(_compile_external_defines)
+    option_types: dict[str, str] = {}
+    frames: list[dict[str, Any]] = []
+    output: list[str] = []
+    line_start = 0
+    in_block_comment = False
+
+    def active() -> bool:
+        return bool(frames[-1]["active"]) if frames else True
+
+    for physical in code.splitlines(keepends=True):
+        ending = "\n" if physical.endswith("\n") else ""
+        line = physical[:-1] if ending else physical
+        stripped = line.lstrip(" \t")
+        hash_column = len(line) - len(stripped)
+        is_directive = stripped.startswith("#") and (not active() or not in_block_comment)
+        blank = " " * len(line) + ending
+
+        if not is_directive:
+            if active():
+                output.append(physical)
+                in_block_comment = _scan_compile_block_comment(line, in_block_comment)
+            else:
+                output.append(blank)
+            line_start += len(physical)
+            continue
+
+        output.append(blank)
+        body = stripped[1:].strip()
+        parts = body.split(None, 1)
+        command = (parts[0] if parts else "").lower()
+        argument = parts[1].strip() if len(parts) == 2 else ""
+        directive_pos = line_start + hash_column
+        argument_pos = line_start + max(line.find(argument), hash_column + 1) if argument else directive_pos
+
+        if command == "if":
+            parent_active = active()
+            condition = False
+            if parent_active:
+                value = _compile_eval(argument, env, filename, argument_pos)
+                if not isinstance(value, bool):
+                    raise ParseError("#if expression must produce bool", argument_pos)
+                condition = value
+            frames.append({"parent": parent_active, "active": parent_active and condition,
+                           "taken": parent_active and condition, "else": False, "pos": directive_pos})
+        elif command == "elif":
+            if not frames:
+                raise ParseError("#elif without matching #if", directive_pos)
+            frame = frames[-1]
+            if frame["else"]:
+                raise ParseError("#elif is not allowed after #else", directive_pos)
+            condition = False
+            if frame["parent"] and not frame["taken"]:
+                value = _compile_eval(argument, env, filename, argument_pos)
+                if not isinstance(value, bool):
+                    raise ParseError("#elif expression must produce bool", argument_pos)
+                condition = value
+            frame["active"] = frame["parent"] and not frame["taken"] and condition
+            frame["taken"] = frame["taken"] or frame["active"]
+        elif command == "else":
+            if argument:
+                raise ParseError("#else does not accept an expression", argument_pos)
+            if not frames:
+                raise ParseError("#else without matching #if", directive_pos)
+            frame = frames[-1]
+            if frame["else"]:
+                raise ParseError("duplicate #else", directive_pos)
+            frame["else"] = True
+            frame["active"] = frame["parent"] and not frame["taken"]
+            frame["taken"] = frame["taken"] or frame["active"]
+        elif command == "endif":
+            if argument:
+                raise ParseError("#endif does not accept an expression", argument_pos)
+            if not frames:
+                raise ParseError("#endif without matching #if", directive_pos)
+            frames.pop()
+        elif command in ("option", "const", "error"):
+            if active():
+                if command == "option":
+                    match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(bool|int|string)\s*=\s*(.+)", argument)
+                    if match is None:
+                        raise ParseError("#option expects NAME: bool|int|string = expression", argument_pos)
+                    name, declared_type, default_text = match.groups()
+                    if name in _COMPILE_PREDEFINED:
+                        raise ParseError(f"predefined compile value {name} cannot be declared as an option", argument_pos)
+                    if name in option_types:
+                        raise ParseError(f"duplicate compile option: {name}", argument_pos)
+                    default_pos = line_start + line.find(default_text)
+                    default_value = _compile_eval(default_text, env, filename, default_pos)
+                    option_types[name] = declared_type
+                    value = env[name] if name in external_names else default_value
+                    if _compile_value_type(value) != declared_type:
+                        raise ParseError(f"compile option {name} expects {declared_type}, got {_compile_value_type(value) or 'unsupported'}", argument_pos)
+                    env[name] = value
+                elif command == "const":
+                    match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)", argument)
+                    if match is None:
+                        raise ParseError("#const expects NAME = expression", argument_pos)
+                    name, value_text = match.groups()
+                    if name in env:
+                        raise ParseError(f"compile-time value already defined: {name}", argument_pos)
+                    value_pos = line_start + line.find(value_text)
+                    env[name] = _compile_eval(value_text, env, filename, value_pos)
+                else:
+                    value = _compile_eval(argument, env, filename, argument_pos)
+                    if not isinstance(value, str):
+                        raise ParseError("#error expects a string expression", argument_pos)
+                    raise ParseError(value, directive_pos)
+        else:
+            raise ParseError(f"unknown compile directive: #{command or '<empty>'}", directive_pos)
+
+        line_start += len(physical)
+
+    if frames:
+        raise ParseError("unterminated #if (missing #endif)", int(frames[-1]["pos"]))
+    return "".join(output)
