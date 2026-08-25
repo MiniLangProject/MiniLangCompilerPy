@@ -385,6 +385,65 @@ def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResul
         return TestResult(name=name, status="PASS", stdout=normal.stdout + object_build.stdout)
 
 
+def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> TestResult:
+    """ELF output must run natively and retain the full thread/GC contract."""
+    if os.name == "nt" and shutil.which("wsl.exe") is None:
+        return TestResult(name=name, status="SKIP", details="WSL is not installed")
+    fixtures = [
+        (tests_root / "linux_target_smoke.ml", ["linux-target", "linux 2"], ["one", "two"]),
+        (tests_root / "linux_ffi.ml", ["[OK] linux ffi strlen", "[OK] linux ffi cos"], []),
+        (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
+        (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
+        (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
+        (tests_root / "shared_value.ml", ["[OK] portable native shared-value snapshots"], []),
+        (tests_root / "thread_features.ml",
+         ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
+    ]
+    outputs: list[str] = []
+    with tempfile.TemporaryDirectory(prefix="mltests_linux_") as td:
+        root = Path(td)
+        for index, (source, markers, run_args) in enumerate(fixtures):
+            image = root / f"linux_{index}"
+            compiled = compile_native(
+                mlc_runner, source, image,
+                extra_args=["--target", "linux-x64", "-I", str(mlc_runner.parent)],
+                timeout_s=180,
+            )
+            if compiled.returncode != 0:
+                return TestResult(name=name, status="FAIL", details=f"Linux compile failed for {source.name}",
+                                  stdout=compiled.stdout, stderr=compiled.stderr)
+            raw = image.read_bytes()
+            if not raw.startswith(b"\x7fELF"):
+                return TestResult(name=name, status="FAIL", details=f"{source.name} is not ELF64")
+            if os.name == "nt":
+                # WSL's argument bridge forwards backslashes to the Linux
+                # command as shell escapes.  A drive-qualified path with
+                # forward slashes remains an unambiguous Windows path for
+                # wslpath and works from every PowerShell/cmd invocation.
+                converted = run_cmd(["wsl.exe", "wslpath", "-a", "-u", str(image).replace("\\", "/")],
+                                    timeout_s=30)
+                linux_path = normalize_out(converted.stdout).strip()
+                if converted.returncode != 0 or not linux_path:
+                    return TestResult(name=name, status="FAIL", details="WSL path conversion failed",
+                                      stdout=converted.stdout, stderr=converted.stderr)
+                run_cmd(["wsl.exe", "chmod", "+x", linux_path], timeout_s=30)
+                executed = run_cmd(["wsl.exe", "timeout", "120s", linux_path, *run_args], timeout_s=130)
+            else:
+                image.chmod(0o755)
+                executed = run_cmd([str(image), *run_args], timeout_s=120)
+            outputs.append(executed.stdout)
+            if executed.returncode != 0:
+                return TestResult(name=name, status="FAIL",
+                                  details=f"Linux run failed for {source.name} (exit {executed.returncode})",
+                                  stdout=executed.stdout, stderr=executed.stderr)
+            normalized = normalize_out(executed.stdout)
+            missing = [marker for marker in markers if marker not in normalized]
+            if missing:
+                return TestResult(name=name, status="FAIL", details="missing Linux marker(s): " + ", ".join(missing),
+                                  stdout=executed.stdout, stderr=executed.stderr)
+    return TestResult(name=name, status="PASS", stdout="".join(outputs))
+
+
 def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """A manifest build must compile, run, restore, and invalidate safely."""
     with tempfile.TemporaryDirectory(prefix="mltests_project_") as td:
@@ -3584,6 +3643,8 @@ def main() -> int:
         name="compiler CLI reports version 1.1.0", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
+    tests.append(lambda: test_linux_x64_target(
+        name="linux-x64 ELF, argv, shared heap and native threads", mlc_runner=mlc_runner, tests_root=tests_root))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,
@@ -3617,7 +3678,7 @@ def main() -> int:
     for test_name, test_path, marker in [
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
-        ("crypto_cng.ml (CNG vectors and authentication)", crypto_cng_ml, "[OK] CNG crypto"),
+        ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
         ("object_entry_inline.ml (entry initializer inline)", object_entry_inline_ml, "[OK] object entry inline"),
     ]:
         if test_path is not None:

@@ -18,7 +18,7 @@ package std.time
 import std.string as s
 import std.fmt as fmt
 
-// Monotonic timing, durations, calendar values and local/UTC Win32 conversion.
+// Monotonic timing, durations and calendar conversion on Windows and Linux.
 
 const TIME_ERR = 300
 
@@ -30,7 +30,7 @@ end function
 /*
 std.time
 
-Native Win32 time helpers + small calendar/date/time library.
+Native platform time helpers plus a portable calendar/date/time library.
 - ticks(): monotonic milliseconds since boot
 - sleep(ms): sleep for a number of milliseconds
 - date/clock/datetime: parsing, formatting, arithmetic
@@ -42,7 +42,7 @@ Native Win32 time helpers + small calendar/date/time library.
 
 const SYSTEMTIME_SIZE = 16
 
-// Managed representation of the Win32 SYSTEMTIME fields.
+// Managed wall-clock representation shared by the Win32 and POSIX adapters.
 struct SystemTime
   year,
   month,
@@ -67,7 +67,7 @@ end function
 // Convert a 16-byte SYSTEMTIME buffer into a managed value.
 function _decodeSystemTime(buf)
   /*
-  decode a Win32 SYSTEMTIME buffer into a std.time.SystemTime struct
+  decode a native little-endian wall-clock buffer into a SystemTime struct
   input: bytes buf (length >= 16)
   returns: SystemTime value (or void on invalid input)
   */
@@ -91,9 +91,10 @@ function _decodeSystemTime(buf)
 end function
 
 // ------------------------------------------------------------
-// Win32 time helpers (native compiler only)
+// Platform-native time helpers.
 // ------------------------------------------------------------
 
+#if TARGET_OS == "windows"
 namespace win32
   // SYSTEMTIME layout for GetLocalTime/GetSystemTime
   extern struct SYSTEMTIME
@@ -140,6 +141,100 @@ namespace win32
   end function
 end namespace
 
+function _nativeTicks()
+  return std.time.win32.GetTickCount64()
+end function
+
+function _nativeLocalTime()
+  return std.time.win32.GetLocalTime()
+end function
+
+function _nativeUtcTime()
+  return std.time.win32.GetSystemTime()
+end function
+#else
+namespace linux
+  const CLOCK_REALTIME = 0
+  const CLOCK_MONOTONIC = 1
+  const TIMESPEC_SIZE = 16
+  const TM_SIZE = 56
+
+  extern function clock_gettime(clockId as int, output as bytes) from "libc.so.6" returns i32
+  extern function nanosleep(request as bytes, remaining as ptr) from "libc.so.6" returns i32
+  extern function localtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
+  extern function gmtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
+
+  function _i32le(buffer, offset)
+    value = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24)
+    if (value & 0x80000000) != 0 then value = value - 0x100000000 end if
+    return value
+  end function
+
+  function _i64le(buffer, offset)
+    value = buffer[offset + 7]
+    if value >= 128 then value = value - 256 end if
+    i = 6
+    while i >= 0
+      value = (value << 8) | buffer[offset + i]
+      i = i - 1
+    end while
+    return value
+  end function
+
+  function _putI64(buffer, offset, value)
+    i = 0
+    while i < 8
+      buffer[offset + i] = (value >> (i * 8)) & 0xFF
+      i = i + 1
+    end while
+  end function
+
+  function _decodeTm(buffer, milliseconds)
+    return std.time.SystemTime(
+      _i32le(buffer, 20) + 1900,
+      _i32le(buffer, 16) + 1,
+      _i32le(buffer, 24),
+      _i32le(buffer, 12),
+      _i32le(buffer, 8),
+      _i32le(buffer, 4),
+      _i32le(buffer, 0),
+      milliseconds
+    )
+  end function
+
+  function _wallClock(localTime)
+    stamp = bytes(TIMESPEC_SIZE, 0)
+    if clock_gettime(CLOCK_REALTIME, stamp) != 0 then return end if
+    tm = bytes(TM_SIZE, 0)
+    result = 0
+    if localTime then
+      result = localtime_r(stamp, tm)
+    else
+      result = gmtime_r(stamp, tm)
+    end if
+    if result == 0 then return end if
+    nanoseconds = _i64le(stamp, 8)
+    milliseconds = (nanoseconds - (nanoseconds % 1000000)) / 1000000
+    return _decodeTm(tm, milliseconds)
+  end function
+end namespace
+
+function _nativeTicks()
+  stamp = bytes(std.time.linux.TIMESPEC_SIZE, 0)
+  if std.time.linux.clock_gettime(std.time.linux.CLOCK_MONOTONIC, stamp) != 0 then return 0 end if
+  nanoseconds = std.time.linux._i64le(stamp, 8)
+  return std.time.linux._i64le(stamp, 0) * 1000 + (nanoseconds - (nanoseconds % 1000000)) / 1000000
+end function
+
+function _nativeLocalTime()
+  return std.time.linux._wallClock(true)
+end function
+
+function _nativeUtcTime()
+  return std.time.linux._wallClock(false)
+end function
+#endif
+
 /*
 read monotonic milliseconds since system start (no wall-clock)
 input: none
@@ -147,7 +242,7 @@ returns: int milliseconds (u64)
 */
 function ticks()
   // Milliseconds since system start (monotonic). Returns an int-compatible u64.
-  return std.time.win32.GetTickCount64()
+  return std.time._nativeTicks()
 end function
 
 /*
@@ -164,7 +259,20 @@ function sleep(ms)
   if ms < 0 then
     return
   end if
+#if TARGET_OS == "windows"
   std.time.win32.Sleep(ms)
+#else
+  request = bytes(std.time.linux.TIMESPEC_SIZE, 0)
+  seconds = (ms - (ms % 1000)) / 1000
+  nanoseconds = (ms % 1000) * 1000000
+  i = 0
+  while i < 8
+    request[i] = (seconds >> (i * 8)) & 0xFF
+    request[8 + i] = (nanoseconds >> (i * 8)) & 0xFF
+    i = i + 1
+  end while
+  std.time.linux.nanosleep(request, 0)
+#endif
 end function
 
 /*
@@ -868,12 +976,12 @@ namespace datetime
   end function
 
   /*
-  convert Win32 SYSTEMTIME to a DateTime
+  convert a native SystemTime value to a DateTime
   input: SystemTime st
   returns: DateTime (or void on invalid input)
   */
   function fromSystemTime(st)
-    // Convert Win32 SYSTEMTIME -> DateTime (returns void on invalid)
+    // Convert the common native wall-clock value (returns void on invalid).
     if typeof(st) == "void" then
       return
     end if
@@ -909,7 +1017,7 @@ namespace datetime
   returns: DateTime (or void on failure)
   */
   function nowLocal()
-    st = std.time.win32.GetLocalTime()
+    st = std.time._nativeLocalTime()
     return std.time.datetime.fromSystemTime(st)
   end function
 
@@ -919,7 +1027,7 @@ namespace datetime
   returns: DateTime (or void on failure)
   */
   function nowUtc()
-    st = std.time.win32.GetSystemTime()
+    st = std.time._nativeUtcTime()
     return std.time.datetime.fromSystemTime(st)
   end function
 

@@ -1795,10 +1795,32 @@ class Parser:
 _COMPILE_PREDEFINED = {
     "TARGET_OS": "windows",
     "TARGET_ARCH": "x64",
+    "TARGET_ABI": "win64",
+    "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
     "MINILANG_VERSION": "1.1.0",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
+
+
+def set_compile_target(target: str) -> None:
+    """Select the immutable target values used by subsequent source parses."""
+    normalized = str(target or "windows-x64").strip().lower().replace("_", "-")
+    aliases = {
+        "windows": "windows-x64",
+        "win64": "windows-x64",
+        "win-x64": "windows-x64",
+        "linux": "linux-x64",
+        "linux64": "linux-x64",
+    }
+    normalized = aliases.get(normalized, normalized)
+    if normalized == "windows-x64":
+        values = {"TARGET_OS": "windows", "TARGET_ARCH": "x64", "TARGET_ABI": "win64", "TARGET_FORMAT": "pe"}
+    elif normalized == "linux-x64":
+        values = {"TARGET_OS": "linux", "TARGET_ARCH": "x64", "TARGET_ABI": "sysv", "TARGET_FORMAT": "elf"}
+    else:
+        raise ValueError(f"unsupported target: {target!r}")
+    _COMPILE_PREDEFINED.update(values)
 
 
 def _compile_value_type(value: Any) -> Optional[str]:

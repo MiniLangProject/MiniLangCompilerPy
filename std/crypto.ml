@@ -15,7 +15,11 @@ limitations under the License.
 */
 
 package std.crypto
+#if TARGET_OS == "windows"
 import std.crypto._cng as cng
+#else
+import std.crypto._openssl as cng
+#endif
 
 const CRYPTO_ERR = 240
 
@@ -23,7 +27,7 @@ function _cryptoError(message)
   return error(CRYPTO_ERR, message)
 end function
 
-// Compute SHA-256 through Windows CNG and return a 32-byte digest.
+// Compute SHA-256 through the platform crypto backend.
 function sha256(input)
   if typeof(input) != "bytes" then return _cryptoError("sha256 expects bytes") end if
   output = bytes(32, 0)
@@ -31,7 +35,7 @@ function sha256(input)
   return output
 end function
 
-// Compute SHA-384 through Windows CNG and return a 48-byte digest.
+// Compute SHA-384 through the platform crypto backend.
 function sha384(input)
   if typeof(input) != "bytes" then return _cryptoError("sha384 expects bytes") end if
   output = bytes(48, 0)
@@ -39,7 +43,7 @@ function sha384(input)
   return output
 end function
 
-// Compute HMAC-SHA-256 through Windows CNG.
+// Compute HMAC-SHA-256 through the platform crypto backend.
 function hmacSha256(key, input)
   if typeof(key) != "bytes" or typeof(input) != "bytes" then return _cryptoError("hmacSha256 expects bytes") end if
   output = bytes(32, 0)
@@ -47,7 +51,7 @@ function hmacSha256(key, input)
   return output
 end function
 
-// Compute HMAC-SHA-384 through Windows CNG.
+// Compute HMAC-SHA-384 through the platform crypto backend.
 function hmacSha384(key, input)
   if typeof(key) != "bytes" or typeof(input) != "bytes" then return _cryptoError("hmacSha384 expects bytes") end if
   output = bytes(48, 0)
@@ -69,17 +73,17 @@ function _hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, length
   return output
 end function
 
-// RFC-5869 HKDF-SHA-256 (extract and expand) through Windows CNG.
+// RFC-5869 HKDF-SHA-256 (extract and expand).
 function hkdfSha256(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA256", 32, inputKeyMaterial, salt, info, length)
 end function
 
-// RFC-5869 HKDF-SHA-384 (extract and expand) through Windows CNG.
+// RFC-5869 HKDF-SHA-384 (extract and expand).
 function hkdfSha384(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA384", 48, inputKeyMaterial, salt, info, length)
 end function
 
-// Obtain cryptographically secure random bytes from the system CNG provider.
+// Obtain cryptographically secure random bytes from the platform provider.
 function secureRandom(length)
   if typeof(length) != "int" or length < 0 or length > 0x7FFFFFFF then return _cryptoError("Invalid random length") end if
   output = bytes(length, 0)

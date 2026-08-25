@@ -5,12 +5,16 @@ self-hosted compilers. No generated executable is tracked or attached.
 
 Highlights:
 
-- native Windows threads, synchronization and thread-safe collections;
+- native Windows and Linux x64 output with matching threads, synchronization,
+  managed heap/GC and thread-safe collections;
 - a process-wide managed heap with per-thread stacks and cooperative GC;
 - `defer`, expanded FFI support and incremental project builds;
 - typed conditional compilation with source options, CLI/project overrides and
   nested target-dependent branches;
-- CPU-dispatched checksums, native byte search and Windows CNG cryptography;
+- deterministic PE32+/ELF64 images and Linux `.so` FFI through the System V ABI;
+- a cross-platform standard library for files, sockets, time, synchronization,
+  shared values and cryptography, using Windows CNG or Linux OpenSSL 3;
+- CPU-dispatched checksums and native byte search;
 - faster generated code and a bounded, substantially faster self-hosted object
   pipeline; and
 - byte-identical target output across Python, self-hosted monolithic and `.mlo`

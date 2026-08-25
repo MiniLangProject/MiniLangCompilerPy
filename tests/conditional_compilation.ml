@@ -3,6 +3,12 @@
 #option LABEL: string = "default"
 #const DOUBLE_LIMIT = LIMIT * 2
 
+// Empty inactive lines must not shift later token/source offsets.
+#if false
+
+
+#endif
+
 #if -5 % 3 != 1 or "alpha" >= "beta"
 #error "compile-time operator semantics failed"
 #endif
@@ -33,6 +39,8 @@ function main(args)
 #if DOUBLE_LIMIT != 6
 #error "compile-time arithmetic failed"
 #endif
+  sourceLineProbe = error(1710, "conditional source offset probe")
+  if sourceLineProbe.line != 42 then return 5 end if
   total = 0
   for index = 1 to 3
     total = total + index

@@ -10,6 +10,8 @@
 
 package std.threading
 
+#if TARGET_OS == "windows"
+
 // Native Win32 synchronization primitives. All MiniLang objects live in the
 // process-wide managed heap; these handles serialize access between the OS
 // threads and their private stacks. Close only after users/waiters have stopped.
@@ -248,3 +250,287 @@ struct Event
   function Reset() return this.reset() end function
   function IsClosed() return this.isClosed() end function
 end struct
+#else
+
+// POSIX synchronization storage sizes are the glibc x86-64 ABI sizes. The
+// buffers live in MiniLang's non-moving global heap and remain stable while a
+// native primitive references them.
+const PTHREAD_MUTEX_SIZE = 40
+const PTHREAD_MUTEXATTR_SIZE = 4
+const PTHREAD_COND_SIZE = 48
+const SEMAPHORE_SIZE = 32
+const PTHREAD_MUTEX_RECURSIVE = 1
+
+extern function _mutexAttrInit(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_init" returns i32
+extern function _mutexAttrSetType(attribute as ptr, kind as int) from "libc.so.6" symbol "pthread_mutexattr_settype" returns i32
+extern function _mutexAttrDestroy(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_destroy" returns i32
+extern function _mutexInit(mutex as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_mutex_init" returns i32
+extern function _mutexLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_lock" returns i32
+extern function _mutexTryLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_trylock" returns i32
+extern function _mutexUnlock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_unlock" returns i32
+extern function _mutexDestroy(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_destroy" returns i32
+extern function _condInit(condition as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_cond_init" returns i32
+extern function _condWait(condition as ptr, mutex as ptr) from "libc.so.6" symbol "pthread_cond_wait" returns i32
+extern function _condSignal(condition as ptr) from "libc.so.6" symbol "pthread_cond_signal" returns i32
+extern function _condBroadcast(condition as ptr) from "libc.so.6" symbol "pthread_cond_broadcast" returns i32
+extern function _condDestroy(condition as ptr) from "libc.so.6" symbol "pthread_cond_destroy" returns i32
+extern function _semInit(semaphore as ptr, shared as int, value as u32) from "libc.so.6" symbol "sem_init" returns i32
+extern function _semWait(semaphore as ptr) from "libc.so.6" symbol "sem_wait" returns i32
+extern function _semTryWait(semaphore as ptr) from "libc.so.6" symbol "sem_trywait" returns i32
+extern function _semPost(semaphore as ptr) from "libc.so.6" symbol "sem_post" returns i32
+extern function _semDestroy(semaphore as ptr) from "libc.so.6" symbol "sem_destroy" returns i32
+extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
+
+function _newRecursiveMutex()
+  mutex = bytes(PTHREAD_MUTEX_SIZE, 0)
+  attribute = bytes(PTHREAD_MUTEXATTR_SIZE, 0)
+  if _mutexAttrInit(nativeBytesPtr(attribute)) != 0 then return end if
+  if _mutexAttrSetType(nativeBytesPtr(attribute), PTHREAD_MUTEX_RECURSIVE) != 0 then
+    _mutexAttrDestroy(nativeBytesPtr(attribute))
+    return
+  end if
+  result = _mutexInit(nativeBytesPtr(mutex), nativeBytesPtr(attribute))
+  _mutexAttrDestroy(nativeBytesPtr(attribute))
+  if result != 0 then return end if
+  return mutex
+end function
+
+function _acquireFor(mutex, milliseconds)
+  elapsed = 0
+  while elapsed <= milliseconds
+    if _mutexTryLock(nativeBytesPtr(mutex)) == 0 then return true end if
+    if elapsed == milliseconds then return false end if
+    _sleepMicros(1000)
+    elapsed = elapsed + 1
+  end while
+  return false
+end function
+
+struct Lock
+  handle
+  closed
+
+  static function new()
+    mutex = _newRecursiveMutex()
+    if typeof(mutex) != "bytes" then return error(1600, "could not create native lock") end if
+    return Lock(mutex, false)
+  end function
+
+  function acquire()
+    if this.closed then return false end if
+    return _mutexLock(nativeBytesPtr(this.handle)) == 0
+  end function
+
+  function acquireFor(milliseconds)
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    return _acquireFor(this.handle, milliseconds)
+  end function
+
+  function tryAcquire() return this.acquireFor(0) end function
+
+  function release()
+    if this.closed then return false end if
+    return _mutexUnlock(nativeBytesPtr(this.handle)) == 0
+  end function
+
+  function isClosed() return this.closed end function
+
+  function close()
+    if this.closed then return false end if
+    ok = _mutexDestroy(nativeBytesPtr(this.handle)) == 0
+    if ok then
+      this.closed = true
+      this.handle = void
+    end if
+    return ok
+  end function
+
+  function Acquire() return this.acquire() end function
+  function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
+  function TryAcquire() return this.tryAcquire() end function
+  function Release() return this.release() end function
+  function IsClosed() return this.isClosed() end function
+end struct
+
+struct Semaphore
+  handle
+  countGuard
+  maximumCount
+  currentCount
+  closed
+
+  static function new(initialCount, maximumCount)
+    if typeof(initialCount) != "int" or typeof(maximumCount) != "int" then return error(1601, "semaphore counts must be integers") end if
+    if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount then return error(1601, "invalid semaphore counts") end if
+    semaphore = bytes(SEMAPHORE_SIZE, 0)
+    guard = _newRecursiveMutex()
+    if typeof(guard) != "bytes" then return error(1601, "could not create semaphore guard") end if
+    if _semInit(nativeBytesPtr(semaphore), 0, initialCount) != 0 then
+      _mutexDestroy(nativeBytesPtr(guard))
+      return error(1601, "could not create native semaphore")
+    end if
+    return Semaphore(semaphore, guard, maximumCount, initialCount, false)
+  end function
+
+  function _consumeCount()
+    _mutexLock(nativeBytesPtr(this.countGuard))
+    this.currentCount = this.currentCount - 1
+    _mutexUnlock(nativeBytesPtr(this.countGuard))
+  end function
+
+  function acquire()
+    if this.closed then return false end if
+    result = _semWait(nativeBytesPtr(this.handle))
+    if result != 0 then return false end if
+    this._consumeCount()
+    return true
+  end function
+
+  function acquireFor(milliseconds)
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    elapsed = 0
+    while elapsed <= milliseconds
+      if _semTryWait(nativeBytesPtr(this.handle)) == 0 then
+        this._consumeCount()
+        return true
+      end if
+      if elapsed == milliseconds then return false end if
+      _sleepMicros(1000)
+      elapsed = elapsed + 1
+    end while
+    return false
+  end function
+
+  function tryAcquire() return this.acquireFor(0) end function
+  function release() return this.releaseMany(1) end function
+
+  function releaseMany(count)
+    if this.closed or typeof(count) != "int" or count <= 0 then return false end if
+    _mutexLock(nativeBytesPtr(this.countGuard))
+    if this.currentCount + count > this.maximumCount then
+      _mutexUnlock(nativeBytesPtr(this.countGuard))
+      return false
+    end if
+    this.currentCount = this.currentCount + count
+    _mutexUnlock(nativeBytesPtr(this.countGuard))
+    i = 0
+    while i < count
+      if _semPost(nativeBytesPtr(this.handle)) != 0 then return false end if
+      i = i + 1
+    end while
+    return true
+  end function
+
+  function isClosed() return this.closed end function
+
+  function close()
+    if this.closed then return false end if
+    ok = _semDestroy(nativeBytesPtr(this.handle)) == 0
+    if ok then ok = _mutexDestroy(nativeBytesPtr(this.countGuard)) == 0 end if
+    if ok then
+      this.closed = true
+      this.handle = void
+      this.countGuard = void
+    end if
+    return ok
+  end function
+
+  function Acquire() return this.acquire() end function
+  function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
+  function TryAcquire() return this.tryAcquire() end function
+  function Release() return this.release() end function
+  function ReleaseMany(count) return this.releaseMany(count) end function
+  function IsClosed() return this.isClosed() end function
+end struct
+
+struct Event
+  mutex
+  condition
+  manualReset
+  signaled
+  closed
+
+  static function new(manualReset, initialState)
+    if typeof(manualReset) != "bool" or typeof(initialState) != "bool" then return error(1602, "event flags must be booleans") end if
+    mutex = _newRecursiveMutex()
+    condition = bytes(PTHREAD_COND_SIZE, 0)
+    if typeof(mutex) != "bytes" or _condInit(nativeBytesPtr(condition), 0) != 0 then return error(1602, "could not create native event") end if
+    return Event(mutex, condition, manualReset, initialState, false)
+  end function
+
+  function wait()
+    if this.closed then return false end if
+    _mutexLock(nativeBytesPtr(this.mutex))
+    while not this.signaled
+      if _condWait(nativeBytesPtr(this.condition), nativeBytesPtr(this.mutex)) != 0 then
+        _mutexUnlock(nativeBytesPtr(this.mutex))
+        return false
+      end if
+    end while
+    if not this.manualReset then this.signaled = false end if
+    _mutexUnlock(nativeBytesPtr(this.mutex))
+    return true
+  end function
+
+  function waitFor(milliseconds)
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    elapsed = 0
+    while elapsed <= milliseconds
+      _mutexLock(nativeBytesPtr(this.mutex))
+      ready = this.signaled
+      if ready and not this.manualReset then this.signaled = false end if
+      _mutexUnlock(nativeBytesPtr(this.mutex))
+      if ready then return true end if
+      if elapsed == milliseconds then return false end if
+      _sleepMicros(1000)
+      elapsed = elapsed + 1
+    end while
+    return false
+  end function
+
+  function tryWait() return this.waitFor(0) end function
+
+  function set()
+    if this.closed then return false end if
+    _mutexLock(nativeBytesPtr(this.mutex))
+    this.signaled = true
+    result = 0
+    if this.manualReset then
+      result = _condBroadcast(nativeBytesPtr(this.condition))
+    else
+      result = _condSignal(nativeBytesPtr(this.condition))
+    end if
+    _mutexUnlock(nativeBytesPtr(this.mutex))
+    return result == 0
+  end function
+
+  function reset()
+    if this.closed then return false end if
+    _mutexLock(nativeBytesPtr(this.mutex))
+    this.signaled = false
+    _mutexUnlock(nativeBytesPtr(this.mutex))
+    return true
+  end function
+
+  function isClosed() return this.closed end function
+
+  function close()
+    if this.closed then return false end if
+    ok = _condDestroy(nativeBytesPtr(this.condition)) == 0
+    if ok then ok = _mutexDestroy(nativeBytesPtr(this.mutex)) == 0 end if
+    if ok then
+      this.closed = true
+      this.mutex = void
+      this.condition = void
+    end if
+    return ok
+  end function
+
+  function Wait() return this.wait() end function
+  function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
+  function TryWait() return this.tryWait() end function
+  function Set() return this.set() end function
+  function Reset() return this.reset() end function
+  function IsClosed() return this.isClosed() end function
+end struct
+#endif

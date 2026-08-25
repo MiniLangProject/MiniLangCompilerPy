@@ -10,17 +10,45 @@ Verified on 25 August 2026 against the matching 1.1.0 revisions of:
 There are two compatibility claims:
 
 1. **Target-output parity:** for the same sources, include-root order and
-   compiler options, the Python compiler, the normal self-hosted path and the
-   self-hosted `.mlo` pipeline emit byte-identical Windows x64 PE files.
+   compiler options, the Python compiler and the normal self-hosted path emit
+   byte-identical Windows x64 PE or Linux x64 ELF files. The self-hosted `.mlo`
+   path adds the same guarantee for Windows PE.
 2. **Compiler-image layout contract:** compiler sources use the same canonical
    entry/function/support and section layout as every other target. Historical
    full fixed-point measurements are listed separately from current automated
    and MiniQuake target-output measurements.
 
 Python accepts `--object-pipeline` for project/CLI parity and emits its
-equivalent monolithic image. The serialized `.mlo` files remain an internal
-self-host implementation detail; the final linked PE is part of the same
+equivalent monolithic image. On `linux-x64`, the self-hosted compiler also
+routes that flag through the monolithic ELF path because the serialized `.mlo`
+linker remains PE-specific. The final linked native image is part of the same
 byte-identity contract.
+
+## Current Windows/Linux target fixed point
+
+The Linux-target implementation was bootstrapped and self-compiled on 25
+August 2026. The final MiniLang compiler source stabilized at the first
+self-hosted stage:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 58,530,304 | `27640C722E8ED9B2543DA487D89C12EAD7BCBE13A23533C0E716DD720AA7B424` |
+| Stage 2, built by Stage 1 | 58,530,304 | `764FEBADEB46EAE6018E44074A545F084047AEAA45A6D2CC117FA8BCD2CADF2E` |
+| Stage 3, built by Stage 2 | 58,530,304 | `764FEBADEB46EAE6018E44074A545F084047AEAA45A6D2CC117FA8BCD2CADF2E` |
+
+Stage 2 and Stage 3 are byte-identical. Direct Python/Stage 3 comparisons also
+produced identical target files:
+
+| Target fixture | Size | SHA-256 |
+| --- | ---: | --- |
+| Windows PE `language_suite.ml` | 1,623,040 | `886CBC1919644C2DD22AD6BDFFA43E0D924233A81F08173792DCBD038D28C13C` |
+| Static Linux ELF smoke | 87,008 | `DA98B53BE2E374B6B48283EB5CDA7BD11A421DF3C6F6C30442D93B1761B3E376` |
+| Dynamic Linux ELF FFI | 87,440 | `BCAAA93565F5A20D52C7AFDF058D1AD1A017E5EE22B3CE3326E9A55C223418D0` |
+
+The ELF tests ran under WSL and cover process arguments, managed allocation,
+threads/GC, `libc` integer/pointer calls and `libm` floating-point calls. The
+complete suites report Python 106/106 and MiniLang 101/101, with additional
+self-hosted Linux static, FFI, thread/GC and object-flag compatibility gates.
 
 ## 1.1.0 release fixed point
 
@@ -310,10 +338,10 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 105, FAIL 0, SKIP 0
+Python harness:    PASS 106, FAIL 0, SKIP 0
 MiniLang harness:  PASS 101, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
-Outer ML gates:    CRC/SIMD/CNG, ABI, object parity, listings and repros passed
+Outer ML gates:    CRC/SIMD/platform crypto/shared values, ABI, PE/ELF and Linux passed
 ```
 
 The 2026-08-25 conditional-compilation bootstrap produced byte-identical
@@ -321,6 +349,25 @@ The 2026-08-25 conditional-compilation bootstrap produced byte-identical
 `F0300E7F1C542204974018DF56E97155EC0BDE6BF43E32DB927BEB9139280209`.
 The shared nested-directive fixture compiled to identical Python, self-hosted
 monolithic and `.mlo` target bytes.
+
+The 2026-08-25 cross-platform stdlib acceptance covered the byte-identical
+34-module `std/` trees plus `stdlib_unit_tests`, `threading_stdlib`, platform
+crypto and shared-value snapshots. Every program compiled and ran on Windows
+x64 and Linux x64 with both compilers. All eight Python/self-host output pairs
+were byte-identical. Representative hashes were
+`962232EAB00AA1BD1AE9E85CD509531C850F9015D6E6BDC0402BE37218584214`
+for the 3,788,288-byte Windows stdlib suite and
+`4B5B0A99FFCDA9741E756F8EBB6DAFC06D31681A01DAA33FF249904E397626D4`
+for the 3,813,552-byte Linux suite. The complete Python harness remained at
+PASS 106/FAIL 0/SKIP 0; the complete self-hosted harness remained at PASS
+101/FAIL 0, and every outer Linux/stdlib gate passed.
+
+A fresh bootstrap after the Linux runtime and standard-library work converged
+at Stage 2. Stage 2 and Stage 3 were byte-identical 58,539,520-byte compiler
+images with SHA-256
+`B8A41B7D29ADF8B956F5732B500E5678E39815023776BF35DB2B6BB437A823BF`.
+The resulting Stage 3 compiler repeated the Linux stdlib-suite hash above and
+the suite ran successfully under Linux.
 
 The 2026-08-24 MiniQuake check used clean commit
 `7e8d0f614f7ad33f423e88873c210b7f846bbced`. Python compiled the 142-source
@@ -372,6 +419,13 @@ $miniLangHash = (Get-FileHash .\build\suite-ml.exe -Algorithm SHA256).Hash
 .\build\mlc_win64.exe .\tests\language_suite.ml .\build\suite-mlo.exe -I . --object-pipeline
 $objectHash = (Get-FileHash .\build\suite-mlo.exe -Algorithm SHA256).Hash
 ($pythonHash -eq $miniLangHash) -and ($miniLangHash -eq $objectHash)
+
+cd ..\MiniLangCompilerPy
+python .\mlc_win64.py .\tests\linux_ffi.ml .\build\ffi-py --target linux-x64 -I .
+cd ..\MiniLangCompilerML
+.\build\mlc_win64.exe .\tests\linux_ffi.ml .\build\ffi-ml --target linux-x64 -I .
+(Get-FileHash ..\MiniLangCompilerPy\build\ffi-py -Algorithm SHA256).Hash -eq `
+  (Get-FileHash .\build\ffi-ml -Algorithm SHA256).Hash
 ```
 
 The final expression must be `True`. Equality is guaranteed only when source

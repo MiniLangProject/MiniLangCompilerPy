@@ -35,10 +35,12 @@ class CodegenCore:
     def __init__(self, minilang_mod: Any, source: str, filename: str, *, heap_config: Optional[Dict[str, Any]] = None,
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
                  extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False, trace_calls: bool = False,
-                 subsystem: str = 'console'):
+                 subsystem: str = 'console', target: str = 'windows-x64'):
         self.ml = minilang_mod
         self.source = source
         self.filename = filename
+        self.target = str(target or 'windows-x64').lower()
+        self.is_linux_target = self.target == 'linux-x64'
 
         # Root directory of the entry file (used for stable, short script paths).
         try:
@@ -270,6 +272,12 @@ class CodegenCore:
         # argv / argc storage for main(args)
         self.data.add_u32('ml_argc', 0)
         self.data.add_u64('ml_argvw', 0)
+        if self.is_linux_target:
+            # Linux starts at ``_start`` with argc/argv on the initial stack.
+            # Keep a private GS page for the managed-thread context pointer;
+            # unlike Win64 there is no TEB-owned gs:[0x28] slot.
+            self.data.add_u64('linux_initial_rsp', 0)
+            self.data.add_bytes('linux_gs_area', b'\x00' * 64)
 
         self.data.add_u64('printSrcPtr', 0)
         self.data.add_u32('printSrcLen', 0)

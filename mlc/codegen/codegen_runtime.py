@@ -3080,6 +3080,9 @@ class CodegenRuntime:
         - Frees argvw buffer via LocalFree and clears ml_argc/ml_argvw.
         - Returns: RAX = tagged pointer to OBJ_ARRAY.
         """
+        if bool(getattr(self, 'is_linux_target', False)):
+            self._emit_build_args_linux()
+            return
         self.ensure_gc_data()
         a = self.asm
         a.mark('fn_build_args')
@@ -3758,6 +3761,93 @@ class CodegenRuntime:
 
         a.mark(l_ret_void)
         a.mov_rax_imm64(enc_void())
+        a.ret()
+
+    def _emit_build_args_linux(self) -> None:
+        """Build ``main(args)`` directly from the UTF-8 argv supplied by ELF startup."""
+        self.ensure_gc_data()
+        a = self.asm
+        a.mark('fn_build_args')
+        # Locals: array, count, index, argv, source, string and byte length.
+        a.sub_rsp_imm32(0x88)
+        a.mov_membase_disp_r64('rsp', 0x78, 'rsi')
+        a.mov_membase_disp_r64('rsp', 0x80, 'rdi')
+        lid = self.new_label_id()
+        l_zero = f'linux_args_zero_{lid}'
+        l_alloc = f'linux_args_alloc_{lid}'
+        l_loop = f'linux_args_loop_{lid}'
+        l_done = f'linux_args_done_{lid}'
+
+        a.mov_eax_rip_dword('ml_argc')
+        a.cmp_r32_imm('eax', 1)
+        a.jcc('le', l_zero)
+        a.dec_r32('eax')
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+        a.jmp(l_alloc)
+        a.mark(l_zero)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_membase_disp_r32('rsp', 0x48, 'eax')
+
+        a.mark(l_alloc)
+        a.mov_rax_rip_qword('ml_argvw')
+        a.mov_membase_disp_r64('rsp', 0x50, 'rax')
+        a.mov_membase_disp_imm32('rsp', 0x4C, 0, qword=False)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x48)
+        a.shl_r32_imm8('ecx', 3)
+        a.add_r32_imm('ecx', 8)
+        a.call('fn_alloc')
+        a.mov_r11_rax()
+        a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x48)
+        a.mov_membase_disp_r32('r11', 4, 'eax')
+        a.mov_membase_disp_r64('rsp', 0x40, 'r11')
+        a.mov_rip_qword_r11('gc_tmp0')
+
+        a.mark(l_loop)
+        a.mov_r32_membase_disp('eax', 'rsp', 0x4C)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x48)
+        a.cmp_r32_r32('eax', 'ecx')
+        a.jcc('ge', l_done)
+        a.mov_r32_r32('edx', 'eax')
+        a.inc_r32('edx')
+        a.shl_r64_imm8('rdx', 3)
+        a.mov_r64_membase_disp('rax', 'rsp', 0x50)
+        a.add_r64_r64('rax', 'rdx')
+        a.mov_r64_membase_disp('rcx', 'rax', 0)
+        a.mov_membase_disp_r64('rsp', 0x58, 'rcx')
+        a.call('fn_strlen')
+        a.mov_membase_disp_r32('rsp', 0x60, 'edx')
+
+        a.mov_r32_r32('ecx', 'edx')
+        a.add_r32_imm('ecx', 9)
+        a.call('fn_alloc')
+        a.mov_membase_disp_r64('rsp', 0x68, 'rax')
+        a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
+        a.mov_r32_membase_disp('ecx', 'rsp', 0x60)
+        a.mov_membase_disp_r32('rax', 4, 'ecx')
+        a.mov_r64_membase_disp('rsi', 'rsp', 0x58)
+        a.lea_r64_membase_disp('rdi', 'rax', 8)
+        a.rep_movsb()
+        a.mov_membase_disp_imm8('rdi', 0, 0)
+
+        a.mov_r64_membase_disp('r10', 'rsp', 0x40)
+        a.mov_r32_membase_disp('edx', 'rsp', 0x4C)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x68)
+        a.mov_mem_bis_r64('r10', 'rdx', 8, 8, 'r11')
+        a.mov_r32_membase_disp('eax', 'rsp', 0x4C)
+        a.inc_r32('eax')
+        a.mov_membase_disp_r32('rsp', 0x4C, 'eax')
+        a.jmp(l_loop)
+
+        a.mark(l_done)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_rip_dword_eax('ml_argc')
+        a.xor_r64_r64('rax', 'rax')
+        a.mov_rip_qword_rax('ml_argvw')
+        a.mov_r64_membase_disp('rax', 'rsp', 0x40)
+        a.mov_r64_membase_disp('rsi', 'rsp', 0x78)
+        a.mov_r64_membase_disp('rdi', 'rsp', 0x80)
+        a.add_rsp_imm32(0x88)
         a.ret()
 
 

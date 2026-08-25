@@ -6,9 +6,9 @@ Current stable release: **1.1.0**. See the [changelog](CHANGELOG.md) and
 Release 1.0.0 and later are source-only: generated `.exe` files are not
 tracked in Git and are not attached to GitHub releases.
 
-MiniLang (`.ml`) is a small, dynamically typed language that compiles to a
-native Windows x64 executable (PE32+) with `mlc_win64.py`. Console applications
-are the default; `--subsystem windows` emits a GUI-subsystem executable.
+MiniLang (`.ml`) is a small, dynamically typed language that compiles with
+`mlc_win64.py` to native Windows x64 (PE32+) or Linux x64 (ELF64) images.
+Windows is the default target; `--subsystem windows` emits a Windows GUI image.
 
 This Python implementation is the bootstrap/reference compiler. Its normal
 monolithic build path is kept byte-for-byte output-compatible with the
@@ -112,16 +112,20 @@ end function
 
 - Source files use the extension: `.ml`
 
-### Compile to native Windows x64
+### Compile to native Windows or Linux x64
 
 ```bash
 python mlc_win64.py input.ml output.exe [options]
+python mlc_win64.py input.ml output --target linux-x64 [options]
 python mlc_win64.py -version
 ```
 
 Notes:
 - Flags can appear before or after the positional arguments.
-- On non-Windows hosts you can still compile, but running the resulting `.exe` requires Wine.
+- `windows-x64` is the default and emits PE32+; `linux-x64` emits ELF64.
+- A Linux image created on Windows can be copied to Linux or run through WSL
+  after `chmod +x output`. A Linux-hosted Python compiler adds the executable
+  permission bits automatically.
 
 Common options:
 
@@ -135,6 +139,7 @@ Common options:
   - or `--asm-no-addr`, `--asm-no-opcodes`, `--asm-no-code`
 - `--asm-data` include `.rdata/.data/.idata` dumps (**constants and imports**)
 - `--asm-pe` include a PE32+ header + section table dump in the listing
+  (Windows target only)
 - `--dump-labels <path>` write a raw section/helper/label dump for parity
   debugging
 
@@ -160,24 +165,34 @@ Common options:
 - `--trace-calls` print each entered function name to stderr (runtime trace)
 
 **Output**
-- `--subsystem console` / `cui` selects the default console subsystem
-- `--subsystem windows` / `window` / `gui` selects the Windows GUI subsystem
+- `--target windows-x64` emits a PE32+ image (default)
+- `--target linux-x64` emits an ELF64 image
+- `--subsystem console` / `cui` selects the default Windows console subsystem
+- `--subsystem windows` / `window` / `gui` selects the Windows GUI subsystem;
+  subsystem selection does not apply to Linux
 
 **Cross-compiler build compatibility**
 - `--object-pipeline` is accepted so project commands can be shared with the
   self-hosted compiler. Python emits the equivalent monolithic image; the
-  self-hosted canonical `.mlo` pipeline produces the same final PE bytes
+  self-hosted canonical `.mlo` pipeline produces the same final Windows bytes.
+  For Linux, both compilers currently use the equivalent monolithic ELF path
 
 `python mlc_win64.py -version` and `--version` both print
 `MiniLang Compiler 1.1.0`. `python mlc_win64.py --help` prints the full option
 list.
 
 Notes (current implementation):
-- Targets Windows x64 console (PE32+).
+- Targets Windows x64 (PE32+) and Linux x64 (ELF64); Windows remains the
+  backward-compatible default.
 - Heap parameters can be configured via `--heap-*` flags (reserve/commit/grow/shrink).
 - If a top-level `function main(args)` exists, the native entrypoint will call it after module initialization has completed. Imported module initializers and the entry file's top-level initialization run automatically before `main`. `args` is `argv[1..]` as an array of strings. The returned int becomes the process exit code (void -> 0).
-- The native runtime uses a VirtualAlloc heap with **separate reserve/commit**: it reserves a large address range and commits pages on demand.
-- Listing order is stable: optional PE dump -> `.text` listing -> optional section dumps.
+- Both runtimes use one process-wide, thread-safe managed heap with per-thread
+  stacks and TLABs. Windows reserves/commits with `VirtualAlloc`; Linux uses
+  `mmap`, `mprotect` and `madvise`.
+- Linux images without external native imports are static. A source containing
+  `extern function ... from "lib.so..."` gets a minimal dynamic ELF image using
+  the x64 System V ABI and the glibc interpreter `/lib64/ld-linux-x86-64.so.2`.
+- Listing order is stable; PE header dumps are available only for Windows.
 - The compiler uses the shared MiniLang frontend for parsing (tokenizer/parser).
 
 
@@ -195,6 +210,7 @@ python mlc_win64.py --project minilang.toml
 entry = "src/main.ml"
 output = "build/app.exe"
 include = ["src", "vendor"]
+target = "windows-x64"
 subsystem = "console"
 object_pipeline = true
 incremental = true
@@ -212,10 +228,11 @@ All paths are relative to the manifest. The supported project fields are:
 | Field | Meaning |
 | --- | --- |
 | `entry` / `input` | required entry `.ml` file |
-| `output` | required output `.exe` path |
+| `output` | required native image path |
 | `include` / `import_paths` | array of import roots |
-| `subsystem` | `console` or `windows` (aliases accepted by the CLI) |
-| `object_pipeline` | request the self-hosted `.mlo` pipeline |
+| `target` | `windows-x64` (default) or `linux-x64` |
+| `subsystem` | Windows only: `console` or `windows` (aliases accepted by the CLI) |
+| `object_pipeline` | request the self-hosted `.mlo` pipeline (Windows target) |
 | `incremental` | enable the exact-hit artifact cache (default `true`) |
 | `cache_dir` | cache directory (default `.minilang-cache`) |
 | `compiler_args` | array of additional compiler arguments |
@@ -243,7 +260,8 @@ executable. Any relevant change performs a full build; this is artifact caching,
 not per-module incremental compilation. Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
-compiler uses its retained `.mlo` pipeline when the field is true.
+compiler uses its retained `.mlo` pipeline for Windows when the field is true
+and the equivalent monolithic path for Linux.
 
 ### Conditional compilation
 
@@ -279,11 +297,12 @@ comparisons, integer arithmetic/bitwise/shift operations and string `+`.
 Inactive branches are blanked before lexing, so their imports and syntax are
 not processed. Directives may be nested.
 
-The immutable target values are `TARGET_OS = "windows"`,
-`TARGET_ARCH = "x64"`, `POINTER_SIZE = 8` and
-`MINILANG_VERSION = "1.1.0"`. No compiler-implementation value is exposed:
-the Python and self-hosted compilers must select the same source for identical
-inputs.
+The immutable target values are `TARGET_OS`, `TARGET_ARCH`, `TARGET_ABI`,
+`TARGET_FORMAT`, `POINTER_SIZE` and `MINILANG_VERSION`. Windows selects
+`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.1.0"`; Linux selects
+`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.1.0"`. No
+compiler-implementation value is exposed: the Python and self-hosted compilers
+must select the same source for identical inputs.
 
 Examples of CLI overrides:
 
@@ -1660,9 +1679,16 @@ import std.time as t
 import std.fs as fs
 ```
 
-The stdlib is compiled together with your program (there is no separate link step). Most “systems” features are **Windows-oriented** because the native backend targets Windows x64.
+The stdlib is compiled together with your program (there is no separate link
+step). Its public modules work on both supported targets. `std.fs`, `std.net`,
+`std.time`, `std.threading` and the shared-value helpers select Win32 or
+glibc/POSIX implementations at compile time while keeping one MiniLang API.
+Cryptography uses Windows CNG on Windows and OpenSSL 3 (`libcrypto.so.3`) on
+Linux. Linux images that use only libc-backed modules need no dependency beyond
+the normal x64 glibc runtime; importing `std.crypto` additionally requires the
+OpenSSL 3 runtime package.
 
-The current library contains 32 source modules, byte-for-byte identical in both
+The current library contains 34 source modules, byte-for-byte identical in both
 compiler repositories:
 
 - **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
@@ -1676,9 +1702,10 @@ compiler repositories:
   `std.ds.concurrent_list`, `std.ds.concurrent_hashmap`
 - **Native primitives:** `std.cpu`, `std.checksum.crc32c`,
   `std.checksum.crc32`, `std.crypto`, `std.crypto.aes_gcm`,
-  `std.crypto._cng` (internal backend)
+  `std.crypto._cng` and `std.crypto._openssl` (internal platform backends)
 - **Compatibility helpers:** `std.result` provides `Option` and `Result`;
-  `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec.
+  `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec;
+  `std._linux_fs` is the internal POSIX filesystem backend.
 
 New code should normally use native `error(...)` propagation with `try(...)`
 instead of `std.result.Result`. Managed objects already share one process-wide
@@ -2429,8 +2456,10 @@ print r
 ```
 ## Native compiler status
 
-The Windows x64 native backend generates deterministic PE32+ executables for
-the console (default) or Windows GUI subsystem.
+The native x64 backend generates deterministic Windows PE32+ images (console by
+default, optionally GUI) and deterministic Linux ELF64 images. The language
+runtime, global GC heap, TLAB allocator, native threads and synchronization are
+implemented on both targets.
 
 What works:
 - core types: int, float, bool, string, array, bytes, void
@@ -2438,7 +2467,7 @@ What works:
 - LIFO deferred cleanup with `defer`, including return/fall-through/error exits
 - bounded source-level `inline` functions with callable fallback bodies
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
-- real Win32 threads with cooperative cancellation, data/result handoff,
+- real native threads on Win32 and Linux with cooperative cancellation, data/result handoff,
   native and logical ids, status/join APIs, private stacks, a process-wide
   thread-safe GC heap, synchronized globals/functions and managed thread pools
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
@@ -2450,8 +2479,9 @@ What works:
 - `package` + `import` (compile-time multi-file merge; imported modules support runtime-initialized globals, self-import ignore, and harmless import cycles)
 - `const` (write-once bindings; top-level/namespace consts are evaluated at compile time)
 - `enum` explicit values (constexpr) + auto-increment for missing int values
-- `extern function` via the PE import table (IAT), ABI-layout
-  `extern struct`, omitted trailing `out` parameters and Win64 callbacks
+- `extern function` via the PE import table (IAT) on Windows or ELF dynamic
+  imports on Linux, ABI-layout `extern struct` and omitted trailing `out`
+  parameters; native Win64 callback pointers remain Windows-specific
 - TOML project manifests with conservative exact-hit artifact caching
 - typed conditional compilation with CLI/project definitions and target values
 - builtins / special forms: `len`, `input`, `toNumber`, `toFloat`, `str`,
@@ -2463,7 +2493,7 @@ What works:
 
 Debugging / listings:
 - `--asm` writes a combined `.asm` listing
-- `--asm-pe` prepends a PE header + section table dump
+- `--asm-pe` prepends a PE header + section table dump for Windows targets
 - `--asm-data` appends `.rdata/.data/.idata` dumps (useful to inspect constants and imports)
 
 Heap sizing flags:
@@ -2527,7 +2557,7 @@ GC flags:
 
 ## Native checksums, cryptography, and SIMD search
 
-The standard library includes reusable CRC-32C/CRC-32, Windows CNG
+The standard library includes reusable CRC-32C/CRC-32, platform-native
 cryptography, and CPU-dispatched byte/string search. Public wrappers live in
 `std.checksum.*`, `std.crypto`, `std.crypto.aes_gcm`, and `std.cpu`;
 checksum helpers and their lookup tables are emitted only when referenced,
@@ -2535,7 +2565,7 @@ while search accelerates the existing first-class string/bytes builtins.
 
 CRC-32C uses SSE4.2 when available and a bit-identical software fallback.
 Search uses AVX2, SSE2, or scalar candidate scans while preserving byte-indexed
-string semantics. Cryptography is backed by Windows CNG and includes
+string semantics. Cryptography is backed by Windows CNG or Linux OpenSSL 3 and includes
 AES-256-GCM, SHA-256/384, HMAC, HKDF, X25519, system CSPRNG,
 constant-time byte comparison, and best-effort secure erasure.
 

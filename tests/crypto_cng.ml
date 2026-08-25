@@ -94,5 +94,5 @@ function main(args)
   t.assertEq(len(random), 64, "secure random length")
   t.assertFalse(crypto.constantTimeEquals(random, bytes(64, 0)), "secure random nonzero")
 
-  print "[OK] CNG crypto"
+  print "[OK] platform crypto"
 end function

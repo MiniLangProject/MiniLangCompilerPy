@@ -947,6 +947,7 @@ def validate_extern_sigs(
     output_exe: str,
     input_ml: str,
     include_dirs: Optional[List[str]] = None,
+    target: str = "windows-x64",
 ) -> None:
     """Validate extern declarations:
 
@@ -1028,8 +1029,10 @@ def validate_extern_sigs(
                 filename=fn,
             )
 
-    # DLL/symbol validation (Windows only)
-    if os.name != "nt":
+    # DLL/symbol validation is meaningful only when both compiler host and
+    # output target are Windows. Linux .so names are resolved by the ELF
+    # loader on the target machine, which may not match the build host.
+    if os.name != "nt" or str(target).lower() != "windows-x64":
         return
 
     loaded: Dict[str, Any] = {}
@@ -1342,11 +1345,15 @@ def compile_to_exe(
     call_profile: bool = False,
     trace_calls: bool = False,
     subsystem: int = 3,
+    target: str = "windows-x64",
     compile_defines: Optional[Dict[str, bool | int | str]] = None,
 ) -> None:
-    """Compile one MiniLang entry file and its imports to a native x64 PE."""
+    """Compile one MiniLang entry file and its imports to a native x64 image."""
 
     ml = load_minilang_frontend(input_ml)
+    configure_target = getattr(ml, "set_compile_target", None)
+    if callable(configure_target):
+        configure_target(target)
     configure_defines = getattr(ml, "set_compile_defines", None)
     if callable(configure_defines):
         configure_defines(compile_defines or {})
@@ -1357,7 +1364,8 @@ def compile_to_exe(
     extern_structs = collect_extern_structs(ml, program, packages_by_file)
 
     # Step 3: validate extern declarations early (friendly diagnostics)
-    validate_extern_sigs(extern_sigs, extern_structs=extern_structs, output_exe=output_exe, input_ml=input_ml, include_dirs=include_dirs)
+    validate_extern_sigs(extern_sigs, extern_structs=extern_structs, output_exe=output_exe,
+                         input_ml=input_ml, include_dirs=include_dirs, target=target)
 
     cg = Codegen(
         ml,
@@ -1369,6 +1377,7 @@ def compile_to_exe(
         extern_structs=extern_structs,
         call_profile=bool(call_profile),
         trace_calls=bool(trace_calls),
+        target=target,
     )
 
     asm_listing_path: Optional[str] = None
@@ -1381,7 +1390,85 @@ def compile_to_exe(
             show_text=asm_show_text,
         )
 
+    if target == 'linux-x64':
+        from .linux_runtime import emit_linux_startup
+        emit_linux_startup(cg)
     cg.emit_program(program)
+
+    if target == 'linux-x64':
+        from .elf import build_elf64, dynamic_size, plan_elf64
+        from .linux_runtime import emit_linux_runtime, linux_dynamic_imports
+
+        emit_linux_runtime(cg)
+        dynamic_imports = linux_dynamic_imports(cg)
+        layout = plan_elf64(len(cg.asm.buf), len(cg.rdata.data), len(cg.data.data),
+                            dynamic_size(dynamic_imports))
+        text_rva = layout.text_off
+        rdata_rva = layout.rdata_off
+        data_rva = layout.data_off
+        bss_rva = layout.bss_off
+        label_rva_map: Dict[str, int] = {}
+        label_rva_map.update((name, text_rva + int(off)) for name, off in cg.asm.labels.items())
+        label_rva_map.update((name, rdata_rva + int(off)) for name, (off, _ln) in cg.rdata.labels.items())
+        label_rva_map.update((name, data_rva + int(off)) for name, off in cg.data.labels.items())
+        if getattr(cg, 'bss', None) is not None:
+            label_rva_map.update((name, bss_rva + int(off)) for name, off in cg.bss.labels.items())
+
+        for pos, patch_target, kind in cg.asm.patches:
+            if patch_target not in label_rva_map:
+                raise RuntimeError(f"Unknown Linux patch target: {patch_target}")
+            target_rva = label_rva_map[patch_target]
+            patch_end = int(pos) + 4
+            if kind == 'rip32':
+                disp = (target_rva - (text_rva + patch_end)) & 0xFFFFFFFF
+            elif kind == 'rel32':
+                disp = (target_rva - (text_rva + patch_end)) & 0xFFFFFFFF
+            else:
+                raise RuntimeError(f"Unknown Linux patch kind: {kind}")
+            cg.asm.buf[pos:pos + 4] = u32(disp)
+
+        for blob, patches in (
+            (cg.rdata.data, getattr(cg.rdata, 'patches', []) or []),
+            (cg.data.data, getattr(cg.data, 'patches', []) or []),
+        ):
+            for pos, patch_target, kind in patches:
+                if patch_target not in label_rva_map:
+                    raise RuntimeError(f"Unknown Linux data patch target: {patch_target}")
+                if kind != 'abs64':
+                    raise RuntimeError(f"Unknown Linux data patch kind: {kind}")
+                blob[pos:pos + 8] = u64(layout.base + label_rva_map[patch_target])
+
+        image = build_elf64(
+            bytes(cg.asm.buf), bytes(cg.rdata.data), bytes(cg.data.data),
+            int(getattr(cg, 'bss', None).size if getattr(cg, 'bss', None) is not None else 0),
+            entry_offset=int(cg.asm.labels.get('_start', 0)),
+            imports=dynamic_imports,
+        )
+        with open(output_exe, 'wb') as f:
+            f.write(image)
+        # Native Unix hosts require the executable permission bit in addition to
+        # a valid ELF image.  Windows cross-builds cannot represent that bit and
+        # leave it to the copy/deployment step (WSL tests invoke chmod there).
+        if os.name != 'nt':
+            os.chmod(output_exe, os.stat(output_exe).st_mode | 0o111)
+
+        if isinstance(dump_labels_out, str) and dump_labels_out:
+            with open(dump_labels_out, 'w', encoding='utf-8', newline='\n') as f:
+                f.write(f'[section] .text raw={len(cg.asm.buf)}\n')
+                f.write(f'[section] .rdata raw={len(cg.rdata.data)}\n')
+                f.write(f'[section] .data raw={len(cg.data.data)}\n')
+                for name, rva in sorted(label_rva_map.items(), key=lambda item: (item[1], item[0])):
+                    f.write(f'[label] {name} {rva}\n')
+        if asm_listing and asm_listing_path:
+            cg.asm.write_listing(
+                asm_listing_path,
+                base_addr=text_rva,
+                label_addr_map=label_rva_map,
+                show_addr=asm_show_addr,
+                show_bytes=asm_show_bytes,
+                show_text=asm_show_text,
+            )
+        return
 
     # Build PE with 2-pass layout (important!)
     pe = PEBuilder()
@@ -1806,13 +1893,15 @@ def main(argv: List[str]) -> int:
 
     parser = argparse.ArgumentParser(
         prog='mlc_win64.py',
-        description=f'MiniLang native compiler {COMPILER_VERSION} (Windows x64)',
+        description=f'MiniLang native compiler {COMPILER_VERSION} (Windows/Linux x64)',
     )
     parser.add_argument('-version', '--version', action='version', version=COMPILER_VERSION_TEXT)
     parser.add_argument('input', help='input .ml file')
-    parser.add_argument('output', help='output .exe file')
+    parser.add_argument('output', help='output native image path')
     parser.add_argument('--object-pipeline', action='store_true',
                         help='accepted for project parity; Python emits the equivalent monolithic image')
+    parser.add_argument('--target', default='windows-x64', choices=('windows-x64', 'linux-x64'),
+                        help='native output target (default: windows-x64)')
 
     parser.add_argument('-I', '--import-path', dest='include_dirs', action='append', default=[], metavar='DIR',
                         help='Add DIR to import search paths (may be repeated).')
@@ -1834,7 +1923,7 @@ def main(argv: List[str]) -> int:
     parser.add_argument('--asm-no-opcodes', action='store_true', help='hide opcode bytes column in listing')
     parser.add_argument('--asm-no-code', action='store_true', help='hide pseudo-assembly column in listing')
     parser.add_argument('--asm-data', action='store_true', help='include .rdata/.data/.idata dumps in the listing')
-    parser.add_argument('--asm-pe', action='store_true', help='include PE header + section table dump in the listing')
+    parser.add_argument('--asm-pe', action='store_true', help='include PE header + section table dump in the listing (Windows target only)')
     parser.add_argument('--dump-labels', default=None, help='write a raw section/helper/label dump for parity debugging')
 
 
@@ -1856,7 +1945,7 @@ def main(argv: List[str]) -> int:
     # Debug tracing (optional)
     parser.add_argument('--trace-calls', action='store_true', help='print each entered function name to stderr (runtime trace)')
     parser.add_argument('--subsystem', type=_parse_subsystem, default=3,
-                        help='PE subsystem: console|cui or windows|window|gui (default: console)')
+                        help='PE subsystem: console|cui or windows|window|gui (Windows target only)')
 
     args = parser.parse_args(argv[1:])
 
@@ -1952,6 +2041,7 @@ def main(argv: List[str]) -> int:
             keep_going=bool(getattr(args, "keep_going", False)),
             max_errors=int(getattr(args, "max_errors", 20) or 20),
             subsystem=int(getattr(args, "subsystem", 3) or 3),
+            target=str(getattr(args, "target", "windows-x64") or "windows-x64"),
             compile_defines=compile_defines,
         )
 
@@ -2053,7 +2143,8 @@ def main(argv: List[str]) -> int:
         print(f"ProjectError: cannot update incremental cache: {e}")
         return 2
 
-    print(f"OK: wrote {out} (native x64 PE, MiniLang Python compiler {COMPILER_VERSION})")
+    image_kind = 'ELF' if getattr(args, 'target', 'windows-x64') == 'linux-x64' else 'PE'
+    print(f"OK: wrote {out} (native x64 {image_kind}, MiniLang Python compiler {COMPILER_VERSION})")
     if args.asm:
         asm_path = args.asm_out or (os.path.splitext(out)[0] + ".asm")
         print(f"OK: wrote {asm_path}")

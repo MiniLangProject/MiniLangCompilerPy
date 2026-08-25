@@ -1861,6 +1861,7 @@ class CodegenExpr:
             a.call('fn_gc_native_enter')
 
         # Move first 4 args into registers (Windows x64 ABI), rest into outgoing stack args.
+        # Linux extern slots point at ABI thunks that translate this stable internal layout to SysV.
         regs = ["rcx", "rdx", "r8", "r9"]
         xregs = ["xmm0", "xmm1", "xmm2", "xmm3"]
         for i in range(min(4, len(params))):
@@ -2033,7 +2034,8 @@ class CodegenExpr:
             if threaded_native:
                 a.call('fn_gc_native_enter')
 
-            # Marshal args to Win64 ABI: RCX/RDX/R8/R9 + outgoing stack slots.
+            # Marshal args to the stable internal native ABI. Linux slots lead
+            # through generated Win64-to-SysV thunks.
             regs = ['rcx', 'rdx', 'r8', 'r9']
             xregs = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
             for i in range(min(4, nargs)):

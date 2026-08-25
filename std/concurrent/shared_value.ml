@@ -20,21 +20,37 @@ const TYPE_BOOL = 2
 const TYPE_STRING = 3
 const TYPE_BYTES = 4
 
+#if TARGET_OS == "windows"
 extern function VirtualAlloc(address as ptr, size as int, allocationType as u32, protect as u32) from "kernel32.dll" returns ptr
 extern function VirtualFree(address as ptr, size as int, freeType as u32) from "kernel32.dll" returns bool
 extern function MoveFromBytes(destination as ptr, source as bytes, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
 extern function MovePointers(destination as ptr, source as ptr, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
+#else
+extern function NativeAllocate(size as u64) from "libc.so.6" symbol "malloc" returns ptr
+extern function NativeFree(address as ptr) from "libc.so.6" symbol "free" returns void
+extern function MoveFromBytes(destination as ptr, source as bytes, count as u64) from "libc.so.6" symbol "memmove" returns ptr
+extern function MovePointers(destination as ptr, source as ptr, count as u64) from "libc.so.6" symbol "memmove" returns ptr
+#endif
 
 // Allocate a writable unmanaged block and return its native address.
 function allocate(size)
   if typeof(size) != "int" or size <= 0 then return 0 end if
+#if TARGET_OS == "windows"
   return VirtualAlloc(void, size, MEM_COMMIT_RESERVE, PAGE_READWRITE)
+#else
+  return NativeAllocate(size)
+#endif
 end function
 
 // Release a block previously returned by allocate().
 function free(address)
   if typeof(address) != "int" or address == 0 then return false end if
+#if TARGET_OS == "windows"
   return VirtualFree(address, 0, MEM_RELEASE)
+#else
+  NativeFree(address)
+  return true
+#endif
 end function
 
 // Copy count bytes between two unmanaged addresses.

@@ -44,7 +44,7 @@ class ProjectBuild:
 
 _KEYS = {
     "entry", "input", "output", "include", "import_paths", "subsystem",
-    "object_pipeline", "incremental", "cache_dir", "compiler_args",
+    "target", "object_pipeline", "incremental", "cache_dir", "compiler_args",
 }
 
 
@@ -135,6 +135,11 @@ def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[Projec
         if not isinstance(subsystem, str):
             raise ProjectError("project field 'subsystem' must be a string")
         expanded.extend(["--subsystem", subsystem])
+    target = cfg.get("target")
+    if target is not None:
+        if not isinstance(target, str):
+            raise ProjectError("project field 'target' must be a string")
+        expanded.extend(["--target", target])
     if object_pipeline:
         expanded.append("--object-pipeline")
     expanded.extend(define_args)

@@ -24,7 +24,7 @@ function _netErr(msg)
 end function
 
 // ------------------------------------------------------------
-// std.net (native WinSock / Windows)
+// std.net (native WinSock on Windows, BSD sockets on Linux)
 //
 // Design goals:
 // - Minimal, dependency-free TCP/UDP helpers.
@@ -33,11 +33,11 @@ end function
 //
 // Notes:
 // - Always call init() once before using sockets (helpers do this for you).
-// - Socket handles are returned as `ptr` (Win64 SOCKET).
+// - Socket handles are exposed as MiniLang integers on both native ABIs.
 // ------------------------------------------------------------
 
 // ---------------------------
-// WinSock constants
+// Portable socket constants plus the few target-specific option values.
 // ---------------------------
 
 const AF_INET = 2
@@ -50,8 +50,13 @@ const IPPROTO_UDP = 17
 const INVALID_SOCKET = -1
 const SOCKET_ERROR = -1
 
+#if TARGET_OS == "windows"
 const SOL_SOCKET = 0xFFFF
 const SO_REUSEADDR = 0x0004
+#else
+const SOL_SOCKET = 1
+const SO_REUSEADDR = 2
+#endif
 
 const SD_RECEIVE = 0
 const SD_SEND = 1
@@ -64,9 +69,10 @@ const WSA_VERSION_2_2 = 0x0202
 const SOCKADDR_IN_SIZE = 16
 
 // ---------------------------
-// WinSock externs
+// Platform socket externs. Public helpers below deliberately keep one API.
 // ---------------------------
 
+#if TARGET_OS == "windows"
 extern function WSAStartup(version as int, wsaData as bytes) from "ws2_32.dll" returns int
 extern function WSACleanup() from "ws2_32.dll" returns int
 extern function WSAGetLastError() from "ws2_32.dll" returns int
@@ -91,6 +97,23 @@ extern function setsockopt(s as ptr, level as int, optname as int, optval as byt
 
 // inet_addr parses dotted IPv4; returns address in network byte order (INADDR_NONE=0xFFFFFFFF on error)
 extern function inet_addr(addr as cstr) from "ws2_32.dll" returns u32
+#else
+extern function socket(af as int, type as int, protocol as int) from "libc.so.6" returns i32
+extern function closesocket(s as int) from "libc.so.6" symbol "close" returns i32
+extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+extern function listen(s as int, backlog as int) from "libc.so.6" returns i32
+extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i32
+extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
+extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i64
+extern function shutdown(s as int, how as int) from "libc.so.6" returns i32
+extern function setsockopt(s as int, level as int, optname as int, optval as bytes, optlen as u32) from "libc.so.6" returns i32
+extern function inet_addr(addr as cstr) from "libc.so.6" returns u32
+extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
+extern function _copyErrno(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 
 // ---------------------------
 // Internal state
@@ -107,11 +130,12 @@ function _isSockHandle(x)
 end function
 
 /*
-Initializes WinSock (WSAStartup). Safe to call multiple times.
+Initializes the platform socket layer. Safe to call multiple times.
 input: (none)
 returns: bool ready
 */
 function init()
+#if TARGET_OS == "windows"
   if _wsaReady == true then
     return true
   end if
@@ -128,14 +152,19 @@ function init()
 
   _wsaReady = true
   return true
+#else
+  _wsaReady = true
+  return true
+#endif
 end function
 
 /*
-Cleans up WinSock (WSACleanup).
+Cleans up the platform socket layer.
 input: (none)
 returns: bool success
 */
 function cleanup()
+#if TARGET_OS == "windows"
   if _wsaReady == false then
     return true
   end if
@@ -147,15 +176,27 @@ function cleanup()
 
   _wsaReady = false
   return true
+#else
+  _wsaReady = false
+  return true
+#endif
 end function
 
 /*
-Returns the last WinSock error code (WSAGetLastError).
+Returns the last platform socket error code.
 input: (none)
 returns: int errorCode
 */
 function lastError()
+#if TARGET_OS == "windows"
   return WSAGetLastError()
+#else
+  location = _errnoLocation()
+  if location == 0 then return 0 end if
+  buffer = bytes(4, 0)
+  _copyErrno(buffer, location, 4)
+  return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
+#endif
 end function
 
 // ---------------------------
@@ -170,7 +211,7 @@ returns: bytes sockaddrIn (16 bytes)
 function _sockaddrIn(ipv4, port)
   a = bytes(SOCKADDR_IN_SIZE, 0)
 
-  // sin_family (u16) in host order (little endian on Windows)
+  // sin_family (u16) in host order (little endian on supported x64 targets)
   a[0] = AF_INET
   a[1] = 0
 
@@ -591,4 +632,3 @@ function udpRecvFrom(sock, maxBytes)
 
   return [slice(buf, 0, got), ipStr, port]
 end function
-

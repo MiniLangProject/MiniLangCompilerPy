@@ -15,7 +15,11 @@ limitations under the License.
 */
 
 package std.crypto.aes_gcm
+#if TARGET_OS == "windows"
 import std.crypto._cng as cng
+#else
+import std.crypto._openssl as cng
+#endif
 
 const AES_GCM_ERR = 241
 

@@ -16,6 +16,31 @@ limitations under the License.
 
 package std.fs
 
+// Portable high-level filesystem API. The target-specific implementations use
+// Win32 wide-character calls or glibc/POSIX file and directory operations.
+#if TARGET_OS == "linux"
+import std._linux_fs as linuxfs
+
+function _fsErr(msg) return error(1, msg) end function
+function exists(path) return linuxfs.exists(path) end function
+function isDir(path) return linuxfs.isDir(path) end function
+function isFile(path) return linuxfs.isFile(path) end function
+function joinPath(base, name) return linuxfs.joinPath(base, name) end function
+function listDir(path) return linuxfs.listDir(path) end function
+function delete(path) return linuxfs.delete(path) end function
+function writeAllBytes(path, data) return linuxfs.writeAllBytes(path, data) end function
+function readAllBytes(path) return linuxfs.readAllBytes(path) end function
+function writeAllText(path, text) return linuxfs.writeAllText(path, text) end function
+function readAllText(path) return linuxfs.readAllText(path) end function
+function copyFile(sourcePath, destPath, overwrite) return linuxfs.copyFile(sourcePath, destPath, overwrite) end function
+function moveFile(sourcePath, destPath, overwrite) return linuxfs.moveFile(sourcePath, destPath, overwrite) end function
+function fileSize(path) return linuxfs.fileSize(path) end function
+function appendAllBytes(path, data) return linuxfs.appendAllBytes(path, data) end function
+function appendAllText(path, text) return linuxfs.appendAllText(path, text) end function
+function readAllLines(path) return linuxfs.readAllLines(path) end function
+
+#else
+
 // ------------------------------------------------------------
 // Error helper (stdlib migrated to value-or-error)
 // ------------------------------------------------------------
@@ -25,7 +50,7 @@ end function
 
 import std.string as s
 
-// Native Win32 file and directory operations with value-or-error results.
+// Native Win32 backend for the portable public helpers above.
 
 // ------------------------------------------------------------
 // std.fs (native Win32)
@@ -197,7 +222,7 @@ function isFile(path)
 end function
 
 /*
-join two path components using \ (Win32)
+join two path components using the Windows separator
 input: string base, string name
 returns: string full
 */
@@ -756,3 +781,4 @@ function readAllLines(path)
 
   return lines
 end function
+#endif

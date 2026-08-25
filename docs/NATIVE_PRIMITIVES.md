@@ -45,16 +45,19 @@ HKDF-SHA-256, HKDF-SHA-384, X25519, secure random bytes,
 `std.crypto.aes_gcm` provides AES-256-GCM `seal`/`open` and
 `encrypt`/`decrypt`.
 
-Cryptographic operations are delegated to the Windows CNG `bcrypt.dll`
-system provider rather than application-level MiniLang loops. AES-GCM accepts
+Cryptographic operations are delegated to Windows CNG (`bcrypt.dll`) or Linux
+OpenSSL 3 (`libcrypto.so.3`) rather than application-level MiniLang loops. The
+public API, validation and result layout are identical on both targets. AES-GCM accepts
 exactly 32-byte keys, nonces from 12 through 16 bytes, and tags from 12 through
-16 bytes. Decryption returns an error and wipes its temporary output when CNG
+16 bytes. Decryption returns an error and wipes its temporary output when native
 authentication fails, so unauthenticated plaintext is never returned.
 Ciphertext, tag, nonce, AAD, or key changes therefore fail authentication.
 
-X25519 uses CNG's `curve25519` provider, clamps a temporary private-key copy,
-converts the CNG raw-secret byte order to RFC 7748 order, and rejects an
-all-zero shared secret. Random bytes use the system-preferred CNG RNG.
+X25519 uses CNG's `curve25519` provider on Windows and EVP raw X25519 keys on
+Linux. The Windows bridge converts CNG's raw-secret byte order to RFC 7748
+order; both backends clamp a temporary private-key copy and reject an all-zero
+shared secret. Random bytes use CNG's system-preferred RNG or OpenSSL
+`RAND_bytes`.
 
 Security boundaries:
 
@@ -64,7 +67,8 @@ Security boundaries:
   erase earlier language/runtime copies. Avoid unnecessary secret copies and
   wipe caller-owned key buffers as soon as possible.
 - Errors never include keys, plaintext, derived secrets, or random material.
-- These APIs currently require the native Windows x64 backend and CNG.
+- Linux crypto images require an x64 OpenSSL 3 installation providing
+  `libcrypto.so.3`; Windows uses the system-provided CNG library.
 - Protocol-level nonce uniqueness, key rotation, transcript construction, and
   trust decisions remain the caller's responsibility.
 

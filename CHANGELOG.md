@@ -4,6 +4,16 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Added `--target windows-x64|linux-x64` and manifest `target` selection. The
+  new deterministic ELF64 backend includes the managed runtime, global GC heap,
+  TLABs, native Linux threads/synchronization and glibc-compatible `.so` FFI.
+- Made the complete public standard library usable on Windows and Linux:
+  filesystem, IPv4 TCP/UDP, monotonic/calendar time, locks/semaphores/events and
+  shared-value storage use native platform adapters, while cryptography selects
+  Windows CNG or Linux OpenSSL 3 behind the same API.
+- Fixed inactive empty lines shifting source/debug locations in the self-hosted
+  conditional preprocessor, and removed quadratic label-array copying from the
+  self-hosted ELF linker for large, FFI-heavy Linux programs.
 - Added real Windows threads over a process-wide, thread-safe managed heap,
   per-thread stacks, cooperative stop-the-world GC and synchronization.
 - Added 64 KiB thread-local allocation buffers for lock-free small-object
@@ -18,7 +28,7 @@ All notable changes to the MiniLang compiler are documented here.
   `#if/#elif/#else/#endif`, `#error`, CLI `-D` overrides and manifest
   `[defines]`, while preserving Python/self-host target-byte parity.
 - Added CPU feature detection, native byte-search primitives, CRC-32,
-  hardware-dispatched CRC-32C and Windows CNG cryptography helpers.
+  hardware-dispatched CRC-32C and platform-native cryptography helpers.
 - Improved generated-code optimization with known-struct method
   devirtualization/inlining, hot primitive XMM register homes and constant
   integer strength reduction; also improved global/object initialization and
