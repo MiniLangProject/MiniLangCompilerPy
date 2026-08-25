@@ -52,6 +52,12 @@ function main(args)
   if not check(tls.isStream(stream), "TLS provider contract") then failed = true end if
   if not check(tls.sendAll(stream, bytes("abc")) == 3 and tls.receive(stream, 16) == bytes("tls"), "TLS stream contract") then failed = true end if
   if not check(tls.shutdown(stream) == true and tls.close(stream) == true, "TLS stream lifecycle") then failed = true end if
+  if not check(typeof(tls.nativeProviderName()) == "string" and len(tls.nativeProviderName()) > 0, "TLS native provider selection") then failed = true end if
+  invalidPinned = tls.clientOptions("localhost")
+  invalidPinned.verifyPeer = false
+  invalidPinned.sha256Pin = bytes(32, 0)
+  invalidPinnedResult = try(tls.validateClientOptions(invalidPinned))
+  if not check(typeof(invalidPinnedResult) == "error", "TLS pin validation is fail-closed") then failed = true end if
 
   directory = "platform-services-" + process.id()
   sourcePath = path.join(directory, "source.bin")

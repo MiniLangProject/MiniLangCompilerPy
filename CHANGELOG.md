@@ -16,6 +16,14 @@ All notable changes to the MiniLang compiler are documented here.
   socket options and listener addresses; UUID v4; PBKDF2-SHA-256/SHA-384; and a
   provider-neutral TLS stream contract. Linux builds now diagnose unguarded
   Windows `.dll` imports during validation.
+- Completed `std.tls` with native Schannel and OpenSSL 3 client/server
+  providers, system or explicit trust, DNS-name verification, SHA-256 leaf
+  pinning, TLS 1.2/1.3 minimums, server identities and clean shutdown. Added
+  real cross-target handshake tests and fixed the Linux null-address `accept`
+  FFI signature exposed by TLS listeners.
+- Made committed-heap growth precede the one emergency full collection at the
+  reserved ceiling, so normal heap expansion does not bypass `--gc-limit` or
+  repeatedly scan large retained object graphs.
 - Fixed `--gc-limit` and `--no-gc-periodic` so generated runtime pressure
   counters receive the requested values in both compilers, including the
   unboxed signed-64-bit disable sentinel used by the self-hosted backend.

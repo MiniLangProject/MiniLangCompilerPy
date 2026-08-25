@@ -9,6 +9,11 @@ you may not use this file except in compliance with the License.
 // Schannel or OpenSSL) plug into this module without leaking provider handles
 // into application code.
 package std.tls
+#if TARGET_OS == "windows"
+import std.tls._schannel as native
+#else
+import std.tls._openssl as native
+#endif
 
 const TLS_ERR = 267
 
@@ -65,6 +70,7 @@ function validateClientOptions(options)
   if typeof(options.serverName) != "string" or len(options.serverName) == 0 then return _error("server name must be non-empty") end if
   if typeof(options.verifyPeer) != "bool" then return _error("verifyPeer must be bool") end if
   if typeof(options.sha256Pin) != "void" and (typeof(options.sha256Pin) != "bytes" or len(options.sha256Pin) != 32) then return _error("SHA-256 pin must contain 32 bytes") end if
+  if typeof(options.sha256Pin) == "bytes" and not options.verifyPeer then return _error("SHA-256 pinning requires peer verification") end if
   if options.minimumVersion != "1.2" and options.minimumVersion != "1.3" then return _error("minimum TLS version must be 1.2 or 1.3") end if
   if typeof(options.caFile) != "void" and typeof(options.caFile) != "string" then return _error("caFile must be string or void") end if
   return true
@@ -88,6 +94,15 @@ function provider(name, openClient, openServer, sendBytes, receiveBytes, shutdow
   return Provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream)
 end function
 
+// Return the target-native provider: Schannel on Windows or OpenSSL 3 on Linux.
+function nativeProvider()
+  return Provider(native.providerName(), native.openClient, native.openServer, native.sendBytes, native.receiveBytes, native.shutdownStream, native.closeStream)
+end function
+
+function nativeProviderName()
+  return native.providerName()
+end function
+
 function connectClient(activeProvider, socket, options)
   if activeProvider is not Provider then return _error("TLS provider is invalid") end if
   valid = validateClientOptions(options)
@@ -104,6 +119,16 @@ function acceptServer(activeProvider, socket, options)
   state = activeProvider.openServer(socket, options)
   if typeof(state) == "error" then return state end if
   return Stream(activeProvider, state, true, false)
+end function
+
+// Establish a native TLS client stream over an already-connected std.net socket.
+function connect(socket, options)
+  return connectClient(nativeProvider(), socket, options)
+end function
+
+// Accept a native TLS server stream over an already-accepted std.net socket.
+function accept(socket, options)
+  return acceptServer(nativeProvider(), socket, options)
 end function
 
 function isStream(value)

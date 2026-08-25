@@ -1684,11 +1684,12 @@ step). Its public modules work on both supported targets. `std.fs`, `std.net`,
 `std.time`, `std.threading` and the shared-value helpers select Win32 or
 glibc/POSIX implementations at compile time while keeping one MiniLang API.
 Cryptography uses Windows CNG on Windows and OpenSSL 3 (`libcrypto.so.3`) on
-Linux. Linux images that use only libc-backed modules need no dependency beyond
-the normal x64 glibc runtime; importing `std.crypto` additionally requires the
-OpenSSL 3 runtime package.
+Linux. TLS uses Schannel on Windows and OpenSSL 3 (`libssl.so.3`) on Linux.
+Linux images that use only libc-backed modules need no dependency beyond the
+normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
+requires the OpenSSL 3 runtime package.
 
-The current library contains 41 source modules, byte-for-byte identical in both
+The current library contains 43 source modules, byte-for-byte identical in both
 compiler repositories:
 
 - **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
@@ -1703,7 +1704,8 @@ compiler repositories:
   `std.ds.concurrent_list`, `std.ds.concurrent_hashmap`
 - **Native primitives:** `std.cpu`, `std.checksum.crc32c`,
   `std.checksum.crc32`, `std.crypto`, `std.crypto.aes_gcm`,
-  `std.crypto._cng` and `std.crypto._openssl` (internal platform backends)
+  `std.crypto._cng`, `std.crypto._openssl`, `std.tls._schannel` and
+  `std.tls._openssl` (internal platform backends)
 - **Compatibility helpers:** `std.result` provides `Option` and `Result`;
   `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec;
   `std._linux_fs` is the internal POSIX filesystem backend.
@@ -1711,10 +1713,11 @@ compiler repositories:
 `std.io.file` is the durable random-access API intended for databases and
 servers: it provides positional reads/writes, truncation, flush, whole-file
 advisory locks, atomic replacement and directory synchronization. `std.tls`
-defines one provider-neutral transport contract; applications supply a native
-Schannel or OpenSSL provider rather than depending on either backend directly.
-See [Platform services](docs/PLATFORM_SERVICES.md) for the complete contracts
-and target mappings.
+provides a built-in target-native Schannel/OpenSSL transport through
+`connect(socket, options)` and `accept(socket, options)`. The original
+provider-neutral callback contract remains available for custom transports.
+See [Platform services](docs/PLATFORM_SERVICES.md) for certificate references,
+trust behavior, socket ownership and the native integration test.
 
 New code should normally use native `error(...)` propagation with `try(...)`
 instead of `std.result.Result`. Managed objects already share one process-wide

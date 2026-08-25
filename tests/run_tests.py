@@ -3514,6 +3514,49 @@ def test_codegen_gc_cli_limits_reach_data(*, name: str, mlc_runner: Path) -> Tes
         return TestResult(name=name, status="FAIL", details=f"GC config inspection failed: {exc}")
 
 
+def test_heap_growth_precedes_emergency_gc(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: a commit boundary must grow before forcing a full GC."""
+    with tempfile.TemporaryDirectory(prefix="mltests_heap_grow_first_") as td:
+        td_path = Path(td)
+        src = td_path / "heap_grow_first.ml"
+        exe = td_path / "heap_grow_first.exe"
+        src.write_text("\n".join([
+            "function main(args)",
+            "  baseline = heap_bytes_committed()",
+            "  scratch = void",
+            "  for i = 0 to 6000",
+            "    scratch = bytes(4096)",
+            "  end for",
+            "  grown = heap_bytes_committed()",
+            "  if grown <= baseline then",
+            '    print "[FAIL] heap did not grow before emergency GC"',
+            "    return 1",
+            "  end if",
+            '  print "[OK] heap growth precedes emergency GC"',
+            "  return 0",
+            "end function",
+            "",
+        ]), encoding="utf-8")
+
+        cr = compile_native(
+            mlc_runner, src, exe, timeout_s=180,
+            extra_args=[
+                "--heap-reserve", "64m", "--heap-commit", "1m",
+                "--heap-grow", "1m", "--gc-limit", "64m",
+            ],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        marker = "[OK] heap growth precedes emergency GC"
+        if rr.returncode != 0 or marker not in normalize_out(rr.stdout):
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime test: --profile-calls instruments user functions and exposes callStats()."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -4179,6 +4222,8 @@ def main() -> int:
                                                                   mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_gc_cli_limits_reach_data(name="codegen: GC CLI limits initialize runtime",
                                                                 mlc_runner=mlc_runner))
+    tests.append(lambda: test_heap_growth_precedes_emergency_gc(name="runtime: heap growth precedes emergency GC",
+                                                                 mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None

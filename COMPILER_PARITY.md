@@ -338,7 +338,7 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 106, FAIL 0, SKIP 0
+Python harness:    PASS 110, FAIL 0, SKIP 0
 MiniLang harness:  PASS 101, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/platform crypto/shared values, ABI, PE/ELF and Linux passed
@@ -405,6 +405,30 @@ seconds. Retail Quake `id1` data passed a 120-frame runtime smoke and a
 120-frame deterministic compatibility trace with rolling hash `74dc3dc9`.
 The same target completed 1,000 E1M1 headless frames in 712 ms and 1,000
 rendered frames in 5,995 ms, approximately 1,404.5 frames/s and 166.8 FPS.
+
+The 2026-08-25 native-TLS acceptance exercised real localhost client/server
+handshakes through Windows Schannel and Linux OpenSSL 3, including fail-closed
+wrong-hostname cases. An initial comparison exposed three bounded Schannel ABI
+buffer scans that the self-hosted optimizer unrolled while the Python optimizer
+kept as loops. Expressing those scans as explicit `while` loops restored target
+parity and avoided about 50 KiB of duplicated Windows code. The final Python
+and self-hosted outputs are byte-identical:
+
+- Windows server: 2,379,776 bytes, SHA-256
+  `B6970220CFB4D2AC9B4E273F48E1D7E70482B33AE0C4164D9C1E857F29DEEFC6`
+- Windows client: 2,378,752 bytes, SHA-256
+  `AA9AA57E10DF3BFE33F5CF72D79997DF204C402B927FA7687D76550206907DCC`
+- Linux server: 735,216 bytes, SHA-256
+  `C86900C35931D38054F478C1CB77E72124ECFD872C04084A1D3F7FC69D6FB737`
+- Linux client: 1,200,288 bytes, SHA-256
+  `531D7D6880CAF897C8F493E5F1D22EDB41C09B40CA3F99529654E85934320EF2`
+
+The final allocator-parity synchronization makes heap growth precede the one
+emergency full collection at the reserved ceiling. Consecutive self-hosted
+Stages 5 and 6 are byte-identical 58,552,832-byte compiler images with SHA-256
+`082DD04118450A4FE2F3D746FF4D1FA96B9146279353F7CB8FFA5360149F7C4B`.
+The four TLS artifacts above were rebuilt with this fixed-point compiler and
+remain byte-identical to the corresponding current Python compiler outputs.
 
 The counters differ because the Python runner counts host-side tests
 individually while the MiniLang harness groups several checks into compiled

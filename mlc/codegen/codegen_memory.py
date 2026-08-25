@@ -1038,40 +1038,27 @@ class CodegenMemory:
         a.jcc("be", l_ok)
 
         # ------------------------------------------------------------
-        # Need to grow committed heap OR run GC
+        # Need to grow committed heap OR run an emergency GC
         # ------------------------------------------------------------
         a.mark(l_grow)
 
-        # First garbage collector, THEN grow!
-        # 1. Check whether we have already tried GC in this alloc call
-        a.mov_r64_membase_disp("rax", "rsp", 0x30)
-        a.test_r64_r64("rax", "rax")
-        a.jcc("nz", f"alloc_do_grow_{lid0}")  # Yes, GC didn't help -> We need to grow!
-
-        # 2. No, haven't tried GC yet. We'll make a note of that (tried_gc = 1)
-        a.mov_rax_imm64(1)
-        a.mov_rsp_disp32_rax(0x30)
-
-        # 3. Call the garbage collector!
-        a.call("fn_gc_collect")
-        a.jmp(l_retry)  # After tidying up: Try again from the beginning (check the free list)
-
-        # ------------------------------------------------------------
-        # GC did not yield sufficient results -> We MUST increase the heap size
-        # ------------------------------------------------------------
-        a.mark(f"alloc_do_grow_{lid0}")
+        # Virtual address space is already reserved. Commit the next configured
+        # growth quantum before forcing a full-graph collection. Periodic GC
+        # remains governed by gc_bytes_limit at the top of fn_alloc; collecting
+        # at every committed boundary made --gc-limit ineffective for large
+        # live graphs (for example a 369-MiB retained BSP with 16-MiB growth).
         a.mov_r64_r64("rcx", "r10")
         a.call("fn_heap_grow")
         a.test_r64_r64("rax", "rax")
-        a.jcc("nz", l_retry)  # Growth successful -> Try allocating again
+        a.jcc("nz", l_retry)  # Growth successful -> retry free-list/bump
 
-        # Growth also failed (2 GB reserve exhausted) -> Out of Memory
-        a.jmp(l_oom)
-
-        # tried_gc = 1
+        # Growth can fail only at the reserved ceiling. Give GC one emergency
+        # chance to recover unreachable blocks before reporting OOM.
+        a.mov_r64_membase_disp("rax", "rsp", 0x30)
+        a.test_r64_r64("rax", "rax")
+        a.jcc("nz", l_oom)
         a.mov_rax_imm64(1)
         a.mov_rsp_disp32_rax(0x30)
-
         a.call("fn_gc_collect")
         a.jmp(l_retry)
 

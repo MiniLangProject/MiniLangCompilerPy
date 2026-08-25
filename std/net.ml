@@ -91,6 +91,7 @@ extern function connect(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dl
 extern function bind(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
 extern function listen(s as ptr, backlog as int) from "ws2_32.dll" returns int
 extern function accept(s as ptr, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns ptr
+extern function acceptNoAddress(s as ptr, addr as ptr, addrlen as ptr) from "ws2_32.dll" symbol "accept" returns ptr
 
 extern function send(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
 extern function recv(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
@@ -111,6 +112,7 @@ extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.6
 extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
 extern function listen(s as int, backlog as int) from "libc.so.6" returns i32
 extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i32
+extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "libc.so.6" symbol "accept" returns i32
 extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
 extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
 extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
@@ -480,7 +482,7 @@ function tcpAccept(serverSocket)
   end if
 
   // Ignore peer address for this simple wrapper.
-  c = accept(serverSocket, 0, 0)
+  c = acceptNoAddress(serverSocket, 0, 0)
   if c == INVALID_SOCKET then
     return _netErr("tcpAccept: accept failed (" + lastError() + ")")
   end if

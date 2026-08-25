@@ -56,12 +56,34 @@ allocations.
 timeout options. `tcpListenAddress(host, port, backlog)` binds an explicit IPv4
 address; `tcpListen` keeps its established all-interface behavior.
 
-`std.tls` is a provider-neutral stream contract, not a bundled TLS engine. A
-provider supplies client/server handshake, send, receive, shutdown and close
-callbacks. This lets applications put an existing Windows Schannel adapter and
-a Linux OpenSSL adapter behind one API without forcing new DLL dependencies on
-Windows programs. Certificate loading, trust policy, hostname verification and
-protocol configuration remain provider responsibilities.
+`std.tls` includes a native provider selected at compile time: Windows uses
+Schannel and the system certificate stores; Linux uses OpenSSL 3
+(`libssl.so.3` and `libcrypto.so.3`). `nativeProviderName()` reports the active
+backend. The callback-based `provider(...)`, `connectClient(...)` and
+`acceptServer(...)` contract remains available for application-specific
+transports, while normal applications use `connect(socket, options)` and
+`accept(socket, options)`.
+
+Client options default to TLS 1.3, system trust and mandatory DNS-name
+verification. The minimum may be changed to TLS 1.2. A 32-byte SHA-256 leaf
+certificate pin is an additional fail-closed check; pinning cannot disable peer
+verification. Linux optionally accepts a PEM CA bundle through `caFile`.
+Schannel intentionally rejects `caFile`; install that CA in a Windows store or
+use a leaf pin. Neither backend silently falls back below the configured
+minimum.
+
+Linux server options are PEM certificate-chain and private-key paths. Windows
+accepts `store:<SHA1-thumbprint>` (searched in CurrentUser and LocalMachine
+`MY`) or `pfx:<path>`. A PFX password is read from
+`MINILANG_TLS_PFX_PASSWORD`; alternatively set `privateKeyReference` to
+`env:VARIABLE_NAME`. Secret buffers and imported PFX payloads are wiped during
+release. `requireClientCertificate` requests native client-certificate
+validation.
+
+TLS streams own their native security context, but never own the TCP socket.
+Call `shutdown(stream)` to send `close_notify`, then `close(stream)`, and
+finally `std.net.close(socket)`. `sendAll` handles partial provider writes and
+`receive` returns empty bytes after a clean peer shutdown.
 
 ## Identifiers and password derivation
 
@@ -75,4 +97,6 @@ An unguarded Windows `.dll` import is a compile error for `--target linux-x64`.
 Use conditional compilation around platform-specific providers. The shared
 `tests/platform_services.ml` acceptance fixture exercises both native targets,
 including PBKDF2 vectors, UUIDs, socket options, durable file operations,
-advisory lock conflicts and the TLS provider lifecycle.
+advisory lock conflicts and the TLS provider lifecycle. Run
+`tests/run_tls_native.ps1 -Compiler <compiler>` with WSL/OpenSSL installed for
+real positive and wrong-hostname Schannel/OpenSSL client/server handshakes.
