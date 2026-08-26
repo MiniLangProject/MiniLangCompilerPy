@@ -2481,7 +2481,9 @@ What works:
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
 - real native threads on Win32 and Linux with cooperative cancellation, data/result handoff,
   native and logical ids, status/join APIs, private stacks, a process-wide
-  thread-safe GC heap, synchronized globals/functions and managed thread pools
+  thread-safe GC heap, synchronized globals/functions and managed thread pools;
+  Linux workers use pthread creation/join so libc TLS, malloc, synchronization
+  and native providers remain valid on every worker
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
 - `main(args)` entrypoint (argv[1..] as `array<string>`, `return int` -> process exit code)
 - `global` declarations inside functions (required for accessing globals from a function; resolves to package/namespace-qualified globals; missing globals are auto-created as `void`)

@@ -15,12 +15,15 @@ const SSL_FILETYPE_PEM = 1
 const SSL_VERIFY_NONE = 0
 const SSL_VERIFY_PEER = 1
 const SSL_VERIFY_FAIL_IF_NO_PEER_CERT = 2
+const SSL_ERROR_WANT_READ = 2
+const SSL_ERROR_WANT_WRITE = 3
 const SSL_CTRL_SET_TLSEXT_HOSTNAME = 55
 const SSL_CTRL_SET_MIN_PROTO_VERSION = 123
 const TLSEXT_NAMETYPE_HOST_NAME = 0
 const TLS1_2_VERSION = 0x0303
 const TLS1_3_VERSION = 0x0304
 const X509_V_OK = 0
+const X509_PURPOSE_SSL_SERVER = 2
 
 struct OpenSslState
   context
@@ -58,6 +61,11 @@ extern function _peerCertificate(session as ptr) from "libssl.so.3" symbol "SSL_
 
 extern function _certificateDigest(certificate as ptr, digest as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "X509_digest" returns i32
 extern function _certificateFree(certificate as ptr) from "libcrypto.so.3" symbol "X509_free" returns void
+extern function _certificateCheckHost(certificate as ptr, host as cstr, hostLength as u64, flags as u32, peerName as ptr) from "libcrypto.so.3" symbol "X509_check_host" returns i32
+extern function _certificateCheckPurpose(certificate as ptr, purpose as int, ca as int) from "libcrypto.so.3" symbol "X509_check_purpose" returns i32
+extern function _certificateNotBefore(certificate as ptr) from "libcrypto.so.3" symbol "X509_get0_notBefore" returns ptr
+extern function _certificateNotAfter(certificate as ptr) from "libcrypto.so.3" symbol "X509_get0_notAfter" returns ptr
+extern function _certificateCompareCurrentTime(time as ptr) from "libcrypto.so.3" symbol "X509_cmp_current_time" returns i32
 extern function _sha256() from "libcrypto.so.3" symbol "EVP_sha256" returns ptr
 extern function _nextError() from "libcrypto.so.3" symbol "ERR_get_error" returns u64
 extern function _errorText(code as u64, output as bytes, length as u64) from "libcrypto.so.3" symbol "ERR_error_string_n" returns void
@@ -117,10 +125,19 @@ function _configureMinimum(context, version)
   return _contextControl(context, SSL_CTRL_SET_MIN_PROTO_VERSION, _minimumVersion(version), 0) == 1
 end function
 
-function _verifyPin(session, expected)
+// An exact leaf pin is its own trust anchor. Validate the independently useful
+// X.509 properties manually so self-signed pinned deployments do not depend on
+// a machine CA store while still rejecting wrong names, validity windows, and
+// certificates that cannot be used for TLS server authentication.
+function _verifyPin(session, expected, serverName)
   if typeof(expected) == "void" then return true end if
   certificate = _peerCertificate(session)
   if certificate == 0 then return _fail("verify", "peer did not provide a certificate") end if
+  if _certificateCheckHost(certificate, serverName, len(bytes(serverName)), 0, 0) != 1 then _certificateFree(certificate); return _fail("verify", "pinned certificate hostname mismatch") end if
+  if _certificateCheckPurpose(certificate, X509_PURPOSE_SSL_SERVER, 0) != 1 then _certificateFree(certificate); return _fail("verify", "pinned certificate is not valid for TLS server authentication") end if
+  notBefore = _certificateNotBefore(certificate)
+  notAfter = _certificateNotAfter(certificate)
+  if notBefore == 0 or notAfter == 0 or _certificateCompareCurrentTime(notBefore) >= 0 or _certificateCompareCurrentTime(notAfter) <= 0 then _certificateFree(certificate); return _fail("verify", "pinned certificate is outside its validity period") end if
   digest = bytes(32, 0)
   digestLength = bytes(4, 0)
   ok = _certificateDigest(certificate, _sha256(), nativeBytesPtr(digest), digestLength) == 1
@@ -136,7 +153,8 @@ function openClient(socket, options)
   if context == 0 then return _fail("connect", "SSL_CTX_new failed") end if
   if not _configureMinimum(context, options.minimumVersion) then _release(context, 0); return _fail("connect", "minimum protocol configuration failed") end if
 
-  if options.verifyPeer then
+  pinning = typeof(options.sha256Pin) == "bytes"
+  if options.verifyPeer and not pinning then
     _contextSetVerify(context, SSL_VERIFY_PEER, 0)
     trusted = 0
     if typeof(options.caFile) == "string" then
@@ -156,15 +174,15 @@ function openClient(socket, options)
     _release(context, session)
     return _fail("connect", "SNI configuration failed")
   end if
-  if options.verifyPeer and _sessionSetHost(session, options.serverName) != 1 then _release(context, session); return _fail("connect", "hostname verification configuration failed") end if
+  if options.verifyPeer and not pinning and _sessionSetHost(session, options.serverName) != 1 then _release(context, session); return _fail("connect", "hostname verification configuration failed") end if
   result = _sessionConnect(session)
   if result != 1 then
     sslError = _sessionError(session, result)
     _release(context, session)
     return _fail("connect", "handshake failed, SSL error " + sslError)
   end if
-  if options.verifyPeer and _sessionVerifyResult(session) != X509_V_OK then _release(context, session); return _fail("connect", "peer certificate validation failed") end if
-  pinned = _verifyPin(session, options.sha256Pin)
+  if options.verifyPeer and not pinning and _sessionVerifyResult(session) != X509_V_OK then _release(context, session); return _fail("connect", "peer certificate validation failed") end if
+  pinned = _verifyPin(session, options.sha256Pin, options.serverName)
   if typeof(pinned) == "error" then _release(context, session); return pinned end if
   return OpenSslState(context, session, socket, false, false)
 end function
@@ -213,6 +231,9 @@ function receiveBytes(state, maximumBytes)
   result = _sessionRead(state.session, nativeBytesPtr(output), maximumBytes, count)
   if result == 1 then return slice(output, 0, _getU64(count)) end if
   sslError = _sessionError(state.session, result)
+  // The internal provider is also used by event-loop adapters. A nonblocking
+  // socket with no complete TLS record is not a transport failure.
+  if sslError == SSL_ERROR_WANT_READ or sslError == SSL_ERROR_WANT_WRITE then return void end if
   if sslError == 6 then return bytes(0) end if
   return _fail("receive", "SSL_read_ex failed, SSL error " + sslError)
 end function

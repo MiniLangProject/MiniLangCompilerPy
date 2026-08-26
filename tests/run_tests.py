@@ -399,6 +399,10 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "platform_services.ml", ["=== PLATFORM SERVICES DONE ==="], []),
         (tests_root / "thread_features.ml",
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
+        (tests_root / "thread_pool.ml",
+         ["[OK] thread arguments, logical ids and managed thread pool"], []),
+        (tests_root / "gc_back_to_back_safepoint.ml",
+         ["[OK] back-to-back GC safepoint state publication"], []),
     ]
     outputs: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mltests_linux_") as td:
@@ -2922,24 +2926,12 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
     """Codegen regression: tiny constant-trip for-loops should be unrolled."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
         td_path = Path(td)
-        main_ml = td_path / "for_unroll_small_const.ml"
+        main_ml = mlc_runner.parent / "tests" / "for_unroll_budget.ml"
         exe = td_path / "for_unroll_small_const.exe"
         asm_path = td_path / "for_unroll_small_const.asm"
 
-        main_ml.write_text("\n".join([
-            'function main(args)',
-            '  sum1 = 0',
-            '  for i = 1 to(4)',
-            '    sum1 = sum1 + i',
-            '  end for',
-            '  sum2 = 0',
-            '  for j = 3 to(1)',
-            '    sum2 = sum2 + j',
-            '  end for',
-            '  print(sum1)',
-            '  print(sum2)',
-            'end function',
-        ]) + "\n", encoding="utf-8")
+        if not main_ml.exists():
+            return TestResult(name=name, status="FAIL", details=f"missing fixture: {main_ml}")
 
         cr = compile_native(
             mlc_runner,
@@ -2960,7 +2952,7 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
                               stdout=rr.stdout, stderr=rr.stderr)
 
         out = normalize_out(rr.stdout).strip().splitlines()
-        if out[:2] != ['10', '6']:
+        if out[:3] != ['10', '6', '2']:
             return TestResult(name=name, status="FAIL",
                               details="unexpected runtime output for small const for-unroll probe",
                               stdout=rr.stdout, stderr=rr.stderr)
@@ -2991,6 +2983,29 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
                 return TestResult(name=name, status="FAIL",
                                   details=f"small constant for-loop was not fully unrolled: found {marker!r} in fn_user_main",
                                   stdout=rr.stdout, stderr=main_asm)
+
+        # The shared statement/expression budget must keep a structurally large
+        # body as a real loop. This guards Python/self-host code-size parity and
+        # prevents tiny-trip loops with large TLS-style conditions from being
+        # duplicated several times.
+        budget_start = None
+        budget_end = len(asm_lines)
+        for i, line in enumerate(asm_lines):
+            if line.lstrip().startswith("fn_user_budgetedLoop:"):
+                budget_start = i
+                break
+        if budget_start is None:
+            return TestResult(name=name, status="FAIL", details="fn_user_budgetedLoop not found in generated .asm listing")
+        for i in range(budget_start + 1, len(asm_lines)):
+            stripped = asm_lines[i].lstrip()
+            if stripped.startswith("fn_") and re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", stripped):
+                budget_end = i
+                break
+        budget_asm = "\n".join(asm_lines[budget_start:budget_end])
+        if "for_top_" not in budget_asm or "for_end_" not in budget_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="complex tiny-trip for-loop exceeded the unroll budget but was still duplicated",
+                              stdout=rr.stdout, stderr=budget_asm)
 
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
@@ -4088,6 +4103,12 @@ def main() -> int:
         mlc_runner=mlc_runner,
         ml_path=tests_root / "package_global_resolution" / "main.ml",
         must_contain=["package global resolution [OK]"],
+    ))
+    tests.append(lambda: test_program_no_fail(
+        name="extern/user basename collision remains package-qualified",
+        mlc_runner=mlc_runner,
+        ml_path=tests_root / "extern_user_name_collision" / "main.ml",
+        must_contain=["extern/user basename collision [OK]"],
     ))
 
     # Negative: imported module must be declaration-only

@@ -137,7 +137,11 @@ struct ThreadPoolJob
   // Release synchronization handles after the job has finished.
   function close()
     if not this.guard.acquire() then return false end if
-    if this.closed or not this.isDone() then
+    // Inspect the terminal state while guard is already held. Avoiding a
+    // nested acquisition keeps disposal independent of recursive-lock details
+    // and gives every platform one straightforward lock/unlock pair.
+    terminal = this.status == JOB_COMPLETED or this.status == JOB_FAILED or this.status == JOB_CANCELLED
+    if this.closed or not terminal then
       this.guard.release()
       return false
     end if

@@ -19,11 +19,27 @@ _CORE_IMPORTS = (
     'LeaveCriticalSection', '_gcvt', 'fmod', 'CommandLineToArgvW',
 )
 
+_RUNTIME_DYNAMIC_IMPORTS = (
+    ('libpthread.so.0', 'pthread_create', 'elfiat_runtime_pthread_create'),
+    ('libpthread.so.0', 'pthread_join', 'elfiat_runtime_pthread_join'),
+)
+
 
 def linux_dynamic_imports(cg: Any) -> list[tuple[str, str, int]]:
     """Return ``(library, symbol, data-slot-offset)`` records for source externs."""
     result: list[tuple[str, str, int]] = []
     seen: set[tuple[str, str, int]] = set()
+    # MiniLang workers must be real pthreads. Raw clone(2) workers do not own a
+    # glibc TLS block, so libc sees every worker as the creating thread; that
+    # breaks recursive mutex ownership and can corrupt malloc state when native
+    # libraries are called concurrently.
+    for library, symbol, loader_label in _RUNTIME_DYNAMIC_IMPORTS:
+        if loader_label not in cg.data.labels:
+            cg.data.pad_align(8)
+            cg.data.add_u64(loader_label, 0)
+        item = (library, symbol, int(cg.data.labels[loader_label]))
+        seen.add(item)
+        result.append(item)
     for qname, sig in dict(getattr(cg, 'extern_sigs', {}) or {}).items():
         if not isinstance(sig, dict):
             continue
@@ -155,6 +171,10 @@ def _syscall(a: Any) -> None:
 def emit_linux_startup(cg: Any) -> None:
     """Emit the ELF ``_start`` prefix before the ordinary MiniLang entry."""
     a = cg.asm
+    d = cg.data
+    if 'linux_sigpipe_action' not in d.labels:
+        # Linux kernel_sigaction: handler=SIG_IGN, flags/restorer/mask=0.
+        d.add_bytes('linux_sigpipe_action', (1).to_bytes(8, 'little') + b'\x00' * 24)
     a.mark('_start')
     # Preserve the kernel-provided argc/argv before adapting stack alignment to
     # the internal ABI (which enters with RSP == 8 mod 16).
@@ -164,6 +184,17 @@ def emit_linux_startup(cg: Any) -> None:
     a.mov_rip_qword_rax('ml_argvw')
     a.mov_r64_r64('r11', 'rsp')
     a.mov_rip_qword_r11('linux_initial_rsp')
+
+    # Network libraries may write after a peer has closed its socket. Ignore
+    # SIGPIPE process-wide so those writes return EPIPE to MiniLang/OpenSSL
+    # instead of terminating the server with signal 13.
+    a.mov_r32_imm32('edi', 13)  # SIGPIPE
+    a.lea_rax_rip('linux_sigpipe_action')
+    a.mov_r64_r64('rsi', 'rax')
+    a.xor_r32_r32('edx', 'edx')
+    a.mov_r32_imm32('r10d', 8)  # kernel sigset size on x86-64
+    a.mov_r32_imm32('eax', 13)  # rt_sigaction
+    _syscall(a)
 
     # arch_prctl(ARCH_SET_GS, &linux_gs_area).  MiniLang stores its current
     # managed-thread context at gs:[0x28], matching its Windows representation.
@@ -271,7 +302,9 @@ def emit_linux_runtime(cg: Any) -> None:
 
     a.mark('linux_ExitProcess')
     a.mov_r32_r32('edi', 'ecx')
-    a.mov_r32_imm32('eax', 60)
+    # Win32 ExitProcess terminates every process thread. Linux SYS_exit only
+    # ends the caller and would leave blocked workers behind, so use exit_group.
+    a.mov_r32_imm32('eax', 231)
     _syscall(a)
     a.emit(b'\x0f\x0b')
 
@@ -343,15 +376,24 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mov_r32_imm32('eax', 1)
     a.ret()
 
-    # Sleep(milliseconds) via poll(NULL, 0, timeout).
+    # Sleep(milliseconds). Windows Sleep(0) yields the remainder of the current
+    # time slice; poll(NULL, 0, 0) merely returns and can starve a mutator while
+    # the collector waits for it to reach a cooperative safepoint.
     a.mark('linux_Sleep')
     a.push_reg('rdi')
     a.push_reg('rsi')
+    a.test_r32_r32('ecx', 'ecx')
+    a.jcc('ne', 'linux_sleep_poll')
+    a.mov_r32_imm32('eax', 24)  # sched_yield
+    _syscall(a)
+    a.jmp('linux_sleep_done')
+    a.mark('linux_sleep_poll')
     a.xor_r32_r32('edi', 'edi')
     a.xor_r32_r32('esi', 'esi')
     a.mov_r32_r32('edx', 'ecx')
     a.mov_r32_imm32('eax', 7)
     _syscall(a)
+    a.mark('linux_sleep_done')
     a.pop_reg('rsi')
     a.pop_reg('rdi')
     a.ret()
@@ -380,6 +422,11 @@ def emit_linux_runtime(cg: Any) -> None:
     a.lock_cmpxchg_membase_disp_r32('r10', 0, 'edx')
     a.jcc('e', 'linux_cs_lock_done')
     a.emit(b'\xf3\x90')
+    # A pure PAUSE loop can monopolize a constrained WSL/Linux scheduler while
+    # the lock owner is parked. Yield after each failed acquisition so GC and
+    # mutator threads can always hand the runtime monitor back to one another.
+    a.mov_r32_imm32('eax', 24)  # sched_yield
+    _syscall(a)
     a.jmp(lock_loop)
     a.mark('linux_cs_lock_done')
     a.mov_membase_disp_r32('r10', 4, 'r9d')
@@ -405,16 +452,23 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mark('linux_cs_leave_done')
     a.ret()
 
-    # CreateThread/WaitForSingleObject use clone(2) directly. Each handle is a
-    # private 1-MiB mapping containing a wait word, GS area and worker stack.
+    # CreateThread is backed by pthread_create so every worker receives a valid
+    # glibc TLS block. The private page stores pthread_t, completion/join state,
+    # the internal callback, its managed context, and MiniLang's GS scratch area.
     a.mark('linux_CreateThread')
-    for reg in ('r12', 'r13', 'r14', 'r15', 'rdi', 'rsi'):
+    for reg in ('rbx', 'r12', 'r13', 'r14', 'r15', 'rdi', 'rsi'):
         a.push_reg(reg)
+    # SysV treats every XMM register as volatile, whereas MiniLang's stable
+    # internal ABI follows Win64 and requires XMM6-XMM15 to survive a call.
+    # Preserve that non-volatile set around pthread_create.
+    a.sub_rsp_imm32(0xA0)
+    for index in range(6, 16):
+        a.movdqu_membase_disp_xmm('rsp', (index - 6) * 16, f'xmm{index}')
     a.mov_r64_r64('r13', 'r8')       # start routine
     a.mov_r64_r64('r14', 'r9')       # argument/context
-    a.mov_r64_membase_disp('r15', 'rsp', 0x60)  # lpThreadId
+    a.mov_r64_membase_disp('r15', 'rsp', 0x108)  # lpThreadId
     a.xor_r32_r32('edi', 'edi')
-    a.mov_r32_imm32('esi', 0x100000)
+    a.mov_r32_imm32('esi', 0x1000)
     a.mov_r32_imm32('edx', 3)
     a.mov_r32_imm32('r10d', 0x22)
     a.mov_r64_imm64('r8', -1)
@@ -424,46 +478,57 @@ def emit_linux_runtime(cg: Any) -> None:
     a.cmp_r64_imm32('rax', -4095)
     a.jcc('ae', 'linux_thread_create_fail')
     a.mov_r64_r64('r12', 'rax')
-    a.lea_r64_membase_disp('rsi', 'r12', 0x100000)
-    a.mov_r32_imm32('edi', 0x01350F00)
-    a.mov_r64_r64('rdx', 'r12')
-    a.mov_r64_r64('r10', 'r12')
-    a.xor_r32_r32('r8d', 'r8d')
-    a.mov_r32_imm32('eax', 56)
-    _syscall(a)
-    a.test_r64_r64('rax', 'rax')
-    a.jcc('e', 'linux_thread_child')
-    a.test_r64_r64('rax', 'rax')
-    a.jcc('s', 'linux_thread_clone_fail')
+    a.mov_membase_disp_imm32('r12', 8, 1, qword=False)
+    a.mov_membase_disp_r64('r12', 16, 'r13')
+    a.mov_membase_disp_r64('r12', 24, 'r14')
+    a.mov_r64_r64('rdi', 'r12')
+    a.xor_r32_r32('esi', 'esi')
+    a.lea_rax_rip('linux_pthread_start')
+    a.mov_r64_r64('rdx', 'rax')
+    a.mov_r64_r64('rcx', 'r12')
+    a.call_rip_qword('elfiat_runtime_pthread_create')
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_create_cleanup')
+    a.mov_r64_membase_disp('rax', 'r12', 0)
     a.mov_membase_disp_r32('r15', 0, 'eax')
     a.mov_r64_r64('r11', 'r12')
-    for reg in ('rsi', 'rdi', 'r15', 'r14', 'r13', 'r12'):
+    for index in range(6, 16):
+        a.movdqu_xmm_membase_disp(f'xmm{index}', 'rsp', (index - 6) * 16)
+    a.add_rsp_imm32(0xA0)
+    for reg in ('rsi', 'rdi', 'r15', 'r14', 'r13', 'r12', 'rbx'):
         a.pop_reg(reg)
     a.mov_r64_r64('rax', 'r11')
     a.ret()
 
-    a.mark('linux_thread_child')
+    # SysV pthread entry bridge to MiniLang's stable internal ABI.
+    a.mark('linux_pthread_start')
+    a.push_reg('r12')
+    a.sub_rsp_imm8(0x20)
+    a.mov_r64_r64('r12', 'rdi')
     a.lea_r64_membase_disp('rax', 'r12', 0x40)
     a.mov_r64_r64('rsi', 'rax')
     a.mov_r32_imm32('edi', 0x1001)
     a.mov_r32_imm32('eax', 158)
     _syscall(a)
-    a.sub_rsp_imm8(0x20)
-    a.mov_r64_r64('rcx', 'r14')
-    a.mov_r64_r64('rax', 'r13')
+    a.mov_r64_membase_disp('rcx', 'r12', 24)
+    a.mov_r64_membase_disp('rax', 'r12', 16)
     a.call_rax()
-    a.mov_r32_imm32('eax', 60)
-    a.xor_r32_r32('edi', 'edi')
-    _syscall(a)
-    a.emit(b'\x0f\x0b')
+    a.mov_membase_disp_imm32('r12', 8, 0, qword=False)
+    a.xor_r64_r64('rax', 'rax')
+    a.add_rsp_imm8(0x20)
+    a.pop_reg('r12')
+    a.ret()
 
-    a.mark('linux_thread_clone_fail')
+    a.mark('linux_thread_create_cleanup')
     a.mov_r64_r64('rdi', 'r12')
-    a.mov_r32_imm32('esi', 0x100000)
+    a.mov_r32_imm32('esi', 0x1000)
     a.mov_r32_imm32('eax', 11)
     _syscall(a)
     a.mark('linux_thread_create_fail')
-    for reg in ('rsi', 'rdi', 'r15', 'r14', 'r13', 'r12'):
+    for index in range(6, 16):
+        a.movdqu_xmm_membase_disp(f'xmm{index}', 'rsp', (index - 6) * 16)
+    a.add_rsp_imm32(0xA0)
+    for reg in ('rsi', 'rdi', 'r15', 'r14', 'r13', 'r12', 'rbx'):
         a.pop_reg(reg)
     a.xor_r32_r32('eax', 'eax')
     a.ret()
@@ -471,12 +536,16 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mark('linux_WaitForSingleObject')
     a.push_reg('r12')
     a.push_reg('r13')
+    a.push_reg('r14')
+    a.sub_rsp_imm32(0xA0)
+    for index in range(6, 16):
+        a.movdqu_membase_disp_xmm('rsp', (index - 6) * 16, f'xmm{index}')
     a.mov_r64_r64('r12', 'rcx')
     a.mov_r32_r32('r13d', 'edx')
     a.mark('linux_thread_wait_loop')
-    a.mov_r32_membase_disp('eax', 'r12', 0)
+    a.mov_r32_membase_disp('eax', 'r12', 8)
     a.test_r32_r32('eax', 'eax')
-    a.jcc('e', 'linux_thread_wait_ok')
+    a.jcc('e', 'linux_thread_wait_join')
     a.test_r32_r32('r13d', 'r13d')
     a.jcc('e', 'linux_thread_wait_timeout')
     a.mov_r32_imm32('ecx', 1)
@@ -485,28 +554,70 @@ def emit_linux_runtime(cg: Any) -> None:
     a.jcc('e', 'linux_thread_wait_loop')
     a.dec_r32('r13d')
     a.jmp('linux_thread_wait_loop')
+    a.mark('linux_thread_wait_join')
+    a.mov_r32_membase_disp('eax', 'r12', 32)
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_wait_ok')
+    a.mov_r64_membase_disp('rdi', 'r12', 0)
+    a.xor_r32_r32('esi', 'esi')
+    a.call_rip_qword('elfiat_runtime_pthread_join')
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_wait_failed')
+    a.mov_membase_disp_imm32('r12', 32, 1, qword=False)
     a.mark('linux_thread_wait_ok')
     a.xor_r32_r32('eax', 'eax')
+    a.jmp('linux_thread_wait_done')
+    a.mark('linux_thread_wait_failed')
+    a.mov_r32_imm32('eax', 0xFFFFFFFF)
     a.jmp('linux_thread_wait_done')
     a.mark('linux_thread_wait_timeout')
     a.mov_r32_imm32('eax', 0x102)
     a.mark('linux_thread_wait_done')
+    for index in range(6, 16):
+        a.movdqu_xmm_membase_disp(f'xmm{index}', 'rsp', (index - 6) * 16)
+    a.add_rsp_imm32(0xA0)
+    a.pop_reg('r14')
     a.pop_reg('r13')
     a.pop_reg('r12')
     a.ret()
 
     a.mark('linux_CloseHandle')
+    a.push_reg('r12')
     a.push_reg('rdi')
     a.push_reg('rsi')
-    a.mov_r64_r64('rdi', 'rcx')
-    a.mov_r32_imm32('esi', 0x100000)
+    a.sub_rsp_imm32(0xA0)
+    for index in range(6, 16):
+        a.movdqu_membase_disp_xmm('rsp', (index - 6) * 16, f'xmm{index}')
+    a.mov_r64_r64('r12', 'rcx')
+    a.mov_r32_membase_disp('eax', 'r12', 8)
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_close_fail')
+    a.mov_r32_membase_disp('eax', 'r12', 32)
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_close_unmap')
+    a.mov_r64_membase_disp('rdi', 'r12', 0)
+    a.xor_r32_r32('esi', 'esi')
+    a.call_rip_qword('elfiat_runtime_pthread_join')
+    a.test_r32_r32('eax', 'eax')
+    a.jcc('ne', 'linux_thread_close_fail')
+    a.mark('linux_thread_close_unmap')
+    a.mov_r64_r64('rdi', 'r12')
+    a.mov_r32_imm32('esi', 0x1000)
     a.mov_r32_imm32('eax', 11)
     _syscall(a)
+    a.test_r64_r64('rax', 'rax')
+    a.jcc('ne', 'linux_thread_close_fail')
+    a.mov_r32_imm32('eax', 1)
+    a.jmp('linux_thread_close_done')
+    a.mark('linux_thread_close_fail')
+    a.xor_r32_r32('eax', 'eax')
+    a.mark('linux_thread_close_done')
+    for index in range(6, 16):
+        a.movdqu_xmm_membase_disp(f'xmm{index}', 'rsp', (index - 6) * 16)
+    a.add_rsp_imm32(0xA0)
     a.pop_reg('rsi')
     a.pop_reg('rdi')
-    a.xor_r64_r64('rax', 'rax')
-    a.test_r64_r64('rax', 'rax')
-    a.mov_r32_imm32('eax', 1)
+    a.pop_reg('r12')
     a.ret()
 
     # fmod has the same floating-register argument layout in both x64 ABIs.

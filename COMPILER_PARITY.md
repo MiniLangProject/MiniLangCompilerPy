@@ -50,6 +50,12 @@ threads/GC, `libc` integer/pointer calls and `libm` floating-point calls. The
 complete suites report Python 106/106 and MiniLang 101/101, with additional
 self-hosted Linux static, FFI, thread/GC and object-flag compatibility gates.
 
+On 26 August 2026 the Linux worker runtime moved from raw `clone(2)` to pthreads.
+The Python compiler and a freshly Python-bootstrapped self-hosted compiler both
+emitted the same `thread_pool.ml` Linux ELF with SHA-256
+`A81E1715E563E9B9C15D6740E22B6F7A26C6D1FC8C600E13178DB149239FB3AE`.
+That image completed 20 consecutive thread/GC/pool runs under WSL2.
+
 ## 1.1.0 release fixed point
 
 The release compiler was rebuilt through the complete trust chain. All stages

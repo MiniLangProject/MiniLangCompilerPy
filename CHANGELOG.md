@@ -21,6 +21,19 @@ All notable changes to the MiniLang compiler are documented here.
   pinning, TLS 1.2/1.3 minimums, server identities and clean shutdown. Added
   real cross-target handshake tests and fixed the Linux null-address `accept`
   FFI signature exposed by TLS listeners.
+- Hardened Linux servers by ignoring `SIGPIPE`, made nonblocking OpenSSL reads
+  report retryable readiness, and made exact leaf-pin validation independent
+  of a machine CA store while retaining hostname, validity-period and TLS
+  server-purpose checks.
+- Replaced raw `clone(2)` workers with `pthread_create`/`pthread_join` so every
+  Linux thread owns valid glibc TLS for malloc, pthread synchronization and
+  native providers. The SysV bridge now preserves MiniLang's nonvolatile XMM
+  contract, process termination uses `exit_group`, and Linux thread-pool/GC
+  regressions run as part of the target gate.
+- Kept extern lookup package-qualified when user functions share a native
+  symbol's basename, and synchronized the conservative small-loop unroll
+  complexity budget across both compilers. This prevents TLS-heavy Windows
+  code bloat while preserving byte-identical Python/self-host targets.
 - Made committed-heap growth precede the one emergency full collection at the
   reserved ceiling, so normal heap expansion does not bypass `--gc-limit` or
   repeatedly scan large retained object graphs.
