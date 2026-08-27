@@ -401,6 +401,9 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
         (tests_root / "thread_pool.ml",
          ["[OK] thread arguments, logical ids and managed thread pool"], []),
+        (tests_root / "synchronized_lock.ml", ["[OK] fine-grained synchronized(lock)"], []),
+        (tests_root / "task_channel.ml",
+         ["[OK] tasks, futures, cancellation and bounded channels"], []),
         (tests_root / "gc_back_to_back_safepoint.ml",
          ["[OK] back-to-back GC safepoint state publication"], []),
     ]
@@ -3715,6 +3718,9 @@ def main() -> int:
     gc_back_to_back_safepoint_ml = find_file_by_name(tests_root, "gc_back_to_back_safepoint.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
     thread_pool_ml = find_file_by_name(tests_root, "thread_pool.ml")
+    synchronized_lock_ml = find_file_by_name(tests_root, "synchronized_lock.ml")
+    synchronized_lock_invalid_exit_ml = find_file_by_name(tests_root, "synchronized_lock_invalid_exit.ml")
+    task_channel_ml = find_file_by_name(tests_root, "task_channel.ml")
     type_checks_ml = find_file_by_name(tests_root, "type_checks.ml")
     member_callable_direct_ml = find_file_by_name(tests_root, "member_callable_direct.ml")
     codegen_phase_gc_ml = find_file_by_name(tests_root, "codegen_phase_gc.ml")
@@ -3841,6 +3847,35 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="thread_pool.ml (arguments + logical ids + worker pool)", status="SKIP",
                                         details="thread_pool.ml not found"))
+
+    if synchronized_lock_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="synchronized(lock) (fine-grained critical section + return cleanup)",
+            mlc_runner=mlc_runner, ml_path=synchronized_lock_ml,
+            must_contain=["[OK] fine-grained synchronized(lock)"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="synchronized(lock) (fine-grained critical section)", status="SKIP",
+                                        details="synchronized_lock.ml not found"))
+
+    if task_channel_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="task_channel.ml (future + cancellation + bounded channel)",
+            mlc_runner=mlc_runner, ml_path=task_channel_ml,
+            must_contain=["[OK] tasks, futures, cancellation and bounded channels"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(name="task_channel.ml (future + cancellation + bounded channel)", status="SKIP",
+                                        details="task_channel.ml not found"))
+
+    if synchronized_lock_invalid_exit_ml is not None:
+        tests.append(lambda: test_compile_expected_fail(
+            name="synchronized(lock): break/continue boundary rejected", mlc_runner=mlc_runner,
+            entry_ml=synchronized_lock_invalid_exit_ml,
+            must_contain_err="break/continue cannot leave synchronized(lock)"))
+    else:
+        tests.append(lambda: TestResult(name="synchronized(lock): invalid boundary exit", status="SKIP",
+                                        details="synchronized_lock_invalid_exit.ml not found"))
 
     if type_checks_ml is not None:
         tests.append(lambda: test_program_no_fail(
@@ -4250,9 +4285,18 @@ def main() -> int:
     only = (args.only or "").lower() if args.only else None
     results: list[TestResult] = []
     for t in tests:
+        if only:
+            # Most thunks contain their user-facing name as a literal. Thunks
+            # registered in a loop capture it as a default argument instead.
+            # Inspect both forms before invocation; filtering the TestResult
+            # afterwards would still execute the entire suite.
+            candidates = list(t.__code__.co_consts)
+            candidates.extend(t.__defaults__ or ())
+            candidates.extend((t.__kwdefaults__ or {}).values())
+            names = (value.lower() for value in candidates if isinstance(value, str))
+            if not any(only in value for value in names):
+                continue
         r = t()
-        if only and only not in r.name.lower():
-            continue
         results.append(r)
 
     # Report

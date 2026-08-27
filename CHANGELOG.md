@@ -4,6 +4,22 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Added fine-grained `synchronized(lock)` blocks with exactly-once lock
+  evaluation and guaranteed release on normal, return and propagated-error
+  exits, while retaining synchronized variables/functions unchanged.
+- Added cross-platform futures/tasks, cooperative cancellation tokens,
+  `whenAll`/`whenAny` completion helpers and bounded MPMC channels with
+  backpressure, timeouts, close/drain semantics and valid `void` messages.
+- Added a native Linux self-host script and completed canonical `.mlo` linking
+  for ELF. Large links now stream sections, labels and relocations by object;
+  dynamic-import ordering preserves byte identity with monolithic ELF output.
+- Fixed self-hosted array-stack truncation that incorrectly called the
+  bytes-only `slice()` builtin. Parent-path normalization, assembler patch
+  rollback and namespaced enum type-query optimization now retain array values;
+  the Linux self-build also verifies project-manifest path handling.
+- Aligned package-qualified enum-variant resolution in the Python compiler with
+  the self-hosted compiler while preserving local shadowing, restoring exact
+  target bytes for the complete language acceptance suite.
 - Added `--target windows-x64|linux-x64` and manifest `target` selection. The
   new deterministic ELF64 backend includes the managed runtime, global GC heap,
   TLABs, native Linux threads/synchronization and glibc-compatible `.so` FFI.
@@ -43,6 +59,11 @@ All notable changes to the MiniLang compiler are documented here.
 - Fixed inactive empty lines shifting source/debug locations in the self-hosted
   conditional preprocessor, and removed quadratic label-array copying from the
   self-hosted ELF linker for large, FFI-heavy Linux programs.
+- Removed the remaining large-program relocation bottleneck in the self-hosted
+  compiler. Very large monolithic builds now resolve text labels directly and
+  materialize only section/IAT overrides, codegen assemblers omit unused full
+  call histories while retaining helper discovery, and the `.mlo` linker
+  preallocates its object-patch index. These changes preserve target bytes.
 - Added real Windows threads over a process-wide, thread-safe managed heap,
   per-thread stacks, cooperative stop-the-world GC and synchronization.
 - Added 64 KiB thread-local allocation buffers for lock-free small-object

@@ -1,7 +1,9 @@
-# MiniLang - Python Reference Compiler
+# MiniLang - Python Reference Compiler for Windows and Linux x64
 
 Current stable release: **1.1.0**. See the [changelog](CHANGELOG.md) and
 [release notes](RELEASE_NOTES_1.1.0.md).
+
+Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
 Release 1.0.0 and later are source-only: generated `.exe` files are not
 tracked in Git and are not attached to GitHub releases.
@@ -174,8 +176,8 @@ Common options:
 **Cross-compiler build compatibility**
 - `--object-pipeline` is accepted so project commands can be shared with the
   self-hosted compiler. Python emits the equivalent monolithic image; the
-  self-hosted canonical `.mlo` pipeline produces the same final Windows bytes.
-  For Linux, both compilers currently use the equivalent monolithic ELF path
+  self-hosted canonical `.mlo` pipeline produces the same final Windows PE or
+  Linux ELF bytes.
 
 `python mlc_win64.py -version` and `--version` both print
 `MiniLang Compiler 1.1.0`. `python mlc_win64.py --help` prints the full option
@@ -260,8 +262,8 @@ executable. Any relevant change performs a full build; this is artifact caching,
 not per-module incremental compilation. Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
-compiler uses its retained `.mlo` pipeline for Windows when the field is true
-and the equivalent monolithic path for Linux.
+compiler uses its retained `.mlo` pipeline for Windows or Linux when the field
+is true.
 
 ### Conditional compilation
 
@@ -376,7 +378,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **105 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **114 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -397,6 +399,13 @@ wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
 vectors, isolated semantic function batches and shared append-only section
 builders while spilling completed assembler fragments. Canonical section order
 keeps the linked image inside the normal cross-compiler target-byte contract.
+
+For very large monolithic programs the profiler additionally reports text-label
+and deferred-patch counts and whether direct section lookup was selected. The
+self-hosted assembler omits unused full call histories during code generation,
+resolves text labels through its existing map and materializes only section/IAT
+overrides; the `.mlo` linker preallocates its object-patch index. These are
+compiler-throughput changes only and do not affect target bytes.
 
 For the 1.1.0 acceptance pass, a 142-file snapshot of the current MiniQuake
 worktree at commit `1036b1c3b551d00de777c67293d262a6cc5c2739` plus 18 dirty
@@ -425,6 +434,17 @@ dependency-driven type-flow worklist plus indexed package-aware integer flow.
 The parity report therefore
 distinguishes the bootstrap image, the measured self-hosted fixed point and
 byte-identical target output explicitly.
+
+The subsequent large-label throughput pass converges at Stage 2. Its Stage 2
+and Stage 3 images are byte-identical 59,923,456-byte compilers with SHA-256
+`FB6D921349BBE248A88726910CE72396651B2372179ADC36D7913FC7240ECF3D`;
+the stages completed in 357.656 and 258.750 seconds through the canonical
+object pipeline. On clean MiniQuake commit
+`b5fe23f17bd5e861f22afd72b2e83aa4b73b9bd5`, this Python compiler completed
+in 77.757 seconds, the optimized self-hosted monolith in 874.519 seconds and
+`.mlo` in 351.937 seconds. All three builds emitted the same 57,197,056-byte PE
+with SHA-256
+`8E5D38689481FC7D0FC6CACD6FFD015EEBA3C2B875A9B19E0CC790A142970E63`.
 
 
 ---
@@ -1187,19 +1207,33 @@ owned by the thread object; it does not invalidate objects published elsewhere.
 Use a synchronized function when a whole critical section must be serialized:
 
 ```ml
+import std.threading as threading
+
 function synchronized updateSharedState()
   global jobsDone
   jobsDone = jobsDone + 1
 end function
+
+guard = threading.Lock.new()
+synchronized(guard)
+  // Only code using this guard is serialized.
+  updateOneSharedObject()
+end synchronized
 ```
 
-All synchronized variables and synchronized functions currently share one
-recursive process-wide monitor. Managed object identity is shared across
-threads; no copy is made when a reference is published. Concurrent writes to
-the same object, array slot or unsynchronized global are data races. Use a
-synchronized function, a synchronized binding or the primitives/collections in
-the next section to define the required critical section. Console and other
-process-wide I/O should also be serialized when multiple workers can use it.
+Synchronized variables and synchronized functions share the recursive
+process-wide monitor for backward compatibility. `synchronized(lock)` instead
+uses the supplied `std.threading.Lock`, evaluates that expression exactly once
+and releases it on fall-through, `return` and propagated `error` exits. A failed
+acquire propagates error `1101`; `break` and `continue` cannot leave this block.
+Independent locks allow unrelated critical sections to proceed concurrently.
+
+Managed object identity is shared across threads; no copy is made when a
+reference is published. Concurrent writes to the same object, array slot or
+unsynchronized global are data races. Use the appropriate synchronized form or
+the primitives/collections in the next section to define the required critical
+section. Console and other process-wide I/O should also be serialized when
+multiple workers can use it.
 
 For closed programs that never reference `Thread`, the compiler selects a
 single-thread fast path. Generated hot code then omits cancellation and GC
@@ -1330,6 +1364,57 @@ Pool workers receive stable logical ids such as `thread-pool-0`. Callbacks may
 allocate, trigger GC and return arbitrary managed values. A `Failed` job stores
 the callback's `error`; retrieve it with `try(job.GetResult())`. Pool disposal
 and job disposal are lifecycle operations and must not race their active users.
+
+### 9.4 Tasks, cancellation and bounded channels
+
+`std.concurrent.task` layers `Future` values over an existing thread pool.
+`run(pool, callback, data)` schedules a conventional callback;
+`runCancellable` calls `callback(data, token)`. Futures provide `Wait`,
+`WaitFor`, `IsDone`, `Cancel`, `Dispose` plus lowercase `status()` and
+`result()`. `whenAll` preserves input order, while `whenAny` and `whenAnyFor`
+return the first completed index.
+
+`std.concurrent.cancellation` provides `CancellationTokenSource` and its
+read-only `CancellationToken`. Cancellation is idempotent and cooperative:
+`IsCancellationRequested`, `Wait`/`WaitFor` and `Check` let running code observe
+the request; `Check` returns error `1650`. Cancelling a queued future removes
+the job directly, whereas running work must inspect its token.
+
+`std.concurrent.channel.Channel.new(capacity)` creates a bounded,
+multi-producer/multi-consumer FIFO with backpressure. `Send`/`Receive` wait,
+`SendFor`/`ReceiveFor` use millisecond timeouts and `TrySend`/`TryReceive` do not
+block. A receive returns `ChannelReceive(received, value)`, so a valid `void`
+message remains distinguishable from a closed and drained channel. `close()`
+seals the writer side; queued values remain readable. Call `Dispose` only after
+blocked users have returned and the channel has drained.
+
+```ml
+import std.concurrent.channel as channels
+import std.concurrent.task as tasks
+import std.concurrent.thread_pool as threadPool
+
+function work(value, token)
+  if token.IsCancellationRequested() then return token.Check() end if
+  return value * 2
+end function
+
+pool = threadPool.ThreadPool.withQueueCapacity(4, 128)
+future = tasks.runCancellable(pool, work, 21)
+future.Wait()
+print future.result() // 42
+future.Dispose()
+
+channel = channels.Channel.new(64)
+channel.Send("ready")
+item = channel.Receive()
+if item.received then print item.value end if
+channel.close()
+channel.Dispose()
+
+pool.Shutdown()
+pool.AwaitTermination()
+pool.Dispose()
+```
 
 ### Function values (function pointers)
 
@@ -1689,7 +1774,7 @@ Linux images that use only libc-backed modules need no dependency beyond the
 normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
 requires the OpenSSL 3 runtime package.
 
-The current library contains 43 source modules, byte-for-byte identical in both
+The current library contains 46 source modules, byte-for-byte identical in both
 compiler repositories:
 
 - **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
@@ -1701,7 +1786,9 @@ compiler repositories:
 - **Collections:** `std.ds.list`, `std.ds.stack`, `std.ds.queue`,
   `std.ds.hashmap`, `std.ds.set`
 - **Concurrency:** `std.threading`, `std.concurrent.thread_pool`,
-  `std.ds.concurrent_list`, `std.ds.concurrent_hashmap`
+  `std.concurrent.task`, `std.concurrent.cancellation`,
+  `std.concurrent.channel`, `std.ds.concurrent_list`,
+  `std.ds.concurrent_hashmap`
 - **Native primitives:** `std.cpu`, `std.checksum.crc32c`,
   `std.checksum.crc32`, `std.crypto`, `std.crypto.aes_gcm`,
   `std.crypto._cng`, `std.crypto._openssl`, `std.tls._schannel` and
@@ -2481,9 +2568,12 @@ What works:
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
 - real native threads on Win32 and Linux with cooperative cancellation, data/result handoff,
   native and logical ids, status/join APIs, private stacks, a process-wide
-  thread-safe GC heap, synchronized globals/functions and managed thread pools;
+  thread-safe GC heap, synchronized globals/functions, fine-grained
+  `synchronized(lock)` blocks and managed thread pools;
   Linux workers use pthread creation/join so libc TLS, malloc, synchronization
   and native providers remain valid on every worker
+- futures/tasks with cooperative cancellation, ordered/all-or-first completion
+  helpers and bounded multi-producer/multi-consumer channels
 - nested functions + closures (captured vars are boxed and stored in an environment frame)
 - `main(args)` entrypoint (argv[1..] as `array<string>`, `return int` -> process exit code)
 - `global` declarations inside functions (required for accessing globals from a function; resolves to package/namespace-qualified globals; missing globals are auto-created as `void`)

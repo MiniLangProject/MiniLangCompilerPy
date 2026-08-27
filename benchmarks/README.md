@@ -46,3 +46,19 @@ The program validates thread completion and result checksums, then reports the
 managed workload time, allocation count and post-collection heap counters. Run
 separate processes repeatedly; a timeout or non-zero exit is a correctness
 failure, not a performance sample.
+
+## Tasks, channels and fine-grained synchronization
+
+`concurrency.ml` measures 10,000 thread-pool tasks, 250,000 values transferred
+through a bounded channel and 400,000 updates protected by
+`synchronized(lock)`. It uses the target-neutral monotonic clock and therefore
+runs unchanged on Windows and Linux.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\concurrency.ml .\build\concurrency_bench.exe -I .
+.\build\concurrency_bench.exe
+```
+
+For Linux, add `--target linux-x64`, make the output executable and run it on
+an x64 Linux host. Record at least five fresh-process runs and compare medians;
+the benchmark validates every result before printing elapsed milliseconds.

@@ -33,6 +33,8 @@ function main(args)
   if not check(path.fileName(path.join("alpha", "beta.txt")) == "beta.txt", "path join/name") then failed = true end if
   if not check(path.extension("alpha.beta") == ".beta", "path extension") then failed = true end if
   if not check(process.id() > 0, "process id") then failed = true end if
+  executablePath = process.executablePath()
+  if not check(typeof(executablePath) == "string" and len(executablePath) > 0, "process executable path") then failed = true end if
   if not check(typeof(process.currentDirectory()) == "string", "process current directory") then failed = true end if
   if not check(typeof(process.environment("PATH")) == "string", "process environment") then failed = true end if
   if not check(typeof(console.disableQuickEdit()) != "error", "console platform setup") then failed = true end if

@@ -19,11 +19,13 @@ end function
 
 #if TARGET_OS == "windows"
 extern function GetCurrentProcessId() from "kernel32.dll" returns u32
+extern function GetModuleFileNameW(module as ptr, output as bytes, size as u32) from "kernel32.dll" returns u32
 extern function GetEnvironmentVariableW(name as wstr, output as bytes, size as u32) from "kernel32.dll" returns u32
 extern function GetCurrentDirectoryW(size as u32, output as bytes) from "kernel32.dll" returns u32
 extern function SetCurrentDirectoryW(path as wstr) from "kernel32.dll" returns bool
 #else
 extern function _getpid() from "libc.so.6" symbol "getpid" returns i32
+extern function _readlink(path as cstr, output as ptr, size as u64) from "libc.so.6" symbol "readlink" returns i64
 extern function _getenv(name as cstr) from "libc.so.6" symbol "getenv" returns ptr
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
@@ -36,6 +38,22 @@ function id()
   return GetCurrentProcessId()
 #else
   return _getpid()
+#endif
+end function
+
+// Return the absolute path of the currently running native image.
+function executablePath()
+#if TARGET_OS == "windows"
+  raw = bytes(MAX_PATH_BYTES * 2, 0)
+  actual = GetModuleFileNameW(0, raw, MAX_PATH_BYTES)
+  if actual == 0 or actual >= MAX_PATH_BYTES then return _error("cannot read executable path") end if
+  return decode16Z(raw)
+#else
+  raw = bytes(MAX_PATH_BYTES, 0)
+  actual = _readlink("/proc/self/exe", nativeBytesPtr(raw), MAX_PATH_BYTES - 1)
+  if actual <= 0 or actual >= MAX_PATH_BYTES then return _error("cannot read executable path") end if
+  raw[actual] = 0
+  return decodeZ(raw)
 #endif
 end function
 

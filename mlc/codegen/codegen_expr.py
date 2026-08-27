@@ -4376,6 +4376,17 @@ class CodegenExpr:
                         return True
                     if qn in (getattr(self, 'struct_fields', {}) or {}):
                         return True
+                    # Enum variants are compile-time qualified values too. The
+                    # self-hosted resolver can reach them through its member
+                    # fallback; recognizing them here keeps the stricter Python
+                    # shadowing checks while selecting the same type-query fast
+                    # path for namespaced Enum.Variant expressions.
+                    if '.' in qn:
+                        enum_base, enum_variant = qn.rsplit('.', 1)
+                        enum_base = self._apply_import_alias(enum_base)
+                        if (enum_base in (getattr(self, 'enum_id', {}) or {})
+                                and enum_variant in (getattr(self, 'enum_variants', {}) or {}).get(enum_base, [])):
+                            return True
                     if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
                         return self.resolve_binding(qn) is not None
                 except Exception:

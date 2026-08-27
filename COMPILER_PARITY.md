@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 25 August 2026 against the matching 1.1.0 revisions of:
+Verified on 27 August 2026 against the matching 1.1.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -12,42 +12,44 @@ There are two compatibility claims:
 1. **Target-output parity:** for the same sources, include-root order and
    compiler options, the Python compiler and the normal self-hosted path emit
    byte-identical Windows x64 PE or Linux x64 ELF files. The self-hosted `.mlo`
-   path adds the same guarantee for Windows PE.
+   path adds the same guarantee for Windows PE and Linux ELF.
 2. **Compiler-image layout contract:** compiler sources use the same canonical
    entry/function/support and section layout as every other target. Historical
    full fixed-point measurements are listed separately from current automated
    and MiniQuake target-output measurements.
 
 Python accepts `--object-pipeline` for project/CLI parity and emits its
-equivalent monolithic image. On `linux-x64`, the self-hosted compiler also
-routes that flag through the monolithic ELF path because the serialized `.mlo`
-linker remains PE-specific. The final linked native image is part of the same
-byte-identity contract.
+equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
+sections, labels and relocations into either PE or ELF. Dynamic-import order is
+encoded explicitly, so Linux object builds retain the monolithic image's exact
+bytes.
 
 ## Current Windows/Linux target fixed point
 
-The Linux-target implementation was bootstrapped and self-compiled on 25
-August 2026. The final MiniLang compiler source stabilized at the first
-self-hosted stage:
+The final cross-target compiler source was bootstrapped and self-compiled on
+27 August 2026. The Windows compiler image is identical from the Python stage
+onward:
 
 | Compiler image | Size | SHA-256 |
 | --- | ---: | --- |
-| Stage 1, built by Python | 58,530,304 | `27640C722E8ED9B2543DA487D89C12EAD7BCBE13A23533C0E716DD720AA7B424` |
-| Stage 2, built by Stage 1 | 58,530,304 | `764FEBADEB46EAE6018E44074A545F084047AEAA45A6D2CC117FA8BCD2CADF2E` |
-| Stage 3, built by Stage 2 | 58,530,304 | `764FEBADEB46EAE6018E44074A545F084047AEAA45A6D2CC117FA8BCD2CADF2E` |
+| Stage 1, built by Python | 59,691,520 | `35C5B77A752E2B53F1FC76F618D05A5F27B700A77E8636566A6CDA645AC1F199` |
+| Stage 2, built by Stage 1 | 59,691,520 | `35C5B77A752E2B53F1FC76F618D05A5F27B700A77E8636566A6CDA645AC1F199` |
 
-Stage 2 and Stage 3 are byte-identical. Direct Python/Stage 3 comparisons also
+Stage 1 and Stage 2 are byte-identical, so the compiler is already at its fixed
+point: Stage 2 is the same executable, and a deterministic Stage 3 invocation
+therefore emits the same bytes.
+Direct Python/self-hosted comparisons also
 produced identical target files:
 
 | Target fixture | Size | SHA-256 |
 | --- | ---: | --- |
-| Windows PE `language_suite.ml` | 1,623,040 | `886CBC1919644C2DD22AD6BDFFA43E0D924233A81F08173792DCBD038D28C13C` |
+| Windows PE `language_suite.ml` | 1,623,040 | `8E1571FD5077ACF0F978B493A56A900F708BD50CDBB8F01D22BB4C77A8F50E08` |
 | Static Linux ELF smoke | 87,008 | `DA98B53BE2E374B6B48283EB5CDA7BD11A421DF3C6F6C30442D93B1761B3E376` |
 | Dynamic Linux ELF FFI | 87,440 | `BCAAA93565F5A20D52C7AFDF058D1AD1A017E5EE22B3CE3326E9A55C223418D0` |
 
 The ELF tests ran under WSL and cover process arguments, managed allocation,
 threads/GC, `libc` integer/pointer calls and `libm` floating-point calls. The
-complete suites report Python 106/106 and MiniLang 101/101, with additional
+complete suites report Python 114/114 and MiniLang 104/104, with additional
 self-hosted Linux static, FFI, thread/GC and object-flag compatibility gates.
 
 On 26 August 2026 the Linux worker runtime moved from raw `clone(2)` to pthreads.
@@ -55,6 +57,53 @@ The Python compiler and a freshly Python-bootstrapped self-hosted compiler both
 emitted the same `thread_pool.ml` Linux ELF with SHA-256
 `A81E1715E563E9B9C15D6740E22B6F7A26C6D1FC8C600E13178DB149239FB3AE`.
 That image completed 20 consecutive thread/GC/pool runs under WSL2.
+
+## Native Linux `.mlo` fixed point and concurrency surface
+
+Verified on 27 August 2026, the native Linux self-build now uses the canonical
+ELF `.mlo` linker rather than redirecting to a monolithic build. The linker
+combines section bytes first, then streams labels into public/per-object maps
+and applies relocations one object at a time. The Python-bootstrap Stage 2 and
+self-hosted Stage 3 results are byte-identical:
+
+| Compiler image | Size | SHA-256 | Build time | Max RSS |
+| --- | ---: | --- | ---: | ---: |
+| Linux Stage 2 | 59,684,080 | `DF4BA2E90A73FFA222733742846EC16DC2D5CB5C217C484209E6178F74520BAA` | 203.41 s | 3,303,360 KiB |
+| Linux Stage 3 | 59,684,080 | `DF4BA2E90A73FFA222733742846EC16DC2D5CB5C217C484209E6178F74520BAA` | 210.48 s | 3,303,360 KiB |
+
+Threaded `synchronized(lock)` and task/channel fixtures are byte-identical
+between the self-hosted monolithic and `.mlo` ELF paths. They cover exactly-once
+lock evaluation, return/error cleanup, acquire failure, tasks/futures,
+cooperative queued/running cancellation, `whenAll`/`whenAny`, bounded MPMC
+backpressure, close/drain/dispose behavior and valid `void` messages.
+
+The final Python, self-hosted monolithic and self-hosted `.mlo` builds produced
+one identical hash per target for every new acceptance fixture:
+
+| Fixture | Windows SHA-256 | Linux SHA-256 |
+| --- | --- | --- |
+| `synchronized(lock)` | `5C3D167EE6B6962875D65325AF6F29F6EDEFCF2EB883A918169C26234DD13E11` | `04EFF0595B9EA2BC59FA9AEEBEDA8137B4449340CB50EB46A029FBDFFA7E36FC` |
+| tasks, cancellation and channel | `A1FFE4C64A800F44381E6F3A602D4F6B3FFFCEFBF6B00E99D0FE4BEBD6A6901C` | `86442515EE993FDA9551D13FAACFC62ACCAA3853B02A070CEC1029BA681F7738` |
+| portable platform services | `4DA34EF30ADCF18B9430B57FDDF38D97BA0A0179A1872C74B1704F50BC31F9FA` | `94DA76CF24BD6F33FB58568D36BF699961D119E88E6D4081AA86C4AA1C4FC3EE` |
+
+The same bootstrap smoke also compiles a project whose output contains a
+parent-path component. This guards Linux path canonicalization and the
+self-hosted compiler's explicit array-stack truncation helper.
+
+The repeatable concurrency benchmark is byte-identical across Python and
+self-hosted `.mlo` output: Windows SHA-256
+`42ABE01A4F780735B2620FC750800E3B2C53BC5CAB7AF2C8C97D4F255D0B6B39`, Linux
+SHA-256 `507CDA78FD30E0426B35DC8C8437EC2D89746A6CB91428D66D271B0363F67044`.
+Five fresh-process runs on the same WSL2 host measured these medians:
+
+| Workload | Windows | Linux |
+| --- | ---: | ---: |
+| 10,000 tasks | 94 ms | 282 ms |
+| 250,000 bounded-channel messages | 5,766 ms | 1,441 ms |
+| 400,000 `synchronized(lock)` updates | 1,750 ms | 312 ms |
+
+These are platform comparisons, not pass/fail thresholds; the benchmark checks
+all counts and checksums before reporting time.
 
 ## 1.1.0 release fixed point
 
@@ -193,7 +242,7 @@ case-insensitive `Thread`/`thread` checks and their negated forms.
 Compiler-scale coverage crosses repeated phased collections and verifies that
 target GC options cannot alter compiler-internal collection or target bytes.
 
-All 32 files below `std/` also have matching relative paths and byte-for-byte
+All 46 files below `std/` also have matching relative paths and byte-for-byte
 identical contents in both repositories. This includes `std.threading`, the
 concurrent collection modules, CPU feature dispatch, CRC-32/CRC-32C checksum
 modules and the CNG-backed cryptography modules.
@@ -219,9 +268,10 @@ Both compilers report `MiniLang Compiler 1.1.0` for `-version` and
 `--version`. The repositories and GitHub releases are source-only; generated
 compiler and test executables are intentionally excluded.
 
-Self-builds should continue to use `MiniLangCompilerML/build.ps1`, which keeps
-the large assembler graph bounded by spilling canonical `.mlo` fragments. The
-memory-management strategy no longer changes the resulting compiler image.
+Self-builds should use `MiniLangCompilerML/build.ps1` on Windows or `build.sh`
+on Linux. Both keep the large assembler graph bounded by spilling canonical
+`.mlo` fragments, and the memory-management strategy does not change the
+resulting compiler image.
 
 ## Parity work included in this revision
 
@@ -315,6 +365,25 @@ never copied merely to append the next delta.
 `--profile-compiler` exposes phase timings without affecting generated target
 bytes.
 
+The large-label throughput pass removes two remaining sources of avoidable
+work. Codegen assemblers no longer retain the complete call-site list when
+only runtime-helper discovery is needed, and helper uniqueness is maintained
+by the existing fast map. For monolithic programs above 262,144 text labels,
+relocation now consults the assembler's text-label map directly and builds a
+small override map only for `.rdata`, `.data`, BSS and IAT labels. Label dumps
+still select the historical fully materialized map and ordering. The `.mlo`
+linker also preallocates its per-object patch-index arrays instead of repeatedly
+copying growing arrays. None of these changes alter instruction selection,
+section layout or relocation precedence.
+
+On the compiler source graph used for profiling, the old fixed-point compiler
+spent 805.000 seconds emitting the program and 700.828 seconds resolving
+labels and patches, for 1,510.172 seconds total. The optimized compiler took
+618.063 seconds for emission and 1.844 seconds for 1,007,242 deferred patches,
+for 623.735 seconds total: 58.7% less wall time overall and 99.7% less time in
+the former relocation bottleneck. Observed peak working set fell from about
+3,286 MiB to 3,168 MiB.
+
 On the same compiler source and heap flags, an instrumented object-pipeline
 self-build improved from 336.073 seconds (286.172 seconds object emission) to
 218.330 seconds (166.438 seconds object emission), a 35.0% total and 41.8%
@@ -344,8 +413,8 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 110, FAIL 0, SKIP 0
-MiniLang harness:  PASS 101, FAIL 0
+Python harness:    PASS 114, FAIL 0, SKIP 0
+MiniLang harness:  PASS 104, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/platform crypto/shared values, ABI, PE/ELF and Linux passed
 ```
@@ -411,6 +480,33 @@ seconds. Retail Quake `id1` data passed a 120-frame runtime smoke and a
 120-frame deterministic compatibility trace with rolling hash `74dc3dc9`.
 The same target completed 1,000 E1M1 headless frames in 712 ms and 1,000
 rendered frames in 5,995 ms, approximately 1,404.5 frames/s and 166.8 FPS.
+
+The final 27 August 2026 large-project check used the clean MiniQuake commit
+`b5fe23f17bd5e861f22afd72b2e83aa4b73b9bd5`. Python compiled it in 67.713
+seconds, the self-hosted monolithic path in 1,687.367 seconds and the `.mlo`
+path in 537.440 seconds. The object path was 3.14 times faster than the
+self-hosted monolith; Python remained 7.94 times faster than `.mlo` on this
+input. All three emitted the same 57,197,056-byte PE with SHA-256
+`8E5D38689481FC7D0FC6CACD6FFD015EEBA3C2B875A9B19E0CC790A142970E63`, and
+the self-hosted output passed the MiniQuake `--version` startup smoke.
+
+The throughput-optimized remeasurement on the same clean commit used the same
+source/include roots and heap/diagnostic flags. Python completed in 77.757
+seconds, the self-hosted monolith in 874.519 seconds and `.mlo` in 351.937
+seconds. Relative to the immediately preceding self-host figures above, that
+is a 48.2% monolithic reduction and a 34.5% object-pipeline reduction; `.mlo`
+is now 2.48 times faster than the optimized monolith. The monolithic profile
+reported 1,234,125 text labels and 926,660 deferred patches: program emission
+took 867.750 seconds while direct relocation took only 3.203 seconds. The
+`.mlo` path emitted 495 function objects in 278.468 seconds and linked 497
+objects in a fresh process in 54.875 seconds. All three outputs remained
+byte-identical at 57,197,056 bytes with the same SHA-256 above, and all three
+passed the MiniQuake `--version` startup smoke.
+
+The resulting optimizer bootstrap converged at Stage 2. Stage 2 and Stage 3
+completed in 357.656 and 258.750 seconds and are byte-identical 59,923,456-byte
+compiler images with SHA-256
+`FB6D921349BBE248A88726910CE72396651B2372179ADC36D7913FC7240ECF3D`.
 
 The 2026-08-25 native-TLS acceptance exercised real localhost client/server
 handshakes through Windows Schannel and Linux OpenSSL 3, including fail-closed

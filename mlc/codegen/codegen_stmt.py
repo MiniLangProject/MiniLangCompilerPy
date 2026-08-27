@@ -13,7 +13,7 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_ST
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
                           OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
                           ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
-                          ERR_PRINT_UNSUPPORTED, )
+                          ERR_PRINT_UNSUPPORTED, ERR_METHOD_NOT_FOUND, )
 from ..context import BreakableCtx
 from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc_float_immediate, wrap_i61
 
@@ -719,6 +719,8 @@ class CodegenStmt:
                     walk(list(getattr(st, 'else_body', []) or []))
                 elif isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()))):
                     walk(list(getattr(st, 'body', []) or []))
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    walk(list(getattr(st, 'body', []) or []))
                 elif isinstance(st, getattr(ml, 'Switch', ())):
                     for cs in getattr(st, 'cases', []) or []:
                         walk(list(getattr(cs, 'body', []) or []))
@@ -868,6 +870,8 @@ class CodegenStmt:
                     walk(list(getattr(st, 'else_body', []) or []), direct=False, loop_depth=loop_depth)
                 elif isinstance(st, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()))):
                     walk(list(getattr(st, 'body', []) or []), direct=False, loop_depth=loop_depth + 1)
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    walk(list(getattr(st, 'body', []) or []), direct=False, loop_depth=loop_depth)
                 elif isinstance(st, getattr(ml, 'Switch', ())):
                     for cs in getattr(st, 'cases', []) or []:
                         walk(list(getattr(cs, 'body', []) or []), direct=False, loop_depth=loop_depth)
@@ -1474,6 +1478,11 @@ class CodegenStmt:
             # expanded into the caller's inline-return label.
             stats['has_nested_fn'] = True
             return 24 + self._inline_collect_expr_stats(getattr(st, 'expr', None), stats)
+        if hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+            # The hidden cleanup frame requires a real function epilogue.
+            stats['has_nested_fn'] = True
+            return (32 + self._inline_collect_expr_stats(getattr(st, 'lock', None), stats)
+                    + self._inline_collect_stmt_list_stats(getattr(st, 'body', []) or [], stats))
         if isinstance(st, getattr(ml, 'SetMember', ())):
             return 6 + self._inline_collect_expr_stats(getattr(st, 'obj', None), stats) + self._inline_collect_expr_stats(
                 getattr(st, 'expr', None), stats)
@@ -1749,6 +1758,8 @@ class CodegenStmt:
                     for cs in getattr(st, 'cases', []) or []:
                         stmt_list(getattr(cs, 'body', []) or [])
                     stmt_list(getattr(st, 'default_body', []) or [])
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    stmt_list(getattr(st, 'body', []) or [])
 
         stmt_list(list(getattr(fn, 'body', []) or []))
         return locals_set, globals_decl, nested
@@ -1848,6 +1859,9 @@ class CodegenStmt:
                     expr(getattr(st, 'expr', None))
                 elif hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
                     expr(getattr(st, 'expr', None))
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    expr(getattr(st, 'lock', None))
+                    stmt_list(getattr(st, 'body', []) or [])
 
         stmt_list(stmts)
         return used
@@ -1886,6 +1900,8 @@ class CodegenStmt:
                     for cs in getattr(st, 'cases', []) or []:
                         stmt_list(getattr(cs, 'body', []) or [])
                     stmt_list(getattr(st, 'default_body', []) or [])
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    stmt_list(getattr(st, 'body', []) or [])
 
         stmt_list(stmts)
         return written
@@ -2054,6 +2070,13 @@ class CodegenStmt:
                             note_reads(rr2)
                         stmt_list(getattr(cs, 'body', []) or [])
                     stmt_list(getattr(st, 'default_body', []) or [])
+                    continue
+
+                if hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    rr: set[str] = set()
+                    expr_reads(getattr(st, 'lock', None), rr)
+                    note_reads(rr)
+                    stmt_list(getattr(st, 'body', []) or [])
                     continue
 
                 if hasattr(ml, 'Return') and isinstance(st, ml.Return):
@@ -2324,6 +2347,57 @@ class CodegenStmt:
                         raise self.error("'defer' expects a function or method call", st)
                     st.site_id = len(sites)
                     sites.append(st)
+                    continue
+                if hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    # A hidden defer guarantees release on return and propagated
+                    # errors. Only control transfers which cross the block are
+                    # rejected; breaks/continues contained by a nested loop or
+                    # switch are ordinary local control flow.
+                    def has_crossing_exit(stmts, break_depth=0, loop_depth=0):
+                        for child in list(stmts or []):
+                            if isinstance(child, getattr(ml, 'FunctionDef', ())):
+                                continue
+                            if isinstance(child, getattr(ml, 'Break', ())):
+                                if int(getattr(child, 'count', 1) or 1) > break_depth:
+                                    return True
+                                continue
+                            if isinstance(child, getattr(ml, 'Continue', ())):
+                                if loop_depth <= 0:
+                                    return True
+                                continue
+                            if isinstance(child, (getattr(ml, 'While', ()), getattr(ml, 'DoWhile', ()),
+                                                  getattr(ml, 'For', ()), getattr(ml, 'ForEach', ()))):
+                                if has_crossing_exit(getattr(child, 'body', []) or [], break_depth + 1,
+                                                     loop_depth + 1):
+                                    return True
+                                continue
+                            if isinstance(child, getattr(ml, 'Switch', ())):
+                                for case in getattr(child, 'cases', []) or []:
+                                    if has_crossing_exit(getattr(case, 'body', []) or [], break_depth + 1,
+                                                         loop_depth):
+                                        return True
+                                if has_crossing_exit(getattr(child, 'default_body', []) or [], break_depth + 1,
+                                                     loop_depth):
+                                    return True
+                                continue
+                            for attr in ('body', 'then_body', 'else_body', 'default_body'):
+                                if has_crossing_exit(getattr(child, attr, []) or [], break_depth, loop_depth):
+                                    return True
+                            for _cond, branch in getattr(child, 'elifs', []) or []:
+                                if has_crossing_exit(branch or [], break_depth, loop_depth):
+                                    return True
+                        return False
+
+                    if has_crossing_exit(getattr(st, 'body', []) or []):
+                        raise self.error("break/continue cannot leave synchronized(lock); move the control transfer outside the block", st)
+                    cleanup = ml.Defer(ml.Call(ml.Member(st.lock, 'release'), []))
+                    for attr in ('_pos', '_filename', '_line'):
+                        if hasattr(st, attr):
+                            setattr(cleanup, attr, getattr(st, attr))
+                    cleanup.site_id = len(sites)
+                    st.cleanup = cleanup
+                    sites.append(cleanup)
+                    walk(list(getattr(st, 'body', []) or []), in_loop)
                     continue
                 if isinstance(st, ml.If):
                     walk(st.then_body, in_loop)
@@ -3032,6 +3106,51 @@ class CodegenStmt:
         if isinstance(s, ml.ExprStmt):
             # evaluate and discard
             self.emit_expr(s.expr)
+            return
+
+        if hasattr(ml, 'SynchronizedBlock') and isinstance(s, ml.SynchronizedBlock):
+            cleanup = getattr(s, 'cleanup', None)
+            offsets = list(getattr(cleanup, 'offsets', []) or [])
+            if cleanup is None or len(offsets) < 2:
+                raise self.error('Internal compiler error: synchronized block has no cleanup frame', s)
+
+            # Freeze the receiver once. The active flag remains clear until a
+            # successful acquire, so an acquire error cannot release a lock
+            # which the current thread never owned.
+            self._emit_defer_registration(cleanup)
+            a.mov_rax_imm64(enc_void())
+            a.mov_rsp_disp32_rax(offsets[0])
+
+            captured = ml.DeferredCapture(int(offsets[1]))
+            acquire_call = ml.Call(ml.Member(captured, 'acquire'), [])
+            for attr in ('_pos', '_filename', '_line'):
+                if hasattr(s, attr):
+                    setattr(acquire_call, attr, getattr(s, attr))
+            self.emit_expr(acquire_call)
+            acquired = f'sync_block_acquired_{self.new_label_id()}'
+            a.cmp_rax_imm8(enc_bool(True))
+            a.jcc('e', acquired)
+            self._emit_make_error_const(ERR_METHOD_NOT_FOUND, 'synchronized(lock) could not acquire its lock')
+            self._emit_auto_errprop()
+            a.mark(acquired)
+            a.mov_rax_imm64(enc_bool(True))
+            a.mov_rsp_disp32_rax(offsets[0])
+
+            self.push_scope()
+            self._emit_stmt_list(list(getattr(s, 'body', []) or []))
+            self.pop_scope()
+
+            # Release on the normal path and deactivate the hidden defer. Any
+            # return or propagated error before here reaches function cleanup.
+            self.emit_expr(self._defer_replay_call(cleanup))
+            released = f'sync_block_released_{self.new_label_id()}'
+            a.cmp_rax_imm8(enc_bool(True))
+            a.jcc('e', released)
+            self._emit_make_error_const(ERR_METHOD_NOT_FOUND, 'synchronized(lock) could not release its lock')
+            self._emit_auto_errprop()
+            a.mark(released)
+            a.mov_rax_imm64(enc_void())
+            a.mov_rsp_disp32_rax(offsets[0])
             return
 
         if isinstance(s, ml.If):
@@ -5769,6 +5888,9 @@ class CodegenStmt:
                     m = max(m, max_calls_expr(st.expr))
                 elif hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
                     m = max(m, max_calls_expr(st.expr))
+                elif hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    m = max(m, max_calls_expr(getattr(st, 'lock', None)))
+                    m = max(m, max_calls_stmts(getattr(st, 'body', []) or []))
                 elif isinstance(st, ml.FunctionDef):
                     # ignore nested defs (unsupported in native)
                     pass
@@ -6034,6 +6156,12 @@ class CodegenStmt:
                     continue
                 if hasattr(ml, 'Defer') and isinstance(st, ml.Defer):
                     analyze_expr(st.expr)
+                    continue
+                if hasattr(ml, 'SynchronizedBlock') and isinstance(st, ml.SynchronizedBlock):
+                    analyze_expr(getattr(st, 'lock', None))
+                    self.push_scope()
+                    analyze_block(list(getattr(st, 'body', []) or []))
+                    self.pop_scope(emit_cleanup=False)
                     continue
                 if isinstance(st, ml.If):
                     analyze_expr(st.cond)

@@ -304,6 +304,14 @@ class SynchronizedDecl(Assign):
 
 
 @dataclass
+class SynchronizedBlock(Stmt):
+    """Critical block guarded by an explicitly supplied Lock-like object."""
+    lock: Expr
+    body: List[Stmt]
+    cleanup: Any = None
+
+
+@dataclass
 class ConstDecl(Stmt):
     name: str
     expr: Expr
@@ -1014,9 +1022,17 @@ class Parser:
             expr = self.parse_expr()
             return self._attach_pos(ConstDecl(name_tok.value, expr), start_pos)
 
-        # synchronized name = expr  (process-shared scalar)
+        # synchronized(lock) ... end synchronized (fine-grained block)
+        # synchronized name = expr                    (process-shared scalar)
         if t.kind == "KW" and t.value == "synchronized":
             self.advance()
+            if self.match("LPAREN"):
+                lock_expr = self.parse_expr()
+                self.expect("RPAREN")
+                self.expect_block_nl()
+                body = self.parse_block_until_end("synchronized", start_pos)
+                self.expect_end_of("synchronized")
+                return self._attach_pos(SynchronizedBlock(lock_expr, body), start_pos)
             name_tok = self.expect("IDENT")
             self.expect("OP", "=")
             expr = self.parse_expr()
