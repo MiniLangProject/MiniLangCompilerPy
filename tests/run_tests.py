@@ -361,12 +361,15 @@ def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 
 def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResult:
-    """The compatibility flag must preserve the Python compiler's target bytes."""
+    """Pipeline/worker compatibility switches must preserve Python target bytes."""
     with tempfile.TemporaryDirectory(prefix="mltests_object_compat_") as td:
         td_path = Path(td)
         source = td_path / "object_compat.ml"
         normal_exe = td_path / "normal.exe"
-        object_exe = td_path / "object.exe"
+        variants = (
+            ("object", ["--object-pipeline"]),
+            ("monolithic", ["--no-object-pipeline"]),
+        )
         source.write_text(
             "function add(a, b)\n  return a + b\nend function\n"
             "function main(args)\n  print add(2, 3)\n  return 0\nend function\n",
@@ -376,13 +379,24 @@ def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResul
         if normal.returncode != 0:
             return TestResult(name=name, status="FAIL", details="normal compile failed",
                               stdout=normal.stdout, stderr=normal.stderr)
-        object_build = compile_native(mlc_runner, source, object_exe, extra_args=["--object-pipeline"])
-        if object_build.returncode != 0:
-            return TestResult(name=name, status="FAIL", details="compatibility-flag compile failed",
-                              stdout=object_build.stdout, stderr=object_build.stderr)
-        if normal_exe.read_bytes() != object_exe.read_bytes():
-            return TestResult(name=name, status="FAIL", details="--object-pipeline changed target bytes")
-        return TestResult(name=name, status="PASS", stdout=normal.stdout + object_build.stdout)
+        outputs = [normal.stdout]
+        expected = normal_exe.read_bytes()
+        for suffix, extra_args in variants:
+            variant_exe = td_path / f"{suffix}.exe"
+            built = compile_native(mlc_runner, source, variant_exe, extra_args=extra_args)
+            outputs.append(built.stdout)
+            if built.returncode != 0:
+                return TestResult(name=name, status="FAIL", details=f"{suffix} compatibility compile failed",
+                                  stdout=built.stdout, stderr=built.stderr)
+            if variant_exe.read_bytes() != expected:
+                return TestResult(name=name, status="FAIL", details=f"{suffix} changed target bytes")
+        conflicting = compile_native(
+            mlc_runner, source, td_path / "conflicting.exe",
+            extra_args=["--object-pipeline", "--no-object-pipeline"],
+        )
+        if conflicting.returncode == 0:
+            return TestResult(name=name, status="FAIL", details="conflicting pipeline switches were accepted")
+        return TestResult(name=name, status="PASS", stdout="".join(outputs))
 
 
 def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> TestResult:
@@ -466,11 +480,18 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
         )
         manifest.write_text(
             '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
-            'incremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = true\n', encoding="utf-8")
+            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = true\n', encoding="utf-8")
         cmd = [sys.executable, str(mlc_runner), "--project", str(manifest)]
         first = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if first.returncode != 0 or not output.is_file():
             return TestResult(name=name, status="FAIL", details="initial manifest build failed",
+                              stdout=first.stdout, stderr=first.stderr)
+        cache_dir = root / ".cache"
+        if (not (cache_dir / "build.exe").is_file()
+                or not (cache_dir / "build.state").is_file()
+                or (cache_dir / "build.exe.tmp").exists()
+                or (cache_dir / "build.state.tmp").exists()):
+            return TestResult(name=name, status="FAIL", details="cache publication left incomplete files",
                               stdout=first.stdout, stderr=first.stderr)
         output.unlink()
         hit = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
@@ -496,7 +517,7 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
                               stderr=run2.stderr)
         manifest.write_text(
             '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
-            'incremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = false\n', encoding="utf-8")
+            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = false\n', encoding="utf-8")
         define_changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if define_changed.returncode != 0 or "cache hit" in normalize_out(define_changed.stdout).lower():
             return TestResult(name=name, status="FAIL", details="define change did not invalidate cache",

@@ -1908,8 +1908,11 @@ def main(argv: List[str]) -> int:
     parser.add_argument('-version', '--version', action='version', version=COMPILER_VERSION_TEXT)
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output native image path')
-    parser.add_argument('--object-pipeline', action='store_true',
-                        help='accepted for project parity; Python emits the equivalent monolithic image')
+    object_pipeline_group = parser.add_mutually_exclusive_group()
+    object_pipeline_group.add_argument('--object-pipeline', action='store_true',
+                                       help='accepted for project parity; Python emits the equivalent monolithic image')
+    object_pipeline_group.add_argument('--no-object-pipeline', action='store_true',
+                                       help='force monolithic mode (the Python compiler default)')
     parser.add_argument('--target', default='windows-x64', choices=('windows-x64', 'linux-x64'),
                         help='native output target (default: windows-x64)')
 

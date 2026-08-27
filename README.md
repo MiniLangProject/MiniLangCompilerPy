@@ -178,6 +178,8 @@ Common options:
   self-hosted compiler. Python emits the equivalent monolithic image; the
   self-hosted canonical `.mlo` pipeline produces the same final Windows PE or
   Linux ELF bytes.
+- `--no-object-pipeline` is also accepted for command/manifest parity. Python
+  code generation remains serial; this switch does not alter its output bytes.
 
 `python mlc_win64.py -version` and `--version` both print
 `MiniLang Compiler 1.1.0`. `python mlc_win64.py --help` prints the full option
@@ -234,7 +236,7 @@ All paths are relative to the manifest. The supported project fields are:
 | `include` / `import_paths` | array of import roots |
 | `target` | `windows-x64` (default) or `linux-x64` |
 | `subsystem` | Windows only: `console` or `windows` (aliases accepted by the CLI) |
-| `object_pipeline` | request the self-hosted `.mlo` pipeline (Windows target) |
+| `object_pipeline` | optional force switch for the self-hosted compiler; omit it for automatic selection |
 | `incremental` | enable the exact-hit artifact cache (default `true`) |
 | `cache_dir` | cache directory (default `.minilang-cache`) |
 | `compiler_args` | array of additional compiler arguments |
@@ -262,8 +264,12 @@ executable. Any relevant change performs a full build; this is artifact caching,
 not per-module incremental compilation. Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
-compiler uses its retained `.mlo` pipeline for Windows or Linux when the field
-is true.
+compiler automatically selects its retained `.mlo` pipeline for large Windows
+or Linux import graphs when the field is omitted. An explicit `true` forces
+`.mlo`; an explicit `false` forces monolithic mode. The Python compiler accepts
+both values without changing its serial output.
+Cache artifacts and validation metadata are published atomically, so an
+interrupted update becomes a miss instead of restoring a partial build.
 
 ### Conditional compilation
 

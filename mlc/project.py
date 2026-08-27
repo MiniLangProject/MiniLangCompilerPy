@@ -121,6 +121,7 @@ def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[Projec
     top_level_defines = parsed.get("defines")
     define_args = _define_args(top_level_defines)
     incremental = cfg.get("incremental", True)
+    object_pipeline_set = "object_pipeline" in cfg
     object_pipeline = cfg.get("object_pipeline", False)
     if not isinstance(incremental, bool):
         raise ProjectError("project field 'incremental' must be a boolean")
@@ -140,8 +141,8 @@ def expand_project_args(argv: Sequence[str]) -> tuple[List[str], Optional[Projec
         if not isinstance(target, str):
             raise ProjectError("project field 'target' must be a string")
         expanded.extend(["--target", target])
-    if object_pipeline:
-        expanded.append("--object-pipeline")
+    if object_pipeline_set:
+        expanded.append("--object-pipeline" if object_pipeline else "--no-object-pipeline")
     expanded.extend(define_args)
     expanded.extend(compiler_args)
 
