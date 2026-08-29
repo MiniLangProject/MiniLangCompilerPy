@@ -417,6 +417,15 @@ at version 2, the Python `--object-pipeline` compatibility behavior is
 unchanged, and current Windows optimizer, Linux static and Linux FFI fixtures
 are byte-identical across all three compiler paths.
 
+The sibling compiler now also reuses one fully materialized semantic fragment
+state throughout its serial function-object stream instead of cloning global
+scope/maps for every batch. It resets binding ids and batch-local state to the
+historical values, so Python target generation and MLO v2 remain unchanged.
+The resulting self-host Stages 1-3, all 297 compiler MLOs and all 497
+MiniQuake MLOs are byte-identical to the preceding pipeline. The self-host
+object-emission median improved by 20.77%, and the clean MiniQuake median by
+10.07%, while sampled private compiler memory fell by about 49 MiB.
+
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
 vectors, isolated semantic function batches and shared append-only section

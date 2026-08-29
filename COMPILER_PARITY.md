@@ -594,6 +594,29 @@ Linux static smoke
 and Linux FFI
 (`15FE6BEDE63C96B41A8599143758D9DCFA43DF4C9A94F297D79139AC9448F633`).
 
+## Reused self-hosted function-fragment state
+
+The self-hosted object emitter now materializes its prepared semantic state
+once and reuses it for every serial function batch. It resets the assembler,
+batch-local lists/stacks and lexical binding ids at each boundary while
+retaining stream-wide label, inline, call and section state. This is internal
+to the sibling compiler; this Python compiler and the MLO v2 wire format are
+unchanged.
+
+On the exact same self-host source, the two-run object-emission median fell
+from 171.633 to 135.993 seconds (20.77%) and a sampled private-memory peak fell
+from 3,240.3 to 3,191.5 MiB. Stages 1-3 and all 297 MLO files are byte-identical
+60,527,104-byte compiler images with SHA-256:
+
+`E22718A62809CEED3919E723467A43E756237DA6B184B24246FC114D38B83810`
+
+On clean MiniQuake commit
+`59ac8cfc6c447c82b207100741512359f95e595c`, the two-run object median fell
+from 239.610 to 215.477 seconds (10.07%). All 497 objects and the final
+57,197,056-byte PE remain byte-identical with SHA-256:
+
+`9AF2B206162B7BD2E632379CA4F6D2598FDD390F8177EDA801668B9EA35C66C8`
+
 ## Reproducing target-output parity
 
 From a workspace containing both repositories as siblings:

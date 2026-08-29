@@ -4,6 +4,12 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Revalidated target parity after the sibling self-hosted compiler began
+  reusing one materialized semantic state across its serial function-object
+  batches. The change is internal to self-hosted compiler throughput and does
+  not alter Python code generation or MLO v2. All 297 fixed-point compiler
+  objects, all 497 MiniQuake objects and their final executables remain
+  byte-identical to the clone-per-batch baseline.
 - Revalidated target parity after the self-hosted MLO writer stopped
   flattening its complete local-patch set before folding. The optimization is
   internal to the sibling compiler and leaves the MLO v2 wire format and this
