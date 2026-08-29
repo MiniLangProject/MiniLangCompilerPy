@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Revalidated target parity after the self-hosted MLO v2 writer began folding
+  same-fragment `rel32`/`rip32` fields directly into materialized text. Its
+  reader remains compatible with v1 and earlier numeric-target v2 caches; the
+  Python compiler continues to emit the equivalent canonical monolithic image.
+  Representative Windows and Linux outputs remain byte-identical.
 - Documented and revalidated compatibility with the self-hosted compiler's
   backward-readable MLO v2 pipeline. The Python compiler continues to emit its
   canonical monolithic image when `--object-pipeline` is accepted for CLI and

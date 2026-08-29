@@ -400,13 +400,15 @@ normal self-hosted path and the Python bootstrap. Exact hashes, test counts,
 boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
 
-The self-hosted pipeline now writes MLO v2 objects: same-fragment text
-relocations carry direct offsets and local control-flow labels are omitted from
-normal object symbol tables. Its reader remains compatible with retained v1
-objects. This Python compiler does not write `.mlo` files; accepting
-`--object-pipeline` still emits the equivalent monolithic Windows PE or Linux
-ELF. Direct parity checks after the v2 change remain byte-identical on the
-language suite, optimizer suite and Linux target smoke.
+The self-hosted pipeline writes MLO v2 objects and now resolves same-fragment
+`rel32`/`rip32` fields directly in each materialized text fragment. Local
+control-flow labels and relocations are therefore absent from normal object
+tables; only named cross-fragment/cross-section patches remain. Its reader is
+compatible with retained v1 and earlier numeric-target v2 objects. This Python
+compiler does not write `.mlo` files; accepting `--object-pipeline` still emits
+the equivalent monolithic Windows PE or Linux ELF. Direct parity checks after
+the folding change remain byte-identical on the language suite, optimizer
+suite and Linux target smoke.
 
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal

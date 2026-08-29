@@ -562,6 +562,20 @@ self-hosted MLO-v2 checks are also byte-identical for:
 - Linux target smoke: 87,440 bytes,
   `731030F6885FFA88149A2D908E505C9D571EDFFC54B1979ECEE800DE581F4489`
 
+The subsequent self-hosted writer pass folds same-fragment x64 `rel32` and
+`rip32` fields directly into each materialized text buffer, so new MLO v2 files
+retain only named cross-fragment/cross-section patches. Readers still accept v1
+and the earlier numeric-target v2 encoding. On the exact same current compiler
+source, retained objects fell from 158,603,878 to 107,016,076 bytes (32.53%).
+Three alternating relinks averaged 5.753 seconds for numeric v2 and 2.617
+seconds for folded v2, while mean sampled peak working set fell from 875.5 to
+481.4 MiB. Both paths emitted the same 60,443,136-byte compiler with SHA-256
+`101C11E9E17D19A58A01C8EABF5E6B4CB7971DC28FB3A66472C12BF8642D6A25`.
+
+Folded self-hosted Stages 2 and 3 are byte-identical. The complete self-hosted
+harness reports 107 passed and 0 failed, all Windows and WSL/Linux gates pass,
+and the three Python/self-host target hashes listed above remain unchanged.
+
 ## Reproducing target-output parity
 
 From a workspace containing both repositories as siblings:
