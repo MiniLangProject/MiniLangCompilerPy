@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Documented and revalidated compatibility with the self-hosted compiler's
+  backward-readable MLO v2 pipeline. The Python compiler continues to emit its
+  canonical monolithic image when `--object-pipeline` is accepted for CLI and
+  manifest parity. Representative Windows and Linux outputs remain
+  byte-identical to the self-hosted MLO-v2 results.
 - Added fine-grained `synchronized(lock)` blocks with exactly-once lock
   evaluation and guaranteed release on normal, return and propagated-error
   exits, while retaining synchronized variables/functions unchanged.

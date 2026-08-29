@@ -536,6 +536,32 @@ The counters differ because the Python runner counts host-side tests
 individually while the MiniLang harness groups several checks into compiled
 programs.
 
+## Local MLO relocations and Python target parity
+
+On 29 August 2026 the self-hosted compiler moved its retained object writer to
+MLO version 2. Same-fragment text targets use direct U32 offsets, so local
+control-flow labels no longer enter normal object symbol tables; cross-object
+and cross-section targets remain named. Its readers continue to accept v1.
+The Python compiler still treats `--object-pipeline` as a compatibility switch
+and emits the equivalent canonical monolithic image.
+
+An exact 296-object self-host comparison reduced the retained set from
+223,663,521 to 158,547,517 bytes (29.11%). Two alternating v1/v2 relinks with
+the same final compiler averaged 22.370 and 5.808 seconds respectively, while
+one sampled linker peak fell from 1,471.0 to 835.5 MiB. Both object versions
+linked to the same 60,421,120-byte compiler image with SHA-256
+`933BB2B5EB1C1285860CC22DF4ADB99DB7FB62897760080BB446A95FF6143032`.
+
+The final self-host Stages 2 and 3 are byte-identical. Direct Python versus
+self-hosted MLO-v2 checks are also byte-identical for:
+
+- Windows `language_suite.ml`: 1,623,040 bytes,
+  `8E1571FD5077ACF0F978B493A56A900F708BD50CDBB8F01D22BB4C77A8F50E08`
+- Windows `codegen_optimizations.ml`: 466,944 bytes,
+  `C75143B7183C03578E6C63BC58A8E0DB1336062F25DE913D6707BDB5A2307F0C`
+- Linux target smoke: 87,440 bytes,
+  `731030F6885FFA88149A2D908E505C9D571EDFFC54B1979ECEE800DE581F4489`
+
 ## Reproducing target-output parity
 
 From a workspace containing both repositories as siblings:
