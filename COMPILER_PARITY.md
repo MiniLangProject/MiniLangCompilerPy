@@ -617,6 +617,37 @@ from 239.610 to 215.477 seconds (10.07%). All 497 objects and the final
 
 `9AF2B206162B7BD2E632379CA4F6D2598FDD390F8177EDA801668B9EA35C66C8`
 
+## Reusable analysis scratch and heap-shrink fixed point (2026-08-29)
+
+The sibling self-hosted serial function analyzer now reuses one compiler-local
+workspace across function fragments. Statement/depth/pending vectors retain
+their high-water capacity, while integer facts, type facts, dependencies,
+queue membership and promotion counts use epoch-cleared maps. This changes
+self-hosted compiler allocation traffic only and does not alter Python target
+generation or MLO v2.
+
+A controlled same-configuration self-build comparison measured medians of
+130.483 seconds before and 110.108 seconds after the change (15.61% less).
+Sampled process-tree private peak fell from 5,363.0 to 5,330.8 MiB (32.3 MiB,
+0.60%). A controlled MiniQuake build fell from 283.945 to 224.695 seconds
+(20.87%) and retained the exact 57,197,056-byte PE with SHA-256
+`9AF2B206162B7BD2E632379CA4F6D2598FDD390F8177EDA801668B9EA35C66C8`.
+
+The review also synchronized the self-hosted `--heap-shrink` implementation
+with this backend, including the post-GC decommit block and Python's 4 MiB
+default threshold. The final Python bootstrap and self-hosted Stages 2 and 3
+are byte-identical 60,660,224-byte compiler images with SHA-256:
+
+`344CE78BB6C03307A594FB4843642669083432AD2FF744772CE6086BA4A7629E`
+
+The dedicated fixture is byte-identical across compilers on Windows
+(`FB3F0FFDADD6BF0CFFEF5C31077A1F625E64DC813116DC2CAC21707FDC094B36`)
+and Linux
+(`D391A8FEFB38FAD7A6F17EB6FF4960595B0BA2CC65D31F00BE999EF9A5410439`).
+Both targets decommit unused pages without crossing the configured minimum.
+The self-hosted harness passed 107/107 plus every Windows/WSL host gate; this
+Python suite passed 115/115 with no skips.
+
 ## Reproducing target-output parity
 
 From a workspace containing both repositories as siblings:

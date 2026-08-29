@@ -5,6 +5,14 @@ All notable changes to the MiniLang compiler are documented here.
 ## 1.1.0 - 2026-08-24
 
 - Revalidated target parity after the sibling self-hosted compiler began
+  reusing capacity-backed worklists and epoch-cleared maps across serial
+  per-function analysis. The optimization changes compiler allocation traffic
+  only; controlled MiniQuake and optimizer outputs remain byte-identical.
+- Added a Windows/Linux heap-shrink runtime regression and synchronized the
+  self-hosted backend's post-GC decommit block and default 4 MiB threshold with
+  this reference implementation. Python-built and self-hosted Stage 2/3
+  compiler images now have the same size and SHA-256.
+- Revalidated target parity after the sibling self-hosted compiler began
   reusing one materialized semantic state across its serial function-object
   batches. The change is internal to self-hosted compiler throughput and does
   not alter Python code generation or MLO v2. All 297 fixed-point compiler

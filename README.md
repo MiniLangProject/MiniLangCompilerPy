@@ -384,7 +384,7 @@ Notes:
 - The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
 - On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **114 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **115 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
@@ -425,6 +425,22 @@ The resulting self-host Stages 1-3, all 297 compiler MLOs and all 497
 MiniQuake MLOs are byte-identical to the preceding pipeline. The self-host
 object-emission median improved by 20.77%, and the clean MiniQuake median by
 10.07%, while sampled private compiler memory fell by about 49 MiB.
+
+The sibling compiler now additionally reuses one compiler-local analysis
+workspace across serial functions. Its capacity-backed worklists and
+epoch-cleared fact/dependency/promotion maps reduce short-lived allocation
+without adding fields to generated codegen state. A controlled self-build
+median improved from 130.483 to 110.108 seconds (15.61%), sampled process-tree
+private peak fell by 32.3 MiB, and a controlled MiniQuake build improved from
+283.945 to 224.695 seconds (20.87%) while retaining the exact target bytes.
+
+The self-hosted heap-shrink emitter is synchronized with this reference
+backend as well: both emit the post-GC decommit path and use the same 4 MiB
+default threshold. Python bootstrap, self-hosted Stage 2 and Stage 3 now emit
+the same 60,660,224-byte compiler image with SHA-256
+`344CE78BB6C03307A594FB4843642669083432AD2FF744772CE6086BA4A7629E`.
+Dedicated Windows and Linux runtime tests verify decommit and the configured
+minimum.
 
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal

@@ -420,15 +420,20 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
          ["[OK] tasks, futures, cancellation and bounded channels"], []),
         (tests_root / "gc_back_to_back_safepoint.ml",
          ["[OK] back-to-back GC safepoint state publication"], []),
+        (tests_root / "heap_shrink.ml", ["[OK] heap shrink decommits unused pages"], [],
+         ["--heap-reserve", "128m", "--heap-commit", "64m", "--heap-shrink",
+          "--heap-shrink-min", "16m", "--gc-limit", "64m"]),
     ]
     outputs: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mltests_linux_") as td:
         root = Path(td)
-        for index, (source, markers, run_args) in enumerate(fixtures):
+        for index, fixture in enumerate(fixtures):
+            source, markers, run_args = fixture[:3]
+            target_args = fixture[3] if len(fixture) > 3 else []
             image = root / f"linux_{index}"
             compiled = compile_native(
                 mlc_runner, source, image,
-                extra_args=["--target", "linux-x64", "-I", str(mlc_runner.parent)],
+                extra_args=["--target", "linux-x64", "-I", str(mlc_runner.parent), *target_args],
                 timeout_s=180,
             )
             if compiled.returncode != 0:
@@ -3596,6 +3601,30 @@ def test_heap_growth_precedes_emergency_gc(*, name: str, mlc_runner: Path) -> Te
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
 
 
+def test_heap_shrink_runtime(*, name: str, mlc_runner: Path) -> TestResult:
+    """Runtime regression: --heap-shrink must decommit unused top pages after GC."""
+    src = Path(__file__).resolve().parent / "heap_shrink.ml"
+    with tempfile.TemporaryDirectory(prefix="mltests_heap_shrink_") as td:
+        exe = Path(td) / "heap_shrink.exe"
+        cr = compile_native(
+            mlc_runner, src, exe, timeout_s=180,
+            extra_args=[
+                "--heap-reserve", "128m", "--heap-commit", "64m",
+                "--heap-shrink", "--heap-shrink-min", "16m", "--gc-limit", "64m",
+            ],
+        )
+        if cr.returncode != 0:
+            return TestResult(name=name, status="FAIL", details=f"compile failed (exit {cr.returncode})",
+                              stdout=cr.stdout, stderr=cr.stderr)
+
+        rr = run_exe(exe, timeout_s=180)
+        marker = "[OK] heap shrink decommits unused pages"
+        if rr.returncode != 0 or marker not in normalize_out(rr.stdout):
+            return TestResult(name=name, status="FAIL", details=f"runtime failed (exit {rr.returncode})",
+                              stdout=rr.stdout, stderr=rr.stderr)
+        return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr=rr.stderr)
+
+
 def test_call_profile_counts(*, name: str, mlc_runner: Path) -> TestResult:
     """Runtime test: --profile-calls instruments user functions and exposes callStats()."""
     with tempfile.TemporaryDirectory(prefix="mltests_") as td:
@@ -4301,6 +4330,8 @@ def main() -> int:
                                                                 mlc_runner=mlc_runner))
     tests.append(lambda: test_heap_growth_precedes_emergency_gc(name="runtime: heap growth precedes emergency GC",
                                                                  mlc_runner=mlc_runner))
+    tests.append(lambda: test_heap_shrink_runtime(name="runtime: heap shrink decommits unused pages",
+                                                   mlc_runner=mlc_runner))
 
     # Run
     only = (args.only or "").lower() if args.only else None
