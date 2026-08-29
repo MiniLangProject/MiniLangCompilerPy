@@ -4,6 +4,12 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Revalidated target parity after the self-hosted MLO writer stopped
+  flattening its complete local-patch set before folding. The optimization is
+  internal to the sibling compiler and leaves the MLO v2 wire format and this
+  Python implementation unchanged. Windows optimizer, Linux static and Linux
+  FFI outputs remain byte-identical across Python, self-hosted monolithic and
+  self-hosted object builds.
 - Revalidated target parity after the self-hosted MLO v2 writer began folding
   same-fragment `rel32`/`rip32` fields directly into materialized text. Its
   reader remains compatible with v1 and earlier numeric-target v2 caches; the

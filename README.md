@@ -410,6 +410,13 @@ the equivalent monolithic Windows PE or Linux ELF. Direct parity checks after
 the folding change remain byte-identical on the language suite, optimizer
 suite and Linux target smoke.
 
+The self-hosted writer now also traverses its fixed-size patch groups directly
+instead of flattening every local patch into a second managed array before
+folding. This is an implementation-only throughput/memory change: MLO remains
+at version 2, the Python `--object-pipeline` compatibility behavior is
+unchanged, and current Windows optimizer, Linux static and Linux FFI fixtures
+are byte-identical across all three compiler paths.
+
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
 vectors, isolated semantic function batches and shared append-only section

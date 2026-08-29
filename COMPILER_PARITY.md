@@ -576,6 +576,24 @@ Folded self-hosted Stages 2 and 3 are byte-identical. The complete self-hosted
 harness reports 107 passed and 0 failed, all Windows and WSL/Linux gates pass,
 and the three Python/self-host target hashes listed above remain unchanged.
 
+The following self-hosted writer pass removes the temporary flat array of all
+patch records and folds directly from fixed-size assembler groups. It does not
+change MLO v2 or Python code generation. The resulting 297-object self-hosted
+Stages 2 and 3 are individually byte-identical and link to the same
+60,513,792-byte compiler with SHA-256
+`6D73F77D48BDD66D38A85C55312D42C1A166563F3938CAEB5901D2A8C49F4391`.
+Mean self-build object serialization fell from 21.296 to 17.224 seconds and
+sampled emitter peak working set from 3,316.6 to 3,286.5 MiB. The full
+self-hosted harness still passes 107/107 plus all Windows/WSL host gates.
+
+Direct parity checks remain byte-identical between Python, self-hosted
+monolithic and self-hosted MLO output for Windows `codegen_optimizations.ml`
+(`C75143B7183C03578E6C63BC58A8E0DB1336062F25DE913D6707BDB5A2307F0C`),
+Linux static smoke
+(`731030F6885FFA88149A2D908E505C9D571EDFFC54B1979ECEE800DE581F4489`)
+and Linux FFI
+(`15FE6BEDE63C96B41A8599143758D9DCFA43DF4C9A94F297D79139AC9448F633`).
+
 ## Reproducing target-output parity
 
 From a workspace containing both repositories as siblings:
