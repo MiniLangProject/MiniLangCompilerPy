@@ -5020,6 +5020,7 @@ class CodegenStmt:
             'stringEqualsIgnoreCaseAscii': (2, 2, 'fn_string_eq_ignore_case_ascii'),
             'stringJoin': (2, 2, 'fn_string_join'),
             'copyBytes': (5, 5, 'fn_builtin_copyBytes'),
+            'copyArray': (5, 5, 'fn_builtin_copyArray'),
             'copyStringBytes': (5, 5, 'fn_builtin_copyStringBytes'),
             'fillBytes': (4, 4, 'fn_builtin_fillBytes'),
 

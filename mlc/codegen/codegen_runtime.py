@@ -3476,6 +3476,134 @@ class CodegenRuntime:
         a.mov_rax_imm64(enc_void())
         a.ret()
 
+    def emit_builtin_copyArray_function(self) -> None:
+        """Emit copyArray(dst, dstOff, src, srcOff, len).
+
+        The operation performs a shallow native copy of tagged array cells.
+        Invalid arguments are a no-op and the length is clipped to both array
+        tails, matching the defensive contract of ``copyBytes``.
+        """
+        a = self.asm
+        a.mark('fn_builtin_copyArray')
+        lid = self.new_label_id()
+        l_ret_void = f"acopy_ret_void_{lid}"
+        l_len_dst = f"acopy_len_dst_{lid}"
+        l_len_src = f"acopy_len_src_{lid}"
+        l_dst_type_ok = f"acopy_dst_type_ok_{lid}"
+        l_src_type_ok = f"acopy_src_type_ok_{lid}"
+
+        a.cmp_r32_imm('r10d', 5)
+        a.jcc('ne', l_ret_void)
+
+        a.mov_r64_r64('r11', 'rcx')  # dst object
+        a.mov_r64_r64('r10', 'r8')   # src object
+        a.mov_r64_r64('r8', 'r9')    # srcOff tagged
+
+        # Promote an immediate-only destination just like indexed assignment;
+        # copied cells may contain managed references that the GC must scan.
+        a.mov_r64_r64('rax', 'r11')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_ARRAY)
+        a.jcc('e', l_dst_type_ok)
+        a.cmp_r32_imm('eax', OBJ_ARRAY_IMM)
+        a.jcc('ne', l_ret_void)
+        a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+        a.mark(l_dst_type_ok)
+
+        # dstOff -> r9d
+        a.mov_r64_r64('rax', 'rdx')
+        a.mov_r64_r64('r9', 'rax')
+        a.and_r64_imm('r9', 7)
+        a.cmp_r64_imm('r9', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r9d', 'eax')
+
+        # src may also be an immutable literal array because it is read-only.
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_PTR)
+        a.jcc('ne', l_ret_void)
+        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('eax', OBJ_ARRAY)
+        a.jcc('e', l_src_type_ok)
+        a.cmp_r32_imm('eax', OBJ_ARRAY_IMM)
+        a.jcc('ne', l_ret_void)
+        a.mark(l_src_type_ok)
+
+        # srcOff -> r8d
+        a.mov_r64_r64('rax', 'r8')
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('r8d', 'eax')
+
+        # len -> edx
+        a.mov_r64_membase_disp('rax', 'rsp', 0x28)
+        a.mov_r64_r64('rcx', 'rax')
+        a.and_r64_imm('rcx', 7)
+        a.cmp_r64_imm('rcx', TAG_INT)
+        a.jcc('ne', l_ret_void)
+        a.sar_r64_imm8('rax', 3)
+        a.cmp_r64_imm('rax', 0)
+        a.jcc('l', l_ret_void)
+        a.cmp_r64_imm('rax', 0x7FFFFFFF)
+        a.jcc('g', l_ret_void)
+        a.mov_r32_r32('edx', 'eax')
+
+        # Clamp length to available tail room in both arrays.
+        a.mov_r32_membase_disp('eax', 'r11', 4)
+        a.cmp_r32_r32('r9d', 'eax')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('eax', 'r9d')
+
+        a.mov_r32_membase_disp('ecx', 'r10', 4)
+        a.cmp_r32_r32('r8d', 'ecx')
+        a.jcc('ge', l_ret_void)
+        a.sub_r32_r32('ecx', 'r8d')
+
+        a.cmp_r32_r32('edx', 'eax')
+        a.jcc('le', l_len_dst)
+        a.mov_r32_r32('edx', 'eax')
+        a.mark(l_len_dst)
+        a.cmp_r32_r32('edx', 'ecx')
+        a.jcc('le', l_len_src)
+        a.mov_r32_r32('edx', 'ecx')
+        a.mark(l_len_src)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('le', l_ret_void)
+
+        # Array payloads start at +8 and contain eight-byte tagged values.
+        a.mov_membase_disp_r32('rsp', 0x20, 'edx')
+        a.lea_r64_membase_disp('rcx', 'r11', 8)
+        a.shl_r64_imm8('r9', 3)
+        a.add_r64_r64('rcx', 'r9')
+        a.lea_r64_membase_disp('rdx', 'r10', 8)
+        a.shl_r64_imm8('r8', 3)
+        a.add_r64_r64('rdx', 'r8')
+        a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
+        a.shl_r64_imm8('r8', 3)
+        a.call('fn_copy_bytes')
+
+        a.mark(l_ret_void)
+        a.mov_rax_imm64(enc_void())
+        a.ret()
+
     def emit_builtin_copyStringBytes_function(self) -> None:
         """Emit fn_builtin_copyStringBytes(dst, dstOff, srcString, srcOff, len).
 

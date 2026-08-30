@@ -2127,6 +2127,26 @@ copyBytes(dst, 1, src, 2, 3)
 print hex(dst) // "0022334400"
 ```
 
+#### copyArray(dst, dstOff, src, srcOff, len) -> void
+Copies tagged values between arrays in one native operation. The copy is
+shallow: strings, nested arrays, structs, and other managed objects remain the
+same shared objects.
+
+Rules:
+- `dst` and `src` must be arrays.
+- `dstOff`, `srcOff`, and `len` must be non-negative integers.
+- The effective length is clamped to the remaining tail room of both arrays.
+- Invalid arguments or offsets at/past an array end are a no-op.
+- Treat source and destination ranges as non-overlapping; overlap behavior is
+  not guaranteed.
+
+```ml
+src = [10, "twenty", true]
+dst = array(5, 0)
+copyArray(dst, 1, src, 0, len(src))
+print dst // [0, 10, "twenty", true, 0]
+```
+
 #### fillBytes(dst, off, len, fill) -> void
 Fills a range inside a `bytes` object with a repeated byte value.
 
@@ -2649,7 +2669,8 @@ What works:
 - builtins / special forms: `len`, `input`, `toNumber`, `toFloat`, `str`,
   `typeof`, `typeName`, `error`, `try`, `array`, `bytes`/`byteBuffer`,
   `decode`, `decodeZ`, `decode16Z`, `hex`, `fromHex`, `slice`, `copyBytes`,
-  `fillBytes`, native string/bytes helpers, `Thread` and its worker helpers,
+  `copyArray`, `fillBytes`, native string/bytes helpers, `Thread` and its worker
+  helpers,
   `nativeBytesPtr`, `nativeRawValue`, `nativeValueFromRaw`, `nativeCallback`,
   plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`, `gc_set_limit`, `callStats`
 

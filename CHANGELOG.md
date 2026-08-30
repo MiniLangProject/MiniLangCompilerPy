@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Added the shallow native `copyArray` primitive and synchronized its runtime
+  emission with the self-hosted backend. The sibling compiler now uses it for
+  exact one-allocation chunk materialization; controlled self-build private
+  peak fell by about 65 MiB (3.58%) while Python and self-hosted outputs remain
+  byte-identical.
 - Revalidated target parity after the sibling self-hosted compiler compacted
   its internal `FastMap` slot generations into byte buffers and raised their
   occupancy limit from 70% to 80%. The self-build private peak fell by

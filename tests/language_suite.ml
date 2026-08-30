@@ -166,6 +166,30 @@ assertEq(arr[2], 30, "array index read 2")
 arr[1] = 99
 assertEq(arr[1], 99, "array index write")
 
+copySrc = [11, "bulk", true, 44]
+copyDst = array(6, 0)
+copyArray(copyDst, 1, copySrc, 0, 99)
+assertEq(copyDst[0], 0, "copyArray preserves prefix")
+assertEq(copyDst[1], 11, "copyArray copies int")
+assertEq(copyDst[2], "bulk", "copyArray copies reference")
+assertEq(copyDst[3], true, "copyArray copies bool")
+assertEq(copyDst[4], 44, "copyArray clips to source tail")
+assertEq(copyDst[5], 0, "copyArray preserves suffix")
+
+copyArrayFn = copyArray
+copyFnDst = array(3, 0)
+copyArrayFn(copyFnDst, 1, [7, 8], 0, 2)
+assertEq(copyFnDst, [0, 7, 8], "copyArray first-class builtin")
+copyArray(copyFnDst, -1, [9], 0, 1)
+assertEq(copyFnDst, [0, 7, 8], "copyArray invalid arguments are no-op")
+
+copyVoidSrc = array(2)
+copyVoidSrc[0] = 42
+copyVoidDst = array(2, 1)
+copyArray(copyVoidDst, 0, copyVoidSrc, 0, 2)
+assertEq(copyVoidDst[0], 42, "copyArray copies populated cell")
+assertTrue(copyVoidDst[1] is void, "copyArray copies void cell")
+
 // strict index assignment errors (catchable via try)
 function _t_seti_oob()
   x = [1, 2, 3]
