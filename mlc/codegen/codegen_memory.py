@@ -615,6 +615,8 @@ class CodegenMemory:
         lid_retire = self.new_label_id()
         l_retire_clear = f"tlab_retire_clear_{lid_retire}"
         l_retire_locked_empty = f"tlab_retire_locked_empty_{lid_retire}"
+        l_retire_link = f"tlab_retire_link_{lid_retire}"
+        l_retire_publish = f"tlab_retire_publish_{lid_retire}"
         l_retire_done = f"tlab_retire_done_{lid_retire}"
         a.sub_rsp_imm8(0x28)
         a.mov_r11_gs_qword_28()
@@ -640,9 +642,25 @@ class CodegenMemory:
         a.mov_membase_disp_imm32("r11", THREAD_TLAB_END_OFFSET, 0, qword=True)
         a.mov_r64_r64("r10", "r9")
         a.sub_r64_r64("r10", "r8")
+        a.mov_rax_rip_qword("gc_free_head")
+        # A central TLAB refill splits its range from the front of a free block
+        # and leaves the right remainder at the list head.  When that head is
+        # still adjacent, fold the private tail into it instead of retaining
+        # two fragments until the next complete sweep.
+        a.cmp_r64_r64("r9", "rax")
+        a.jcc("ne", l_retire_link)
+        a.mov_r64_membase_disp("rcx", "rax", 0)
+        a.test_r64_imm32("rcx", GC_BLOCK_FREE_BIT)
+        a.jcc("e", l_retire_link)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.add_r64_r64("r10", "rcx")
+        a.mov_r64_membase_disp("rax", "rax", GC_OFF_NEXT_FREE)
+        a.jmp(l_retire_publish)
+
+        a.mark(l_retire_link)
+        a.mark(l_retire_publish)
         a.or_r64_imm("r10", GC_BLOCK_FREE_BIT)
         a.mov_membase_disp_r64("r8", 0, "r10")
-        a.mov_rax_rip_qword("gc_free_head")
         a.mov_membase_disp_r64("r8", GC_OFF_NEXT_FREE, "rax")
         a.mov_r64_r64("rax", "r8")
         a.mov_rip_qword_rax("gc_free_head")

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified on 27 August 2026 against the matching 1.1.0 revisions of:
+Verified through 30 August 2026 against the matching 1.1.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,49 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## Current compact-index fixed point
+
+Verified on 30 August 2026 after replacing the self-hosted compiler's tagged
+`FastMap` generation arrays with byte buffers and allowing deterministic maps
+to reach 80% occupancy before rehashing:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 60,690,432 | `5E2518E16AC783F90F8E72E353338629088035D35A7870A15DEA283D7C605E20` |
+| Stage 2, built by Stage 1 | 60,690,432 | `5E2518E16AC783F90F8E72E353338629088035D35A7870A15DEA283D7C605E20` |
+| Stage 3, built by Stage 2 | 60,690,432 | `5E2518E16AC783F90F8E72E353338629088035D35A7870A15DEA283D7C605E20` |
+
+The controlled object-emission comparison used the same source and options:
+
+| Self-host build | Wall time | Private peak | Working-set peak |
+| --- | ---: | ---: | ---: |
+| Tagged generation arrays, 70% occupancy | 107.143 s | 1,944.2 MiB | 1,904.3 MiB |
+| Byte generations, 80% occupancy | 104.266 s | 1,823.9 MiB | 1,792.1 MiB |
+| Change | -2.68% | -120.3 MiB (-6.19%) | -112.2 MiB (-5.89%) |
+
+A second final Stage-3 emission completed in 102.678 seconds at the same
+1,823.9 MiB private peak. Python and self-hosted builds of the Windows language
+suite are also byte-identical at 1,623,040 bytes with SHA-256
+`93B7FEBC4DCF15D84E3A090FE3A0057E409ABCA6B77A8FA948C35F702EC9E01B`.
+The ML harness explicitly covers the byte-generation wrap, stale-slot removal,
+80% density and rehash behavior.
+
+## TLAB allocator fixed point before compact indexes
+
+Verified on 30 August 2026 after adding O(1) right-neighbor coalescing when a
+thread retires its unused TLAB tail:
+
+| Artifact | Size | SHA-256 |
+| --- | ---: | --- |
+| Compiler Stage 1, built by Python | 60,690,944 | `E508C72C4131CC5341656E473AA96E93EBBABDE3B11719F774D4BF7792F8B679` |
+| Compiler Stage 2, built by Stage 1 | 60,690,944 | `E508C72C4131CC5341656E473AA96E93EBBABDE3B11719F774D4BF7792F8B679` |
+| Windows `tlab_shared_heap.ml`, Python/self-hosted | 123,392 | `D155B97DF4D6E5F0085E3917B858A96CBEAC757AC79C5E1F32EE236764AB99DF` |
+
+The targeted threaded fixture completed under both generated images. The
+Python and MiniLang test harnesses additionally require the new
+`tlab_retire_publish_*` block, so parity covers the coalescing path rather than
+only the pre-existing TLAB fast path.
 
 ## Current Windows/Linux target fixed point
 

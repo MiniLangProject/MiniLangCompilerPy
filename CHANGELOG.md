@@ -4,6 +4,18 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.1.0 - 2026-08-24
 
+- Revalidated target parity after the sibling self-hosted compiler compacted
+  its internal `FastMap` slot generations into byte buffers and raised their
+  occupancy limit from 70% to 80%. The self-build private peak fell by
+  120.3 MiB (6.19%) and object-emission time by 2.68%; Python Stage 1 and
+  self-hosted Stages 2/3 are byte-identical 60,690,432-byte images.
+- Coalesced a retired TLAB tail with the still-adjacent central free-list head
+  in O(1). This avoids retaining two neighboring fragments until the next full
+  sweep without adding a list scan to the allocation path. A controlled
+  self-build improved from 105.781 to 103.573 seconds with an unchanged
+  2,279 MiB process-tree private peak. Python Stage 1 and self-hosted Stage 2
+  are byte-identical at 60,690,944 bytes; the threaded allocation/GC fixture is
+  also byte-identical and verifies the new retirement path in both suites.
 - Revalidated target parity after the sibling self-hosted compiler began
   reusing capacity-backed worklists and epoch-cleared maps across serial
   per-function analysis. The optimization changes compiler allocation traffic

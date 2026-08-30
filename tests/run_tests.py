@@ -3250,6 +3250,7 @@ def test_tlab_shared_heap_codegen(*, name: str, mlc_runner: Path, ml_path: Path)
 
         listing = normalize_out(asm_path.read_text(encoding="utf-8", errors="replace"))
         for required in ("fn_alloc:", "tlab_refill_", "tlab_retire_internal:",
+                         "tlab_retire_publish_",
                          "fn_heap_enter:", "gc_context_loop_"):
             if required not in listing:
                 return TestResult(name=name, status="FAIL",

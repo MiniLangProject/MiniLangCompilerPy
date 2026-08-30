@@ -442,6 +442,16 @@ the same 60,660,224-byte compiler image with SHA-256
 Dedicated Windows and Linux runtime tests verify decommit and the configured
 minimum.
 
+The sibling self-hosted compiler now stores its internal `FastMap` slot
+generations in byte buffers instead of tagged arrays and grows those maps only
+after reaching 80% occupancy. This does not change Python code generation or
+target bytes. An adjacent self-build reduced private peak memory from 1,944.2
+to 1,823.9 MiB (6.19%), working set from 1,904.3 to 1,792.1 MiB (5.89%) and
+object-emission time from 107.143 to 104.266 seconds (2.68%). Python Stage 1
+and self-hosted Stages 2/3 converge to the same 60,690,432-byte image with
+SHA-256
+`5E2518E16AC783F90F8E72E353338629088035D35A7870A15DEA283D7C605E20`.
+
 The sibling self-hosted compiler also supports `--profile-compiler` for
 wall-clock phase timings. Its `.mlo` pipeline uses capacity-backed internal
 vectors, isolated semantic function batches and shared append-only section
