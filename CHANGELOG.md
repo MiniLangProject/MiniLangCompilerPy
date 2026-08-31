@@ -2,6 +2,15 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Added gradual runtime type annotations and optional values, expression
+  lambdas, default/named/variadic calls, value/range `match`, eager iterators
+  with `yield`, structural interfaces, and native thread-backed
+  `async`/`await`/`select`. The new syntax is covered by positive and negative
+  language tests and remains byte-identical with the self-hosted compiler on
+  Windows and Linux x64.
+
 ## 1.1.0 - 2026-08-24
 
 - Added the shallow native `copyArray` primitive and synchronized its runtime

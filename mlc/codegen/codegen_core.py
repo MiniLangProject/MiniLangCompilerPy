@@ -131,6 +131,8 @@ class CodegenCore:
 
         # compile-time type tables
         self.struct_fields: Dict[str, List[str]] = {}
+        # Parallel gradual-type metadata for source-declared struct fields.
+        self.struct_field_types: Dict[str, List[tuple[Optional[str], bool]]] = {}
         self.struct_id: Dict[str, int] = {}
         # struct_qname -> {method_name -> function_qname}
         self.struct_methods: Dict[str, Dict[str, str]] = {}
@@ -152,6 +154,7 @@ class CodegenCore:
         # Fields:
         #   code (int), message (string), script (string|void), func (string|void), line (int|void)
         self.struct_fields["error"] = ["code", "message", "script", "func", "line"]
+        self.struct_field_types["error"] = [(None, False)] * 5
         self.struct_id["error"] = ERROR_STRUCT_ID
 
         # built-in call profiling record struct (enabled only with --profile-calls)

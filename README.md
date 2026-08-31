@@ -41,6 +41,7 @@ assistance of generative AI.
   - [8.6 break / continue](#86-break--continue)
   - [8.7 switch / case](#87-switch--case)
 - [9. Functions](#9-functions)
+  - [Modern language extensions](#modern-language-extensions)
   - [Deferred cleanup (`defer`)](#deferred-cleanup-defer)
   - [Inline functions (`inline`)](#inline-functions-inline)
   - [9.1 Native threads & synchronization](#91-native-threads--synchronization)
@@ -1103,6 +1104,126 @@ function add3(
 end function
 ```
 
+### Modern language extensions
+
+MiniLang remains dynamically typed, but declarations may add runtime-checked
+contracts. A failed parameter, return, annotated initializer or typed
+struct-constructor field
+contract produces error `1308` and propagates like every other MiniLang error;
+wrap an operation in `try(...)` when the error is expected.
+
+```ml
+function sum(first as int, second as int = 0, rest...) returns int
+  total = first + second
+  for each value in rest
+    total = total + value
+  end for
+  return total
+end function
+
+maybeName as string? = void
+print sum(second = 2, first = 1)
+print sum(1, 2, 3, 4)
+```
+
+The optional marker follows the type (`Person?`). `void` is accepted only by
+an optional contract. Default and named arguments are available for directly
+resolved MiniLang functions and methods; struct constructors accept field names.
+A final `name...` parameter receives surplus positional arguments as an array.
+Dynamic callable values intentionally do not accept named arguments because
+their runtime representation has no parameter-name metadata.
+
+Expression lambdas use the existing closure implementation and may capture
+lexical variables:
+
+```ml
+factor = 4
+multiply = function(value as int) returns int => value * factor
+print multiply(3)
+```
+
+Lambda calls are positional. Lambda parameters support type annotations, but
+defaults and variadic tails are intentionally reserved for declared functions,
+whose signatures the compiler can resolve at the call site.
+
+Optional access and fallback expressions avoid manual `void` checks. `?.`
+short-circuits both field access and method calls, and `??` evaluates its right
+side only when the left side is `void`:
+
+```ml
+label = user?.profile?.displayName ?? "anonymous"
+```
+
+`match` provides deterministic value, list and inclusive-range matching. It is
+the pattern-oriented spelling of `switch`; cases do not fall through and the
+current version deliberately has no destructuring or guard clauses.
+
+```ml
+match status
+  case 0
+    print "idle"
+  end case
+  case 1 to 3
+    print "busy"
+  end case
+  case default
+    print "unknown"
+  end case
+end match
+```
+
+Iterator functions collect yielded values into an array with geometric buffer
+growth. This provides the normal MiniLang iterable protocol without quadratic
+array concatenation. Iterators are currently eager, not resumable generators;
+`returns T` is the yielded-value contract and value-bearing `return` statements
+are rejected.
+
+```ml
+iterator function numbers(limit as int) returns int
+  for i = 0 to limit
+    yield i
+  end for
+end function
+```
+
+Interfaces are compile-time structural contracts. `implements` verifies every
+required instance method and its complete parameter/variadic/optional/return
+signature. Interfaces do not allocate runtime objects, provide default methods
+or add a separate dynamic-dispatch mechanism.
+
+```ml
+interface Named
+  function name() returns string
+end interface
+
+struct Person implements Named
+  value as string
+  function name() returns string
+    return this.value
+  end function
+end struct
+```
+
+Async functions are native-thread-backed and available on Windows and Linux.
+Calling one returns a `Thread` handle immediately; `await` joins a handle and
+returns its result, while a non-thread value passes through unchanged. `select`
+waits for the first completed handle and returns its zero-based index (`-1` for
+an empty list). Async declarations are currently limited to module or namespace
+scope; async struct methods and combined `async iterator` declarations are
+rejected. Threads retain MiniLang's shared GC heap and per-thread stack model.
+
+```ml
+async function fetch(id as int) returns string
+  return "item-" + id
+end function
+
+first = fetch(1)
+second = fetch(id = 2)
+winner = select(first, second)
+print await first
+print await second
+```
+
 
 ### Deferred cleanup (`defer`)
 
@@ -1184,7 +1305,7 @@ print add3(
 
 ### 9.1 Native threads & synchronization
 
-`Thread(function[, logicalId])` creates a real Win32 thread object without
+`Thread(function[, logicalId])` creates a real native Windows/Linux thread object without
 starting it. Its entry point must be a top-level, capture-free function with
 zero or one parameter. A one-parameter worker receives the exact managed value
 passed to `Start(value)`:
@@ -2554,6 +2675,9 @@ Statements are separated by newlines or `;`.
   - `<expr>.<field> = ...`
   - `<expr>[<index>] = ...` (multiline indexing allowed)
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
+- `function name(a as int, b as string? = void, rest...) returns int ... end function`
+- `async function name(...) ... end function` / `iterator function name(...) ... end function`
+- `interface Name ... end interface`; `struct Name implements Interface ... end struct`
 - `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
 - optional entrypoint: `function main(args) ... end function`
 - `return` / `return <expr>` / `return;` (and bare `return` directly before `end/else/case` in inline blocks)
@@ -2567,6 +2691,7 @@ Statements are separated by newlines or `;`.
 - `break` / `break <int>`
 - `continue`
 - `switch <expr> ... end switch`
+- `match <expr> ... end match` (value/list/range/default cases)
 - `struct Name ... end struct` (optional legacy `are` after the name)
 - `enum Name ... end enum` (optional legacy `are` after the name; native supports optional `= <constexpr>` values)
 - `namespace Name ... end namespace` (top-level or nested in namespaces; imported modules remain declaration-oriented, but top-level global assignments are allowed; native compiler)
@@ -2579,7 +2704,10 @@ Statements are separated by newlines or `;`.
 ### Expressions
 - literals: number, string, `true/false`, `[ ... ]` (multiline + trailing comma allowed)
 - variable: `name`
-- call: `f(a,b)` (multiline args + trailing comma allowed)
+- call: `f(a,b)` or `f(second = 2, first = 1)` (multiline args + trailing comma allowed)
+- lambda: `function(x as int) returns int => x + 1`
+- optional access/fallback: `value?.member`, `value?.method()`, `left ?? fallback`
+- async wait: `await handle`; first completion: `select(handle1, handle2)`
 - native thread: `Thread(topLevelFunction)`; methods `Start`, `Stop`, `Join`, `Status`, `IsAlive`, `Id`, `Close`
 - index: `arr[i]`
 - member: `obj.field`
@@ -2669,6 +2797,8 @@ What works:
 - LIFO deferred cleanup with `defer`, including return/fall-through/error exits
 - bounded source-level `inline` functions with callable fallback bodies
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
+- gradual runtime-checked type contracts, optional values/access, default/named/variadic calls and expression lambdas
+- value/range `match`, eager `iterator function`/`yield`, structural compile-time interfaces and native-thread-backed `async`/`await`/`select`
 - real native threads on Win32 and Linux with cooperative cancellation, data/result handoff,
   native and logical ids, status/join APIs, private stacks, a process-wide
   thread-safe GC heap, synchronized globals/functions, fine-grained

@@ -1369,6 +1369,10 @@ def compile_to_exe(
     if callable(configure_defines):
         configure_defines(compile_defines or {})
     source, program, import_aliases, packages_by_file = load_modules_recursive(ml, input_ml, include_dirs=include_dirs, keep_going=keep_going, max_errors=max_errors)
+    # Validate interface contracts and lower lambdas, iterators and async sugar
+    # only after imports have been combined, so cross-module declarations work.
+    if hasattr(ml, "prepare_language_features"):
+        program = ml.prepare_language_features(program)
 
     extern_sigs = collect_extern_sigs(ml, program, packages_by_file)
 

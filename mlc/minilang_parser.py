@@ -96,13 +96,16 @@ class Token:
 KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "false", "and", "or", "not", "function",
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
-            "out", "static", "inline", "synchronized", "void", "is", "defer",}
+            "out", "static", "inline", "synchronized", "void", "is", "defer", "interface", "implements",
+            "iterator", "yield", "async", "await",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
-              ("IDENT", r"[A-Za-z_][A-Za-z0-9_]*"), ("DOT", r"\."), ("LPAREN", r"\("), ("RPAREN", r"\)"),
+              ("IDENT", r"[A-Za-z_][A-Za-z0-9_]*"), ("ELLIPSIS", r"\.\.\."), ("SAFEDOT", r"\?\."),
+              ("OP", r"=>|\?\?|==|!=|>=|<=|<<|>>|[+\-*/%=<>&|^~>]"),
+              ("QMARK", r"\?"), ("DOT", r"\."), ("LPAREN", r"\("), ("RPAREN", r"\)"),
               ("LBRACK", r"\["), ("RBRACK", r"\]"), ("COMMA", r","), ("SEMI", r";"),  # include % for modulo
-              ("OP", r"==|!=|>=|<=|<<|>>|[+\-*/%=<>&|^~>]"), ("NEWLINE", r"\n"), ("SKIP", r"[ \t]+"), ]
+              ("NEWLINE", r"\n"), ("SKIP", r"[ \t]+"), ]
 
 TOKEN_RE = re.compile("|".join(f"(?P<{name}>{pattern})" for name, pattern in TOKEN_SPEC))
 
@@ -224,9 +227,25 @@ class IsType(Expr):
 
 
 @dataclass
+class TypeGuard(Expr):
+    """Runtime guard introduced at an explicitly annotated type boundary."""
+    expr: Expr
+    type_name: str
+    optional: bool = False
+
+
+@dataclass
+class Coalesce(Expr):
+    """Return the left operand unless it is void; evaluate the right lazily."""
+    left: Expr
+    right: Expr
+
+
+@dataclass
 class Call(Expr):
     callee: Expr
     args: List[Expr]
+    arg_names: List[Optional[str]] = field(default_factory=list)
 
 
 @dataclass
@@ -239,6 +258,26 @@ class Index(Expr):
 class Member(Expr):
     target: Expr
     name: str
+
+
+@dataclass
+class SafeMember(Expr):
+    """Void-safe member access (`value?.member`)."""
+    target: Expr
+    name: str
+
+
+@dataclass
+class Lambda(Expr):
+    """Parser-only anonymous function; lowered to an ordinary closure."""
+    params: List[str]
+    body: List["Stmt"]
+    param_types: List[Optional[str]] = field(default_factory=list)
+    param_optional: List[bool] = field(default_factory=list)
+    param_defaults: List[Optional[Expr]] = field(default_factory=list)
+    variadic_index: int = -1
+    return_type: Optional[str] = None
+    return_optional: bool = False
 
 
 @dataclass
@@ -295,6 +334,8 @@ class Print(Stmt):
 class Assign(Stmt):
     name: str
     expr: Expr
+    declared_type: Optional[str] = None
+    declared_optional: bool = False
 
 
 @dataclass
@@ -379,10 +420,23 @@ class FunctionDef(Stmt):
     is_static: bool = False
     is_inline: bool = False
     is_synchronized: bool = False
+    param_types: List[Optional[str]] = field(default_factory=list)
+    param_optional: List[bool] = field(default_factory=list)
+    param_defaults: List[Optional[Expr]] = field(default_factory=list)
+    variadic_index: int = -1
+    return_type: Optional[str] = None
+    return_optional: bool = False
+    is_async: bool = False
+    is_iterator: bool = False
 
 
 @dataclass
 class Return(Stmt):
+    expr: Optional[Expr]
+
+
+@dataclass
+class Yield(Stmt):
     expr: Optional[Expr]
 
 
@@ -435,6 +489,16 @@ class StructDef(Stmt):
     name: str
     fields: List[str]
     methods: List["FunctionDef"] = field(default_factory=list)
+    field_types: List[Optional[str]] = field(default_factory=list)
+    field_optional: List[bool] = field(default_factory=list)
+    interfaces: List[str] = field(default_factory=list)
+
+
+@dataclass
+class InterfaceDef(Stmt):
+    """Compile-time structural contract; it has no runtime representation."""
+    name: str
+    methods: List[FunctionDef] = field(default_factory=list)
 
 
 @dataclass
@@ -464,7 +528,7 @@ class ExternFunctionDef(Stmt):
 # Parser
 # ============================================================
 
-PRECEDENCE = {"or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, "is": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
+PRECEDENCE = {"??": 0, "or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, "is": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
               ">>": 8, "+": 9, "-": 9, "*": 10, "/": 10, "%": 10, }
 
 
@@ -503,6 +567,7 @@ class Parser:
         # file-level package directive tracking
         self._seen_package = False
         self._seen_nonpackage_toplevel_stmt = False
+        self._lambda_counter = 0
 
     def peek(self) -> Token:
         return self.tokens[self.i]
@@ -614,6 +679,125 @@ class Parser:
             break
 
         return items
+
+    def parse_type_ref(self) -> tuple[str, bool]:
+        """Parse a qualified type name followed by an optional `?` marker."""
+        tok = self.peek()
+        if tok.kind not in ("IDENT", "KW"):
+            raise ParseError("Expected type name", tok.pos)
+        parts = [self.advance().value]
+        while self.match("DOT"):
+            parts.append(self.expect("IDENT").value)
+        optional = self.match("QMARK")
+        return ".".join(parts), optional
+
+    def parse_parameter(self) -> tuple[str, Optional[str], bool, Optional[Expr], bool]:
+        """Parse one user-function parameter and its gradual-type metadata."""
+        name = self.expect("IDENT").value
+        ty: Optional[str] = None
+        optional = False
+        if self.peek().kind == "KW" and self.peek().value == "as":
+            self.advance()
+            ty, optional = self.parse_type_ref()
+        variadic = self.match("ELLIPSIS")
+        default: Optional[Expr] = None
+        if self.match("OP", "="):
+            if variadic:
+                raise ParseError("A variadic parameter cannot have a default value", self.peek().pos)
+            default = self.parse_expr()
+        return name, ty, optional, default, variadic
+
+    def parse_parameters(self) -> tuple[List[str], List[Optional[str]], List[bool], List[Optional[Expr]], int]:
+        raw = self.parse_delimited_list("RPAREN", self.parse_parameter)
+        names: List[str] = []
+        types: List[Optional[str]] = []
+        optionals: List[bool] = []
+        defaults: List[Optional[Expr]] = []
+        variadic_index = -1
+        saw_default = False
+        for i, (name, ty, optional, default, variadic) in enumerate(raw):
+            if variadic:
+                if i != len(raw) - 1:
+                    raise ParseError("The variadic parameter must be last", getattr(default, "pos", self.peek().pos))
+                variadic_index = i
+            elif default is None and saw_default:
+                raise ParseError("Required parameters cannot follow default parameters", self.peek().pos)
+            if default is not None:
+                saw_default = True
+            names.append(name)
+            types.append(ty)
+            optionals.append(optional)
+            defaults.append(default)
+        if len(set(names)) != len(names):
+            raise ParseError("Duplicate function parameter", self.peek().pos)
+        return names, types, optionals, defaults, variadic_index
+
+    def parse_call_arguments(self) -> tuple[List[Expr], List[Optional[str]]]:
+        """Parse positional and `name = value` call arguments."""
+        args: List[Expr] = []
+        names: List[Optional[str]] = []
+        self.skip_newlines()
+        if self.match("RPAREN"):
+            return args, names
+        named_seen = False
+        while True:
+            arg_name: Optional[str] = None
+            if self.peek().kind == "IDENT" and self.peek2().kind == "OP" and self.peek2().value == "=":
+                arg_name = self.advance().value
+                self.advance()
+                named_seen = True
+            elif named_seen:
+                raise ParseError("Positional arguments cannot follow named arguments", self.peek().pos)
+            args.append(self.parse_expr())
+            names.append(arg_name)
+            self.skip_newlines()
+            if self.match("COMMA"):
+                self.skip_newlines()
+                if self.match("RPAREN"):
+                    break
+                continue
+            self.expect("RPAREN")
+            break
+        return args, names
+
+    def _guard_expr(self, expr: Expr, ty: Optional[str], optional: bool, pos: int) -> Expr:
+        if not ty:
+            return expr
+        return self._attach_pos(TypeGuard(expr, ty, optional), pos)
+
+    def _guard_returns(self, body: List[Stmt], ty: Optional[str], optional: bool) -> None:
+        """Apply a declared return contract without descending into nested functions."""
+        if not ty:
+            return
+        for st in body:
+            if isinstance(st, Return):
+                value = st.expr if st.expr is not None else self._attach_pos(VoidLit(), getattr(st, "_pos", 0))
+                st.expr = self._guard_expr(value, ty, optional, getattr(st, "_pos", 0))
+            elif isinstance(st, If):
+                self._guard_returns(st.then_body, ty, optional)
+                for _, branch in st.elifs:
+                    self._guard_returns(branch, ty, optional)
+                self._guard_returns(st.else_body, ty, optional)
+            elif isinstance(st, (While, DoWhile, For, ForEach, SynchronizedBlock)):
+                self._guard_returns(st.body, ty, optional)
+            elif isinstance(st, Switch):
+                for case in st.cases:
+                    self._guard_returns(case.body, ty, optional)
+                self._guard_returns(st.default_body, ty, optional)
+
+    def _apply_function_contracts(self, fn: FunctionDef) -> FunctionDef:
+        guards: List[Stmt] = []
+        for i, name in enumerate(fn.params):
+            ty = fn.param_types[i] if i < len(fn.param_types) else None
+            optional = fn.param_optional[i] if i < len(fn.param_optional) else False
+            if ty:
+                var = self._attach_pos(Var(name), getattr(fn, "_pos", 0))
+                guarded = self._guard_expr(var, ty, optional, getattr(fn, "_pos", 0))
+                guards.append(self._attach_pos(Assign(name, guarded, ty, optional), getattr(fn, "_pos", 0)))
+        if guards:
+            fn.body = guards + fn.body
+        self._guard_returns(fn.body, fn.return_type, fn.return_optional)
+        return fn
 
     def skip_stmt_seps(self) -> None:
         # Statement separators: newline(s) and semicolons.
@@ -727,11 +911,15 @@ class Parser:
 
     def is_end_of(self, what: str) -> bool:
         return (
-                self.peek().kind == "KW" and self.peek().value == "end" and self.peek2().kind == "KW" and self.peek2().value == what)
+                self.peek().kind == "KW" and self.peek().value == "end"
+                and self.peek2().kind in ("KW", "IDENT") and self.peek2().value == what)
 
     def expect_end_of(self, what: str) -> None:
         self.expect("KW", "end")
-        self.expect("KW", what)
+        token = self.peek()
+        if token.kind not in ("KW", "IDENT") or token.value != what:
+            raise ParseError(f"Expected '{what}'", token.pos)
+        self.advance()
 
     def parse_dotted_name(self) -> str:
         first = self.expect("IDENT").value
@@ -1089,6 +1277,16 @@ class Parser:
                 return self._attach_pos(Return(None), start_pos)
             return self._attach_pos(Return(self.parse_expr()), start_pos)
 
+        # yield [expr] (only valid in iterator functions; validated during lowering)
+        if t.kind == "KW" and t.value == "yield":
+            if self._func_depth <= 0:
+                raise ParseError("'yield' is only allowed inside iterator functions", t.pos)
+            self.advance()
+            nxt = self.peek()
+            if nxt.kind in ("NL", "SEMI", "EOF") or (nxt.kind == "KW" and nxt.value in ("end", "else", "case", "default")):
+                return self._attach_pos(Yield(None), start_pos)
+            return self._attach_pos(Yield(self.parse_expr()), start_pos)
+
         # defer call(...)
         #
         # The call operands are evaluated when this statement is reached; the
@@ -1172,9 +1370,13 @@ class Parser:
 
             return self._attach_pos(ExternFunctionDef(name_tok.value, params, dll, symbol, ret_ty), start_pos)
 
-        # function [inline] [synchronized] name(params)
-        if t.kind == "KW" and t.value == "function":
+        # [async|iterator] function [inline] [synchronized] name(params)
+        if t.kind == "KW" and t.value in ("function", "async", "iterator"):
+            is_async = t.value == "async"
+            is_iterator = t.value == "iterator"
             self.advance()
+            if is_async or is_iterator:
+                self.expect("KW", "function")
             is_inline = False
             is_synchronized = False
             while self.peek().kind == "KW" and self.peek().value in ("inline", "synchronized"):
@@ -1189,8 +1391,13 @@ class Parser:
                     is_synchronized = True
             name_tok = self.expect("IDENT")
             self.expect("LPAREN")
-            # Allow multiline parameter lists and a trailing comma.
-            params: List[str] = self.parse_delimited_list("RPAREN", lambda: self.expect("IDENT").value)
+            params, param_types, param_optional, param_defaults, variadic_index = self.parse_parameters()
+
+            return_type: Optional[str] = None
+            return_optional = False
+            if self.peek().kind == "KW" and self.peek().value == "returns":
+                self.advance()
+                return_type, return_optional = self.parse_type_ref()
 
             self.expect_block_nl()
             self._func_depth += 1
@@ -1199,19 +1406,67 @@ class Parser:
             finally:
                 self._func_depth -= 1
             self.expect_end_of("function")
-            return self._attach_pos(FunctionDef(name_tok.value, params, body, is_inline=is_inline,
-                                                 is_synchronized=is_synchronized), start_pos)
+            fn = self._attach_pos(FunctionDef(name_tok.value, params, body, is_inline=is_inline,
+                                               is_synchronized=is_synchronized, param_types=param_types,
+                                               param_optional=param_optional, param_defaults=param_defaults,
+                                               variadic_index=variadic_index, return_type=return_type,
+                                               return_optional=return_optional, is_async=is_async,
+                                               is_iterator=is_iterator), start_pos)
+            return self._apply_function_contracts(fn)
+
+        # interface Name ... end interface
+        if t.kind == "KW" and t.value == "interface":
+            if self._func_depth > 0:
+                raise ParseError("'interface' is only allowed at declaration scope", t.pos)
+            self.advance()
+            name = self.expect("IDENT").value
+            self.expect_block_nl()
+            methods: List[FunctionDef] = []
+            while not self.is_end_of("interface"):
+                self.skip_stmt_seps()
+                if self.is_end_of("interface"):
+                    break
+                self.expect("KW", "function")
+                mpos = self.peek().pos
+                mname = self.expect("IDENT").value
+                self.expect("LPAREN")
+                params, ptypes, poptional, pdefaults, variadic = self.parse_parameters()
+                if any(x is not None for x in pdefaults):
+                    raise ParseError("Interface methods cannot declare default values", mpos)
+                rty: Optional[str] = None
+                ropt = False
+                if self.peek().kind == "KW" and self.peek().value == "returns":
+                    self.advance()
+                    rty, ropt = self.parse_type_ref()
+                methods.append(self._attach_pos(FunctionDef(mname, params, [], param_types=ptypes,
+                                                             param_optional=poptional, variadic_index=variadic,
+                                                             return_type=rty, return_optional=ropt), mpos))
+                self.expect_block_nl()
+            self.expect_end_of("interface")
+            return self._attach_pos(InterfaceDef(name, methods), start_pos)
 
         # struct
         if t.kind == "KW" and t.value == "struct":
             self.advance()
             name = self.expect("IDENT").value
+            interfaces: List[str] = []
+            if self.peek().kind == "KW" and self.peek().value == "implements":
+                self.advance()
+                while True:
+                    iface, opt = self.parse_type_ref()
+                    if opt:
+                        raise ParseError("An implemented interface cannot be optional", self.peek().pos)
+                    interfaces.append(iface)
+                    if not self.match("COMMA"):
+                        break
             # `are` is optional (legacy)
             if self.peek().kind == "KW" and self.peek().value == "are":
                 self.advance()
             self.expect_block_nl()
 
             fields: List[str] = []
+            field_types: List[Optional[str]] = []
+            field_optional: List[bool] = []
             methods: List[FunctionDef] = []
 
             while not self.is_end_of("struct"):
@@ -1249,8 +1504,12 @@ class Parser:
 
                     m_name_tok = self.expect("IDENT")
                     self.expect("LPAREN")
-                    # Allow multiline parameter lists and a trailing comma.
-                    m_params: List[str] = self.parse_delimited_list("RPAREN", lambda: self.expect("IDENT").value)
+                    m_params, m_types, m_optional, m_defaults, m_variadic = self.parse_parameters()
+                    m_return_type: Optional[str] = None
+                    m_return_optional = False
+                    if self.peek().kind == "KW" and self.peek().value == "returns":
+                        self.advance()
+                        m_return_type, m_return_optional = self.parse_type_ref()
 
                     self.expect_block_nl()
                     self._func_depth += 1
@@ -1260,14 +1519,24 @@ class Parser:
                         self._func_depth -= 1
                     self.expect_end_of("function")
 
-                    methods.append(
-                        self._attach_pos(FunctionDef(m_name_tok.value, m_params, m_body, is_static=is_static,
-                                                     is_inline=is_inline,
-                                                     is_synchronized=is_synchronized), m_start))
+                    method = self._attach_pos(FunctionDef(m_name_tok.value, m_params, m_body, is_static=is_static,
+                                                           is_inline=is_inline, is_synchronized=is_synchronized,
+                                                           param_types=m_types, param_optional=m_optional,
+                                                           param_defaults=m_defaults, variadic_index=m_variadic,
+                                                           return_type=m_return_type,
+                                                           return_optional=m_return_optional), m_start)
+                    methods.append(self._apply_function_contracts(method))
                     continue
 
                 # field (allow comma-separated lists + trailing commas)
                 fields.append(self.expect("IDENT").value)
+                fty: Optional[str] = None
+                fopt = False
+                if self.peek().kind == "KW" and self.peek().value == "as":
+                    self.advance()
+                    fty, fopt = self.parse_type_ref()
+                field_types.append(fty)
+                field_optional.append(fopt)
                 while self.match("COMMA"):
                     # If we see a newline after a comma, continue the field list only if the
                     # next non-newline token is an identifier; otherwise treat it as a trailing comma.
@@ -1279,10 +1548,17 @@ class Parser:
                     if self.peek().kind != "IDENT":
                         break
                     fields.append(self.expect("IDENT").value)
+                    fty = None
+                    fopt = False
+                    if self.peek().kind == "KW" and self.peek().value == "as":
+                        self.advance()
+                        fty, fopt = self.parse_type_ref()
+                    field_types.append(fty)
+                    field_optional.append(fopt)
                 self.expect_block_nl()
 
             self.expect_end_of("struct")
-            return self._attach_pos(StructDef(name, fields, methods), start_pos)
+            return self._attach_pos(StructDef(name, fields, methods, field_types, field_optional, interfaces), start_pos)
 
         # enum
         if t.kind == "KW" and t.value == "enum":
@@ -1375,8 +1651,13 @@ class Parser:
                 body.append(self.parse_stmt())
                 self.skip_stmt_seps()
 
-        # switch expr
-        if t.kind == "KW" and t.value == "switch":
+        # switch/match expr. `match` is the pattern-oriented spelling and shares
+        # value/range semantics with switch. Destructuring and guarded patterns
+        # are deliberately left for a future extension.
+        if ((t.kind == "KW" and t.value == "switch")
+                or (t.kind in ("IDENT", "KW") and t.value == "match"
+                    and self.peek2().kind not in ("OP", "DOT"))):
+            block_kind = t.value
             self.advance()
             expr = self.parse_expr()
             self.expect_block_nl()
@@ -1435,7 +1716,7 @@ class Parser:
 
                 break
 
-            self.expect_end_of("switch")
+            self.expect_end_of(block_kind)
             return self._attach_pos(Switch(expr, cases, default_body), start_pos)
 
         # if cond then ... [else if ...] [else ...] end if
@@ -1508,17 +1789,27 @@ class Parser:
         if t.kind == "IDENT":
             expr = self.parse_postfix()
 
+            declared_type: Optional[str] = None
+            declared_optional = False
+            if isinstance(expr, Var) and self.peek().kind == "KW" and self.peek().value == "as":
+                self.advance()
+                declared_type, declared_optional = self.parse_type_ref()
+
             if self.match("OP", "="):
                 rhs = self.parse_expr()
 
                 if isinstance(expr, Var):
-                    return self._attach_pos(Assign(expr.name, rhs), start_pos)
+                    rhs = self._guard_expr(rhs, declared_type, declared_optional, start_pos)
+                    return self._attach_pos(Assign(expr.name, rhs, declared_type, declared_optional), start_pos)
                 if isinstance(expr, Member):
                     return self._attach_pos(SetMember(expr.target, expr.name, rhs), start_pos)
                 if isinstance(expr, Index):
                     return self._attach_pos(SetIndex(expr.target, expr.index, rhs), start_pos)
 
                 raise ParseError("Invalid assignment target (lvalue)", start_pos)
+
+            if declared_type is not None:
+                raise ParseError("A typed variable declaration requires '='", start_pos)
 
             if isinstance(expr, Call):
                 return self._attach_pos(ExprStmt(expr), start_pos)
@@ -1669,7 +1960,10 @@ class Parser:
             start_pos = getattr(left, "_pos", None)
             if start_pos is None:
                 start_pos = tok.pos
-            left = self._attach_pos(Bin(left, op, right), start_pos)
+            if op == "??":
+                left = self._attach_pos(Coalesce(left, right), start_pos)
+            else:
+                left = self._attach_pos(Bin(left, op, right), start_pos)
 
         return left
 
@@ -1696,6 +1990,13 @@ class Parser:
             self.skip_newlines()
             return self._attach_pos(Unary("not", self.parse_unary()), start_pos)
 
+        if t.kind == "KW" and t.value == "await":
+            start_pos = t.pos
+            self.advance()
+            self.skip_newlines()
+            callee = self._attach_pos(Var("__ml_await"), start_pos)
+            return self._attach_pos(Call(callee, [self.parse_unary()]), start_pos)
+
         return self.parse_postfix()
     def parse_postfix(self) -> Expr:
         """Parse postfix operators: calls, indexing, and member access."""
@@ -1714,9 +2015,9 @@ class Parser:
                 # Qualified-name handling (e.g. typeof(ns.Struct) / typeof(ns.Enum.Variant)) is
                 # resolved later during codegen. This avoids incorrectly treating runtime member
                 # access like typeof(t.value) as a qualified symbol "t.value".
-                args = self.parse_delimited_list("RPAREN", self.parse_expr)
+                args, arg_names = self.parse_call_arguments()
 
-                expr = self._attach_pos(Call(expr, args), call_start)
+                expr = self._attach_pos(Call(expr, args, arg_names), call_start)
                 continue
 
             # Indexing
@@ -1744,6 +2045,17 @@ class Parser:
                 expr = self._attach_pos(Member(expr, name_tok.value), mem_start)
                 continue
 
+            # Optional chaining. Calls following this member are handled by the
+            # normal call parser and remain void-safe because the callee is void.
+            if self.peek().kind == "SAFEDOT":
+                mem_start = getattr(expr, "_pos", None)
+                if mem_start is None:
+                    mem_start = self.peek().pos
+                self.advance()
+                name_tok = self.expect("IDENT")
+                expr = self._attach_pos(SafeMember(expr, name_tok.value), mem_start)
+                continue
+
             break
 
         return expr
@@ -1766,6 +2078,41 @@ class Parser:
             self.advance()
             items = self.parse_delimited_list("RBRACK", self.parse_expr)
             return self._attach_pos(ArrayLit(items), start_pos)
+
+        # Expression-bodied anonymous function. It is lowered to a regular
+        # nested function so it automatically inherits the closure machinery.
+        # Example: `mapper = function(x as int) => x + 1`.
+        if t.kind == "KW" and t.value == "function":
+            start_pos = t.pos
+            self.advance()
+            self.expect("LPAREN")
+            params, ptypes, poptional, pdefaults, variadic = self.parse_parameters()
+            if variadic >= 0 or any(default is not None for default in pdefaults):
+                raise ParseError("Lambda parameters do not support default or variadic arguments", start_pos)
+            return_type: Optional[str] = None
+            return_optional = False
+            if self.peek().kind == "KW" and self.peek().value == "returns":
+                self.advance()
+                return_type, return_optional = self.parse_type_ref()
+            self.expect("OP", "=>")
+            value = self.parse_expr()
+            value = self._guard_expr(value, return_type, return_optional, start_pos)
+            body: List[Stmt] = [self._attach_pos(Return(value), start_pos)]
+            return self._attach_pos(Lambda(params, body, ptypes, poptional, pdefaults, variadic,
+                                           return_type, return_optional), start_pos)
+
+        # `select(a, b, ...)` waits until one async handle completes and returns
+        # its zero-based index. The helper is injected only when used.
+        if (t.kind in ("IDENT", "KW") and t.value == "select"
+                and self.peek2().kind == "LPAREN"):
+            start_pos = t.pos
+            self.advance()
+            self.expect("LPAREN")
+            args, names = self.parse_call_arguments()
+            if any(name is not None for name in names):
+                raise ParseError("select does not accept named arguments", start_pos)
+            return self._attach_pos(Call(self._attach_pos(Var("__ml_select"), start_pos),
+                                         [self._attach_pos(ArrayLit(args), start_pos)]), start_pos)
 
         if t.kind == "NUMBER":
             start_pos = t.pos
@@ -1802,6 +2149,365 @@ class Parser:
             return self._attach_pos(Var(t.value), start_pos)
 
         raise ParseError(f"Unexpected expression: {t.kind}:{t.value}", t.pos)
+
+
+# ============================================================
+# Backward-compatible lowering for high-level language features
+# ============================================================
+
+def _copy_source_pos(dst: Any, src: Any) -> Any:
+    for attr in ("_pos", "_filename"):
+        if hasattr(src, attr):
+            setattr(dst, attr, getattr(src, attr))
+    return dst
+
+
+class _LanguageLowerer:
+    """Lower closures, generators and async sugar to the stable core AST."""
+
+    def __init__(self) -> None:
+        self.serial = 0
+        self.needs_await = False
+        self.needs_select = False
+        self.await_source: Optional[Expr] = None
+        self.select_source: Optional[Expr] = None
+
+    def fresh(self, stem: str) -> str:
+        self.serial += 1
+        return f"__ml_{stem}_{self.serial}"
+
+    def lower_expr(self, expr: Optional[Expr], prelude: List[Stmt]) -> Optional[Expr]:
+        if expr is None:
+            return None
+        if isinstance(expr, Lambda):
+            name = self.fresh("lambda")
+            body = self.lower_block(expr.body, function_depth=1)
+            guards: List[Stmt] = []
+            for i, param in enumerate(expr.params):
+                ty = expr.param_types[i] if i < len(expr.param_types) else None
+                if ty:
+                    optional = expr.param_optional[i] if i < len(expr.param_optional) else False
+                    guards.append(_copy_source_pos(Assign(param, TypeGuard(Var(param), ty, optional), ty, optional), expr))
+            fn = FunctionDef(name, list(expr.params), guards + body,
+                             param_types=list(expr.param_types), param_optional=list(expr.param_optional),
+                             param_defaults=list(expr.param_defaults), variadic_index=expr.variadic_index,
+                             return_type=expr.return_type, return_optional=expr.return_optional)
+            prelude.append(_copy_source_pos(fn, expr))
+            return _copy_source_pos(Var(name), expr)
+        if isinstance(expr, Call):
+            expr.callee = self.lower_expr(expr.callee, prelude)
+            expr.args = [self.lower_expr(x, prelude) for x in expr.args]
+            if isinstance(expr.callee, Var) and expr.callee.name == "__ml_await":
+                self.needs_await = True
+                if self.await_source is None:
+                    self.await_source = expr
+            if isinstance(expr.callee, Var) and expr.callee.name == "__ml_select":
+                self.needs_select = True
+                if self.select_source is None:
+                    self.select_source = expr
+            return expr
+        if isinstance(expr, (Member, SafeMember)):
+            expr.target = self.lower_expr(expr.target, prelude)
+            return expr
+        if isinstance(expr, Index):
+            expr.target = self.lower_expr(expr.target, prelude)
+            expr.index = self.lower_expr(expr.index, prelude)
+            return expr
+        if isinstance(expr, ArrayLit):
+            expr.items = [self.lower_expr(x, prelude) for x in expr.items]
+            return expr
+        if isinstance(expr, Unary):
+            expr.right = self.lower_expr(expr.right, prelude)
+            return expr
+        if isinstance(expr, Bin):
+            expr.left = self.lower_expr(expr.left, prelude)
+            expr.right = self.lower_expr(expr.right, prelude)
+            return expr
+        if isinstance(expr, Coalesce):
+            expr.left = self.lower_expr(expr.left, prelude)
+            expr.right = self.lower_expr(expr.right, prelude)
+            return expr
+        if isinstance(expr, (IsType, TypeGuard)):
+            expr.expr = self.lower_expr(expr.expr, prelude)
+            return expr
+        return expr
+
+    def lower_stmt(self, st: Stmt, function_depth: int) -> List[Stmt]:
+        prelude: List[Stmt] = []
+        if isinstance(st, NamespaceDef):
+            st.body = self.lower_block(st.body, function_depth=function_depth)
+        elif isinstance(st, FunctionDef):
+            st.body = self.lower_block(st.body, function_depth=function_depth + 1)
+            if st.is_iterator:
+                self.lower_iterator(st)
+            if st.is_async:
+                if function_depth > 0:
+                    raise ParseError("async functions must be declared at module or namespace scope", getattr(st, "_pos", 0))
+                return self.lower_async(st)
+        elif isinstance(st, StructDef):
+            for method in st.methods:
+                method.body = self.lower_block(method.body, function_depth=function_depth + 1)
+                if method.is_iterator:
+                    self.lower_iterator(method)
+                if method.is_async:
+                    raise ParseError("async struct methods are not supported; use a module-level async function", getattr(method, "_pos", 0))
+        elif isinstance(st, If):
+            st.cond = self.lower_expr(st.cond, prelude)
+            st.then_body = self.lower_block(st.then_body, function_depth)
+            st.elifs = [(self.lower_expr(c, prelude), self.lower_block(b, function_depth)) for c, b in st.elifs]
+            st.else_body = self.lower_block(st.else_body, function_depth)
+        elif isinstance(st, (While, DoWhile)):
+            st.cond = self.lower_expr(st.cond, prelude)
+            st.body = self.lower_block(st.body, function_depth)
+        elif isinstance(st, For):
+            st.start = self.lower_expr(st.start, prelude)
+            st.end = self.lower_expr(st.end, prelude)
+            st.body = self.lower_block(st.body, function_depth)
+        elif isinstance(st, ForEach):
+            st.iterable = self.lower_expr(st.iterable, prelude)
+            st.body = self.lower_block(st.body, function_depth)
+        elif isinstance(st, SynchronizedBlock):
+            st.lock = self.lower_expr(st.lock, prelude)
+            st.body = self.lower_block(st.body, function_depth)
+        elif isinstance(st, Switch):
+            st.expr = self.lower_expr(st.expr, prelude)
+            for case in st.cases:
+                case.values = [self.lower_expr(x, prelude) for x in case.values]
+                case.range_start = self.lower_expr(case.range_start, prelude)
+                case.range_end = self.lower_expr(case.range_end, prelude)
+                case.body = self.lower_block(case.body, function_depth)
+            st.default_body = self.lower_block(st.default_body, function_depth)
+        else:
+            for attr in ("expr", "cond", "target", "index", "start", "end"):
+                if hasattr(st, attr):
+                    setattr(st, attr, self.lower_expr(getattr(st, attr), prelude))
+            if isinstance(st, SetMember):
+                st.obj = self.lower_expr(st.obj, prelude)
+        return prelude + [st]
+
+    def lower_block(self, body: List[Stmt], function_depth: int = 0) -> List[Stmt]:
+        out: List[Stmt] = []
+        for st in body:
+            out.extend(self.lower_stmt(st, function_depth))
+        return out
+
+    def lower_iterator(self, fn: FunctionDef) -> None:
+        """Implement `yield` as an allocation-efficient eager sequence builder.
+
+        Arrays are MiniLang's native iterable protocol today. The lowering grows
+        a private capacity buffer geometrically, avoiding quadratic array
+        concatenation, and returns a tightly sized array to callers.
+        """
+        if fn.is_async:
+            raise ParseError("A function cannot be both async and iterator", getattr(fn, "_pos", 0))
+        suffix = self.fresh("iter")
+        buf = suffix + "_buf"
+        count = suffix + "_count"
+        grown = suffix + "_grown"
+        copy_i = suffix + "_copy_i"
+        result = suffix + "_result"
+
+        def v(name: str) -> Var:
+            return _copy_source_pos(Var(name), fn)
+
+        def n(value: int) -> Num:
+            return _copy_source_pos(Num(value), fn)
+
+        def call(name: str, args: List[Expr]) -> Call:
+            return _copy_source_pos(Call(_copy_source_pos(Var(name), fn), args), fn)
+
+        def append_yield(y: Yield) -> List[Stmt]:
+            value: Expr = y.expr if y.expr is not None else _copy_source_pos(VoidLit(), y)
+            if fn.return_type:
+                value = _copy_source_pos(TypeGuard(value, fn.return_type, fn.return_optional), y)
+            grow_body: List[Stmt] = [
+                _copy_source_pos(Assign(grown, call("array", [Bin(call("len", [v(buf)]), "*", n(2)), VoidLit()])), y),
+                _copy_source_pos(For(copy_i, n(0), Bin(v(count), "-", n(1)), [
+                    _copy_source_pos(SetIndex(v(grown), v(copy_i), Index(v(buf), v(copy_i))), y)
+                ]), y),
+                _copy_source_pos(Assign(buf, v(grown)), y),
+            ]
+            return [
+                _copy_source_pos(If(Bin(v(count), "==", call("len", [v(buf)])), grow_body, [], []), y),
+                _copy_source_pos(SetIndex(v(buf), v(count), value), y),
+                _copy_source_pos(Assign(count, Bin(v(count), "+", n(1))), y),
+            ]
+
+        def rewrite(body: List[Stmt]) -> List[Stmt]:
+            out: List[Stmt] = []
+            for st in body:
+                if isinstance(st, Yield):
+                    out.extend(append_yield(st))
+                elif isinstance(st, Return):
+                    raise ParseError("iterator functions use yield and cannot return a value", getattr(st, "_pos", 0))
+                elif isinstance(st, If):
+                    st.then_body = rewrite(st.then_body)
+                    st.elifs = [(c, rewrite(b)) for c, b in st.elifs]
+                    st.else_body = rewrite(st.else_body)
+                    out.append(st)
+                elif isinstance(st, (While, DoWhile, For, ForEach, SynchronizedBlock)):
+                    st.body = rewrite(st.body)
+                    out.append(st)
+                elif isinstance(st, Switch):
+                    for case in st.cases:
+                        case.body = rewrite(case.body)
+                    st.default_body = rewrite(st.default_body)
+                    out.append(st)
+                elif isinstance(st, FunctionDef):
+                    out.append(st)
+                else:
+                    out.append(st)
+            return out
+
+        original = rewrite(fn.body)
+        init = [
+            _copy_source_pos(Assign(buf, call("array", [n(8), VoidLit()])), fn),
+            _copy_source_pos(Assign(count, n(0)), fn),
+        ]
+        finish = [
+            _copy_source_pos(Assign(result, call("array", [v(count), VoidLit()])), fn),
+            _copy_source_pos(For(copy_i, n(0), Bin(v(count), "-", n(1)), [
+                _copy_source_pos(SetIndex(v(result), v(copy_i), Index(v(buf), v(copy_i))), fn)
+            ]), fn),
+            _copy_source_pos(Return(v(result)), fn),
+        ]
+        fn.body = init + original + finish
+        fn.is_iterator = False
+
+    def lower_async(self, fn: FunctionDef) -> List[Stmt]:
+        impl_name = self.fresh("async_impl")
+        entry_name = self.fresh("async_entry")
+        arg_name = self.fresh("async_args")
+        thread_name = self.fresh("async_thread")
+
+        impl = _copy_source_pos(FunctionDef(impl_name, list(fn.params), fn.body,
+                                            param_types=list(fn.param_types), param_optional=list(fn.param_optional),
+                                            variadic_index=fn.variadic_index, return_type=fn.return_type,
+                                            return_optional=fn.return_optional), fn)
+        forwarded = [_copy_source_pos(Index(Var(arg_name), Num(i)), fn) for i in range(len(fn.params))]
+        entry_call = _copy_source_pos(Call(Var(impl_name), forwarded), fn)
+        entry = _copy_source_pos(FunctionDef(entry_name, [arg_name], [Return(entry_call)]), fn)
+
+        packed = _copy_source_pos(ArrayLit([Var(name) for name in fn.params]), fn)
+        wrapper_body: List[Stmt] = [
+            _copy_source_pos(Assign(thread_name, Call(Var("Thread"), [Var(entry_name)])), fn),
+            _copy_source_pos(ExprStmt(Call(Member(Var(thread_name), "Start"), [packed])), fn),
+            _copy_source_pos(Return(Var(thread_name)), fn),
+        ]
+        wrapper = _copy_source_pos(FunctionDef(fn.name, list(fn.params), wrapper_body,
+                                               is_static=fn.is_static,
+                                               param_types=list(fn.param_types), param_optional=list(fn.param_optional),
+                                               param_defaults=list(fn.param_defaults), variadic_index=fn.variadic_index,
+                                               return_type=fn.return_type, return_optional=fn.return_optional), fn)
+        return [impl, entry, wrapper]
+
+    def await_helper(self) -> FunctionDef:
+        value = Var("value")
+        is_thread = Bin(Call(Var("typeof"), [value]), "==", Str("thread"))
+        body: List[Stmt] = [
+            If(is_thread, [ExprStmt(Call(Member(value, "Join"), [])), Return(Call(Member(value, "Result"), []))], [], []),
+            Return(value),
+        ]
+        return FunctionDef("__ml_await", ["value"], body)
+
+    def select_helper(self) -> FunctionDef:
+        handles = Var("handles")
+        idx = Var("__ml_select_i")
+        handle = Var("__ml_select_handle")
+        valid = Bin(Call(Var("typeof"), [handles]), "==", Str("array"))
+        nonempty = Bin(Call(Var("len"), [handles]), ">", Num(0))
+        completed = Unary("not", Call(Member(handle, "IsAlive"), []))
+        loop = While(Bool(True), [
+            For("__ml_select_i", Num(0), Bin(Call(Var("len"), [handles]), "-", Num(1)), [
+                Assign("__ml_select_handle", Index(handles, idx)),
+                If(Bin(Call(Var("typeof"), [handle]), "!=", Str("thread")), [Return(idx)], [], []),
+                If(completed, [ExprStmt(Call(Member(handle, "Join"), [])), Return(idx)], [], []),
+            ]),
+            ExprStmt(Call(Var("threadSleep"), [Num(1)])),
+        ])
+        return FunctionDef("__ml_select", ["handles"], [
+            If(Unary("not", Bin(valid, "and", nonempty)), [Return(Num(-1))], [], []),
+            loop,
+            Return(Num(-1)),
+        ])
+
+
+def _validate_interfaces(program: List[Stmt]) -> None:
+    interfaces: dict[str, InterfaceDef] = {}
+    structs: List[tuple[str, StructDef]] = []
+
+    def collect(body: List[Stmt], prefix: str = "") -> None:
+        for st in body:
+            if isinstance(st, NamespaceDef):
+                collect(st.body, prefix + st.name + ".")
+            elif isinstance(st, InterfaceDef):
+                interfaces[prefix + st.name] = st
+            elif isinstance(st, StructDef):
+                structs.append((prefix + st.name, st))
+
+    collect(program)
+
+    def signature_matches(requirement: FunctionDef, actual: FunctionDef) -> bool:
+        """Compare the callable contract exposed by an interface method."""
+        if actual.is_static:
+            return False
+        if len(actual.params) != len(requirement.params) or actual.variadic_index != requirement.variadic_index:
+            return False
+        required_types = list(requirement.param_types or []) + [None] * len(requirement.params)
+        actual_types = list(actual.param_types or []) + [None] * len(actual.params)
+        required_optional = list(requirement.param_optional or []) + [False] * len(requirement.params)
+        actual_optional = list(actual.param_optional or []) + [False] * len(actual.params)
+        for i in range(len(requirement.params)):
+            if required_types[i] != actual_types[i] or bool(required_optional[i]) != bool(actual_optional[i]):
+                return False
+        return (requirement.return_type == actual.return_type
+                and bool(requirement.return_optional) == bool(actual.return_optional))
+
+    simple: dict[str, List[str]] = {}
+    for qname in interfaces:
+        simple.setdefault(qname.rsplit(".", 1)[-1], []).append(qname)
+    for struct_qname, struct in structs:
+        prefix = struct_qname.rsplit(".", 1)[0] + "." if "." in struct_qname else ""
+        methods = {m.name: m for m in struct.methods}
+        for raw_name in struct.interfaces:
+            candidates = [prefix + raw_name, raw_name]
+            candidates.extend(simple.get(raw_name, []))
+            iface_name = next((x for x in candidates if x in interfaces), None)
+            if iface_name is None:
+                raise ParseError(f"Unknown interface '{raw_name}' implemented by {struct_qname}", getattr(struct, "_pos", 0))
+            for requirement in interfaces[iface_name].methods:
+                actual = methods.get(requirement.name)
+                if actual is None:
+                    raise ParseError(f"Struct {struct_qname} does not implement {raw_name}.{requirement.name}", getattr(struct, "_pos", 0))
+                if not signature_matches(requirement, actual):
+                    raise ParseError(f"Method {struct_qname}.{actual.name} has an incompatible interface signature", getattr(actual, "_pos", 0))
+
+
+def prepare_language_features(program: List[Stmt]) -> List[Stmt]:
+    """Validate contracts and lower new syntax before semantic analysis/codegen."""
+    _validate_interfaces(program)
+    lowerer = _LanguageLowerer()
+    lowered = lowerer.lower_block(program)
+
+    def remove_interfaces(body: List[Stmt]) -> List[Stmt]:
+        out: List[Stmt] = []
+        for st in body:
+            if isinstance(st, InterfaceDef):
+                continue
+            if isinstance(st, NamespaceDef):
+                st.body = remove_interfaces(st.body)
+            out.append(st)
+        return out
+
+    lowered = remove_interfaces(lowered)
+    helpers: List[Stmt] = []
+    if lowerer.needs_await:
+        helper = lowerer.await_helper()
+        helpers.append(_copy_source_pos(helper, lowerer.await_source) if lowerer.await_source is not None else helper)
+    if lowerer.needs_select:
+        helper = lowerer.select_helper()
+        helpers.append(_copy_source_pos(helper, lowerer.select_source) if lowerer.select_source is not None else helper)
+    return helpers + lowered
 
 
 # ============================================================

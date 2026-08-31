@@ -9,7 +9,7 @@ from typing import Any, List, Optional
 
 from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION, OBJ_THREAD,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
-                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
+                         ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, ERR_TYPE_GUARD, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
 from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod, try_enc_float_immediate, wrap_i61
 
@@ -32,6 +32,69 @@ class CodegenExpr:
     # - We match runtime "truthiness" used by emit_jmp_if_false_rax.
 
     _OPT_NO = object()
+
+    def _normalize_declared_call_args(self, call: Any, fn: Any, *, implicit: int = 0) -> List[Any]:
+        """Map positional/named/default/variadic arguments to the function ABI."""
+        ml = self.ml
+        supplied = list(getattr(call, "args", []) or [])
+        names = list(getattr(call, "arg_names", []) or [])
+        if len(names) < len(supplied):
+            names.extend([None] * (len(supplied) - len(names)))
+        params = list(getattr(fn, "params", []) or [])[implicit:]
+        defaults = list(getattr(fn, "param_defaults", []) or [])[implicit:]
+        if len(defaults) < len(params):
+            defaults.extend([None] * (len(params) - len(defaults)))
+        raw_variadic_value = getattr(fn, "variadic_index", -1)
+        raw_variadic = int(raw_variadic_value) if raw_variadic_value is not None else -1
+        variadic = raw_variadic - implicit if raw_variadic >= implicit else -1
+        fixed_count = variadic if variadic >= 0 else len(params)
+        slots: List[Any] = [None] * fixed_count
+        extras: List[Any] = []
+        next_pos = 0
+        used_names: set[str] = set()
+
+        for value, arg_name in zip(supplied, names):
+            if arg_name is None:
+                while next_pos < fixed_count and slots[next_pos] is not None:
+                    next_pos += 1
+                if next_pos < fixed_count:
+                    slots[next_pos] = value
+                    next_pos += 1
+                elif variadic >= 0:
+                    extras.append(value)
+                else:
+                    raise self.error(f"Function {getattr(fn, 'name', '<function>')} expects {len(params)} args, got {len(supplied)}", call)
+                continue
+
+            name = str(arg_name)
+            if name in used_names:
+                raise self.error(f"Argument '{name}' was supplied more than once", call)
+            used_names.add(name)
+            if name not in params:
+                raise self.error(f"Unknown named argument '{name}' for {getattr(fn, 'name', '<function>')}", call)
+            index = params.index(name)
+            if index == variadic:
+                raise self.error(f"Variadic parameter '{name}' cannot be supplied by name", call)
+            if index >= fixed_count or slots[index] is not None:
+                raise self.error(f"Argument '{name}' was supplied more than once", call)
+            slots[index] = value
+
+        for i in range(fixed_count):
+            if slots[i] is None:
+                default = defaults[i] if i < len(defaults) else None
+                if default is None:
+                    raise self.error(f"Missing required argument '{params[i]}' for {getattr(fn, 'name', '<function>')}", call)
+                slots[i] = default
+        if variadic >= 0:
+            slots.append(ml.ArrayLit(extras))
+        return slots
+
+    def _is_declared_instance_method(self, function_name: str) -> bool:
+        """Return whether a hoisted function belongs to an instance method."""
+        for methods in (getattr(self, 'struct_methods', {}) or {}).values():
+            if function_name in (methods or {}).values():
+                return True
+        return False
 
     @staticmethod
     def _opt_truthy(v: Any) -> bool:
@@ -2381,6 +2444,100 @@ class CodegenExpr:
         ml = self.ml
         a = self.asm
 
+        # New high-level operators deliberately reuse the existing Value ABI;
+        # no runtime object kinds or GC paths are needed.
+        if hasattr(ml, 'Coalesce') and isinstance(e, ml.Coalesce):
+            lid = self.new_label_id()
+            l_done = f"coalesce_done_{lid}"
+            self.emit_expr(e.left)
+            a.cmp_rax_imm8(enc_void())
+            a.jcc('ne', l_done)
+            self.emit_expr(e.right)
+            a.mark(l_done)
+            return
+
+        if (hasattr(ml, 'SafeMember') and isinstance(e, ml.Call)
+                and isinstance(getattr(e, 'callee', None), ml.SafeMember)):
+            safe = e.callee
+            lid = self.new_label_id()
+            l_void = f"safe_call_void_{lid}"
+            l_done = f"safe_call_done_{lid}"
+            off = self.alloc_expr_temps(8)
+            self.emit_expr(safe.target)
+            a.mov_rsp_disp32_rax(off)
+            a.cmp_rax_imm8(enc_void())
+            a.jcc('e', l_void)
+            target = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else safe.target
+            nested = ml.Call(ml.Member(target, safe.name), list(getattr(e, 'args', []) or []),
+                             list(getattr(e, 'arg_names', []) or []))
+            for attr in ('_pos', '_filename'):
+                if hasattr(e, attr):
+                    setattr(nested, attr, getattr(e, attr))
+            self.emit_expr(nested)
+            a.jmp(l_done)
+            a.mark(l_void)
+            a.mov_rax_imm64(enc_void())
+            a.mark(l_done)
+            self.free_expr_temps(8)
+            return
+
+        if hasattr(ml, 'SafeMember') and isinstance(e, ml.SafeMember):
+            lid = self.new_label_id()
+            l_void = f"safe_member_void_{lid}"
+            l_done = f"safe_member_done_{lid}"
+            off = self.alloc_expr_temps(8)
+            self.emit_expr(e.target)
+            a.mov_rsp_disp32_rax(off)
+            a.cmp_rax_imm8(enc_void())
+            a.jcc('e', l_void)
+            target = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else e.target
+            member = ml.Member(target, e.name)
+            for attr in ('_pos', '_filename'):
+                if hasattr(e, attr):
+                    setattr(member, attr, getattr(e, attr))
+            self.emit_expr(member)
+            a.jmp(l_done)
+            a.mark(l_void)
+            a.mov_rax_imm64(enc_void())
+            a.mark(l_done)
+            self.free_expr_temps(8)
+            return
+
+        if hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard):
+            lid = self.new_label_id()
+            l_valid = f"type_guard_valid_{lid}"
+            l_done = f"type_guard_done_{lid}"
+            off = self.alloc_expr_temps(8)
+            self.emit_expr(e.expr)
+            a.mov_rsp_disp32_rax(off)
+            if bool(getattr(e, 'optional', False)):
+                a.cmp_rax_imm8(enc_void())
+                a.jcc('e', l_valid)
+
+            raw_type = str(getattr(e, 'type_name', '') or '')
+            aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+            canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
+            loaded = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else e.expr
+            primitives = {'int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'struct',
+                          'enum', 'error', 'thread', 'void', 'unknown'}
+            if canonical in primitives:
+                check = ml.Bin(ml.Call(ml.Var('typeof'), [loaded]), '==', ml.Str(canonical))
+            else:
+                check = ml.IsType(loaded, raw_type, False)
+            self.emit_expr(check)
+            a.cmp_rax_imm8(enc_bool(True))
+            a.jcc('e', l_valid)
+            self._emit_make_error_const(ERR_TYPE_GUARD, f"Expected value of type {raw_type}{'?' if bool(getattr(e, 'optional', False)) else ''}")
+            a.jmp(l_done)
+            a.mark(l_valid)
+            a.mov_rax_rsp_disp32(off)
+            a.mark(l_done)
+            self.free_expr_temps(8)
+            # Type contracts are ordinary MiniLang error boundaries. Propagate
+            # a failed guard unless the expression is explicitly wrapped in try().
+            self._emit_auto_errprop()
+            return
+
         # Internal operand used by the defer epilogue.  It deliberately bypasses
         # name lookup: the value was captured in a GC-visible function-frame slot
         # when the defer statement was reached.
@@ -4541,6 +4698,8 @@ class CodegenExpr:
                 if mname in thread_methods:
                     arity_spec, helper = thread_methods[mname]
                     args = list(getattr(e, 'args', []) or [])
+                    if any(name is not None for name in list(getattr(e, 'arg_names', []) or [])):
+                        raise self.error(f"Thread.{mname} does not accept named arguments", e)
                     allowed = arity_spec if isinstance(arity_spec, tuple) else (arity_spec,)
                     if len(args) not in allowed:
                         allowed_s = ' or '.join(str(x) for x in allowed)
@@ -4609,7 +4768,6 @@ class CodegenExpr:
 
                 if mname and (getattr(self, 'struct_methods', {}) or {}):
                     args = list(getattr(e, 'args', []) or [])
-                    total = 1 + len(args)  # receiver + explicit args
 
                     # Type flow can prove the concrete receiver for locals that
                     # retain a struct-constructor fact. In that case the runtime
@@ -4623,6 +4781,14 @@ class CodegenExpr:
                     known_method = ((getattr(self, 'struct_methods', {}) or {}).get(known_qname, {}) or {}).get(mname)
                     known_def = ((getattr(self, 'user_functions', {}) or {}).get(known_method)
                                  if known_method is not None else None)
+                    if known_def is not None:
+                        args = self._normalize_declared_call_args(e, known_def, implicit=1)
+                        setattr(e, 'args', args)
+                        if hasattr(e, 'arg_names'):
+                            setattr(e, 'arg_names', [None] * len(args))
+                    elif any(name is not None for name in list(getattr(e, 'arg_names', []) or [])):
+                        raise self.error("Named method arguments require a statically known struct receiver", e)
+                    total = 1 + len(args)  # receiver + normalized explicit args
                     if known_def is not None and len(list(getattr(known_def, 'params', []) or [])) == total:
                         inline_used = int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(known_method, 0) or 0)
                         if inline_used < 4096 and known_method in (getattr(self, 'inline_functions', {}) or {}):
@@ -4809,6 +4975,55 @@ class CodegenExpr:
             # We use `void` (not a null pointer) so that if a `this` access slips through,
             # runtime errors are safer than a null dereference.
             call_args = list(getattr(e, 'args', []) or [])
+
+            # Normalize the extended call syntax before any direct-call fast
+            # path sees it. The physical ABI remains fixed-arity; a variadic
+            # tail is passed as one ordinary MiniLang array.
+            if callee_name is not None and callee_name in (getattr(self, 'user_functions', {}) or {}):
+                binding = None
+                try:
+                    binding = self.resolve_binding(callee_name)
+                except Exception:
+                    binding = None
+                if ((binding is None or getattr(binding, 'kind', None) == 'global')
+                        and not self._is_declared_instance_method(str(callee_name))):
+                    declared_fn = self.user_functions.get(callee_name)
+                    call_args = self._normalize_declared_call_args(e, declared_fn)
+                    setattr(e, 'args', call_args)
+                    if hasattr(e, 'arg_names'):
+                        setattr(e, 'arg_names', [None] * len(call_args))
+
+            elif any(name is not None for name in list(getattr(e, 'arg_names', []) or [])):
+                # Struct constructors can use field names directly. Dynamic
+                # functions and native builtins have no stable parameter names.
+                if callee_name is not None and callee_name in (getattr(self, 'struct_fields', {}) or {}):
+                    fields = list(self.struct_fields.get(callee_name) or [])
+                    values = [None] * len(fields)
+                    names = list(getattr(e, 'arg_names', []) or [])
+                    next_pos = 0
+                    for value, name in zip(call_args, names):
+                        if name is None:
+                            while next_pos < len(values) and values[next_pos] is not None:
+                                next_pos += 1
+                            if next_pos >= len(values):
+                                raise self.error(f"Struct {callee_name} received too many arguments", e)
+                            values[next_pos] = value
+                            next_pos += 1
+                        else:
+                            if name not in fields:
+                                raise self.error(f"Unknown field argument '{name}' for struct {callee_name}", e)
+                            index = fields.index(name)
+                            if values[index] is not None:
+                                raise self.error(f"Field argument '{name}' was supplied more than once", e)
+                            values[index] = value
+                    missing = [fields[i] for i, value in enumerate(values) if value is None]
+                    if missing:
+                        raise self.error(f"Missing field argument '{missing[0]}' for struct {callee_name}", e)
+                    call_args = values
+                    setattr(e, 'args', call_args)
+                    setattr(e, 'arg_names', [None] * len(call_args))
+                else:
+                    raise self.error("Named arguments require a directly resolved MiniLang function or struct", e)
 
             # Thread(function[, logicalId]): real OS thread over the shared heap.
             # Entry points are capture-free and accept zero or one parameter.
@@ -5013,24 +5228,7 @@ class CodegenExpr:
                     pass
                 return bool(uses)
 
-            def _is_instance_method_qname(fn_qn: str) -> bool:
-                # Lazy build reverse map: function_qname -> (struct_qname, method_name)
-                rev = getattr(self, '_struct_method_rev', None)
-                if rev is None:
-                    rev = {}
-                    try:
-                        for _s, _md in (getattr(self, 'struct_methods', {}) or {}).items():
-                            for _m, _fn in (_md or {}).items():
-                                rev[str(_fn)] = (str(_s), str(_m))
-                    except Exception:
-                        rev = {}
-                    try:
-                        setattr(self, '_struct_method_rev', rev)
-                    except Exception:
-                        pass
-                return bool(fn_qn in (rev or {}))
-
-            if callee_name is not None and _is_instance_method_qname(str(callee_name)):
+            if callee_name is not None and self._is_declared_instance_method(str(callee_name)):
                 fn_def = (getattr(self, 'user_functions', {}) or {}).get(str(callee_name))
                 if fn_def is not None:
                     expected = len(getattr(fn_def, 'params', []) or [])
@@ -6538,7 +6736,16 @@ class CodegenExpr:
 
                 # fill fields in order
                 for i, arg in enumerate(e.args):
-                    self.emit_expr(arg)
+                    field_contracts = (getattr(self, 'struct_field_types', {}) or {}).get(sname, [])
+                    if i < len(field_contracts) and field_contracts[i][0]:
+                        field_ty, field_optional = field_contracts[i]
+                        guarded_arg = ml.TypeGuard(arg, str(field_ty), bool(field_optional))
+                        for attr in ('_pos', '_filename'):
+                            if hasattr(arg, attr):
+                                setattr(guarded_arg, attr, getattr(arg, attr))
+                        self.emit_expr(guarded_arg)
+                    else:
+                        self.emit_expr(arg)
                     # restore base pointer into r11 (do NOT clobber rax)
                     a.mov_r64_membase_disp("r11", "rsp", base_off)
                     disp = 8 + i * 8

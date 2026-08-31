@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 30 August 2026 against the matching 1.1.0 revisions of:
+Verified through 31 August 2026 against the matching 1.1.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,33 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## Modern language-extension parity
+
+The combined gradual-types, richer-calls, lambda, `match`, iterator,
+interface and async acceptance fixture has exact parity across the Python,
+self-hosted monolithic and self-hosted `.mlo` paths:
+
+| Target | Size | SHA-256 |
+| --- | ---: | --- |
+| Windows x64 PE | 216,064 | `7B5FB76064E5C7274A7F4E647C3BFA29388D092AC267DE191CBDEC1B55036E98` |
+| Linux x64 ELF | 226,880 | `7837B2A4F75307A482F1E98C57E55139229FCEADF86FE9B08553EBB7A07C3BA3` |
+
+The object-pipeline regression also verifies that typed struct-field contracts
+survive fragment-state cloning. Invalid constructor values therefore retain
+runtime error 1308 instead of silently bypassing their type guard.
+
+The complete compiler was bootstrapped again after adding these constructs.
+The Python-built Stage 1 and its self-hosted Stage 2 are byte-identical:
+
+| Compiler image | Size | SHA-256 |
+| --- | ---: | --- |
+| Stage 1, built by Python | 64,539,136 | `CF695355E7D4213FEB3DB751FEC9B4BD5F452E2533E7E49828AA23E0CC9F6BAB` |
+| Stage 2, built by Stage 1 | 64,539,136 | `CF695355E7D4213FEB3DB751FEC9B4BD5F452E2533E7E49828AA23E0CC9F6BAB` |
+
+The self-hosted Stage 2 build completed in 189.795 seconds. Since the two
+compiler images are identical, this revision reaches its deterministic fixed
+point after the bootstrap stage.
 
 ## Current compact-index fixed point
 

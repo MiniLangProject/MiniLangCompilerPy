@@ -1784,6 +1784,14 @@ class CodegenStmt:
                 expr(getattr(e, 'left', None))
                 expr(getattr(e, 'right', None))
                 return
+            if hasattr(ml, 'Coalesce') and isinstance(e, ml.Coalesce):
+                expr(getattr(e, 'left', None))
+                expr(getattr(e, 'right', None))
+                return
+            if ((hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard))
+                    or (hasattr(ml, 'IsType') and isinstance(e, ml.IsType))):
+                expr(getattr(e, 'expr', None))
+                return
             if hasattr(ml, 'Call') and isinstance(e, ml.Call):
                 expr(getattr(e, 'callee', None))
                 for aa in getattr(e, 'args', []) or []:
@@ -1795,6 +1803,9 @@ class CodegenStmt:
                 return
             if hasattr(ml, 'Member') and isinstance(e, ml.Member):
                 expr(getattr(e, 'target', None) or getattr(e, 'obj', None))
+                return
+            if hasattr(ml, 'SafeMember') and isinstance(e, ml.SafeMember):
+                expr(getattr(e, 'target', None))
                 return
             if hasattr(ml, 'ArrayLit') and isinstance(e, ml.ArrayLit):
                 for it in getattr(e, 'items', []) or []:
@@ -1943,6 +1954,14 @@ class CodegenStmt:
                 expr_reads(getattr(e, 'left', None), out)
                 expr_reads(getattr(e, 'right', None), out)
                 return
+            if hasattr(ml, 'Coalesce') and isinstance(e, ml.Coalesce):
+                expr_reads(getattr(e, 'left', None), out)
+                expr_reads(getattr(e, 'right', None), out)
+                return
+            if ((hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard))
+                    or (hasattr(ml, 'IsType') and isinstance(e, ml.IsType))):
+                expr_reads(getattr(e, 'expr', None), out)
+                return
             if hasattr(ml, 'Call') and isinstance(e, ml.Call):
                 expr_reads(getattr(e, 'callee', None), out)
                 for aa in getattr(e, 'args', []) or []:
@@ -1954,6 +1973,9 @@ class CodegenStmt:
                 return
             if hasattr(ml, 'Member') and isinstance(e, ml.Member):
                 expr_reads(getattr(e, 'target', None) or getattr(e, 'obj', None), out)
+                return
+            if hasattr(ml, 'SafeMember') and isinstance(e, ml.SafeMember):
+                expr_reads(getattr(e, 'target', None), out)
                 return
             if hasattr(ml, 'ArrayLit') and isinstance(e, ml.ArrayLit):
                 for it in getattr(e, 'items', []) or []:
@@ -4571,6 +4593,13 @@ class CodegenStmt:
                             raise self.error(f"duplicate field {f} in struct {qname}", st)
                         seen.add(f)
                     self.struct_fields[qname] = fields
+                    source_types = list(getattr(st, "field_types", []) or [])
+                    source_optional = list(getattr(st, "field_optional", []) or [])
+                    self.struct_field_types[qname] = [
+                        (source_types[i] if i < len(source_types) else None,
+                         bool(source_optional[i]) if i < len(source_optional) else False)
+                        for i in range(len(fields))
+                    ]
                     if qname not in self.struct_id:
                         self.struct_id[qname] = next_sid
                         next_sid += 1
@@ -4616,6 +4645,13 @@ class CodegenStmt:
                                 is_static=is_static,
                                 is_inline=bool(getattr(mfn, "is_inline", False)),
                                 is_synchronized=bool(getattr(mfn, "is_synchronized", False)),
+                                param_types=(([] if is_static else [None]) + list(getattr(mfn, "param_types", []) or [])),
+                                param_optional=(([] if is_static else [False]) + list(getattr(mfn, "param_optional", []) or [])),
+                                param_defaults=(([] if is_static else [None]) + list(getattr(mfn, "param_defaults", []) or [])),
+                                variadic_index=(int(getattr(mfn, "variadic_index", -1)) + (0 if is_static else 1)
+                                                if int(getattr(mfn, "variadic_index", -1)) >= 0 else -1),
+                                return_type=getattr(mfn, "return_type", None),
+                                return_optional=bool(getattr(mfn, "return_optional", False)),
                             )
                             # preserve source position/filename if present
                             for attr in ("_pos", "_filename"):
@@ -6103,6 +6139,16 @@ class CodegenStmt:
                 analyze_expr(e.right)
                 return
 
+            if hasattr(ml, 'Coalesce') and isinstance(e, ml.Coalesce):
+                analyze_expr(e.left)
+                analyze_expr(e.right)
+                return
+
+            if ((hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard))
+                    or (hasattr(ml, 'IsType') and isinstance(e, ml.IsType))):
+                analyze_expr(e.expr)
+                return
+
             if isinstance(e, ml.ArrayLit):
                 for it in e.items:
                     analyze_expr(it)
@@ -6111,6 +6157,34 @@ class CodegenStmt:
             if isinstance(e, ml.Index):
                 analyze_expr(e.target)
                 analyze_expr(e.index)
+                return
+
+            if hasattr(ml, 'SafeMember') and isinstance(e, ml.SafeMember):
+                analyze_expr(e.target)
+                return
+
+            if isinstance(e, ml.Member):
+                # A qualified module member used as a first-class value (for
+                # example `handler = alias.callback`) is a declaration, not a
+                # read of a runtime variable named `alias`.
+                parts: List[str] = []
+                cur = e
+                while isinstance(cur, ml.Member):
+                    parts.append(str(cur.name))
+                    cur = cur.target
+                if isinstance(cur, ml.Var):
+                    parts.append(str(cur.name))
+                    parts.reverse()
+                    qn0 = ".".join(parts)
+                    aliases = getattr(self, "import_aliases", None) or {}
+                    if parts and parts[0] in aliases:
+                        return
+                    qn = self._apply_import_alias(qn0)
+                    if qn in allowed_function_names or qn in allowed_struct_names or qn in allowed_extern_names:
+                        return
+                # Preserve the legacy member-analysis behavior. Runtime member
+                # bases are validated while emitting the member expression;
+                # qualified constants/types need no local binding here.
                 return
 
             if isinstance(e, getattr(ml, 'StructInit', ())):

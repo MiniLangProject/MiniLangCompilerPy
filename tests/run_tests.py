@@ -3781,6 +3781,8 @@ def main() -> int:
     # Locate main test programs
     language_suite_ml = (find_file_by_name(tests_root, "language_suite.ml") or find_ml_containing(tests_root,
                                                                                                   "=== BASIC (INT/BOOL) ==="))
+    language_extensions_ml = find_file_by_name(tests_root, "language_extensions.ml")
+    language_type_guard_object_ml = find_file_by_name(tests_root, "language_type_guard_object.ml")
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
@@ -3843,6 +3845,38 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="language_suite.ml (full language suite)", status="SKIP",
                                         details="language_suite.ml not found"))
+
+    if language_extensions_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="language extensions: types, calls, lambdas, match, iterators, interfaces and async",
+            mlc_runner=mlc_runner, ml_path=language_extensions_ml,
+            must_contain=["[OK] language extensions"], timeout_compile_s=180, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(
+            name="language extensions: types, calls, lambdas, match, iterators, interfaces and async",
+            status="SKIP", details="language_extensions.ml not found"))
+
+    if language_type_guard_object_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="typed struct fields retain runtime guards",
+            mlc_runner=mlc_runner, ml_path=language_type_guard_object_ml,
+            must_contain=["[OK] typed struct field guards"],
+            timeout_compile_s=120, timeout_run_s=120))
+
+    for negative_name, negative_file, marker in [
+        ("language interface requires every method", "language_interface_missing.ml", "does not implement"),
+        ("language interface validates typed signatures", "language_interface_signature.ml", "incompatible interface signature"),
+        ("language iterator rejects value returns", "language_iterator_return.ml", "use yield"),
+        ("language named arguments reject duplicates", "language_named_argument_error.ml", "supplied more than once"),
+        ("language lambda rejects unresolved call-shape metadata", "language_lambda_parameter_error.ml", "Lambda parameters do not support"),
+    ]:
+        negative_path = find_file_by_name(tests_root, negative_file)
+        if negative_path is not None:
+            tests.append(lambda n=negative_name, p=negative_path, m=marker: test_compile_expected_fail(
+                name=n, mlc_runner=mlc_runner, entry_ml=p, must_contain_err=m))
+        else:
+            tests.append(lambda n=negative_name, f=negative_file: TestResult(
+                name=n, status="SKIP", details=f + " not found"))
 
     if input_length_regression_ml is not None:
         tests.append(lambda: test_program_no_fail(

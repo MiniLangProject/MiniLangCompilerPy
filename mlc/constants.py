@@ -125,6 +125,9 @@ ERR_MEMBER_NOT_FOUND = 1306
 # Array initializer errors
 ERR_ARRAY_INIT_SIZE = 1307
 
+# Gradual type annotation violated at a parameter/assignment/return boundary.
+ERR_TYPE_GUARD = 1308
+
 # Module initialization dependency / cycle
 ERR_MODULE_INIT_CYCLE = 1400
 
