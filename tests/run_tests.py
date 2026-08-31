@@ -475,27 +475,33 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """A manifest build must compile, run, restore, and invalidate safely."""
     with tempfile.TemporaryDirectory(prefix="mltests_project_") as td:
         root = Path(td)
-        source = root / "main.ml"
+        source_dir = root / "src"
+        source_dir.mkdir()
+        source = source_dir / "main.ml"
+        shared = root / "shared.ml"
         output = root / "build" / "app.exe"
         manifest = root / "minilang.toml"
+        shared.write_text('package shared\nfunction text()\n  return "shared v1 [OK]"\nend function\n', encoding="utf-8")
         source.write_text(
-            '#option ENABLED: bool = false\n#if ENABLED\nprint "manifest v1 [OK]"\n'
+            'import "../shared.ml" as shared\n#option ENABLED: bool = false\n'
+            '#if ENABLED\nprint "manifest v1 [OK] " + shared.text()\n'
             '#else\nprint "manifest disabled [OK]"\n#endif\n',
             encoding="utf-8",
         )
         manifest.write_text(
-            '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
-            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = true\n', encoding="utf-8")
+            '[project]\nentry = "src/main.ml"\noutput = "build/app.exe"\n'
+            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n'
+            'compiler_args = ["--asm-cols", "addr,code"]\n\n[defines]\nENABLED = true\n', encoding="utf-8")
         cmd = [sys.executable, str(mlc_runner), "--project", str(manifest)]
         first = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if first.returncode != 0 or not output.is_file():
             return TestResult(name=name, status="FAIL", details="initial manifest build failed",
                               stdout=first.stdout, stderr=first.stderr)
         cache_dir = root / ".cache"
-        if (not (cache_dir / "build.exe").is_file()
-                or not (cache_dir / "build.state").is_file()
-                or (cache_dir / "build.exe.tmp").exists()
-                or (cache_dir / "build.state.tmp").exists()):
+        state_lines = (cache_dir / "build.state").read_text(encoding="ascii").splitlines()
+        cached_artifact = cache_dir / f"build.{state_lines[0]}.exe" if state_lines else cache_dir / "missing"
+        if (len(state_lines) != 2 or not cached_artifact.is_file()
+                or any(cache_dir.glob("*.tmp"))):
             return TestResult(name=name, status="FAIL", details="cache publication left incomplete files",
                               stdout=first.stdout, stderr=first.stderr)
         output.unlink()
@@ -507,8 +513,32 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
         if run1.returncode != 0 or "manifest v1 [OK]" not in normalize_out(run1.stdout):
             return TestResult(name=name, status="FAIL", details="restored program failed", stdout=run1.stdout,
                               stderr=run1.stderr)
+
+        # A damaged cached executable must be rejected rather than restored.
+        output.unlink()
+        cached_artifact.write_bytes(b"damaged-cache-artifact")
+        damaged = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if damaged.returncode != 0 or "cache hit" in normalize_out(damaged.stdout).lower():
+            return TestResult(name=name, status="FAIL", details="damaged cache artifact was accepted",
+                              stdout=damaged.stdout, stderr=damaged.stderr)
+        damaged_run = run_exe(output)
+        if damaged_run.returncode != 0 or "manifest v1 [OK]" not in normalize_out(damaged_run.stdout):
+            return TestResult(name=name, status="FAIL", details="damaged cache recovery failed",
+                              stdout=damaged_run.stdout, stderr=damaged_run.stderr)
+
+        # The relative import escapes src/, but remains part of the fingerprint.
+        shared.write_text('package shared\nfunction text()\n  return "shared v2 [OK]"\nend function\n', encoding="utf-8")
+        imported_changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
+        if imported_changed.returncode != 0 or "cache hit" in normalize_out(imported_changed.stdout).lower():
+            return TestResult(name=name, status="FAIL", details="external import change did not invalidate cache",
+                              stdout=imported_changed.stdout, stderr=imported_changed.stderr)
+        imported_run = run_exe(output)
+        if imported_run.returncode != 0 or "shared v2 [OK]" not in normalize_out(imported_run.stdout):
+            return TestResult(name=name, status="FAIL", details="external import rebuild is stale",
+                              stdout=imported_run.stdout, stderr=imported_run.stderr)
         source.write_text(
-            '#option ENABLED: bool = false\n#if ENABLED\nprint "manifest v2 [OK]"\n'
+            'import "../shared.ml" as shared\n#option ENABLED: bool = false\n'
+            '#if ENABLED\nprint "manifest v2 [OK] " + shared.text()\n'
             '#else\nprint "manifest disabled [OK]"\n#endif\n',
             encoding="utf-8",
         )
@@ -521,8 +551,9 @@ def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
             return TestResult(name=name, status="FAIL", details="rebuilt program is stale", stdout=run2.stdout,
                               stderr=run2.stderr)
         manifest.write_text(
-            '[project]\nentry = "main.ml"\noutput = "build/app.exe"\n'
-            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n\n[defines]\nENABLED = false\n', encoding="utf-8")
+            '[project]\nentry = "src/main.ml"\noutput = "build/app.exe"\n'
+            'object_pipeline = false\nincremental = true\ncache_dir = ".cache"\n'
+            'compiler_args = ["--asm-cols", "addr,code"]\n\n[defines]\nENABLED = false\n', encoding="utf-8")
         define_changed = run_cmd(cmd, cwd=mlc_runner.parent, timeout_s=240)
         if define_changed.returncode != 0 or "cache hit" in normalize_out(define_changed.stdout).lower():
             return TestResult(name=name, status="FAIL", details="define change did not invalidate cache",

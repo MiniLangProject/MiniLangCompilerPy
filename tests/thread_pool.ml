@@ -147,6 +147,32 @@ function main(args)
   if not immediateRunning.Dispose() or not immediateQueued.Dispose() then return 46 end if
   if not immediate.Dispose() or not immediateGate.close() then return 47 end if
 
+  // Hold the only worker while a large unbounded backlog forces several
+  // circular-buffer growth steps. Results also verify FIFO slot preservation.
+  backlogGate = threading.Event.new(true, false)
+  backlogPool = threadPool.ThreadPool.new(1)
+  backlogBlocker = backlogPool.Submit(blockingWorker, backlogGate)
+  if typeof(backlogBlocker) != "struct" or not waitUntilRunning(backlogBlocker) then return 48 end if
+  backlogJobs = array(512)
+  i = 0
+  while i < len(backlogJobs)
+    backlogJobs[i] = backlogPool.Submit(poolWorker, i + 1)
+    if typeof(backlogJobs[i]) != "struct" then return 49 end if
+    i = i + 1
+  end while
+  if backlogPool.PendingCount() != len(backlogJobs) then return 50 end if
+  if not backlogGate.set() or not backlogPool.Shutdown() or not backlogPool.AwaitTerminationFor(20000) then return 51 end if
+  if not backlogBlocker.WaitFor(1000) or backlogBlocker.GetResult() != 123 then return 52 end if
+  i = 0
+  while i < len(backlogJobs)
+    if not backlogJobs[i].WaitFor(1000) or backlogJobs[i].GetStatus() != "Completed" then return 53 end if
+    backlogValue = backlogJobs[i].GetResult()
+    if typeof(backlogValue) != "struct" or backlogValue.value != (i + 1) * (i + 1) then return 54 end if
+    if not backlogJobs[i].Dispose() then return 55 end if
+    i = i + 1
+  end while
+  if not backlogBlocker.Dispose() or not backlogPool.Dispose() or not backlogGate.close() then return 56 end if
+
   print "[OK] thread arguments, logical ids and managed thread pool"
   return 0
 end function

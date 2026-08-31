@@ -6,6 +6,7 @@ import argparse
 import io
 import re
 import os
+import stat
 import sys
 import ctypes
 import tempfile
@@ -1460,7 +1461,11 @@ def compile_to_exe(
         # a valid ELF image.  Windows cross-builds cannot represent that bit and
         # leave it to the copy/deployment step (WSL tests invoke chmod there).
         if os.name != 'nt':
-            os.chmod(output_exe, os.stat(output_exe).st_mode | 0o111)
+            current_mode = stat.S_IMODE(os.stat(output_exe).st_mode)
+            # Add execute permission only for identities which may read the
+            # file. This retains the caller's umask instead of broadening a
+            # private 0600 output to a group/world-readable executable.
+            os.chmod(output_exe, current_mode | ((current_mode & 0o444) >> 2))
 
         if isinstance(dump_labels_out, str) and dump_labels_out:
             with open(dump_labels_out, 'w', encoding='utf-8', newline='\n') as f:

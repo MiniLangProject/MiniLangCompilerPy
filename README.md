@@ -127,7 +127,8 @@ Notes:
 - `windows-x64` is the default and emits PE32+; `linux-x64` emits ELF64.
 - A Linux image created on Windows can be copied to Linux or run through WSL
   after `chmod +x output`. A Linux-hosted Python compiler adds the executable
-  permission bits automatically.
+  permission bits without widening the caller's `umask`; exact project-cache
+  restores preserve that mode.
 
 Common options:
 
@@ -255,21 +256,25 @@ For manifests that must work with both compilers, use the conservative TOML
 subset shown above: a `[project]` table, quoted strings, booleans, and
 single-line arrays of quoted strings. Keep comments on their own lines. The
 Python implementation uses `tomllib`; the self-hosted implementation has a
-small purpose-built parser for this shared subset.
+small purpose-built parser for this shared subset and preserves commas inside
+quoted array strings.
 
 The incremental cache is deliberately conservative. Its fingerprint covers the
-manifest, effective compiler arguments, compiler identity and every `.ml`
-source below the entry/include roots. An exact hit restores the already linked
-executable. Any relevant change performs a full build; this is artifact caching,
-not per-module incremental compilation. Listing and label-dump builds bypass
+manifest, effective compiler arguments, content-based compiler identity, every
+`.ml` source below the entry/include roots, and recursively quoted imports which
+escape those roots. An exact hit verifies the content-addressed executable and
+preserves its POSIX mode while restoring it. Any relevant change performs a
+full build; this is artifact caching, not per-module incremental compilation.
+Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
 compiler automatically selects its retained `.mlo` pipeline for large Windows
 or Linux import graphs when the field is omitted. An explicit `true` forces
 `.mlo`; an explicit `false` forces monolithic mode. The Python compiler accepts
 both values without changing its serial output.
-Cache artifacts and validation metadata are published atomically, so an
-interrupted update becomes a miss instead of restoring a partial build.
+Per-process temporary artifacts are published before one atomic state-pointer
+update, so interrupted or concurrent generations cannot pair one input digest
+with another executable. Damaged cached executables fail checksum validation.
 
 ### Conditional compilation
 
@@ -399,6 +404,24 @@ canonical layout is covered by automated byte-identity gates against both the
 normal self-hosted path and the Python bootstrap. Exact hashes, test counts,
 boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
+
+Current audited Windows fixed point (2026-08-31): with a warm filesystem cache
+and fresh object directories, this Python compiler produced Stage 1 in 60.398
+seconds at 1,100.8 MiB process-tree working set / 1,090.3 MiB private commit.
+The sibling native bootstrap produced Stage 2 in 99.976 seconds at 1,787.1 /
+2,005.9 MiB, and that generated compiler produced Stage 3 in 130.402 seconds at
+1,778.8 / 1,893.6 MiB. All three are byte-identical 62,788,096-byte images with
+SHA-256
+`EDA1417DD6B2D88B9DB3643189275CB1AB2B92BE65C4037428A98890746334D7`.
+One repeated Stage 3 probe exited transiently at support-tail emission after 318
+function objects; an isolated retry completed with the exact fixed-point image.
+The sibling build script now omits its self-host-only `--mem-probe` diagnostic
+flag automatically when selecting a clean Python bootstrap.
+
+#### Historical performance record
+
+The measurements below preserve the chronology of earlier optimization passes;
+the audited fixed-point values above describe the current trees.
 
 The self-hosted pipeline writes MLO v2 objects and now resolves same-fragment
 `rel32`/`rip32` fields directly in each materialized text fragment. Local
@@ -1407,6 +1430,8 @@ pool.Dispose()
 - `ThreadPool.new(workerCount)` uses an unbounded queue.
 - `ThreadPool.withQueueCapacity(workerCount, capacity)` bounds waiting jobs;
   capacity `0` is unbounded. Worker counts must be between 1 and 256.
+- Pending jobs use a geometrically growing circular buffer, keeping total queue
+  growth linear even when producers temporarily outrun every worker.
 - `Submit(function, data)` returns a `ThreadPoolJob`, or `void` after shutdown
   or when a bounded queue is full.
 - `PendingCount()`, `WorkerCount()` and `IsShutdown()` expose pool state.

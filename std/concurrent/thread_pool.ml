@@ -174,18 +174,26 @@ function _poolIsStopping(pool)
   return value
 end function
 
-// Compact an already-locked queue after enough consumed slots accumulate.
-function _poolCompactLocked(pool)
-  if pool.queueHead < 64 or pool.queueHead * 2 < len(pool.queue) then return end if
-  remaining = pool.queuedCount
-  compacted = array(remaining)
+// Grow the locked circular queue geometrically. Submitting N queued jobs now
+// performs O(N) total copying instead of copying the complete queue per job.
+function _poolEnsureQueueSpaceLocked(pool)
+  if pool.queuedCount < len(pool.queue) then return true end if
+  newCapacity = len(pool.queue) * 2
+  if newCapacity < 64 then newCapacity = 64 end if
+  if pool.queueCapacity > 0 and newCapacity > pool.queueCapacity then newCapacity = pool.queueCapacity end if
+  if newCapacity <= pool.queuedCount then return false end if
+  grown = array(newCapacity, 0)
   i = 0
-  while i < remaining
-    compacted[i] = pool.queue[pool.queueHead + i]
+  while i < pool.queuedCount
+    oldIndex = pool.queueHead + i
+    if len(pool.queue) > 0 then oldIndex = oldIndex % len(pool.queue) end if
+    grown[i] = pool.queue[oldIndex]
     i = i + 1
   end while
-  pool.queue = compacted
+  pool.queue = grown
   pool.queueHead = 0
+  pool.queueTail = pool.queuedCount
+  return true
 end function
 
 // Remove and return one queued job while preserving FIFO order.
@@ -195,9 +203,12 @@ function _poolTake(pool)
   if pool.queuedCount > 0 then
     job = pool.queue[pool.queueHead]
     pool.queue[pool.queueHead] = 0
-    pool.queueHead = pool.queueHead + 1
+    pool.queueHead = (pool.queueHead + 1) % len(pool.queue)
     pool.queuedCount = pool.queuedCount - 1
-    _poolCompactLocked(pool)
+    if pool.queuedCount == 0 then
+      pool.queueHead = 0
+      pool.queueTail = 0
+    end if
   end if
   pool.guard.release()
   return job
@@ -225,6 +236,7 @@ struct ThreadPool
   workers
   queue
   queueHead
+  queueTail
   queuedCount
   queueCapacity
   accepting
@@ -251,6 +263,7 @@ struct ThreadPool
       threading.Semaphore.new(0, SIGNAL_MAXIMUM),
       [],
       [],
+      0,
       0,
       0,
       queueCapacity,
@@ -299,7 +312,14 @@ struct ThreadPool
       job.close()
       return
     end if
-    this.queue = this.queue + [job]
+    if not _poolEnsureQueueSpaceLocked(this) then
+      this.guard.release()
+      job.cancel()
+      job.close()
+      return
+    end if
+    this.queue[this.queueTail] = job
+    this.queueTail = (this.queueTail + 1) % len(this.queue)
     this.queuedCount = this.queuedCount + 1
     this.guard.release()
     if not this.signal.release() then
@@ -353,14 +373,17 @@ struct ThreadPool
     end if
     this.accepting = false
     this.stopping = true
-    i = this.queueHead
-    while i < len(this.queue)
-      job = this.queue[i]
+    remaining = this.queuedCount
+    i = 0
+    while i < remaining
+      queueIndex = (this.queueHead + i) % len(this.queue)
+      job = this.queue[queueIndex]
       if typeof(job) != "void" then job.cancel() end if
-      this.queue[i] = 0
+      this.queue[queueIndex] = 0
       i = i + 1
     end while
-    this.queueHead = len(this.queue)
+    this.queueHead = 0
+    this.queueTail = 0
     this.queuedCount = 0
     count = len(this.workers)
     this.guard.release()
