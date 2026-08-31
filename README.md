@@ -1133,6 +1133,13 @@ A final `name...` parameter receives surplus positional arguments as an array.
 Dynamic callable values intentionally do not accept named arguments because
 their runtime representation has no parameter-name metadata.
 
+Non-optional annotations also feed the optimizer after their entry guard has
+succeeded. Proven integer, float, boolean, string, array, bytes and concrete
+struct values can therefore use the same specialized machine-code paths as
+locally inferred values. A proven primitive return expression also omits its
+otherwise redundant return-contract check; entry guards remain the dynamic
+call boundary.
+
 Expression lambdas use the existing closure implementation and may capture
 lexical variables:
 
@@ -1144,7 +1151,11 @@ print multiply(3)
 
 Lambda calls are positional. Lambda parameters support type annotations, but
 defaults and variadic tails are intentionally reserved for declared functions,
-whose signatures the compiler can resolve at the call site.
+whose signatures the compiler can resolve at the call site. Small expression
+lambdas and fully typed expression functions are automatically considered for
+the same bounded inliner as explicit `inline` declarations; every function
+still retains its normal callable body when the budget or eligibility check
+requires a fallback.
 
 Optional access and fallback expressions avoid manual `void` checks. `?.`
 short-circuits both field access and method calls, and `??` evaluates its right
@@ -1173,10 +1184,14 @@ end match
 ```
 
 Iterator functions collect yielded values into an array with geometric buffer
-growth. This provides the normal MiniLang iterable protocol without quadratic
-array concatenation. Iterators are currently eager, not resumable generators;
-`returns T` is the yielded-value contract and value-bearing `return` statements
-are rejected.
+growth. Prefixing the declaration with `lazy` instead returns a zero-argument
+pull closure: each call produces one value and exhaustion returns `void`.
+`for each` accepts both eager arrays and these pull closures, so a lazy iterator
+does not materialize an intermediate collection. In both forms, `returns T` is
+the yielded-value contract and explicit `return` statements are rejected.
+Lazy state machines currently support `yield` in straight-line code, `if`,
+`while`, `do while`, `for` and `for each`; `yield` inside `match`/`switch` or
+`synchronized`, `defer`, and multi-level `break` are rejected at compile time.
 
 ```ml
 iterator function numbers(limit as int) returns int
@@ -1184,7 +1199,18 @@ iterator function numbers(limit as int) returns int
     yield i
   end for
 end function
+
+lazy iterator function largeNumbers(limit as int) returns int
+  for i = 0 to limit
+    yield i
+  end for
+end function
 ```
+
+For a directly resolved variadic call, the compiler proves whether the tail can
+escape the callee. Read-only, call-scoped tails use an immutable stack array
+view; returned, captured, mutated or forwarded tails keep the normal managed
+heap array. This optimization does not change source semantics.
 
 Interfaces are compile-time structural contracts. `implements` verifies every
 required instance method and its complete parameter/variadic/optional/return
@@ -1204,13 +1230,17 @@ struct Person implements Named
 end struct
 ```
 
-Async functions are native-thread-backed and available on Windows and Linux.
-Calling one returns a `Thread` handle immediately; `await` joins a handle and
-returns its result, while a non-thread value passes through unchanged. `select`
-waits for the first completed handle and returns its zero-based index (`-1` for
-an empty list). Async declarations are currently limited to module or namespace
-scope; async struct methods and combined `async iterator` declarations are
-rejected. Threads retain MiniLang's shared GC heap and per-thread stack model.
+Async functions use one compiler-managed four-worker `ThreadPool` per program
+and are available on Windows and Linux. Calling one submits a job and returns a
+`ThreadPoolJob` immediately instead of creating a native thread per call.
+`await` accepts pool jobs, ordinary `Thread` handles and non-thread values;
+`select` accepts jobs and threads and returns the zero-based index of the first
+completed item (`-1` for an empty list). Async declarations are currently
+limited to module or namespace scope; async struct methods and combined
+`async iterator` declarations are rejected. Workers retain MiniLang's shared
+GC heap and private-stack model. A retained async handle owns native
+synchronization resources; call `Dispose()` after its result is no longer
+needed, as with an explicitly submitted `ThreadPoolJob`.
 
 ```ml
 async function fetch(id as int) returns string
@@ -1264,7 +1294,9 @@ end function
 
 For an eligible **direct** call such as `clamp01(v)`, the compiler expands the
 callee body at the call site (no call/ret overhead). `inline` is a bounded
-optimization request, not a guarantee.
+optimization request, not a guarantee. Small fully typed expression functions
+and generated expression lambdas are also eligible automatically; explicit
+`inline` remains useful for larger hand-selected bodies.
 
 Current behavior / limits:
 - Only supported for **top-level functions** and **struct methods** (`function inline ...`).
@@ -2676,7 +2708,7 @@ Statements are separated by newlines or `;`.
   - `<expr>[<index>] = ...` (multiline indexing allowed)
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
 - `function name(a as int, b as string? = void, rest...) returns int ... end function`
-- `async function name(...) ... end function` / `iterator function name(...) ... end function`
+- `async function name(...) ... end function` / `[lazy] iterator function name(...) ... end function`
 - `interface Name ... end interface`; `struct Name implements Interface ... end struct`
 - `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
 - optional entrypoint: `function main(args) ... end function`
@@ -2798,7 +2830,7 @@ What works:
 - bounded source-level `inline` functions with callable fallback bodies
 - first-class functions: user functions and many builtins are values; direct **and** indirect calls are supported
 - gradual runtime-checked type contracts, optional values/access, default/named/variadic calls and expression lambdas
-- value/range `match`, eager `iterator function`/`yield`, structural compile-time interfaces and native-thread-backed `async`/`await`/`select`
+- value/range `match`, eager/lazy `iterator function`/`yield`, structural compile-time interfaces and pooled `async`/`await`/`select`
 - real native threads on Win32 and Linux with cooperative cancellation, data/result handoff,
   native and logical ids, status/join APIs, private stacks, a process-wide
   thread-safe GC heap, synchronized globals/functions, fine-grained

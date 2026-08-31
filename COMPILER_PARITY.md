@@ -372,6 +372,9 @@ No existing feature was removed. The synchronized surface includes:
 - `Thread` as a first-class, case-insensitive `is` runtime category, verified
   together with every other public primitive, struct and enum category;
 - closures, captures, boxed variables and environment hops;
+- optimizer-backed type contracts, bounded automatic inline candidates for
+  typed expression functions/lambdas, eager and lazy pull iterators,
+  non-escaping variadic stack views, and pooled async jobs;
 - `foreach`, `switch`, namespaces and module initialization;
 - explicit-value enums, struct construction and constant folding;
 - call profiling/tracing;
@@ -389,8 +392,9 @@ user-function alignment, loop-invariant container-base hoisting, proven bounds-c
 elimination, GC-root/prologue sizing and short-back-edge selection. Stack sizing also
 accounts for calls hidden inside eligible inline bodies, so an expanded wide
 call cannot overwrite caller locals, debug saves or the root-frame record. The shared
-`tests/codegen_optimizations.ml` fixture covers optimized behavior and fallback
-semantics, including a narrow caller around a hidden ten-argument call. Listing
+`tests/codegen_optimizations.ml` and
+`tests/language_performance_features.ml` fixtures cover optimized behavior and
+fallback semantics, including a narrow caller around a hidden ten-argument call. Listing
 checks additionally verify float/bool/struct fast paths, specialized array and
 bytes indexing, invariant hoists, eliminated in-range loop checks, retained
 negative-index normalization, all inline fallback bodies and both the small and

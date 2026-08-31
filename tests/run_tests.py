@@ -3782,6 +3782,7 @@ def main() -> int:
     language_suite_ml = (find_file_by_name(tests_root, "language_suite.ml") or find_ml_containing(tests_root,
                                                                                                   "=== BASIC (INT/BOOL) ==="))
     language_extensions_ml = find_file_by_name(tests_root, "language_extensions.ml")
+    language_performance_features_ml = find_file_by_name(tests_root, "language_performance_features.ml")
     language_type_guard_object_ml = find_file_by_name(tests_root, "language_type_guard_object.ml")
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
@@ -3863,10 +3864,18 @@ def main() -> int:
             must_contain=["[OK] typed struct field guards"],
             timeout_compile_s=120, timeout_run_s=120))
 
+    if language_performance_features_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="optimized types, inline calls, lazy iterators, variadics and pooled async",
+            mlc_runner=mlc_runner, ml_path=language_performance_features_ml,
+            must_contain=["[OK] optimized language features"],
+            timeout_compile_s=180, timeout_run_s=120))
+
     for negative_name, negative_file, marker in [
         ("language interface requires every method", "language_interface_missing.ml", "does not implement"),
         ("language interface validates typed signatures", "language_interface_signature.ml", "incompatible interface signature"),
         ("language iterator rejects value returns", "language_iterator_return.ml", "use yield"),
+        ("language lazy iterator rejects suspended synchronization", "language_lazy_iterator_invalid.ml", "yield inside match/switch or synchronized"),
         ("language named arguments reject duplicates", "language_named_argument_error.ml", "supplied more than once"),
         ("language lambda rejects unresolved call-shape metadata", "language_lambda_parameter_error.ml", "Lambda parameters do not support"),
     ]:

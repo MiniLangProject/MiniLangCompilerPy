@@ -812,6 +812,39 @@ def load_modules_recursive(
 
     load_one(entry_abs, is_main=True)
 
+    # Async functions lower to the shared standard-library worker pool. Load
+    # that module and its transitive threading dependency implicitly so async
+    # remains a language feature rather than requiring a boilerplate import in
+    # every source file.
+    def _contains_async(node: Any) -> bool:
+        if node is None:
+            return False
+        if bool(getattr(node, "is_async", False)):
+            return True
+        for attr in ("body", "methods", "then_body", "else_body", "default_body"):
+            for child in list(getattr(node, attr, []) or []):
+                if _contains_async(child):
+                    return True
+        for _, branch in list(getattr(node, "elifs", []) or []):
+            if any(_contains_async(child) for child in list(branch or [])):
+                return True
+        for case in list(getattr(node, "cases", []) or []):
+            if any(_contains_async(child) for child in list(getattr(case, "body", []) or [])):
+                return True
+        return False
+
+    if any(_contains_async(st) for stmts in cache.values() for st in stmts):
+        async_module = os.path.join("std", "concurrent", "thread_pool.ml")
+        resolved, tried, _, _, _ = _resolve_import(
+            async_module, base_dir=entry_root, include_dirs=include_dirs_norm)
+        if not resolved:
+            tried_s = "\n".join("  - " + path for path in tried)
+            raise CompileError(
+                f"Async support module not found: {async_module}\nSearched:\n{tried_s}",
+                filename=entry_abs,
+            )
+        load_one(resolved, is_main=False)
+
     if keep_going and diags:
         raise MultiCompileError(diags)
 

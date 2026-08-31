@@ -86,8 +86,114 @@ class CodegenExpr:
                     raise self.error(f"Missing required argument '{params[i]}' for {getattr(fn, 'name', '<function>')}", call)
                 slots[i] = default
         if variadic >= 0:
-            slots.append(ml.ArrayLit(extras))
+            tail = ml.ArrayLit(extras)
+            if implicit == 0 and self._variadic_param_stack_safe(fn):
+                tail.stack_variadic = True
+            slots.append(tail)
         return slots
+
+    def _variadic_param_stack_safe(self, fn: Any) -> bool:
+        """Prove that a variadic array cannot escape the direct callee.
+
+        Safe callees may inspect length, index elements, or iterate the tail.
+        Mutation, returning/passing the array, and closure capture retain the
+        ordinary heap array. This keeps the stack view strictly call-scoped.
+        """
+        cached = getattr(fn, '_ml_stack_variadic_safe', None)
+        if isinstance(cached, bool):
+            return cached
+        ml = self.ml
+        raw_index = getattr(fn, 'variadic_index', -1)
+        index = int(raw_index) if raw_index is not None else -1
+        params = list(getattr(fn, 'params', []) or [])
+        if index < 0 or index >= len(params):
+            setattr(fn, '_ml_stack_variadic_safe', False)
+            return False
+        name = str(params[index])
+
+        def direct_var(expr: Any) -> bool:
+            return isinstance(expr, getattr(ml, 'Var', ())) and str(getattr(expr, 'name', '')) == name
+
+        def safe_expr(expr: Any) -> bool:
+            if expr is None:
+                return True
+            if direct_var(expr):
+                return False
+            if isinstance(expr, getattr(ml, 'Index', ())):
+                target = getattr(expr, 'target', None)
+                return ((direct_var(target) or safe_expr(target))
+                        and safe_expr(getattr(expr, 'index', None)))
+            if isinstance(expr, getattr(ml, 'Call', ())):
+                callee = getattr(expr, 'callee', None)
+                args = list(getattr(expr, 'args', []) or [])
+                allowed = (isinstance(callee, getattr(ml, 'Var', ()))
+                           and str(getattr(callee, 'name', '')) in ('len', 'typeof', 'typeName')
+                           and len(args) == 1 and direct_var(args[0]))
+                if allowed:
+                    return True
+                return safe_expr(callee) and all(safe_expr(arg) for arg in args)
+            for attr in ('left', 'right', 'expr', 'target', 'index', 'callee', 'obj'):
+                if not safe_expr(getattr(expr, attr, None)):
+                    return False
+            for attr in ('items', 'args', 'values'):
+                values = getattr(expr, attr, None)
+                if isinstance(values, dict):
+                    values = list(values.values())
+                for value in list(values or []):
+                    if isinstance(value, (list, tuple)) and len(value) >= 2:
+                        value = value[1]
+                    if not safe_expr(value):
+                        return False
+            return True
+
+        def safe_stmts(body: List[Any]) -> bool:
+            for st in body or []:
+                if isinstance(st, getattr(ml, 'FunctionDef', ())):
+                    if not safe_stmts(list(getattr(st, 'body', []) or [])):
+                        return False
+                    continue
+                if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()))):
+                    if str(getattr(st, 'name', '')) == name or not safe_expr(getattr(st, 'expr', None)):
+                        return False
+                elif isinstance(st, getattr(ml, 'SetIndex', ())):
+                    if direct_var(getattr(st, 'target', None)):
+                        return False
+                    if not (safe_expr(getattr(st, 'target', None))
+                            and safe_expr(getattr(st, 'index', None))
+                            and safe_expr(getattr(st, 'expr', None))):
+                        return False
+                elif self._is_foreach_stmt(st):
+                    iterable = getattr(st, 'iterable', None)
+                    if not (direct_var(iterable) or safe_expr(iterable)):
+                        return False
+                    if not safe_stmts(list(getattr(st, 'body', []) or [])):
+                        return False
+                    continue
+                else:
+                    for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj', 'lock'):
+                        if not safe_expr(getattr(st, attr, None)):
+                            return False
+                if isinstance(st, getattr(ml, 'If', ())):
+                    if not safe_stmts(list(getattr(st, 'then_body', []) or [])):
+                        return False
+                    for cond, branch in list(getattr(st, 'elifs', []) or []):
+                        if not safe_expr(cond) or not safe_stmts(list(branch or [])):
+                            return False
+                    if not safe_stmts(list(getattr(st, 'else_body', []) or [])):
+                        return False
+                elif isinstance(st, getattr(ml, 'Switch', ())):
+                    for case in list(getattr(st, 'cases', []) or []):
+                        if not safe_stmts(list(getattr(case, 'body', []) or [])):
+                            return False
+                    if not safe_stmts(list(getattr(st, 'default_body', []) or [])):
+                        return False
+                elif not safe_stmts(list(getattr(st, 'body', []) or [])):
+                    return False
+            return True
+
+        result = safe_stmts(list(getattr(fn, 'body', []) or []))
+        setattr(fn, '_ml_stack_variadic_safe', bool(result))
+        return bool(result)
 
     def _is_declared_instance_method(self, function_name: str) -> bool:
         """Return whether a hoisted function belongs to an instance method."""
@@ -363,7 +469,10 @@ class CodegenExpr:
             return True
         if isinstance(e, getattr(ml, 'Var', ())):
             name = str(getattr(e, 'name', '') or '')
-            if name not in (getattr(self, '_known_int_names', set()) or set()):
+            known_by_flow = name in (getattr(self, '_known_int_names', set()) or set())
+            known_by_contract = self._opt_value_type_base(
+                (getattr(self, '_known_value_types', {}) or {}).get(name)) == 'int'
+            if not (known_by_flow or known_by_contract):
                 return False
             try:
                 b = self.resolve_binding(name)
@@ -2260,6 +2369,7 @@ class CodegenExpr:
         saved_ctx_qn = getattr(self, '_current_fn_qname', None)
         saved_inline_alloc = bool(getattr(self, '_inline_alloc_enabled', False))
         saved_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
+        saved_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
         saved_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
         try:
@@ -2287,9 +2397,35 @@ class CodegenExpr:
             self.in_function = True
             self.func_ret_label = l_end
             self._inline_alloc_enabled = True
-            # Inline parameters are dynamically typed and the isolated inline
-            # scope does not run the full function analysis pass.
+            # Seed the isolated inline scope from the callee's non-optional
+            # parameter contracts. Local flow facts belong to the native body
+            # analysis and are intentionally not leaked into a caller scope.
             self._known_value_types = {}
+            params_typed = list(getattr(fn, 'params', []) or [])
+            declared_types = list(getattr(fn, 'param_types', []) or [])
+            declared_optional = list(getattr(fn, 'param_optional', []) or [])
+            aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+            primitive = {'int', 'float', 'bool', 'string', 'array', 'bytes',
+                         'function', 'thread', 'error', 'void'}
+            for index, name in enumerate(params_typed):
+                optional = bool(declared_optional[index]) if index < len(declared_optional) else False
+                raw_type = declared_types[index] if index < len(declared_types) else None
+                if optional or not raw_type:
+                    continue
+                raw = str(raw_type)
+                canonical = aliases.get(raw.lower(), raw.lower()) if '.' not in raw else raw
+                if canonical in primitive:
+                    fact = canonical
+                else:
+                    try:
+                        fact = 'struct:' + str(self._qualify_identifier(raw, fn, kind='struct'))
+                    except Exception:
+                        fact = 'struct:' + raw
+                self._known_value_types[str(name)] = fact
+            self._known_int_names = {
+                name for name, fact in self._known_value_types.items()
+                if self._opt_value_type_base(fact) == 'int'
+            }
             self._loop_index_fast_stack = []
 
             # Use the callee's qualification context for unqualified name resolution.
@@ -2345,6 +2481,7 @@ class CodegenExpr:
             self._current_fn_file = saved_ctx_file
             self._current_fn_qname = saved_ctx_qn
             self._known_value_types = saved_known_value_types
+            self._known_int_names = saved_known_int_names
             self._loop_index_fast_stack = saved_loop_index_fast_stack
 
             self._decl_site_bindings = saved_decl_site
@@ -6687,6 +6824,7 @@ class CodegenExpr:
                            if callee_name is not None else 0)
             if (callee_name is not None
                     and inline_used < 4096
+                    and not any(bool(getattr(arg, 'stack_variadic', False)) for arg in list(getattr(e, 'args', []) or []))
                     and callee_name in (getattr(self, 'inline_functions', {}) or {})):
                 b = None
                 try:
@@ -6900,7 +7038,15 @@ class CodegenExpr:
             # Member-call diagnostics need a few extra temp roots for assembled error strings;
             # plain indirect calls do not.
             diag_extra = 24 if callee_is_member else 0
-            base = self.alloc_expr_temps((nargs + 1) * 8 + diag_extra)
+            stack_varargs: dict[int, tuple[Any, int]] = {}
+            stack_vararg_bytes = 0
+            for index, arg in enumerate(call_args):
+                if (isinstance(arg, getattr(ml, 'ArrayLit', ()))
+                        and bool(getattr(arg, 'stack_variadic', False))):
+                    stack_varargs[index] = (arg, stack_vararg_bytes)
+                    stack_vararg_bytes += 8 + len(list(getattr(arg, 'items', []) or [])) * 8
+            temp_bytes = (nargs + 1) * 8 + diag_extra + stack_vararg_bytes
+            base = self.alloc_expr_temps(temp_bytes)
             void_imm = enc_void()
             if callee_is_member:
                 # Init diag temp slots to void (GC-safe even on first use)
@@ -6912,10 +7058,25 @@ class CodegenExpr:
             self.emit_expr(callee_expr)
             a.mov_rsp_disp32_rax(base)
 
+            stack_region = base + (nargs + 1) * 8 + diag_extra
+            for stack_array, relative in stack_varargs.values():
+                item_count = len(list(getattr(stack_array, 'items', []) or []))
+                a.mov_membase_disp_imm32('rsp', stack_region + relative, OBJ_ARRAY_IMM, qword=False)
+                a.mov_membase_disp_imm32('rsp', stack_region + relative + 4, item_count, qword=False)
+                for item_index in range(item_count):
+                    a.mov_membase_disp_imm32('rsp', stack_region + relative + 8 + item_index * 8,
+                                             void_imm, qword=True)
+
             for i, arg in enumerate(call_args):
                 if arg is None:
                     # injected dummy receiver for type-qualified helper instance method calls
                     a.mov_rax_imm64(enc_void())
+                elif i in stack_varargs:
+                    stack_array, relative = stack_varargs[i]
+                    for item_index, item in enumerate(list(getattr(stack_array, 'items', []) or [])):
+                        self.emit_expr(item)
+                        a.mov_rsp_disp32_rax(stack_region + relative + 8 + item_index * 8)
+                    a.lea_r64_membase_disp('rax', 'rsp', stack_region + relative)
                 else:
                     self.emit_expr(arg)
                 a.mov_rsp_disp32_rax(base + (i + 1) * 8)
@@ -7317,7 +7478,7 @@ class CodegenExpr:
                 a.mark(devirt_done_lbl)
 
             # --- GC safety: clear temps + outgoing stack args ---
-            self.free_expr_temps((nargs + 1) * 8 + diag_extra)
+            self.free_expr_temps(temp_bytes)
 
             void_imm = enc_void()
             if nargs > 4:

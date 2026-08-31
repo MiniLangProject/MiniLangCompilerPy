@@ -204,6 +204,9 @@ class Var(Expr):
 @dataclass
 class ArrayLit(Expr):
     items: List[Expr]
+    # Internal-only marker: a proven non-escaping variadic tail may use an
+    # immutable stack view for the duration of its direct call.
+    stack_variadic: bool = False
 
 
 @dataclass
@@ -1370,12 +1373,22 @@ class Parser:
 
             return self._attach_pos(ExternFunctionDef(name_tok.value, params, dll, symbol, ret_ty), start_pos)
 
-        # [async|iterator] function [inline] [synchronized] name(params)
-        if t.kind == "KW" and t.value in ("function", "async", "iterator"):
+        # [async|iterator] function ... or contextual `lazy iterator function ...`.
+        # `lazy` intentionally remains an identifier outside this exact header.
+        is_lazy_iterator = (t.kind == "IDENT" and t.value == "lazy"
+                            and self.peek2().kind == "KW" and self.peek2().value == "iterator"
+                            and self.i + 2 < len(self.tokens)
+                            and self.tokens[self.i + 2].kind == "KW"
+                            and self.tokens[self.i + 2].value == "function")
+        if ((t.kind == "KW" and t.value in ("function", "async", "iterator"))
+                or is_lazy_iterator):
             is_async = t.value == "async"
-            is_iterator = t.value == "iterator"
+            is_iterator = 2 if is_lazy_iterator else (t.value == "iterator")
             self.advance()
-            if is_async or is_iterator:
+            if is_lazy_iterator:
+                self.expect("KW", "iterator")
+                self.expect("KW", "function")
+            elif is_async or is_iterator:
                 self.expect("KW", "function")
             is_inline = False
             is_synchronized = False
@@ -2171,6 +2184,8 @@ class _LanguageLowerer:
         self.needs_select = False
         self.await_source: Optional[Expr] = None
         self.select_source: Optional[Expr] = None
+        self.needs_async_pool = False
+        self.async_pool_name = "__ml_async_pool_global"
 
     def fresh(self, stem: str) -> str:
         self.serial += 1
@@ -2239,7 +2254,10 @@ class _LanguageLowerer:
         elif isinstance(st, FunctionDef):
             st.body = self.lower_block(st.body, function_depth=function_depth + 1)
             if st.is_iterator:
-                self.lower_iterator(st)
+                if int(st.is_iterator) == 2:
+                    self.lower_lazy_iterator(st)
+                else:
+                    self.lower_iterator(st)
             if st.is_async:
                 if function_depth > 0:
                     raise ParseError("async functions must be declared at module or namespace scope", getattr(st, "_pos", 0))
@@ -2248,7 +2266,10 @@ class _LanguageLowerer:
             for method in st.methods:
                 method.body = self.lower_block(method.body, function_depth=function_depth + 1)
                 if method.is_iterator:
-                    self.lower_iterator(method)
+                    if int(method.is_iterator) == 2:
+                        self.lower_lazy_iterator(method)
+                    else:
+                        self.lower_iterator(method)
                 if method.is_async:
                     raise ParseError("async struct methods are not supported; use a module-level async function", getattr(method, "_pos", 0))
         elif isinstance(st, If):
@@ -2374,11 +2395,208 @@ class _LanguageLowerer:
         fn.body = init + original + finish
         fn.is_iterator = False
 
+    def lower_lazy_iterator(self, fn: FunctionDef) -> None:
+        """Lower a pull iterator to a zero-argument closure state machine.
+
+        The returned closure computes one `yield` per call and returns `void`
+        after exhaustion. `for each` recognizes this callable pull protocol,
+        so values are never materialized into an intermediate array.
+        """
+        if fn.is_async:
+            raise ParseError("A function cannot be both async and iterator", getattr(fn, "_pos", 0))
+
+        state_name = self.fresh("lazy_state")
+        next_name = self.fresh("lazy_next")
+        blocks: List[List[Stmt]] = []
+        persistent: set[str] = {state_name}
+        globals_declared: set[str] = set()
+
+        def tagged(node: Any, src: Any = fn) -> Any:
+            return _copy_source_pos(node, src)
+
+        def reserve() -> int:
+            blocks.append([])
+            return len(blocks) - 1
+
+        def jump(target: int, src: Any = fn) -> List[Stmt]:
+            return [tagged(Assign(state_name, tagged(Num(target), src)), src), tagged(Continue(), src)]
+
+        def contains_yield(st: Stmt) -> bool:
+            if isinstance(st, Yield):
+                return True
+            if isinstance(st, FunctionDef):
+                return False
+            if isinstance(st, If):
+                return (any(contains_yield(x) for x in st.then_body)
+                        or any(contains_yield(x) for _, body in st.elifs for x in body)
+                        or any(contains_yield(x) for x in st.else_body))
+            if isinstance(st, Switch):
+                return (any(contains_yield(x) for case in st.cases for x in case.body)
+                        or any(contains_yield(x) for x in st.default_body))
+            return any(contains_yield(x) for x in list(getattr(st, "body", []) or []))
+
+        def collect_names(body: List[Stmt]) -> None:
+            for st in body:
+                if isinstance(st, GlobalDecl):
+                    globals_declared.update(st.names)
+                    continue
+                if isinstance(st, (Assign, ConstDecl, SynchronizedDecl)):
+                    persistent.add(str(st.name))
+                elif isinstance(st, (For, ForEach)):
+                    persistent.add(str(st.var))
+                elif isinstance(st, FunctionDef):
+                    persistent.add(str(st.name))
+                    continue
+                if isinstance(st, If):
+                    collect_names(st.then_body)
+                    for _, branch in st.elifs:
+                        collect_names(branch)
+                    collect_names(st.else_body)
+                elif isinstance(st, Switch):
+                    for case in st.cases:
+                        collect_names(case.body)
+                    collect_names(st.default_body)
+                else:
+                    collect_names(list(getattr(st, "body", []) or []))
+
+        collect_names(fn.body)
+
+        def compile_seq(body: List[Stmt], cont: int,
+                        break_target: Optional[int] = None,
+                        continue_target: Optional[int] = None) -> int:
+            current = cont
+            for st in reversed(body):
+                src = st
+                if isinstance(st, Yield):
+                    block = reserve()
+                    value: Expr = st.expr if st.expr is not None else tagged(VoidLit(), st)
+                    if fn.return_type:
+                        value = tagged(TypeGuard(value, fn.return_type, fn.return_optional), st)
+                    blocks[block] = [tagged(Assign(state_name, tagged(Num(current), st)), st),
+                                     tagged(Return(value), st)]
+                    current = block
+                    continue
+                if isinstance(st, Return):
+                    raise ParseError("iterator functions use yield and cannot return a value", getattr(st, "_pos", 0))
+                if isinstance(st, Break):
+                    if int(getattr(st, "count", 1) or 1) != 1 or break_target is None:
+                        raise ParseError("lazy iterators only support break for the innermost loop", getattr(st, "_pos", 0))
+                    block = reserve()
+                    blocks[block] = jump(break_target, src)
+                    current = block
+                    continue
+                if isinstance(st, Continue):
+                    if continue_target is None:
+                        raise ParseError("continue outside a lazy-iterator loop", getattr(st, "_pos", 0))
+                    block = reserve()
+                    blocks[block] = jump(continue_target, src)
+                    current = block
+                    continue
+                if isinstance(st, If):
+                    then_entry = compile_seq(st.then_body, current, break_target, continue_target)
+                    else_entry = compile_seq(st.else_body, current, break_target, continue_target)
+                    elif_entries = [(cond, compile_seq(branch, current, break_target, continue_target))
+                                    for cond, branch in st.elifs]
+                    branch = reserve()
+                    branch_elifs = [(cond, jump(entry, st)) for cond, entry in elif_entries]
+                    blocks[branch] = [tagged(If(st.cond, jump(then_entry, st), branch_elifs,
+                                                       jump(else_entry, st)), st)]
+                    current = branch
+                    continue
+                if isinstance(st, While):
+                    cond_block = reserve()
+                    body_entry = compile_seq(st.body, cond_block, current, cond_block)
+                    blocks[cond_block] = [tagged(If(st.cond, jump(body_entry, st), [], jump(current, st)), st)]
+                    current = cond_block
+                    continue
+                if isinstance(st, DoWhile):
+                    cond_block = reserve()
+                    body_entry = compile_seq(st.body, cond_block, current, cond_block)
+                    blocks[cond_block] = [tagged(If(st.cond, jump(body_entry, st), [], jump(current, st)), st)]
+                    current = body_entry
+                    continue
+                if isinstance(st, For):
+                    end_name = self.fresh("lazy_for_end")
+                    step_name = self.fresh("lazy_for_step")
+                    persistent.update((st.var, end_name, step_name))
+                    cond_block = reserve()
+                    inc_block = reserve()
+                    body_entry = compile_seq(st.body, inc_block, current, inc_block)
+                    positive = tagged(Bin(Var(step_name), ">", Num(0)), st)
+                    within_up = tagged(Bin(Var(st.var), "<=", Var(end_name)), st)
+                    within_down = tagged(Bin(Var(st.var), ">=", Var(end_name)), st)
+                    condition = tagged(Bin(tagged(Bin(positive, "and", within_up), st), "or",
+                                           tagged(Bin(tagged(Unary("not", positive), st), "and", within_down), st)), st)
+                    blocks[cond_block] = [tagged(If(condition, jump(body_entry, st), [], jump(current, st)), st)]
+                    blocks[inc_block] = [tagged(Assign(st.var, tagged(Bin(Var(st.var), "+", Var(step_name)), st)), st)] + jump(cond_block, st)
+                    init_block = reserve()
+                    blocks[init_block] = [
+                        tagged(Assign(st.var, st.start), st),
+                        tagged(Assign(end_name, st.end), st),
+                        tagged(If(tagged(Bin(Var(st.var), "<=", Var(end_name)), st),
+                                  [tagged(Assign(step_name, tagged(Num(1), st)), st)], [],
+                                  [tagged(Assign(step_name, tagged(Num(-1), st)), st)]), st),
+                    ] + jump(cond_block, st)
+                    current = init_block
+                    continue
+                if isinstance(st, ForEach):
+                    seq_name = self.fresh("lazy_each_seq")
+                    index_name = self.fresh("lazy_each_index")
+                    persistent.update((st.var, seq_name, index_name))
+                    cond_block = reserve()
+                    inc_block = reserve()
+                    body_entry = compile_seq(st.body, inc_block, current, inc_block)
+                    load_block = reserve()
+                    blocks[load_block] = [tagged(Assign(st.var, tagged(Index(Var(seq_name), Var(index_name)), st)), st)] + jump(body_entry, st)
+                    cond = tagged(Bin(Var(index_name), "<", tagged(Call(Var("len"), [Var(seq_name)]), st)), st)
+                    blocks[cond_block] = [tagged(If(cond, jump(load_block, st), [], jump(current, st)), st)]
+                    blocks[inc_block] = [tagged(Assign(index_name, tagged(Bin(Var(index_name), "+", Num(1)), st)), st)] + jump(cond_block, st)
+                    init_block = reserve()
+                    blocks[init_block] = [tagged(Assign(seq_name, st.iterable), st),
+                                          tagged(Assign(index_name, tagged(Num(0), st)), st)] + jump(cond_block, st)
+                    current = init_block
+                    continue
+                if isinstance(st, (Switch, SynchronizedBlock)) and contains_yield(st):
+                    raise ParseError("yield inside match/switch or synchronized is not supported by lazy iterators",
+                                     getattr(st, "_pos", 0))
+                if isinstance(st, Defer):
+                    raise ParseError("defer is not supported inside a lazy iterator", getattr(st, "_pos", 0))
+
+                simple: Stmt = st
+                if isinstance(st, ConstDecl):
+                    simple = tagged(Assign(st.name, st.expr), st)
+                block = reserve()
+                blocks[block] = [simple] + jump(current, src)
+                current = block
+            return current
+
+        done = reserve()
+        blocks[done] = [tagged(Return(tagged(VoidLit(), fn)), fn)]
+        entry = compile_seq(fn.body, done)
+
+        cases: List[SwitchCase] = []
+        for index, body in enumerate(blocks):
+            case = tagged(SwitchCase("values", [tagged(Num(index), fn)], None, None, body), fn)
+            cases.append(case)
+        dispatch = tagged(Switch(tagged(Var(state_name), fn), cases,
+                                 [tagged(Return(tagged(VoidLit(), fn)), fn)]), fn)
+        next_fn = tagged(FunctionDef(next_name, [], [tagged(While(tagged(Bool(True), fn), [dispatch]), fn)]), fn)
+
+        initializers: List[Stmt] = []
+        for name in sorted(persistent - set(fn.params) - globals_declared - {state_name}):
+            initializers.append(tagged(Assign(name, tagged(VoidLit(), fn)), fn))
+        initializers.append(tagged(Assign(state_name, tagged(Num(entry), fn)), fn))
+        fn.body = initializers + [next_fn, tagged(Return(tagged(Var(next_name), fn)), fn)]
+        # The declared return type describes yielded elements, not the closure.
+        fn.return_type = None
+        fn.return_optional = False
+        fn.is_iterator = False
+
     def lower_async(self, fn: FunctionDef) -> List[Stmt]:
         impl_name = self.fresh("async_impl")
         entry_name = self.fresh("async_entry")
         arg_name = self.fresh("async_args")
-        thread_name = self.fresh("async_thread")
+        self.needs_async_pool = True
 
         impl = _copy_source_pos(FunctionDef(impl_name, list(fn.params), fn.body,
                                             param_types=list(fn.param_types), param_optional=list(fn.param_optional),
@@ -2389,23 +2607,23 @@ class _LanguageLowerer:
         entry = _copy_source_pos(FunctionDef(entry_name, [arg_name], [Return(entry_call)]), fn)
 
         packed = _copy_source_pos(ArrayLit([Var(name) for name in fn.params]), fn)
-        wrapper_body: List[Stmt] = [
-            _copy_source_pos(Assign(thread_name, Call(Var("Thread"), [Var(entry_name)])), fn),
-            _copy_source_pos(ExprStmt(Call(Member(Var(thread_name), "Start"), [packed])), fn),
-            _copy_source_pos(Return(Var(thread_name)), fn),
-        ]
+        submit = _copy_source_pos(Call(Member(Var(self.async_pool_name), "Submit"),
+                                       [Var(entry_name), packed]), fn)
+        wrapper_body: List[Stmt] = [_copy_source_pos(Return(submit), fn)]
         wrapper = _copy_source_pos(FunctionDef(fn.name, list(fn.params), wrapper_body,
                                                is_static=fn.is_static,
                                                param_types=list(fn.param_types), param_optional=list(fn.param_optional),
                                                param_defaults=list(fn.param_defaults), variadic_index=fn.variadic_index,
-                                               return_type=fn.return_type, return_optional=fn.return_optional), fn)
+                                               return_type=None, return_optional=False), fn)
         return [impl, entry, wrapper]
 
     def await_helper(self) -> FunctionDef:
         value = Var("value")
         is_thread = Bin(Call(Var("typeof"), [value]), "==", Str("thread"))
+        is_job = IsType(value, "std.concurrent.thread_pool.ThreadPoolJob", False)
         body: List[Stmt] = [
             If(is_thread, [ExprStmt(Call(Member(value, "Join"), [])), Return(Call(Member(value, "Result"), []))], [], []),
+            If(is_job, [ExprStmt(Call(Member(value, "Wait"), [])), Return(Call(Member(value, "GetResult"), []))], [], []),
             Return(value),
         ]
         return FunctionDef("__ml_await", ["value"], body)
@@ -2416,12 +2634,16 @@ class _LanguageLowerer:
         handle = Var("__ml_select_handle")
         valid = Bin(Call(Var("typeof"), [handles]), "==", Str("array"))
         nonempty = Bin(Call(Var("len"), [handles]), ">", Num(0))
-        completed = Unary("not", Call(Member(handle, "IsAlive"), []))
+        is_thread = Bin(Call(Var("typeof"), [handle]), "==", Str("thread"))
+        is_job = IsType(handle, "std.concurrent.thread_pool.ThreadPoolJob", False)
+        completed_thread = Bin(is_thread, "and", Unary("not", Call(Member(handle, "IsAlive"), [])))
+        completed_job = Bin(is_job, "and", Call(Member(handle, "IsDone"), []))
+        completed = Bin(completed_thread, "or", completed_job)
         loop = While(Bool(True), [
             For("__ml_select_i", Num(0), Bin(Call(Var("len"), [handles]), "-", Num(1)), [
                 Assign("__ml_select_handle", Index(handles, idx)),
-                If(Bin(Call(Var("typeof"), [handle]), "!=", Str("thread")), [Return(idx)], [], []),
-                If(completed, [ExprStmt(Call(Member(handle, "Join"), [])), Return(idx)], [], []),
+                If(Unary("not", Bin(is_thread, "or", is_job)), [Return(idx)], [], []),
+                If(completed, [Return(idx)], [], []),
             ]),
             ExprStmt(Call(Var("threadSleep"), [Num(1)])),
         ])
@@ -2507,6 +2729,14 @@ def prepare_language_features(program: List[Stmt]) -> List[Stmt]:
     if lowerer.needs_select:
         helper = lowerer.select_helper()
         helpers.append(_copy_source_pos(helper, lowerer.select_source) if lowerer.select_source is not None else helper)
+    if lowerer.needs_async_pool:
+        pool_type: Expr = Member(Member(Member(Var("std"), "concurrent"), "thread_pool"), "ThreadPool")
+        pool_init = Assign(lowerer.async_pool_name,
+                           Call(Member(pool_type, "new"), [Num(4)]))
+        # This initializer is compiler-generated infrastructure, not user code.
+        # Keeping its neutral source position also keeps both frontends' debug
+        # line tables deterministic.
+        helpers.insert(0, pool_init)
     return helpers + lowered
 
 

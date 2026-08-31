@@ -683,7 +683,18 @@ class CodegenStmt:
         loop_bounds: dict[str, list[tuple[Any, Any]]] = {}
         loop_names: set[str] = set()
         normal_names: set[str] = set()
-        excluded: set[str] = set(str(x) for x in (getattr(fn, 'params', []) or []))
+        params = list(getattr(fn, 'params', []) or [])
+        param_types = list(getattr(fn, 'param_types', []) or [])
+        param_optional = list(getattr(fn, 'param_optional', []) or [])
+        # A non-optional annotated parameter is guarded at function entry. Keep
+        # it in the lattice when every later assignment preserves the declared
+        # representation; untyped and optional parameters remain dynamic.
+        excluded: set[str] = set()
+        for index, param in enumerate(params):
+            ty = param_types[index] if index < len(param_types) else None
+            optional = bool(param_optional[index]) if index < len(param_optional) else False
+            if not ty or optional:
+                excluded.add(str(param))
         excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
@@ -743,6 +754,10 @@ class CodegenStmt:
                 pass
             if isinstance(expr, getattr(ml, 'Var', ())):
                 return str(getattr(expr, 'name', '') or '') in known
+            if hasattr(ml, 'TypeGuard') and isinstance(expr, ml.TypeGuard):
+                raw_type = str(getattr(expr, 'type_name', '') or '').lower()
+                return (not bool(getattr(expr, 'optional', False))
+                        and raw_type in ('int', 'integer'))
             if isinstance(expr, getattr(ml, 'Unary', ())):
                 return str(getattr(expr, 'op', '')) in ('-', '~') and expr_is_int(
                     getattr(expr, 'right', None), known)
@@ -811,8 +826,8 @@ class CodegenStmt:
         when every write in the function preserves the same representation
         category. A candidate also needs an unconditional function-body
         initializer (loop variables are initialized by their loop prologue).
-        Parameters, globals, captures, synchronized values and boxed locals are
-        deliberately excluded.
+        Untyped/optional parameters, globals, captures, synchronized values and
+        boxed locals are deliberately excluded.
         """
         cached = getattr(fn, '_ml_known_value_types', None)
         if isinstance(cached, dict):
@@ -824,7 +839,15 @@ class CodegenStmt:
         loop_names: set[str] = set()
         promotion_hot_names: set[str] = set()
         normal_names: set[str] = set()
-        excluded: set[str] = set(str(x) for x in (getattr(fn, 'params', []) or []))
+        params = list(getattr(fn, 'params', []) or [])
+        param_types = list(getattr(fn, 'param_types', []) or [])
+        param_optional = list(getattr(fn, 'param_optional', []) or [])
+        excluded: set[str] = set()
+        for index, param in enumerate(params):
+            ty = param_types[index] if index < len(param_types) else None
+            optional = bool(param_optional[index]) if index < len(param_optional) else False
+            if not ty or optional:
+                excluded.add(str(param))
         excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
@@ -995,6 +1018,21 @@ class CodegenStmt:
                 return f"array:{len(list(getattr(expr, 'items', []) or []))}"
             if isinstance(expr, getattr(ml, 'Var', ())):
                 return known.get(str(getattr(expr, 'name', '') or ''))
+            if hasattr(ml, 'TypeGuard') and isinstance(expr, ml.TypeGuard):
+                if bool(getattr(expr, 'optional', False)):
+                    return None
+                raw_type = str(getattr(expr, 'type_name', '') or '')
+                aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+                canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
+                if canonical in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread', 'error'):
+                    return canonical
+                if canonical == 'void':
+                    return 'void'
+                try:
+                    qualified = self._qualify_identifier(raw_type, expr, kind='struct')
+                except Exception:
+                    qualified = raw_type
+                return 'struct:' + str(qualified)
             if isinstance(expr, getattr(ml, 'IsType', ())):
                 return 'bool'
             if isinstance(expr, getattr(ml, 'Unary', ())):
@@ -1055,6 +1093,16 @@ class CodegenStmt:
                     return 'int'
                 if raw in ('typeof', 'typeName'):
                     return 'string'
+                try:
+                    fn_qname = self._native_callback_resolve_user_fn(getattr(expr, 'callee', None))
+                except Exception:
+                    fn_qname = ''
+                declared = (getattr(self, 'user_functions', {}) or {}).get(fn_qname) if fn_qname else None
+                if declared is not None and not bool(getattr(declared, 'return_optional', False)):
+                    return_type = getattr(declared, 'return_type', None)
+                    if return_type:
+                        guarded = ml.TypeGuard(expr, str(return_type), False)
+                        return infer_expr(guarded, known)
                 if raw in ('bytes', 'byteBuffer'):
                     if len(args) == 0:
                         return 'bytes:0'
@@ -4062,7 +4110,8 @@ class CodegenStmt:
             return
 
         if self._is_foreach_stmt(s):
-            # for each <var> in <iterable>  (arrays + strings + bytes)
+            # for each <var> in <iterable>  (arrays, strings, bytes, or a
+            # zero-argument pull closure returned by a lazy iterator)
             fid = self.new_label_id()
             it_name, i_name, len_name, top_ptr_name, base_ptr_name = self._foreach_state_names(s)
 
@@ -4070,6 +4119,7 @@ class CodegenStmt:
             top_arr = f"foreach_top_arr_{fid}"
             top_bytes = f"foreach_top_bytes_{fid}"
             top_str = f"foreach_top_str_{fid}"
+            top_func = f"foreach_top_func_{fid}"
             body = f"foreach_body_{fid}"
             cont = f"foreach_cont_{fid}"
             end = f"foreach_end_{fid}"
@@ -4077,6 +4127,10 @@ class CodegenStmt:
             l_arr = f"foreach_is_arr_{fid}"
             l_bytes = f"foreach_is_bytes_{fid}"
             l_str = f"foreach_is_str_{fid}"
+            l_func = f"foreach_is_func_{fid}"
+            l_func_plain = f"foreach_func_plain_{fid}"
+            l_func_closure = f"foreach_func_closure_{fid}"
+            l_func_value = f"foreach_func_value_{fid}"
             # Loop variable name
             var_name = self._foreach_var_name(s)
 
@@ -4176,6 +4230,10 @@ class CodegenStmt:
             # if string
             a.cmp_r32_imm("edx", OBJ_STRING)
             a.jcc('e', l_str)
+            a.cmp_r32_imm("edx", OBJ_FUNCTION)
+            a.jcc('e', l_func)
+            a.cmp_r32_imm("edx", OBJ_CLOSURE)
+            a.jcc('e', l_func)
             # unsupported iterable => end
             a.jmp(end)
 
@@ -4214,6 +4272,44 @@ class CodegenStmt:
             a.lea_rax_rip(top_str)
             _state_store_qword_rax(top_ptr_slot)
             a.jmp(top_str)
+
+            a.mark(l_func)
+            a.lea_rax_rip(top_func)
+            _state_store_qword_rax(top_ptr_slot)
+            a.jmp(top_func)
+
+            # ---- callable pull-iterator path ----
+            a.mark(top_func)
+            _state_load_qword_rax(it_slot)
+            a.mov_r64_r64('r11', 'rax')
+            a.mov_r32_membase_disp('edx', 'r11', 0)
+            a.cmp_r32_imm('edx', OBJ_FUNCTION)
+            a.jcc('e', l_func_plain)
+            a.cmp_r32_imm('edx', OBJ_CLOSURE)
+            a.jcc('e', l_func_closure)
+            a.jmp(end)
+
+            a.mark(l_func_plain)
+            a.mov_r32_membase_disp('edx', 'r11', 4)
+            a.cmp_r32_imm('edx', 0)
+            a.jcc('ne', end)
+            a.mov_r64_imm64('r10', enc_void())
+            a.call_membase_disp('r11', 8)
+            a.jmp(l_func_value)
+
+            a.mark(l_func_closure)
+            a.mov_r32_membase_disp('edx', 'r11', 4)
+            a.cmp_r32_imm('edx', 0)
+            a.jcc('ne', end)
+            a.mov_r64_membase_disp('r10', 'r11', 16)
+            a.call_membase_disp('r11', 8)
+
+            a.mark(l_func_value)
+            self._emit_auto_errprop()
+            a.cmp_rax_imm8(enc_void())
+            a.jcc('e', end)
+            self.emit_store_var(var_name, s)
+            a.jmp(body)
 
             # ---- array path ----
             a.mark(top_arr)
@@ -4374,7 +4470,24 @@ class CodegenStmt:
             if s.expr is None:
                 a.mov_rax_imm64(enc_void())
             else:
-                self.emit_expr(s.expr)
+                return_expr = s.expr
+                # The parser represents a declared return contract as a
+                # TypeGuard around every returned expression.  Once local
+                # type flow proves the inner expression has the exact
+                # primitive representation, repeating that runtime check is
+                # redundant. Parameter-entry guards remain untouched, so
+                # dynamically called typed functions still validate inputs.
+                if (hasattr(ml, 'TypeGuard') and isinstance(return_expr, ml.TypeGuard)
+                        and not bool(getattr(return_expr, 'optional', False))):
+                    raw_type = str(getattr(return_expr, 'type_name', '') or '')
+                    aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+                    canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
+                    known = self._opt_value_type_base(
+                        self._opt_expr_known_type(getattr(return_expr, 'expr', None)))
+                    if canonical in {'int', 'float', 'bool', 'string', 'array', 'bytes',
+                                      'function', 'thread', 'error', 'void'} and known == canonical:
+                        return_expr = getattr(return_expr, 'expr', return_expr)
+                self.emit_expr(return_expr)
             a.jmp(self.func_ret_label)
             return
 
@@ -5320,10 +5433,33 @@ class CodegenStmt:
         self.inline_functions = {}
         self.inline_function_stats = {}
         for qn, fn in (getattr(self, "user_functions", {}) or {}).items():
-            if not bool(getattr(fn, "is_inline", False)):
+            explicit_inline = bool(getattr(fn, "is_inline", False))
+            params = list(getattr(fn, 'params', []) or [])
+            param_types = list(getattr(fn, 'param_types', []) or [])
+            fully_typed = (bool(getattr(fn, 'return_type', None))
+                           and len(param_types) >= len(params)
+                           and all(bool(param_types[i]) for i in range(len(params))))
+            generated_lambda = str(getattr(fn, 'name', '') or '').startswith('__ml_lambda_')
+            raw_variadic = getattr(fn, 'variadic_index', -1)
+            variadic_index = int(raw_variadic) if raw_variadic is not None else -1
+            body = list(getattr(fn, 'body', []) or [])
+            simple_expression_body = bool(body) and isinstance(body[-1], self.ml.Return)
+            if simple_expression_body:
+                for guard in body[:-1]:
+                    if (not isinstance(guard, self.ml.Assign)
+                            or str(getattr(guard, 'name', '')) not in params
+                            or not isinstance(getattr(guard, 'expr', None), self.ml.TypeGuard)):
+                        simple_expression_body = False
+                        break
+            auto_inline = (simple_expression_body
+                           and ((fully_typed and variadic_index < 0)
+                                or generated_lambda))
+            if not (explicit_inline or auto_inline):
                 continue
             if bool(getattr(fn, 'is_synchronized', False)):
-                raise self.error('a synchronized function cannot also be inline', fn)
+                if explicit_inline:
+                    raise self.error('a synchronized function cannot also be inline', fn)
+                continue
             stats = self._inline_analyze_function(fn)
             self.inline_function_stats[qn] = stats
             if bool(stats.get('ok', False)):

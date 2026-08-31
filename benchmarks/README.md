@@ -47,6 +47,20 @@ managed workload time, allocation count and post-collection heap counters. Run
 separate processes repeatedly; a timeout or non-zero exit is a correctness
 failure, not a performance sample.
 
+## Language optimizer features
+
+`language_optimizer.ml` compares typed and dynamic arithmetic, automatic
+inlining and an equivalent typed call, eager and lazy iterators, stack-backed
+and escaping variadic tails, and compiler-managed async jobs versus native
+thread creation. It validates equal checksums before reporting time and heap
+deltas. The pairs deliberately isolate one optimizer decision where practical;
+lazy iterators trade throughput for bounded memory, so compare both columns.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\language_optimizer.ml .\build\language_optimizer.exe -I .
+.\build\language_optimizer.exe
+```
+
 ## Tasks, channels and fine-grained synchronization
 
 `concurrency.ml` measures 10,000 thread-pool tasks, 250,000 values transferred

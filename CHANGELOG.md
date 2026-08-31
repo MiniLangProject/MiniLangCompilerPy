@@ -5,11 +5,15 @@ All notable changes to the MiniLang compiler are documented here.
 ## Unreleased
 
 - Added gradual runtime type annotations and optional values, expression
-  lambdas, default/named/variadic calls, value/range `match`, eager iterators
-  with `yield`, structural interfaces, and native thread-backed
-  `async`/`await`/`select`. The new syntax is covered by positive and negative
-  language tests and remains byte-identical with the self-hosted compiler on
-  Windows and Linux x64.
+  lambdas, default/named/variadic calls, value/range `match`, eager and lazy
+  pull iterators with `yield`, structural interfaces, and pooled
+  `async`/`await`/`select`. Type contracts now feed representation flow; small
+  typed expression functions/lambdas are considered for bounded automatic
+  inlining; proven non-escaping variadic tails use immutable stack views; and
+  proven primitive returns elide redundant contract checks while async calls
+  share a four-worker pool. The positive/negative and performance
+  fixtures remain byte-identical with the self-hosted compiler on Windows and
+  Linux x64.
 
 ## 1.1.0 - 2026-08-24
 
