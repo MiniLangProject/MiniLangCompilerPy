@@ -306,28 +306,34 @@ function _acquireFor(mutex, milliseconds)
   return false
 end function
 
+// POSIX recursive mutex with the same public contract as the Win32 Lock.
 struct Lock
   handle
   closed
 
+  // Allocate and initialize stable native mutex storage.
   static function new()
     mutex = _newRecursiveMutex()
     if typeof(mutex) != "bytes" then return error(1600, "could not create native lock") end if
     return Lock(mutex, false)
   end function
 
+  // Block until the current thread owns the recursive mutex.
   function acquire()
     if this.closed then return false end if
     return _mutexLock(nativeBytesPtr(this.handle)) == 0
   end function
 
+  // Poll for ownership until the requested timeout expires.
   function acquireFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
     return _acquireFor(this.handle, milliseconds)
   end function
 
+  // Attempt immediate acquisition without blocking.
   function tryAcquire() return this.acquireFor(0) end function
 
+  // Release one acquisition held by the current thread.
   function release()
     if this.closed then return false end if
     return _mutexUnlock(nativeBytesPtr(this.handle)) == 0
@@ -335,6 +341,7 @@ struct Lock
 
   function isClosed() return this.closed end function
 
+  // Destroy native storage after all users have stopped accessing the lock.
   function close()
     if this.closed then return false end if
     ok = _mutexDestroy(nativeBytesPtr(this.handle)) == 0
@@ -352,6 +359,7 @@ struct Lock
   function IsClosed() return this.isClosed() end function
 end struct
 
+// POSIX counting semaphore plus guarded maximum-count bookkeeping.
 struct Semaphore
   handle
   countGuard
@@ -359,6 +367,7 @@ struct Semaphore
   currentCount
   closed
 
+  // Create a semaphore with validated initial and maximum permit counts.
   static function new(initialCount, maximumCount)
     if typeof(initialCount) != "int" or typeof(maximumCount) != "int" then return error(1601, "semaphore counts must be integers") end if
     if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount then return error(1601, "invalid semaphore counts") end if
@@ -372,12 +381,14 @@ struct Semaphore
     return Semaphore(semaphore, guard, maximumCount, initialCount, false)
   end function
 
+  // Mirror a successful native wait under the bookkeeping mutex.
   function _consumeCount()
     _mutexLock(nativeBytesPtr(this.countGuard))
     this.currentCount = this.currentCount - 1
     _mutexUnlock(nativeBytesPtr(this.countGuard))
   end function
 
+  // Block until one permit can be consumed.
   function acquire()
     if this.closed then return false end if
     result = _semWait(nativeBytesPtr(this.handle))
@@ -386,6 +397,7 @@ struct Semaphore
     return true
   end function
 
+  // Poll for one permit until the requested timeout expires.
   function acquireFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
     elapsed = 0
@@ -404,6 +416,7 @@ struct Semaphore
   function tryAcquire() return this.acquireFor(0) end function
   function release() return this.releaseMany(1) end function
 
+  // Validate and return multiple permits without exceeding the maximum.
   function releaseMany(count)
     if this.closed or typeof(count) != "int" or count <= 0 then return false end if
     _mutexLock(nativeBytesPtr(this.countGuard))
@@ -423,6 +436,7 @@ struct Semaphore
 
   function isClosed() return this.closed end function
 
+  // Destroy both native primitives after all users have stopped accessing them.
   function close()
     if this.closed then return false end if
     ok = _semDestroy(nativeBytesPtr(this.handle)) == 0
@@ -443,6 +457,7 @@ struct Semaphore
   function IsClosed() return this.isClosed() end function
 end struct
 
+// POSIX condition-variable implementation of manual- and auto-reset events.
 struct Event
   mutex
   condition
@@ -450,6 +465,7 @@ struct Event
   signaled
   closed
 
+  // Allocate stable mutex/condition storage and set the initial signal state.
   static function new(manualReset, initialState)
     if typeof(manualReset) != "bool" or typeof(initialState) != "bool" then return error(1602, "event flags must be booleans") end if
     mutex = _newRecursiveMutex()
@@ -458,6 +474,7 @@ struct Event
     return Event(mutex, condition, manualReset, initialState, false)
   end function
 
+  // Wait indefinitely, consuming an auto-reset signal exactly once.
   function wait()
     if this.closed then return false end if
     _mutexLock(nativeBytesPtr(this.mutex))
@@ -472,6 +489,7 @@ struct Event
     return true
   end function
 
+  // Poll for a signal until the requested timeout expires.
   function waitFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
     elapsed = 0

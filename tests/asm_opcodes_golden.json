@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-08-23T19:42:35.011627Z",
-  "count": 228,
+  "generated_utc": "2026-09-01T09:52:51.742884Z",
+  "count": 229,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -791,6 +791,17 @@
       "asm": "; lock_cmpxchg_membase_disp_r32(rbp, -16, r11d)"
     },
     {
+      "name": "lock_cmpxchg_membase_disp_r64",
+      "args": [
+        "rbp",
+        -16,
+        "r11"
+      ],
+      "kwargs": {},
+      "hex": "f04c0fb15df0",
+      "asm": "; lock_cmpxchg_membase_disp_r64(rbp, -16, r11)"
+    },
+    {
       "name": "mov_eax_rip_dword",
       "args": [
         "L"
@@ -1276,6 +1287,16 @@
       "asm": "; movdqu_xmm_membase_disp(xmm9, rbp, -16)"
     },
     {
+      "name": "movq_r64_xmm",
+      "args": [
+        "r11",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66490f7ecb",
+      "asm": "; movq_r64_xmm(r11, xmm1)"
+    },
+    {
       "name": "movq_xmm_r64",
       "args": [
         "xmm9",
@@ -1284,16 +1305,6 @@
       "kwargs": {},
       "hex": "664d0f6eca",
       "asm": "; movq_xmm_r64(xmm9, r10)"
-    },
-    {
-      "name": "movq_r64_xmm",
-      "args": [
-        "r10",
-        "xmm9"
-      ],
-      "kwargs": {},
-      "hex": "664d0f7eca",
-      "asm": "; movq_r64_xmm(r10, xmm9)"
     },
     {
       "name": "movsd_membase_disp_xmm",

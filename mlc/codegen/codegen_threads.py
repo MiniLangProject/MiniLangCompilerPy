@@ -42,6 +42,10 @@ THREAD_STOP_REQUESTED = 2
 THREAD_COMPLETED = 3
 THREAD_STOPPED = 4
 THREAD_FAILED = 5
+# Private publication/configuration states. Public Status() maps these to the
+# closest stable lifecycle state and they never escape as new API strings.
+THREAD_STARTING = 6
+THREAD_CONFIGURING = 7
 
 GC_THREAD_RUNNING = 0
 GC_THREAD_PARKED = 1
@@ -611,18 +615,27 @@ class CodegenThreads:
         l_not_created = f'thstart_not_created_{lid}'
         l_wrong_arity = f'thstart_wrong_arity_{lid}'
         l_create_fail = f'thstart_create_fail_{lid}'
+        l_claim = f'thstart_claim_{lid}'
+        l_claimed = f'thstart_claimed_{lid}'
         l_done = f'thstart_done_{lid}'
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_ARITY)
         a.cmp_r32_r32('eax', 'r8d')
         a.jcc('ne', l_wrong_arity)
-        # Claim the one-shot Thread object before publishing its argument.  A
-        # plain load/store allowed two callers to start the same object and
-        # overwrite each other's handle and argument.
+        # Claim the one-shot object with a private state. Running is published
+        # only after both the native handle and id are visible to Join().
+        a.mark(l_claim)
         a.mov_r32_imm32('eax', THREAD_CREATED)
-        a.mov_r32_imm32('r11d', THREAD_RUNNING)
+        a.mov_r32_imm32('r11d', THREAD_STARTING)
         a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'r11d')
         a.cmp_r32_imm('eax', THREAD_CREATED)
+        a.jcc('e', l_claimed)
+        # SetLogicalId() holds CONFIGURING for only its value store. Waiting
+        # here gives a concurrent Start deterministic, race-free semantics.
+        a.cmp_r32_imm('eax', THREAD_CONFIGURING)
         a.jcc('ne', l_not_created)
+        a.emit(b'\xF3\x90')  # PAUSE
+        a.jmp(l_claim)
+        a.mark(l_claimed)
         a.mov_membase_disp_imm32('rcx', THREAD_STOP, 0, qword=False)
         a.mov_membase_disp_r64('rcx', THREAD_ARG, 'rdx')
         # Count the worker before CreateThread can enter managed execution.
@@ -643,6 +656,7 @@ class CodegenThreads:
         a.mov_membase_disp_r64('r11', THREAD_HANDLE, 'rax')
         a.mov_r32_membase_disp('eax', 'rsp', 0x40)
         a.mov_membase_disp_r32('r11', THREAD_ID, 'eax')
+        a.mov_membase_disp_imm32('r11', THREAD_STATUS, THREAD_RUNNING, qword=False)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
         a.mark(l_create_fail)
@@ -687,9 +701,20 @@ class CodegenThreads:
         a.mov_membase_disp_r64('rsp', 0x28, 'rdx')
         lid = self.new_label_id()
         l_false = f'thjoin_false_{lid}'
+        l_wait_handle = f'thjoin_wait_handle_{lid}'
+        l_have_published_state = f'thjoin_have_published_state_{lid}'
         l_done = f'thjoin_done_{lid}'
         a.call('fn_gc_native_enter')
+        a.mark(l_wait_handle)
         a.mov_r64_membase_disp('r11', 'rsp', 0x20)
+        a.mov_r32_membase_disp('eax', 'r11', THREAD_STATUS)
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('ne', l_have_published_state)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.mov_rax_rip_qword('iat_Sleep')
+        a.call_rax()
+        a.jmp(l_wait_handle)
+        a.mark(l_have_published_state)
         a.mov_r64_membase_disp('rax', 'r11', THREAD_HANDLE)
         a.test_r64_r64('rax', 'rax')
         a.jcc('e', l_false)
@@ -726,6 +751,8 @@ class CodegenThreads:
         l_true = f'thalive_true_{lid}'
         l_done = f'thalive_done_{lid}'
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('e', l_true)
         a.cmp_r32_imm('eax', THREAD_RUNNING)
         a.jcc('e', l_true)
         a.cmp_r32_imm('eax', THREAD_STOP_REQUESTED)
@@ -762,10 +789,13 @@ class CodegenThreads:
         lid = self.new_label_id()
         l_false = f'thsetid_false_{lid}'
         l_done = f'thsetid_done_{lid}'
-        a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
+        a.mov_r32_imm32('eax', THREAD_CREATED)
+        a.mov_r32_imm32('r11d', THREAD_CONFIGURING)
+        a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'r11d')
         a.cmp_r32_imm('eax', THREAD_CREATED)
         a.jcc('ne', l_false)
         a.mov_membase_disp_r64('rcx', THREAD_LOGICAL_ID, 'rdx')
+        a.mov_membase_disp_imm32('rcx', THREAD_STATUS, THREAD_CREATED, qword=False)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
         a.mark(l_false)
@@ -806,6 +836,10 @@ class CodegenThreads:
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
         labels = ('obj_thread_created', 'obj_thread_running', 'obj_thread_stop_requested',
                   'obj_thread_completed', 'obj_thread_stopped', 'obj_thread_failed')
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('e', f'thstatus_1_{lid}')
+        a.cmp_r32_imm('eax', THREAD_CONFIGURING)
+        a.jcc('e', f'thstatus_0_{lid}')
         for status, lbl in enumerate(labels):
             case = f'thstatus_{status}_{lid}'
             a.cmp_r32_imm('eax', status)
@@ -835,13 +869,32 @@ class CodegenThreads:
         a.jcc('e', l_false)
         a.cmp_r32_imm('eax', THREAD_STOP_REQUESTED)
         a.jcc('e', l_false)
-        a.mov_r64_membase_disp('rcx', 'rcx', THREAD_HANDLE)
-        a.test_r64_r64('rcx', 'rcx')
+        a.cmp_r32_imm('eax', THREAD_STARTING)
         a.jcc('e', l_false)
+        # Atomically take ownership of the handle. At most one concurrent
+        # Close() can wait, close and clear the registered roots.
+        a.mov_r64_membase_disp('rax', 'rcx', THREAD_HANDLE)
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', l_false)
+        a.xor_r32_r32('edx', 'edx')
+        a.lock_cmpxchg_membase_disp_r64('rcx', THREAD_HANDLE, 'rdx')
+        a.jcc('ne', l_false)
+        a.mov_membase_disp_r64('rsp', 0x28, 'rax')
+        # A terminal status can precede the worker's final native epilogue by
+        # a few instructions. Only clear its roots after the OS signals exit.
+        a.mov_r64_r64('rcx', 'rax')
+        a.xor_r32_r32('edx', 'edx')
+        a.mov_rax_rip_qword('iat_WaitForSingleObject')
+        a.call_rax()
+        l_restore = f'thclose_restore_{lid}'
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('ne', l_restore)
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x28)
         a.mov_rax_rip_qword('iat_CloseHandle')
         a.call_rax()
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_restore)
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
-        a.mov_membase_disp_imm32('r11', THREAD_HANDLE, 0, qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_CODE, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_RESULT, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
@@ -853,6 +906,11 @@ class CodegenThreads:
             a.mov_membase_disp_imm32('r11', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
+        a.mark(l_restore)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x30)
+        a.xor_r32_r32('eax', 'eax')
+        a.mov_r64_membase_disp('rdx', 'rsp', 0x28)
+        a.lock_cmpxchg_membase_disp_r64('r11', THREAD_HANDLE, 'rdx')
         a.mark(l_false)
         a.mov_rax_imm64(enc_bool(False))
         a.mark(l_done)
@@ -904,6 +962,20 @@ class CodegenThreads:
         lid = self.new_label_id()
         l_finish = f'thentry_finish_{lid}'
         l_finalize = f'thentry_finalize_{lid}'
+        l_wait_start = f'thentry_wait_start_{lid}'
+        l_start_published = f'thentry_start_published_{lid}'
+
+        # CreateThread may schedule the worker before Start() has stored the
+        # returned handle. Do not enter managed code until publication ends.
+        a.mark(l_wait_start)
+        a.mov_r32_membase_disp('eax', 'r12', THREAD_STATUS)
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('ne', l_start_published)
+        a.xor_r32_r32('ecx', 'ecx')
+        a.mov_rax_rip_qword('iat_Sleep')
+        a.call_rax()
+        a.jmp(l_wait_start)
+        a.mark(l_start_published)
 
         # User functions preserve RBX because the main runtime keeps stdout
         # there. Native worker entry points do not inherit the main thread's

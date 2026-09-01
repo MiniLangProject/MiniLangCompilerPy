@@ -11,7 +11,9 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_BOOL, TAG_VOID, TAG_ENUM, TAG_FLO
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_CLOSURE, ERROR_STRUCT_ID, ERR_EXTERN_CONVERSION, ERR_EXTERN_RET_WSTR_CONVERSION,
                          ERR_CALL_NOT_CALLABLE, ERR_METHOD_NOT_FOUND, ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE, ERR_MEMBER_TARGET_TYPE, ERR_MEMBER_NOT_FOUND, ERR_ARRAY_INIT_SIZE, ERR_TYPE_GUARD, OBJ_STRUCTTYPE, OBJ_BUILTIN, WIDEBUF_SIZE, )
 from ..errors import CompileError
-from ..tools import align_up, enc_int, enc_bool, enc_void, enc_enum, align_to_mod, try_enc_float_immediate, wrap_i61
+from ..tools import (align_up, enc_int, enc_bool, enc_void, enc_enum,
+                     align_to_mod, try_enc_float_immediate, wrap_i61,
+                     extern_library_label_token)
 
 _F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
@@ -1438,12 +1440,8 @@ class CodegenExpr:
     
     def _extern_dll_base(self, dll: str) -> str:
         # Must match compiler._dll_base() used for IAT label generation.
-        base = os.path.basename(dll).lower()
-        if base.endswith(".dll"):
-            base = base[:-4]
-        base = re.sub(r"[^a-z0-9_]+", "_", base)
-        base = re.sub(r"_+", "_", base).strip("_")
-        return base or "dll"
+        identity = str(dll) if self.is_linux_target else str(dll).strip().lower()
+        return extern_library_label_token(identity)
 
     def _extern_iat_label(self, dll: str, symbol: str) -> str:
         # Disambiguated label, e.g. iat_kernel32_ExitProcess
@@ -2053,6 +2051,17 @@ class CodegenExpr:
 
         # Call through the imported function pointer.
         a.call_rip_qword(self._extern_iat_label(dll, symbol))
+        if self.is_linux_target:
+            extern_resolved = f"L_extern_resolved_{self.new_label_id()}"
+            a.jcc('ae', extern_resolved)
+            if threaded_native:
+                a.call('fn_gc_native_leave')
+            self._emit_make_error_const(
+                ERR_EXTERN_CONVERSION,
+                f"Extern resolution failed: {callee_name} from {dll} symbol {symbol}",
+            )
+            a.jmp(cleanup_label)
+            a.mark(extern_resolved)
         if threaded_native:
             a.call('fn_gc_native_leave')
 
@@ -2233,6 +2242,17 @@ class CodegenExpr:
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",
                         pos, )
             a.call_rip_qword(self._extern_iat_label(str(dll), str(sym)))
+            if self.is_linux_target:
+                extern_resolved = f"lbl_extern_stub_resolved_{self.new_label_id()}"
+                a.jcc('ae', extern_resolved)
+                if threaded_native:
+                    a.call('fn_gc_native_leave')
+                self._emit_make_error_const(
+                    ERR_EXTERN_CONVERSION,
+                    f"Extern resolution failed: {qn} from {dll} symbol {sym}",
+                )
+                a.jmp(l_done)
+                a.mark(extern_resolved)
             if threaded_native:
                 a.call('fn_gc_native_leave')
 

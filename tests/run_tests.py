@@ -406,6 +406,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
     fixtures = [
         (tests_root / "linux_target_smoke.ml", ["linux-target", "linux 2"], ["one", "two"]),
         (tests_root / "linux_ffi.ml", ["[OK] linux ffi strlen", "[OK] linux ffi cos"], []),
+        (tests_root / "linux_ffi_resolution_error.ml",
+         ["[OK] Linux extern resolution errors are managed"], []),
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
@@ -415,6 +417,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "thread_features.ml",
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
         (tests_root / "thread_concurrent_start.ml", ["[OK] atomic same-object Thread.Start"], []),
+        (tests_root / "thread_lifecycle_races.ml",
+         ["[OK] thread lifecycle publication and cleanup races"], []),
         (tests_root / "language_async_variadic.ml", ["[OK] async variadic arguments"], []),
         (tests_root / "language_default_lambda.ml", ["[OK] lowered lambda default arguments"], []),
         (tests_root / "language_imported_interface.ml", ["[OK] imported interface declarations"], []),
@@ -2483,7 +2487,7 @@ def test_extern_namespaced(*, name: str, mlc_runner: Path) -> TestResult:
 
         # Module providing an extern via a package name (for import-as aliasing).
         winapi_ml.write_text(
-            "\n".join(["package winapi", 'extern function GetTickCount() from "kernel32.dll" returns u32', ]) + "\n",
+            "\n".join(["package winapi", 'extern function GetTickCount() from "KERNEL32.DLL" returns u32', ]) + "\n",
             encoding="utf-8", )
 
         winapi_abs = str(winapi_ml.resolve()).replace("\\", "\\\\")
@@ -2509,7 +2513,7 @@ def test_extern_value_runtime(*, name: str, mlc_runner: Path) -> TestResult:
         main_ml = td_path / "extern_value_runtime.ml"
 
         main_ml.write_text("\n".join(
-            ['extern function GetTickCount() from "kernel32.dll" returns u32', '', 'function ok(cond, label)',
+            ['extern function GetTickCount() from "KERNEL32.DLL" returns u32', '', 'function ok(cond, label)',
              '  if cond then', '    print label + " [OK]"', '  else', '    print label + " [FAIL]"', '  end if',
              'end function', '', 'function call0(f)', '  return f()', 'end function', '', 'function make(f)',
              '  return f', 'end function', '', 'struct Box', '  fn', 'end struct', '',
@@ -3809,6 +3813,7 @@ def main() -> int:
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
     thread_concurrent_start_ml = find_file_by_name(tests_root, "thread_concurrent_start.ml")
+    thread_lifecycle_races_ml = find_file_by_name(tests_root, "thread_lifecycle_races.ml")
     tlab_shared_heap_ml = find_file_by_name(tests_root, "tlab_shared_heap.ml")
     gc_back_to_back_safepoint_ml = find_file_by_name(tests_root, "gc_back_to_back_safepoint.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
@@ -3969,6 +3974,17 @@ def main() -> int:
         tests.append(lambda: TestResult(
             name="Thread.Start atomically claims a one-shot thread object", status="SKIP",
             details="thread_concurrent_start.ml not found"))
+
+    if thread_lifecycle_races_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="Thread lifecycle publication, id and close operations are race-safe",
+            mlc_runner=mlc_runner, ml_path=thread_lifecycle_races_ml,
+            must_contain=["[OK] thread lifecycle publication and cleanup races"],
+            timeout_compile_s=120, timeout_run_s=180))
+    else:
+        tests.append(lambda: TestResult(
+            name="Thread lifecycle publication, id and close operations are race-safe", status="SKIP",
+            details="thread_lifecycle_races.ml not found"))
 
     if tlab_shared_heap_ml is not None:
         tests.append(lambda: test_tlab_shared_heap_codegen(

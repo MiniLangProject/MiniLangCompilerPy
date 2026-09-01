@@ -27,33 +27,34 @@ bytes.
 ## Post-release audit hardening fixed point
 
 Verified on 1 September 2026 after the compiler, comment and documentation
-audit. The fixes make `Thread.Start` an atomic one-shot operation, constrain
-the PUSH/POP peephole to adjacent instructions, lower lambdas in default
-arguments, accept imported interfaces, recover from empty `.mlo` caches and
-harden Linux float formatting, complete-file writes and per-library FFI symbol
-resolution. The self-hosted Linux runtime also folds local resolver-thunk
-branches before embedding each fragment.
+audit and its follow-up concurrency/FFI hardening. Thread construction now
+publishes `Running` only after the native handle exists, `SetLogicalId` is
+atomic with respect to `Start`, and concurrent `Close` calls cannot double-close
+a handle or release roots while the native thread is still alive. Linux FFI
+slots encode the complete UTF-8 library identity without sanitizer collisions;
+missing libraries and symbols return managed MiniLang errors instead of calling
+null. The self-hosted Linux runtime uses named verified blob boundaries and
+folds local resolver-thunk branches before embedding each fragment.
 
 | Compiler image | Size | SHA-256 | Build time |
 | --- | ---: | --- | ---: |
-| Windows Stage 1, built by Python | 65,826,816 | `1CBD04DB789A8CF19738DEE07B9D2F653851155642034F8B240CC8D80BC6F1D0` | 62.598 s |
-| Windows Stage 2, built by Stage 1 | 65,826,816 | `1CBD04DB789A8CF19738DEE07B9D2F653851155642034F8B240CC8D80BC6F1D0` | 102.987 s |
+| Windows Stage 1, built by Python | 65,977,344 | `39AD8309420B480EC550D057128E247C951862E4EA44C83F62B98B602C9FC5BC` | 66.913 s |
+| Windows Stage 2, built by Stage 1 | 65,977,344 | `39AD8309420B480EC550D057128E247C951862E4EA44C83F62B98B602C9FC5BC` | 99.546 s |
 
 The identical images establish the Windows self-host fixed point. The Python
-suite passes 129/129. The self-hosted inner harness passes 125/125 in 83.271
+suite passes 130/130. The self-hosted inner harness passes 126/126 in 87.260
 seconds, while the complete Windows/WSL wrapper passes every outer Linux, FFI,
-GC, object-pipeline and relink gate in 123.361 seconds. All 46 standard-library
+GC, object-pipeline and relink gate in 133.811 seconds. All 46 standard-library
 files are byte-identical between repositories.
 
-A targeted audit matrix compiles ten Windows/Linux target cases through the
-Python, self-hosted monolithic and self-hosted `.mlo` paths. All three output
-hashes match for every fixture, including atomic thread start, async variadics,
-default-argument lambdas, imported interfaces, Linux float rounding and Linux
-FFI. Representative Linux hashes are
-`8D7411E25311A76DF692D2265E853B2411A82B8589A501D5CFE2F6DEB69BD854`
-for `language_async_variadic.ml` and
-`1D28DDA9C3A1C7152BEE9C0E4538BF7757B0B5808925B1B91F65E1EE87A20C27`
-for `linux_ffi.ml`.
+A targeted matrix compiles the four critical Windows/Linux regressions through
+the Python and self-hosted compilers. Every pair is byte-identical and runs:
+`thread_lifecycle_races.ml` (`35F2822F...14015`), uppercase Windows DLL
+identity (`9756F38E...791E`), `linux_target_smoke.ml`
+(`4A4F5DC3...7352`) and managed Linux FFI resolution failure
+(`F5F53907...25E5F`). Separate monolithic/`.mlo` gates retain exact object-pipeline
+parity, including Linux ELF SHA-256
+`6598F695F79180741926BEEA747BD31C78132739BACB9E0F4B3B8D5E23497F8F`.
 
 
 ## 1.2.0 release fixed point
@@ -437,7 +438,7 @@ No existing feature was removed. The synchronized surface includes:
 - explicit-value enums, struct construction and constant folding;
 - call profiling/tracing;
 - deterministic constant/data layout and canonicalized debug paths; and
-- synchronized assembler coverage with 228 golden opcode vectors.
+- synchronized assembler coverage with 229 golden opcode vectors.
 
 Generated-code optimization is synchronized as part of the same parity
 contract: both backends use the same inline expansion budget with unconditional

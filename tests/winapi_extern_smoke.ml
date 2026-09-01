@@ -19,5 +19,7 @@ package winapi_extern_smoke
 // - import-as alias resolution
 // - namespaced extern calls (alias.MemberCall)
 
-extern function GetTickCount() from "kernel32.dll" returns u32
+// Windows DLL identity is case-insensitive; label generation must match the
+// normalized import-table key even when source spelling uses uppercase.
+extern function GetTickCount() from "KERNEL32.DLL" returns u32
 

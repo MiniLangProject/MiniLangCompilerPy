@@ -157,6 +157,8 @@ def _emit_extern_thunks(cg: Any) -> None:
         # Resolve through the declared library's handle, not the ELF global
         # symbol namespace. Cache the pointer in the existing loader slot.
         resolved = f'{thunk_label}_resolved'
+        resolve_failed = f'{thunk_label}_resolve_failed'
+        epilogue = f'{thunk_label}_epilogue'
         a.mov_rax_rip_qword(loader_label)
         a.test_r64_r64('rax', 'rax')
         a.jcc('ne', resolved)
@@ -165,11 +167,13 @@ def _emit_extern_thunks(cg: Any) -> None:
         a.mov_r32_imm32('esi', 2)  # RTLD_NOW | RTLD_LOCAL
         a.call_rip_qword('elfiat_runtime_dlopen')
         a.test_r64_r64('rax', 'rax')
-        a.jcc('e', resolved)
+        a.jcc('e', resolve_failed)
         a.mov_r64_r64('rdi', 'rax')
         a.lea_rax_rip(symbol_label)
         a.mov_r64_r64('rsi', 'rax')
         a.call_rip_qword('elfiat_runtime_dlsym')
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', resolve_failed)
         a.mov_rip_qword_rax(loader_label)
         a.mark(resolved)
 
@@ -184,6 +188,14 @@ def _emit_extern_thunks(cg: Any) -> None:
                 a.mov_membase_disp_r64('rsp', int(destination) * 8, 'rax')
         a.mov_r32_imm32('eax', xmm_index)
         a.call_rip_qword(loader_label)
+        # R11D carries a private success bit to the shared epilogue. Shifting
+        # it immediately before RET publishes resolution failure in CF without
+        # disturbing the native return value in RAX/XMM0.
+        a.mov_r32_imm32('r11d', 0)
+        a.jmp(epilogue)
+        a.mark(resolve_failed)
+        a.mov_r32_imm32('r11d', 1)
+        a.mark(epilogue)
 
         for index in range(6, 16):
             a.movdqu_xmm_membase_disp(f'xmm{index}', 'rsp', xmm_save_base + (index - 6) * 16)
@@ -193,6 +205,7 @@ def _emit_extern_thunks(cg: Any) -> None:
             a.add_rsp_imm32(frame)
         a.pop_reg('rsi')
         a.pop_reg('rdi')
+        a.shr_r32_imm8('r11d', 1)
         a.ret()
 
 

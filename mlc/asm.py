@@ -1230,6 +1230,14 @@ class Asm:
         rex_x, rex_b, tail = self._encode_mem(s, b, disp)
         self.emit(b"\xF0" + self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB1" + tail)
 
+    def lock_cmpxchg_membase_disp_r64(self, base: str, disp: int, src: str) -> None:
+        """Atomically compare RAX with qword [base+disp] and exchange from src."""
+        s = self._rid_any(src)
+        b = self._rid_any(base)
+        rex_r = 1 if s >= 8 else 0
+        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
+        self.emit(b"\xF0" + self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB1" + tail)
+
     def mov_r8_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.
 

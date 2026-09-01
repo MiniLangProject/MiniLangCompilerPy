@@ -67,6 +67,18 @@ def u64(x: int) -> bytes:
     return struct.pack("<Q", x & 0xFFFFFFFFFFFFFFFF)
 
 
+def extern_library_label_token(library: object) -> str:
+    """Return a collision-free assembler-label token for an extern library.
+
+    The complete UTF-8 spelling is encoded instead of sanitizing only the
+    basename.  This keeps distinct paths and punctuation distinct while also
+    giving the Python and self-hosted compilers exactly the same label scheme.
+    """
+
+    payload = str(library).encode("utf-8").hex()
+    return "lib_" + (payload or "00")
+
+
 # ============================================================
 # Tagged value encoders
 # ============================================================

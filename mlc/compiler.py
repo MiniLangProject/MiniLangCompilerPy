@@ -19,7 +19,7 @@ from .frontend import load_minilang_frontend, parse_program, normalize_code_for_
 from .minilang_parser import ParseError, parse_compile_define_specs
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
 from .project import ProjectError, expand_project_args, fingerprint as project_fingerprint, restore as project_restore, store as project_store
-from .tools import u32, u64
+from .tools import u32, u64, extern_library_label_token
 
 
 COMPILER_VERSION = "1.2.0"
@@ -1586,12 +1586,7 @@ def compile_to_exe(
     #   iat_<symbol>                 (backwards compatible with existing codegen)
     #   iat_<dllbase>_<symbol>       (disambiguated; recommended for extern calls)
     def _dll_base(dll: str) -> str:
-        base = os.path.basename(dll).lower()
-        if base.endswith('.dll'):
-            base = base[:-4]
-        # make it label-friendly (keep alnum + underscore)
-        base = re.sub(r'[^a-z0-9_]', '_', base)
-        return base or 'dll'
+        return extern_library_label_token(str(dll).strip().lower())
 
     for (dll, sym), rva in iat_symbol_rva.items():
         # Back-compat label
