@@ -97,11 +97,7 @@ end if
 n = len(values)
 lst = List.withCapacity(n)
 if n > 0 then
-  buf = lst.buf
-  for i = 0 to(n - 1)
-    buf[i] = values[i]
-  end for
-  lst.buf = buf
+  copyArray(lst.buf, 0, values, 0, n)
   lst.size = n
 end if
 return lst
@@ -163,9 +159,7 @@ function _grow(newCap)
   c2 = _nextPow2(newCap)
   nb = _allocArray(c2, 0)
   if this.size > 0 then
-    for i = 0 to(this.size - 1)
-      nb[i] = this.buf[i]
-    end for
+    copyArray(nb, 0, this.buf, 0, this.size)
   end if
   this.buf = nb
   this.cap = c2
@@ -211,9 +205,7 @@ function addAll(values)
     this._grow(needed)
   end if
   base = this.size
-  for i = 0 to(n - 1)
-    this.buf[base + i] = values[i]
-  end for
+  copyArray(this.buf, base, values, 0, n)
   this.size = needed
 end function
 
@@ -363,9 +355,7 @@ function toArray()
   if this.size <= 0 then
     return output
   end if
-  for i = 0 to(this.size - 1)
-    output[i] = this.buf[i]
-  end for
+  copyArray(output, 0, this.buf, 0, this.size)
   return output
 end function
 end struct
