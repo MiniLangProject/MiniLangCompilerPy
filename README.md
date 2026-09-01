@@ -508,7 +508,7 @@ Retail Quake data passed a 120-frame runtime smoke and deterministic trace; a
 rendered FPS. The object writer preserves the stream-wide inline budget across
 fragments and filters local return/defer labels out of helper discovery.
 
-The current reviewed 1.1.0 self-host source reaches a binary fixed point:
+The reviewed 1.1.0 self-host source reached a binary fixed point at that time:
 Stage 2 and Stage 3 are byte-identical 56,743,936-byte compiler images with
 SHA-256
 `E85E3A6EE515DC8605A10752DA953E0FBF92C5992CC354179CA7A471E11AFFEF`.

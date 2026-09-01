@@ -24,7 +24,10 @@ Highlights:
   bulk copies and streamed canonical object linking; and
 - hardened GC safepoints and conservative interior-pointer scans, Linux
   pthread behavior, project/cache boundaries and assembler reuse after
-  materialization.
+  materialization; and
+- post-release audit hardening for atomic thread startup, concurrent joins,
+  native-handle ownership across `Join`/`Close`/GC, and exact Linux FFI symbol
+  resolution.
 
 The 1.2.0 acceptance build verifies the version CLI, the complete Windows and
 Linux language/runtime suites, fixed-point self-hosting and byte-identical

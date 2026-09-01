@@ -1,5 +1,5 @@
 #if TARGET_OS != "linux" or TARGET_ARCH != "x64" or TARGET_ABI != "sysv" or TARGET_FORMAT != "elf"
-#error "unexpected Linux target values"
+#error "linux target predefined values are inconsistent"
 #endif
 
 function main(args)
