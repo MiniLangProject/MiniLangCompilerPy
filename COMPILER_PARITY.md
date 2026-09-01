@@ -31,8 +31,10 @@ audit and its follow-up concurrency/FFI hardening. Thread construction now
 publishes `Running` only after the native handle exists, `SetLogicalId` is
 atomic with respect to `Start`, `Stop` owns the startup-publication window,
 concurrent Linux joins share one native `pthread_join`, and `Close` waits for
-the native epilogue after atomically claiming a handle. Thread contexts are
-packed into synchronized 64-KiB arenas. Linux FFI treats every `out` parameter,
+the native epilogue after atomically claiming a handle. Per-handle waiter
+references make concurrent `Join`/`Close` safe, while blocking cleanup leaves
+GC participation until it re-enters managed code. Thread contexts are packed
+into synchronized 64-KiB arenas. Linux FFI treats every `out` parameter,
 including `out double`, as a pointer-class argument, rejects conflicting ABI
 aliases and preserves the exact declared library identity. Ordinary strings
 whose text equals an internal conversion sentinel remain ordinary strings.
@@ -41,28 +43,28 @@ and relocation sites.
 
 | Compiler image | Size | SHA-256 | Build time |
 | --- | ---: | --- | ---: |
-| Windows Stage 1, built by Python | 66,212,864 | `85937F6D1C327393E43C491803C7266A803BD29BA1D8DA7F8B68AEB96CCE9762` | 62.889 s |
-| Windows Stage 2, built by Stage 1 | 66,212,864 | `85937F6D1C327393E43C491803C7266A803BD29BA1D8DA7F8B68AEB96CCE9762` | 94.116 s |
+| Windows Stage 1, built by Python | 66,314,240 | `9AAA804542149FB4665311AB90189073D0438D635636D5F7D32B62FBD72EF42B` | 68.572 s |
+| Windows Stage 2, built by Stage 1 | 66,314,240 | `9AAA804542149FB4665311AB90189073D0438D635636D5F7D32B62FBD72EF42B` | 117.646 s |
 
 The identical images establish the Windows self-host fixed point. The Python
-suite passes 132/132. The self-hosted inner harness passes 126/126 in 87.760
+suite passes 132/132. The self-hosted inner harness passes 126/126 in 96.696
 seconds, while the complete Windows/WSL wrapper passes every outer Linux, FFI,
-GC, object-pipeline, blob-layout and relink gate in 133.004 seconds. All 46
+GC, object-pipeline, blob-layout and relink gate in 144.964 seconds. All 46
 standard-library files are byte-identical between repositories.
 
 The current targeted cross-compiler matrix is also byte-identical:
 
 | Regression / target | Size | SHA-256 |
 | --- | ---: | --- |
-| Thread lifecycle races, Windows PE | 189,952 | `063D1A8238F2050A36A41297B6B59BD218FF2B45139441D4DA6F1B6C0B395E66` |
-| Thread lifecycle races, Linux ELF | 194,256 | `176FD313E759E219B1F12F9E9619040F3DF890D1E4E04A694FF73AE149943692` |
-| Linux `out double` FFI | 87,648 | `155244DFFEDFF74D0282104A4F0419BE6AD74CFD82D1B3C38F73F8A3D0E74750` |
-| Exact Linux library spelling | 87,648 | `1B51E01346B5F94B034FD2E2B98B940D43E8FFFFC5BCBDA1EB7B1EE311C703CB` |
-| Language extensions, Windows PE | 655,360 | `4C211EBB3D2B48AB45BB2F8D921AE673DBC6E76BE2E2E718A1B600BE14BD67D2` |
-| Language extensions, Linux ELF | 743,968 | `3C9B70A89208F1FD1F0E1CF0F93CB9AE7AF87EA11DA5F4523CF6906E49EEFA10` |
+| Thread lifecycle races, Windows PE | 230,912 | `FB4C00740E4D0D182C935A53F8FCE0F2F8A031068227D44675E50307182FAAA3` |
+| Thread lifecycle races, Linux ELF | 235,280 | `0C6E2F9BC502CDA56377667DCE8F5EED680578A2469A33D9067EBE2A0ACF254C` |
+| Linux `out double` FFI | 87,664 | `3735604564E7F6723DE85E1D477974A67BC0C11FF9AB816254394A1B754F6876` |
+| Exact Linux library spelling | 87,664 | `A91C44BE93B14FB651625989402F772377F28A7FBBA0BEA2CB1FA3F15F22A9BD` |
+| Language extensions, Windows PE | 655,360 | `FC740384B74B7064803E5C657F6B0BD68D12C6F33F0442B20F57E69231FD629E` |
+| Language extensions, Linux ELF | 743,984 | `94B8DC43E546F7F8F72F28C1F154D15BEB1A8E668462085E56D242948CD9BA1E` |
 
 The Linux monolithic/`.mlo` smoke gate retains exact object-pipeline parity at
-SHA-256 `E737C9FDB7D95D0E57E3AE16B9CD3FD366B10819EC1704CB42D5ADD5C26B2DED`.
+SHA-256 `749A3483B6B711DF6DA0B6AF932EAD090F71542684435DCB7572F272E948544B`.
 
 
 ## 1.2.0 release fixed point

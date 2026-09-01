@@ -6,6 +6,9 @@ synchronized configGo = false
 synchronized joinReady = 0
 synchronized joinGo = false
 synchronized releaseWorker = false
+synchronized mixedReady = 0
+synchronized mixedGo = false
+synchronized gcCloseRun = false
 
 function immediateWorker()
   return 17
@@ -74,8 +77,32 @@ function startVictim(victim)
   return victim.Start()
 end function
 
+function joinOrCloseTogether(payload)
+  global mixedReady, mixedGo
+  mixedReady = mixedReady + 1
+  while not mixedGo
+    threadSleep(0)
+  end while
+  if payload[1] then return payload[0].Close() end if
+  return payload[0].Join(10000)
+end function
+
+function allocatingWorker()
+  // Leave a live TLAB tail for the terminal epilogue to retire.
+  return ["worker-result", [1, 2, 3, 4]]
+end function
+
+function closeGcCollector()
+  global gcCloseRun
+  while gcCloseRun
+    gc_collect()
+    threadSleep(0)
+  end while
+end function
+
 function main(args)
   global closeReady, closeGo, configReady, configGo, joinReady, joinGo, releaseWorker
+  global mixedReady, mixedGo, gcCloseRun
 
   // Status() deliberately maps the internal Starting state to Running. Join()
   // must nevertheless wait until Start() has published a nonzero OS handle.
@@ -179,6 +206,49 @@ function main(args)
     end while
     if not victim.Close() then return 61 end if
   end for
+
+  // Join and Close may start against the same terminal handle. Join either
+  // acquires a handle reference and completes, or observes the Close claim and
+  // returns false; neither path may wait on or dereference a released handle.
+  for round = 0 to 249
+    victim = Thread(slowWorker)
+    if not victim.Start() then return 70 end if
+    while victim.IsAlive()
+      threadSleep(0)
+    end while
+    mixedReady = 0
+    mixedGo = false
+    first = Thread(joinOrCloseTogether)
+    second = Thread(joinOrCloseTogether)
+    closer = Thread(joinOrCloseTogether)
+    if not first.Start([victim, false]) or not second.Start([victim, false]) then return 71 end if
+    if not closer.Start([victim, true]) then return 72 end if
+    while mixedReady < 3
+      threadSleep(0)
+    end while
+    mixedGo = true
+    if not first.Join(10000) or not second.Join(10000) or not closer.Join(10000) then return 73 end if
+    if typeof(first.Result()) != "bool" or typeof(second.Result()) != "bool" then return 74 end if
+    if closer.Result() != true then return 75 end if
+    if not first.Close() or not second.Close() or not closer.Close() then return 76 end if
+  end for
+
+  // Repeated collections must be able to finish while the main thread closes a
+  // worker whose terminal epilogue still has a TLAB tail to retire. A closer
+  // published as RUNNING would deadlock this cycle at the worker safepoint.
+  gcCloseRun = true
+  collector = Thread(closeGcCollector)
+  if not collector.Start() then return 80 end if
+  for round = 0 to 299
+    victim = Thread(allocatingWorker)
+    if not victim.Start() then return 81 end if
+    while victim.IsAlive()
+      threadSleep(0)
+    end while
+    if not victim.Close() then return 82 end if
+  end for
+  gcCloseRun = false
+  if not collector.Join(10000) or not collector.Close() then return 83 end if
 
   print "[OK] thread lifecycle publication and cleanup races"
   return 0

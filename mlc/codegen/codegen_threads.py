@@ -34,7 +34,10 @@ THREAD_HEAP_BYPASS_DEPTH = 168
 THREAD_TLAB_START = 176
 THREAD_TLAB_CURSOR = 184
 THREAD_TLAB_END = 192
-THREAD_CONTEXT_SIZE = 200
+# Active Join() calls hold a reference while they use THREAD_HANDLE. Close()
+# removes the handle first, then waits for this count before releasing it.
+THREAD_HANDLE_USERS = 200
+THREAD_CONTEXT_SIZE = 208
 THREAD_CONTEXT_STRIDE = 208  # 16-byte alignment inside packed native arenas
 THREAD_CONTEXT_POOL_SIZE = 0x10000
 
@@ -112,6 +115,7 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDLE_USERS, 0, qword=False)
         a.mov_rip_qword_rax('thread_contexts_head')
         a.xor_r32_r32('eax', 'eax')
         a.mov_rip_qword_rax('gc_requested')
@@ -567,7 +571,7 @@ class CodegenThreads:
         l_leave_fail = f'thnew_leave_fail_{lid}'
         l_done = f'thnew_done_{lid}'
         # Serialize the arena cursor with the heap monitor. Allocating one
-        # context per VirtualAlloc used a full 4-KiB page for a 200-byte object;
+        # context per VirtualAlloc used a full 4-KiB page for a 208-byte object;
         # packed 64-KiB arenas retain stable addresses at a fraction of the RSS.
         a.call('fn_heap_enter')
         a.mov_rax_rip_qword('thread_context_pool_cursor')
@@ -621,6 +625,7 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDLE_USERS, 0, qword=False)
         # Context identities remain stable for the process lifetime. Close()
         # clears managed roots; packed arenas avoid one OS page per identity.
         a.lea_rax_rip('gc_coord_monitor')
@@ -764,6 +769,10 @@ class CodegenThreads:
         l_false = f'thjoin_false_{lid}'
         l_wait_handle = f'thjoin_wait_handle_{lid}'
         l_have_published_state = f'thjoin_have_published_state_{lid}'
+        l_ref_retry = f'thjoin_ref_retry_{lid}'
+        l_ref_lost = f'thjoin_ref_lost_{lid}'
+        l_ref_lost_retry = f'thjoin_ref_lost_retry_{lid}'
+        l_release_retry = f'thjoin_release_retry_{lid}'
         l_done = f'thjoin_done_{lid}'
         a.call('fn_gc_native_enter')
         a.mark(l_wait_handle)
@@ -788,15 +797,50 @@ class CodegenThreads:
         a.mov_r64_membase_disp('rax', 'r11', THREAD_HANDLE)
         a.test_r64_r64('rax', 'rax')
         a.jcc('e', l_false)
+        a.mov_membase_disp_r64('rsp', 0x30, 'rax')
+        # Pin the handle before entering the OS wait. Rechecking after the
+        # increment closes the load-vs-Close race: a closer that already set the
+        # field to zero may free the native handle, but this Join will not use it.
+        a.mark(l_ref_retry)
+        a.mov_r32_membase_disp('eax', 'r11', THREAD_HANDLE_USERS)
+        a.mov_r32_r32('edx', 'eax')
+        a.inc_r32('edx')
+        a.lock_cmpxchg_membase_disp_r32('r11', THREAD_HANDLE_USERS, 'edx')
+        a.jcc('ne', l_ref_retry)
+        a.mov_r64_membase_disp('r10', 'r11', THREAD_HANDLE)
+        a.mov_r64_membase_disp('rax', 'rsp', 0x30)
+        a.cmp_r64_r64('r10', 'rax')
+        a.jcc('ne', l_ref_lost)
         a.mov_r64_r64('rcx', 'rax')
         a.mov_r32_membase_disp('edx', 'rsp', 0x28)
         a.mov_rax_rip_qword('iat_WaitForSingleObject')
         a.call_rax()
+        # Close may release the handle as soon as the last user drops its
+        # reference, so retain only the wait result before decrementing.
+        a.mov_membase_disp_r32('rsp', 0x30, 'eax')
+        a.mov_r64_membase_disp('r11', 'rsp', 0x20)
+        a.mark(l_release_retry)
+        a.mov_r32_membase_disp('eax', 'r11', THREAD_HANDLE_USERS)
+        a.mov_r32_r32('edx', 'eax')
+        a.dec_r32('edx')
+        a.lock_cmpxchg_membase_disp_r32('r11', THREAD_HANDLE_USERS, 'edx')
+        a.jcc('ne', l_release_retry)
         a.call('fn_gc_native_leave')
+        a.mov_r32_membase_disp('eax', 'rsp', 0x30)
         a.cmp_r32_imm('eax', 0)  # WAIT_OBJECT_0
         a.jcc('ne', l_false)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
+        a.mark(l_ref_lost)
+        # The handle changed after our speculative reference increment. Drop
+        # the reference without touching the saved native handle.
+        a.mark(l_ref_lost_retry)
+        a.mov_r32_membase_disp('eax', 'r11', THREAD_HANDLE_USERS)
+        a.mov_r32_r32('edx', 'eax')
+        a.dec_r32('edx')
+        a.lock_cmpxchg_membase_disp_r32('r11', THREAD_HANDLE_USERS, 'edx')
+        a.jcc('ne', l_ref_lost_retry)
+        a.jmp(l_false)
         a.mark(l_false)
         # If the handle was absent, balance the native transition before
         # returning. On the wait-failure path native_leave already ran.
@@ -927,12 +971,16 @@ class CodegenThreads:
     def emit_thread_close_function(self) -> None:
         """Emit native-handle cleanup after a Thread has terminated."""
 
+        self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
         a = self.asm
         a.mark('fn_thread_close')
         a.sub_rsp_imm8(0x38)
         a.mov_membase_disp_r64('rsp', 0x30, 'rcx')
         lid = self.new_label_id()
         l_false = f'thclose_false_{lid}'
+        l_wait_users = f'thclose_wait_users_{lid}'
+        l_wait_native = f'thclose_wait_native_{lid}'
+        l_native_restore = f'thclose_native_restore_{lid}'
         l_done = f'thclose_done_{lid}'
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
         a.cmp_r32_imm('eax', THREAD_RUNNING)
@@ -950,19 +998,37 @@ class CodegenThreads:
         a.lock_cmpxchg_membase_disp_r64('rcx', THREAD_HANDLE, 'rdx')
         a.jcc('ne', l_false)
         a.mov_membase_disp_r64('rsp', 0x28, 'rax')
+        # Blocking waits must not leave this managed caller published as
+        # RUNNING. The collector may otherwise wait for Close while the worker
+        # waits at its final TLAB-retirement safepoint.
+        a.call('fn_gc_native_enter')
+        # Joins that acquired the old handle before our atomic claim remain
+        # valid. Wait until all of them have left the OS wait before releasing
+        # the native handle or its Linux control mapping.
+        a.mark(l_wait_users)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x30)
+        a.mov_r32_membase_disp('eax', 'r11', THREAD_HANDLE_USERS)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', l_wait_native)
+        a.mov_r32_imm32('ecx', 1)
+        a.mov_rax_rip_qword('iat_Sleep')
+        a.call_rax()
+        a.jmp(l_wait_users)
         # A terminal status can precede the worker's final native epilogue by
         # a few instructions. Close owns the handle now, so wait for the OS to
         # signal exit before clearing roots or releasing it.
-        a.mov_r64_r64('rcx', 'rax')
+        a.mark(l_wait_native)
+        a.mov_r64_membase_disp('rcx', 'rsp', 0x28)
         a.mov_r32_imm32('edx', -1)  # INFINITE
         a.mov_rax_rip_qword('iat_WaitForSingleObject')
         a.call_rax()
         l_restore = f'thclose_restore_{lid}'
         a.test_r32_r32('eax', 'eax')
-        a.jcc('ne', l_restore)
+        a.jcc('ne', l_native_restore)
         a.mov_r64_membase_disp('rcx', 'rsp', 0x28)
         a.mov_rax_rip_qword('iat_CloseHandle')
         a.call_rax()
+        a.call('fn_gc_native_leave')
         a.test_r32_r32('eax', 'eax')
         a.jcc('e', l_restore)
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
@@ -977,6 +1043,8 @@ class CodegenThreads:
             a.mov_membase_disp_imm32('r11', THREAD_TMP0 + i * 8, enc_void(), qword=True)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
+        a.mark(l_native_restore)
+        a.call('fn_gc_native_leave')
         a.mark(l_restore)
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
         a.xor_r32_r32('eax', 'eax')

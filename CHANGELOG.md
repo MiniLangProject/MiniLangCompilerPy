@@ -8,8 +8,9 @@ All notable changes to the MiniLang compiler are documented here.
   callers from launching the same thread object twice or overwriting its
   argument/handle state. `SetLogicalId` is atomic against that transition,
   `Stop` owns the publicly alive startup window, concurrent Linux `Join` calls
-  share one `pthread_join`, and concurrent/double `Close` cannot release roots
-  before the native worker exits.
+  share one `pthread_join`, and atomic handle references make `Join` safe against
+  a concurrent `Close`. Blocking cleanup is published as native to the GC and
+  cannot release roots or handles before every waiter and worker has exited.
 - Packed stable thread control records into synchronized 64-KiB arenas instead
   of allocating one OS page per `Thread`. A 50,000-object stress case reduced
   Windows working set from about 202 MiB to about 17 MiB without changing the

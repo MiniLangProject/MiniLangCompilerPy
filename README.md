@@ -415,11 +415,11 @@ boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
 
 Current audited Windows fixed point (2026-09-01): this Python compiler produced
-Stage 1 in 62.889 seconds, and Stage 1 produced the self-hosted Stage 2 in
-94.116 seconds. Both are byte-identical 66,212,864-byte images with SHA-256
-`85937F6D1C327393E43C491803C7266A803BD29BA1D8DA7F8B68AEB96CCE9762`.
+Stage 1 in 68.572 seconds, and Stage 1 produced the self-hosted Stage 2 in
+117.646 seconds. Both are byte-identical 66,314,240-byte images with SHA-256
+`9AAA804542149FB4665311AB90189073D0438D635636D5F7D32B62FBD72EF42B`.
 The complete Python suite passes 132/132. The self-hosted inner harness passes
-126/126 in 87.760 seconds, and the complete 133.004-second outer wrapper passes
+126/126 in 96.696 seconds, and the complete 144.964-second outer wrapper passes
 every Windows/Linux, FFI, GC, pthread-blob, object-pipeline and relink gate.
 Focused thread-lifecycle, Linux `out double`, exact-library-identity and
 language-extension builds are byte-identical across both compilers and targets.
@@ -1401,9 +1401,13 @@ Thread methods:
   `try(t.Result())` when a failed worker returned an `error` value.
 - `Close()` closes the native handle after termination. Concurrent calls are
   safe and exactly one can claim a live handle; cleanup also verifies that the
-  native worker has fully exited before clearing its registered roots. Status
-  metadata remains valid until process exit. Stable control records are packed
-  into thread-safe 64-KiB arenas rather than consuming one OS page each.
+  native worker has fully exited before clearing its registered roots. A `Join`
+  that already acquired the handle remains valid while `Close` waits for it;
+  later joins observe the close claim and return `false`. Blocking cleanup is
+  excluded from stop-the-world GC participation, preventing a terminal worker's
+  TLAB-retirement safepoint from deadlocking with its closer. Status metadata
+  remains valid until process exit. Stable control records are packed into
+  thread-safe 64-KiB arenas rather than consuming one OS page each.
 
 Worker helpers:
 
