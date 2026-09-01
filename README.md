@@ -494,7 +494,7 @@ resolves text labels through its existing map and materializes only section/IAT
 overrides; the `.mlo` linker preallocates its object-patch index. These are
 compiler-throughput changes only and do not affect target bytes.
 
-For the 1.1.0 acceptance pass, a 142-file snapshot of the current MiniQuake
+For the 1.1.0 acceptance pass, a 142-file snapshot of the then-current MiniQuake
 worktree at commit `1036b1c3b551d00de777c67293d262a6cc5c2739` plus 18 dirty
 entries was built through all three paths. This compiler took 67.528 seconds,
 the self-hosted monolithic compiler took 2,024.375 seconds and the canonical
@@ -2518,7 +2518,9 @@ Notes:
 - Windows imports are resolved by the PE loader, so a missing DLL or symbol
   normally prevents startup. Linux preserves the exact `from` spelling,
   resolves it through `dlopen`/`dlsym`, and returns a catchable MiniLang error
-  when the library or symbol is unavailable.
+  when the library or symbol is unavailable. Lazy Linux resolution is claimed
+  atomically, so concurrent first calls share one result; failed lookups are
+  cached and a library opened for a missing symbol is closed immediately.
 
 Example: MessageBox
 

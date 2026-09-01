@@ -410,6 +410,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "linux_ffi_whitespace_library.ml", ["[OK] exact Linux library spelling"], []),
         (tests_root / "linux_ffi_resolution_error.ml",
          ["[OK] Linux extern resolution errors are managed"], []),
+        (tests_root / "linux_ffi_concurrent_resolution.ml",
+         ["[OK] concurrent Linux extern resolution"], []),
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),

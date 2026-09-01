@@ -1005,6 +1005,7 @@ class CodegenStmt:
             return hits[0] if len(hits) == 1 else None
 
         def infer_expr(expr: Any, known: dict[str, str]) -> Optional[str]:
+            """Infer only facts that remain valid across the optimization pass."""
             if expr is None:
                 return None
             if isinstance(expr, getattr(ml, 'Num', ())):
@@ -6135,7 +6136,7 @@ class CodegenStmt:
             self.register_decl_site_binding(node, name, b)
 
         def analyze_expr(e, *, allow_func_ident: bool = False):
-
+            """Bind reads/captures while preserving lexical write ownership."""
             if e is None:
                 return
 

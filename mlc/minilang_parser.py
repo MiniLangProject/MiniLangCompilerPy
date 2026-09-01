@@ -2470,6 +2470,7 @@ class _LanguageLowerer:
         def compile_seq(body: List[Stmt], cont: int,
                         break_target: Optional[int] = None,
                         continue_target: Optional[int] = None) -> int:
+            """Lower a statement sequence backwards into lazy iterator states."""
             current = cont
             for st in reversed(body):
                 src = st

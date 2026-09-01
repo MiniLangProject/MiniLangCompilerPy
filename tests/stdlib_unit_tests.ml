@@ -34,6 +34,7 @@ import std.ds.hashmap as hm
 import std.ds.set as hset
 import std.ds.list as list
 import std.net as net
+import std.uuid as uuid
 
 function _assertNotError(v, msg)
   return a.assertTrue(typeof(v) != "error", msg)
@@ -335,11 +336,15 @@ function test_math_fmt_time()
 end function
 
 function test_fs_io()
-  // Use relative paths; test harness runs in a temp directory.
-  p_txt = "ml_stdlib_io_test.txt"
-  p_bin = "ml_stdlib_io_test.bin"
-  p_copy = "ml_stdlib_io_copy.bin"
-  p_move = "ml_stdlib_io_move.bin"
+  // A random per-process prefix keeps concurrent harnesses from modifying the
+  // same fixture while still exercising relative-path behavior.
+  suffix = try(uuid.v4())
+  if typeof(suffix) == "error" then suffix = "fallback-" + t.ticks() end if
+  prefix = "ml_stdlib_io_" + suffix
+  p_txt = prefix + ".txt"
+  p_bin = prefix + ".bin"
+  p_copy = prefix + "_copy.bin"
+  p_move = prefix + "_move.bin"
 
   // text roundtrip
   w = try(fs.writeAllText(p_txt, "hello\nworld\n"))
@@ -555,6 +560,11 @@ function _udpBindAny(sock)
 end function
 
 function test_net_tcp_udp()
+  // Public APIs reject ports before sockaddr_in can truncate them to 16 bits.
+  chk(a.assertTrue(typeof(try(net.tcpConnect("127.0.0.1", -1))) == "error", "net: tcpConnect rejects negative port"))
+  chk(a.assertTrue(typeof(try(net.tcpListen(65536, 1))) == "error", "net: tcpListen rejects oversized port"))
+  chk(a.assertTrue(typeof(try(net.tcpListenAddress("127.0.0.1", -1, 1))) == "error", "net: tcpListenAddress rejects negative port"))
+
   // TCP roundtrip on localhost
   lp = try(_tcpListenAny(8))
   chk(_assertNotError(lp, "net: tcpListenAny"))
@@ -564,6 +574,10 @@ function test_net_tcp_udp()
 
   srv = lp[0]
   port = lp[1]
+
+  duplicate = try(net.tcpListen(port, 1))
+  chk(a.assertTrue(typeof(duplicate) == "error", "net: active listener owns its port exclusively"))
+  if typeof(duplicate) != "error" then net.close(duplicate) end if
 
   cli = try(net.tcpConnect("127.0.0.1", port))
   chk(_assertNotError(cli, "net: tcpConnect"))
@@ -630,12 +644,23 @@ function test_net_tcp_udp()
     return
   end if
 
+  chk(a.assertTrue(typeof(try(net.udpBind(u1, -1))) == "error", "net: udpBind rejects negative port"))
+  chk(a.assertTrue(typeof(try(net.udpSendTo(u1, "127.0.0.1", 65536, "x"))) == "error", "net: udpSendTo rejects oversized port"))
+
   up = try(_udpBindAny(u2))
   chk(_assertNotError(up, "net: udpBindAny"))
   if typeof(up) == "error" then
     net.close(u1)
     net.close(u2)
     return
+  end if
+
+  u3 = try(net.udpOpen())
+  chk(_assertNotError(u3, "net: udpOpen duplicate probe"))
+  if typeof(u3) != "error" then
+    duplicateUdp = try(net.udpBind(u3, up))
+    chk(a.assertTrue(typeof(duplicateUdp) == "error", "net: active UDP socket owns its port exclusively"))
+    net.close(u3)
   end if
 
   ur = try(net.udpSendTo(u1, "127.0.0.1", up, "hi"))

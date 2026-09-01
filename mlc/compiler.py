@@ -565,6 +565,7 @@ def load_modules_recursive(
         return f"  {loc}: import {req}{as_part} -> {res_disp}"
 
     def load_one(path: str, *, is_main: bool, edge: Optional[_ImportEdge] = None) -> None:
+        """Load, validate and recursively merge one canonical import node."""
         nonlocal stop_now
 
         if stop_now:

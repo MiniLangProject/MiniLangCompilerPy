@@ -36,6 +36,7 @@ class CodegenCore:
                  import_aliases: Optional[Dict[str, str]] = None, extern_sigs: Optional[Dict[str, Any]] = None,
                  extern_structs: Optional[Dict[str, Any]] = None, call_profile: bool = False, trace_calls: bool = False,
                  subsystem: str = 'console', target: str = 'windows-x64'):
+        """Initialize one compilation's shared backend state and target policy."""
         self.ml = minilang_mod
         self.source = source
         self.filename = filename

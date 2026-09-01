@@ -24,6 +24,7 @@ _RUNTIME_DYNAMIC_IMPORTS = (
     ('libpthread.so.0', 'pthread_join', 'elfiat_runtime_pthread_join'),
     ('libdl.so.2', 'dlopen', 'elfiat_runtime_dlopen'),
     ('libdl.so.2', 'dlsym', 'elfiat_runtime_dlsym'),
+    ('libdl.so.2', 'dlclose', 'elfiat_runtime_dlclose'),
 )
 
 
@@ -132,7 +133,8 @@ def _emit_extern_thunks(cg: Any) -> None:
 
         native_base = stack_count * 8
         xmm_save_base = native_base + len(params) * 8
-        frame_min = xmm_save_base + 10 * 16
+        loader_handle_offset = xmm_save_base + 10 * 16
+        frame_min = loader_handle_offset + 8
         # Two pushes retain entry's 8-mod-16 alignment. A frame congruent to 8
         # leaves RSP 16-byte aligned at the SysV call site.
         frame = ((frame_min + 7) // 16) * 16 + 8
@@ -161,25 +163,48 @@ def _emit_extern_thunks(cg: Any) -> None:
             a.movdqu_membase_disp_xmm('rsp', xmm_save_base + (index - 6) * 16, f'xmm{index}')
 
         # Resolve through the declared library's handle, not the ELF global
-        # symbol namespace. Cache the pointer in the existing loader slot.
+        # symbol namespace. The shared slot has four states: 0=unresolved,
+        # 1=one thread resolving, 2=permanent failure, pointer=resolved. A
+        # compare/exchange claim prevents concurrent first calls from leaking
+        # loader references or publishing a partially initialized pointer.
+        resolve_retry = f'{thunk_label}_resolve_retry'
+        resolve_claim = f'{thunk_label}_resolve_claim'
+        resolve_wait = f'{thunk_label}_resolve_wait'
         resolved = f'{thunk_label}_resolved'
+        resolve_symbol_failed = f'{thunk_label}_resolve_symbol_failed'
+        resolve_publish_failed = f'{thunk_label}_resolve_publish_failed'
         resolve_failed = f'{thunk_label}_resolve_failed'
         epilogue = f'{thunk_label}_epilogue'
+        a.mark(resolve_retry)
         a.mov_rax_rip_qword(loader_label)
         a.test_r64_r64('rax', 'rax')
-        a.jcc('ne', resolved)
+        a.jcc('e', resolve_claim)
+        a.cmp_r64_imm('rax', 1)
+        a.jcc('e', resolve_wait)
+        a.cmp_r64_imm('rax', 2)
+        a.jcc('e', resolve_failed)
+        a.jmp(resolved)
+        a.mark(resolve_wait)
+        a.emit(b'\xf3\x90')  # PAUSE while the owning resolver is in libdl.
+        a.jmp(resolve_retry)
+        a.mark(resolve_claim)
+        a.lea_r11_rip(loader_label)
+        a.mov_r32_imm32('edx', 1)
+        a.lock_cmpxchg_membase_disp_r64('r11', 0, 'rdx')
+        a.jcc('ne', resolve_retry)
         a.lea_rax_rip(library_label)
         a.mov_r64_r64('rdi', 'rax')
         a.mov_r32_imm32('esi', 2)  # RTLD_NOW | RTLD_LOCAL
         a.call_rip_qword('elfiat_runtime_dlopen')
         a.test_r64_r64('rax', 'rax')
-        a.jcc('e', resolve_failed)
+        a.jcc('e', resolve_publish_failed)
+        a.mov_membase_disp_r64('rsp', loader_handle_offset, 'rax')
         a.mov_r64_r64('rdi', 'rax')
         a.lea_rax_rip(symbol_label)
         a.mov_r64_r64('rsi', 'rax')
         a.call_rip_qword('elfiat_runtime_dlsym')
         a.test_r64_r64('rax', 'rax')
-        a.jcc('e', resolve_failed)
+        a.jcc('e', resolve_symbol_failed)
         a.mov_rip_qword_rax(loader_label)
         a.mark(resolved)
 
@@ -199,6 +224,13 @@ def _emit_extern_thunks(cg: Any) -> None:
         # disturbing the native return value in RAX/XMM0.
         a.mov_r32_imm32('r11d', 0)
         a.jmp(epilogue)
+        a.mark(resolve_symbol_failed)
+        a.mov_r64_membase_disp('rdi', 'rsp', loader_handle_offset)
+        a.call_rip_qword('elfiat_runtime_dlclose')
+        a.mark(resolve_publish_failed)
+        a.mov_r32_imm32('eax', 2)
+        a.mov_rip_qword_rax(loader_label)
+        a.jmp(resolve_failed)
         a.mark(resolve_failed)
         a.mov_r32_imm32('r11d', 1)
         a.mark(epilogue)

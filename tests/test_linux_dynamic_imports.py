@@ -34,7 +34,7 @@ class TestLinuxDynamicImports(unittest.TestCase):
 
         imports = linux_dynamic_imports(cg)
         self.assertEqual({symbol for _, symbol, _ in imports},
-                         {"pthread_create", "pthread_join", "dlopen", "dlsym"})
+                         {"pthread_create", "pthread_join", "dlopen", "dlsym", "dlclose"})
         first = f"elfiat_{extern_library_label_token('libfirst.so')}_shared"
         second = f"elfiat_{extern_library_label_token('libsecond.so')}_shared"
         self.assertIn(first, cg.data.labels)
@@ -45,8 +45,11 @@ class TestLinuxDynamicImports(unittest.TestCase):
         patch_targets = {label for _, label, _ in cg.asm.patches}
         self.assertIn("elfiat_runtime_dlopen", patch_targets)
         self.assertIn("elfiat_runtime_dlsym", patch_targets)
+        self.assertIn("elfiat_runtime_dlclose", patch_targets)
         self.assertIn(first, patch_targets)
         self.assertIn(second, patch_targets)
+        # LOCK CMPXCHG [r11],rdx claims each lazy resolver slot exactly once.
+        self.assertIn(b"\xF0\x49\x0F\xB1\x13", bytes(cg.asm.buf))
 
     def test_exact_library_spelling_cannot_collapse(self) -> None:
         libraries = (

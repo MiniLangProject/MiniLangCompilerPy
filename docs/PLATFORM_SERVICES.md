@@ -54,7 +54,12 @@ allocations.
 
 `std.net` now exposes reusable-address, keepalive, TCP no-delay and send/receive
 timeout options. `tcpListenAddress(host, port, backlog)` binds an explicit IPv4
-address; `tcpListen` keeps its established all-interface behavior.
+address; `tcpListen` keeps its established all-interface behavior. Public TCP
+and UDP helpers accept ports from `0` through `65535` and reject values outside
+that range. TCP listeners and bound UDP sockets request exclusive port ownership
+on Windows to avoid cross-process traffic routing; Linux TCP listeners retain
+`SO_REUSEADDR` restart semantics. Explicit `setReuseAddress` calls remain
+available to applications.
 
 `std.tls` includes a native provider selected at compile time: Windows uses
 Schannel and the system certificate stores; Linux uses OpenSSL 3

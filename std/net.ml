@@ -53,6 +53,7 @@ const SOCKET_ERROR = -1
 #if TARGET_OS == "windows"
 const SOL_SOCKET = 0xFFFF
 const SO_REUSEADDR = 0x0004
+const SO_EXCLUSIVEADDRUSE = -5
 const SO_KEEPALIVE = 0x0008
 const SO_SNDTIMEO = 0x1005
 const SO_RCVTIMEO = 0x1006
@@ -217,6 +218,10 @@ Builds a sockaddr_in (IPv4) for connect/bind.
 input: u32 ipv4NetworkOrder, int port
 returns: bytes sockaddrIn (16 bytes)
 */
+function _isValidPort(port)
+  return typeof(port) == "int" and port >= 0 and port <= 65535
+end function
+
 function _sockaddrIn(ipv4, port)
   a = bytes(SOCKADDR_IN_SIZE, 0)
 
@@ -330,6 +335,27 @@ function setReuseAddress(sock, enabled)
   return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, enabled, "setReuseAddress")
 end function
 
+function _prepareTcpListener(sock, operation)
+  // Winsock's SO_REUSEADDR permits unrelated processes to bind the same port
+  // and receive each other's traffic. Linux uses the option for prompt restart
+  // after TIME_WAIT, while Windows listeners request exclusive ownership.
+#if TARGET_OS == "windows"
+  return _setBooleanOption(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, true, operation)
+#else
+  return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, true, operation)
+#endif
+end function
+
+function _prepareUdpBind(sock)
+  // Winsock also permits overlapping UDP binds unless exclusive ownership is
+  // requested. Linux keeps the previous default (no reuse option) for UDP.
+#if TARGET_OS == "windows"
+  return _setBooleanOption(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, true, "udpBind: configure socket")
+#else
+  return true
+#endif
+end function
+
 // Enable or disable TCP keepalive probes.
 function setKeepAlive(sock, enabled)
   return _setBooleanOption(sock, SOL_SOCKET, SO_KEEPALIVE, enabled, "setKeepAlive")
@@ -377,8 +403,8 @@ function tcpConnect(host, port)
   if init() == false then
     return _netErr("net.init failed")
   end if
-  if typeof(port) != "int" then
-    return _netErr("tcpConnect: port must be int")
+  if not _isValidPort(port) then
+    return _netErr("tcpConnect: port must be int in range 0..65535")
   end if
 
   ip = _parseIPv4(host)
@@ -411,8 +437,8 @@ function tcpListen(port, backlog)
   if init() == false then
     return _netErr("net.init failed")
   end if
-  if typeof(port) != "int" then
-    return _netErr("tcpListen: port must be int")
+  if not _isValidPort(port) then
+    return _netErr("tcpListen: port must be int in range 0..65535")
   end if
   if typeof(backlog) != "int" then
     backlog = 16
@@ -423,10 +449,8 @@ function tcpListen(port, backlog)
     return _netErr("tcpListen: socket failed (" + lastError() + ")")
   end if
 
-  // Best-effort reuseaddr.
-  opt = bytes(4, 0)
-  opt[0] = 1
-  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, opt, 4)
+  configured = _prepareTcpListener(s, "tcpListen: configure listener")
+  if typeof(configured) == "error" then closesocket(s); return configured end if
 
   addr = _sockaddrIn(0, port)
   rc = bind(s, addr, len(addr))
@@ -449,14 +473,14 @@ end function
 // Create an IPv4 listener bound to an explicit dotted address.
 function tcpListenAddress(host, port, backlog)
   if init() == false then return _netErr("net.init failed") end if
-  if typeof(port) != "int" then return _netErr("tcpListenAddress: port must be int") end if
+  if not _isValidPort(port) then return _netErr("tcpListenAddress: port must be int in range 0..65535") end if
   if typeof(backlog) != "int" then backlog = 16 end if
   ip = _parseIPv4(host)
   if typeof(ip) == "void" then return _netErr("tcpListenAddress: invalid IPv4 host") end if
   server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
   if server == INVALID_SOCKET then return _netErr("tcpListenAddress: socket failed (" + lastError() + ")") end if
-  reused = setReuseAddress(server, true)
-  if typeof(reused) == "error" then closesocket(server); return reused end if
+  configured = _prepareTcpListener(server, "tcpListenAddress: configure listener")
+  if typeof(configured) == "error" then closesocket(server); return configured end if
   address = _sockaddrIn(ip, port)
   if bind(server, address, len(address)) != 0 then
     code = lastError()
@@ -648,9 +672,12 @@ function udpBind(sock, port)
   if not _isSockHandle(sock) then
     return _netErr("udpBind: sock must be ptr")
   end if
-  if typeof(port) != "int" then
-    return _netErr("udpBind: port must be int")
+  if not _isValidPort(port) then
+    return _netErr("udpBind: port must be int in range 0..65535")
   end if
+
+  configured = _prepareUdpBind(sock)
+  if typeof(configured) == "error" then return configured end if
 
   addr = _sockaddrIn(0, port)
   rc = bind(sock, addr, len(addr))
@@ -670,8 +697,8 @@ function udpSendTo(sock, host, port, data)
   if not _isSockHandle(sock) then
     return _netErr("udpSendTo: sock must be ptr")
   end if
-  if typeof(port) != "int" then
-    return _netErr("udpSendTo: port must be int")
+  if not _isValidPort(port) then
+    return _netErr("udpSendTo: port must be int in range 0..65535")
   end if
   // Convenience: allow sending UTF-8 text directly.
   if typeof(data) == "string" then
