@@ -346,7 +346,7 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.1.0"
+    expected = "MiniLang Compiler 1.2.0"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -3797,6 +3797,7 @@ def main() -> int:
     gc_float_call_roots_ml = find_file_by_name(tests_root, "gc_float_call_roots.ml")
     native_bytes_ptr_ml = find_file_by_name(tests_root, "native_bytes_ptr_smoke.ml")
     native_raw_value_ml = find_file_by_name(tests_root, "native_raw_value_smoke.ml")
+    gc_interior_pointer_bounds_ml = find_file_by_name(tests_root, "gc_interior_pointer_bounds.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
     tlab_shared_heap_ml = find_file_by_name(tests_root, "tlab_shared_heap.ml")
@@ -3827,7 +3828,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.1.0", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.0", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_linux_x64_target(
@@ -4352,6 +4353,17 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="native interop: raw value roundtrip", status="SKIP",
                                         details="native_raw_value_smoke.ml not found"))
+
+    if gc_interior_pointer_bounds_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="GC: conservative interior pointer bounds",
+            mlc_runner=mlc_runner,
+            ml_path=gc_interior_pointer_bounds_ml,
+            must_contain=["[OK] GC bounds conservative interior pointers"],
+        ))
+    else:
+        tests.append(lambda: TestResult(name="GC: conservative interior pointer bounds", status="SKIP",
+                                        details="gc_interior_pointer_bounds.ml not found"))
 
     if native_callback_wndproc_ml is not None:
         tests.append(lambda: test_program_no_fail(

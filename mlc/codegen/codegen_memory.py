@@ -1712,8 +1712,17 @@ class CodegenMemory:
         # scan array elements
         # ------------------------------------------------------------
         a.mark(L_SCAN_ARRAY)
+        # Raw native values can conservatively resemble interior heap
+        # pointers. Bound embedded counts to the candidate block before they
+        # can drive a scan beyond committed heap memory.
+        a.mov_r64_membase_disp("rcx", "rax", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.sub_r64_imm("rcx", GC_HEADER_SIZE + 8)
+        a.shr_r64_imm8("rcx", 3)
         # edx = len
         a.mov_r32_membase_disp("edx", "rax", 4)  # mov edx, [rax+4]
+        a.cmp_r32_r32("edx", "ecx")
+        a.jcc('a', L_MARK_LOOP)
         # rbx = data base = rax + 8
         a.lea_r64_membase_disp("rbx", "rax", 8)  # lea rbx, [rax+8]
         # Use non-volatile regs for loop state; gc_mark_value clobbers r8/r9.
@@ -1777,6 +1786,10 @@ class CodegenMemory:
         #   [16] u64 env (Value)
         # ------------------------------------------------------------
         a.mark(L_SCAN_FUNCTION)
+        a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 24)
+        a.jcc('b', L_MARK_LOOP)
         a.mov_r64_membase_disp("rax", "r11", 16)  # rax = fn.env
         a.call(L_MARK_VALUE)
         a.jmp(L_MARK_LOOP)
@@ -1790,6 +1803,15 @@ class CodegenMemory:
         #   [16] qword slot0 (Value) ...
         # ------------------------------------------------------------
         a.mark(L_SCAN_ENV)
+        a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 16)
+        a.jcc('b', L_MARK_LOOP)
+        a.sub_r64_imm("rcx", GC_HEADER_SIZE + 16)
+        a.shr_r64_imm8("rcx", 3)
+        a.mov_r32_membase_disp("edx", "r11", 4)
+        a.cmp_r32_r32("edx", "ecx")
+        a.jcc('a', L_MARK_LOOP)
         # preserve env pointer across calls (gc_mark_value clobbers r11)
         a.mov_r64_r64("rdi", "r11")  # rdi = env
 
@@ -1825,8 +1847,14 @@ class CodegenMemory:
         #   [8]  qword slot0 (Value) ...
         # ------------------------------------------------------------
         a.mark(L_SCAN_ENV_LOCAL)
+        a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.sub_r64_imm("rcx", GC_HEADER_SIZE + 8)
+        a.shr_r64_imm8("rcx", 3)
+        a.mov_r32_membase_disp("edx", "r11", 4)
+        a.cmp_r32_r32("edx", "ecx")
+        a.jcc('a', L_MARK_LOOP)
         a.mov_r64_r64("rdi", "r11")
-        a.mov_r32_membase_disp("edx", "rdi", 4)
         a.lea_r64_membase_disp("rbx", "rdi", 8)
         a.mov_r32_r32("r14d", "edx")
         a.xor_r32_r32("r13d", "r13d")
@@ -1840,6 +1868,10 @@ class CodegenMemory:
         #   [8]  u64 value (Value)
         # ------------------------------------------------------------
         a.mark(L_SCAN_BOX)
+        a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
+        a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+        a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 16)
+        a.jcc('b', L_MARK_LOOP)
         a.mov_r64_membase_disp("rax", "r11", 8)  # rax = box.value
         a.call(L_MARK_VALUE)
         a.jmp(L_MARK_LOOP)

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 31 August 2026 against the matching 1.1.0 revisions of:
+Verified through 1 September 2026 against the matching 1.2.0 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,32 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.0 release fixed point
+
+Verified on 1 September 2026 after the release version update, reusable
+assembler hardening and bounded conservative GC object scans. Every compiler
+reports `MiniLang Compiler 1.2.0`.
+
+| Compiler image | Size | SHA-256 | Build time |
+| --- | ---: | --- | ---: |
+| Windows Stage 1, built by Python | 65,695,232 | `13D485D2FA64B97794BB30F0E25B093BAE84BF3EECF3C8FB07C034044CDF429A` | 94.399 s |
+| Windows Stage 2, built by Stage 1 | 65,695,232 | `13D485D2FA64B97794BB30F0E25B093BAE84BF3EECF3C8FB07C034044CDF429A` | 231.758 s |
+| Windows Stage 3, built by Stage 2 | 65,695,232 | `13D485D2FA64B97794BB30F0E25B093BAE84BF3EECF3C8FB07C034044CDF429A` | 218.076 s |
+| Linux Stage 1, cross-built by Windows Stage 3 | 65,651,952 | `55F63603A034740ECD3C2C479A8DD550EB6F2594D4BD6F27DD084BC04750E784` | 122.282 s |
+| Linux Stage 2, built natively by Linux Stage 1 | 65,651,952 | `55F63603A034740ECD3C2C479A8DD550EB6F2594D4BD6F27DD084BC04750E784` | 418 s |
+
+All three Windows images are byte-identical. The cross-built and natively
+self-hosted Linux images are also byte-identical. The Linux time includes WSL2
+I/O against the mounted Windows checkout and the build script's monolithic,
+object-pipeline and project-manifest smoke tests; it is not a compiler-only
+performance baseline.
+
+The release regression suite additionally constructs a conservative interior
+heap pointer whose payload mimics an environment with an impossible slot
+count. The previous scanner crashed with an access violation; both release
+backends now reject the count against the candidate block size on Windows and
+Linux.
 
 ## Modern language-extension parity
 
@@ -334,7 +360,7 @@ global constant pools, and therefore no longer introduces an image-layout
 difference. The historical compiler-image rows are retained for comparison;
 they are not presented as a fresh fixed-point measurement of this revision.
 
-Both compilers report `MiniLang Compiler 1.1.0` for `-version` and
+Both compilers report `MiniLang Compiler 1.2.0` for `-version` and
 `--version`. The repositories and GitHub releases are source-only; generated
 compiler and test executables are intentionally excluded.
 

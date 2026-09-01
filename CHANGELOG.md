@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.0 - 2026-09-01
+
 - Added gradual runtime type annotations and optional values, expression
   lambdas, default/named/variadic calls, value/range `match`, eager and lazy
   pull iterators with `yield`, structural interfaces, and pooled
@@ -14,6 +16,26 @@ All notable changes to the MiniLang compiler are documented here.
   share a four-worker pool. The positive/negative and performance
   fixtures remain byte-identical with the self-hosted compiler on Windows and
   Linux x64.
+- Added Windows/Linux x64 target parity, native Linux self-hosting, typed
+  conditional compilation, cross-platform TLS/system services and a matching
+  standard library surface on both operating systems.
+- Added structured concurrency with tasks, futures, cooperative cancellation,
+  bounded channels, `async`/`await`/`select` and fine-grained
+  `synchronized(lock)` cleanup semantics.
+- Added thread-local allocation buffers and hardened cooperative GC
+  safepoints, Linux pthread behavior, project caching, host process boundaries
+  and compiler thread-pool shutdown.
+- Kept the reference compiler byte-identical with the self-hosted compiler's
+  canonical streamed `.mlo` pipeline, compact internal representations,
+  phase-local graph release, reused analysis state and native bulk copies for
+  both Windows PE and Linux ELF output.
+- Added matching regression coverage for resumed assembler emission and
+  unresolved patch application after materialization in the self-hosted
+  assembler.
+- Bounded variable-size GC scans to their candidate heap blocks. This prevents
+  conservative interior pointers whose payload resembles arrays or closure
+  environments from causing out-of-bounds reads; the regression is exercised
+  on Windows and Linux and restores native Linux self-hosting stability.
 
 ## 1.1.0 - 2026-08-24
 
