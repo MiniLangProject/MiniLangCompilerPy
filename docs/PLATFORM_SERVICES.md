@@ -56,10 +56,13 @@ allocations.
 timeout options. `tcpListenAddress(host, port, backlog)` binds an explicit IPv4
 address; `tcpListen` keeps its established all-interface behavior. Public TCP
 and UDP helpers accept ports from `0` through `65535` and reject values outside
-that range. TCP listeners and bound UDP sockets request exclusive port ownership
-on Windows to avoid cross-process traffic routing; Linux TCP listeners retain
-`SO_REUSEADDR` restart semantics. Explicit `setReuseAddress` calls remain
-available to applications.
+that range. TCP listeners and ordinary bound UDP sockets request exclusive port
+ownership on Windows to avoid cross-process traffic routing; Linux TCP
+listeners retain `SO_REUSEADDR` restart semantics. An explicit
+`setReuseAddress(socket, true)` call opts a Windows UDP socket out of the
+exclusive default before it is bound, so intentional shared-port designs keep
+working. Process-wide socket initialization and cleanup are serialized; as
+before, applications must not call `cleanup()` while sockets are still in use.
 
 `std.tls` includes a native provider selected at compile time: Windows uses
 Schannel and the system certificate stores; Linux uses OpenSSL 3

@@ -24,7 +24,7 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
-## Post-release audit hardening fixed point
+## Post-release ownership and cache hardening fixed point
 
 Verified on 1 September 2026 after the compiler, comment and documentation
 audit and its follow-up concurrency/FFI hardening. Thread construction now
@@ -39,18 +39,22 @@ including `out double`, as a pointer-class argument, rejects conflicting ABI
 aliases and preserves the exact declared library identity. Ordinary strings
 whose text equals an internal conversion sentinel remain ordinary strings.
 The self-hosted Linux runtime uses named, automatically checked blob boundaries
-and relocation sites.
+and relocation sites. Process-wide socket initialization is serialized and an
+explicit Windows UDP reuse request now overrides the ordinary exclusive-bind
+default. The self-hosted object cache validates every MLO's content identity,
+while build and test cleanup is restricted to invocation-owned staging trees.
 
 | Compiler image | Size | SHA-256 | Build time |
 | --- | ---: | --- | ---: |
-| Windows Stage 1, built by Python | 66,314,240 | `9AAA804542149FB4665311AB90189073D0438D635636D5F7D32B62FBD72EF42B` | 68.572 s |
-| Windows Stage 2, built by Stage 1 | 66,314,240 | `9AAA804542149FB4665311AB90189073D0438D635636D5F7D32B62FBD72EF42B` | 117.646 s |
+| Windows Stage 1, built by Python | 66,393,088 | `6000AAE0787F3A9B8C93B1206AEEE07D91B5F831ED11E0609A278BBD0212F780` | 92.286 s |
+| Windows Stage 2, built by Stage 1 | 66,393,088 | `6000AAE0787F3A9B8C93B1206AEEE07D91B5F831ED11E0609A278BBD0212F780` | 187.630 s |
+| Windows Stage 3, built by Stage 2 | 66,393,088 | `6000AAE0787F3A9B8C93B1206AEEE07D91B5F831ED11E0609A278BBD0212F780` | 188.809 s |
 
-The identical images establish the Windows self-host fixed point. The Python
-suite passes 132/132. The self-hosted inner harness passes 126/126 in 96.696
-seconds, while the complete Windows/WSL wrapper passes every outer Linux, FFI,
-GC, object-pipeline, blob-layout and relink gate in 144.964 seconds. All 46
-standard-library files are byte-identical between repositories.
+The three identical images establish the Windows self-host fixed point. The
+Python suite passes 132/132. The self-hosted inner harness passes 126/126 in
+89.167 seconds, while the complete Windows/WSL wrapper passes every outer
+Linux, FFI, GC, object-pipeline, blob-layout and relink gate in 132.080 seconds.
+All 46 standard-library files are byte-identical between repositories.
 
 The current targeted cross-compiler matrix is also byte-identical:
 
@@ -62,6 +66,8 @@ The current targeted cross-compiler matrix is also byte-identical:
 | Exact Linux library spelling | 87,664 | `A91C44BE93B14FB651625989402F772377F28A7FBBA0BEA2CB1FA3F15F22A9BD` |
 | Language extensions, Windows PE | 655,360 | `FC740384B74B7064803E5C657F6B0BD68D12C6F33F0442B20F57E69231FD629E` |
 | Language extensions, Linux ELF | 743,984 | `94B8DC43E546F7F8F72F28C1F154D15BEB1A8E668462085E56D242948CD9BA1E` |
+| Standard-library suite, Windows PE | 4,528,128 | `87B1294EA0903BC42934220C01C4F2D622A0D8AB79B65D51A6925F9C864DE2E9` |
+| Standard-library suite, Linux ELF | 4,493,296 | `AFA6384DF05A2C90C47C55EDFD825EFF85BD5C8F60DFE6EDC846826BD98192DB` |
 
 The Linux monolithic/`.mlo` smoke gate retains exact object-pipeline parity at
 SHA-256 `749A3483B6B711DF6DA0B6AF932EAD090F71542684435DCB7572F272E948544B`.

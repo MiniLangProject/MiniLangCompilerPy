@@ -103,6 +103,7 @@ extern function recvfrom(s as ptr, buf as bytes, len as int, flags as int, addr 
 extern function shutdown(s as ptr, how as int) from "ws2_32.dll" returns int
 
 extern function setsockopt(s as ptr, level as int, optname as int, optval as bytes, optlen as int) from "ws2_32.dll" returns int
+extern function getsockopt(s as ptr, level as int, optname as int, optval as bytes, optlen as bytes) from "ws2_32.dll" returns int
 
 // inet_addr parses dotted IPv4; returns address in network byte order (INADDR_NONE=0xFFFFFFFF on error)
 extern function inet_addr(addr as cstr) from "ws2_32.dll" returns u32
@@ -129,6 +130,10 @@ extern function _copyErrno(destination as bytes, source as ptr, count as u64) fr
 // Internal state
 // ---------------------------
 
+// init() and cleanup() serialize this process-wide Winsock ownership flag on
+// the same recursive monitor. Ordinary socket operations may call init()
+// concurrently, but applications must not call cleanup() while sockets remain
+// in use.
 _wsaReady = false
 
 // In the native backend, extern return type `ptr` is represented as a MiniLang
@@ -144,7 +149,7 @@ Initializes the platform socket layer. Safe to call multiple times.
 input: (none)
 returns: bool ready
 */
-function init()
+function synchronized init()
 #if TARGET_OS == "windows"
   if _wsaReady == true then
     return true
@@ -173,7 +178,7 @@ Cleans up the platform socket layer.
 input: (none)
 returns: bool success
 */
-function cleanup()
+function synchronized cleanup()
 #if TARGET_OS == "windows"
   if _wsaReady == false then
     return true
@@ -330,8 +335,28 @@ function _setBooleanOption(sock, level, option, enabled, operation)
   return true
 end function
 
+#if TARGET_OS == "windows"
+function _getBooleanOption(sock, level, option, operation)
+  if not _isSockHandle(sock) then return _netErr(operation + ": invalid socket") end if
+  raw = bytes(4, 0)
+  rawLength = bytes(4, 0)
+  _putU32(rawLength, 0, len(raw))
+  if getsockopt(sock, level, option, raw, rawLength) != 0 then return _netErr(operation + ": getsockopt failed (" + lastError() + ")") end if
+  return raw[0] != 0
+end function
+#endif
+
 // Enable or disable address reuse on an existing socket.
 function setReuseAddress(sock, enabled)
+#if TARGET_OS == "windows"
+  // SO_REUSEADDR and SO_EXCLUSIVEADDRUSE are mutually exclusive on Winsock.
+  // Explicit reuse therefore opts out of udpBind's exclusive default before
+  // applying the caller's requested reuse state.
+  if enabled == true then
+    exclusive = _setBooleanOption(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, false, "setReuseAddress")
+    if typeof(exclusive) == "error" then return exclusive end if
+  end if
+#endif
   return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, enabled, "setReuseAddress")
 end function
 
@@ -348,8 +373,12 @@ end function
 
 function _prepareUdpBind(sock)
   // Winsock also permits overlapping UDP binds unless exclusive ownership is
-  // requested. Linux keeps the previous default (no reuse option) for UDP.
+  // requested. An explicit setReuseAddress(true) deliberately opts out;
+  // Linux keeps the previous caller-controlled UDP behavior.
 #if TARGET_OS == "windows"
+  reuse = _getBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, "udpBind: inspect socket")
+  if typeof(reuse) == "error" then return reuse end if
+  if reuse then return true end if
   return _setBooleanOption(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, true, "udpBind: configure socket")
 #else
   return true

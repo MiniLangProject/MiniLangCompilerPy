@@ -36,6 +36,43 @@ import std.ds.list as list
 import std.net as net
 import std.uuid as uuid
 
+synchronized _netInitReady = 0
+synchronized _netInitGo = false
+synchronized _netInitFailures = 0
+
+function _netInitWorker()
+  global _netInitReady, _netInitGo, _netInitFailures
+  _netInitReady = _netInitReady + 1
+  while not _netInitGo threadSleep(0) end while
+  if net.init() != true then _netInitFailures = _netInitFailures + 1 end if
+end function
+
+function _testConcurrentNetInit()
+  global _netInitReady, _netInitGo, _netInitFailures
+  if net.cleanup() != true then return false end if
+  _netInitReady = 0
+  _netInitGo = false
+  _netInitFailures = 0
+  workers = []
+  started = true
+  for i = 1 to 16
+    worker = Thread(_netInitWorker)
+    workers = workers + [worker]
+    if not worker.Start() then started = false; break end if
+  end for
+  if started then
+    while _netInitReady < len(workers) threadSleep(0) end while
+  end if
+  _netInitGo = true
+  for each worker in workers
+    if worker.Join(10000) == false then started = false end if
+    worker.Close()
+  end for
+  cleaned = net.cleanup()
+  restored = net.init()
+  return started and _netInitFailures == 0 and cleaned == true and restored == true
+end function
+
 function _assertNotError(v, msg)
   return a.assertTrue(typeof(v) != "error", msg)
 end function
@@ -560,6 +597,8 @@ function _udpBindAny(sock)
 end function
 
 function test_net_tcp_udp()
+  chk(a.assertTrue(_testConcurrentNetInit(), "net: concurrent init/cleanup lifecycle"))
+
   // Public APIs reject ports before sockaddr_in can truncate them to 16 bits.
   chk(a.assertTrue(typeof(try(net.tcpConnect("127.0.0.1", -1))) == "error", "net: tcpConnect rejects negative port"))
   chk(a.assertTrue(typeof(try(net.tcpListen(65536, 1))) == "error", "net: tcpListen rejects oversized port"))
@@ -662,6 +701,37 @@ function test_net_tcp_udp()
     chk(a.assertTrue(typeof(duplicateUdp) == "error", "net: active UDP socket owns its port exclusively"))
     net.close(u3)
   end if
+
+  // Explicit reuse must remain usable even though ordinary Windows UDP binds
+  // request exclusive ownership. Both sockets opt in before either bind.
+  reuseAttempted = false
+  reuseWorked = false
+  for reusePort = 39200 to 39300
+    reuseFirst = try(net.udpOpen())
+    reuseSecond = try(net.udpOpen())
+    if typeof(reuseFirst) == "error" or typeof(reuseSecond) == "error" then
+      if typeof(reuseFirst) != "error" then net.close(reuseFirst) end if
+      if typeof(reuseSecond) != "error" then net.close(reuseSecond) end if
+      break
+    end if
+    firstOption = try(net.setReuseAddress(reuseFirst, true))
+    secondOption = try(net.setReuseAddress(reuseSecond, true))
+    if typeof(firstOption) == "error" or typeof(secondOption) == "error" then
+      net.close(reuseFirst); net.close(reuseSecond)
+      break
+    end if
+    firstBind = try(net.udpBind(reuseFirst, reusePort))
+    if typeof(firstBind) == "error" then
+      net.close(reuseFirst); net.close(reuseSecond)
+      continue
+    end if
+    reuseAttempted = true
+    secondBind = try(net.udpBind(reuseSecond, reusePort))
+    reuseWorked = typeof(secondBind) != "error"
+    net.close(reuseFirst); net.close(reuseSecond)
+    break
+  end for
+  chk(a.assertTrue(reuseAttempted and reuseWorked, "net: explicit UDP address reuse"))
 
   ur = try(net.udpSendTo(u1, "127.0.0.1", up, "hi"))
   chk(_assertNotError(ur, "net: udpSendTo"))
