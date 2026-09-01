@@ -29,32 +29,40 @@ bytes.
 Verified on 1 September 2026 after the compiler, comment and documentation
 audit and its follow-up concurrency/FFI hardening. Thread construction now
 publishes `Running` only after the native handle exists, `SetLogicalId` is
-atomic with respect to `Start`, and concurrent `Close` calls cannot double-close
-a handle or release roots while the native thread is still alive. Linux FFI
-slots encode the complete UTF-8 library identity without sanitizer collisions;
-missing libraries and symbols return managed MiniLang errors instead of calling
-null. The self-hosted Linux runtime uses named verified blob boundaries and
-folds local resolver-thunk branches before embedding each fragment.
+atomic with respect to `Start`, `Stop` owns the startup-publication window,
+concurrent Linux joins share one native `pthread_join`, and `Close` waits for
+the native epilogue after atomically claiming a handle. Thread contexts are
+packed into synchronized 64-KiB arenas. Linux FFI treats every `out` parameter,
+including `out double`, as a pointer-class argument, rejects conflicting ABI
+aliases and preserves the exact declared library identity. Ordinary strings
+whose text equals an internal conversion sentinel remain ordinary strings.
+The self-hosted Linux runtime uses named, automatically checked blob boundaries
+and relocation sites.
 
 | Compiler image | Size | SHA-256 | Build time |
 | --- | ---: | --- | ---: |
-| Windows Stage 1, built by Python | 65,977,344 | `39AD8309420B480EC550D057128E247C951862E4EA44C83F62B98B602C9FC5BC` | 66.913 s |
-| Windows Stage 2, built by Stage 1 | 65,977,344 | `39AD8309420B480EC550D057128E247C951862E4EA44C83F62B98B602C9FC5BC` | 99.546 s |
+| Windows Stage 1, built by Python | 66,212,864 | `85937F6D1C327393E43C491803C7266A803BD29BA1D8DA7F8B68AEB96CCE9762` | 62.889 s |
+| Windows Stage 2, built by Stage 1 | 66,212,864 | `85937F6D1C327393E43C491803C7266A803BD29BA1D8DA7F8B68AEB96CCE9762` | 94.116 s |
 
 The identical images establish the Windows self-host fixed point. The Python
-suite passes 130/130. The self-hosted inner harness passes 126/126 in 87.260
+suite passes 132/132. The self-hosted inner harness passes 126/126 in 87.760
 seconds, while the complete Windows/WSL wrapper passes every outer Linux, FFI,
-GC, object-pipeline and relink gate in 133.811 seconds. All 46 standard-library
-files are byte-identical between repositories.
+GC, object-pipeline, blob-layout and relink gate in 133.004 seconds. All 46
+standard-library files are byte-identical between repositories.
 
-A targeted matrix compiles the four critical Windows/Linux regressions through
-the Python and self-hosted compilers. Every pair is byte-identical and runs:
-`thread_lifecycle_races.ml` (`35F2822F...14015`), uppercase Windows DLL
-identity (`9756F38E...791E`), `linux_target_smoke.ml`
-(`4A4F5DC3...7352`) and managed Linux FFI resolution failure
-(`F5F53907...25E5F`). Separate monolithic/`.mlo` gates retain exact object-pipeline
-parity, including Linux ELF SHA-256
-`6598F695F79180741926BEEA747BD31C78132739BACB9E0F4B3B8D5E23497F8F`.
+The current targeted cross-compiler matrix is also byte-identical:
+
+| Regression / target | Size | SHA-256 |
+| --- | ---: | --- |
+| Thread lifecycle races, Windows PE | 189,952 | `063D1A8238F2050A36A41297B6B59BD218FF2B45139441D4DA6F1B6C0B395E66` |
+| Thread lifecycle races, Linux ELF | 194,256 | `176FD313E759E219B1F12F9E9619040F3DF890D1E4E04A694FF73AE149943692` |
+| Linux `out double` FFI | 87,648 | `155244DFFEDFF74D0282104A4F0419BE6AD74CFD82D1B3C38F73F8A3D0E74750` |
+| Exact Linux library spelling | 87,648 | `1B51E01346B5F94B034FD2E2B98B940D43E8FFFFC5BCBDA1EB7B1EE311C703CB` |
+| Language extensions, Windows PE | 655,360 | `4C211EBB3D2B48AB45BB2F8D921AE673DBC6E76BE2E2E718A1B600BE14BD67D2` |
+| Language extensions, Linux ELF | 743,968 | `3C9B70A89208F1FD1F0E1CF0F93CB9AE7AF87EA11DA5F4523CF6906E49EEFA10` |
+
+The Linux monolithic/`.mlo` smoke gate retains exact object-pipeline parity at
+SHA-256 `E737C9FDB7D95D0E57E3AE16B9CD3FD366B10819EC1704CB42D5ADD5C26B2DED`.
 
 
 ## 1.2.0 release fixed point
@@ -110,7 +118,7 @@ The self-hosted Stage 2 build completed in 189.795 seconds. Since the two
 compiler images are identical, this revision reaches its deterministic fixed
 point after the bootstrap stage.
 
-## Current compact-index fixed point
+## Historical compact-index fixed point
 
 Verified on 30 August 2026 after replacing the self-hosted compiler's tagged
 `FastMap` generation arrays with byte buffers and allowing deterministic maps
@@ -153,7 +161,7 @@ Python and MiniLang test harnesses additionally require the new
 `tlab_retire_publish_*` block, so parity covers the coalescing path rather than
 only the pre-existing TLAB fast path.
 
-## Current Windows/Linux target fixed point
+## Historical Windows/Linux target fixed point
 
 The final cross-target compiler source was bootstrapped and self-compiled on
 27 August 2026. The Windows compiler image is identical from the Python stage
@@ -254,7 +262,7 @@ Stage 3 monolithic path and by the Stage 3 `.mlo` path. All three files ran
 successfully and were byte-identical: 1,620,480 bytes, SHA-256
 `6E7BF4DCA93339C95B6EB4587613918053EE827A178A4055124599978FF94C67`.
 
-## Current TLAB and safepoint fixed-point verification
+## Historical TLAB and safepoint fixed-point verification
 
 The post-release TLAB implementation and the back-to-back GC safepoint fix were
 bootstrapped and self-compiled again on 24 August 2026. The compiler image
@@ -274,7 +282,7 @@ without a timeout after the fix. The dedicated back-to-back GC regression is
 also byte-identical at 112,128 bytes with SHA-256
 `F2AE65320F4A92C2EA5232B04F4CE8B83BC335DDF552870FD50DEBDD38468F82`.
 
-## Current optimizer-audit fixed point
+## Historical optimizer-audit fixed point
 
 The comment, optimizer-safety and code-hygiene audit was bootstrapped again on
 24 August 2026. The compiler stabilized at the first self-hosted stage:
@@ -290,7 +298,7 @@ monolithic path and by its `.mlo` path is byte-identical in all three cases:
 1,622,016 bytes, SHA-256
 `AC1C08B988A0B8A8987F487B2DFB2D95553733D8F0A41DBB86F597D29F4F6029`.
 
-## Current performance-hardening fixed point
+## Historical performance-hardening fixed point
 
 The guarded fallible-bytes specialization, 16-byte user-function alignment,
 package-aware integer flow and indexed self-hosted analyses were bootstrapped

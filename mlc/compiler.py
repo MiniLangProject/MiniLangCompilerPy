@@ -945,6 +945,20 @@ def _norm_abi_ty(t: Any) -> str:
     return str(t or "").strip().lower()
 
 
+def _extern_physical_abi_class(t: Any, *, is_out: bool = False) -> str:
+    """Return the native register class relevant to a shared import thunk.
+
+    Partially populated declarations from inactive platform branches are kept
+    deterministic here; their user-facing validation happens separately.
+    """
+    if is_out:
+        return "gpr"
+    nt = _norm_abi_ty(t)
+    if nt in ("void", "none"):
+        return "void"
+    return "xmm" if nt == "double" else "gpr"
+
+
 def _resolve_dll_candidates(dll: str, *, out_dir: str, src_dir: str, include_dirs: List[str]) -> List[str]:
     """Best-effort DLL path candidates.
 
@@ -994,7 +1008,9 @@ def validate_extern_sigs(
     out_dir = os.path.dirname(os.path.realpath(os.path.abspath(output_exe)))
     src_dir = os.path.dirname(os.path.realpath(os.path.abspath(input_ml)))
 
-    # Type validation (always; independent of OS)
+    # Type validation (always; independent of OS). Every physical native target
+    # owns one import slot/thunk, so ABI-incompatible source aliases are rejected.
+    physical_targets: Dict[tuple[str, str], tuple[tuple[str, ...], str, str]] = {}
     for qn, sig in (extern_sigs or {}).items():
         if not isinstance(sig, dict):
             continue
@@ -1072,6 +1088,27 @@ def validate_extern_sigs(
                 pos=pos,
                 filename=fn,
             )
+
+        param_classes = tuple(
+            _extern_physical_abi_class(ty, is_out=is_out)
+            for ty, is_out in norm_params
+        )
+        ret_class = _extern_physical_abi_class(rt)
+        raw_symbol = str(sig.get("symbol", "") or str(qn).split(".")[-1])
+        if str(target).lower() == "linux-x64":
+            target_key = (str(sig.get("dll", "") or ""), raw_symbol)
+        else:
+            target_key = (native_library.lower(), raw_symbol)
+        physical = (param_classes, ret_class, str(qn))
+        previous = physical_targets.get(target_key)
+        if previous is not None and previous[:2] != physical[:2]:
+            raise CompileError(
+                f"extern function {qn}: incompatible ABI signature for native target "
+                f"'{target_key[0]}' symbol '{target_key[1]}' (already declared by {previous[2]})",
+                pos=pos,
+                filename=fn,
+            )
+        physical_targets[target_key] = physical
 
     # DLL/symbol validation is meaningful only when both compiler host and
     # output target are Windows. Linux .so names are resolved by the ELF

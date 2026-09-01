@@ -406,6 +406,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
     fixtures = [
         (tests_root / "linux_target_smoke.ml", ["linux-target", "linux 2"], ["one", "two"]),
         (tests_root / "linux_ffi.ml", ["[OK] linux ffi strlen", "[OK] linux ffi cos"], []),
+        (tests_root / "linux_ffi_out_double.ml", ["[OK] Linux FFI double out pointer"], []),
+        (tests_root / "linux_ffi_whitespace_library.ml", ["[OK] exact Linux library spelling"], []),
         (tests_root / "linux_ffi_resolution_error.ml",
          ["[OK] Linux extern resolution errors are managed"], []),
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
@@ -478,6 +480,16 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
                 return TestResult(name=name, status="FAIL", details="missing Linux marker(s): " + ", ".join(missing),
                                   stdout=executed.stdout, stderr=executed.stderr)
     return TestResult(name=name, status="PASS", stdout="".join(outputs))
+
+
+def test_linux_dynamic_import_module(*, name: str, tests_root: Path) -> TestResult:
+    """Run library-identity loader regressions as part of the unified suite."""
+    result = run_cmd([sys.executable, "-m", "unittest", "tests.test_linux_dynamic_imports"],
+                     cwd=tests_root.parent, timeout_s=180)
+    if result.returncode != 0:
+        return TestResult(name=name, status="FAIL", details="Linux loader unit module failed",
+                          stdout=result.stdout, stderr=result.stderr)
+    return TestResult(name=name, status="PASS", stdout=result.stdout, stderr=result.stderr)
 
 
 def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
@@ -3847,12 +3859,19 @@ def main() -> int:
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_linux_x64_target(
         name="linux-x64 ELF, argv, shared heap and native threads", mlc_runner=mlc_runner, tests_root=tests_root))
+    tests.append(lambda: test_linux_dynamic_import_module(
+        name="linux-x64 exact dynamic-library identity", tests_root=tests_root))
     if linux_windows_ffi_error_ml is not None:
         tests.append(lambda: test_compile_expected_fail(
             name="linux-x64 rejects unguarded Windows DLL imports",
             mlc_runner=mlc_runner, entry_ml=linux_windows_ffi_error_ml,
             must_contain_err="cannot be imported by the linux-x64 target",
             extra_args=["--target", "linux-x64", "-I", str(project_root)]))
+    tests.append(lambda: test_compile_expected_fail(
+        name="extern aliases reject incompatible native ABI signatures",
+        mlc_runner=mlc_runner, entry_ml=tests_root / "extern_abi_conflict.ml",
+        must_contain_err="incompatible ABI signature",
+        extra_args=["--target", "linux-x64", "-I", str(project_root)]))
 
     if language_suite_ml is not None:
         tests.append(lambda: test_program_no_fail(name="language_suite.ml (full language suite)", mlc_runner=mlc_runner,

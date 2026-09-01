@@ -1656,7 +1656,7 @@ class CodegenExpr:
         raise CompileError(f"Unsupported extern ABI type '{self._abi_ty_to_str(abi_ty) or str(abi_ty)}'", pos)
 
     def _emit_extern_ret_from_native(self, ret_ty: Any, pos: Any) -> None:
-        """Convert native Win64-ABI return value in RAX into a MiniLang tagged value in RAX."""
+        """Convert a stable-native-ABI return value into a tagged MiniLang value."""
         a = self.asm
         t = self._abi_ty_to_str(ret_ty).strip().lower()
 
@@ -1944,7 +1944,7 @@ class CodegenExpr:
         self._emit_extern_ret_from_native(ty, pos)
 
     def _emit_extern_call(self, e: Any, callee_name: str) -> None:
-        """Emit a direct call to an `extern function` via the PE import table (IAT)."""
+        """Emit a direct call to an `extern function` through its native import slot."""
         threaded_native = bool(getattr(self, 'native_threads_possible', True))
         if threaded_native:
             self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
@@ -2002,11 +2002,16 @@ class CodegenExpr:
                 a.mov_membase_disp_r64("rsp", roots_off + i * 8, "rax")
 
             wbuf = None
+            is_out = isinstance(abi_ty, dict) and bool(abi_ty.get('out', False))
             abi_name = self._abi_ty_to_str(abi_ty).strip().lower()
             if abi_name in ("wstr", "wstring"):
                 wbuf = wpool[i % len(wpool)]
 
-            if abi_name == "double":
+            if is_out:
+                # Explicit out arguments are already tagged native addresses;
+                # omitted calls below synthesize the same representation.
+                a.mov_membase_disp_r64("rsp", self.call_temp_base + i * 8, "rax")
+            elif abi_name == "double":
                 self.emit_to_double_xmm(0, fail_label)
                 a.movsd_membase_disp_xmm("rsp", self.call_temp_base + i * 8, "xmm0")
             else:
@@ -2035,17 +2040,21 @@ class CodegenExpr:
         regs = ["rcx", "rdx", "r8", "r9"]
         xregs = ["xmm0", "xmm1", "xmm2", "xmm3"]
         for i in range(min(4, len(params))):
-            abi_name = self._abi_ty_to_str(params[i]).strip().lower()
-            if abi_name == "double":
+            param = params[i]
+            abi_name = self._abi_ty_to_str(param).strip().lower()
+            is_out = isinstance(param, dict) and bool(param.get('out', False))
+            if abi_name == "double" and not is_out:
                 a.movsd_xmm_membase_disp(xregs[i], "rsp", self.call_temp_base + i * 8)
             else:
                 a.mov_r64_membase_disp(regs[i], "rsp", self.call_temp_base + i * 8)
                 a.sar_r64_imm8(regs[i], 3)
 
         for i in range(4, len(params)):
-            abi_name = self._abi_ty_to_str(params[i]).strip().lower()
+            param = params[i]
+            abi_name = self._abi_ty_to_str(param).strip().lower()
+            is_out = isinstance(param, dict) and bool(param.get('out', False))
             a.mov_r64_membase_disp("rax", "rsp", self.call_temp_base + i * 8)
-            if abi_name != "double":
+            if abi_name != "double" or is_out:
                 a.sar_r64_imm8("rax", 3)
             a.mov_membase_disp_r64("rsp", 0x20 + (i - 4) * 8, "rax")
 
@@ -2202,10 +2211,14 @@ class CodegenExpr:
             for i, abi_ty in enumerate(params):
                 a.mov_r64_membase_disp('rax', 'rsp', tag_off + i * 8)
                 wbuf = None
+                is_out = isinstance(abi_ty, dict) and bool(abi_ty.get('out', False))
                 abi_name = self._abi_ty_to_str(abi_ty).strip().lower()
                 if abi_name in ('wstr', 'wstring'):
                     wbuf = wpool[i % len(wpool)]
-                if abi_name == 'double':
+                if is_out:
+                    a.sar_rax_imm8(3)
+                    a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
+                elif abi_name == 'double':
                     self.emit_to_double_xmm(0, l_fail)
                     a.movsd_membase_disp_xmm('rsp', native_off + i * 8, 'xmm0')
                 else:
@@ -2220,8 +2233,10 @@ class CodegenExpr:
             regs = ['rcx', 'rdx', 'r8', 'r9']
             xregs = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
             for i in range(min(4, nargs)):
-                abi_name = self._abi_ty_to_str(params[i]).strip().lower()
-                if abi_name == 'double':
+                param = params[i]
+                abi_name = self._abi_ty_to_str(param).strip().lower()
+                is_out = isinstance(param, dict) and bool(param.get('out', False))
+                if abi_name == 'double' and not is_out:
                     a.movsd_xmm_membase_disp(xregs[i], 'rsp', native_off + i * 8)
                 else:
                     a.mov_r64_membase_disp(regs[i], 'rsp', native_off + i * 8)
@@ -2230,13 +2245,12 @@ class CodegenExpr:
                 a.mov_r64_membase_disp('rax', 'rsp', native_off + i * 8)
                 a.mov_membase_disp_r64('rsp', 0x20 + (i - 4) * 8, 'rax')
 
-            # Call through IAT.
-            # Sanity-check that the import was registered (otherwise the PE patch stage would fail
-            # with an obscure missing-label error).
+            # Call through the target's native import slot. On PE, sanity-check
+            # registration so a missing import gets a useful compiler error.
             dll_n = str(dll or '').strip().lower()
             sym_s = str(sym or '').strip()
             imports = getattr(self, 'imports', {}) or {}
-            if dll_n and sym_s:
+            if not self.is_linux_target and dll_n and sym_s:
                 if dll_n not in imports or sym_s not in (imports.get(dll_n) or []):
                     raise CompileError(
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",

@@ -3,6 +3,9 @@ synchronized closeReady = 0
 synchronized closeGo = false
 synchronized configReady = 0
 synchronized configGo = false
+synchronized joinReady = 0
+synchronized joinGo = false
+synchronized releaseWorker = false
 
 function immediateWorker()
   return 17
@@ -46,8 +49,33 @@ function startTogether(victim)
   return victim.Start()
 end function
 
+function slowWorker()
+  threadSleep(2)
+  return 9
+end function
+
+function joinTogether(victim)
+  global joinReady, joinGo
+  joinReady = joinReady + 1
+  while not joinGo
+    threadSleep(0)
+  end while
+  return victim.Join(10000)
+end function
+
+function cooperativeWorker()
+  global releaseWorker
+  while not releaseWorker and not threadStopRequested()
+    threadSleep(0)
+  end while
+end function
+
+function startVictim(victim)
+  return victim.Start()
+end function
+
 function main(args)
-  global closeReady, closeGo, configReady, configGo
+  global closeReady, closeGo, configReady, configGo, joinReady, joinGo, releaseWorker
 
   // Status() deliberately maps the internal Starting state to Running. Join()
   // must nevertheless wait until Start() has published a nonzero OS handle.
@@ -101,6 +129,55 @@ function main(args)
     if not victim.Join(10000) then return 33 end if
     if setter.Result() == true and victim.Result() != wanted then return 34 end if
     if not setter.Close() or not starter.Close() or not victim.Close() then return 35 end if
+  end for
+
+  // pthread_join is a single-owner operation. Both public Join() calls must
+  // still observe the same successful completion.
+  for round = 0 to 99
+    joinReady = 0
+    joinGo = false
+    victim = Thread(slowWorker)
+    first = Thread(joinTogether)
+    second = Thread(joinTogether)
+    if not victim.Start() or not first.Start(victim) or not second.Start(victim) then return 40 end if
+    while joinReady < 2
+      threadSleep(0)
+    end while
+    joinGo = true
+    if not first.Join(10000) or not second.Join(10000) then return 41 end if
+    if first.Result() != true or second.Result() != true then return 42 end if
+    if not first.Close() or not second.Close() or not victim.Close() then return 43 end if
+  end for
+
+  // STARTING maps to the public Running/alive state, so Stop() must also own
+  // that short publication window instead of returning a contradictory false.
+  for round = 0 to 249
+    releaseWorker = false
+    victim = Thread(cooperativeWorker)
+    starter = Thread(startVictim)
+    if not starter.Start(victim) then return 50 end if
+    while victim.Status() == "Created"
+      threadSleep(0)
+    end while
+    // A zero-timeout Join must include the handle-publication wait and remain
+    // nonblocking even when it observes the internal STARTING state.
+    if victim.Join(0) then return 51 end if
+    if victim.IsAlive() and not victim.Stop() then return 52 end if
+    releaseWorker = true
+    if not starter.Join(10000) or not victim.Join(10000) then return 53 end if
+    if not starter.Close() or not victim.Close() then return 54 end if
+  end for
+
+  // A terminal public status is published just before the native entry
+  // epilogue returns. Close() must wait for that epilogue before releasing the
+  // OS handle, even when no caller performed Join() first.
+  for round = 0 to 499
+    victim = Thread(immediateWorker)
+    if not victim.Start() then return 60 end if
+    while victim.IsAlive()
+      threadSleep(0)
+    end while
+    if not victim.Close() then return 61 end if
   end for
 
   print "[OK] thread lifecycle publication and cleanup races"

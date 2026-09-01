@@ -35,6 +35,8 @@ THREAD_TLAB_START = 176
 THREAD_TLAB_CURSOR = 184
 THREAD_TLAB_END = 192
 THREAD_CONTEXT_SIZE = 200
+THREAD_CONTEXT_STRIDE = 208  # 16-byte alignment inside packed native arenas
+THREAD_CONTEXT_POOL_SIZE = 0x10000
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -76,6 +78,10 @@ class CodegenThreads:
             d.add_bytes('main_thread_context', b'\x00' * THREAD_CONTEXT_SIZE)
         if 'thread_contexts_head' not in d.labels:
             d.add_u64('thread_contexts_head', 0)
+        if 'thread_context_pool_cursor' not in d.labels:
+            d.add_u64('thread_context_pool_cursor', 0)
+        if 'thread_context_pool_end' not in d.labels:
+            d.add_u64('thread_context_pool_end', 0)
         if 'gc_requested' not in d.labels:
             d.add_u64('gc_requested', 0)
         if 'managed_thread_count' not in d.labels:
@@ -547,6 +553,7 @@ class CodegenThreads:
 
     def emit_thread_new_function(self) -> None:
         """RCX=entry code, EDX=entry arity, R8=logical id; returns context."""
+        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_thread_new')
@@ -554,17 +561,47 @@ class CodegenThreads:
         a.mov_membase_disp_r64('rsp', 0x38, 'rcx')
         a.mov_membase_disp_r64('rsp', 0x40, 'rdx')
         a.mov_membase_disp_r64('rsp', 0x48, 'r8')
+        lid = self.new_label_id()
+        l_have_context = f'thnew_have_context_{lid}'
+        l_alloc_fail = f'thnew_alloc_fail_{lid}'
+        l_leave_fail = f'thnew_leave_fail_{lid}'
+        l_done = f'thnew_done_{lid}'
+        # Serialize the arena cursor with the heap monitor. Allocating one
+        # context per VirtualAlloc used a full 4-KiB page for a 200-byte object;
+        # packed 64-KiB arenas retain stable addresses at a fraction of the RSS.
+        a.call('fn_heap_enter')
+        a.mov_rax_rip_qword('thread_context_pool_cursor')
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', l_alloc_fail)
+        a.mov_r64_r64('r10', 'rax')
+        a.mov_r64_r64('r11', 'rax')
+        a.add_r64_imm('r11', THREAD_CONTEXT_STRIDE)
+        a.mov_rax_rip_qword('thread_context_pool_end')
+        a.cmp_r64_r64('r11', 'rax')
+        a.jcc('be', l_have_context)
+        a.mark(l_alloc_fail)
         a.xor_r32_r32('ecx', 'ecx')
-        a.mov_r32_imm32('edx', THREAD_CONTEXT_SIZE)
+        a.mov_r32_imm32('edx', THREAD_CONTEXT_POOL_SIZE)
         a.mov_r8d_imm32(0x3000)  # MEM_RESERVE | MEM_COMMIT
         a.mov_r9d_imm32(0x04)    # PAGE_READWRITE
         a.mov_rax_rip_qword('iat_VirtualAlloc')
         a.call_rax()
-        lid = self.new_label_id()
-        l_done = f'thnew_done_{lid}'
         a.test_r64_r64('rax', 'rax')
-        a.jcc('e', l_done)
+        a.jcc('e', l_leave_fail)
+        a.mov_r64_r64('r10', 'rax')
+        a.mov_r64_r64('r11', 'rax')
+        a.add_r64_imm('r11', THREAD_CONTEXT_POOL_SIZE)
+        a.mov_r64_r64('rax', 'r11')
+        a.mov_rip_qword_rax('thread_context_pool_end')
+        a.mov_r64_r64('r11', 'r10')
+        a.add_r64_imm('r11', THREAD_CONTEXT_STRIDE)
+        a.mark(l_have_context)
+        # R10 is the chosen context, R11 is the next arena cursor.
+        a.mov_r64_r64('rax', 'r10')
+        a.mov_rip_qword_r11('thread_context_pool_cursor')
         a.mov_membase_disp_r64('rsp', 0x30, 'rax')
+        a.call('fn_heap_leave')
+        a.mov_r64_membase_disp('rax', 'rsp', 0x30)
         a.mov_membase_disp_imm32('rax', THREAD_TYPE, OBJ_THREAD, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_STATUS, THREAD_CREATED, qword=False)
         a.mov_r64_membase_disp('r11', 'rsp', 0x38)
@@ -584,8 +621,8 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
-        # Contexts remain registered for the process lifetime. Close() clears
-        # their managed roots, so registration itself cannot retain user data.
+        # Context identities remain stable for the process lifetime. Close()
+        # clears managed roots; packed arenas avoid one OS page per identity.
         a.lea_rax_rip('gc_coord_monitor')
         a.mov_r64_r64('rcx', 'rax')
         a.mov_rax_rip_qword('iat_EnterCriticalSection')
@@ -600,6 +637,10 @@ class CodegenThreads:
         a.mov_rax_rip_qword('iat_LeaveCriticalSection')
         a.call_rax()
         a.mov_r64_membase_disp('rax', 'rsp', 0x30)
+        a.jmp(l_done)
+        a.mark(l_leave_fail)
+        a.call('fn_heap_leave')
+        a.xor_r32_r32('eax', 'eax')
         a.mark(l_done)
         a.add_rsp_imm8(0x58)
         a.ret()
@@ -621,8 +662,8 @@ class CodegenThreads:
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_ARITY)
         a.cmp_r32_r32('eax', 'r8d')
         a.jcc('ne', l_wrong_arity)
-        # Claim the one-shot object with a private state. Running is published
-        # only after both the native handle and id are visible to Join().
+        # Claim the one-shot object with a private state. The public API treats
+        # STARTING as alive, so Stop() may replace it with a pending stop request.
         a.mark(l_claim)
         a.mov_r32_imm32('eax', THREAD_CREATED)
         a.mov_r32_imm32('r11d', THREAD_STARTING)
@@ -656,7 +697,10 @@ class CodegenThreads:
         a.mov_membase_disp_r64('r11', THREAD_HANDLE, 'rax')
         a.mov_r32_membase_disp('eax', 'rsp', 0x40)
         a.mov_membase_disp_r32('r11', THREAD_ID, 'eax')
-        a.mov_membase_disp_imm32('r11', THREAD_STATUS, THREAD_RUNNING, qword=False)
+        # Publish Running only if Stop() did not already replace STARTING.
+        a.mov_r32_imm32('eax', THREAD_STARTING)
+        a.mov_r32_imm32('edx', THREAD_RUNNING)
+        a.lock_cmpxchg_membase_disp_r32('r11', THREAD_STATUS, 'edx')
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
         a.mark(l_create_fail)
@@ -678,12 +722,29 @@ class CodegenThreads:
         a.mark('fn_thread_stop')
         lid = self.new_label_id()
         l_false = f'thstop_false_{lid}'
+        l_starting = f'thstop_starting_{lid}'
+        l_true = f'thstop_true_{lid}'
+        l_retry = f'thstop_retry_{lid}'
         l_done = f'thstop_done_{lid}'
+        a.mark(l_retry)
         a.mov_r32_imm32('eax', THREAD_RUNNING)
         a.mov_r32_imm32('edx', THREAD_STOP_REQUESTED)
         a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'edx')
         a.cmp_r32_imm('eax', THREAD_RUNNING)
-        a.jcc('ne', l_false)
+        a.jcc('e', l_true)
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('e', l_starting)
+        a.jmp(l_false)
+        a.mark(l_starting)
+        a.mov_r32_imm32('eax', THREAD_STARTING)
+        a.mov_r32_imm32('edx', THREAD_STOP_REQUESTED)
+        a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'edx')
+        a.cmp_r32_imm('eax', THREAD_STARTING)
+        a.jcc('e', l_true)
+        a.cmp_r32_imm('eax', THREAD_RUNNING)
+        a.jcc('e', l_retry)
+        a.jmp(l_false)
+        a.mark(l_true)
         a.mov_rax_imm64(enc_bool(True))
         a.jmp(l_done)
         a.mark(l_false)
@@ -710,9 +771,18 @@ class CodegenThreads:
         a.mov_r32_membase_disp('eax', 'r11', THREAD_STATUS)
         a.cmp_r32_imm('eax', THREAD_STARTING)
         a.jcc('ne', l_have_published_state)
-        a.xor_r32_r32('ecx', 'ecx')
+        # Publication wait consumes the same timeout budget as the OS wait.
+        a.mov_r32_membase_disp('edx', 'rsp', 0x28)
+        a.test_r32_r32('edx', 'edx')
+        a.jcc('e', l_false)
+        a.mov_r32_imm32('ecx', 1)
         a.mov_rax_rip_qword('iat_Sleep')
         a.call_rax()
+        a.mov_r32_membase_disp('edx', 'rsp', 0x28)
+        a.cmp_r32_imm32('edx', -1)
+        a.jcc('e', l_wait_handle)
+        a.dec_r32('edx')
+        a.mov_membase_disp_r32('rsp', 0x28, 'edx')
         a.jmp(l_wait_handle)
         a.mark(l_have_published_state)
         a.mov_r64_membase_disp('rax', 'r11', THREAD_HANDLE)
@@ -881,9 +951,10 @@ class CodegenThreads:
         a.jcc('ne', l_false)
         a.mov_membase_disp_r64('rsp', 0x28, 'rax')
         # A terminal status can precede the worker's final native epilogue by
-        # a few instructions. Only clear its roots after the OS signals exit.
+        # a few instructions. Close owns the handle now, so wait for the OS to
+        # signal exit before clearing roots or releasing it.
         a.mov_r64_r64('rcx', 'rax')
-        a.xor_r32_r32('edx', 'edx')
+        a.mov_r32_imm32('edx', -1)  # INFINITE
         a.mov_rax_rip_qword('iat_WaitForSingleObject')
         a.call_rax()
         l_restore = f'thclose_restore_{lid}'
@@ -947,7 +1018,7 @@ class CodegenThreads:
         a.jmp('fn_alloc')
 
     def emit_thread_entry_function(self) -> None:
-        """Emit the Win32-to-managed callback bridge and result publication."""
+        """Emit the native-to-managed worker bridge and result publication."""
 
         # fn_alloc also emits the private TLAB-retirement helper used below.
         self.used_helpers.update({'fn_gc_native_leave', 'fn_gc_managed_exit', 'fn_alloc'})

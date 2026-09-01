@@ -6,7 +6,18 @@ All notable changes to the MiniLang compiler are documented here.
 
 - Made `Thread.Start` an atomic one-shot transition, preventing concurrent
   callers from launching the same thread object twice or overwriting its
-  argument/handle state.
+  argument/handle state. `SetLogicalId` is atomic against that transition,
+  `Stop` owns the publicly alive startup window, concurrent Linux `Join` calls
+  share one `pthread_join`, and concurrent/double `Close` cannot release roots
+  before the native worker exits.
+- Packed stable thread control records into synchronized 64-KiB arenas instead
+  of allocating one OS page per `Thread`. A 50,000-object stress case reduced
+  Windows working set from about 202 MiB to about 17 MiB without changing the
+  process-lifetime identity contract.
+- Fixed native `out double` parameters to pass their address in an integer ABI
+  register, reject aliases that give one library/symbol incompatible native ABI
+  classes, and preserve exact Linux library spelling consistently. Missing
+  Linux libraries/symbols remain catchable managed errors.
 - Fixed the x64 PUSH/POP peephole so it only cancels truly adjacent operations;
   an intervening instruction ending in a PUSH-like byte can no longer be
   deleted. Also fixed Python async-variadic lowering, lambda expressions in
@@ -16,6 +27,12 @@ All notable changes to the MiniLang compiler are documented here.
   part, `writeAllText` retries partial writes, and source externs resolve
   through their declared library's `dlopen` handle so equal symbol names in
   different shared libraries remain distinct.
+- Corrected `std.fs.Sleep` to declare the native function's `void` return and
+  integrated Linux loader identity, scalar-out and ABI-conflict regressions into
+  the standard test commands.
+- Distinguished actual conversion failures from pooled user strings whose text
+  is `"void"` or `"<unsupported>"`, so those literals concatenate normally while
+  real `void` operands still raise error 1303.
 
 ## 1.2.0 - 2026-09-01
 

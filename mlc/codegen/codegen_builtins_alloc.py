@@ -1350,6 +1350,14 @@ Returns:
         # Save b (RDX) at [rsp+0x20] (non-shadow local)
         a.mov_membase_disp_r64("rsp", 32, "rdx")  # mov [rsp+0x20],rdx
 
+        # Reject actual void operands before converting values to strings.  A
+        # post-conversion pointer comparison is not sufficient: pooled literal
+        # strings such as "void" legitimately share obj_void's address.
+        a.cmp_r64_imm("rcx", TAG_VOID)
+        a.jcc('e', l_fail_void)
+        a.cmp_r64_imm("rdx", TAG_VOID)
+        a.jcc('e', l_fail_void)
+
         # s1 = a if already string, else value_to_string(a)
         a.mov_r64_r64("rax", "rcx")
         a.mov_r64_r64("r10", "rax")
@@ -1361,15 +1369,12 @@ Returns:
         a.jcc('e', l_s1_ready)
         a.mark(l_s1_convert)
         a.call('fn_value_to_string')
-        a.mark(l_s1_ready)
-
-        # Reject placeholder conversions (<unsupported> / void)
+        # Reject only a conversion result, not an already-string operand with
+        # identical pooled text.
         a.lea_r11_rip('obj_uns')
         a.cmp_r64_r64('rax', 'r11')
         a.jcc('e', l_fail_uns)
-        a.lea_r11_rip('obj_void')
-        a.cmp_r64_r64('rax', 'r11')
-        a.jcc('e', l_fail_void)
+        a.mark(l_s1_ready)
 
         # save s1 across calls (callee may clobber volatile r10)
         a.mov_membase_disp_r64("rsp", 40, "rax")  # mov [rsp+0x28],rax
@@ -1389,15 +1394,11 @@ Returns:
         a.jcc('e', l_s2_ready)
         a.mark(l_s2_convert)
         a.call('fn_value_to_string')
-        a.mark(l_s2_ready)
-
-        # Reject placeholder conversions (<unsupported> / void)
+        # As above, only conversions may yield the unsupported sentinel.
         a.lea_r11_rip('obj_uns')
         a.cmp_r64_r64('rax', 'r11')
         a.jcc('e', l_fail_uns)
-        a.lea_r11_rip('obj_void')
-        a.cmp_r64_r64('rax', 'r11')
-        a.jcc('e', l_fail_void)
+        a.mark(l_s2_ready)
 
         a.mov_r11_rax()  # r11 = s2
         # save s2 across calls

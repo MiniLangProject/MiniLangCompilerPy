@@ -159,7 +159,7 @@ extern function FindFirstFileW(pattern as wstr, data as bytes) from "kernel32.dl
 extern function FindNextFileW(h as ptr, data as bytes) from "kernel32.dll" returns bool
 extern function FindClose(h as ptr) from "kernel32.dll" returns bool
 extern function GetFileSizeEx(h as ptr, sizeBuf as bytes) from "kernel32.dll" returns bool
-extern function Sleep(ms as int) from "kernel32.dll" returns int
+extern function Sleep(ms as int) from "kernel32.dll" returns void
 
 /*
 decode a 32-bit little-endian unsigned integer from a bytes(4) buffer

@@ -50,9 +50,12 @@ def linux_dynamic_imports(cg: Any) -> list[tuple[str, str, int]]:
     for qname, sig in dict(getattr(cg, 'extern_sigs', {}) or {}).items():
         if not isinstance(sig, dict):
             continue
-        library = str(sig.get('dll', '') or '').strip()
-        symbol = str(sig.get('symbol', '') or str(qname).split('.')[-1]).strip()
-        if not library or not symbol:
+        # Linux loader identities are exact byte strings. Preserve boundary
+        # whitespace here as well as in the call-site label; dlopen/dlsym will
+        # then either resolve that exact spelling or report a managed error.
+        library = str(sig.get('dll', '') or '')
+        symbol = str(sig.get('symbol', '') or str(qname).split('.')[-1])
+        if not library.strip() or not symbol.strip():
             continue
         label = cg._extern_iat_label(library, symbol)
         thunk_label = f'linux_extern_thunk_{label[4:]}'
@@ -77,6 +80,9 @@ def linux_dynamic_imports(cg: Any) -> list[tuple[str, str, int]]:
 
 def _extern_param_type(param: Any) -> str:
     if isinstance(param, dict):
+        # An out parameter carries an address even when its pointee is double.
+        if bool(param.get('out', False)):
+            return 'pointer'
         for key in ('ty', 'type', 'abi_ty', 'abi'):
             value = param.get(key)
             if isinstance(value, str) and value.strip():
@@ -94,9 +100,9 @@ def _emit_extern_thunks(cg: Any) -> None:
     for qname, sig in dict(getattr(cg, 'extern_sigs', {}) or {}).items():
         if not isinstance(sig, dict):
             continue
-        library = str(sig.get('dll', '') or '').strip()
-        symbol = str(sig.get('symbol', '') or str(qname).split('.')[-1]).strip()
-        if not library or not symbol:
+        library = str(sig.get('dll', '') or '')
+        symbol = str(sig.get('symbol', '') or str(qname).split('.')[-1])
+        if not library.strip() or not symbol.strip():
             continue
         iat_label = cg._extern_iat_label(library, symbol)
         thunk_label = f'linux_extern_thunk_{iat_label[4:]}'
@@ -600,15 +606,32 @@ def emit_linux_runtime(cg: Any) -> None:
     a.dec_r32('r13d')
     a.jmp('linux_thread_wait_loop')
     a.mark('linux_thread_wait_join')
+    # Claim pthread_join exactly once. State 0 is unclaimed, 1 is owned by a
+    # waiter and 2 is fully joined. Secondary waiters only observe the owner.
+    a.mark('linux_thread_wait_join_claim')
     a.mov_r32_membase_disp('eax', 'r12', 32)
+    a.cmp_r32_imm('eax', 2)
+    a.jcc('e', 'linux_thread_wait_ok')
     a.test_r32_r32('eax', 'eax')
-    a.jcc('ne', 'linux_thread_wait_ok')
+    a.jcc('ne', 'linux_thread_wait_join_owned')
+    a.xor_r32_r32('eax', 'eax')
+    a.mov_r32_imm32('edx', 1)
+    a.lock_cmpxchg_membase_disp_r32('r12', 32, 'edx')
+    a.jcc('ne', 'linux_thread_wait_join_claim')
     a.mov_r64_membase_disp('rdi', 'r12', 0)
     a.xor_r32_r32('esi', 'esi')
     a.call_rip_qword('elfiat_runtime_pthread_join')
     a.test_r32_r32('eax', 'eax')
-    a.jcc('ne', 'linux_thread_wait_failed')
-    a.mov_membase_disp_imm32('r12', 32, 1, qword=False)
+    a.jcc('ne', 'linux_thread_wait_join_release')
+    a.mov_membase_disp_imm32('r12', 32, 2, qword=False)
+    a.jmp('linux_thread_wait_ok')
+    a.mark('linux_thread_wait_join_owned')
+    a.mov_r32_imm32('ecx', 1)
+    a.call('linux_Sleep')
+    a.jmp('linux_thread_wait_join_claim')
+    a.mark('linux_thread_wait_join_release')
+    a.mov_membase_disp_imm32('r12', 32, 0, qword=False)
+    a.jmp('linux_thread_wait_failed')
     a.mark('linux_thread_wait_ok')
     a.xor_r32_r32('eax', 'eax')
     a.jmp('linux_thread_wait_done')

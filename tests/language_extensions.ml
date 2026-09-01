@@ -69,6 +69,11 @@ function contextualNames(match)
 end function
 
 function main(args)
+sentinelText = "void"
+if "x" + sentinelText != "xvoid" then return fail("literal void string concatenation") end if
+sentinelText = "<unsupported>"
+if sentinelText + "x" != "<unsupported>x" then return fail("literal unsupported string concatenation") end if
+
 if sum3(4) != 9 then return fail("default arguments") end if
 if sum3(c = 8, a = 1, b = 2) != 11 then return fail("named arguments") end if
 paramError = try(sum3("wrong"))
