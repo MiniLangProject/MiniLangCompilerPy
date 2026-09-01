@@ -406,6 +406,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
     fixtures = [
         (tests_root / "linux_target_smoke.ml", ["linux-target", "linux 2"], ["one", "two"]),
         (tests_root / "linux_ffi.ml", ["[OK] linux ffi strlen", "[OK] linux ffi cos"], []),
+        (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
@@ -413,6 +414,10 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "platform_services.ml", ["=== PLATFORM SERVICES DONE ==="], []),
         (tests_root / "thread_features.ml",
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
+        (tests_root / "thread_concurrent_start.ml", ["[OK] atomic same-object Thread.Start"], []),
+        (tests_root / "language_async_variadic.ml", ["[OK] async variadic arguments"], []),
+        (tests_root / "language_default_lambda.ml", ["[OK] lowered lambda default arguments"], []),
+        (tests_root / "language_imported_interface.ml", ["[OK] imported interface declarations"], []),
         (tests_root / "thread_pool.ml",
          ["[OK] thread arguments, logical ids and managed thread pool"], []),
         (tests_root / "synchronized_lock.ml", ["[OK] fine-grained synchronized(lock)"], []),
@@ -3784,6 +3789,9 @@ def main() -> int:
     language_extensions_ml = find_file_by_name(tests_root, "language_extensions.ml")
     language_performance_features_ml = find_file_by_name(tests_root, "language_performance_features.ml")
     language_type_guard_object_ml = find_file_by_name(tests_root, "language_type_guard_object.ml")
+    language_async_variadic_ml = find_file_by_name(tests_root, "language_async_variadic.ml")
+    language_default_lambda_ml = find_file_by_name(tests_root, "language_default_lambda.ml")
+    language_imported_interface_ml = find_file_by_name(tests_root, "language_imported_interface.ml")
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
@@ -3800,6 +3808,7 @@ def main() -> int:
     gc_interior_pointer_bounds_ml = find_file_by_name(tests_root, "gc_interior_pointer_bounds.ml")
     native_callback_wndproc_ml = find_file_by_name(tests_root, "native_callback_wndproc_smoke.ml")
     thread_features_ml = find_file_by_name(tests_root, "thread_features.ml")
+    thread_concurrent_start_ml = find_file_by_name(tests_root, "thread_concurrent_start.ml")
     tlab_shared_heap_ml = find_file_by_name(tests_root, "tlab_shared_heap.ml")
     gc_back_to_back_safepoint_ml = find_file_by_name(tests_root, "gc_back_to_back_safepoint.ml")
     threading_stdlib_ml = find_file_by_name(tests_root, "threading_stdlib.ml")
@@ -3872,6 +3881,22 @@ def main() -> int:
             must_contain=["[OK] optimized language features"],
             timeout_compile_s=180, timeout_run_s=120))
 
+    for test_name, test_path, marker in [
+        ("async variadic arguments are packed once", language_async_variadic_ml,
+         "[OK] async variadic arguments"),
+        ("lambda expressions in default arguments are lowered", language_default_lambda_ml,
+         "[OK] lowered lambda default arguments"),
+        ("interfaces are accepted in imported declaration modules", language_imported_interface_ml,
+         "[OK] imported interface declarations"),
+    ]:
+        if test_path is not None:
+            tests.append(lambda n=test_name, p=test_path, m=marker: test_program_no_fail(
+                name=n, mlc_runner=mlc_runner, ml_path=p, must_contain=[m],
+                timeout_compile_s=180, timeout_run_s=120))
+        else:
+            tests.append(lambda n=test_name: TestResult(
+                name=n, status="SKIP", details="test source not found"))
+
     for negative_name, negative_file, marker in [
         ("language interface requires every method", "language_interface_missing.ml", "does not implement"),
         ("language interface validates typed signatures", "language_interface_signature.ml", "incompatible interface signature"),
@@ -3933,6 +3958,17 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="thread_features.ml (native threads + synchronization)", status="SKIP",
                                         details="thread_features.ml not found"))
+
+    if thread_concurrent_start_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="Thread.Start atomically claims a one-shot thread object",
+            mlc_runner=mlc_runner, ml_path=thread_concurrent_start_ml,
+            must_contain=["[OK] atomic same-object Thread.Start"],
+            timeout_compile_s=120, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(
+            name="Thread.Start atomically claims a one-shot thread object", status="SKIP",
+            details="thread_concurrent_start.ml not found"))
 
     if tlab_shared_heap_ml is not None:
         tests.append(lambda: test_tlab_shared_heap_codegen(

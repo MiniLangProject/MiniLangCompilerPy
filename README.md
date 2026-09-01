@@ -198,6 +198,8 @@ Notes (current implementation):
 - Linux images without external native imports are static. A source containing
   `extern function ... from "lib.so..."` gets a minimal dynamic ELF image using
   the x64 System V ABI and the glibc interpreter `/lib64/ld-linux-x86-64.so.2`.
+  Each source extern is resolved through its declared library handle, so equal
+  symbol names from different shared libraries keep distinct function slots.
 - Listing order is stable; PE header dumps are available only for Windows.
 - The compiler uses the shared MiniLang frontend for parsing (tokenizer/parser).
 
@@ -387,16 +389,18 @@ python tests/run_tests.py --allow-skip
 ```
 
 Notes:
-- The test runner compiles a set of `.ml` programs to Windows `.exe` files and executes them.
-- On Windows, `.exe` runs natively; on non-Windows you need `wine` to execute the produced binaries.
+- The test runner compiles and executes Windows PE fixtures and, when WSL is
+  available, the Linux ELF/FFI/threading matrix as well.
+- Windows images run natively on Windows; a non-Windows host needs Wine for the
+  PE matrix. Linux images run natively or through WSL.
 - `--only PAT` filters by substring, `--verbose` prints full stdout/stderr, and `--allow-skip` exits with code 0 even if some tests were skipped (e.g. no Wine).
-- Latest complete run for this revision: **115 passed, 0 failed, 0 skipped**.
+- Latest complete run for this revision: **129 passed, 0 failed, 0 skipped**.
 
 ### Compiler parity and self-hosting
 
 For identical source files, include roots and compiler options, this compiler
 and the self-hosted compiler's normal monolithic path emit byte-identical PE
-files. The current 25-program parity matrix covers the language/standard-library
+and ELF files. The current 25-program parity matrix covers the language/standard-library
 suites, GC stress, compiler-GC liveness, extern/native interop, global rebinding,
 native threads and managed thread pools; every pair matches by SHA-256.
 
@@ -406,18 +410,14 @@ normal self-hosted path and the Python bootstrap. Exact hashes, test counts,
 boundaries and reproduction commands are recorded in
 [COMPILER_PARITY.md](COMPILER_PARITY.md).
 
-Current audited Windows fixed point (2026-08-31): with a warm filesystem cache
-and fresh object directories, this Python compiler produced Stage 1 in 60.398
-seconds at 1,100.8 MiB process-tree working set / 1,090.3 MiB private commit.
-The sibling native bootstrap produced Stage 2 in 99.976 seconds at 1,787.1 /
-2,005.9 MiB, and that generated compiler produced Stage 3 in 130.402 seconds at
-1,778.8 / 1,893.6 MiB. All three are byte-identical 62,788,096-byte images with
-SHA-256
-`EDA1417DD6B2D88B9DB3643189275CB1AB2B92BE65C4037428A98890746334D7`.
-One repeated Stage 3 probe exited transiently at support-tail emission after 318
-function objects; an isolated retry completed with the exact fixed-point image.
-The sibling build script now omits its self-host-only `--mem-probe` diagnostic
-flag automatically when selecting a clean Python bootstrap.
+Current audited Windows fixed point (2026-09-01): this Python compiler produced
+Stage 1 in 62.598 seconds, and Stage 1 produced the self-hosted Stage 2 in
+102.987 seconds. Both are byte-identical 65,826,816-byte images with SHA-256
+`1CBD04DB789A8CF19738DEE07B9D2F653851155642034F8B240CC8D80BC6F1D0`.
+The complete Python suite passes 129/129. The self-hosted inner harness passes
+125/125, and every outer Windows/Linux, FFI, GC, object-pipeline and relink gate
+passes. A targeted ten-case matrix additionally proves byte identity across
+the Python, self-hosted monolithic and self-hosted `.mlo` paths on both targets.
 
 #### Historical performance record
 
@@ -1373,8 +1373,10 @@ print t is not Thread  // false
 
 Thread methods:
 
-- `Start()` or `Start(value)` starts a newly created thread once and returns
-  `bool`. Its argument count must match the entry function's zero/one arity.
+- `Start()` or `Start(value)` atomically claims and starts a newly created
+  thread once and returns `bool`; concurrent calls on the same object can
+  produce only one worker. Its argument count must match the entry function's
+  zero/one arity.
 - `Stop()` atomically requests cooperative cancellation and returns whether a
   running thread changed to `StopRequested`.
 - `Join()` waits indefinitely; `Join(timeoutMs)` waits at most the given number
@@ -1386,7 +1388,7 @@ Thread methods:
 - `LogicalId()` returns the user-defined logical id. `SetLogicalId(value)` can
   replace it while the thread is still in `Created`; the constructor's optional
   second argument sets the initial value. Logical ids do not change the native
-  Win32 id.
+  operating-system thread id.
 - `Result()` returns the worker's result (`void` until it publishes one). Use
   `try(t.Result())` when a failed worker returned an `error` value.
 - `Close()` closes the native handle after termination. Status metadata remains
@@ -1481,7 +1483,7 @@ This selection is automatic and does not change source semantics.
 
 `std.threading` exposes native process-wide synchronization objects:
 
-- `Lock.new()` creates a recursive Win32 mutex. Methods are `acquire()`,
+- `Lock.new()` creates a native recursive mutex on either target. Methods are `acquire()`,
   `tryAcquire()`, `acquireFor(timeoutMs)`, `release()`, `isClosed()` and
   `close()`. `Acquire`, `TryAcquire`, `AcquireFor` and `Release` aliases are
   also available.
@@ -1491,8 +1493,9 @@ This selection is automatic and does not change source semantics.
 - `Event.new(manualReset, initialState)` provides `wait()`, `tryWait()`,
   `waitFor(timeoutMs)`, `set()`, `reset()`, `isClosed()` and `close()`.
 
-All waits return `bool`; a timeout is reported as `false`. A lock acquired after
-`WAIT_ABANDONED` is treated as successfully acquired and must be released.
+All waits return `bool`; a timeout is reported as `false`. On Windows, a lock
+acquired after `WAIT_ABANDONED` is treated as successfully acquired and must be
+released.
 
 The collection modules serialize access to managed backing arrays in the global
 heap:
@@ -1716,7 +1719,8 @@ end function
 Rules:
 - `main` must be declared at top-level (not inside a `namespace`).
 - Signature must be `main(args)` (exactly 1 parameter).
-- `args` contains `argv[1..]` (arguments after the executable name), parsed with Windows quoting rules.
+- `args` contains `argv[1..]` (arguments after the executable name). Windows
+  uses `CommandLineToArgvW` quoting; Linux consumes the kernel-provided `argv`.
 - If `main` returns an `int`, it becomes the process exit code. If it returns `void` (no return), the exit code is `0`.
 - The entrypoint call happens **after** module initialization has executed. Imported modules are initialized automatically before the entry file continues, and all module-init blocks run at most once.
 

@@ -1,7 +1,7 @@
-"""Constants shared across the Windows x64 native codegen.
+"""Constants shared across the Windows and Linux x64 native code generators.
 
-This module is imported from multiple compiler stages (codegen, PE builder,
-runtime helpers). Keep it side-effect free.
+This module is imported from multiple compiler stages (codegen, PE/ELF
+builders and runtime helpers). Keep it side-effect free.
 """
 
 from __future__ import annotations

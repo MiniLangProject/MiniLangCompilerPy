@@ -24,6 +24,38 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
+## Post-release audit hardening fixed point
+
+Verified on 1 September 2026 after the compiler, comment and documentation
+audit. The fixes make `Thread.Start` an atomic one-shot operation, constrain
+the PUSH/POP peephole to adjacent instructions, lower lambdas in default
+arguments, accept imported interfaces, recover from empty `.mlo` caches and
+harden Linux float formatting, complete-file writes and per-library FFI symbol
+resolution. The self-hosted Linux runtime also folds local resolver-thunk
+branches before embedding each fragment.
+
+| Compiler image | Size | SHA-256 | Build time |
+| --- | ---: | --- | ---: |
+| Windows Stage 1, built by Python | 65,826,816 | `1CBD04DB789A8CF19738DEE07B9D2F653851155642034F8B240CC8D80BC6F1D0` | 62.598 s |
+| Windows Stage 2, built by Stage 1 | 65,826,816 | `1CBD04DB789A8CF19738DEE07B9D2F653851155642034F8B240CC8D80BC6F1D0` | 102.987 s |
+
+The identical images establish the Windows self-host fixed point. The Python
+suite passes 129/129. The self-hosted inner harness passes 125/125 in 83.271
+seconds, while the complete Windows/WSL wrapper passes every outer Linux, FFI,
+GC, object-pipeline and relink gate in 123.361 seconds. All 46 standard-library
+files are byte-identical between repositories.
+
+A targeted audit matrix compiles ten Windows/Linux target cases through the
+Python, self-hosted monolithic and self-hosted `.mlo` paths. All three output
+hashes match for every fixture, including atomic thread start, async variadics,
+default-argument lambdas, imported interfaces, Linux float rounding and Linux
+FFI. Representative Linux hashes are
+`8D7411E25311A76DF692D2265E853B2411A82B8589A501D5CFE2F6DEB69BD854`
+for `language_async_variadic.ml` and
+`1D28DDA9C3A1C7152BEE9C0E4538BF7757B0B5808925B1B91F65E1EE87A20C27`
+for `linux_ffi.ml`.
+
+
 ## 1.2.0 release fixed point
 
 Verified on 1 September 2026 after the release version update, reusable
@@ -513,8 +545,8 @@ with SHA-256
 Latest complete runs for this revision:
 
 ```text
-Python harness:    PASS 114, FAIL 0, SKIP 0
-MiniLang harness:  PASS 104, FAIL 0
+Python harness:    PASS 129, FAIL 0, SKIP 0
+MiniLang harness:  PASS 125, FAIL 0
 ML opcode smoke:   synchronized golden vectors and direct encoder passed
 Outer ML gates:    CRC/SIMD/platform crypto/shared values, ABI, PE/ELF and Linux passed
 ```

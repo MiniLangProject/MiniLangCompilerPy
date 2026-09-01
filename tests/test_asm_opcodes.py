@@ -116,6 +116,19 @@ def _assemble_with_nasm(lines: list[str]) -> bytes:
 
 
 class TestAsmOpcodeVectors(unittest.TestCase):
+    def test_push_pop_peephole_requires_true_adjacency(self) -> None:
+        """An intervening instruction may legitimately end in a PUSH opcode byte."""
+        import sys
+
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+
+        a = Asm()
+        a.push_reg("rax")
+        a.mov_r32_imm32("eax", 0x50000000)
+        a.pop_reg("rax")
+        self.assertEqual(a.finalize(), bytes.fromhex("50b80000005058"))
+
     def test_short_backward_branches(self) -> None:
         """Resolved loop back-edges use rel8; unresolved forward edges stay rel32."""
         import sys

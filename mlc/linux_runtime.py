@@ -22,11 +22,18 @@ _CORE_IMPORTS = (
 _RUNTIME_DYNAMIC_IMPORTS = (
     ('libpthread.so.0', 'pthread_create', 'elfiat_runtime_pthread_create'),
     ('libpthread.so.0', 'pthread_join', 'elfiat_runtime_pthread_join'),
+    ('libdl.so.2', 'dlopen', 'elfiat_runtime_dlopen'),
+    ('libdl.so.2', 'dlsym', 'elfiat_runtime_dlsym'),
 )
 
 
 def linux_dynamic_imports(cg: Any) -> list[tuple[str, str, int]]:
-    """Return ``(library, symbol, data-slot-offset)`` records for source externs."""
+    """Materialize loader state and return ELF bootstrap imports.
+
+    Source externs are resolved through a library-specific ``dlopen`` handle.
+    ELF symbol relocations are process-global by name and cannot distinguish
+    two declarations of the same symbol from different shared libraries.
+    """
     result: list[tuple[str, str, int]] = []
     seen: set[tuple[str, str, int]] = set()
     # MiniLang workers must be real pthreads. Raw clone(2) workers do not own a
@@ -58,10 +65,13 @@ def linux_dynamic_imports(cg: Any) -> list[tuple[str, str, int]]:
         if loader_label not in cg.data.labels:
             cg.data.pad_align(8)
             cg.data.add_u64(loader_label, 0)
-        item = (library, symbol, int(cg.data.labels[loader_label]))
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
+        suffix = label[4:]
+        library_label = f'linux_extern_library_{suffix}'
+        symbol_label = f'linux_extern_symbol_{suffix}'
+        if library_label not in cg.rdata.labels:
+            cg.rdata.add_bytes(library_label, library.encode('utf-8') + b'\x00')
+        if symbol_label not in cg.rdata.labels:
+            cg.rdata.add_bytes(symbol_label, symbol.encode('utf-8') + b'\x00')
     return result
 
 
@@ -93,6 +103,9 @@ def _emit_extern_thunks(cg: Any) -> None:
         if thunk_label in a.labels:
             continue
         loader_label = f'elfiat_{iat_label[4:]}'
+        suffix = iat_label[4:]
+        library_label = f'linux_extern_library_{suffix}'
+        symbol_label = f'linux_extern_symbol_{suffix}'
         params = list(sig.get('params', []) or [])
 
         int_index = 0
@@ -140,6 +153,25 @@ def _emit_extern_thunks(cg: Any) -> None:
 
         for index in range(6, 16):
             a.movdqu_membase_disp_xmm('rsp', xmm_save_base + (index - 6) * 16, f'xmm{index}')
+
+        # Resolve through the declared library's handle, not the ELF global
+        # symbol namespace. Cache the pointer in the existing loader slot.
+        resolved = f'{thunk_label}_resolved'
+        a.mov_rax_rip_qword(loader_label)
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('ne', resolved)
+        a.lea_rax_rip(library_label)
+        a.mov_r64_r64('rdi', 'rax')
+        a.mov_r32_imm32('esi', 2)  # RTLD_NOW | RTLD_LOCAL
+        a.call_rip_qword('elfiat_runtime_dlopen')
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', resolved)
+        a.mov_r64_r64('rdi', 'rax')
+        a.lea_rax_rip(symbol_label)
+        a.mov_r64_r64('rsi', 'rax')
+        a.call_rip_qword('elfiat_runtime_dlsym')
+        a.mov_rip_qword_rax(loader_label)
+        a.mark(resolved)
 
         for index, (kind, destination) in enumerate(destinations):
             source = native_base + index * 8
@@ -692,6 +724,28 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mulsd_xmm_xmm('xmm0', 'xmm1')
     a.roundsd_xmm_xmm_imm8('xmm0', 'xmm0', 0)
     a.cvttsd2si_r64_xmm('r14', 'xmm0')
+    # Rounding can carry into the integer part. Propagate that carry through
+    # the already formatted digits instead of emitting ':' for 1_000_000.
+    a.cmp_r64_imm32('r14', 1000000)
+    a.jcc('ne', 'linux_gcvt_fraction_ready')
+    a.mov_r64_r64('r10', 'r13')
+    a.mark('linux_gcvt_carry_loop')
+    a.dec_r64('r10')
+    a.mov_r8_membase_disp('al', 'r10', 0)
+    a.cmp_r8_imm8('al', 57)
+    a.jcc('ne', 'linux_gcvt_carry_increment')
+    a.mov_membase_disp_imm8('r10', 0, 48)
+    a.cmp_r64_r64('r10', 'r15')
+    a.jcc('a', 'linux_gcvt_carry_loop')
+    a.mov_membase_disp_imm8('r15', 0, 49)
+    a.mov_membase_disp_imm8('r13', 0, 48)
+    a.inc_r64('r13')
+    a.jmp('linux_gcvt_terminate')
+    a.mark('linux_gcvt_carry_increment')
+    a.add_r8_imm8('al', 1)
+    a.mov_membase_disp_r8('r10', 0, 'al')
+    a.jmp('linux_gcvt_terminate')
+    a.mark('linux_gcvt_fraction_ready')
     a.test_r64_r64('r14', 'r14')
     a.jcc('e', 'linux_gcvt_terminate')
     a.mov_membase_disp_imm8('r13', 0, 46)

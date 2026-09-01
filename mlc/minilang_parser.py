@@ -1093,7 +1093,7 @@ class Parser:
                         raise ParseError("'import' is not allowed inside a namespace", t.pos)
 
                     # Allowed at namespace top-level: declarations + const + simple global assignments.
-                    if t.kind == "KW" and t.value in ("function", "struct", "enum", "namespace", "extern", "const"):
+                    if t.kind == "KW" and t.value in ("function", "struct", "interface", "enum", "namespace", "extern", "const"):
                         st2 = self.parse_stmt() if not self.collect_errors else self._parse_stmt_recover(end_type="namespace")
                         if st2 is not None:
                             body.append(st2)
@@ -1113,7 +1113,7 @@ class Parser:
                         raise ParseError("Inside a namespace, only declarations/globals are allowed (e.g. 'x = ...')", pos)
 
                     raise ParseError(
-                        "Inside a namespace, only declarations are allowed (function/struct/enum/namespace/extern/const)",
+                        "Inside a namespace, only declarations are allowed (function/struct/interface/enum/namespace/extern/const)",
                         t.pos)
                 except ParseError as e:
                     if not self.collect_errors:
@@ -2252,6 +2252,9 @@ class _LanguageLowerer:
         if isinstance(st, NamespaceDef):
             st.body = self.lower_block(st.body, function_depth=function_depth)
         elif isinstance(st, FunctionDef):
+            for i, default in enumerate(st.param_defaults):
+                if default is not None:
+                    st.param_defaults[i] = self.lower_expr(default, prelude)
             st.body = self.lower_block(st.body, function_depth=function_depth + 1)
             if st.is_iterator:
                 if int(st.is_iterator) == 2:
@@ -2261,9 +2264,12 @@ class _LanguageLowerer:
             if st.is_async:
                 if function_depth > 0:
                     raise ParseError("async functions must be declared at module or namespace scope", getattr(st, "_pos", 0))
-                return self.lower_async(st)
+                return prelude + self.lower_async(st)
         elif isinstance(st, StructDef):
             for method in st.methods:
+                for i, default in enumerate(method.param_defaults):
+                    if default is not None:
+                        method.param_defaults[i] = self.lower_expr(default, prelude)
                 method.body = self.lower_block(method.body, function_depth=function_depth + 1)
                 if method.is_iterator:
                     if int(method.is_iterator) == 2:
@@ -2598,9 +2604,12 @@ class _LanguageLowerer:
         arg_name = self.fresh("async_args")
         self.needs_async_pool = True
 
+        # The public wrapper has already packed the variadic tail into its last
+        # parameter.  The internal implementation therefore receives ordinary
+        # fixed arguments and must not pack that array a second time.
         impl = _copy_source_pos(FunctionDef(impl_name, list(fn.params), fn.body,
                                             param_types=list(fn.param_types), param_optional=list(fn.param_optional),
-                                            variadic_index=fn.variadic_index, return_type=fn.return_type,
+                                            variadic_index=-1, return_type=fn.return_type,
                                             return_optional=fn.return_optional), fn)
         forwarded = [_copy_source_pos(Index(Var(arg_name), Num(i)), fn) for i in range(len(fn.params))]
         entry_call = _copy_source_pos(Call(Var(impl_name), forwarded), fn)

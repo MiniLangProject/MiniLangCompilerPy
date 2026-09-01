@@ -4,6 +4,19 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Made `Thread.Start` an atomic one-shot transition, preventing concurrent
+  callers from launching the same thread object twice or overwriting its
+  argument/handle state.
+- Fixed the x64 PUSH/POP peephole so it only cancels truly adjacent operations;
+  an intervening instruction ending in a PUSH-like byte can no longer be
+  deleted. Also fixed Python async-variadic lowering, lambda expressions in
+  default arguments, and interface declarations in imported modules and
+  namespaces.
+- Hardened Linux output: float formatting propagates rounding into the integer
+  part, `writeAllText` retries partial writes, and source externs resolve
+  through their declared library's `dlopen` handle so equal symbol names in
+  different shared libraries remain distinct.
+
 ## 1.2.0 - 2026-09-01
 
 - Added gradual runtime type annotations and optional values, expression

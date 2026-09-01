@@ -255,7 +255,7 @@ def _is_decl_stmt(ml: Any, st: Any) -> bool:
     """Return True if `st` is allowed at top-level of imported modules (declaration-only)."""
     n = type(st).__name__
     decl_names = (
-        "FunctionDef", "StructDef", "EnumDef",
+        "FunctionDef", "StructDef", "InterfaceDef", "EnumDef",
         "NamespaceDef", "NamespaceDecl",
         # extern declarations (Step 4/5)
         "ExternFunctionDef", "ExternFunctionDecl",

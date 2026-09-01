@@ -612,15 +612,19 @@ class CodegenThreads:
         l_wrong_arity = f'thstart_wrong_arity_{lid}'
         l_create_fail = f'thstart_create_fail_{lid}'
         l_done = f'thstart_done_{lid}'
-        a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
-        a.cmp_r32_imm('eax', THREAD_CREATED)
-        a.jcc('ne', l_not_created)
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_ARITY)
         a.cmp_r32_r32('eax', 'r8d')
         a.jcc('ne', l_wrong_arity)
+        # Claim the one-shot Thread object before publishing its argument.  A
+        # plain load/store allowed two callers to start the same object and
+        # overwrite each other's handle and argument.
+        a.mov_r32_imm32('eax', THREAD_CREATED)
+        a.mov_r32_imm32('r11d', THREAD_RUNNING)
+        a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'r11d')
+        a.cmp_r32_imm('eax', THREAD_CREATED)
+        a.jcc('ne', l_not_created)
         a.mov_membase_disp_imm32('rcx', THREAD_STOP, 0, qword=False)
         a.mov_membase_disp_r64('rcx', THREAD_ARG, 'rdx')
-        a.mov_membase_disp_imm32('rcx', THREAD_STATUS, THREAD_RUNNING, qword=False)
         # Count the worker before CreateThread can enter managed execution.
         self._emit_managed_thread_count_delta(1)
         a.xor_r32_r32('eax', 'eax')

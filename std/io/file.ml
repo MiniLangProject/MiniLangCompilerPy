@@ -110,6 +110,8 @@ const LOCK_EXCLUSIVE = 2
 const LOCK_NONBLOCKING = 4
 const LOCK_UNLOCK = 8
 const EWOULDBLOCK = 11
+// These offsets follow the Linux x86-64 glibc stat ABI. Revisit them for
+// another CPU architecture or libc implementation.
 const STAT_SIZE = 144
 const STAT_FILE_SIZE_OFFSET = 48
 

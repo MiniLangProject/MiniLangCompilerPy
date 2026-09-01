@@ -2716,7 +2716,7 @@ class CodegenMemory:
         a.test_r64_r64("rax", "rax")
         a.jcc("e", l_fail)
 
-        # heap_end aus rbx aktualisieren
+        # Publish the heap-end cursor held in RBX.
         a.mov_r64_r64("rax", "rbx")
         a.mov_rip_qword_rax("heap_end")
 

@@ -65,7 +65,9 @@ class Asm:
         # - cancel adjacent push/pop of the same register
         # - cmp reg,0  -> test reg,reg (safe for zero checks)
         self._peephole_enabled: bool = True
-        self._peephole_last_push: tuple[bytes, str] | None = None  # (push_bytes, reg)
+        # End position prevents a later instruction whose last byte resembles
+        # a PUSH opcode from being mistaken for the remembered instruction.
+        self._peephole_last_push: tuple[bytes, str, int] | None = None
         self._peephole_last_jump: tuple[int, int, str, int] | None = None  # (start, end, label, disp_pos)
 
     # -----------------------------------------------------------------
@@ -233,6 +235,8 @@ class Asm:
             name: Label name.
         """
         if getattr(self, '_peephole_enabled', False):
+            # Never fold stack operations across a control-flow boundary.
+            self._peephole_last_push = None
             last_jump = getattr(self, '_peephole_last_jump', None)
             if last_jump is not None:
                 start, end, target, disp_pos = last_jump
@@ -985,7 +989,7 @@ class Asm:
 
         if getattr(self, '_peephole_enabled', False):
             # Remember the raw bytes so pop_reg can cancel an adjacent push/pop.
-            self._peephole_last_push = (b, str(reg))
+            self._peephole_last_push = (b, str(reg), len(self.buf))
 
     def pop_reg(self, reg: str) -> None:
         """Emit `POP` instruction.
@@ -996,9 +1000,10 @@ class Asm:
         if getattr(self, '_peephole_enabled', False):
             last = getattr(self, '_peephole_last_push', None)
             if last is not None:
-                push_b, push_reg = last
+                push_b, push_reg, push_end = last
                 # Cancel adjacent `push reg; pop reg`.
-                if push_reg == str(reg) and len(self.buf) >= len(push_b) and self.buf[-len(push_b):] == push_b:
+                if (push_reg == str(reg) and len(self.buf) == push_end
+                        and self.buf[-len(push_b):] == push_b):
                     self._peephole_trim_tail(len(push_b))
                     self._peephole_last_push = None
                     return

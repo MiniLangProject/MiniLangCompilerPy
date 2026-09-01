@@ -11,6 +11,8 @@ import std.string as s
 
 const FS_ERR = 1
 const IO_BUF_SIZE = 4096
+// These layout constants follow the Linux x86-64 glibc ABI. Revisit them when
+// adding another CPU architecture or libc implementation.
 const STAT_SIZE = 144
 const STAT_MODE_OFFSET = 24
 const STAT_FILE_SIZE_OFFSET = 48
@@ -171,12 +173,9 @@ end function
 
 function writeAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then return _err("writeAllText: invalid args") end if
-  fd = _openWrite(path)
-  if typeof(fd) == "error" then return fd end if
-  written = _writeText(fd, text, len(text))
-  _close(fd)
-  if written != len(text) then return _err("writeAllText: write failed") end if
-  return true
+  result = writeAllBytes(path, bytes(text))
+  if typeof(result) == "error" then return _err("writeAllText: write failed") end if
+  return result
 end function
 
 function readAllBytes(path)
