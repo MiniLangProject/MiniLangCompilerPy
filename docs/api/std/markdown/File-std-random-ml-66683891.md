@@ -34,7 +34,7 @@ Source: `std/random.ml:136`
 const DEFAULT_SEED = 1831565813
 ```
 
-Stores the default seed.
+Track the default seed value used by this standard-library module.
 
 
 Source: `std/random.ml:24`
@@ -92,7 +92,7 @@ Source: `std/random.ml:22`
 const U32_RANGE_FLOAT = 4294967296.
 ```
 
-Stores the u32 range float.
+Track the u32 range float value used by this standard-library module.
 
 
 Source: `std/random.ml:26`

@@ -54,7 +54,7 @@ Source: `std/bytes.ml:51`
 const BYTES_ERR = 211
 ```
 
-Stores the bytes err.
+Track the bytes err value used by this standard-library module.
 
 
 Source: `std/bytes.ml:22`

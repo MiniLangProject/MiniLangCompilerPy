@@ -21,6 +21,7 @@ from pathlib import Path
 
 
 def main() -> int:
+    """Regenerate deterministic opcode vectors for every public assembler helper."""
     project_root = Path(__file__).resolve().parents[1]
     # Ensure we can import `mlc` when running from the repository root.
     import sys

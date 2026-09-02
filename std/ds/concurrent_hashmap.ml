@@ -81,27 +81,27 @@ end function
 
 /// Detached key/value snapshot returned by entriesArray().
 struct Entry
-  /// Stores the key member of `Entry`.
+  /// Key associated with `Entry`.
   key
-  /// Stores the value member of `Entry`.
+  /// Value associated with `Entry`.
   value
 end struct
 
 /// Lock-protected open-addressing map for shared managed values.
 struct ThreadSafeHashMap
-  /// Stores the guard member of `ThreadSafeHashMap`.
+  /// Guard associated with `ThreadSafeHashMap`.
   guard
-  /// Stores the bucket count member of `ThreadSafeHashMap`.
+  /// Bucket count associated with `ThreadSafeHashMap`.
   bucketCount
-  /// Stores the size member of `ThreadSafeHashMap`.
+  /// Current logical size of `ThreadSafeHashMap`.
   size
-  /// Stores the keys member of `ThreadSafeHashMap`.
+  /// Keys associated with `ThreadSafeHashMap`.
   keys
-  /// Stores the values member of `ThreadSafeHashMap`.
+  /// Values associated with `ThreadSafeHashMap`.
   values
-  /// Stores the states member of `ThreadSafeHashMap`.
+  /// States associated with `ThreadSafeHashMap`.
   states
-  /// Stores the closed member of `ThreadSafeHashMap`.
+  /// Closed associated with `ThreadSafeHashMap`.
   closed
 
   /// Create a map with the default bucket count.

@@ -23,7 +23,7 @@ Source: `std/tls.ml:38`
 certificateReference
 ```
 
-Stores the certificate reference member of `ServerOptions`.
+Certificate reference associated with `ServerOptions`.
 
 
 Source: `std/tls.ml:40`
@@ -35,7 +35,7 @@ Source: `std/tls.ml:40`
 minimumVersion
 ```
 
-Stores the minimum version member of `ServerOptions`.
+Minimum version associated with `ServerOptions`.
 
 
 Source: `std/tls.ml:44`
@@ -47,7 +47,7 @@ Source: `std/tls.ml:44`
 privateKeyReference
 ```
 
-Stores the private key reference member of `ServerOptions`.
+Private key reference associated with `ServerOptions`.
 
 
 Source: `std/tls.ml:42`
@@ -59,7 +59,7 @@ Source: `std/tls.ml:42`
 requireClientCertificate
 ```
 
-Stores the require client certificate member of `ServerOptions`.
+Require client certificate associated with `ServerOptions`.
 
 
 Source: `std/tls.ml:46`

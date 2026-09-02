@@ -23,6 +23,8 @@ class _CodegenFixture(SimpleNamespace):
 
 
 class TestLinuxDynamicImports(unittest.TestCase):
+    """Verify deterministic, library-specific ELF dynamic import generation."""
+
     def test_duplicate_symbol_names_keep_library_specific_slots(self) -> None:
         cg = _CodegenFixture(
             asm=Asm(), data=DataBuilder(), rdata=RDataBuilder(),

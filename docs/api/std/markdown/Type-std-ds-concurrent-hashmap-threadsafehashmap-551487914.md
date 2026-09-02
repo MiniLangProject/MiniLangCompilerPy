@@ -23,7 +23,7 @@ Source: `std/ds/concurrent_hashmap.ml:91`
 bucketCount
 ```
 
-Stores the bucket count member of `ThreadSafeHashMap`.
+Bucket count associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:95`
@@ -59,7 +59,7 @@ Source: `std/ds/concurrent_hashmap.ml:386`
 closed
 ```
 
-Stores the closed member of `ThreadSafeHashMap`.
+Closed associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:105`
@@ -144,7 +144,7 @@ Source: `std/ds/concurrent_hashmap.ml:230`
 guard
 ```
 
-Stores the guard member of `ThreadSafeHashMap`.
+Guard associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:93`
@@ -213,7 +213,7 @@ Source: `std/ds/concurrent_hashmap.ml:161`
 keys
 ```
 
-Stores the keys member of `ThreadSafeHashMap`.
+Keys associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:99`
@@ -294,7 +294,7 @@ Source: `std/ds/concurrent_hashmap.ml:173`
 size
 ```
 
-Stores the size member of `ThreadSafeHashMap`.
+Current logical size of `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:97`
@@ -306,7 +306,7 @@ Source: `std/ds/concurrent_hashmap.ml:97`
 states
 ```
 
-Stores the states member of `ThreadSafeHashMap`.
+States associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:103`
@@ -318,7 +318,7 @@ Source: `std/ds/concurrent_hashmap.ml:103`
 values
 ```
 
-Stores the values member of `ThreadSafeHashMap`.
+Values associated with `ThreadSafeHashMap`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:101`

@@ -14,18 +14,18 @@ package std.threading
 
 /// Native timeout/count parameters are signed 32-bit values on at least one supported target. Keeping the shared API inside this range avoids truncation and platform-dependent interpretations of the high bit.
 const MAX_PORTABLE_TIMEOUT_MS = 2147483647
-/// Stores the max native semaphore count.
+/// Track the max native semaphore count value used by this standard-library module.
 const MAX_NATIVE_SEMAPHORE_COUNT = 2147483647
 
 #if TARGET_OS == "windows"
 
 /// Native Win32 synchronization primitives. All MiniLang objects live in the process-wide managed heap; these handles serialize access between the OS threads and their private stacks. Close only after users/waiters have stopped.
 const WAIT_OBJECT_0 = 0
-/// Stores the wait abandoned.
+/// Track the wait abandoned value used by this standard-library module.
 const WAIT_ABANDONED = 0x80
-/// Stores the wait timeout.
+/// Track the wait timeout value used by this standard-library module.
 const WAIT_TIMEOUT = 0x102
-/// Stores the infinite.
+/// Track the infinite value used by this standard-library module.
 const INFINITE = 0xFFFFFFFF
 
 /// Creates create mutex w.
@@ -49,7 +49,7 @@ extern function SetEvent(handle as ptr) from "kernel32.dll" returns bool
 /// Releases or resets reset event.
 /// @internal
 extern function ResetEvent(handle as ptr) from "kernel32.dll" returns bool
-/// Implements wait for single object.
+/// Provide the wait for single object operation for this standard-library module.
 /// @internal
 extern function WaitForSingleObject(handle as ptr, milliseconds as u32) from "kernel32.dll" returns u32
 /// Releases or resets close handle.
@@ -64,9 +64,9 @@ end function
 
 /// Re-entrant native mutex. Every successful acquire must be released.
 struct Lock
-  /// Stores the handle member of `Lock`.
+  /// Handle associated with `Lock`.
   handle
-  /// Stores the closed member of `Lock`.
+  /// Closed associated with `Lock`.
   closed
 
   /// Create an initially unowned native mutex.
@@ -122,10 +122,10 @@ struct Lock
 
   /// PascalCase aliases match the native Thread API.
   function Acquire() return this.acquire() end function
-  /// Implements acquire for.
+  /// Provide acquire for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
-  /// Implements try acquire.
+  /// Provide try acquire behavior for this standard-library module.
   function TryAcquire() return this.tryAcquire() end function
   /// Releases or resets release.
   function Release() return this.release() end function
@@ -135,11 +135,11 @@ end struct
 
 /// Counting semaphore with a fixed maximum permit count.
 struct Semaphore
-  /// Stores the handle member of `Semaphore`.
+  /// Handle associated with `Semaphore`.
   handle
-  /// Stores the maximum count member of `Semaphore`.
+  /// Maximum count associated with `Semaphore`.
   maximumCount
-  /// Stores the closed member of `Semaphore`.
+  /// Closed associated with `Semaphore`.
   closed
 
   /// Create a semaphore with validated initial and maximum permit counts.
@@ -211,10 +211,10 @@ struct Semaphore
 
   /// PascalCase aliases mirror the native Thread API.
   function Acquire() return this.acquire() end function
-  /// Implements acquire for.
+  /// Provide acquire for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
-  /// Implements try acquire.
+  /// Provide try acquire behavior for this standard-library module.
   function TryAcquire() return this.tryAcquire() end function
   /// Releases or resets release.
   function Release() return this.release() end function
@@ -227,11 +227,11 @@ end struct
 
 /// Win32 manual- or auto-reset event for one-to-many notifications.
 struct Event
-  /// Stores the handle member of `Event`.
+  /// Handle associated with `Event`.
   handle
-  /// Stores the manual reset member of `Event`.
+  /// Manual reset associated with `Event`.
   manualReset
-  /// Stores the closed member of `Event`.
+  /// Closed associated with `Event`.
   closed
 
   /// Create an event with explicit reset mode and initial signal state.
@@ -301,7 +301,7 @@ struct Event
   /// Exposes the Windows event timed wait through a PascalCase alias.
   /// @param milliseconds Maximum duration in milliseconds.
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
-  /// Implements try wait.
+  /// Provide try wait behavior for this standard-library module.
   function TryWait() return this.tryWait() end function
   /// Updates set.
   function Set() return this.set() end function
@@ -314,73 +314,73 @@ end struct
 
 /// POSIX synchronization storage sizes are the glibc x86-64 ABI sizes. The buffers live in MiniLang's non-moving global heap and remain stable while a native primitive references them.
 const PTHREAD_MUTEX_SIZE = 40
-/// Stores the pthread mutexattr size.
+/// Track the pthread mutexattr size value used by this standard-library module.
 const PTHREAD_MUTEXATTR_SIZE = 4
-/// Stores the pthread cond size.
+/// Track the pthread cond size value used by this standard-library module.
 const PTHREAD_COND_SIZE = 48
-/// Stores the semaphore size.
+/// Track the semaphore size value used by this standard-library module.
 const SEMAPHORE_SIZE = 32
-/// Stores the pthread mutex recursive.
+/// Track the pthread mutex recursive value used by this standard-library module.
 const PTHREAD_MUTEX_RECURSIVE = 1
 
-/// Implements mutex attr init.
+/// Provide the mutex attr init operation for this standard-library module.
 /// @internal
 extern function _mutexAttrInit(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_init" returns i32
-/// Implements mutex attr set type.
+/// Provide the mutex attr set type operation for this standard-library module.
 /// @internal
 extern function _mutexAttrSetType(attribute as ptr, kind as int) from "libc.so.6" symbol "pthread_mutexattr_settype" returns i32
-/// Implements mutex attr destroy.
+/// Provide the mutex attr destroy operation for this standard-library module.
 /// @internal
 extern function _mutexAttrDestroy(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_destroy" returns i32
-/// Implements mutex init.
+/// Provide the mutex init operation for this standard-library module.
 /// @internal
 extern function _mutexInit(mutex as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_mutex_init" returns i32
-/// Implements mutex lock.
+/// Provide the mutex lock operation for this standard-library module.
 /// @internal
 extern function _mutexLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_lock" returns i32
-/// Implements mutex try lock.
+/// Provide the mutex try lock operation for this standard-library module.
 /// @internal
 extern function _mutexTryLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_trylock" returns i32
-/// Implements mutex unlock.
+/// Provide the mutex unlock operation for this standard-library module.
 /// @internal
 extern function _mutexUnlock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_unlock" returns i32
-/// Implements mutex destroy.
+/// Provide the mutex destroy operation for this standard-library module.
 /// @internal
 extern function _mutexDestroy(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_destroy" returns i32
-/// Implements cond init.
+/// Provide the cond init operation for this standard-library module.
 /// @internal
 extern function _condInit(condition as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_cond_init" returns i32
-/// Implements cond wait.
+/// Provide the cond wait operation for this standard-library module.
 /// @internal
 extern function _condWait(condition as ptr, mutex as ptr) from "libc.so.6" symbol "pthread_cond_wait" returns i32
-/// Implements cond signal.
+/// Provide the cond signal operation for this standard-library module.
 /// @internal
 extern function _condSignal(condition as ptr) from "libc.so.6" symbol "pthread_cond_signal" returns i32
-/// Implements cond broadcast.
+/// Provide the cond broadcast operation for this standard-library module.
 /// @internal
 extern function _condBroadcast(condition as ptr) from "libc.so.6" symbol "pthread_cond_broadcast" returns i32
-/// Implements cond destroy.
+/// Provide the cond destroy operation for this standard-library module.
 /// @internal
 extern function _condDestroy(condition as ptr) from "libc.so.6" symbol "pthread_cond_destroy" returns i32
-/// Implements sem init.
+/// Provide the sem init operation for this standard-library module.
 /// @internal
 extern function _semInit(semaphore as ptr, shared as int, value as u32) from "libc.so.6" symbol "sem_init" returns i32
-/// Implements sem wait.
+/// Provide the sem wait operation for this standard-library module.
 /// @internal
 extern function _semWait(semaphore as ptr) from "libc.so.6" symbol "sem_wait" returns i32
-/// Implements sem try wait.
+/// Provide the sem try wait operation for this standard-library module.
 /// @internal
 extern function _semTryWait(semaphore as ptr) from "libc.so.6" symbol "sem_trywait" returns i32
-/// Implements sem post.
+/// Provide the sem post operation for this standard-library module.
 /// @internal
 extern function _semPost(semaphore as ptr) from "libc.so.6" symbol "sem_post" returns i32
-/// Implements sem get value.
+/// Provide the sem get value operation for this standard-library module.
 /// @internal
 extern function _semGetValue(semaphore as ptr, value as ptr) from "libc.so.6" symbol "sem_getvalue" returns i32
-/// Implements sem destroy.
+/// Provide the sem destroy operation for this standard-library module.
 /// @internal
 extern function _semDestroy(semaphore as ptr) from "libc.so.6" symbol "sem_destroy" returns i32
-/// Implements sleep micros.
+/// Provide the sleep micros operation for this standard-library module.
 /// @internal
 extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
 
@@ -400,7 +400,7 @@ function _newRecursiveMutex()
   return mutex
 end function
 
-/// Implements acquire for.
+/// Provide the acquire for operation for this standard-library module.
 /// @internal
 function _acquireFor(mutex, milliseconds)
   elapsed = 0
@@ -415,9 +415,9 @@ end function
 
 /// POSIX recursive mutex with the same public contract as the Win32 Lock.
 struct Lock
-  /// Stores the handle member of `Lock`.
+  /// Handle associated with `Lock`.
   handle
-  /// Stores the closed member of `Lock`.
+  /// Closed associated with `Lock`.
   closed
 
   /// Allocate and initialize stable native mutex storage.
@@ -463,12 +463,12 @@ struct Lock
     return ok
   end function
 
-  /// Implements acquire.
+  /// Provide acquire behavior for this standard-library module.
   function Acquire() return this.acquire() end function
-  /// Implements acquire for.
+  /// Provide acquire for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
-  /// Implements try acquire.
+  /// Provide try acquire behavior for this standard-library module.
   function TryAcquire() return this.tryAcquire() end function
   /// Releases or resets release.
   function Release() return this.release() end function
@@ -478,15 +478,15 @@ end struct
 
 /// POSIX counting semaphore. Releases are serialized and inspect the native count while holding the release guard, so an acquire cannot leave stale bookkeeping that spuriously rejects a valid handoff.
 struct Semaphore
-  /// Stores the handle member of `Semaphore`.
+  /// Handle associated with `Semaphore`.
   handle
-  /// Stores the count guard member of `Semaphore`.
+  /// Count guard associated with `Semaphore`.
   countGuard
-  /// Stores the count value member of `Semaphore`.
+  /// Count value associated with `Semaphore`.
   countValue
-  /// Stores the maximum count member of `Semaphore`.
+  /// Maximum count associated with `Semaphore`.
   maximumCount
-  /// Stores the closed member of `Semaphore`.
+  /// Closed associated with `Semaphore`.
   closed
 
   /// Create a semaphore with validated initial and maximum permit counts.
@@ -528,7 +528,7 @@ struct Semaphore
     return false
   end function
 
-  /// Implements try acquire.
+  /// Provide try acquire behavior for this standard-library module.
   function tryAcquire() return this.acquireFor(0) end function
   /// Releases or resets release.
   function release() return this.releaseMany(1) end function
@@ -576,12 +576,12 @@ struct Semaphore
     return ok
   end function
 
-  /// Implements acquire.
+  /// Provide acquire behavior for this standard-library module.
   function Acquire() return this.acquire() end function
-  /// Implements acquire for.
+  /// Provide acquire for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function AcquireFor(milliseconds) return this.acquireFor(milliseconds) end function
-  /// Implements try acquire.
+  /// Provide try acquire behavior for this standard-library module.
   function TryAcquire() return this.tryAcquire() end function
   /// Releases or resets release.
   function Release() return this.release() end function
@@ -594,15 +594,15 @@ end struct
 
 /// POSIX condition-variable implementation of manual- and auto-reset events.
 struct Event
-  /// Stores the mutex member of `Event`.
+  /// Mutex associated with `Event`.
   mutex
-  /// Stores the condition member of `Event`.
+  /// Condition associated with `Event`.
   condition
-  /// Stores the manual reset member of `Event`.
+  /// Manual reset associated with `Event`.
   manualReset
-  /// Stores the signaled member of `Event`.
+  /// Signaled associated with `Event`.
   signaled
-  /// Stores the closed member of `Event`.
+  /// Closed associated with `Event`.
   closed
 
   /// Allocate stable mutex/condition storage and set the initial signal state.
@@ -649,7 +649,7 @@ struct Event
     return false
   end function
 
-  /// Implements try wait.
+  /// Provide try wait behavior for this standard-library module.
   function tryWait() return this.waitFor(0) end function
 
   /// Updates set.
@@ -697,7 +697,7 @@ struct Event
   /// Exposes the POSIX event timed wait through a PascalCase alias.
   /// @param milliseconds Maximum duration in milliseconds.
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
-  /// Implements try wait.
+  /// Provide try wait behavior for this standard-library module.
   function TryWait() return this.tryWait() end function
   /// Updates set.
   function Set() return this.set() end function

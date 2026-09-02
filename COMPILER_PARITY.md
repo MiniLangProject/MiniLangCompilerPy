@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 2 September 2026 against the matching 1.2.2 revisions of:
+Verified through 2 September 2026 against the matching 1.2.3 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,29 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.3 documentation and maintainability fixed point
+
+Verified on 2 September 2026 after the declaration-documentation audit,
+self-hosted code-generation refactoring and deterministic MiniDoc regeneration.
+Every compiler reports `MiniLang Compiler 1.2.3`, and the
+`MINILANG_VERSION` predefined value is `"1.2.3"`.
+
+| Compiler image | Size | SHA-256 | Build time |
+| --- | ---: | --- | ---: |
+| Windows Stage 1, built by Python | 66,540,544 | `C34B0FE887A3138A55D729F13259288F6F6AE1E43BDCE5316BC25B81868FAADB` | 71.297 s |
+| Windows Stage 2, built by Stage 1 | 66,540,544 | `C34B0FE887A3138A55D729F13259288F6F6AE1E43BDCE5316BC25B81868FAADB` | 111.040 s |
+| Windows Stage 3, built by Stage 2 | 66,540,544 | `C34B0FE887A3138A55D729F13259288F6F6AE1E43BDCE5316BC25B81868FAADB` | 95.690 s |
+
+The three byte-identical Windows images establish the 1.2.3 fixed point across
+the Python and self-hosted compilers. The Python suite passes 133/133. The
+self-hosted suite completes in 200.048 seconds with its embedded MiniLang
+harness at 127/127 and all outer Windows, WSL/Linux, FFI, thread, GC, MLO
+determinism and monolithic/MLO identity gates passing. MiniDoc 0.4.2 builds and
+passes its complete suite as both Windows PE and Linux ELF. Strict MiniDoc
+generation reports zero warnings for MiniDoc, the compiler and both standard
+libraries. All 46 shared standard-library sources and all 289 generated
+standard-library documentation files are byte-identical between repositories.
 
 ## 1.2.2 MiniDoc-profile fixed point
 

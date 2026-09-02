@@ -23,7 +23,7 @@ Source: `std/concurrent/task.ml:17`
 callback
 ```
 
-Stores the callback member of `CancellableCall`.
+Callback associated with `CancellableCall`.
 
 
 Source: `std/concurrent/task.ml:19`
@@ -35,7 +35,7 @@ Source: `std/concurrent/task.ml:19`
 data
 ```
 
-Stores the data member of `CancellableCall`.
+Backing data owned by `CancellableCall`.
 
 
 Source: `std/concurrent/task.ml:21`
@@ -47,7 +47,7 @@ Source: `std/concurrent/task.ml:21`
 token
 ```
 
-Stores the token member of `CancellableCall`.
+Token associated with `CancellableCall`.
 
 
 Source: `std/concurrent/task.ml:23`

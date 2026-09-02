@@ -39,7 +39,7 @@ Source: `std/result.ml:86`
 has
 ```
 
-Stores the has member of `Option`.
+Has associated with `Option`.
 
 
 Source: `std/result.ml:24`
@@ -163,7 +163,7 @@ Source: `std/result.ml:68`
 value
 ```
 
-Stores the value member of `Option`.
+Value associated with `Option`.
 
 
 Source: `std/result.ml:26`

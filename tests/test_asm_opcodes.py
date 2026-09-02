@@ -116,6 +116,8 @@ def _assemble_with_nasm(lines: list[str]) -> bytes:
 
 
 class TestAsmOpcodeVectors(unittest.TestCase):
+    """Verify exact x64 encodings and the assembler's local peephole rules."""
+
     def test_push_pop_peephole_requires_true_adjacency(self) -> None:
         """An intervening instruction may legitimately end in a PUSH opcode byte."""
         import sys

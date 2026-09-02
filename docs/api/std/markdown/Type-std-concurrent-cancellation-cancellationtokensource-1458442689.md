@@ -47,7 +47,7 @@ Source: `std/concurrent/cancellation.ml:85`
 cancelled
 ```
 
-Stores the cancelled member of `CancellationTokenSource`.
+Cancelled associated with `CancellationTokenSource`.
 
 
 Source: `std/concurrent/cancellation.ml:65`
@@ -71,7 +71,7 @@ Source: `std/concurrent/cancellation.ml:121`
 closed
 ```
 
-Stores the closed member of `CancellationTokenSource`.
+Closed associated with `CancellationTokenSource`.
 
 
 Source: `std/concurrent/cancellation.ml:67`
@@ -95,7 +95,7 @@ Source: `std/concurrent/cancellation.ml:141`
 event
 ```
 
-Stores the event member of `CancellationTokenSource`.
+Event associated with `CancellationTokenSource`.
 
 
 Source: `std/concurrent/cancellation.ml:63`
@@ -107,7 +107,7 @@ Source: `std/concurrent/cancellation.ml:63`
 guard
 ```
 
-Stores the guard member of `CancellationTokenSource`.
+Guard associated with `CancellationTokenSource`.
 
 
 Source: `std/concurrent/cancellation.ml:61`

@@ -23,7 +23,7 @@ Source: `std/time.ml:336`
 day
 ```
 
-Stores the day member of `Date`.
+Day associated with `Date`.
 
 
 Source: `std/time.ml:342`
@@ -35,7 +35,7 @@ Source: `std/time.ml:342`
 month
 ```
 
-Stores the month member of `Date`.
+Month associated with `Date`.
 
 
 Source: `std/time.ml:340`
@@ -47,7 +47,7 @@ Source: `std/time.ml:340`
 year
 ```
 
-Stores the year member of `Date`.
+Year associated with `Date`.
 
 
 Source: `std/time.ml:338`

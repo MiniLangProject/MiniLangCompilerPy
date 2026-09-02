@@ -10,16 +10,16 @@ package std.concurrent.task
 import std.concurrent.cancellation as cancellation
 import std.concurrent.thread_pool as threadPool
 
-/// Stores the task error.
+/// Track the task error value used by this standard-library module.
 const TASK_ERROR = 1651
 
 /// Represents cancellable call.
 struct CancellableCall
-  /// Stores the callback member of `CancellableCall`.
+  /// Callback associated with `CancellableCall`.
   callback
-  /// Stores the data member of `CancellableCall`.
+  /// Backing data owned by `CancellableCall`.
   data
-  /// Stores the token member of `CancellableCall`.
+  /// Token associated with `CancellableCall`.
   token
 end struct
 
@@ -34,11 +34,11 @@ end function
 
 /// Future is a stable managed handle around a ThreadPoolJob and, optionally, a cooperative cancellation source. Result values remain rooted by the job.
 struct Future
-  /// Stores the job member of `Future`.
+  /// Job associated with `Future`.
   job
-  /// Stores the cancellation source member of `Future`.
+  /// Cancellation source associated with `Future`.
   cancellationSource
-  /// Stores the closed member of `Future`.
+  /// Closed associated with `Future`.
   closed
 
   /// Blocks until this task completes.
@@ -54,7 +54,7 @@ struct Future
     return this.job.WaitFor(milliseconds)
   end function
 
-  /// Implements status.
+  /// Provide status behavior for this standard-library module.
   function status()
     if this.closed then return "Closed" end if
     return this.job.GetStatus()
@@ -66,7 +66,7 @@ struct Future
     return this.job.IsDone()
   end function
 
-  /// Implements result.
+  /// Provide result behavior for this standard-library module.
   function result()
     if this.closed then return error(TASK_ERROR, "future is closed") end if
     if not this.job.IsDone() then return error(TASK_ERROR, "future is not complete") end if
@@ -172,7 +172,7 @@ function whenAnyFor(futures, milliseconds)
   return -1
 end function
 
-/// Implements when any.
+/// Provide the when any operation for this standard-library module.
 /// @param futures Value supplied for `futures`.
 function whenAny(futures)
   return whenAnyFor(futures, -1)

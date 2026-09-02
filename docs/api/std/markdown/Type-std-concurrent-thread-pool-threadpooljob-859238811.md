@@ -23,7 +23,7 @@ Source: `std/concurrent/thread_pool.ml:34`
 callback
 ```
 
-Stores the callback member of `ThreadPoolJob`.
+Callback associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:40`
@@ -71,7 +71,7 @@ Source: `std/concurrent/thread_pool.ml:160`
 closed
 ```
 
-Stores the closed member of `ThreadPoolJob`.
+Closed associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:48`
@@ -83,7 +83,7 @@ Source: `std/concurrent/thread_pool.ml:48`
 data
 ```
 
-Stores the data member of `ThreadPoolJob`.
+Backing data owned by `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:42`
@@ -95,7 +95,7 @@ Source: `std/concurrent/thread_pool.ml:42`
 function Dispose()
 ```
 
-Implements dispose.
+Provide dispose behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:196`
@@ -107,7 +107,7 @@ Source: `std/concurrent/thread_pool.ml:196`
 done
 ```
 
-Stores the done member of `ThreadPoolJob`.
+Done associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:38`
@@ -167,7 +167,7 @@ Source: `std/concurrent/thread_pool.ml:133`
 guard
 ```
 
-Stores the guard member of `ThreadPoolJob`.
+Guard associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:36`
@@ -244,7 +244,7 @@ Source: `std/concurrent/thread_pool.ml:53`
 result
 ```
 
-Stores the result member of `ThreadPoolJob`.
+Result associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:46`
@@ -256,7 +256,7 @@ Source: `std/concurrent/thread_pool.ml:46`
 status
 ```
 
-Stores the status member of `ThreadPoolJob`.
+Status associated with `ThreadPoolJob`.
 
 
 Source: `std/concurrent/thread_pool.ml:44`
@@ -268,7 +268,7 @@ Source: `std/concurrent/thread_pool.ml:44`
 function Wait()
 ```
 
-Implements wait.
+Provide wait behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:183`
@@ -292,7 +292,7 @@ Source: `std/concurrent/thread_pool.ml:120`
 function WaitFor(milliseconds)
 ```
 
-Implements wait for.
+Provide wait for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

@@ -75,7 +75,7 @@ Source: `std/io/file.ml:528`
 const CLOSED_HANDLE = 265
 ```
 
-Stores the closed handle.
+Track the closed handle value used by this standard-library module.
 
 
 Source: `std/io/file.ml:22`
@@ -103,7 +103,7 @@ Source: `std/io/file.ml:320`
 const CREATE_ALWAYS = 2
 ```
 
-Stores the create always.
+Track the create always value used by this standard-library module.
 
 
 Source: `std/io/file.ml:98`
@@ -115,7 +115,7 @@ Source: `std/io/file.ml:98`
 const CREATE_NEW = 1
 ```
 
-Stores the create new.
+Track the create new value used by this standard-library module.
 
 
 Source: `std/io/file.ml:96`
@@ -207,7 +207,7 @@ Source: `std/io/file.ml:590`
 function directoryExists(path)
 ```
 
-Implements directory exists.
+Provide the directory exists operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -223,7 +223,7 @@ Source: `std/io/file.ml:584`
 const ERROR_LOCK_VIOLATION = 33
 ```
 
-Stores the error lock violation.
+Track the error lock violation value used by this standard-library module.
 
 
 Source: `std/io/file.ml:116`
@@ -235,7 +235,7 @@ Source: `std/io/file.ml:116`
 const FILE_ATTRIBUTE_NORMAL = 128
 ```
 
-Stores the file attribute normal.
+Track the file attribute normal value used by this standard-library module.
 
 
 Source: `std/io/file.ml:104`
@@ -247,7 +247,7 @@ Source: `std/io/file.ml:104`
 const FILE_BEGIN = 0
 ```
 
-Stores the file begin.
+Track the file begin value used by this standard-library module.
 
 
 Source: `std/io/file.ml:110`
@@ -259,7 +259,7 @@ Source: `std/io/file.ml:110`
 const FILE_ERR = 263
 ```
 
-Stores the file err.
+Track the file err value used by this standard-library module.
 
 
 Source: `std/io/file.ml:18`
@@ -271,7 +271,7 @@ Source: `std/io/file.ml:18`
 const FILE_FLAG_BACKUP_SEMANTICS = 33554432
 ```
 
-Stores the file flag backup semantics.
+Track the file flag backup semantics value used by this standard-library module.
 
 
 Source: `std/io/file.ml:108`
@@ -283,7 +283,7 @@ Source: `std/io/file.ml:108`
 const FILE_FLAG_WRITE_THROUGH = 2147483648
 ```
 
-Stores the file flag write through.
+Track the file flag write through value used by this standard-library module.
 
 
 Source: `std/io/file.ml:106`
@@ -295,7 +295,7 @@ Source: `std/io/file.ml:106`
 const FILE_SHARE_ALL = 7
 ```
 
-Stores the file share all.
+Track the file share all value used by this standard-library module.
 
 
 Source: `std/io/file.ml:94`
@@ -307,7 +307,7 @@ Source: `std/io/file.ml:94`
 function fileExists(path)
 ```
 
-Implements file exists.
+Provide the file exists operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -324,7 +324,7 @@ Source: `std/io/file.ml:578`
 function flush(file)
 ```
 
-Implements flush.
+Provide the flush operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -340,7 +340,7 @@ Source: `std/io/file.ml:464`
 const GENERIC_READ = 2147483648
 ```
 
-Stores the generic read.
+Track the generic read value used by this standard-library module.
 
 
 Source: `std/io/file.ml:90`
@@ -352,7 +352,7 @@ Source: `std/io/file.ml:90`
 const GENERIC_WRITE = 1073741824
 ```
 
-Stores the generic write.
+Track the generic write value used by this standard-library module.
 
 
 Source: `std/io/file.ml:92`
@@ -364,7 +364,7 @@ Source: `std/io/file.ml:92`
 function joinPath(left, right)
 ```
 
-Implements join path.
+Provide the join path operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -399,7 +399,7 @@ Source: `std/io/file.ml:480`
 const LOCK_CONFLICT = 264
 ```
 
-Stores the lock conflict.
+Track the lock conflict value used by this standard-library module.
 
 
 Source: `std/io/file.ml:20`
@@ -411,7 +411,7 @@ Source: `std/io/file.ml:20`
 const LOCKFILE_EXCLUSIVE_LOCK = 2
 ```
 
-Stores the lockfile exclusive lock.
+Track the lockfile exclusive lock value used by this standard-library module.
 
 
 Source: `std/io/file.ml:114`
@@ -423,7 +423,7 @@ Source: `std/io/file.ml:114`
 const LOCKFILE_FAIL_IMMEDIATELY = 1
 ```
 
-Stores the lockfile fail immediately.
+Track the lockfile fail immediately value used by this standard-library module.
 
 
 Source: `std/io/file.ml:112`
@@ -435,7 +435,7 @@ Source: `std/io/file.ml:112`
 const MAX_IO_COUNT = 2147483647
 ```
 
-Stores the max io count.
+Track the max io count value used by this standard-library module.
 
 
 Source: `std/io/file.ml:24`
@@ -447,7 +447,7 @@ Source: `std/io/file.ml:24`
 const MOVEFILE_REPLACE_EXISTING = 1
 ```
 
-Stores the movefile replace existing.
+Track the movefile replace existing value used by this standard-library module.
 
 
 Source: `std/io/file.ml:118`
@@ -459,7 +459,7 @@ Source: `std/io/file.ml:118`
 const MOVEFILE_WRITE_THROUGH = 8
 ```
 
-Stores the movefile write through.
+Track the movefile write through value used by this standard-library module.
 
 
 Source: `std/io/file.ml:120`
@@ -471,7 +471,7 @@ Source: `std/io/file.ml:120`
 function movePath(source, destination, replaceExisting)
 ```
 
-Implements move path.
+Provide the move path operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -489,7 +489,7 @@ Source: `std/io/file.ml:657`
 const OPEN_ALWAYS = 4
 ```
 
-Stores the open always.
+Track the open always value used by this standard-library module.
 
 
 Source: `std/io/file.ml:102`
@@ -501,7 +501,7 @@ Source: `std/io/file.ml:102`
 const OPEN_EXISTING = 3
 ```
 
-Stores the open existing.
+Track the open existing value used by this standard-library module.
 
 
 Source: `std/io/file.ml:100`
@@ -513,7 +513,7 @@ Source: `std/io/file.ml:100`
 function openRead(path)
 ```
 
-Implements open read.
+Provide the open read operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -529,7 +529,7 @@ Source: `std/io/file.ml:294`
 function openReadWrite(path, createIfMissing)
 ```
 
-Implements open read write.
+Provide the open read write operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -546,7 +546,7 @@ Source: `std/io/file.ml:301`
 function openReadWriteDurable(path, createIfMissing)
 ```
 
-Implements open read write durable.
+Provide the open read write durable operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -563,7 +563,7 @@ Source: `std/io/file.ml:311`
 function pathExists(path)
 ```
 
-Implements path exists.
+Provide the path exists operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -669,7 +669,7 @@ Source: `std/io/file.ml:560`
 function size(file)
 ```
 
-Implements size.
+Provide the size operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -701,7 +701,7 @@ Source: `std/io/file.ml:663`
 function truncate(file, newSize)
 ```
 
-Implements truncate.
+Provide the truncate operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -718,7 +718,7 @@ Source: `std/io/file.ml:450`
 function unlock(file)
 ```
 
-Implements unlock.
+Provide the unlock operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

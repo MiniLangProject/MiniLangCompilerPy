@@ -56,15 +56,15 @@ end function
 
 /// FIFO queue backed by a compacting growable array.
 struct Queue
-  /// Stores the buf member of `Queue`.
+  /// Buf associated with `Queue`.
   buf
-  /// Stores the head member of `Queue`.
+  /// Head associated with `Queue`.
   head
-  /// Stores the tail member of `Queue`.
+  /// Tail associated with `Queue`.
   tail
-  /// Stores the size member of `Queue`.
+  /// Current logical size of `Queue`.
   size
-  /// Stores the cap member of `Queue`.
+  /// Allocated capacity of `Queue`.
   cap
 
   /// Creates a new queue with default capacity.

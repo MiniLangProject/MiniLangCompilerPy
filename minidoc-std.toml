@@ -22,6 +22,7 @@ formats = ["html", "markdown"]
 html_dir = "docs/api/std/html"
 markdown_dir = "docs/api/std/markdown"
 markdown_profile = "repository"
+include_timestamp = false
 
 [graphs]
 imports = true
@@ -33,4 +34,4 @@ granularity = "package"
 hide_empty = true
 
 [links]
-revision = "shared-stdlib-1.2.2"
+revision = "shared-stdlib-1.2.3"

@@ -23,7 +23,7 @@ Source: `std/concurrent/cancellation.ml:16`
 function Check()
 ```
 
-Implements check.
+Provide check behavior for this standard-library module.
 
 
 Source: `std/concurrent/cancellation.ml:55`
@@ -71,7 +71,7 @@ Source: `std/concurrent/cancellation.ml:21`
 source
 ```
 
-Stores the source member of `CancellationToken`.
+Source associated with `CancellationToken`.
 
 
 Source: `std/concurrent/cancellation.ml:18`

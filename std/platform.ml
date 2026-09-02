@@ -11,7 +11,7 @@ you may not use this file except in compliance with the License.
 
 package std.platform
 
-/// Implements operating system.
+/// Provide the operating system operation for this standard-library module.
 function operatingSystem()
 #if TARGET_OS == "windows"
   return "windows"
@@ -20,7 +20,7 @@ function operatingSystem()
 #endif
 end function
 
-/// Implements architecture.
+/// Provide the architecture operation for this standard-library module.
 function architecture()
   return "x64"
 end function
@@ -43,7 +43,7 @@ function isLinux()
 #endif
 end function
 
-/// Implements path separator.
+/// Provide the path separator operation for this standard-library module.
 function pathSeparator()
 #if TARGET_OS == "windows"
   return "\\"
@@ -52,7 +52,7 @@ function pathSeparator()
 #endif
 end function
 
-/// Implements line ending.
+/// Provide the line ending operation for this standard-library module.
 function lineEnding()
 #if TARGET_OS == "windows"
   return "\r\n"
@@ -61,7 +61,7 @@ function lineEnding()
 #endif
 end function
 
-/// Implements executable extension.
+/// Provide the executable extension operation for this standard-library module.
 function executableExtension()
 #if TARGET_OS == "windows"
   return ".exe"
@@ -70,7 +70,7 @@ function executableExtension()
 #endif
 end function
 
-/// Implements dynamic library extension.
+/// Provide the dynamic library extension operation for this standard-library module.
 function dynamicLibraryExtension()
 #if TARGET_OS == "windows"
   return ".dll"

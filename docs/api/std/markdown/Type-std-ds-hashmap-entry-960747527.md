@@ -23,7 +23,7 @@ Source: `std/ds/hashmap.ml:140`
 key
 ```
 
-Stores the key member of `Entry`.
+Key associated with `Entry`.
 
 
 Source: `std/ds/hashmap.ml:142`
@@ -35,7 +35,7 @@ Source: `std/ds/hashmap.ml:142`
 value
 ```
 
-Stores the value member of `Entry`.
+Value associated with `Entry`.
 
 
 Source: `std/ds/hashmap.ml:144`

@@ -11,57 +11,57 @@ you may not use this file except in compliance with the License.
 package std._linux_fs
 import std.string as s
 
-/// Stores the fs err.
+/// Track the fs err value used by this standard-library module.
 /// @internal
 const FS_ERR = 1
-/// Stores the io buf size.
+/// Track the io buf size value used by this standard-library module.
 /// @internal
 const IO_BUF_SIZE = 4096
 /// These layout constants follow the Linux x86-64 glibc ABI. Revisit them when adding another CPU architecture or libc implementation.
 /// @internal
 const STAT_SIZE = 144
-/// Stores the stat mode offset.
+/// Track the stat mode offset value used by this standard-library module.
 /// @internal
 const STAT_MODE_OFFSET = 24
-/// Stores the stat file size offset.
+/// Track the stat file size offset value used by this standard-library module.
 /// @internal
 const STAT_FILE_SIZE_OFFSET = 48
-/// Stores the dirent size.
+/// Track the dirent size value used by this standard-library module.
 /// @internal
 const DIRENT_SIZE = 280
-/// Stores the dirent name offset.
+/// Track the dirent name offset value used by this standard-library module.
 /// @internal
 const DIRENT_NAME_OFFSET = 19
 
-/// Stores the o rdonly.
+/// Track the o rdonly value used by this standard-library module.
 /// @internal
 const O_RDONLY = 0
-/// Stores the o wronly.
+/// Track the o wronly value used by this standard-library module.
 /// @internal
 const O_WRONLY = 1
-/// Stores the o creat.
+/// Track the o creat value used by this standard-library module.
 /// @internal
 const O_CREAT = 64
-/// Stores the o trunc.
+/// Track the o trunc value used by this standard-library module.
 /// @internal
 const O_TRUNC = 512
-/// Stores the seek set.
+/// Track the seek set value used by this standard-library module.
 /// @internal
 const SEEK_SET = 0
-/// Stores the seek end.
+/// Track the seek end value used by this standard-library module.
 /// @internal
 const SEEK_END = 2
-/// Stores the default file mode.
+/// Track the default file mode value used by this standard-library module.
 /// @internal
 const DEFAULT_FILE_MODE = 0x1B6 // 0666, filtered by the process umask.
-/// Stores the s ifmt.
+/// Track the s ifmt value used by this standard-library module.
 /// @internal
 const S_IFMT = 0xF000
-/// Stores the s ifdir.
+/// Track the s ifdir value used by this standard-library module.
 /// @internal
 const S_IFDIR = 0x4000
 
-/// Implements open.
+/// Provide the open operation for this standard-library module.
 /// @internal
 extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" symbol "open" returns i32
 /// Returns read.
@@ -76,19 +76,19 @@ extern function _writeText(fd as int, input as cstr, count as u64) from "libc.so
 /// Releases or resets close.
 /// @internal
 extern function _close(fd as int) from "libc.so.6" symbol "close" returns i32
-/// Implements lseek.
+/// Provide the lseek operation for this standard-library module.
 /// @internal
 extern function _lseek(fd as int, offset as i64, whence as int) from "libc.so.6" symbol "lseek" returns i64
-/// Implements stat.
+/// Provide the stat operation for this standard-library module.
 /// @internal
 extern function _stat(path as cstr, output as bytes) from "libc.so.6" symbol "stat" returns i32
-/// Implements unlink.
+/// Provide the unlink operation for this standard-library module.
 /// @internal
 extern function _unlink(path as cstr) from "libc.so.6" symbol "unlink" returns i32
-/// Implements rename.
+/// Provide the rename operation for this standard-library module.
 /// @internal
 extern function _rename(source as cstr, destination as cstr) from "libc.so.6" symbol "rename" returns i32
-/// Implements opendir.
+/// Provide the opendir operation for this standard-library module.
 /// @internal
 extern function _opendir(path as cstr) from "libc.so.6" symbol "opendir" returns ptr
 /// Returns readdir.
@@ -97,26 +97,26 @@ extern function _readdir(directory as ptr) from "libc.so.6" symbol "readdir" ret
 /// Releases or resets closedir.
 /// @internal
 extern function _closedir(directory as ptr) from "libc.so.6" symbol "closedir" returns i32
-/// Implements copy native.
+/// Provide the copy native operation for this standard-library module.
 /// @internal
 extern function _copyNative(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
-/// Implements usleep.
+/// Provide the usleep operation for this standard-library module.
 /// @internal
 extern function _usleep(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
 
-/// Implements err.
+/// Provide the err operation for this standard-library module.
 /// @internal
 function _err(message)
   return error(FS_ERR, message)
 end function
 
-/// Implements u32le.
+/// Provide the u32le operation for this standard-library module.
 /// @internal
 function _u32le(buffer, offset)
   return buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24)
 end function
 
-/// Implements i64le.
+/// Provide the i64le operation for this standard-library module.
 /// @internal
 function _i64le(buffer, offset)
   value = buffer[offset + 7]
@@ -129,7 +129,7 @@ function _i64le(buffer, offset)
   return value
 end function
 
-/// Implements stat buffer.
+/// Provide the stat buffer operation for this standard-library module.
 /// @internal
 function _statBuffer(path)
   if typeof(path) != "string" then return end if
@@ -138,7 +138,7 @@ function _statBuffer(path)
   return buffer
 end function
 
-/// Implements exists.
+/// Provide the exists operation for this standard-library module.
 /// @internal
 function exists(path)
   return typeof(_statBuffer(path)) == "bytes"
@@ -159,7 +159,7 @@ function isFile(path)
   return exists(path) and not isDir(path)
 end function
 
-/// Implements join path.
+/// Provide the join path operation for this standard-library module.
 /// @internal
 function joinPath(base, name)
   if typeof(base) != "string" or typeof(name) != "string" then return end if
@@ -168,7 +168,7 @@ function joinPath(base, name)
   return base + "/" + name
 end function
 
-/// Implements grow.
+/// Provide the grow operation for this standard-library module.
 /// @internal
 function _grow(items, need)
   newLength = len(items)
@@ -181,7 +181,7 @@ function _grow(items, need)
   return output
 end function
 
-/// Implements take.
+/// Provide the take operation for this standard-library module.
 /// @internal
 function _take(items, count)
   if count <= 0 then return [] end if
@@ -190,7 +190,7 @@ function _take(items, count)
   return output
 end function
 
-/// Implements list dir.
+/// Provide the list dir operation for this standard-library module.
 /// @internal
 function listDir(path)
   if typeof(path) != "string" then return _err("listDir: invalid args") end if
@@ -231,7 +231,7 @@ function delete(path)
   return false
 end function
 
-/// Implements open write.
+/// Provide the open write operation for this standard-library module.
 /// @internal
 function _openWrite(path)
   fd = _open(path, O_WRONLY | O_CREAT | O_TRUNC, DEFAULT_FILE_MODE)
@@ -311,7 +311,7 @@ function readAllText(path)
   return text
 end function
 
-/// Implements copy file.
+/// Provide the copy file operation for this standard-library module.
 /// @internal
 function copyFile(sourcePath, destinationPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destinationPath) != "string" then return _err("copyFile: invalid args") end if
@@ -323,7 +323,7 @@ function copyFile(sourcePath, destinationPath, overwrite)
   return writeAllBytes(destinationPath, data)
 end function
 
-/// Implements move file.
+/// Provide the move file operation for this standard-library module.
 /// @internal
 function moveFile(sourcePath, destinationPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destinationPath) != "string" then return _err("moveFile: invalid args") end if
@@ -337,7 +337,7 @@ function moveFile(sourcePath, destinationPath, overwrite)
   return true
 end function
 
-/// Implements file size.
+/// Provide the file size operation for this standard-library module.
 /// @internal
 function fileSize(path)
   buffer = _statBuffer(path)

@@ -125,7 +125,7 @@ Source: `std/random.ml:35`
 state
 ```
 
-Stores the state member of `RNG`.
+State associated with `RNG`.
 
 
 Source: `std/random.ml:31`

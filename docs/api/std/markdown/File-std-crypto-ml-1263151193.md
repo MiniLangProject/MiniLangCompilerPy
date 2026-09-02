@@ -38,7 +38,7 @@ Source: `std/crypto.ml:148`
 const CRYPTO_ERR = 240
 ```
 
-Stores the crypto err.
+Track the crypto err value used by this standard-library module.
 
 
 Source: `std/crypto.ml:27`

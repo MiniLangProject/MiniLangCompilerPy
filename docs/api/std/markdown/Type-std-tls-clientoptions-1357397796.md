@@ -23,7 +23,7 @@ Source: `std/tls.ml:24`
 caFile
 ```
 
-Stores the ca file member of `ClientOptions`.
+Ca file associated with `ClientOptions`.
 
 
 Source: `std/tls.ml:34`
@@ -35,7 +35,7 @@ Source: `std/tls.ml:34`
 minimumVersion
 ```
 
-Stores the minimum version member of `ClientOptions`.
+Minimum version associated with `ClientOptions`.
 
 
 Source: `std/tls.ml:32`
@@ -47,7 +47,7 @@ Source: `std/tls.ml:32`
 serverName
 ```
 
-Stores the server name member of `ClientOptions`.
+Server name associated with `ClientOptions`.
 
 
 Source: `std/tls.ml:26`
@@ -59,7 +59,7 @@ Source: `std/tls.ml:26`
 sha256Pin
 ```
 
-Stores the sha256 pin member of `ClientOptions`.
+Sha256 pin associated with `ClientOptions`.
 
 
 Source: `std/tls.ml:30`
@@ -71,7 +71,7 @@ Source: `std/tls.ml:30`
 verifyPeer
 ```
 
-Stores the verify peer member of `ClientOptions`.
+Verify peer associated with `ClientOptions`.
 
 
 Source: `std/tls.ml:28`

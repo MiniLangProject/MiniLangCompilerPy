@@ -20,9 +20,9 @@ package std.result
 
 /// Std.result Minimal Option/Result data structures. NOTE (important for packages): Inside a `package`, names are qualified (e.g. std.result.Option). Therefore constructors inside this file must use fully-qualified names.
 struct Option
-  /// Stores the has member of `Option`.
+  /// Has associated with `Option`.
   has
-  /// Stores the value member of `Option`.
+  /// Value associated with `Option`.
   value
 
   /// Creates an Option with a value.
@@ -93,11 +93,11 @@ end struct
 
 /// Explicit success/error container for APIs that avoid automatic propagation.
 struct Result
-  /// Stores the ok member of `Result`.
+  /// Whether `Result` represents a successful result.
   ok
-  /// Stores the value member of `Result`.
+  /// Value associated with `Result`.
   value
-  /// Stores the message member of `Result`.
+  /// Diagnostic message carried by `Result`.
   message
 
   /// Creates a successful Result.

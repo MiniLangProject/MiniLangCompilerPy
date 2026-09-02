@@ -23,7 +23,7 @@ Source: `std/io/file.ml:27`
 closed
 ```
 
-Stores the closed member of `FileHandle`.
+Closed associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:39`
@@ -35,7 +35,7 @@ Source: `std/io/file.ml:39`
 durable
 ```
 
-Stores the durable member of `FileHandle`.
+Durable associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:37`
@@ -47,7 +47,7 @@ Source: `std/io/file.ml:37`
 lockMode
 ```
 
-Stores the lock mode member of `FileHandle`.
+Lock mode associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:41`
@@ -59,7 +59,7 @@ Source: `std/io/file.ml:41`
 nativeHandle
 ```
 
-Stores the native handle member of `FileHandle`.
+Native handle associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:31`
@@ -71,7 +71,7 @@ Source: `std/io/file.ml:31`
 path
 ```
 
-Stores the path member of `FileHandle`.
+Path associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:29`
@@ -83,7 +83,7 @@ Source: `std/io/file.ml:29`
 readable
 ```
 
-Stores the readable member of `FileHandle`.
+Readable associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:33`
@@ -95,7 +95,7 @@ Source: `std/io/file.ml:33`
 writable
 ```
 
-Stores the writable member of `FileHandle`.
+Writable associated with `FileHandle`.
 
 
 Source: `std/io/file.ml:35`

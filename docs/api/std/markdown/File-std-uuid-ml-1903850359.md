@@ -71,7 +71,7 @@ Source: `std/uuid.ml:53`
 const UUID_ERR = 266
 ```
 
-Stores the uuid err.
+Track the uuid err value used by this standard-library module.
 
 
 Source: `std/uuid.ml:17`
@@ -83,7 +83,7 @@ Source: `std/uuid.ml:17`
 function v4()
 ```
 
-Implements v4.
+Provide the v4 operation for this standard-library module.
 
 
 Source: `std/uuid.ml:43`
@@ -95,7 +95,7 @@ Source: `std/uuid.ml:43`
 function v4Bytes()
 ```
 
-Implements v4 bytes.
+Provide the v4 bytes operation for this standard-library module.
 
 
 Source: `std/uuid.ml:34`

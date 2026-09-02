@@ -38,7 +38,7 @@ Source: `std/tls.ml:192`
 function acceptServer(activeProvider, socket, options)
 ```
 
-Implements accept server.
+Provide the accept server operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ Source: `std/tls.ml:173`
 function clientOptions(serverName)
 ```
 
-Implements client options.
+Provide the client options operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -106,7 +106,7 @@ Source: `std/tls.ml:185`
 function connectClient(activeProvider, socket, options)
 ```
 
-Implements connect client.
+Provide the connect client operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -152,7 +152,7 @@ Source: `std/tls.ml:147`
 function nativeProviderName()
 ```
 
-Implements native provider name.
+Provide the native provider name operation for this standard-library module.
 
 
 Source: `std/tls.ml:152`
@@ -164,7 +164,7 @@ Source: `std/tls.ml:152`
 function pinnedClientOptions(serverName, sha256Pin)
 ```
 
-Implements pinned client options.
+Provide the pinned client options operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -181,7 +181,7 @@ Source: `std/tls.ml:94`
 function provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream)
 ```
 
-Implements provider.
+Provide the provider operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ Source: `std/tls.ml:137`
 function receive(stream, maximumBytes)
 ```
 
-Implements receive.
+Provide the receive operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -221,7 +221,7 @@ Source: `std/tls.ml:223`
 function sendAll(stream, data)
 ```
 
-Implements send all.
+Provide the send all operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -238,7 +238,7 @@ Source: `std/tls.ml:205`
 function serverOptions(certificateReference, privateKeyReference)
 ```
 
-Implements server options.
+Provide the server options operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -256,7 +256,7 @@ Source: `std/tls.ml:101`
 function shutdown(stream)
 ```
 
-Implements shutdown.
+Provide the shutdown operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -273,7 +273,7 @@ Source: `std/tls.ml:234`
 const TLS_ERR = 267
 ```
 
-Stores the tls err.
+Track the tls err value used by this standard-library module.
 
 
 Source: `std/tls.ml:21`
@@ -285,7 +285,7 @@ Source: `std/tls.ml:21`
 function validateClientOptions(options)
 ```
 
-Implements validate client options.
+Provide the validate client options operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -301,7 +301,7 @@ Source: `std/tls.ml:107`
 function validateServerOptions(options)
 ```
 
-Implements validate server options.
+Provide the validate server options operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

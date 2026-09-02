@@ -57,11 +57,11 @@ end function
 
 /// Mutable growable sequence with indexed insertion and removal.
 struct List
-  /// Stores the buf member of `List`.
+  /// Buf associated with `List`.
   buf
-  /// Stores the size member of `List`.
+  /// Current logical size of `List`.
   size
-  /// Stores the cap member of `List`.
+  /// Allocated capacity of `List`.
   cap
 
   /// Creates a new empty list.

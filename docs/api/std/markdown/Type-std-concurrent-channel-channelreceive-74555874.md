@@ -23,7 +23,7 @@ Source: `std/concurrent/channel.ml:18`
 received
 ```
 
-Stores the received member of `ChannelReceive`.
+Received associated with `ChannelReceive`.
 
 
 Source: `std/concurrent/channel.ml:20`
@@ -35,7 +35,7 @@ Source: `std/concurrent/channel.ml:20`
 value
 ```
 
-Stores the value member of `ChannelReceive`.
+Value associated with `ChannelReceive`.
 
 
 Source: `std/concurrent/channel.ml:22`

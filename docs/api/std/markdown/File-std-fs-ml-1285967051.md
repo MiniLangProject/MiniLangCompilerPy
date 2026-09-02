@@ -91,7 +91,7 @@ Source: `std/fs.ml:440`
 const DELETE_RETRY_COUNT = 30
 ```
 
-Stores the delete retry count.
+Track the delete retry count value used by this standard-library module.
 
 
 Source: `std/fs.ml:174`
@@ -103,7 +103,7 @@ Source: `std/fs.ml:174`
 const DELETE_RETRY_SLEEP_MS = 5
 ```
 
-Stores the delete retry sleep ms.
+Track the delete retry sleep ms value used by this standard-library module.
 
 
 Source: `std/fs.ml:176`
@@ -115,7 +115,7 @@ Source: `std/fs.ml:176`
 const DWORD_SIZE = 4
 ```
 
-Stores the dword size.
+Track the dword size value used by this standard-library module.
 
 
 Source: `std/fs.ml:170`
@@ -172,7 +172,7 @@ Source: `std/fs.ml:244`
 const FIND_NAME_LEN = 520
 ```
 
-Stores the find name len.
+Track the find name len value used by this standard-library module.
 
 
 Source: `std/fs.ml:248`
@@ -184,7 +184,7 @@ Source: `std/fs.ml:248`
 const FIND_NAME_OFF = 44
 ```
 
-Stores the find name off.
+Track the find name off value used by this standard-library module.
 
 
 Source: `std/fs.ml:246`
@@ -196,7 +196,7 @@ Source: `std/fs.ml:246`
 const INVALID_FILE_ATTRIBUTES = 4294967295
 ```
 
-Stores the invalid file attributes.
+Track the invalid file attributes value used by this standard-library module.
 
 
 Source: `std/fs.ml:107`
@@ -220,7 +220,7 @@ Source: `std/fs.ml:105`
 const IO_BUF_SIZE = 4096
 ```
 
-Stores the io buf size.
+Track the io buf size value used by this standard-library module.
 
 
 Source: `std/fs.ml:172`
@@ -364,7 +364,7 @@ Source: `std/fs.ml:621`
 const WRITE_RETRY_COUNT = 30
 ```
 
-Stores the write retry count.
+Track the write retry count value used by this standard-library module.
 
 
 Source: `std/fs.ml:178`
@@ -376,7 +376,7 @@ Source: `std/fs.ml:178`
 const WRITE_RETRY_SLEEP_MS = 10
 ```
 
-Stores the write retry sleep ms.
+Track the write retry sleep ms value used by this standard-library module.
 
 
 Source: `std/fs.ml:180`

@@ -13,10 +13,10 @@ import std.crypto as crypto
 import std.encoding.hex as hex
 import std.string as string
 
-/// Stores the uuid err.
+/// Track the uuid err value used by this standard-library module.
 const UUID_ERR = 266
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(message)
   return error(UUID_ERR, message)
@@ -30,7 +30,7 @@ function format(raw)
   return string.substr(text, 0, 8) + "-" + string.substr(text, 8, 4) + "-" + string.substr(text, 12, 4) + "-" + string.substr(text, 16, 4) + "-" + string.substr(text, 20, 12)
 end function
 
-/// Implements v4 bytes.
+/// Provide the v4 bytes operation for this standard-library module.
 function v4Bytes()
   raw = crypto.secureRandom(16)
   if typeof(raw) == "error" then return raw end if
@@ -39,7 +39,7 @@ function v4Bytes()
   return raw
 end function
 
-/// Implements v4.
+/// Provide the v4 operation for this standard-library module.
 function v4()
   raw = v4Bytes()
   if typeof(raw) == "error" then return raw end if

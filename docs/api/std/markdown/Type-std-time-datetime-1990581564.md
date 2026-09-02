@@ -23,7 +23,7 @@ Source: `std/time.ml:358`
 date
 ```
 
-Stores the date member of `DateTime`.
+Date associated with `DateTime`.
 
 
 Source: `std/time.ml:360`
@@ -35,7 +35,7 @@ Source: `std/time.ml:360`
 time
 ```
 
-Stores the time member of `DateTime`.
+Time associated with `DateTime`.
 
 
 Source: `std/time.ml:362`

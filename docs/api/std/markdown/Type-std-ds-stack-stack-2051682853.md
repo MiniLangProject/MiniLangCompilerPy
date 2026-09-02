@@ -35,7 +35,7 @@ Source: `std/ds/stack.ml:179`
 data
 ```
 
-Stores the data member of `Stack`.
+Backing data owned by `Stack`.
 
 
 Source: `std/ds/stack.ml:121`

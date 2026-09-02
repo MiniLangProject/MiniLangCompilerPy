@@ -180,16 +180,19 @@ class Expr:
 
 @dataclass
 class Num(Expr):
+    """Numeric literal preserving its integer or floating-point representation."""
     value: float | int
 
 
 @dataclass
 class Str(Expr):
+    """UTF-8 string literal."""
     value: str
 
 
 @dataclass
 class Bool(Expr):
+    """Boolean literal."""
     value: bool
 
 
@@ -201,11 +204,13 @@ class VoidLit(Expr):
 
 @dataclass
 class Var(Expr):
+    """Reference to a lexical, module-global, or qualified binding."""
     name: str
 
 
 @dataclass
 class ArrayLit(Expr):
+    """Array literal and its optional non-escaping variadic-stack marker."""
     items: List[Expr]
     # Internal-only marker: a proven non-escaping variadic tail may use an
     # immutable stack view for the duration of its direct call.
@@ -214,12 +219,14 @@ class ArrayLit(Expr):
 
 @dataclass
 class Unary(Expr):
+    """Unary operator application."""
     op: str
     right: Expr
 
 
 @dataclass
 class Bin(Expr):
+    """Binary operator application with left-to-right operands."""
     left: Expr
     op: str
     right: Expr
@@ -227,6 +234,7 @@ class Bin(Expr):
 
 @dataclass
 class IsType(Expr):
+    """Runtime type predicate produced by the ``is`` syntax."""
     expr: Expr
     type_name: str
     negated: bool = False
@@ -249,6 +257,7 @@ class Coalesce(Expr):
 
 @dataclass
 class Call(Expr):
+    """Function or method call, including optional named arguments."""
     callee: Expr
     args: List[Expr]
     arg_names: List[Optional[str]] = field(default_factory=list)
@@ -256,12 +265,14 @@ class Call(Expr):
 
 @dataclass
 class Index(Expr):
+    """Indexed array, byte-buffer, or string access."""
     target: Expr
     index: Expr
 
 
 @dataclass
 class Member(Expr):
+    """Member lookup on a value or qualified module path."""
     target: Expr
     name: str
 
@@ -309,6 +320,7 @@ class Stmt:
 
 @dataclass
 class Import(Stmt):
+    """Source-file import with optional namespace metadata."""
     path: str
     alias: Optional[str] = None
     module: Optional[str] = None
@@ -316,28 +328,33 @@ class Import(Stmt):
 
 @dataclass
 class NamespaceDef(Stmt):
+    """Lexically scoped namespace body."""
     name: str
     body: List[Stmt]
 
 
 @dataclass
 class NamespaceDecl(Stmt):
+    """File-level namespace declaration."""
     name: str
 
 
 @dataclass
 class ImportStmt(Stmt):
+    """Qualified module import and its local alias."""
     module: str
     alias: str
 
 
 @dataclass
 class Print(Stmt):
+    """Statement that writes one formatted value followed by a newline."""
     expr: Expr
 
 
 @dataclass
 class Assign(Stmt):
+    """Binding declaration or assignment with an optional type contract."""
     name: str
     expr: Expr
     declared_type: Optional[str] = None
@@ -360,12 +377,14 @@ class SynchronizedBlock(Stmt):
 
 @dataclass
 class ConstDecl(Stmt):
+    """Immutable binding declaration."""
     name: str
     expr: Expr
 
 
 @dataclass
 class SetMember(Stmt):
+    """Assignment to a field on a struct value."""
     obj: Expr
     field: str
     expr: Expr
@@ -373,6 +392,7 @@ class SetMember(Stmt):
 
 @dataclass
 class SetIndex(Stmt):
+    """Assignment to an indexed array or byte-buffer element."""
     target: Expr
     index: Expr
     expr: Expr
@@ -380,11 +400,13 @@ class SetIndex(Stmt):
 
 @dataclass
 class ExprStmt(Stmt):
+    """Expression evaluated only for its side effects."""
     expr: Expr
 
 
 @dataclass
 class If(Stmt):
+    """Conditional statement with ordered elseif branches and an else body."""
     cond: Expr
     then_body: List[Stmt]
     elifs: List[Tuple[Expr, List[Stmt]]]
@@ -393,18 +415,21 @@ class If(Stmt):
 
 @dataclass
 class While(Stmt):
+    """Pre-test loop."""
     cond: Expr
     body: List[Stmt]
 
 
 @dataclass
 class DoWhile(Stmt):
+    """Post-test loop that executes its body at least once."""
     body: List[Stmt]
     cond: Expr
 
 
 @dataclass
 class For(Stmt):
+    """Inclusive numeric range loop."""
     var: str
     start: Expr
     end: Expr
@@ -413,6 +438,7 @@ class For(Stmt):
 
 @dataclass
 class ForEach(Stmt):
+    """Iteration over the values of an iterable expression."""
     var: str
     iterable: Expr
     body: List[Stmt]
@@ -420,6 +446,7 @@ class ForEach(Stmt):
 
 @dataclass
 class FunctionDef(Stmt):
+    """Function declaration with calling, typing, and optimization metadata."""
     name: str
     params: List[str]
     body: List[Stmt]
@@ -438,16 +465,19 @@ class FunctionDef(Stmt):
 
 @dataclass
 class Return(Stmt):
+    """Return an optional value from the current function."""
     expr: Optional[Expr]
 
 
 @dataclass
 class Yield(Stmt):
+    """Suspend an iterator and publish its optional next value."""
     expr: Optional[Expr]
 
 
 @dataclass
 class Defer(Stmt):
+    """Register a call for execution when the current scope exits."""
     expr: Call
     site_id: int = -1
     offsets: List[int] = field(default_factory=list)
@@ -456,21 +486,25 @@ class Defer(Stmt):
 
 @dataclass
 class Break(Stmt):
+    """Leave one or more enclosing loops or switches."""
     count: int = 1
 
 
 @dataclass
 class Continue(Stmt):
+    """Continue the nearest enclosing loop."""
     pass
 
 
 @dataclass
 class GlobalDecl(Stmt):
+    """Declare module-global bindings visible inside a function."""
     names: List[str]
 
 
 @dataclass
 class SwitchCase:
+    """One value-list or inclusive-range branch of a switch statement."""
     kind: str  # "values" | "range"
     values: List[Expr]
     range_start: Optional[Expr]
@@ -485,6 +519,7 @@ class SwitchCase:
 
 @dataclass
 class Switch(Stmt):
+    """Multi-way value dispatch with an optional default body."""
     expr: Expr
     cases: List[SwitchCase]
     default_body: List[Stmt]
@@ -492,6 +527,7 @@ class Switch(Stmt):
 
 @dataclass
 class StructDef(Stmt):
+    """Struct declaration with fields, methods, and implemented interfaces."""
     name: str
     fields: List[str]
     methods: List["FunctionDef"] = field(default_factory=list)
@@ -509,6 +545,7 @@ class InterfaceDef(Stmt):
 
 @dataclass
 class EnumDef(Stmt):
+    """Enumeration declaration with optional explicit variant values."""
     name: str
     variants: List[str]
     values: List[Optional[Expr]] = field(default_factory=list)
@@ -516,6 +553,7 @@ class EnumDef(Stmt):
 
 @dataclass
 class ExternParam:
+    """Native ABI parameter, including optional trailing ``out`` semantics."""
     name: Optional[str]  # optional parameter name (for readability)
     ty: str  # ABI type name (e.g. int, bool, ptr, cstr, wstr, void)
     is_out: bool = False  # out-parameter (passed as pointer; may be omitted at call site)
@@ -523,6 +561,7 @@ class ExternParam:
 
 @dataclass
 class ExternFunctionDef(Stmt):
+    """Foreign function declaration resolved from a native shared library."""
     name: str
     params: List[ExternParam]
     dll: str
@@ -2763,7 +2802,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.2.2",
+    "MINILANG_VERSION": "1.2.3",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

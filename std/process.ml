@@ -11,14 +11,14 @@ you may not use this file except in compliance with the License.
 
 package std.process
 
-/// Stores the process err.
+/// Track the process err value used by this standard-library module.
 const PROCESS_ERR = 261
-/// Stores the max environment bytes.
+/// Track the max environment bytes value used by this standard-library module.
 const MAX_ENVIRONMENT_BYTES = 1048576
-/// Stores the max path bytes.
+/// Track the max path bytes value used by this standard-library module.
 const MAX_PATH_BYTES = 32768
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(message)
   return error(PROCESS_ERR, message)
@@ -50,21 +50,21 @@ extern function _readlink(path as cstr, output as ptr, size as u64) from "libc.s
 /// Returns getenv.
 /// @internal
 extern function _getenv(name as cstr) from "libc.so.6" symbol "getenv" returns ptr
-/// Implements strlen.
+/// Provide the strlen operation for this standard-library module.
 /// @internal
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
-/// Implements copy from native.
+/// Provide the copy from native operation for this standard-library module.
 /// @internal
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
 /// Returns getcwd.
 /// @internal
 extern function _getcwd(output as bytes, size as u64) from "libc.so.6" symbol "getcwd" returns ptr
-/// Implements chdir.
+/// Provide the chdir operation for this standard-library module.
 /// @internal
 extern function _chdir(path as cstr) from "libc.so.6" symbol "chdir" returns i32
 #endif
 
-/// Implements id.
+/// Provide the id operation for this standard-library module.
 function id()
 #if TARGET_OS == "windows"
   return GetCurrentProcessId()
@@ -112,7 +112,7 @@ function environment(name)
 #endif
 end function
 
-/// Implements current directory.
+/// Provide the current directory operation for this standard-library module.
 function currentDirectory()
 #if TARGET_OS == "windows"
   raw = bytes(MAX_PATH_BYTES * 2, 0)

@@ -60,7 +60,7 @@ Source: `std/concurrent/task.ml:126`
 const TASK_ERROR = 1651
 ```
 
-Stores the task error.
+Track the task error value used by this standard-library module.
 
 
 Source: `std/concurrent/task.ml:14`
@@ -88,7 +88,7 @@ Source: `std/concurrent/task.ml:139`
 function whenAny(futures)
 ```
 
-Implements when any.
+Provide the when any operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

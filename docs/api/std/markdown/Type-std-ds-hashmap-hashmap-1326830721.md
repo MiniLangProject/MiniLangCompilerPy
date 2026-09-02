@@ -23,7 +23,7 @@ Source: `std/ds/hashmap.ml:148`
 cap
 ```
 
-Stores the cap member of `HashMap`.
+Allocated capacity of `HashMap`.
 
 
 Source: `std/ds/hashmap.ml:150`
@@ -148,7 +148,7 @@ Source: `std/ds/hashmap.ml:181`
 keys
 ```
 
-Stores the keys member of `HashMap`.
+Keys associated with `HashMap`.
 
 
 Source: `std/ds/hashmap.ml:154`
@@ -217,7 +217,7 @@ Source: `std/ds/hashmap.ml:229`
 size
 ```
 
-Stores the size member of `HashMap`.
+Current logical size of `HashMap`.
 
 
 Source: `std/ds/hashmap.ml:152`
@@ -229,7 +229,7 @@ Source: `std/ds/hashmap.ml:152`
 states
 ```
 
-Stores the states member of `HashMap`.
+States associated with `HashMap`.
 
 
 Source: `std/ds/hashmap.ml:158`
@@ -241,7 +241,7 @@ Source: `std/ds/hashmap.ml:158`
 values
 ```
 
-Stores the values member of `HashMap`.
+Values associated with `HashMap`.
 
 
 Source: `std/ds/hashmap.ml:156`

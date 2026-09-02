@@ -21,71 +21,71 @@ limitations under the License.
 
 package std.crypto._cng
 
-/// Implements bcrypt open algorithm provider.
+/// Provide the bcrypt open algorithm provider operation for this standard-library module.
 /// @internal
 extern function BCryptOpenAlgorithmProvider(result as bytes, algorithm as wstr, implementation as ptr, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt close algorithm provider.
+/// Provide the bcrypt close algorithm provider operation for this standard-library module.
 /// @internal
 extern function BCryptCloseAlgorithmProvider(handle as ptr, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt hash.
+/// Provide the bcrypt hash operation for this standard-library module.
 /// @internal
 extern function BCryptHash(handle as ptr, secret as ptr, secretLength as u32, input as ptr, inputLength as u32, output as ptr, outputLength as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt gen random.
+/// Provide the bcrypt gen random operation for this standard-library module.
 /// @internal
 extern function BCryptGenRandom(handle as ptr, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt set property w.
+/// Provide the bcrypt set property w operation for this standard-library module.
 /// @internal
 extern function BCryptSetPropertyW(handle as ptr, property as wstr, value as wstr, valueLength as u32, flags as u32) from "bcrypt.dll" symbol "BCryptSetProperty" returns i32
-/// Implements bcrypt set property bytes.
+/// Provide the bcrypt set property bytes operation for this standard-library module.
 /// @internal
 extern function BCryptSetPropertyBytes(handle as ptr, property as wstr, value as bytes, valueLength as u32, flags as u32) from "bcrypt.dll" symbol "BCryptSetProperty" returns i32
-/// Implements bcrypt generate symmetric key.
+/// Provide the bcrypt generate symmetric key operation for this standard-library module.
 /// @internal
 extern function BCryptGenerateSymmetricKey(handle as ptr, result as bytes, keyObject as ptr, keyObjectLength as u32, secret as ptr, secretLength as u32, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt destroy key.
+/// Provide the bcrypt destroy key operation for this standard-library module.
 /// @internal
 extern function BCryptDestroyKey(handle as ptr) from "bcrypt.dll" returns i32
-/// Implements bcrypt encrypt.
+/// Provide the bcrypt encrypt operation for this standard-library module.
 /// @internal
 extern function BCryptEncrypt(key as ptr, input as ptr, inputLength as u32, paddingInfo as ptr, iv as ptr, ivLength as u32, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt decrypt.
+/// Provide the bcrypt decrypt operation for this standard-library module.
 /// @internal
 extern function BCryptDecrypt(key as ptr, input as ptr, inputLength as u32, paddingInfo as ptr, iv as ptr, ivLength as u32, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt key derivation.
+/// Provide the bcrypt key derivation operation for this standard-library module.
 /// @internal
 extern function BCryptKeyDerivation(key as ptr, parameters as ptr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt import key pair.
+/// Provide the bcrypt import key pair operation for this standard-library module.
 /// @internal
 extern function BCryptImportKeyPair(algorithm as ptr, importKey as ptr, blobType as wstr, result as bytes, input as ptr, inputLength as u32, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt export key.
+/// Provide the bcrypt export key operation for this standard-library module.
 /// @internal
 extern function BCryptExportKey(key as ptr, exportKey as ptr, blobType as wstr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt secret agreement.
+/// Provide the bcrypt secret agreement operation for this standard-library module.
 /// @internal
 extern function BCryptSecretAgreement(privateKey as ptr, publicKey as ptr, result as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt derive key.
+/// Provide the bcrypt derive key operation for this standard-library module.
 /// @internal
 extern function BCryptDeriveKey(secret as ptr, kdf as wstr, parameters as ptr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
-/// Implements bcrypt destroy secret.
+/// Provide the bcrypt destroy secret operation for this standard-library module.
 /// @internal
 extern function BCryptDestroySecret(secret as ptr) from "bcrypt.dll" returns i32
-/// Implements bcrypt derive key pbkdf2.
+/// Provide the bcrypt derive key pbkdf2 operation for this standard-library module.
 /// @internal
 extern function BCryptDeriveKeyPBKDF2(provider as ptr, password as ptr, passwordLength as u32, salt as ptr, saltLength as u32, iterations as u64, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
 
-/// Stores the bcrypt alg handle hmac flag.
+/// Track the bcrypt alg handle hmac flag value used by this standard-library module.
 /// @internal
 const BCRYPT_ALG_HANDLE_HMAC_FLAG = 0x00000008
-/// Stores the bcrypt use system preferred rng.
+/// Track the bcrypt use system preferred rng value used by this standard-library module.
 /// @internal
 const BCRYPT_USE_SYSTEM_PREFERRED_RNG = 0x00000002
-/// Stores the bcrypt kdf hkdf info.
+/// Track the bcrypt kdf hkdf info value used by this standard-library module.
 /// @internal
 const BCRYPT_KDF_HKDF_INFO = 0x14
-/// Stores the bcrypt ecdh public generic magic.
+/// Track the bcrypt ecdh public generic magic value used by this standard-library module.
 /// @internal
 const BCRYPT_ECDH_PUBLIC_GENERIC_MAGIC = 0x504B4345
-/// Stores the bcrypt ecdh private generic magic.
+/// Track the bcrypt ecdh private generic magic value used by this standard-library module.
 /// @internal
 const BCRYPT_ECDH_PRIVATE_GENERIC_MAGIC = 0x564B4345
 
@@ -97,7 +97,7 @@ function _putPtr(buffer, offset, value)
   end for
 end function
 
-/// Implements put u32.
+/// Provide the put u32 operation for this standard-library module.
 /// @internal
 function _putU32(buffer, offset, value)
   buffer[offset] = value & 0xFF
@@ -122,7 +122,7 @@ function _getU32(buffer)
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
 end function
 
-/// Implements zero.
+/// Provide the zero operation for this standard-library module.
 /// @internal
 function _zero(buffer)
   if typeof(buffer) == "bytes" and len(buffer) > 0 then
@@ -296,7 +296,7 @@ function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   return ok
 end function
 
-/// Implements open x25519.
+/// Provide the open x25519 operation for this standard-library module.
 /// @internal
 function _openX25519(providerBytes)
   status = BCryptOpenAlgorithmProvider(providerBytes, "ECDH", 0, 0)

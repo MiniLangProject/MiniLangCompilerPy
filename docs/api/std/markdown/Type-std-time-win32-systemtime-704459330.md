@@ -23,7 +23,7 @@ Source: `std/time.ml:111`
 day as u16
 ```
 
-Stores the day member of `SYSTEMTIME`.
+Day associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:119`
@@ -35,7 +35,7 @@ Source: `std/time.ml:119`
 dayOfWeek as u16
 ```
 
-Stores the day of week member of `SYSTEMTIME`.
+Day of week associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:117`
@@ -47,7 +47,7 @@ Source: `std/time.ml:117`
 hour as u16
 ```
 
-Stores the hour member of `SYSTEMTIME`.
+Hour associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:121`
@@ -59,7 +59,7 @@ Source: `std/time.ml:121`
 millisecond as u16
 ```
 
-Stores the millisecond member of `SYSTEMTIME`.
+Millisecond associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:127`
@@ -71,7 +71,7 @@ Source: `std/time.ml:127`
 minute as u16
 ```
 
-Stores the minute member of `SYSTEMTIME`.
+Minute associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:123`
@@ -83,7 +83,7 @@ Source: `std/time.ml:123`
 month as u16
 ```
 
-Stores the month member of `SYSTEMTIME`.
+Month associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:115`
@@ -95,7 +95,7 @@ Source: `std/time.ml:115`
 second as u16
 ```
 
-Stores the second member of `SYSTEMTIME`.
+Second associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:125`
@@ -107,7 +107,7 @@ Source: `std/time.ml:125`
 year as u16
 ```
 
-Stores the year member of `SYSTEMTIME`.
+Year associated with `SYSTEMTIME`.
 
 
 Source: `std/time.ml:113`

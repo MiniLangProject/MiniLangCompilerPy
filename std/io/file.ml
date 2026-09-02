@@ -14,46 +14,46 @@ package std.io.file
 import std.fs as fs
 import std.path as path_api
 
-/// Stores the file err.
+/// Track the file err value used by this standard-library module.
 const FILE_ERR = 263
-/// Stores the lock conflict.
+/// Track the lock conflict value used by this standard-library module.
 const LOCK_CONFLICT = 264
-/// Stores the closed handle.
+/// Track the closed handle value used by this standard-library module.
 const CLOSED_HANDLE = 265
-/// Stores the max io count.
+/// Track the max io count value used by this standard-library module.
 const MAX_IO_COUNT = 0x7FFFFFFF
 
 /// Represents file handle.
 struct FileHandle
-  /// Stores the path member of `FileHandle`.
+  /// Path associated with `FileHandle`.
   path
-  /// Stores the native handle member of `FileHandle`.
+  /// Native handle associated with `FileHandle`.
   nativeHandle
-  /// Stores the readable member of `FileHandle`.
+  /// Readable associated with `FileHandle`.
   readable
-  /// Stores the writable member of `FileHandle`.
+  /// Writable associated with `FileHandle`.
   writable
-  /// Stores the durable member of `FileHandle`.
+  /// Durable associated with `FileHandle`.
   durable
-  /// Stores the closed member of `FileHandle`.
+  /// Closed associated with `FileHandle`.
   closed
-  /// Stores the lock mode member of `FileHandle`.
+  /// Lock mode associated with `FileHandle`.
   lockMode
 end struct
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(code, operation, message)
   return error(code, "std.io.file." + operation + ": " + message)
 end function
 
-/// Implements u32.
+/// Provide the u32 operation for this standard-library module.
 /// @internal
 function _u32(buffer, offset)
   return buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24)
 end function
 
-/// Implements i64.
+/// Provide the i64 operation for this standard-library module.
 /// @internal
 function _i64(buffer, offset)
   value = buffer[offset + 7]
@@ -66,7 +66,7 @@ function _i64(buffer, offset)
   return value
 end function
 
-/// Implements valid slice.
+/// Provide the valid slice operation for this standard-library module.
 /// @internal
 function _validSlice(buffer, offset, count, operation)
   if typeof(buffer) != "bytes" then return _error(FILE_ERR, operation, "buffer must be bytes") end if
@@ -77,7 +77,7 @@ function _validSlice(buffer, offset, count, operation)
   return true
 end function
 
-/// Implements validate open.
+/// Provide the validate open operation for this standard-library module.
 /// @internal
 function _validateOpen(file, operation)
   if file is not FileHandle then return _error(FILE_ERR, operation, "value must be FileHandle") end if
@@ -86,37 +86,37 @@ function _validateOpen(file, operation)
 end function
 
 #if TARGET_OS == "windows"
-/// Stores the generic read.
+/// Track the generic read value used by this standard-library module.
 const GENERIC_READ = 0x80000000
-/// Stores the generic write.
+/// Track the generic write value used by this standard-library module.
 const GENERIC_WRITE = 0x40000000
-/// Stores the file share all.
+/// Track the file share all value used by this standard-library module.
 const FILE_SHARE_ALL = 7
-/// Stores the create new.
+/// Track the create new value used by this standard-library module.
 const CREATE_NEW = 1
-/// Stores the create always.
+/// Track the create always value used by this standard-library module.
 const CREATE_ALWAYS = 2
-/// Stores the open existing.
+/// Track the open existing value used by this standard-library module.
 const OPEN_EXISTING = 3
-/// Stores the open always.
+/// Track the open always value used by this standard-library module.
 const OPEN_ALWAYS = 4
-/// Stores the file attribute normal.
+/// Track the file attribute normal value used by this standard-library module.
 const FILE_ATTRIBUTE_NORMAL = 0x80
-/// Stores the file flag write through.
+/// Track the file flag write through value used by this standard-library module.
 const FILE_FLAG_WRITE_THROUGH = 0x80000000
-/// Stores the file flag backup semantics.
+/// Track the file flag backup semantics value used by this standard-library module.
 const FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
-/// Stores the file begin.
+/// Track the file begin value used by this standard-library module.
 const FILE_BEGIN = 0
-/// Stores the lockfile fail immediately.
+/// Track the lockfile fail immediately value used by this standard-library module.
 const LOCKFILE_FAIL_IMMEDIATELY = 1
-/// Stores the lockfile exclusive lock.
+/// Track the lockfile exclusive lock value used by this standard-library module.
 const LOCKFILE_EXCLUSIVE_LOCK = 2
-/// Stores the error lock violation.
+/// Track the error lock violation value used by this standard-library module.
 const ERROR_LOCK_VIOLATION = 33
-/// Stores the movefile replace existing.
+/// Track the movefile replace existing value used by this standard-library module.
 const MOVEFILE_REPLACE_EXISTING = 1
-/// Stores the movefile write through.
+/// Track the movefile write through value used by this standard-library module.
 const MOVEFILE_WRITE_THROUGH = 8
 
 /// Creates create file w.
@@ -137,13 +137,13 @@ extern function GetFileSizeEx(handle as ptr, output as bytes) from "kernel32.dll
 /// Updates set end of file.
 /// @internal
 extern function SetEndOfFile(handle as ptr) from "kernel32.dll" returns bool
-/// Implements flush file buffers.
+/// Provide the flush file buffers operation for this standard-library module.
 /// @internal
 extern function FlushFileBuffers(handle as ptr) from "kernel32.dll" returns bool
-/// Implements lock file ex.
+/// Provide the lock file ex operation for this standard-library module.
 /// @internal
 extern function LockFileEx(handle as ptr, flags as u32, reserved as u32, lowCount as u32, highCount as u32, overlapped as bytes) from "kernel32.dll" returns bool
-/// Implements unlock file ex.
+/// Provide the unlock file ex operation for this standard-library module.
 /// @internal
 extern function UnlockFileEx(handle as ptr, reserved as u32, lowCount as u32, highCount as u32, overlapped as bytes) from "kernel32.dll" returns bool
 /// Releases or resets close handle.
@@ -158,89 +158,89 @@ extern function CreateDirectoryW(path as wstr, security as ptr) from "kernel32.d
 /// Releases or resets remove directory w.
 /// @internal
 extern function RemoveDirectoryW(path as wstr) from "kernel32.dll" returns bool
-/// Implements move file ex w.
+/// Provide the move file ex w operation for this standard-library module.
 /// @internal
 extern function MoveFileExW(source as wstr, destination as wstr, flags as u32) from "kernel32.dll" returns bool
 #else
-/// Stores the o rdonly.
+/// Track the o rdonly value used by this standard-library module.
 const O_RDONLY = 0
-/// Stores the o wronly.
+/// Track the o wronly value used by this standard-library module.
 const O_WRONLY = 1
-/// Stores the o rdwr.
+/// Track the o rdwr value used by this standard-library module.
 const O_RDWR = 2
-/// Stores the o creat.
+/// Track the o creat value used by this standard-library module.
 const O_CREAT = 64
-/// Stores the o excl.
+/// Track the o excl value used by this standard-library module.
 const O_EXCL = 128
-/// Stores the o trunc.
+/// Track the o trunc value used by this standard-library module.
 const O_TRUNC = 512
-/// Stores the o dsync.
+/// Track the o dsync value used by this standard-library module.
 const O_DSYNC = 4096
-/// Stores the o directory.
+/// Track the o directory value used by this standard-library module.
 const O_DIRECTORY = 65536
-/// Stores the o cloexec.
+/// Track the o cloexec value used by this standard-library module.
 const O_CLOEXEC = 524288
-/// Stores the default file mode.
+/// Track the default file mode value used by this standard-library module.
 const DEFAULT_FILE_MODE = 0x1B6
-/// Stores the default directory mode.
+/// Track the default directory mode value used by this standard-library module.
 const DEFAULT_DIRECTORY_MODE = 0x1FF
-/// Stores the lock shared.
+/// Track the lock shared value used by this standard-library module.
 const LOCK_SHARED = 1
-/// Stores the lock exclusive.
+/// Track the lock exclusive value used by this standard-library module.
 const LOCK_EXCLUSIVE = 2
-/// Stores the lock nonblocking.
+/// Track the lock nonblocking value used by this standard-library module.
 const LOCK_NONBLOCKING = 4
-/// Stores the lock unlock.
+/// Track the lock unlock value used by this standard-library module.
 const LOCK_UNLOCK = 8
-/// Stores the ewouldblock.
+/// Track the ewouldblock value used by this standard-library module.
 const EWOULDBLOCK = 11
 /// These offsets follow the Linux x86-64 glibc stat ABI. Revisit them for another CPU architecture or libc implementation.
 const STAT_SIZE = 144
-/// Stores the stat file size offset.
+/// Track the stat file size offset value used by this standard-library module.
 const STAT_FILE_SIZE_OFFSET = 48
 
-/// Implements open.
+/// Provide the open operation for this standard-library module.
 /// @internal
 extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" symbol "open" returns i32
-/// Implements pread.
+/// Provide the pread operation for this standard-library module.
 /// @internal
 extern function _pread(handle as int, output as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pread" returns i64
-/// Implements pwrite.
+/// Provide the pwrite operation for this standard-library module.
 /// @internal
 extern function _pwrite(handle as int, input as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pwrite" returns i64
-/// Implements fstat.
+/// Provide the fstat operation for this standard-library module.
 /// @internal
 extern function _fstat(handle as int, output as bytes) from "libc.so.6" symbol "fstat" returns i32
-/// Implements ftruncate.
+/// Provide the ftruncate operation for this standard-library module.
 /// @internal
 extern function _ftruncate(handle as int, size as i64) from "libc.so.6" symbol "ftruncate" returns i32
-/// Implements fsync.
+/// Provide the fsync operation for this standard-library module.
 /// @internal
 extern function _fsync(handle as int) from "libc.so.6" symbol "fsync" returns i32
-/// Implements flock.
+/// Provide the flock operation for this standard-library module.
 /// @internal
 extern function _flock(handle as int, operation as int) from "libc.so.6" symbol "flock" returns i32
 /// Releases or resets close.
 /// @internal
 extern function _close(handle as int) from "libc.so.6" symbol "close" returns i32
-/// Implements mkdir.
+/// Provide the mkdir operation for this standard-library module.
 /// @internal
 extern function _mkdir(path as cstr, mode as u32) from "libc.so.6" symbol "mkdir" returns i32
-/// Implements rmdir.
+/// Provide the rmdir operation for this standard-library module.
 /// @internal
 extern function _rmdir(path as cstr) from "libc.so.6" symbol "rmdir" returns i32
-/// Implements rename.
+/// Provide the rename operation for this standard-library module.
 /// @internal
 extern function _rename(source as cstr, destination as cstr) from "libc.so.6" symbol "rename" returns i32
-/// Implements errno location.
+/// Provide the errno location operation for this standard-library module.
 /// @internal
 extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
-/// Implements copy errno.
+/// Provide the copy errno operation for this standard-library module.
 /// @internal
 extern function _copyErrno(output as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
 #endif
 
-/// Implements native error code.
+/// Provide the native error code operation for this standard-library module.
 /// @internal
 function _nativeErrorCode()
 #if TARGET_OS == "windows"
@@ -254,7 +254,7 @@ function _nativeErrorCode()
 #endif
 end function
 
-/// Implements native failure.
+/// Provide the native failure operation for this standard-library module.
 /// @internal
 function _nativeFailure(operation)
   return _error(FILE_ERR, operation, "native error " + _nativeErrorCode())
@@ -289,13 +289,13 @@ function _openFile(path, readable, writable, creation, durable)
   return FileHandle(path, handle, readable, writable, durable, false, 0)
 end function
 
-/// Implements open read.
+/// Provide the open read operation for this standard-library module.
 /// @param path Path to operate on.
 function openRead(path)
   return _openFile(path, true, false, 0, false)
 end function
 
-/// Implements open read write.
+/// Provide the open read write operation for this standard-library module.
 /// @param path Path to operate on.
 /// @param createIfMissing Value supplied for `createIfMissing`.
 function openReadWrite(path, createIfMissing)
@@ -305,7 +305,7 @@ function openReadWrite(path, createIfMissing)
   return _openFile(path, true, true, creation, false)
 end function
 
-/// Implements open read write durable.
+/// Provide the open read write durable operation for this standard-library module.
 /// @param path Path to operate on.
 /// @param createIfMissing Value supplied for `createIfMissing`.
 function openReadWriteDurable(path, createIfMissing)
@@ -429,7 +429,7 @@ function append(file, source, sourceOffset, count)
   return offset
 end function
 
-/// Implements size.
+/// Provide the size operation for this standard-library module.
 /// @param file Value supplied for `file`.
 function size(file)
   state = _validateOpen(file, "size")
@@ -444,7 +444,7 @@ function size(file)
 #endif
 end function
 
-/// Implements truncate.
+/// Provide the truncate operation for this standard-library module.
 /// @param file Value supplied for `file`.
 /// @param newSize Value supplied for `newSize`.
 function truncate(file, newSize)
@@ -459,7 +459,7 @@ function truncate(file, newSize)
   return true
 end function
 
-/// Implements flush.
+/// Provide the flush operation for this standard-library module.
 /// @param file Value supplied for `file`.
 function flush(file)
   state = _validateOpen(file, "flush")
@@ -507,7 +507,7 @@ function lock(file, mode, wait)
   return true
 end function
 
-/// Implements unlock.
+/// Provide the unlock operation for this standard-library module.
 /// @param file Value supplied for `file`.
 function unlock(file)
   state = _validateOpen(file, "unlock")
@@ -567,19 +567,19 @@ function removeDirectory(path)
   return true
 end function
 
-/// Implements path exists.
+/// Provide the path exists operation for this standard-library module.
 /// @param path Path to operate on.
 function pathExists(path)
   return fs.exists(path)
 end function
 
-/// Implements file exists.
+/// Provide the file exists operation for this standard-library module.
 /// @param path Path to operate on.
 function fileExists(path)
   return fs.isFile(path)
 end function
 
-/// Implements directory exists.
+/// Provide the directory exists operation for this standard-library module.
 /// @param path Path to operate on.
 function directoryExists(path)
   return fs.isDir(path)
@@ -594,7 +594,7 @@ function deletePath(path)
   return true
 end function
 
-/// Implements join path.
+/// Provide the join path operation for this standard-library module.
 /// @param left Left input value.
 /// @param right Right input value.
 function joinPath(left, right)
@@ -650,7 +650,7 @@ function atomicMove(source, destination, replaceExisting)
   return true
 end function
 
-/// Implements move path.
+/// Provide the move path operation for this standard-library module.
 /// @param source Source value to process.
 /// @param destination Value supplied for `destination`.
 /// @param replaceExisting Value supplied for `replaceExisting`.

@@ -23,7 +23,7 @@ Source: `std/crypto/aes_gcm.ml:30`
 ciphertext
 ```
 
-Stores the ciphertext member of `Encrypted`.
+Ciphertext associated with `Encrypted`.
 
 
 Source: `std/crypto/aes_gcm.ml:32`
@@ -35,7 +35,7 @@ Source: `std/crypto/aes_gcm.ml:32`
 tag
 ```
 
-Stores the tag member of `Encrypted`.
+Tag associated with `Encrypted`.
 
 
 Source: `std/crypto/aes_gcm.ml:34`

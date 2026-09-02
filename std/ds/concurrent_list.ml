@@ -31,15 +31,15 @@ end function
 
 /// Lock-protected growable list whose values remain shared-heap objects.
 struct ThreadSafeList
-  /// Stores the guard member of `ThreadSafeList`.
+  /// Guard associated with `ThreadSafeList`.
   guard
-  /// Stores the buf member of `ThreadSafeList`.
+  /// Buf associated with `ThreadSafeList`.
   buf
-  /// Stores the size member of `ThreadSafeList`.
+  /// Current logical size of `ThreadSafeList`.
   size
-  /// Stores the capacity member of `ThreadSafeList`.
+  /// Allocated capacity of `ThreadSafeList`.
   capacity
-  /// Stores the closed member of `ThreadSafeList`.
+  /// Closed associated with `ThreadSafeList`.
   closed
 
   /// Create an empty list with the default initial capacity.

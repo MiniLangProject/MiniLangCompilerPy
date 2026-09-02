@@ -95,7 +95,7 @@ Source: `std/result.ml:144`
 message
 ```
 
-Stores the message member of `Result`.
+Diagnostic message carried by `Result`.
 
 
 Source: `std/result.ml:101`
@@ -107,7 +107,7 @@ Source: `std/result.ml:101`
 ok
 ```
 
-Stores the ok member of `Result`.
+Whether `Result` represents a successful result.
 
 
 Source: `std/result.ml:97`
@@ -163,7 +163,7 @@ Source: `std/result.ml:127`
 value
 ```
 
-Stores the value member of `Result`.
+Value associated with `Result`.
 
 
 Source: `std/result.ml:99`

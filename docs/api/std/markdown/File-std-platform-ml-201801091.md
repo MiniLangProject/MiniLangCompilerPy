@@ -17,7 +17,7 @@ Reachable from entry: **no**
 function architecture()
 ```
 
-Implements architecture.
+Provide the architecture operation for this standard-library module.
 
 
 Source: `std/platform.ml:24`
@@ -29,7 +29,7 @@ Source: `std/platform.ml:24`
 function dynamicLibraryExtension()
 ```
 
-Implements dynamic library extension.
+Provide the dynamic library extension operation for this standard-library module.
 
 
 Source: `std/platform.ml:74`
@@ -41,7 +41,7 @@ Source: `std/platform.ml:74`
 function executableExtension()
 ```
 
-Implements executable extension.
+Provide the executable extension operation for this standard-library module.
 
 
 Source: `std/platform.ml:65`
@@ -77,7 +77,7 @@ Source: `std/platform.ml:29`
 function lineEnding()
 ```
 
-Implements line ending.
+Provide the line ending operation for this standard-library module.
 
 
 Source: `std/platform.ml:56`
@@ -89,7 +89,7 @@ Source: `std/platform.ml:56`
 function operatingSystem()
 ```
 
-Implements operating system.
+Provide the operating system operation for this standard-library module.
 
 
 Source: `std/platform.ml:15`
@@ -101,7 +101,7 @@ Source: `std/platform.ml:15`
 function pathSeparator()
 ```
 
-Implements path separator.
+Provide the path separator operation for this standard-library module.
 
 
 Source: `std/platform.ml:47`

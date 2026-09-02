@@ -671,7 +671,7 @@ Source: `std/time.ml:1045`
 const MAX_PORTABLE_SLEEP_MS = 2147483647
 ```
 
-Stores the max portable sleep ms.
+Track the max portable sleep ms value used by this standard-library module.
 
 
 Source: `std/time.ml:26`

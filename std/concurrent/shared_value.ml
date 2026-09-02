@@ -9,48 +9,48 @@ package std.concurrent.shared_value
 
 /// Legacy native-value codec retained for compatibility. The managed concurrent collections no longer need it because every thread shares the same GC heap. It remains useful for explicit snapshots passed to unmanaged native memory.
 const MEM_COMMIT_RESERVE = 0x3000
-/// Stores the mem release.
+/// Track the mem release value used by this standard-library module.
 const MEM_RELEASE = 0x8000
-/// Stores the page readwrite.
+/// Track the page readwrite value used by this standard-library module.
 const PAGE_READWRITE = 0x04
-/// Stores the record size.
+/// Track the record size value used by this standard-library module.
 const RECORD_SIZE = 24
 
-/// Stores the type void.
+/// Track the type void value used by this standard-library module.
 const TYPE_VOID = 0
-/// Stores the type int.
+/// Track the type int value used by this standard-library module.
 const TYPE_INT = 1
-/// Stores the type bool.
+/// Track the type bool value used by this standard-library module.
 const TYPE_BOOL = 2
-/// Stores the type string.
+/// Track the type string value used by this standard-library module.
 const TYPE_STRING = 3
-/// Stores the type bytes.
+/// Track the type bytes value used by this standard-library module.
 const TYPE_BYTES = 4
 
 #if TARGET_OS == "windows"
-/// Implements virtual alloc.
+/// Provide the virtual alloc operation for this standard-library module.
 /// @internal
 extern function VirtualAlloc(address as ptr, size as int, allocationType as u32, protect as u32) from "kernel32.dll" returns ptr
-/// Implements virtual free.
+/// Provide the virtual free operation for this standard-library module.
 /// @internal
 extern function VirtualFree(address as ptr, size as int, freeType as u32) from "kernel32.dll" returns bool
-/// Implements move from bytes.
+/// Provide the move from bytes operation for this standard-library module.
 /// @internal
 extern function MoveFromBytes(destination as ptr, source as bytes, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
-/// Implements move pointers.
+/// Provide the move pointers operation for this standard-library module.
 /// @internal
 extern function MovePointers(destination as ptr, source as ptr, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
 #else
-/// Implements native allocate.
+/// Provide the native allocate operation for this standard-library module.
 /// @internal
 extern function NativeAllocate(size as u64) from "libc.so.6" symbol "malloc" returns ptr
-/// Implements native free.
+/// Provide the native free operation for this standard-library module.
 /// @internal
 extern function NativeFree(address as ptr) from "libc.so.6" symbol "free" returns void
-/// Implements move from bytes.
+/// Provide the move from bytes operation for this standard-library module.
 /// @internal
 extern function MoveFromBytes(destination as ptr, source as bytes, count as u64) from "libc.so.6" symbol "memmove" returns ptr
-/// Implements move pointers.
+/// Provide the move pointers operation for this standard-library module.
 /// @internal
 extern function MovePointers(destination as ptr, source as ptr, count as u64) from "libc.so.6" symbol "memmove" returns ptr
 #endif

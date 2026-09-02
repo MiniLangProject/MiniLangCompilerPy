@@ -20,14 +20,14 @@ package std.random
 
 /// Std.random Simple deterministic PRNG (xorshift32). - Deterministic across runs. - Not cryptographically secure.
 const U32_MASK = 0xFFFFFFFF
-/// Stores the default seed.
+/// Track the default seed value used by this standard-library module.
 const DEFAULT_SEED = 0x6d2b79f5
-/// Stores the u32 range float.
+/// Track the u32 range float value used by this standard-library module.
 const U32_RANGE_FLOAT = 4294967296.0
 
 /// Deterministic per-instance pseudorandom number generator.
 struct RNG
-  /// Stores the state member of `RNG`.
+  /// State associated with `RNG`.
   state
 
   /// Creates a deterministic RNG from a seed.

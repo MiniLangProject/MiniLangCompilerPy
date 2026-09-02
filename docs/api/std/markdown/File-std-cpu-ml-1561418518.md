@@ -29,7 +29,7 @@ Source: `std/cpu.ml:42`
 const AES_NI = 16
 ```
 
-Stores the aes ni.
+Track the aes ni value used by this standard-library module.
 
 
 Source: `std/cpu.ml:30`
@@ -41,7 +41,7 @@ Source: `std/cpu.ml:30`
 const AVX = 4
 ```
 
-Stores the avx.
+Track the avx value used by this standard-library module.
 
 
 Source: `std/cpu.ml:26`
@@ -53,7 +53,7 @@ Source: `std/cpu.ml:26`
 const AVX2 = 8
 ```
 
-Stores the avx2.
+Track the avx2 value used by this standard-library module.
 
 
 Source: `std/cpu.ml:28`
@@ -77,7 +77,7 @@ Source: `std/cpu.ml:37`
 const PCLMULQDQ = 32
 ```
 
-Stores the pclmulqdq.
+Track the pclmulqdq value used by this standard-library module.
 
 
 Source: `std/cpu.ml:32`
@@ -105,7 +105,7 @@ Source: `std/cpu.ml:48`
 const SHA = 64
 ```
 
-Stores the sha.
+Track the sha value used by this standard-library module.
 
 
 Source: `std/cpu.ml:34`
@@ -117,7 +117,7 @@ Source: `std/cpu.ml:34`
 const SSE2 = 1
 ```
 
-Stores the sse2.
+Track the sse2 value used by this standard-library module.
 
 
 Source: `std/cpu.ml:22`
@@ -129,7 +129,7 @@ Source: `std/cpu.ml:22`
 const SSE42 = 2
 ```
 
-Stores the sse42.
+Track the sse42 value used by this standard-library module.
 
 
 Source: `std/cpu.ml:24`

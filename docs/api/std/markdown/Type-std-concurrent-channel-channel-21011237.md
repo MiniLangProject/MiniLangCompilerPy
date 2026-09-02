@@ -35,7 +35,7 @@ Source: `std/concurrent/channel.ml:209`
 function Count()
 ```
 
-Implements count.
+Provide count behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:240`
@@ -47,7 +47,7 @@ Source: `std/concurrent/channel.ml:240`
 function countValue()
 ```
 
-Implements count value.
+Provide count value behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:204`
@@ -83,7 +83,7 @@ Source: `std/concurrent/channel.ml:215`
 disposed
 ```
 
-Stores the disposed member of `Channel`.
+Disposed associated with `Channel`.
 
 
 Source: `std/concurrent/channel.ml:149`
@@ -111,7 +111,7 @@ Source: `std/concurrent/channel.ml:153`
 queue
 ```
 
-Stores the queue member of `Channel`.
+Queue associated with `Channel`.
 
 
 Source: `std/concurrent/channel.ml:147`
@@ -179,7 +179,7 @@ Source: `std/concurrent/channel.ml:185`
 function Send(value)
 ```
 
-Implements send.
+Provide send behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -195,7 +195,7 @@ Source: `std/concurrent/channel.ml:224`
 function send(value)
 ```
 
-Implements send.
+Provide send behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -211,7 +211,7 @@ Source: `std/concurrent/channel.ml:178`
 function SendFor(value, milliseconds)
 ```
 
-Implements send for.
+Provide send for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -228,7 +228,7 @@ Source: `std/concurrent/channel.ml:228`
 function sendFor(value, milliseconds)
 ```
 
-Implements send for.
+Provide send for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -245,7 +245,7 @@ Source: `std/concurrent/channel.ml:163`
 function TryReceive()
 ```
 
-Implements try receive.
+Provide try receive behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:238`
@@ -257,7 +257,7 @@ Source: `std/concurrent/channel.ml:238`
 function tryReceive()
 ```
 
-Implements try receive.
+Provide try receive behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:202`
@@ -269,7 +269,7 @@ Source: `std/concurrent/channel.ml:202`
 function TrySend(value)
 ```
 
-Implements try send.
+Provide try send behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -285,7 +285,7 @@ Source: `std/concurrent/channel.ml:231`
 function trySend(value)
 ```
 
-Implements try send.
+Provide try send behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

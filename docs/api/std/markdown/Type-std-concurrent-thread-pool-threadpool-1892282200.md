@@ -23,7 +23,7 @@ Source: `std/concurrent/thread_pool.ml:266`
 accepting
 ```
 
-Stores the accepting member of `ThreadPool`.
+Accepting associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:284`
@@ -35,7 +35,7 @@ Source: `std/concurrent/thread_pool.ml:284`
 function AwaitTermination()
 ```
 
-Implements await termination.
+Provide await termination behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:506`
@@ -47,7 +47,7 @@ Source: `std/concurrent/thread_pool.ml:506`
 function AwaitTerminationFor(milliseconds)
 ```
 
-Implements await termination for.
+Provide await termination for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -75,7 +75,7 @@ Source: `std/concurrent/thread_pool.ml:474`
 closed
 ```
 
-Stores the closed member of `ThreadPool`.
+Closed associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:290`
@@ -87,7 +87,7 @@ Source: `std/concurrent/thread_pool.ml:290`
 function Dispose()
 ```
 
-Implements dispose.
+Provide dispose behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:511`
@@ -99,7 +99,7 @@ Source: `std/concurrent/thread_pool.ml:511`
 guard
 ```
 
-Stores the guard member of `ThreadPool`.
+Guard associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:268`
@@ -179,7 +179,7 @@ Source: `std/concurrent/thread_pool.ml:294`
 function PendingCount()
 ```
 
-Implements pending count.
+Provide pending count behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:496`
@@ -203,7 +203,7 @@ Source: `std/concurrent/thread_pool.ml:383`
 queue
 ```
 
-Stores the queue member of `ThreadPool`.
+Queue associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:274`
@@ -215,7 +215,7 @@ Source: `std/concurrent/thread_pool.ml:274`
 queueCapacity
 ```
 
-Stores the queue capacity member of `ThreadPool`.
+Queue capacity associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:282`
@@ -227,7 +227,7 @@ Source: `std/concurrent/thread_pool.ml:282`
 queuedCount
 ```
 
-Stores the queued count member of `ThreadPool`.
+Queued count associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:280`
@@ -239,7 +239,7 @@ Source: `std/concurrent/thread_pool.ml:280`
 queueHead
 ```
 
-Stores the queue head member of `ThreadPool`.
+Queue head associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:276`
@@ -251,7 +251,7 @@ Source: `std/concurrent/thread_pool.ml:276`
 queueTail
 ```
 
-Stores the queue tail member of `ThreadPool`.
+Queue tail associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:278`
@@ -263,7 +263,7 @@ Source: `std/concurrent/thread_pool.ml:278`
 function Shutdown()
 ```
 
-Implements shutdown.
+Provide shutdown behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:502`
@@ -287,7 +287,7 @@ Source: `std/concurrent/thread_pool.ml:404`
 function ShutdownNow()
 ```
 
-Implements shutdown now.
+Provide shutdown now behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:504`
@@ -299,7 +299,7 @@ Source: `std/concurrent/thread_pool.ml:504`
 signal
 ```
 
-Stores the signal member of `ThreadPool`.
+Signal associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:270`
@@ -323,7 +323,7 @@ Source: `std/concurrent/thread_pool.ml:418`
 stopped
 ```
 
-Stores the stopped member of `ThreadPool`.
+Stopped associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:288`
@@ -335,7 +335,7 @@ Source: `std/concurrent/thread_pool.ml:288`
 stopping
 ```
 
-Stores the stopping member of `ThreadPool`.
+Stopping associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:286`
@@ -398,7 +398,7 @@ Source: `std/concurrent/thread_pool.ml:301`
 function WorkerCount()
 ```
 
-Implements worker count.
+Provide worker count behavior for this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:498`
@@ -422,7 +422,7 @@ Source: `std/concurrent/thread_pool.ml:391`
 workers
 ```
 
-Stores the workers member of `ThreadPool`.
+Workers associated with `ThreadPool`.
 
 
 Source: `std/concurrent/thread_pool.ml:272`

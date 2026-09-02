@@ -23,7 +23,7 @@ Source: `std/tls.ml:68`
 closed
 ```
 
-Stores the closed member of `Stream`.
+Closed associated with `Stream`.
 
 
 Source: `std/tls.ml:76`
@@ -35,7 +35,7 @@ Source: `std/tls.ml:76`
 provider
 ```
 
-Stores the provider member of `Stream`.
+Provider associated with `Stream`.
 
 
 Source: `std/tls.ml:70`
@@ -47,7 +47,7 @@ Source: `std/tls.ml:70`
 serverSide
 ```
 
-Stores the server side member of `Stream`.
+Server side associated with `Stream`.
 
 
 Source: `std/tls.ml:74`
@@ -59,7 +59,7 @@ Source: `std/tls.ml:74`
 state
 ```
 
-Stores the state member of `Stream`.
+State associated with `Stream`.
 
 
 Source: `std/tls.ml:72`

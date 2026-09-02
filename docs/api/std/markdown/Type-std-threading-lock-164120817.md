@@ -47,7 +47,7 @@ Source: `std/threading.ml:82`
 function AcquireFor(milliseconds)
 ```
 
-Implements acquire for.
+Provide acquire for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ Source: `std/threading.ml:113`
 closed
 ```
 
-Stores the closed member of `Lock`.
+Closed associated with `Lock`.
 
 
 Source: `std/threading.ml:70`
@@ -103,7 +103,7 @@ Source: `std/threading.ml:70`
 handle
 ```
 
-Stores the handle member of `Lock`.
+Handle associated with `Lock`.
 
 
 Source: `std/threading.ml:68`
@@ -175,7 +175,7 @@ Source: `std/threading.ml:102`
 function TryAcquire()
 ```
 
-Implements try acquire.
+Provide try acquire behavior for this standard-library module.
 
 
 Source: `std/threading.ml:129`

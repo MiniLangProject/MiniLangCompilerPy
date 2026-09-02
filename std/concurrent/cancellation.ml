@@ -9,12 +9,12 @@ package std.concurrent.cancellation
 
 import std.threading as threading
 
-/// Stores the cancelled error.
+/// Track the cancelled error value used by this standard-library module.
 const CANCELLED_ERROR = 1650
 
 /// Read-only cancellation view passed to cooperative operations. Cancellation never terminates an OS thread; code observes the shared request explicitly.
 struct CancellationToken
-  /// Stores the source member of `CancellationToken`.
+  /// Source associated with `CancellationToken`.
   source
 
   /// Reports whether cancellation was requested for this token.
@@ -51,19 +51,19 @@ struct CancellationToken
   /// Exposes the timed token wait through a PascalCase alias.
   /// @param milliseconds Maximum duration in milliseconds.
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
-  /// Implements check.
+  /// Provide check behavior for this standard-library module.
   function Check() return this.check() end function
 end struct
 
 /// Owns the native event used to publish one idempotent cancellation request.
 struct CancellationTokenSource
-  /// Stores the guard member of `CancellationTokenSource`.
+  /// Guard associated with `CancellationTokenSource`.
   guard
-  /// Stores the event member of `CancellationTokenSource`.
+  /// Event associated with `CancellationTokenSource`.
   event
-  /// Stores the cancelled member of `CancellationTokenSource`.
+  /// Cancelled associated with `CancellationTokenSource`.
   cancelled
-  /// Stores the closed member of `CancellationTokenSource`.
+  /// Closed associated with `CancellationTokenSource`.
   closed
 
   /// Creates a cancellation token source.

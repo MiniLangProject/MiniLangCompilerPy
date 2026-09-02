@@ -22,7 +22,7 @@ from .project import ProjectError, expand_project_args, fingerprint as project_f
 from .tools import u32, u64, extern_library_label_token
 
 
-COMPILER_VERSION = "1.2.2"
+COMPILER_VERSION = "1.2.3"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 

@@ -138,23 +138,23 @@ end function
 
 /// Detached key/value pair returned by entry-oriented operations.
 struct Entry
-  /// Stores the key member of `Entry`.
+  /// Key associated with `Entry`.
   key
-  /// Stores the value member of `Entry`.
+  /// Value associated with `Entry`.
   value
 end struct
 
 /// Open-addressing map with deterministic hashing for supported key types.
 struct HashMap
-  /// Stores the cap member of `HashMap`.
+  /// Allocated capacity of `HashMap`.
   cap
-  /// Stores the size member of `HashMap`.
+  /// Current logical size of `HashMap`.
   size
-  /// Stores the keys member of `HashMap`.
+  /// Keys associated with `HashMap`.
   keys
-  /// Stores the values member of `HashMap`.
+  /// Values associated with `HashMap`.
   values
-  /// Stores the states member of `HashMap`.
+  /// States associated with `HashMap`.
   states
 
   /// Creates a new empty hash map.

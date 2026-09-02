@@ -22,7 +22,7 @@ import std.ds.hashmap as hm
 
 /// Std.ds.set Simple set built on top of std.ds.hashmap.HashMap. Supported key types are the same as the underlying HashMap: - int - bytes - string.
 struct HashSet
-  /// Stores the map member of `HashSet`.
+  /// Map associated with `HashSet`.
   map
 
   /// Creates a new empty hash set.

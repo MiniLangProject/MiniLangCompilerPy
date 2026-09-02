@@ -47,7 +47,7 @@ Source: `std/concurrent/task.ml:77`
 cancellationSource
 ```
 
-Stores the cancellation source member of `Future`.
+Cancellation source associated with `Future`.
 
 
 Source: `std/concurrent/task.ml:40`
@@ -71,7 +71,7 @@ Source: `std/concurrent/task.ml:88`
 closed
 ```
 
-Stores the closed member of `Future`.
+Closed associated with `Future`.
 
 
 Source: `std/concurrent/task.ml:42`
@@ -119,7 +119,7 @@ Source: `std/concurrent/task.ml:64`
 job
 ```
 
-Stores the job member of `Future`.
+Job associated with `Future`.
 
 
 Source: `std/concurrent/task.ml:38`
@@ -131,7 +131,7 @@ Source: `std/concurrent/task.ml:38`
 function result()
 ```
 
-Implements result.
+Provide result behavior for this standard-library module.
 
 
 Source: `std/concurrent/task.ml:70`
@@ -143,7 +143,7 @@ Source: `std/concurrent/task.ml:70`
 function status()
 ```
 
-Implements status.
+Provide status behavior for this standard-library module.
 
 
 Source: `std/concurrent/task.ml:58`

@@ -2,6 +2,13 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.3 - 2026-09-02
+
+- Added meaningful docstrings for every public module-level Python declaration
+  and a source-policy regression that prevents undocumented public APIs.
+- Replaced placeholder standard-library comments with module-specific English
+  descriptions and made checked-in MiniDoc output timestamp-free.
+
 ## 1.2.2 - 2026-09-02
 
 - Synchronized the release contract with the optimized self-hosted compiler,

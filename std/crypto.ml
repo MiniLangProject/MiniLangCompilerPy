@@ -23,10 +23,10 @@ import std.crypto._cng as cng
 import std.crypto._openssl as cng
 #endif
 
-/// Stores the crypto err.
+/// Track the crypto err value used by this standard-library module.
 const CRYPTO_ERR = 240
 
-/// Implements crypto error.
+/// Provide the crypto error operation for this standard-library module.
 /// @internal
 function _cryptoError(message)
   return error(CRYPTO_ERR, message)
@@ -70,7 +70,7 @@ function hmacSha384(key, input)
   return output
 end function
 
-/// Implements hkdf.
+/// Provide the hkdf operation for this standard-library module.
 /// @internal
 function _hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, length)
   if typeof(inputKeyMaterial) != "bytes" or typeof(salt) != "bytes" or typeof(info) != "bytes" then
@@ -104,7 +104,7 @@ function hkdfSha384(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA384", 48, inputKeyMaterial, salt, info, length)
 end function
 
-/// Implements pbkdf2.
+/// Provide the pbkdf2 operation for this standard-library module.
 /// @internal
 function _pbkdf2(hashAlgorithm, password, salt, iterations, length)
   if typeof(password) != "bytes" or typeof(salt) != "bytes" then return _cryptoError("PBKDF2 expects bytes") end if

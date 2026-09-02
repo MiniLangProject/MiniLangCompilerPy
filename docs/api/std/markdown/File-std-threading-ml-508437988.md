@@ -18,7 +18,7 @@ Reachable from entry: **no**
 const INFINITE = 4294967295
 ```
 
-Stores the infinite.
+Track the infinite value used by this standard-library module.
 
 
 Source: `std/threading.ml:29`
@@ -31,7 +31,7 @@ Source: `std/threading.ml:29`
 const MAX_NATIVE_SEMAPHORE_COUNT = 2147483647
 ```
 
-Stores the max native semaphore count.
+Track the max native semaphore count value used by this standard-library module.
 
 
 Source: `std/threading.ml:18`
@@ -56,7 +56,7 @@ Source: `std/threading.ml:16`
 const WAIT_ABANDONED = 128
 ```
 
-Stores the wait abandoned.
+Track the wait abandoned value used by this standard-library module.
 
 
 Source: `std/threading.ml:25`
@@ -80,7 +80,7 @@ Source: `std/threading.ml:23`
 const WAIT_TIMEOUT = 258
 ```
 
-Stores the wait timeout.
+Track the wait timeout value used by this standard-library module.
 
 
 Source: `std/threading.ml:27`

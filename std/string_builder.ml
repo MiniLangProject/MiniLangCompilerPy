@@ -39,11 +39,11 @@ end function
 
 /// Mutable UTF-8 byte builder for append-heavy string construction.
 struct StringBuilder
-  /// Stores the buf member of `StringBuilder`.
+  /// Buf associated with `StringBuilder`.
   buf
-  /// Stores the len bytes member of `StringBuilder`.
+  /// Len bytes associated with `StringBuilder`.
   lenBytes
-  /// Stores the capacity member of `StringBuilder`.
+  /// Allocated capacity of `StringBuilder`.
   capacity
 
   /// Create an empty builder with a practical default capacity.

@@ -12,170 +12,170 @@ you may not use this file except in compliance with the License.
 
 package std.tls._openssl
 
-/// Stores the tls err.
+/// Track the tls err value used by this standard-library module.
 /// @internal
 const TLS_ERR = 267
-/// Stores the ssl filetype pem.
+/// Track the ssl filetype pem value used by this standard-library module.
 /// @internal
 const SSL_FILETYPE_PEM = 1
-/// Stores the ssl verify none.
+/// Track the ssl verify none value used by this standard-library module.
 /// @internal
 const SSL_VERIFY_NONE = 0
-/// Stores the ssl verify peer.
+/// Track the ssl verify peer value used by this standard-library module.
 /// @internal
 const SSL_VERIFY_PEER = 1
-/// Stores the ssl verify fail if no peer cert.
+/// Track the ssl verify fail if no peer cert value used by this standard-library module.
 /// @internal
 const SSL_VERIFY_FAIL_IF_NO_PEER_CERT = 2
-/// Stores the ssl error want read.
+/// Track the ssl error want read value used by this standard-library module.
 /// @internal
 const SSL_ERROR_WANT_READ = 2
-/// Stores the ssl error want write.
+/// Track the ssl error want write value used by this standard-library module.
 /// @internal
 const SSL_ERROR_WANT_WRITE = 3
-/// Stores the ssl ctrl set tlsext hostname.
+/// Track the ssl ctrl set tlsext hostname value used by this standard-library module.
 /// @internal
 const SSL_CTRL_SET_TLSEXT_HOSTNAME = 55
-/// Stores the ssl ctrl set min proto version.
+/// Track the ssl ctrl set min proto version value used by this standard-library module.
 /// @internal
 const SSL_CTRL_SET_MIN_PROTO_VERSION = 123
-/// Stores the tlsext nametype host name.
+/// Track the tlsext nametype host name value used by this standard-library module.
 /// @internal
 const TLSEXT_NAMETYPE_HOST_NAME = 0
-/// Stores the tls1 2 version.
+/// Track the tls1 2 version value used by this standard-library module.
 /// @internal
 const TLS1_2_VERSION = 0x0303
-/// Stores the tls1 3 version.
+/// Track the tls1 3 version value used by this standard-library module.
 /// @internal
 const TLS1_3_VERSION = 0x0304
-/// Stores the x509 v ok.
+/// Track the x509 v ok value used by this standard-library module.
 /// @internal
 const X509_V_OK = 0
-/// Stores the x509 purpose ssl server.
+/// Track the x509 purpose ssl server value used by this standard-library module.
 /// @internal
 const X509_PURPOSE_SSL_SERVER = 2
 
 /// Represents open ssl state.
 /// @internal
 struct OpenSslState
-  /// Stores the context member of `OpenSslState`.
+  /// Context associated with `OpenSslState`.
   context
-  /// Stores the session member of `OpenSslState`.
+  /// Session associated with `OpenSslState`.
   session
-  /// Stores the socket member of `OpenSslState`.
+  /// Socket associated with `OpenSslState`.
   socket
-  /// Stores the server member of `OpenSslState`.
+  /// Server associated with `OpenSslState`.
   server
-  /// Stores the closed member of `OpenSslState`.
+  /// Closed associated with `OpenSslState`.
   closed
 end struct
 
-/// Implements client method.
+/// Provide the client method operation for this standard-library module.
 /// @internal
 extern function _clientMethod() from "libssl.so.3" symbol "TLS_client_method" returns ptr
-/// Implements server method.
+/// Provide the server method operation for this standard-library module.
 /// @internal
 extern function _serverMethod() from "libssl.so.3" symbol "TLS_server_method" returns ptr
-/// Implements context new.
+/// Provide the context new operation for this standard-library module.
 /// @internal
 extern function _contextNew(method as ptr) from "libssl.so.3" symbol "SSL_CTX_new" returns ptr
-/// Implements context free.
+/// Provide the context free operation for this standard-library module.
 /// @internal
 extern function _contextFree(context as ptr) from "libssl.so.3" symbol "SSL_CTX_free" returns void
-/// Implements context control.
+/// Provide the context control operation for this standard-library module.
 /// @internal
 extern function _contextControl(context as ptr, command as int, argument as i64, value as ptr) from "libssl.so.3" symbol "SSL_CTX_ctrl" returns i64
-/// Implements context set verify.
+/// Provide the context set verify operation for this standard-library module.
 /// @internal
 extern function _contextSetVerify(context as ptr, mode as int, callback as ptr) from "libssl.so.3" symbol "SSL_CTX_set_verify" returns void
-/// Implements context default verify paths.
+/// Provide the context default verify paths operation for this standard-library module.
 /// @internal
 extern function _contextDefaultVerifyPaths(context as ptr) from "libssl.so.3" symbol "SSL_CTX_set_default_verify_paths" returns i32
-/// Implements context load verify locations.
+/// Provide the context load verify locations operation for this standard-library module.
 /// @internal
 extern function _contextLoadVerifyLocations(context as ptr, caFile as cstr, caPath as ptr) from "libssl.so.3" symbol "SSL_CTX_load_verify_locations" returns i32
-/// Implements context use certificate chain.
+/// Provide the context use certificate chain operation for this standard-library module.
 /// @internal
 extern function _contextUseCertificateChain(context as ptr, path as cstr) from "libssl.so.3" symbol "SSL_CTX_use_certificate_chain_file" returns i32
-/// Implements context use private key.
+/// Provide the context use private key operation for this standard-library module.
 /// @internal
 extern function _contextUsePrivateKey(context as ptr, path as cstr, kind as int) from "libssl.so.3" symbol "SSL_CTX_use_PrivateKey_file" returns i32
-/// Implements context check private key.
+/// Provide the context check private key operation for this standard-library module.
 /// @internal
 extern function _contextCheckPrivateKey(context as ptr) from "libssl.so.3" symbol "SSL_CTX_check_private_key" returns i32
 
-/// Implements session new.
+/// Provide the session new operation for this standard-library module.
 /// @internal
 extern function _sessionNew(context as ptr) from "libssl.so.3" symbol "SSL_new" returns ptr
-/// Implements session free.
+/// Provide the session free operation for this standard-library module.
 /// @internal
 extern function _sessionFree(session as ptr) from "libssl.so.3" symbol "SSL_free" returns void
-/// Implements session set fd.
+/// Provide the session set fd operation for this standard-library module.
 /// @internal
 extern function _sessionSetFd(session as ptr, socket as int) from "libssl.so.3" symbol "SSL_set_fd" returns i32
-/// Implements session set server name.
+/// Provide the session set server name operation for this standard-library module.
 /// @internal
 extern function _sessionSetServerName(session as ptr, command as int, argument as i64, value as cstr) from "libssl.so.3" symbol "SSL_ctrl" returns i64
-/// Implements session set host.
+/// Provide the session set host operation for this standard-library module.
 /// @internal
 extern function _sessionSetHost(session as ptr, host as cstr) from "libssl.so.3" symbol "SSL_set1_host" returns i32
-/// Implements session connect.
+/// Provide the session connect operation for this standard-library module.
 /// @internal
 extern function _sessionConnect(session as ptr) from "libssl.so.3" symbol "SSL_connect" returns i32
-/// Implements session accept.
+/// Provide the session accept operation for this standard-library module.
 /// @internal
 extern function _sessionAccept(session as ptr) from "libssl.so.3" symbol "SSL_accept" returns i32
-/// Implements session write.
+/// Provide the session write operation for this standard-library module.
 /// @internal
 extern function _sessionWrite(session as ptr, input as ptr, length as u64, written as bytes) from "libssl.so.3" symbol "SSL_write_ex" returns i32
-/// Implements session read.
+/// Provide the session read operation for this standard-library module.
 /// @internal
 extern function _sessionRead(session as ptr, output as ptr, length as u64, readCount as bytes) from "libssl.so.3" symbol "SSL_read_ex" returns i32
-/// Implements session error.
+/// Provide the session error operation for this standard-library module.
 /// @internal
 extern function _sessionError(session as ptr, result as int) from "libssl.so.3" symbol "SSL_get_error" returns i32
-/// Implements session shutdown.
+/// Provide the session shutdown operation for this standard-library module.
 /// @internal
 extern function _sessionShutdown(session as ptr) from "libssl.so.3" symbol "SSL_shutdown" returns i32
-/// Implements session verify result.
+/// Provide the session verify result operation for this standard-library module.
 /// @internal
 extern function _sessionVerifyResult(session as ptr) from "libssl.so.3" symbol "SSL_get_verify_result" returns i64
-/// Implements peer certificate.
+/// Provide the peer certificate operation for this standard-library module.
 /// @internal
 extern function _peerCertificate(session as ptr) from "libssl.so.3" symbol "SSL_get1_peer_certificate" returns ptr
 
-/// Implements certificate digest.
+/// Provide the certificate digest operation for this standard-library module.
 /// @internal
 extern function _certificateDigest(certificate as ptr, digest as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "X509_digest" returns i32
-/// Implements certificate free.
+/// Provide the certificate free operation for this standard-library module.
 /// @internal
 extern function _certificateFree(certificate as ptr) from "libcrypto.so.3" symbol "X509_free" returns void
-/// Implements certificate check host.
+/// Provide the certificate check host operation for this standard-library module.
 /// @internal
 extern function _certificateCheckHost(certificate as ptr, host as cstr, hostLength as u64, flags as u32, peerName as ptr) from "libcrypto.so.3" symbol "X509_check_host" returns i32
-/// Implements certificate check purpose.
+/// Provide the certificate check purpose operation for this standard-library module.
 /// @internal
 extern function _certificateCheckPurpose(certificate as ptr, purpose as int, ca as int) from "libcrypto.so.3" symbol "X509_check_purpose" returns i32
-/// Implements certificate not before.
+/// Provide the certificate not before operation for this standard-library module.
 /// @internal
 extern function _certificateNotBefore(certificate as ptr) from "libcrypto.so.3" symbol "X509_get0_notBefore" returns ptr
-/// Implements certificate not after.
+/// Provide the certificate not after operation for this standard-library module.
 /// @internal
 extern function _certificateNotAfter(certificate as ptr) from "libcrypto.so.3" symbol "X509_get0_notAfter" returns ptr
-/// Implements certificate compare current time.
+/// Provide the certificate compare current time operation for this standard-library module.
 /// @internal
 extern function _certificateCompareCurrentTime(time as ptr) from "libcrypto.so.3" symbol "X509_cmp_current_time" returns i32
-/// Implements sha256.
+/// Provide the sha256 operation for this standard-library module.
 /// @internal
 extern function _sha256() from "libcrypto.so.3" symbol "EVP_sha256" returns ptr
-/// Implements next error.
+/// Provide the next error operation for this standard-library module.
 /// @internal
 extern function _nextError() from "libcrypto.so.3" symbol "ERR_get_error" returns u64
-/// Implements error text.
+/// Provide the error text operation for this standard-library module.
 /// @internal
 extern function _errorText(code as u64, output as bytes, length as u64) from "libcrypto.so.3" symbol "ERR_error_string_n" returns void
 
-/// Implements fail.
+/// Provide the fail operation for this standard-library module.
 /// @internal
 function _fail(operation, message)
   code = _nextError()
@@ -211,14 +211,14 @@ function _getU64(buffer)
   return value
 end function
 
-/// Implements minimum version.
+/// Provide the minimum version operation for this standard-library module.
 /// @internal
 function _minimumVersion(value)
   if value == "1.2" then return TLS1_2_VERSION end if
   return TLS1_3_VERSION
 end function
 
-/// Implements constant time equals.
+/// Provide the constant time equals operation for this standard-library module.
 /// @internal
 function _constantTimeEquals(left, right)
   if typeof(left) != "bytes" or typeof(right) != "bytes" or len(left) != len(right) then return false end if
@@ -238,7 +238,7 @@ function _release(context, session)
   if context != 0 then _contextFree(context) end if
 end function
 
-/// Implements configure minimum.
+/// Provide the configure minimum operation for this standard-library module.
 /// @internal
 function _configureMinimum(context, version)
   return _contextControl(context, SSL_CTRL_SET_MIN_PROTO_VERSION, _minimumVersion(version), 0) == 1
@@ -333,7 +333,7 @@ function openServer(socket, options)
   return OpenSslState(context, session, socket, true, false)
 end function
 
-/// Implements send bytes.
+/// Provide the send bytes operation for this standard-library module.
 /// @internal
 function sendBytes(state, data)
   if state is not OpenSslState or state.closed then return _fail("send", "session is closed or invalid") end if
@@ -344,7 +344,7 @@ function sendBytes(state, data)
   return _getU64(count)
 end function
 
-/// Implements receive bytes.
+/// Provide the receive bytes operation for this standard-library module.
 /// @internal
 function receiveBytes(state, maximumBytes)
   if state is not OpenSslState or state.closed then return _fail("receive", "session is closed or invalid") end if
@@ -361,7 +361,7 @@ function receiveBytes(state, maximumBytes)
   return _fail("receive", "SSL_read_ex failed, SSL error " + sslError)
 end function
 
-/// Implements shutdown stream.
+/// Provide the shutdown stream operation for this standard-library module.
 /// @internal
 function shutdownStream(state)
   if state is not OpenSslState or state.closed then return true end if
@@ -383,7 +383,7 @@ function closeStream(state)
   return true
 end function
 
-/// Implements provider name.
+/// Provide the provider name operation for this standard-library module.
 /// @internal
 function providerName()
   return "OpenSSL 3"

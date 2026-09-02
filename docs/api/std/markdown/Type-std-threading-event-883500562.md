@@ -35,7 +35,7 @@ Source: `std/threading.ml:289`
 closed
 ```
 
-Stores the closed member of `Event`.
+Closed associated with `Event`.
 
 
 Source: `std/threading.ml:235`
@@ -47,7 +47,7 @@ Source: `std/threading.ml:235`
 handle
 ```
 
-Stores the handle member of `Event`.
+Handle associated with `Event`.
 
 
 Source: `std/threading.ml:231`
@@ -83,7 +83,7 @@ Source: `std/threading.ml:284`
 manualReset
 ```
 
-Stores the manual reset member of `Event`.
+Manual reset associated with `Event`.
 
 
 Source: `std/threading.ml:233`
@@ -160,7 +160,7 @@ Source: `std/threading.ml:272`
 function TryWait()
 ```
 
-Implements try wait.
+Provide try wait behavior for this standard-library module.
 
 
 Source: `std/threading.ml:305`

@@ -23,7 +23,7 @@ Source: `std/time.ml:47`
 day
 ```
 
-Stores the day member of `SystemTime`.
+Day associated with `SystemTime`.
 
 
 Source: `std/time.ml:55`
@@ -35,7 +35,7 @@ Source: `std/time.ml:55`
 dayOfWeek
 ```
 
-Stores the day of week member of `SystemTime`.
+Day of week associated with `SystemTime`.
 
 
 Source: `std/time.ml:53`
@@ -47,7 +47,7 @@ Source: `std/time.ml:53`
 hour
 ```
 
-Stores the hour member of `SystemTime`.
+Hour associated with `SystemTime`.
 
 
 Source: `std/time.ml:57`
@@ -59,7 +59,7 @@ Source: `std/time.ml:57`
 millisecond
 ```
 
-Stores the millisecond member of `SystemTime`.
+Millisecond associated with `SystemTime`.
 
 
 Source: `std/time.ml:63`
@@ -71,7 +71,7 @@ Source: `std/time.ml:63`
 minute
 ```
 
-Stores the minute member of `SystemTime`.
+Minute associated with `SystemTime`.
 
 
 Source: `std/time.ml:59`
@@ -83,7 +83,7 @@ Source: `std/time.ml:59`
 month
 ```
 
-Stores the month member of `SystemTime`.
+Month associated with `SystemTime`.
 
 
 Source: `std/time.ml:51`
@@ -95,7 +95,7 @@ Source: `std/time.ml:51`
 second
 ```
 
-Stores the second member of `SystemTime`.
+Second associated with `SystemTime`.
 
 
 Source: `std/time.ml:61`
@@ -107,7 +107,7 @@ Source: `std/time.ml:61`
 year
 ```
 
-Stores the year member of `SystemTime`.
+Year associated with `SystemTime`.
 
 
 Source: `std/time.ml:49`

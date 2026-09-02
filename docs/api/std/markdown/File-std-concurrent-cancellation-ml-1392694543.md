@@ -23,7 +23,7 @@ Reachable from entry: **no**
 const CANCELLED_ERROR = 1650
 ```
 
-Stores the cancelled error.
+Track the cancelled error value used by this standard-library module.
 
 
 Source: `std/concurrent/cancellation.ml:13`

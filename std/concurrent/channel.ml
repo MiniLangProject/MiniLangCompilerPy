@@ -9,42 +9,42 @@ package std.concurrent.channel
 
 import std.threading as threading
 
-/// Stores the channel error.
+/// Track the channel error value used by this standard-library module.
 const CHANNEL_ERROR = 1652
-/// Stores the channel poll milliseconds.
+/// Track the channel poll milliseconds value used by this standard-library module.
 const CHANNEL_POLL_MILLISECONDS = 1
 
 /// A receive result distinguishes a closed/drained channel from a valid void.
 struct ChannelReceive
-  /// Stores the received member of `ChannelReceive`.
+  /// Received associated with `ChannelReceive`.
   received
-  /// Stores the value member of `ChannelReceive`.
+  /// Value associated with `ChannelReceive`.
   value
 end struct
 
 /// Private bounded FIFO. All state is protected by one native lock, so the capacity check and ring mutation form one atomic operation.
 struct BoundedQueue
-  /// Stores the guard member of `BoundedQueue`.
+  /// Guard associated with `BoundedQueue`.
   guard
-  /// Stores the closed event member of `BoundedQueue`.
+  /// Closed event associated with `BoundedQueue`.
   closedEvent
-  /// Stores the slots member of `BoundedQueue`.
+  /// Slots associated with `BoundedQueue`.
   slots
-  /// Stores the items member of `BoundedQueue`.
+  /// Items associated with `BoundedQueue`.
   items
-  /// Stores the buffer member of `BoundedQueue`.
+  /// Buffer associated with `BoundedQueue`.
   buffer
-  /// Stores the void flags member of `BoundedQueue`.
+  /// Void flags associated with `BoundedQueue`.
   voidFlags
-  /// Stores the capacity member of `BoundedQueue`.
+  /// Allocated capacity of `BoundedQueue`.
   capacity
-  /// Stores the head member of `BoundedQueue`.
+  /// Head associated with `BoundedQueue`.
   head
-  /// Stores the tail member of `BoundedQueue`.
+  /// Tail associated with `BoundedQueue`.
   tail
-  /// Stores the size member of `BoundedQueue`.
+  /// Current logical size of `BoundedQueue`.
   size
-  /// Stores the closed member of `BoundedQueue`.
+  /// Closed associated with `BoundedQueue`.
   closed
 
   /// Creates the bounded queue backing a channel.
@@ -65,7 +65,7 @@ struct BoundedQueue
     )
   end function
 
-  /// Implements try put.
+  /// Provide try put behavior for this standard-library module.
   /// @param value Value to process.
   function tryPut(value)
     if this.closedEvent.tryWait() or not this.slots.tryAcquire() then return false end if
@@ -89,7 +89,7 @@ struct BoundedQueue
     return this.items.release()
   end function
 
-  /// Implements try take.
+  /// Provide try take behavior for this standard-library module.
   function tryTake()
     if not this.items.tryAcquire() then return ChannelReceive(false, void) end if
     if not this.guard.acquire() then this.items.release(); return ChannelReceive(false, void) end if
@@ -107,7 +107,7 @@ struct BoundedQueue
     return ChannelReceive(true, value)
   end function
 
-  /// Implements count value.
+  /// Provide count value behavior for this standard-library module.
   function countValue()
     if not this.guard.acquire() then return 0 end if
     value = this.size
@@ -120,7 +120,7 @@ struct BoundedQueue
     return this.closedEvent.tryWait()
   end function
 
-  /// Implements seal.
+  /// Provide seal behavior for this standard-library module.
   function seal()
     if this.closed or not this.guard.acquire() then return false end if
     if this.closedEvent.tryWait() then this.guard.release(); return false end if
@@ -143,9 +143,9 @@ end struct
 
 /// Bounded multi-producer/multi-consumer FIFO. Waiting always happens outside the short queue lock, so a full producer cannot prevent a consumer from freeing space and close remains observable by blocked operations.
 struct Channel
-  /// Stores the queue member of `Channel`.
+  /// Queue associated with `Channel`.
   queue
-  /// Stores the disposed member of `Channel`.
+  /// Disposed associated with `Channel`.
   disposed
 
   /// Creates a channel with bounded capacity.
@@ -157,7 +157,7 @@ struct Channel
     return Channel(BoundedQueue.new(capacity), false)
   end function
 
-  /// Implements send for.
+  /// Provide send for behavior for this standard-library module.
   /// @param value Value to process.
   /// @param milliseconds Maximum duration in milliseconds.
   function sendFor(value, milliseconds)
@@ -173,10 +173,10 @@ struct Channel
     return false
   end function
 
-  /// Implements send.
+  /// Provide send behavior for this standard-library module.
   /// @param value Value to process.
   function send(value) return this.sendFor(value, -1) end function
-  /// Implements try send.
+  /// Provide try send behavior for this standard-library module.
   /// @param value Value to process.
   function trySend(value) return this.sendFor(value, 0) end function
 
@@ -198,9 +198,9 @@ struct Channel
 
   /// Receives the next channel value, waiting when necessary.
   function receive() return this.receiveFor(-1) end function
-  /// Implements try receive.
+  /// Provide try receive behavior for this standard-library module.
   function tryReceive() return this.receiveFor(0) end function
-  /// Implements count value.
+  /// Provide count value behavior for this standard-library module.
   function countValue()
     if this.disposed then return 0 end if
     return this.queue.countValue()
@@ -219,14 +219,14 @@ struct Channel
     return true
   end function
 
-  /// Implements send.
+  /// Provide send behavior for this standard-library module.
   /// @param value Value to process.
   function Send(value) return this.send(value) end function
-  /// Implements send for.
+  /// Provide send for behavior for this standard-library module.
   /// @param value Value to process.
   /// @param milliseconds Maximum duration in milliseconds.
   function SendFor(value, milliseconds) return this.sendFor(value, milliseconds) end function
-  /// Implements try send.
+  /// Provide try send behavior for this standard-library module.
   /// @param value Value to process.
   function TrySend(value) return this.trySend(value) end function
   /// Exposes blocking receive through a PascalCase alias.
@@ -234,9 +234,9 @@ struct Channel
   /// Exposes timed receive through a PascalCase alias.
   /// @param milliseconds Maximum duration in milliseconds.
   function ReceiveFor(milliseconds) return this.receiveFor(milliseconds) end function
-  /// Implements try receive.
+  /// Provide try receive behavior for this standard-library module.
   function TryReceive() return this.tryReceive() end function
-  /// Implements count.
+  /// Provide count behavior for this standard-library module.
   function Count() return this.countValue() end function
   /// PascalCase Close is reserved by the native Thread API.
   function Dispose() return this.dispose() end function

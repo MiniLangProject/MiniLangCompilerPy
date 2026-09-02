@@ -23,24 +23,24 @@ import std.crypto._cng as cng
 import std.crypto._openssl as cng
 #endif
 
-/// Stores the aes gcm err.
+/// Track the aes gcm err value used by this standard-library module.
 const AES_GCM_ERR = 241
 
 /// Represents encrypted.
 struct Encrypted
-  /// Stores the ciphertext member of `Encrypted`.
+  /// Ciphertext associated with `Encrypted`.
   ciphertext,
-  /// Stores the tag member of `Encrypted`.
+  /// Tag associated with `Encrypted`.
   tag
 end struct
 
-/// Implements aes error.
+/// Provide the aes error operation for this standard-library module.
 /// @internal
 function _aesError(message)
   return error(AES_GCM_ERR, message)
 end function
 
-/// Implements valid common.
+/// Provide the valid common operation for this standard-library module.
 /// @internal
 function _validCommon(key, nonce, aad, tagLength)
   if typeof(key) != "bytes" or len(key) != 32 then return false end if

@@ -89,7 +89,7 @@ Source: `std/string_builder.ml:102`
 buf
 ```
 
-Stores the buf member of `StringBuilder`.
+Buf associated with `StringBuilder`.
 
 
 Source: `std/string_builder.ml:43`
@@ -101,7 +101,7 @@ Source: `std/string_builder.ml:43`
 capacity
 ```
 
-Stores the capacity member of `StringBuilder`.
+Allocated capacity of `StringBuilder`.
 
 
 Source: `std/string_builder.ml:47`
@@ -137,7 +137,7 @@ Source: `std/string_builder.ml:68`
 lenBytes
 ```
 
-Stores the len bytes member of `StringBuilder`.
+Len bytes associated with `StringBuilder`.
 
 
 Source: `std/string_builder.ml:45`

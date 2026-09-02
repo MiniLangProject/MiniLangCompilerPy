@@ -21,7 +21,7 @@ Reachable from entry: **no**
 function changeExtension(path, newExtension)
 ```
 
-Implements change extension.
+Provide the change extension operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -38,7 +38,7 @@ Source: `std/path.ml:121`
 function directoryName(path)
 ```
 
-Implements directory name.
+Provide the directory name operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ Source: `std/path.ml:89`
 function extension(path)
 ```
 
-Implements extension.
+Provide the extension operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -70,7 +70,7 @@ Source: `std/path.ml:106`
 function fileName(path)
 ```
 
-Implements file name.
+Provide the file name operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -102,7 +102,7 @@ Source: `std/path.ml:41`
 function join(left, right)
 ```
 
-Implements join.
+Provide the join operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -119,7 +119,7 @@ Source: `std/path.ml:56`
 const PATH_ERR = 260
 ```
 
-Stores the path err.
+Track the path err value used by this standard-library module.
 
 
 Source: `std/path.ml:16`
@@ -131,7 +131,7 @@ Source: `std/path.ml:16`
 function separator()
 ```
 
-Implements separator.
+Provide the separator operation for this standard-library module.
 
 
 Source: `std/path.ml:25`

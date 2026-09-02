@@ -21,7 +21,7 @@ Reachable from entry: **no**
 const AES_GCM_ERR = 241
 ```
 
-Stores the aes gcm err.
+Track the aes gcm err value used by this standard-library module.
 
 
 Source: `std/crypto/aes_gcm.ml:27`

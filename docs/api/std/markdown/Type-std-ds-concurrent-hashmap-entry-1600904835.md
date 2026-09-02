@@ -23,7 +23,7 @@ Source: `std/ds/concurrent_hashmap.ml:83`
 key
 ```
 
-Stores the key member of `Entry`.
+Key associated with `Entry`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:85`
@@ -35,7 +35,7 @@ Source: `std/ds/concurrent_hashmap.ml:85`
 value
 ```
 
-Stores the value member of `Entry`.
+Value associated with `Entry`.
 
 
 Source: `std/ds/concurrent_hashmap.ml:87`

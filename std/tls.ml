@@ -17,92 +17,92 @@ import std.tls._schannel as native
 import std.tls._openssl as native
 #endif
 
-/// Stores the tls err.
+/// Track the tls err value used by this standard-library module.
 const TLS_ERR = 267
 
 /// Represents client options.
 struct ClientOptions
-  /// Stores the server name member of `ClientOptions`.
+  /// Server name associated with `ClientOptions`.
   serverName
-  /// Stores the verify peer member of `ClientOptions`.
+  /// Verify peer associated with `ClientOptions`.
   verifyPeer
-  /// Stores the sha256 pin member of `ClientOptions`.
+  /// Sha256 pin associated with `ClientOptions`.
   sha256Pin
-  /// Stores the minimum version member of `ClientOptions`.
+  /// Minimum version associated with `ClientOptions`.
   minimumVersion
-  /// Stores the ca file member of `ClientOptions`.
+  /// Ca file associated with `ClientOptions`.
   caFile
 end struct
 
 /// Represents server options.
 struct ServerOptions
-  /// Stores the certificate reference member of `ServerOptions`.
+  /// Certificate reference associated with `ServerOptions`.
   certificateReference
-  /// Stores the private key reference member of `ServerOptions`.
+  /// Private key reference associated with `ServerOptions`.
   privateKeyReference
-  /// Stores the minimum version member of `ServerOptions`.
+  /// Minimum version associated with `ServerOptions`.
   minimumVersion
-  /// Stores the require client certificate member of `ServerOptions`.
+  /// Require client certificate associated with `ServerOptions`.
   requireClientCertificate
 end struct
 
 /// Represents provider.
 struct Provider
-  /// Stores the name member of `Provider`.
+  /// Name associated with `Provider`.
   name
-  /// Stores the open client member of `Provider`.
+  /// Open client associated with `Provider`.
   openClient
-  /// Stores the open server member of `Provider`.
+  /// Open server associated with `Provider`.
   openServer
-  /// Stores the send bytes member of `Provider`.
+  /// Send bytes associated with `Provider`.
   sendBytes
-  /// Stores the receive bytes member of `Provider`.
+  /// Receive bytes associated with `Provider`.
   receiveBytes
-  /// Stores the shutdown stream member of `Provider`.
+  /// Shutdown stream associated with `Provider`.
   shutdownStream
-  /// Stores the close stream member of `Provider`.
+  /// Close stream associated with `Provider`.
   closeStream
 end struct
 
 /// Represents stream.
 struct Stream
-  /// Stores the provider member of `Stream`.
+  /// Provider associated with `Stream`.
   provider
-  /// Stores the state member of `Stream`.
+  /// State associated with `Stream`.
   state
-  /// Stores the server side member of `Stream`.
+  /// Server side associated with `Stream`.
   serverSide
-  /// Stores the closed member of `Stream`.
+  /// Closed associated with `Stream`.
   closed
 end struct
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(message)
   return error(TLS_ERR, message)
 end function
 
-/// Implements client options.
+/// Provide the client options operation for this standard-library module.
 /// @param serverName Value supplied for `serverName`.
 function clientOptions(serverName)
   return ClientOptions(serverName, true, void, "1.3", void)
 end function
 
-/// Implements pinned client options.
+/// Provide the pinned client options operation for this standard-library module.
 /// @param serverName Value supplied for `serverName`.
 /// @param sha256Pin Value supplied for `sha256Pin`.
 function pinnedClientOptions(serverName, sha256Pin)
   return ClientOptions(serverName, true, sha256Pin, "1.3", void)
 end function
 
-/// Implements server options.
+/// Provide the server options operation for this standard-library module.
 /// @param certificateReference Value supplied for `certificateReference`.
 /// @param privateKeyReference Value supplied for `privateKeyReference`.
 function serverOptions(certificateReference, privateKeyReference)
   return ServerOptions(certificateReference, privateKeyReference, "1.3", false)
 end function
 
-/// Implements validate client options.
+/// Provide the validate client options operation for this standard-library module.
 /// @param options Value supplied for `options`.
 function validateClientOptions(options)
   if options is not ClientOptions then return _error("client options are invalid") end if
@@ -115,7 +115,7 @@ function validateClientOptions(options)
   return true
 end function
 
-/// Implements validate server options.
+/// Provide the validate server options operation for this standard-library module.
 /// @param options Value supplied for `options`.
 function validateServerOptions(options)
   if options is not ServerOptions then return _error("server options are invalid") end if
@@ -126,7 +126,7 @@ function validateServerOptions(options)
   return true
 end function
 
-/// Implements provider.
+/// Provide the provider operation for this standard-library module.
 /// @param name Name of the requested item.
 /// @param openClient Value supplied for `openClient`.
 /// @param openServer Value supplied for `openServer`.
@@ -148,12 +148,12 @@ function nativeProvider()
   return Provider(native.providerName(), native.openClient, native.openServer, native.sendBytes, native.receiveBytes, native.shutdownStream, native.closeStream)
 end function
 
-/// Implements native provider name.
+/// Provide the native provider name operation for this standard-library module.
 function nativeProviderName()
   return native.providerName()
 end function
 
-/// Implements connect client.
+/// Provide the connect client operation for this standard-library module.
 /// @param activeProvider Value supplied for `activeProvider`.
 /// @param socket Value supplied for `socket`.
 /// @param options Value supplied for `options`.
@@ -166,7 +166,7 @@ function connectClient(activeProvider, socket, options)
   return Stream(activeProvider, state, false, false)
 end function
 
-/// Implements accept server.
+/// Provide the accept server operation for this standard-library module.
 /// @param activeProvider Value supplied for `activeProvider`.
 /// @param socket Value supplied for `socket`.
 /// @param options Value supplied for `options`.
@@ -199,7 +199,7 @@ function isStream(value)
   return value is Stream
 end function
 
-/// Implements send all.
+/// Provide the send all operation for this standard-library module.
 /// @param stream Value supplied for `stream`.
 /// @param data Data to process.
 function sendAll(stream, data)
@@ -217,7 +217,7 @@ function sendAll(stream, data)
   return total
 end function
 
-/// Implements receive.
+/// Provide the receive operation for this standard-library module.
 /// @param stream Value supplied for `stream`.
 /// @param maximumBytes Value supplied for `maximumBytes`.
 function receive(stream, maximumBytes)
@@ -229,7 +229,7 @@ function receive(stream, maximumBytes)
   return result
 end function
 
-/// Implements shutdown.
+/// Provide the shutdown operation for this standard-library module.
 /// @param stream Value supplied for `stream`.
 function shutdown(stream)
   if stream is not Stream or stream.closed then return true end if

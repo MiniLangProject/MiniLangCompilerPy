@@ -17,7 +17,7 @@ Reachable from entry: **no**
 const CONSOLE_ERR = 262
 ```
 
-Stores the console err.
+Track the console err value used by this standard-library module.
 
 
 Source: `std/console.ml:15`
@@ -29,7 +29,7 @@ Source: `std/console.ml:15`
 const CP_UTF8 = 65001
 ```
 
-Stores the cp utf8.
+Track the cp utf8 value used by this standard-library module.
 
 
 Source: `std/console.ml:27`
@@ -53,7 +53,7 @@ Source: `std/console.ml:109`
 const ENABLE_ECHO_INPUT = 4
 ```
 
-Stores the enable echo input.
+Track the enable echo input value used by this standard-library module.
 
 
 Source: `std/console.ml:21`
@@ -65,7 +65,7 @@ Source: `std/console.ml:21`
 const ENABLE_EXTENDED_FLAGS = 128
 ```
 
-Stores the enable extended flags.
+Track the enable extended flags value used by this standard-library module.
 
 
 Source: `std/console.ml:25`
@@ -77,7 +77,7 @@ Source: `std/console.ml:25`
 const ENABLE_QUICK_EDIT_MODE = 64
 ```
 
-Stores the enable quick edit mode.
+Track the enable quick edit mode value used by this standard-library module.
 
 
 Source: `std/console.ml:23`
@@ -101,7 +101,7 @@ Source: `std/console.ml:97`
 const MAX_SECRET_UTF16_UNITS = 4096
 ```
 
-Stores the max secret utf16 units.
+Track the max secret utf16 units value used by this standard-library module.
 
 
 Source: `std/console.ml:31`
@@ -164,7 +164,7 @@ Source: `std/console.ml:189`
 const STD_INPUT_HANDLE = -10
 ```
 
-Stores the std input handle.
+Track the std input handle value used by this standard-library module.
 
 
 Source: `std/console.ml:17`
@@ -176,7 +176,7 @@ Source: `std/console.ml:17`
 const STD_OUTPUT_HANDLE = -11
 ```
 
-Stores the std output handle.
+Track the std output handle value used by this standard-library module.
 
 
 Source: `std/console.ml:19`
@@ -188,7 +188,7 @@ Source: `std/console.ml:19`
 const WC_ERR_INVALID_CHARS = 128
 ```
 
-Stores the wc err invalid chars.
+Track the wc err invalid chars value used by this standard-library module.
 
 
 Source: `std/console.ml:29`
@@ -200,7 +200,7 @@ Source: `std/console.ml:29`
 function wipe(buffer)
 ```
 
-Implements wipe.
+Provide the wipe operation for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |

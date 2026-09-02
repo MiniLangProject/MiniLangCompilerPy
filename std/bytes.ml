@@ -18,7 +18,7 @@ limitations under the License.
 
 package std.bytes
 
-/// Stores the bytes err.
+/// Track the bytes err value used by this standard-library module.
 const BYTES_ERR = 211
 
 /// Construct a consistent argument/range error for this module.

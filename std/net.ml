@@ -18,10 +18,10 @@ limitations under the License.
 
 package std.net
 
-/// Stores the max portable socket timeout ms.
+/// Track the max portable socket timeout ms value used by this standard-library module.
 const MAX_PORTABLE_SOCKET_TIMEOUT_MS = 2147483647
 
-/// Stores the net err.
+/// Track the net err value used by this standard-library module.
 const NET_ERR = 200
 
 /// Construct a consistent networking argument or socket error.
@@ -45,54 +45,54 @@ end function
 
 /// Portable socket constants plus the few target-specific option values.
 const AF_INET = 2
-/// Stores the sock stream.
+/// Track the sock stream value used by this standard-library module.
 const SOCK_STREAM = 1
-/// Stores the sock dgram.
+/// Track the sock dgram value used by this standard-library module.
 const SOCK_DGRAM = 2
 
-/// Stores the ipproto tcp.
+/// Track the ipproto tcp value used by this standard-library module.
 const IPPROTO_TCP = 6
-/// Stores the ipproto udp.
+/// Track the ipproto udp value used by this standard-library module.
 const IPPROTO_UDP = 17
 
-/// Stores the invalid socket.
+/// Track the invalid socket value used by this standard-library module.
 const INVALID_SOCKET = -1
-/// Stores the socket error.
+/// Track the socket error value used by this standard-library module.
 const SOCKET_ERROR = -1
 
 #if TARGET_OS == "windows"
-/// Stores the sol socket.
+/// Track the sol socket value used by this standard-library module.
 const SOL_SOCKET = 0xFFFF
-/// Stores the so reuseaddr.
+/// Track the so reuseaddr value used by this standard-library module.
 const SO_REUSEADDR = 0x0004
-/// Stores the so exclusiveaddruse.
+/// Track the so exclusiveaddruse value used by this standard-library module.
 const SO_EXCLUSIVEADDRUSE = -5
-/// Stores the so keepalive.
+/// Track the so keepalive value used by this standard-library module.
 const SO_KEEPALIVE = 0x0008
-/// Stores the so sndtimeo.
+/// Track the so sndtimeo value used by this standard-library module.
 const SO_SNDTIMEO = 0x1005
-/// Stores the so rcvtimeo.
+/// Track the so rcvtimeo value used by this standard-library module.
 const SO_RCVTIMEO = 0x1006
 #else
-/// Stores the sol socket.
+/// Track the sol socket value used by this standard-library module.
 const SOL_SOCKET = 1
-/// Stores the so reuseaddr.
+/// Track the so reuseaddr value used by this standard-library module.
 const SO_REUSEADDR = 2
-/// Stores the so keepalive.
+/// Track the so keepalive value used by this standard-library module.
 const SO_KEEPALIVE = 9
-/// Stores the so sndtimeo.
+/// Track the so sndtimeo value used by this standard-library module.
 const SO_SNDTIMEO = 21
-/// Stores the so rcvtimeo.
+/// Track the so rcvtimeo value used by this standard-library module.
 const SO_RCVTIMEO = 20
 #endif
-/// Stores the tcp nodelay.
+/// Track the tcp nodelay value used by this standard-library module.
 const TCP_NODELAY = 1
 
-/// Stores the sd receive.
+/// Track the sd receive value used by this standard-library module.
 const SD_RECEIVE = 0
-/// Stores the sd send.
+/// Track the sd send value used by this standard-library module.
 const SD_SEND = 1
-/// Stores the sd both.
+/// Track the sd both value used by this standard-library module.
 const SD_BOTH = 2
 
 /// MAKEWORD(2,2).
@@ -106,54 +106,54 @@ const SOCKADDR_IN_SIZE = 16
 // ---------------------------
 
 #if TARGET_OS == "windows"
-/// Implements wsastartup.
+/// Provide the wsastartup operation for this standard-library module.
 /// @internal
 extern function WSAStartup(version as int, wsaData as bytes) from "ws2_32.dll" returns int
-/// Implements wsacleanup.
+/// Provide the wsacleanup operation for this standard-library module.
 /// @internal
 extern function WSACleanup() from "ws2_32.dll" returns int
-/// Implements wsaget last error.
+/// Provide the wsaget last error operation for this standard-library module.
 /// @internal
 extern function WSAGetLastError() from "ws2_32.dll" returns int
 
-/// Implements socket.
+/// Provide the socket operation for this standard-library module.
 /// @internal
 extern function socket(af as int, type as int, protocol as int) from "ws2_32.dll" returns ptr
 /// Releases or resets closesocket.
 /// @internal
 extern function closesocket(s as ptr) from "ws2_32.dll" returns int
 
-/// Implements connect.
+/// Provide the connect operation for this standard-library module.
 /// @internal
 extern function connect(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
-/// Implements bind.
+/// Provide the bind operation for this standard-library module.
 /// @internal
 extern function bind(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
-/// Implements listen.
+/// Provide the listen operation for this standard-library module.
 /// @internal
 extern function listen(s as ptr, backlog as int) from "ws2_32.dll" returns int
-/// Implements accept.
+/// Provide the accept operation for this standard-library module.
 /// @internal
 extern function accept(s as ptr, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns ptr
-/// Implements accept no address.
+/// Provide the accept no address operation for this standard-library module.
 /// @internal
 extern function acceptNoAddress(s as ptr, addr as ptr, addrlen as ptr) from "ws2_32.dll" symbol "accept" returns ptr
 
-/// Implements send.
+/// Provide the send operation for this standard-library module.
 /// @internal
 extern function send(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
-/// Implements recv.
+/// Provide the recv operation for this standard-library module.
 /// @internal
 extern function recv(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
 
-/// Implements sendto.
+/// Provide the sendto operation for this standard-library module.
 /// @internal
 extern function sendto(s as ptr, buf as bytes, len as int, flags as int, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
-/// Implements recvfrom.
+/// Provide the recvfrom operation for this standard-library module.
 /// @internal
 extern function recvfrom(s as ptr, buf as bytes, len as int, flags as int, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns int
 
-/// Implements shutdown.
+/// Provide the shutdown operation for this standard-library module.
 /// @internal
 extern function shutdown(s as ptr, how as int) from "ws2_32.dll" returns int
 
@@ -168,52 +168,52 @@ extern function getsockopt(s as ptr, level as int, optname as int, optval as byt
 /// @internal
 extern function inet_addr(addr as cstr) from "ws2_32.dll" returns u32
 #else
-/// Implements socket.
+/// Provide the socket operation for this standard-library module.
 /// @internal
 extern function socket(af as int, type as int, protocol as int) from "libc.so.6" returns i32
 /// Releases or resets closesocket.
 /// @internal
 extern function closesocket(s as int) from "libc.so.6" symbol "close" returns i32
-/// Implements connect.
+/// Provide the connect operation for this standard-library module.
 /// @internal
 extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
-/// Implements bind.
+/// Provide the bind operation for this standard-library module.
 /// @internal
 extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
-/// Implements listen.
+/// Provide the listen operation for this standard-library module.
 /// @internal
 extern function listen(s as int, backlog as int) from "libc.so.6" returns i32
-/// Implements accept.
+/// Provide the accept operation for this standard-library module.
 /// @internal
 extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i32
-/// Implements accept no address.
+/// Provide the accept no address operation for this standard-library module.
 /// @internal
 extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "libc.so.6" symbol "accept" returns i32
-/// Implements send.
+/// Provide the send operation for this standard-library module.
 /// @internal
 extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
-/// Implements recv.
+/// Provide the recv operation for this standard-library module.
 /// @internal
 extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
-/// Implements sendto.
+/// Provide the sendto operation for this standard-library module.
 /// @internal
 extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
-/// Implements recvfrom.
+/// Provide the recvfrom operation for this standard-library module.
 /// @internal
 extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i64
-/// Implements shutdown.
+/// Provide the shutdown operation for this standard-library module.
 /// @internal
 extern function shutdown(s as int, how as int) from "libc.so.6" returns i32
 /// Updates setsockopt.
 /// @internal
 extern function setsockopt(s as int, level as int, optname as int, optval as bytes, optlen as u32) from "libc.so.6" returns i32
-/// Implements inet addr.
+/// Provide the inet addr operation for this standard-library module.
 /// @internal
 extern function inet_addr(addr as cstr) from "libc.so.6" returns u32
-/// Implements errno location.
+/// Provide the errno location operation for this standard-library module.
 /// @internal
 extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
-/// Implements copy errno.
+/// Provide the copy errno operation for this standard-library module.
 /// @internal
 extern function _copyErrno(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
 #endif
@@ -303,7 +303,7 @@ function _isValidPort(port)
   return typeof(port) == "int" and port >= 0 and port <= 65535
 end function
 
-/// Implements sockaddr in.
+/// Provide the sockaddr in operation for this standard-library module.
 /// @internal
 function _sockaddrIn(ipv4, port)
   a = bytes(SOCKADDR_IN_SIZE, 0)
@@ -381,7 +381,7 @@ function _portFromSockaddr(addr)
   return addr[2] * 256 + addr[3]
 end function
 
-/// Implements put u32.
+/// Provide the put u32 operation for this standard-library module.
 /// @internal
 function _putU32(buffer, offset, value)
   buffer[offset] = value & 0xFF
@@ -390,7 +390,7 @@ function _putU32(buffer, offset, value)
   buffer[offset + 3] = (value >> 24) & 0xFF
 end function
 
-/// Implements put i64.
+/// Provide the put i64 operation for this standard-library module.
 /// @internal
 function _putI64(buffer, offset, value)
   i = 0
@@ -439,7 +439,7 @@ function setReuseAddress(sock, enabled)
   return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, enabled, "setReuseAddress")
 end function
 
-/// Implements prepare tcp listener.
+/// Provide the prepare tcp listener operation for this standard-library module.
 /// @internal
 function _prepareTcpListener(sock, operation)
   // Winsock's SO_REUSEADDR permits unrelated processes to bind the same port
@@ -452,7 +452,7 @@ function _prepareTcpListener(sock, operation)
 #endif
 end function
 
-/// Implements prepare udp bind.
+/// Provide the prepare udp bind operation for this standard-library module.
 /// @internal
 function _prepareUdpBind(sock)
   // Winsock also permits overlapping UDP binds unless exclusive ownership is

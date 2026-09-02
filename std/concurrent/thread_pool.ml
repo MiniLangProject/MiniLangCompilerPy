@@ -14,37 +14,37 @@ import std.threading as threading
 
 /// Job states are stable strings so callers can persist and compare them.
 const JOB_QUEUED = "Queued"
-/// Stores the job running.
+/// Track the job running value used by this standard-library module.
 const JOB_RUNNING = "Running"
-/// Stores the job completed.
+/// Track the job completed value used by this standard-library module.
 const JOB_COMPLETED = "Completed"
-/// Stores the job failed.
+/// Track the job failed value used by this standard-library module.
 const JOB_FAILED = "Failed"
-/// Stores the job cancelled.
+/// Track the job cancelled value used by this standard-library module.
 const JOB_CANCELLED = "Cancelled"
 
-/// Stores the max workers.
+/// Track the max workers value used by this standard-library module.
 const MAX_WORKERS = 256
-/// Stores the signal maximum.
+/// Track the signal maximum value used by this standard-library module.
 const SIGNAL_MAXIMUM = 0x7FFFFFFF
-/// Stores the max portable timeout ms.
+/// Track the max portable timeout ms value used by this standard-library module.
 const MAX_PORTABLE_TIMEOUT_MS = 0x7FFFFFFF
 
 /// Handle for one submitted callback and its eventual result.
 struct ThreadPoolJob
-  /// Stores the guard member of `ThreadPoolJob`.
+  /// Guard associated with `ThreadPoolJob`.
   guard
-  /// Stores the done member of `ThreadPoolJob`.
+  /// Done associated with `ThreadPoolJob`.
   done
-  /// Stores the callback member of `ThreadPoolJob`.
+  /// Callback associated with `ThreadPoolJob`.
   callback
-  /// Stores the data member of `ThreadPoolJob`.
+  /// Backing data owned by `ThreadPoolJob`.
   data
-  /// Stores the status member of `ThreadPoolJob`.
+  /// Status associated with `ThreadPoolJob`.
   status
-  /// Stores the result member of `ThreadPoolJob`.
+  /// Result associated with `ThreadPoolJob`.
   result
-  /// Stores the closed member of `ThreadPoolJob`.
+  /// Closed associated with `ThreadPoolJob`.
   closed
 
   /// Create a queued job owned by the pool until it reaches a terminal state.
@@ -179,9 +179,9 @@ struct ThreadPoolJob
 
   /// PascalCase aliases mirror the native Thread API naming style.
   function Cancel() return this.cancel() end function
-  /// Implements wait.
+  /// Provide wait behavior for this standard-library module.
   function Wait() return this.wait() end function
-  /// Implements wait for.
+  /// Provide wait for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function WaitFor(milliseconds) return this.waitFor(milliseconds) end function
   /// Returns get status.
@@ -192,7 +192,7 @@ struct ThreadPoolJob
   function IsDone() return this.isDone() end function
   /// Reports whether is cancelled.
   function IsCancelled() return this.isCancelled() end function
-  /// Implements dispose.
+  /// Provide dispose behavior for this standard-library module.
   function Dispose() return this.close() end function
 end struct
 
@@ -264,29 +264,29 @@ end function
 
 /// Fixed-size worker set backed by an optionally bounded FIFO queue.
 struct ThreadPool
-  /// Stores the guard member of `ThreadPool`.
+  /// Guard associated with `ThreadPool`.
   guard
-  /// Stores the signal member of `ThreadPool`.
+  /// Signal associated with `ThreadPool`.
   signal
-  /// Stores the workers member of `ThreadPool`.
+  /// Workers associated with `ThreadPool`.
   workers
-  /// Stores the queue member of `ThreadPool`.
+  /// Queue associated with `ThreadPool`.
   queue
-  /// Stores the queue head member of `ThreadPool`.
+  /// Queue head associated with `ThreadPool`.
   queueHead
-  /// Stores the queue tail member of `ThreadPool`.
+  /// Queue tail associated with `ThreadPool`.
   queueTail
-  /// Stores the queued count member of `ThreadPool`.
+  /// Queued count associated with `ThreadPool`.
   queuedCount
-  /// Stores the queue capacity member of `ThreadPool`.
+  /// Queue capacity associated with `ThreadPool`.
   queueCapacity
-  /// Stores the accepting member of `ThreadPool`.
+  /// Accepting associated with `ThreadPool`.
   accepting
-  /// Stores the stopping member of `ThreadPool`.
+  /// Stopping associated with `ThreadPool`.
   stopping
-  /// Stores the stopped member of `ThreadPool`.
+  /// Stopped associated with `ThreadPool`.
   stopped
-  /// Stores the closed member of `ThreadPool`.
+  /// Closed associated with `ThreadPool`.
   closed
 
   /// Create an unbounded pool with workerCount native workers.
@@ -492,21 +492,21 @@ struct ThreadPool
   /// @param callback Value supplied for `callback`.
   /// @param data Data to process.
   function Submit(callback, data) return this.submit(callback, data) end function
-  /// Implements pending count.
+  /// Provide pending count behavior for this standard-library module.
   function PendingCount() return this.pendingCount() end function
-  /// Implements worker count.
+  /// Provide worker count behavior for this standard-library module.
   function WorkerCount() return this.workerCount() end function
   /// Reports whether is shutdown.
   function IsShutdown() return this.isShutdown() end function
-  /// Implements shutdown.
+  /// Provide shutdown behavior for this standard-library module.
   function Shutdown() return this.shutdown() end function
-  /// Implements shutdown now.
+  /// Provide shutdown now behavior for this standard-library module.
   function ShutdownNow() return this.stop() end function
-  /// Implements await termination.
+  /// Provide await termination behavior for this standard-library module.
   function AwaitTermination() return this.join() end function
-  /// Implements await termination for.
+  /// Provide await termination for behavior for this standard-library module.
   /// @param milliseconds Maximum duration in milliseconds.
   function AwaitTerminationFor(milliseconds) return this.joinFor(milliseconds) end function
-  /// Implements dispose.
+  /// Provide dispose behavior for this standard-library module.
   function Dispose() return this.close() end function
 end struct

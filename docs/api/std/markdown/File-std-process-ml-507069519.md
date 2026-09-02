@@ -17,7 +17,7 @@ Reachable from entry: **no**
 function currentDirectory()
 ```
 
-Implements current directory.
+Provide the current directory operation for this standard-library module.
 
 
 Source: `std/process.ml:116`
@@ -57,7 +57,7 @@ Source: `std/process.ml:77`
 function id()
 ```
 
-Implements id.
+Provide the id operation for this standard-library module.
 
 
 Source: `std/process.ml:68`
@@ -69,7 +69,7 @@ Source: `std/process.ml:68`
 const MAX_ENVIRONMENT_BYTES = 1048576
 ```
 
-Stores the max environment bytes.
+Track the max environment bytes value used by this standard-library module.
 
 
 Source: `std/process.ml:17`
@@ -81,7 +81,7 @@ Source: `std/process.ml:17`
 const MAX_PATH_BYTES = 32768
 ```
 
-Stores the max path bytes.
+Track the max path bytes value used by this standard-library module.
 
 
 Source: `std/process.ml:19`
@@ -93,7 +93,7 @@ Source: `std/process.ml:19`
 const PROCESS_ERR = 261
 ```
 
-Stores the process err.
+Track the process err value used by this standard-library module.
 
 
 Source: `std/process.ml:15`

@@ -10,69 +10,69 @@ you may not use this file except in compliance with the License.
 
 package std.crypto._openssl
 
-/// Stores the evp ctrl gcm set ivlen.
+/// Track the evp ctrl gcm set ivlen value used by this standard-library module.
 /// @internal
 const EVP_CTRL_GCM_SET_IVLEN = 0x09
-/// Stores the evp ctrl gcm get tag.
+/// Track the evp ctrl gcm get tag value used by this standard-library module.
 /// @internal
 const EVP_CTRL_GCM_GET_TAG = 0x10
-/// Stores the evp ctrl gcm set tag.
+/// Track the evp ctrl gcm set tag value used by this standard-library module.
 /// @internal
 const EVP_CTRL_GCM_SET_TAG = 0x11
-/// Stores the evp pkey x25519.
+/// Track the evp pkey x25519 value used by this standard-library module.
 /// @internal
 const EVP_PKEY_X25519 = 1034
 
-/// Implements sha256.
+/// Provide the sha256 operation for this standard-library module.
 /// @internal
 extern function _sha256(input as ptr, length as u64, output as ptr) from "libcrypto.so.3" symbol "SHA256" returns ptr
-/// Implements sha384.
+/// Provide the sha384 operation for this standard-library module.
 /// @internal
 extern function _sha384(input as ptr, length as u64, output as ptr) from "libcrypto.so.3" symbol "SHA384" returns ptr
-/// Implements evp sha256.
+/// Provide the evp sha256 operation for this standard-library module.
 /// @internal
 extern function _evpSha256() from "libcrypto.so.3" symbol "EVP_sha256" returns ptr
-/// Implements evp sha384.
+/// Provide the evp sha384 operation for this standard-library module.
 /// @internal
 extern function _evpSha384() from "libcrypto.so.3" symbol "EVP_sha384" returns ptr
-/// Implements hmac.
+/// Provide the hmac operation for this standard-library module.
 /// @internal
 extern function _hmac(digest as ptr, key as ptr, keyLength as int, input as ptr, inputLength as u64, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "HMAC" returns ptr
-/// Implements random.
+/// Provide the random operation for this standard-library module.
 /// @internal
 extern function _random(output as ptr, length as int) from "libcrypto.so.3" symbol "RAND_bytes" returns i32
-/// Implements native pbkdf2.
+/// Provide the native pbkdf2 operation for this standard-library module.
 /// @internal
 extern function _nativePbkdf2(password as ptr, passwordLength as int, salt as ptr, saltLength as int, iterations as int, digest as ptr, outputLength as int, output as ptr) from "libcrypto.so.3" symbol "PKCS5_PBKDF2_HMAC" returns i32
 
-/// Implements cipher context new.
+/// Provide the cipher context new operation for this standard-library module.
 /// @internal
 extern function _cipherContextNew() from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_new" returns ptr
-/// Implements cipher context free.
+/// Provide the cipher context free operation for this standard-library module.
 /// @internal
 extern function _cipherContextFree(context as ptr) from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_free" returns void
-/// Implements aes256 gcm.
+/// Provide the aes256 gcm operation for this standard-library module.
 /// @internal
 extern function _aes256Gcm() from "libcrypto.so.3" symbol "EVP_aes_256_gcm" returns ptr
-/// Implements encrypt init.
+/// Provide the encrypt init operation for this standard-library module.
 /// @internal
 extern function _encryptInit(context as ptr, cipher as ptr, implementation as ptr, key as ptr, iv as ptr) from "libcrypto.so.3" symbol "EVP_EncryptInit_ex" returns i32
-/// Implements encrypt update.
+/// Provide the encrypt update operation for this standard-library module.
 /// @internal
 extern function _encryptUpdate(context as ptr, output as ptr, outputLength as bytes, input as ptr, inputLength as int) from "libcrypto.so.3" symbol "EVP_EncryptUpdate" returns i32
-/// Implements encrypt final.
+/// Provide the encrypt final operation for this standard-library module.
 /// @internal
 extern function _encryptFinal(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_EncryptFinal_ex" returns i32
-/// Implements decrypt init.
+/// Provide the decrypt init operation for this standard-library module.
 /// @internal
 extern function _decryptInit(context as ptr, cipher as ptr, implementation as ptr, key as ptr, iv as ptr) from "libcrypto.so.3" symbol "EVP_DecryptInit_ex" returns i32
-/// Implements decrypt update.
+/// Provide the decrypt update operation for this standard-library module.
 /// @internal
 extern function _decryptUpdate(context as ptr, output as ptr, outputLength as bytes, input as ptr, inputLength as int) from "libcrypto.so.3" symbol "EVP_DecryptUpdate" returns i32
-/// Implements decrypt final.
+/// Provide the decrypt final operation for this standard-library module.
 /// @internal
 extern function _decryptFinal(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_DecryptFinal_ex" returns i32
-/// Implements cipher control.
+/// Provide the cipher control operation for this standard-library module.
 /// @internal
 extern function _cipherControl(context as ptr, operation as int, argument as int, data as ptr) from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_ctrl" returns i32
 
@@ -85,26 +85,26 @@ extern function _newRawPublicKey(kind as int, engine as ptr, key as ptr, keyLeng
 /// Returns get raw public key.
 /// @internal
 extern function _getRawPublicKey(key as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_PKEY_get_raw_public_key" returns i32
-/// Implements key free.
+/// Provide the key free operation for this standard-library module.
 /// @internal
 extern function _keyFree(key as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_free" returns void
-/// Implements derive context new.
+/// Provide the derive context new operation for this standard-library module.
 /// @internal
 extern function _deriveContextNew(key as ptr, engine as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_CTX_new" returns ptr
-/// Implements derive context free.
+/// Provide the derive context free operation for this standard-library module.
 /// @internal
 extern function _deriveContextFree(context as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_CTX_free" returns void
-/// Implements derive init.
+/// Provide the derive init operation for this standard-library module.
 /// @internal
 extern function _deriveInit(context as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_derive_init" returns i32
-/// Implements derive set peer.
+/// Provide the derive set peer operation for this standard-library module.
 /// @internal
 extern function _deriveSetPeer(context as ptr, peer as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_derive_set_peer" returns i32
-/// Implements derive.
+/// Provide the derive operation for this standard-library module.
 /// @internal
 extern function _derive(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_PKEY_derive" returns i32
 
-/// Implements put u64.
+/// Provide the put u64 operation for this standard-library module.
 /// @internal
 function _putU64(buffer, value)
   i = 0
@@ -120,13 +120,13 @@ function _getU32(buffer)
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
 end function
 
-/// Implements zero.
+/// Provide the zero operation for this standard-library module.
 /// @internal
 function _zero(buffer)
   if typeof(buffer) == "bytes" and len(buffer) > 0 then fillBytes(buffer, 0, len(buffer), 0) end if
 end function
 
-/// Implements digest.
+/// Provide the digest operation for this standard-library module.
 /// @internal
 function _digest(algorithm)
   if algorithm == "SHA256" then return _evpSha256() end if
@@ -153,7 +153,7 @@ function hash(algorithm, key, input, output)
   return result != 0
 end function
 
-/// Implements random.
+/// Provide the random operation for this standard-library module.
 /// @internal
 function random(output)
   if len(output) == 0 then return true end if
@@ -208,7 +208,7 @@ function hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, output)
   return ok
 end function
 
-/// Implements aes gcm.
+/// Provide the aes gcm operation for this standard-library module.
 /// @internal
 function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   context = _cipherContextNew()
@@ -246,7 +246,7 @@ function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   return ok
 end function
 
-/// Implements x25519 public.
+/// Provide the x25519 public operation for this standard-library module.
 /// @internal
 function x25519Public(privateKey, output)
   key = _newRawPrivateKey(EVP_PKEY_X25519, 0, nativeBytesPtr(privateKey), len(privateKey))
@@ -260,7 +260,7 @@ function x25519Public(privateKey, output)
   return ok
 end function
 
-/// Implements x25519.
+/// Provide the x25519 operation for this standard-library module.
 /// @internal
 function x25519(privateKey, publicKey, output)
   privateHandle = _newRawPrivateKey(EVP_PKEY_X25519, 0, nativeBytesPtr(privateKey), len(privateKey))

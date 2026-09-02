@@ -23,7 +23,7 @@ Source: `std/concurrent/channel.ml:26`
 buffer
 ```
 
-Stores the buffer member of `BoundedQueue`.
+Buffer associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:36`
@@ -35,7 +35,7 @@ Source: `std/concurrent/channel.ml:36`
 capacity
 ```
 
-Stores the capacity member of `BoundedQueue`.
+Allocated capacity of `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:40`
@@ -47,7 +47,7 @@ Source: `std/concurrent/channel.ml:40`
 closed
 ```
 
-Stores the closed member of `BoundedQueue`.
+Closed associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:48`
@@ -59,7 +59,7 @@ Source: `std/concurrent/channel.ml:48`
 closedEvent
 ```
 
-Stores the closed event member of `BoundedQueue`.
+Closed event associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:30`
@@ -71,7 +71,7 @@ Source: `std/concurrent/channel.ml:30`
 function countValue()
 ```
 
-Implements count value.
+Provide count value behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:111`
@@ -95,7 +95,7 @@ Source: `std/concurrent/channel.ml:133`
 guard
 ```
 
-Stores the guard member of `BoundedQueue`.
+Guard associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:28`
@@ -107,7 +107,7 @@ Source: `std/concurrent/channel.ml:28`
 head
 ```
 
-Stores the head member of `BoundedQueue`.
+Head associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:42`
@@ -131,7 +131,7 @@ Source: `std/concurrent/channel.ml:119`
 items
 ```
 
-Stores the items member of `BoundedQueue`.
+Items associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:34`
@@ -159,7 +159,7 @@ Source: `std/concurrent/channel.ml:52`
 function seal()
 ```
 
-Implements seal.
+Provide seal behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:124`
@@ -171,7 +171,7 @@ Source: `std/concurrent/channel.ml:124`
 size
 ```
 
-Stores the size member of `BoundedQueue`.
+Current logical size of `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:46`
@@ -183,7 +183,7 @@ Source: `std/concurrent/channel.ml:46`
 slots
 ```
 
-Stores the slots member of `BoundedQueue`.
+Slots associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:32`
@@ -195,7 +195,7 @@ Source: `std/concurrent/channel.ml:32`
 tail
 ```
 
-Stores the tail member of `BoundedQueue`.
+Tail associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:44`
@@ -207,7 +207,7 @@ Source: `std/concurrent/channel.ml:44`
 function tryPut(value)
 ```
 
-Implements try put.
+Provide try put behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -223,7 +223,7 @@ Source: `std/concurrent/channel.ml:70`
 function tryTake()
 ```
 
-Implements try take.
+Provide try take behavior for this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:93`
@@ -235,7 +235,7 @@ Source: `std/concurrent/channel.ml:93`
 voidFlags
 ```
 
-Stores the void flags member of `BoundedQueue`.
+Void flags associated with `BoundedQueue`.
 
 
 Source: `std/concurrent/channel.ml:38`

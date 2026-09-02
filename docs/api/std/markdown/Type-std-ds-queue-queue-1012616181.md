@@ -23,7 +23,7 @@ Source: `std/ds/queue.ml:58`
 buf
 ```
 
-Stores the buf member of `Queue`.
+Buf associated with `Queue`.
 
 
 Source: `std/ds/queue.ml:60`
@@ -35,7 +35,7 @@ Source: `std/ds/queue.ml:60`
 cap
 ```
 
-Stores the cap member of `Queue`.
+Allocated capacity of `Queue`.
 
 
 Source: `std/ds/queue.ml:68`
@@ -87,7 +87,7 @@ Source: `std/ds/queue.ml:121`
 head
 ```
 
-Stores the head member of `Queue`.
+Head associated with `Queue`.
 
 
 Source: `std/ds/queue.ml:62`
@@ -147,7 +147,7 @@ Source: `std/ds/queue.ml:132`
 size
 ```
 
-Stores the size member of `Queue`.
+Current logical size of `Queue`.
 
 
 Source: `std/ds/queue.ml:66`
@@ -159,7 +159,7 @@ Source: `std/ds/queue.ml:66`
 tail
 ```
 
-Stores the tail member of `Queue`.
+Tail associated with `Queue`.
 
 
 Source: `std/ds/queue.ml:64`

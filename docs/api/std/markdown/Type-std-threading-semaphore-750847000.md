@@ -47,7 +47,7 @@ Source: `std/threading.ml:163`
 function AcquireFor(milliseconds)
 ```
 
-Implements acquire for.
+Provide acquire for behavior for this standard-library module.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ Source: `std/threading.ml:202`
 closed
 ```
 
-Stores the closed member of `Semaphore`.
+Closed associated with `Semaphore`.
 
 
 Source: `std/threading.ml:143`
@@ -103,7 +103,7 @@ Source: `std/threading.ml:143`
 handle
 ```
 
-Stores the handle member of `Semaphore`.
+Handle associated with `Semaphore`.
 
 
 Source: `std/threading.ml:139`
@@ -139,7 +139,7 @@ Source: `std/threading.ml:197`
 maximumCount
 ```
 
-Stores the maximum count member of `Semaphore`.
+Maximum count associated with `Semaphore`.
 
 
 Source: `std/threading.ml:141`
@@ -224,7 +224,7 @@ Source: `std/threading.ml:189`
 function TryAcquire()
 ```
 
-Implements try acquire.
+Provide try acquire behavior for this standard-library module.
 
 
 Source: `std/threading.ml:218`

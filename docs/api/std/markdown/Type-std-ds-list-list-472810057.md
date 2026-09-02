@@ -55,7 +55,7 @@ Source: `std/ds/list.ml:157`
 buf
 ```
 
-Stores the buf member of `List`.
+Buf associated with `List`.
 
 
 Source: `std/ds/list.ml:61`
@@ -67,7 +67,7 @@ Source: `std/ds/list.ml:61`
 cap
 ```
 
-Stores the cap member of `List`.
+Allocated capacity of `List`.
 
 
 Source: `std/ds/list.ml:65`
@@ -293,7 +293,7 @@ Source: `std/ds/list.ml:189`
 size
 ```
 
-Stores the size member of `List`.
+Current logical size of `List`.
 
 
 Source: `std/ds/list.ml:63`

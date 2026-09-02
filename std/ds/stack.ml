@@ -117,7 +117,7 @@ end function
 
 /// LIFO stack with geometric backing-array growth.
 struct Stack
-  /// Stores the data member of `Stack`.
+  /// Backing data owned by `Stack`.
   data
 
   /// Creates a new empty stack.

@@ -23,10 +23,10 @@ package std.fs
 #if TARGET_OS == "linux"
 import std._linux_fs as linuxfs
 
-/// Implements fs err.
+/// Provide the fs err operation for this standard-library module.
 /// @internal
 function _fsErr(msg) return error(1, msg) end function
-/// Implements exists.
+/// Provide the exists operation for this standard-library module.
 /// @param path Path to operate on.
 function exists(path) return linuxfs.exists(path) end function
 /// Reports whether is dir.
@@ -35,11 +35,11 @@ function isDir(path) return linuxfs.isDir(path) end function
 /// Reports whether is file.
 /// @param path Path to operate on.
 function isFile(path) return linuxfs.isFile(path) end function
-/// Implements join path.
+/// Provide the join path operation for this standard-library module.
 /// @param base Value supplied for `base`.
 /// @param name Name of the requested item.
 function joinPath(base, name) return linuxfs.joinPath(base, name) end function
-/// Implements list dir.
+/// Provide the list dir operation for this standard-library module.
 /// @param path Path to operate on.
 function listDir(path) return linuxfs.listDir(path) end function
 /// Releases or resets delete.
@@ -59,17 +59,17 @@ function writeAllText(path, text) return linuxfs.writeAllText(path, text) end fu
 /// Returns read all text.
 /// @param path Path to operate on.
 function readAllText(path) return linuxfs.readAllText(path) end function
-/// Implements copy file.
+/// Provide the copy file operation for this standard-library module.
 /// @param sourcePath Value supplied for `sourcePath`.
 /// @param destPath Value supplied for `destPath`.
 /// @param overwrite Value supplied for `overwrite`.
 function copyFile(sourcePath, destPath, overwrite) return linuxfs.copyFile(sourcePath, destPath, overwrite) end function
-/// Implements move file.
+/// Provide the move file operation for this standard-library module.
 /// @param sourcePath Value supplied for `sourcePath`.
 /// @param destPath Value supplied for `destPath`.
 /// @param overwrite Value supplied for `overwrite`.
 function moveFile(sourcePath, destPath, overwrite) return linuxfs.moveFile(sourcePath, destPath, overwrite) end function
-/// Implements file size.
+/// Provide the file size operation for this standard-library module.
 /// @param path Path to operate on.
 function fileSize(path) return linuxfs.fileSize(path) end function
 /// Updates append all bytes.
@@ -103,7 +103,7 @@ import std.string as s
 
 /// Win32 constants (kept local to std.fs).
 const INVALID_HANDLE_VALUE = -1
-/// Stores the invalid file attributes.
+/// Track the invalid file attributes value used by this standard-library module.
 const INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
 
 /// Win32 generic access masks accepted by File.open().
@@ -166,17 +166,17 @@ enum FileAttr
   FILE_ATTRIBUTE_ENCRYPTED = 0x00004000
 end enum
 
-/// Stores the dword size.
+/// Track the dword size value used by this standard-library module.
 const DWORD_SIZE = 4
-/// Stores the io buf size.
+/// Track the io buf size value used by this standard-library module.
 const IO_BUF_SIZE = 4096
-/// Stores the delete retry count.
+/// Track the delete retry count value used by this standard-library module.
 const DELETE_RETRY_COUNT = 30
-/// Stores the delete retry sleep ms.
+/// Track the delete retry sleep ms value used by this standard-library module.
 const DELETE_RETRY_SLEEP_MS = 5
-/// Stores the write retry count.
+/// Track the write retry count value used by this standard-library module.
 const WRITE_RETRY_COUNT = 30
-/// Stores the write retry sleep ms.
+/// Track the write retry sleep ms value used by this standard-library module.
 const WRITE_RETRY_SLEEP_MS = 10
 
 /// Creates create file w.
@@ -227,10 +227,10 @@ extern function CloseHandle(h as ptr) from "kernel32.dll" returns bool
 /// Releases or resets delete file w.
 /// @internal
 extern function DeleteFileW(path as wstr) from "kernel32.dll" returns bool
-/// Implements copy file w.
+/// Provide the copy file w operation for this standard-library module.
 /// @internal
 extern function CopyFileW(existingPath as wstr, newPath as wstr, failIfExists as bool) from "kernel32.dll" returns bool
-/// Implements move file w.
+/// Provide the move file w operation for this standard-library module.
 /// @internal
 extern function MoveFileW(existingPath as wstr, newPath as wstr) from "kernel32.dll" returns bool
 /// Returns get file attributes w.
@@ -242,9 +242,9 @@ extern function GetLastError() from "kernel32.dll" returns u32
 
 /// Directory enumeration (FindFirstFileW/FindNextFileW).
 const FIND_DATA_SIZE = 592
-/// Stores the find name off.
+/// Track the find name off value used by this standard-library module.
 const FIND_NAME_OFF = 44
-/// Stores the find name len.
+/// Track the find name len value used by this standard-library module.
 const FIND_NAME_LEN = 520
 
 /// Returns find first file w.
@@ -259,7 +259,7 @@ extern function FindClose(h as ptr) from "kernel32.dll" returns bool
 /// Returns get file size ex.
 /// @internal
 extern function GetFileSizeEx(h as ptr, sizeBuf as bytes) from "kernel32.dll" returns bool
-/// Implements sleep.
+/// Provide the sleep operation for this standard-library module.
 /// @internal
 extern function Sleep(ms as int) from "kernel32.dll" returns void
 

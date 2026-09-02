@@ -23,7 +23,7 @@ Reachable from entry: **no**
 const CHANNEL_ERROR = 1652
 ```
 
-Stores the channel error.
+Track the channel error value used by this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:13`
@@ -35,7 +35,7 @@ Source: `std/concurrent/channel.ml:13`
 const CHANNEL_POLL_MILLISECONDS = 1
 ```
 
-Stores the channel poll milliseconds.
+Track the channel poll milliseconds value used by this standard-library module.
 
 
 Source: `std/concurrent/channel.ml:15`

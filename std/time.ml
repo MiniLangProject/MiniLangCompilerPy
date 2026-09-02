@@ -22,7 +22,7 @@ import std.fmt as fmt
 
 /// Monotonic timing, durations and calendar conversion on Windows and Linux.
 const TIME_ERR = 300
-/// Stores the max portable sleep ms.
+/// Track the max portable sleep ms value used by this standard-library module.
 const MAX_PORTABLE_SLEEP_MS = 2147483647
 
 /// Construct a consistent date/time validation error.
@@ -45,21 +45,21 @@ const SYSTEMTIME_SIZE = 16
 
 /// Managed wall-clock representation shared by the Win32 and POSIX adapters.
 struct SystemTime
-  /// Stores the year member of `SystemTime`.
+  /// Year associated with `SystemTime`.
   year,
-  /// Stores the month member of `SystemTime`.
+  /// Month associated with `SystemTime`.
   month,
-  /// Stores the day of week member of `SystemTime`.
+  /// Day of week associated with `SystemTime`.
   dayOfWeek,
-  /// Stores the day member of `SystemTime`.
+  /// Day associated with `SystemTime`.
   day,
-  /// Stores the hour member of `SystemTime`.
+  /// Hour associated with `SystemTime`.
   hour,
-  /// Stores the minute member of `SystemTime`.
+  /// Minute associated with `SystemTime`.
   minute,
-  /// Stores the second member of `SystemTime`.
+  /// Second associated with `SystemTime`.
   second,
-  /// Stores the millisecond member of `SystemTime`.
+  /// Millisecond associated with `SystemTime`.
   millisecond,
 end struct
 
@@ -109,28 +109,28 @@ end function
 namespace win32
   // SYSTEMTIME layout for GetLocalTime/GetSystemTime
   extern struct SYSTEMTIME
-    /// Stores the year member of `SYSTEMTIME`.
+    /// Year associated with `SYSTEMTIME`.
     year as u16
-    /// Stores the month member of `SYSTEMTIME`.
+    /// Month associated with `SYSTEMTIME`.
     month as u16
-    /// Stores the day of week member of `SYSTEMTIME`.
+    /// Day of week associated with `SYSTEMTIME`.
     dayOfWeek as u16
-    /// Stores the day member of `SYSTEMTIME`.
+    /// Day associated with `SYSTEMTIME`.
     day as u16
-    /// Stores the hour member of `SYSTEMTIME`.
+    /// Hour associated with `SYSTEMTIME`.
     hour as u16
-    /// Stores the minute member of `SYSTEMTIME`.
+    /// Minute associated with `SYSTEMTIME`.
     minute as u16
-    /// Stores the second member of `SYSTEMTIME`.
+    /// Second associated with `SYSTEMTIME`.
     second as u16
-    /// Stores the millisecond member of `SYSTEMTIME`.
+    /// Millisecond associated with `SYSTEMTIME`.
     millisecond as u16
   end struct
 
   /// Use the 64-bit tick counter to avoid 32-bit wrap-around.
   /// @internal
   extern function GetTickCount64() from "kernel32.dll" returns u64
-  /// Implements sleep.
+  /// Provide sleep behavior for this standard-library module.
   /// @internal
   extern function Sleep(dwMilliseconds as u32) from "kernel32.dll" returns void
 
@@ -156,48 +156,48 @@ namespace win32
   end function
 end namespace
 
-/// Implements native ticks.
+/// Provide the native ticks operation for this standard-library module.
 /// @internal
 function _nativeTicks()
   return std.time.win32.GetTickCount64()
 end function
 
-/// Implements native local time.
+/// Provide the native local time operation for this standard-library module.
 /// @internal
 function _nativeLocalTime()
   return std.time.win32.GetLocalTime()
 end function
 
-/// Implements native utc time.
+/// Provide the native utc time operation for this standard-library module.
 /// @internal
 function _nativeUtcTime()
   return std.time.win32.GetSystemTime()
 end function
 #else
 namespace linux
-  /// Stores the clock realtime.
+  /// Current clock realtime used by this routine.
   const CLOCK_REALTIME = 0
-  /// Stores the clock monotonic.
+  /// Current clock monotonic used by this routine.
   const CLOCK_MONOTONIC = 1
-  /// Stores the timespec size.
+  /// Current timespec size used by this routine.
   const TIMESPEC_SIZE = 16
-  /// Stores the tm size.
+  /// Current tm size used by this routine.
   const TM_SIZE = 56
 
-  /// Implements clock gettime.
+  /// Provide clock gettime behavior for this standard-library module.
   /// @internal
   extern function clock_gettime(clockId as int, output as bytes) from "libc.so.6" returns i32
-  /// Implements nanosleep.
+  /// Provide nanosleep behavior for this standard-library module.
   /// @internal
   extern function nanosleep(request as bytes, remaining as ptr) from "libc.so.6" returns i32
-  /// Implements localtime r.
+  /// Provide localtime r behavior for this standard-library module.
   /// @internal
   extern function localtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
-  /// Implements gmtime r.
+  /// Provide gmtime r behavior for this standard-library module.
   /// @internal
   extern function gmtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
 
-  /// Implements i32le.
+  /// Provide i32le behavior for this standard-library module.
   /// @internal
   function _i32le(buffer, offset)
     value = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24)
@@ -205,7 +205,7 @@ namespace linux
     return value
   end function
 
-  /// Implements i64le.
+  /// Provide i64le behavior for this standard-library module.
   /// @internal
   function _i64le(buffer, offset)
     value = buffer[offset + 7]
@@ -218,7 +218,7 @@ namespace linux
     return value
   end function
 
-  /// Implements put i64.
+  /// Provide put i64 behavior for this standard-library module.
   /// @internal
   function _putI64(buffer, offset, value)
     i = 0
@@ -243,7 +243,7 @@ namespace linux
     )
   end function
 
-  /// Implements wall clock.
+  /// Provide wall clock behavior for this standard-library module.
   /// @internal
   function _wallClock(localTime)
     stamp = bytes(TIMESPEC_SIZE, 0)
@@ -262,7 +262,7 @@ namespace linux
   end function
 end namespace
 
-/// Implements native ticks.
+/// Provide the native ticks operation for this standard-library module.
 /// @internal
 function _nativeTicks()
   stamp = bytes(std.time.linux.TIMESPEC_SIZE, 0)
@@ -271,13 +271,13 @@ function _nativeTicks()
   return std.time.linux._i64le(stamp, 0) * 1000 + (nanoseconds - (nanoseconds % 1000000)) / 1000000
 end function
 
-/// Implements native local time.
+/// Provide the native local time operation for this standard-library module.
 /// @internal
 function _nativeLocalTime()
   return std.time.linux._wallClock(true)
 end function
 
-/// Implements native utc time.
+/// Provide the native utc time operation for this standard-library module.
 /// @internal
 function _nativeUtcTime()
   return std.time.linux._wallClock(false)
@@ -334,31 +334,31 @@ end function
 
 /// Calendar date/time (proleptic Gregorian, year 1..9999).
 struct Date
-  /// Stores the year member of `Date`.
+  /// Year associated with `Date`.
   year,
-  /// Stores the month member of `Date`.
+  /// Month associated with `Date`.
   month,
-  /// Stores the day member of `Date`.
+  /// Day associated with `Date`.
   day,
 end struct
 
 /// Time-of-day value with millisecond precision.
 struct Time
-  /// Stores the hour member of `Time`.
+  /// Hour associated with `Time`.
   hour,
-  /// Stores the minute member of `Time`.
+  /// Minute associated with `Time`.
   minute,
-  /// Stores the second member of `Time`.
+  /// Second associated with `Time`.
   second,
-  /// Stores the millisecond member of `Time`.
+  /// Millisecond associated with `Time`.
   millisecond,
 end struct
 
 /// Calendar date plus time-of-day with millisecond precision.
 struct DateTime
-  /// Stores the date member of `DateTime`.
+  /// Date associated with `DateTime`.
   date,
-  /// Stores the time member of `DateTime`.
+  /// Time associated with `DateTime`.
   time,
 end struct
 

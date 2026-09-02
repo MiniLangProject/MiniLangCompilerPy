@@ -119,7 +119,7 @@ Source: `std/ds/set.ml:34`
 map
 ```
 
-Stores the map member of `HashSet`.
+Map associated with `HashSet`.
 
 
 Source: `std/ds/set.ml:26`

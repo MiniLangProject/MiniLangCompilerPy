@@ -23,7 +23,7 @@ Source: `std/time.ml:346`
 hour
 ```
 
-Stores the hour member of `Time`.
+Hour associated with `Time`.
 
 
 Source: `std/time.ml:348`
@@ -35,7 +35,7 @@ Source: `std/time.ml:348`
 millisecond
 ```
 
-Stores the millisecond member of `Time`.
+Millisecond associated with `Time`.
 
 
 Source: `std/time.ml:354`
@@ -47,7 +47,7 @@ Source: `std/time.ml:354`
 minute
 ```
 
-Stores the minute member of `Time`.
+Minute associated with `Time`.
 
 
 Source: `std/time.ml:350`
@@ -59,7 +59,7 @@ Source: `std/time.ml:350`
 second
 ```
 
-Stores the second member of `Time`.
+Second associated with `Time`.
 
 
 Source: `std/time.ml:352`

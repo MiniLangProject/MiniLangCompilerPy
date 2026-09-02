@@ -21,7 +21,7 @@ Reachable from entry: **no**
 const JOB_CANCELLED = "Cancelled"
 ```
 
-Stores the job cancelled.
+Track the job cancelled value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:24`
@@ -33,7 +33,7 @@ Source: `std/concurrent/thread_pool.ml:24`
 const JOB_COMPLETED = "Completed"
 ```
 
-Stores the job completed.
+Track the job completed value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:20`
@@ -45,7 +45,7 @@ Source: `std/concurrent/thread_pool.ml:20`
 const JOB_FAILED = "Failed"
 ```
 
-Stores the job failed.
+Track the job failed value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:22`
@@ -69,7 +69,7 @@ Source: `std/concurrent/thread_pool.ml:16`
 const JOB_RUNNING = "Running"
 ```
 
-Stores the job running.
+Track the job running value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:18`
@@ -81,7 +81,7 @@ Source: `std/concurrent/thread_pool.ml:18`
 const MAX_PORTABLE_TIMEOUT_MS = 2147483647
 ```
 
-Stores the max portable timeout ms.
+Track the max portable timeout ms value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:31`
@@ -93,7 +93,7 @@ Source: `std/concurrent/thread_pool.ml:31`
 const MAX_WORKERS = 256
 ```
 
-Stores the max workers.
+Track the max workers value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:27`
@@ -105,7 +105,7 @@ Source: `std/concurrent/thread_pool.ml:27`
 const SIGNAL_MAXIMUM = 2147483647
 ```
 
-Stores the signal maximum.
+Track the signal maximum value used by this standard-library module.
 
 
 Source: `std/concurrent/thread_pool.ml:29`

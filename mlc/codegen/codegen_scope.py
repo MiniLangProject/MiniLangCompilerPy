@@ -84,6 +84,8 @@ class VarBinding:
 
 
 class CodegenScope:
+    """Manage lexical bindings, frame slots, captures, and emitted scope cleanup."""
+
     # --------- setup ---------
 
     def scope_setup(self) -> None:

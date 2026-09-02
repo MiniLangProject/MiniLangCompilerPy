@@ -125,7 +125,7 @@ Source: `std/concurrent/shared_value.ml:11`
 const MEM_RELEASE = 32768
 ```
 
-Stores the mem release.
+Track the mem release value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:13`
@@ -155,7 +155,7 @@ Source: `std/concurrent/shared_value.ml:85`
 const PAGE_READWRITE = 4
 ```
 
-Stores the page readwrite.
+Track the page readwrite value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:15`
@@ -199,7 +199,7 @@ Source: `std/concurrent/shared_value.ml:127`
 const RECORD_SIZE = 24
 ```
 
-Stores the record size.
+Track the record size value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:17`
@@ -227,7 +227,7 @@ Source: `std/concurrent/shared_value.ml:172`
 const TYPE_BOOL = 2
 ```
 
-Stores the type bool.
+Track the type bool value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:24`
@@ -239,7 +239,7 @@ Source: `std/concurrent/shared_value.ml:24`
 const TYPE_BYTES = 4
 ```
 
-Stores the type bytes.
+Track the type bytes value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:28`
@@ -251,7 +251,7 @@ Source: `std/concurrent/shared_value.ml:28`
 const TYPE_INT = 1
 ```
 
-Stores the type int.
+Track the type int value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:22`
@@ -263,7 +263,7 @@ Source: `std/concurrent/shared_value.ml:22`
 const TYPE_STRING = 3
 ```
 
-Stores the type string.
+Track the type string value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:26`
@@ -275,7 +275,7 @@ Source: `std/concurrent/shared_value.ml:26`
 const TYPE_VOID = 0
 ```
 
-Stores the type void.
+Track the type void value used by this standard-library module.
 
 
 Source: `std/concurrent/shared_value.ml:20`

@@ -81,7 +81,7 @@ Source: `std/net.ml:239`
 const INVALID_SOCKET = -1
 ```
 
-Stores the invalid socket.
+Track the invalid socket value used by this standard-library module.
 
 
 Source: `std/net.ml:59`
@@ -93,7 +93,7 @@ Source: `std/net.ml:59`
 const IPPROTO_TCP = 6
 ```
 
-Stores the ipproto tcp.
+Track the ipproto tcp value used by this standard-library module.
 
 
 Source: `std/net.ml:54`
@@ -105,7 +105,7 @@ Source: `std/net.ml:54`
 const IPPROTO_UDP = 17
 ```
 
-Stores the ipproto udp.
+Track the ipproto udp value used by this standard-library module.
 
 
 Source: `std/net.ml:56`
@@ -129,7 +129,7 @@ Source: `std/net.ml:284`
 const MAX_PORTABLE_SOCKET_TIMEOUT_MS = 2147483647
 ```
 
-Stores the max portable socket timeout ms.
+Track the max portable socket timeout ms value used by this standard-library module.
 
 
 Source: `std/net.ml:22`
@@ -141,7 +141,7 @@ Source: `std/net.ml:22`
 const NET_ERR = 200
 ```
 
-Stores the net err.
+Track the net err value used by this standard-library module.
 
 
 Source: `std/net.ml:25`
@@ -153,7 +153,7 @@ Source: `std/net.ml:25`
 const SD_BOTH = 2
 ```
 
-Stores the sd both.
+Track the sd both value used by this standard-library module.
 
 
 Source: `std/net.ml:96`
@@ -165,7 +165,7 @@ Source: `std/net.ml:96`
 const SD_RECEIVE = 0
 ```
 
-Stores the sd receive.
+Track the sd receive value used by this standard-library module.
 
 
 Source: `std/net.ml:92`
@@ -177,7 +177,7 @@ Source: `std/net.ml:92`
 const SD_SEND = 1
 ```
 
-Stores the sd send.
+Track the sd send value used by this standard-library module.
 
 
 Source: `std/net.ml:94`
@@ -274,7 +274,7 @@ Source: `std/net.ml:511`
 const SO_EXCLUSIVEADDRUSE = -5
 ```
 
-Stores the so exclusiveaddruse.
+Track the so exclusiveaddruse value used by this standard-library module.
 
 
 Source: `std/net.ml:69`
@@ -286,7 +286,7 @@ Source: `std/net.ml:69`
 const SO_KEEPALIVE = 8
 ```
 
-Stores the so keepalive.
+Track the so keepalive value used by this standard-library module.
 
 
 Source: `std/net.ml:71`
@@ -298,7 +298,7 @@ Source: `std/net.ml:71`
 const SO_RCVTIMEO = 4102
 ```
 
-Stores the so rcvtimeo.
+Track the so rcvtimeo value used by this standard-library module.
 
 
 Source: `std/net.ml:75`
@@ -310,7 +310,7 @@ Source: `std/net.ml:75`
 const SO_REUSEADDR = 4
 ```
 
-Stores the so reuseaddr.
+Track the so reuseaddr value used by this standard-library module.
 
 
 Source: `std/net.ml:67`
@@ -322,7 +322,7 @@ Source: `std/net.ml:67`
 const SO_SNDTIMEO = 4101
 ```
 
-Stores the so sndtimeo.
+Track the so sndtimeo value used by this standard-library module.
 
 
 Source: `std/net.ml:73`
@@ -334,7 +334,7 @@ Source: `std/net.ml:73`
 const SOCK_DGRAM = 2
 ```
 
-Stores the sock dgram.
+Track the sock dgram value used by this standard-library module.
 
 
 Source: `std/net.ml:51`
@@ -346,7 +346,7 @@ Source: `std/net.ml:51`
 const SOCK_STREAM = 1
 ```
 
-Stores the sock stream.
+Track the sock stream value used by this standard-library module.
 
 
 Source: `std/net.ml:49`
@@ -370,7 +370,7 @@ Source: `std/net.ml:102`
 const SOCKET_ERROR = -1
 ```
 
-Stores the socket error.
+Track the socket error value used by this standard-library module.
 
 
 Source: `std/net.ml:61`
@@ -382,7 +382,7 @@ Source: `std/net.ml:61`
 const SOL_SOCKET = 65535
 ```
 
-Stores the sol socket.
+Track the sol socket value used by this standard-library module.
 
 
 Source: `std/net.ml:65`
@@ -394,7 +394,7 @@ Source: `std/net.ml:65`
 const TCP_NODELAY = 1
 ```
 
-Stores the tcp nodelay.
+Track the tcp nodelay value used by this standard-library module.
 
 
 Source: `std/net.ml:89`

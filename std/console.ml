@@ -11,44 +11,44 @@ you may not use this file except in compliance with the License.
 
 package std.console
 
-/// Stores the console err.
+/// Track the console err value used by this standard-library module.
 const CONSOLE_ERR = 262
-/// Stores the std input handle.
+/// Track the std input handle value used by this standard-library module.
 const STD_INPUT_HANDLE = -10
-/// Stores the std output handle.
+/// Track the std output handle value used by this standard-library module.
 const STD_OUTPUT_HANDLE = -11
-/// Stores the enable echo input.
+/// Track the enable echo input value used by this standard-library module.
 const ENABLE_ECHO_INPUT = 4
-/// Stores the enable quick edit mode.
+/// Track the enable quick edit mode value used by this standard-library module.
 const ENABLE_QUICK_EDIT_MODE = 0x40
-/// Stores the enable extended flags.
+/// Track the enable extended flags value used by this standard-library module.
 const ENABLE_EXTENDED_FLAGS = 0x80
-/// Stores the cp utf8.
+/// Track the cp utf8 value used by this standard-library module.
 const CP_UTF8 = 65001
-/// Stores the wc err invalid chars.
+/// Track the wc err invalid chars value used by this standard-library module.
 const WC_ERR_INVALID_CHARS = 0x80
-/// Stores the max secret utf16 units.
+/// Track the max secret utf16 units value used by this standard-library module.
 const MAX_SECRET_UTF16_UNITS = 4096
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(message)
   return error(CONSOLE_ERR, message)
 end function
 
-/// Implements u32.
+/// Provide the u32 operation for this standard-library module.
 /// @internal
 function _u32(buffer)
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
 end function
 
-/// Implements u16.
+/// Provide the u16 operation for this standard-library module.
 /// @internal
 function _u16(buffer, offset)
   return buffer[offset] | (buffer[offset + 1] << 8)
 end function
 
-/// Implements wipe.
+/// Provide the wipe operation for this standard-library module.
 /// @param buffer Buffer to process.
 function wipe(buffer)
   if typeof(buffer) != "bytes" then return false end if
@@ -72,7 +72,7 @@ extern function ReadConsoleW(handle as ptr, buffer as bytes, count as u32, readO
 /// Updates write console w.
 /// @internal
 extern function WriteConsoleW(handle as ptr, text as wstr, count as u32, writtenOut as bytes, reserved as ptr) from "kernel32.dll" returns bool
-/// Implements wide char to multi byte.
+/// Provide the wide char to multi byte operation for this standard-library module.
 /// @internal
 extern function WideCharToMultiByte(codePage as u32, flags as u32, wideText as bytes, wideCount as i32, output as bytes, outputCount as i32, defaultChar as ptr, usedDefault as ptr) from "kernel32.dll" returns i32
 #else
@@ -82,13 +82,13 @@ extern function _isatty(fd as int) from "libc.so.6" symbol "isatty" returns i32
 /// Returns getpass.
 /// @internal
 extern function _getpass(prompt as cstr) from "libc.so.6" symbol "getpass" returns ptr
-/// Implements strlen.
+/// Provide the strlen operation for this standard-library module.
 /// @internal
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
-/// Implements copy from native.
+/// Provide the copy from native operation for this standard-library module.
 /// @internal
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
-/// Implements wipe native.
+/// Provide the wipe native operation for this standard-library module.
 /// @internal
 extern function _wipeNative(value as ptr, count as u64) from "libc.so.6" symbol "explicit_bzero" returns void
 #endif

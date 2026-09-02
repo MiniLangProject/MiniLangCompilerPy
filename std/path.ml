@@ -12,21 +12,21 @@ you may not use this file except in compliance with the License.
 package std.path
 import std.platform as platform
 
-/// Stores the path err.
+/// Track the path err value used by this standard-library module.
 const PATH_ERR = 260
 
-/// Implements error.
+/// Provide the error operation for this standard-library module.
 /// @internal
 function _error(message)
   return error(PATH_ERR, message)
 end function
 
-/// Implements separator.
+/// Provide the separator operation for this standard-library module.
 function separator()
   return platform.pathSeparator()
 end function
 
-/// Implements separator byte.
+/// Provide the separator byte operation for this standard-library module.
 /// @internal
 function _separatorByte(value)
 #if TARGET_OS == "windows"
@@ -50,7 +50,7 @@ function isAbsolute(path)
 #endif
 end function
 
-/// Implements join.
+/// Provide the join operation for this standard-library module.
 /// @param left Left input value.
 /// @param right Right input value.
 function join(left, right)
@@ -67,7 +67,7 @@ function join(left, right)
   return left + separator() + right
 end function
 
-/// Implements file name.
+/// Provide the file name operation for this standard-library module.
 /// @param path Path to operate on.
 function fileName(path)
   if typeof(path) != "string" then return _error("fileName expects string") end if
@@ -84,7 +84,7 @@ function fileName(path)
   return path
 end function
 
-/// Implements directory name.
+/// Provide the directory name operation for this standard-library module.
 /// @param path Path to operate on.
 function directoryName(path)
   if typeof(path) != "string" then return _error("directoryName expects string") end if
@@ -101,7 +101,7 @@ function directoryName(path)
   return ""
 end function
 
-/// Implements extension.
+/// Provide the extension operation for this standard-library module.
 /// @param path Path to operate on.
 function extension(path)
   name = fileName(path)
@@ -115,7 +115,7 @@ function extension(path)
   return ""
 end function
 
-/// Implements change extension.
+/// Provide the change extension operation for this standard-library module.
 /// @param path Path to operate on.
 /// @param newExtension Value supplied for `newExtension`.
 function changeExtension(path, newExtension)

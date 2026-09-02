@@ -13,259 +13,259 @@ import std.net as network
 /// Native Schannel transport for std.tls. The module owns SSPI handles, certificate contexts and TLS record buffering for one Stream.
 /// @internal
 const INVALID_ARGUMENT = 9001
-/// Stores the tls error.
+/// Track the tls error value used by this standard-library module.
 /// @internal
 const TLS_ERROR = 9034
 
-/// Stores the sec e ok.
+/// Track the sec e ok value used by this standard-library module.
 /// @internal
 const SEC_E_OK = 0
-/// Stores the sec i continue needed.
+/// Track the sec i continue needed value used by this standard-library module.
 /// @internal
 const SEC_I_CONTINUE_NEEDED = 590610
-/// Stores the sec i context expired.
+/// Track the sec i context expired value used by this standard-library module.
 /// @internal
 const SEC_I_CONTEXT_EXPIRED = 590615
-/// Stores the sec i renegotiate.
+/// Track the sec i renegotiate value used by this standard-library module.
 /// @internal
 const SEC_I_RENEGOTIATE = 590625
-/// Stores the sec e invalid token.
+/// Track the sec e invalid token value used by this standard-library module.
 /// @internal
 const SEC_E_INVALID_TOKEN = -2146893048
-/// Stores the sec e incomplete message.
+/// Track the sec e incomplete message value used by this standard-library module.
 /// @internal
 const SEC_E_INCOMPLETE_MESSAGE = -2146893032
-/// Stores the sec e wrong principal.
+/// Track the sec e wrong principal value used by this standard-library module.
 /// @internal
 const SEC_E_WRONG_PRINCIPAL = -2146893022
-/// Stores the sec e untrusted root.
+/// Track the sec e untrusted root value used by this standard-library module.
 /// @internal
 const SEC_E_UNTRUSTED_ROOT = -2146893019
-/// Stores the sec e cert unknown.
+/// Track the sec e cert unknown value used by this standard-library module.
 /// @internal
 const SEC_E_CERT_UNKNOWN = -2146893017
-/// Stores the secpkg cred inbound.
+/// Track the secpkg cred inbound value used by this standard-library module.
 /// @internal
 const SECPKG_CRED_INBOUND = 1
-/// Stores the secpkg cred outbound.
+/// Track the secpkg cred outbound value used by this standard-library module.
 /// @internal
 const SECPKG_CRED_OUTBOUND = 2
-/// Stores the unisp package.
+/// Track the unisp package value used by this standard-library module.
 /// @internal
 const UNISP_PACKAGE = "Microsoft Unified Security Protocol Provider"
-/// Stores the security native drep.
+/// Track the security native drep value used by this standard-library module.
 /// @internal
 const SECURITY_NATIVE_DREP = 16
-/// Stores the isc req sequence detect.
+/// Track the isc req sequence detect value used by this standard-library module.
 /// @internal
 const ISC_REQ_SEQUENCE_DETECT = 8
-/// Stores the isc req replay detect.
+/// Track the isc req replay detect value used by this standard-library module.
 /// @internal
 const ISC_REQ_REPLAY_DETECT = 4
-/// Stores the isc req confidentiality.
+/// Track the isc req confidentiality value used by this standard-library module.
 /// @internal
 const ISC_REQ_CONFIDENTIALITY = 16
-/// Stores the isc req extended error.
+/// Track the isc req extended error value used by this standard-library module.
 /// @internal
 const ISC_REQ_EXTENDED_ERROR = 16384
-/// Stores the isc req stream.
+/// Track the isc req stream value used by this standard-library module.
 /// @internal
 const ISC_REQ_STREAM = 32768
-/// Stores the asc req replay detect.
+/// Track the asc req replay detect value used by this standard-library module.
 /// @internal
 const ASC_REQ_REPLAY_DETECT = 4
-/// Stores the asc req mutual auth.
+/// Track the asc req mutual auth value used by this standard-library module.
 /// @internal
 const ASC_REQ_MUTUAL_AUTH = 2
-/// Stores the asc req sequence detect.
+/// Track the asc req sequence detect value used by this standard-library module.
 /// @internal
 const ASC_REQ_SEQUENCE_DETECT = 8
-/// Stores the asc req confidentiality.
+/// Track the asc req confidentiality value used by this standard-library module.
 /// @internal
 const ASC_REQ_CONFIDENTIALITY = 16
-/// Stores the asc req extended error.
+/// Track the asc req extended error value used by this standard-library module.
 /// @internal
 const ASC_REQ_EXTENDED_ERROR = 32768
-/// Stores the asc req stream.
+/// Track the asc req stream value used by this standard-library module.
 /// @internal
 const ASC_REQ_STREAM = 65536
-/// Stores the secbuffer empty.
+/// Track the secbuffer empty value used by this standard-library module.
 /// @internal
 const SECBUFFER_EMPTY = 0
-/// Stores the secbuffer data.
+/// Track the secbuffer data value used by this standard-library module.
 /// @internal
 const SECBUFFER_DATA = 1
-/// Stores the secbuffer token.
+/// Track the secbuffer token value used by this standard-library module.
 /// @internal
 const SECBUFFER_TOKEN = 2
-/// Stores the secbuffer missing.
+/// Track the secbuffer missing value used by this standard-library module.
 /// @internal
 const SECBUFFER_MISSING = 4
-/// Stores the secbuffer extra.
+/// Track the secbuffer extra value used by this standard-library module.
 /// @internal
 const SECBUFFER_EXTRA = 5
-/// Stores the secbuffer stream trailer.
+/// Track the secbuffer stream trailer value used by this standard-library module.
 /// @internal
 const SECBUFFER_STREAM_TRAILER = 6
-/// Stores the secbuffer stream header.
+/// Track the secbuffer stream header value used by this standard-library module.
 /// @internal
 const SECBUFFER_STREAM_HEADER = 7
-/// Stores the secbuffer version.
+/// Track the secbuffer version value used by this standard-library module.
 /// @internal
 const SECBUFFER_VERSION = 0
-/// Stores the sec buffer size.
+/// Track the sec buffer size value used by this standard-library module.
 /// @internal
 const SEC_BUFFER_SIZE = 16
-/// Stores the sec buffer desc size.
+/// Track the sec buffer desc size value used by this standard-library module.
 /// @internal
 const SEC_BUFFER_DESC_SIZE = 16
-/// Stores the cred handle size.
+/// Track the cred handle size value used by this standard-library module.
 /// @internal
 const CRED_HANDLE_SIZE = 16
-/// Stores the timestamp size.
+/// Track the timestamp size value used by this standard-library module.
 /// @internal
 const TIMESTAMP_SIZE = 8
-/// Stores the tls token bytes.
+/// Track the tls token bytes value used by this standard-library module.
 /// @internal
 const TLS_TOKEN_BYTES = 65536
-/// Stores the tls network receive bytes.
+/// Track the tls network receive bytes value used by this standard-library module.
 /// @internal
 const TLS_NETWORK_RECEIVE_BYTES = 65536
-/// Stores the tls max pfx bytes.
+/// Track the tls max pfx bytes value used by this standard-library module.
 /// @internal
 const TLS_MAX_PFX_BYTES = 16777216
-/// Stores the tls max receive bytes.
+/// Track the tls max receive bytes value used by this standard-library module.
 /// @internal
 const TLS_MAX_RECEIVE_BYTES = 67108864
 
-/// Stores the sch credentials version.
+/// Track the sch credentials version value used by this standard-library module.
 /// @internal
 const SCH_CREDENTIALS_VERSION = 5
-/// Stores the sch credentials bytes.
+/// Track the sch credentials bytes value used by this standard-library module.
 /// @internal
 const SCH_CREDENTIALS_BYTES = 72
-/// Stores the tls parameters bytes.
+/// Track the tls parameters bytes value used by this standard-library module.
 /// @internal
 const TLS_PARAMETERS_BYTES = 40
-/// Stores the crypto settings bytes.
+/// Track the crypto settings bytes value used by this standard-library module.
 /// @internal
 const CRYPTO_SETTINGS_BYTES = 48
-/// Stores the tls key exchange usage.
+/// Track the tls key exchange usage value used by this standard-library module.
 /// @internal
 const TLS_KEY_EXCHANGE_USAGE = 0
-/// Stores the sch cred manual cred validation.
+/// Track the sch cred manual cred validation value used by this standard-library module.
 /// @internal
 const SCH_CRED_MANUAL_CRED_VALIDATION = 8
-/// Stores the sch cred no default creds.
+/// Track the sch cred no default creds value used by this standard-library module.
 /// @internal
 const SCH_CRED_NO_DEFAULT_CREDS = 16
-/// Stores the sch cred auto cred validation.
+/// Track the sch cred auto cred validation value used by this standard-library module.
 /// @internal
 const SCH_CRED_AUTO_CRED_VALIDATION = 32
-/// Stores the sch use strong crypto.
+/// Track the sch use strong crypto value used by this standard-library module.
 /// @internal
 const SCH_USE_STRONG_CRYPTO = 4194304
-/// Stores the sp prot tls1 3 server.
+/// Track the sp prot tls1 3 server value used by this standard-library module.
 /// @internal
 const SP_PROT_TLS1_3_SERVER = 4096
-/// Stores the sp prot tls1 3 client.
+/// Track the sp prot tls1 3 client value used by this standard-library module.
 /// @internal
 const SP_PROT_TLS1_3_CLIENT = 8192
-/// Stores the sp prot tls1 2 server.
+/// Track the sp prot tls1 2 server value used by this standard-library module.
 /// @internal
 const SP_PROT_TLS1_2_SERVER = 1024
-/// Stores the sp prot tls1 2 client.
+/// Track the sp prot tls1 2 client value used by this standard-library module.
 /// @internal
 const SP_PROT_TLS1_2_CLIENT = 2048
-/// Stores the sp prot legacy server.
+/// Track the sp prot legacy server value used by this standard-library module.
 /// @internal
 const SP_PROT_LEGACY_SERVER = 1365
-/// Stores the sp prot legacy client.
+/// Track the sp prot legacy client value used by this standard-library module.
 /// @internal
 const SP_PROT_LEGACY_CLIENT = 2730
-/// Stores the sp prot before tls1 2 server.
+/// Track the sp prot before tls1 2 server value used by this standard-library module.
 /// @internal
 const SP_PROT_BEFORE_TLS1_2_SERVER = 341
-/// Stores the sp prot before tls1 2 client.
+/// Track the sp prot before tls1 2 client value used by this standard-library module.
 /// @internal
 const SP_PROT_BEFORE_TLS1_2_CLIENT = 682
-/// Stores the secpkg attr stream sizes.
+/// Track the secpkg attr stream sizes value used by this standard-library module.
 /// @internal
 const SECPKG_ATTR_STREAM_SIZES = 4
-/// Stores the secpkg attr remote cert context.
+/// Track the secpkg attr remote cert context value used by this standard-library module.
 /// @internal
 const SECPKG_ATTR_REMOTE_CERT_CONTEXT = 83
-/// Stores the secpkg attr connection info.
+/// Track the secpkg attr connection info value used by this standard-library module.
 /// @internal
 const SECPKG_ATTR_CONNECTION_INFO = 90
-/// Stores the secpkg attr cipher info.
+/// Track the secpkg attr cipher info value used by this standard-library module.
 /// @internal
 const SECPKG_ATTR_CIPHER_INFO = 100
-/// Stores the schannel shutdown.
+/// Track the schannel shutdown value used by this standard-library module.
 /// @internal
 const SCHANNEL_SHUTDOWN = 1
-/// Stores the secpkg cipher info bytes.
+/// Track the secpkg cipher info bytes value used by this standard-library module.
 /// @internal
 const SECPKG_CIPHER_INFO_BYTES = 680
 
-/// Stores the cert store prov system w.
+/// Track the cert store prov system w value used by this standard-library module.
 /// @internal
 const CERT_STORE_PROV_SYSTEM_W = 10
-/// Stores the cert system store current user.
+/// Track the cert system store current user value used by this standard-library module.
 /// @internal
 const CERT_SYSTEM_STORE_CURRENT_USER = 65536
-/// Stores the cert system store local machine.
+/// Track the cert system store local machine value used by this standard-library module.
 /// @internal
 const CERT_SYSTEM_STORE_LOCAL_MACHINE = 131072
-/// Stores the x509 asn encoding.
+/// Track the x509 asn encoding value used by this standard-library module.
 /// @internal
 const X509_ASN_ENCODING = 1
-/// Stores the pkcs 7 asn encoding.
+/// Track the pkcs 7 asn encoding value used by this standard-library module.
 /// @internal
 const PKCS_7_ASN_ENCODING = 65536
-/// Stores the cert encoding.
+/// Track the cert encoding value used by this standard-library module.
 /// @internal
 const CERT_ENCODING = 65537
-/// Stores the cert find sha1 hash.
+/// Track the cert find sha1 hash value used by this standard-library module.
 /// @internal
 const CERT_FIND_SHA1_HASH = 65536
-/// Stores the cert find has private key.
+/// Track the cert find has private key value used by this standard-library module.
 /// @internal
 const CERT_FIND_HAS_PRIVATE_KEY = 1376256
-/// Stores the cert close store force flag.
+/// Track the cert close store force flag value used by this standard-library module.
 /// @internal
 const CERT_CLOSE_STORE_FORCE_FLAG = 1
-/// Stores the crypt user keyset.
+/// Track the crypt user keyset value used by this standard-library module.
 /// @internal
 const CRYPT_USER_KEYSET = 4096
-/// Stores the cert sha256 hash prop id.
+/// Track the cert sha256 hash prop id value used by this standard-library module.
 /// @internal
 const CERT_SHA256_HASH_PROP_ID = 107
-/// Stores the cert chain policy ssl.
+/// Track the cert chain policy ssl value used by this standard-library module.
 /// @internal
 const CERT_CHAIN_POLICY_SSL = 4
-/// Stores the cert chain cache end cert.
+/// Track the cert chain cache end cert value used by this standard-library module.
 /// @internal
 const CERT_CHAIN_CACHE_END_CERT = 1
-/// Stores the authtype server.
+/// Track the authtype server value used by this standard-library module.
 /// @internal
 const AUTHTYPE_SERVER = 2
-/// Stores the security flag ignore unknown ca.
+/// Track the security flag ignore unknown ca value used by this standard-library module.
 /// @internal
 const SECURITY_FLAG_IGNORE_UNKNOWN_CA = 256
-/// Stores the cert chain para bytes.
+/// Track the cert chain para bytes value used by this standard-library module.
 /// @internal
 const CERT_CHAIN_PARA_BYTES = 96
-/// Stores the ssl policy extra bytes.
+/// Track the ssl policy extra bytes value used by this standard-library module.
 /// @internal
 const SSL_POLICY_EXTRA_BYTES = 24
-/// Stores the cert chain policy para bytes.
+/// Track the cert chain policy para bytes value used by this standard-library module.
 /// @internal
 const CERT_CHAIN_POLICY_PARA_BYTES = 16
-/// Stores the cert chain policy status bytes.
+/// Track the cert chain policy status bytes value used by this standard-library module.
 /// @internal
 const CERT_CHAIN_POLICY_STATUS_BYTES = 24
-/// Stores the server auth oid.
+/// Track the server auth oid value used by this standard-library module.
 /// @internal
 const SERVER_AUTH_OID = "1.3.6.1.5.5.7.3.1"
 
@@ -273,43 +273,43 @@ const SERVER_AUTH_OID = "1.3.6.1.5.5.7.3.1"
 /// @internal
 struct SchannelCredential
   // SSPI CredHandle encoded in native-layout bytes.
-  /// Stores the handle member of `SchannelCredential`.
+  /// Handle associated with `SchannelCredential`.
   handle
   // Credential expiry timestamp returned by SSPI.
-  /// Stores the expiry member of `SchannelCredential`.
+  /// Expiry associated with `SchannelCredential`.
   expiry
   // Distinguishes a server credential from a client credential.
-  /// Stores the inbound member of `SchannelCredential`.
+  /// Inbound associated with `SchannelCredential`.
   inbound
   // Prevents duplicate native-handle release.
-  /// Stores the closed member of `SchannelCredential`.
+  /// Closed associated with `SchannelCredential`.
   closed
   // Server leaf certificate context, or void for a client credential.
-  /// Stores the certificate context member of `SchannelCredential`.
+  /// Certificate context associated with `SchannelCredential`.
   certificateContext
   // Certificate store kept open while the server credential is usable.
-  /// Stores the certificate store member of `SchannelCredential`.
+  /// Certificate store associated with `SchannelCredential`.
   certificateStore
   // SCH_CREDENTIALS structure retained for the native credential lifetime.
-  /// Stores the credential bytes member of `SchannelCredential`.
+  /// Credential bytes associated with `SchannelCredential`.
   credentialBytes
   // Native pointer array that pins the configured server certificate.
-  /// Stores the pinned certificate pointers member of `SchannelCredential`.
+  /// Pinned certificate pointers associated with `SchannelCredential`.
   pinnedCertificatePointers
   // Imported PFX payload retained and wiped when the credential closes.
-  /// Stores the pfx bytes member of `SchannelCredential`.
+  /// Pfx bytes associated with `SchannelCredential`.
   pfxBytes
   // TLS_PARAMETERS structure that enforces the configured protocol minimum.
-  /// Stores the tls parameters member of `SchannelCredential`.
+  /// Tls parameters associated with `SchannelCredential`.
   tlsParameters
   // CRYPTO_SETTINGS array that disables every key-exchange group except X25519.
-  /// Stores the disabled crypto member of `SchannelCredential`.
+  /// Disabled crypto associated with `SchannelCredential`.
   disabledCrypto
   // Algorithm-name buffers referenced by the disabled crypto settings.
-  /// Stores the disabled crypto strings member of `SchannelCredential`.
+  /// Disabled crypto strings associated with `SchannelCredential`.
   disabledCryptoStrings
   // Selects explicit chain and pin validation for a client credential.
-  /// Stores the manual validation member of `SchannelCredential`.
+  /// Manual validation associated with `SchannelCredential`.
   manualValidation
 end struct
 
@@ -317,58 +317,58 @@ end struct
 /// @internal
 struct TlsContext
   // Credential that authenticated and parameterized this connection.
-  /// Stores the credential member of `TlsContext`.
+  /// Credential associated with `TlsContext`.
   credential
   // Caller-owned connected TCP socket used for encrypted record transport.
-  /// Stores the socket handle member of `TlsContext`.
+  /// Socket handle associated with `TlsContext`.
   socketHandle
   // SSPI CtxtHandle encoded in native-layout bytes.
-  /// Stores the handle member of `TlsContext`.
+  /// Handle associated with `TlsContext`.
   handle
   // Context expiry timestamp returned by SSPI.
-  /// Stores the expiry member of `TlsContext`.
+  /// Expiry associated with `TlsContext`.
   expiry
   // Negotiated SSPI context attributes.
-  /// Stores the attributes member of `TlsContext`.
+  /// Attributes associated with `TlsContext`.
   attributes
   // Prevents use or release after closure.
-  /// Stores the closed member of `TlsContext`.
+  /// Closed associated with `TlsContext`.
   closed
   // Distinguishes a received close_notify from released native handles.
-  /// Stores the released member of `TlsContext`.
+  /// Released associated with `TlsContext`.
   released
   // True for the accepted server side and false for the connecting client side.
-  /// Stores the server member of `TlsContext`.
+  /// Server associated with `TlsContext`.
   server
   // TLS records received but not yet consumed by Schannel.
-  /// Stores the encrypted input member of `TlsContext`.
+  /// Encrypted input associated with `TlsContext`.
   encryptedInput
   // Plaintext produced by Schannel but not yet consumed by the caller.
-  /// Stores the decrypted input member of `TlsContext`.
+  /// Decrypted input associated with `TlsContext`.
   decryptedInput
   // Provider-specific record header capacity.
-  /// Stores the stream header bytes member of `TlsContext`.
+  /// Stream header bytes associated with `TlsContext`.
   streamHeaderBytes
   // Provider-specific AEAD trailer capacity.
-  /// Stores the stream trailer bytes member of `TlsContext`.
+  /// Stream trailer bytes associated with `TlsContext`.
   streamTrailerBytes
   // Maximum plaintext carried by one encrypted TLS record.
-  /// Stores the maximum message bytes member of `TlsContext`.
+  /// Maximum message bytes associated with `TlsContext`.
   maximumMessageBytes
   // Immutable std.tls client or server options.
-  /// Stores the options member of `TlsContext`.
+  /// Options associated with `TlsContext`.
   options
   // Handshake records retained until the ServerHello profile is verified.
-  /// Stores the handshake transcript member of `TlsContext`.
+  /// Handshake transcript associated with `TlsContext`.
   handshakeTranscript
   // IANA identifier of the negotiated TLS cipher suite.
-  /// Stores the negotiated cipher suite member of `TlsContext`.
+  /// Negotiated cipher suite associated with `TlsContext`.
   negotiatedCipherSuite
   // IANA identifier of the negotiated key-exchange group.
-  /// Stores the negotiated group member of `TlsContext`.
+  /// Negotiated group associated with `TlsContext`.
   negotiatedGroup
   // SHA-256 digest of the peer leaf certificate in DER form.
-  /// Stores the peer certificate sha256 member of `TlsContext`.
+  /// Peer certificate sha256 associated with `TlsContext`.
   peerCertificateSha256
 end struct
 
@@ -1623,7 +1623,7 @@ function sendBytes(context, data)
   return sendAll(context, context.socketHandle, data)
 end function
 
-/// Implements receive bytes.
+/// Provide the receive bytes operation for this standard-library module.
 /// @internal
 function receiveBytes(context, maximumBytes)
   if context is not TlsContext or context.released then return fail("receive", "context is closed or invalid") end if
@@ -1644,7 +1644,7 @@ function receiveBytes(context, maximumBytes)
   end while
 end function
 
-/// Implements shutdown stream.
+/// Provide the shutdown stream operation for this standard-library module.
 /// @internal
 function shutdownStream(context)
   return shutdown(context, context.socketHandle)

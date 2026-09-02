@@ -23,7 +23,7 @@ Source: `std/tls.ml:50`
 closeStream
 ```
 
-Stores the close stream member of `Provider`.
+Close stream associated with `Provider`.
 
 
 Source: `std/tls.ml:64`
@@ -35,7 +35,7 @@ Source: `std/tls.ml:64`
 name
 ```
 
-Stores the name member of `Provider`.
+Name associated with `Provider`.
 
 
 Source: `std/tls.ml:52`
@@ -47,7 +47,7 @@ Source: `std/tls.ml:52`
 openClient
 ```
 
-Stores the open client member of `Provider`.
+Open client associated with `Provider`.
 
 
 Source: `std/tls.ml:54`
@@ -59,7 +59,7 @@ Source: `std/tls.ml:54`
 openServer
 ```
 
-Stores the open server member of `Provider`.
+Open server associated with `Provider`.
 
 
 Source: `std/tls.ml:56`
@@ -71,7 +71,7 @@ Source: `std/tls.ml:56`
 receiveBytes
 ```
 
-Stores the receive bytes member of `Provider`.
+Receive bytes associated with `Provider`.
 
 
 Source: `std/tls.ml:60`
@@ -83,7 +83,7 @@ Source: `std/tls.ml:60`
 sendBytes
 ```
 
-Stores the send bytes member of `Provider`.
+Send bytes associated with `Provider`.
 
 
 Source: `std/tls.ml:58`
@@ -95,7 +95,7 @@ Source: `std/tls.ml:58`
 shutdownStream
 ```
 
-Stores the shutdown stream member of `Provider`.
+Shutdown stream associated with `Provider`.
 
 
 Source: `std/tls.ml:62`

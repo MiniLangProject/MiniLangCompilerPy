@@ -18,19 +18,19 @@ limitations under the License.
 
 package std.cpu
 
-/// Stores the sse2.
+/// Track the sse2 value used by this standard-library module.
 const SSE2 = 1
-/// Stores the sse42.
+/// Track the sse42 value used by this standard-library module.
 const SSE42 = 2
-/// Stores the avx.
+/// Track the avx value used by this standard-library module.
 const AVX = 4
-/// Stores the avx2.
+/// Track the avx2 value used by this standard-library module.
 const AVX2 = 8
-/// Stores the aes ni.
+/// Track the aes ni value used by this standard-library module.
 const AES_NI = 16
-/// Stores the pclmulqdq.
+/// Track the pclmulqdq value used by this standard-library module.
 const PCLMULQDQ = 32
-/// Stores the sha.
+/// Track the sha value used by this standard-library module.
 const SHA = 64
 
 /// Return capabilities detected once during process startup.

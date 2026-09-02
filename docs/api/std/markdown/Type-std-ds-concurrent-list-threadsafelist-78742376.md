@@ -55,7 +55,7 @@ Source: `std/ds/concurrent_list.ml:150`
 buf
 ```
 
-Stores the buf member of `ThreadSafeList`.
+Buf associated with `ThreadSafeList`.
 
 
 Source: `std/ds/concurrent_list.ml:37`
@@ -67,7 +67,7 @@ Source: `std/ds/concurrent_list.ml:37`
 capacity
 ```
 
-Stores the capacity member of `ThreadSafeList`.
+Allocated capacity of `ThreadSafeList`.
 
 
 Source: `std/ds/concurrent_list.ml:41`
@@ -103,7 +103,7 @@ Source: `std/ds/concurrent_list.ml:315`
 closed
 ```
 
-Stores the closed member of `ThreadSafeList`.
+Closed associated with `ThreadSafeList`.
 
 
 Source: `std/ds/concurrent_list.ml:43`
@@ -171,7 +171,7 @@ Source: `std/ds/concurrent_list.ml:170`
 guard
 ```
 
-Stores the guard member of `ThreadSafeList`.
+Guard associated with `ThreadSafeList`.
 
 
 Source: `std/ds/concurrent_list.ml:35`
@@ -353,7 +353,7 @@ Source: `std/ds/concurrent_list.ml:185`
 size
 ```
 
-Stores the size member of `ThreadSafeList`.
+Current logical size of `ThreadSafeList`.
 
 
 Source: `std/ds/concurrent_list.ml:39`
