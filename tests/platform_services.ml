@@ -46,6 +46,7 @@ function main(args)
   if typeof(listener) == "error" then print "[FAIL] network listener: " + listener.message; return 6 end if
   if not check(net.setReceiveTimeout(listener, 1000) == true, "network receive timeout") then failed = true end if
   if not check(net.setSendTimeout(listener, 1000) == true, "network send timeout") then failed = true end if
+  if not check(typeof(try(net.setReceiveTimeout(listener, 2147483648))) == "error", "network oversized timeout rejection") then failed = true end if
   if not check(net.setKeepAlive(listener, true) == true, "network keepalive") then failed = true end if
   if not check(net.setNoDelay(listener, true) == true, "network no-delay") then failed = true end if
   if not check(net.close(listener), "network close") then failed = true end if

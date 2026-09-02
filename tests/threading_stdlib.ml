@@ -9,6 +9,30 @@ sharedList = concurrentList.ThreadSafeList.withCapacity(1)
 sharedMap = concurrentMap.ThreadSafeHashMap.withCapacity(4)
 lockCount = 0
 
+#if TARGET_OS == "linux"
+extern function _testSemGetValue(semaphore as ptr, value as ptr) from "libc.so.6" symbol "sem_getvalue" returns i32
+
+handoffSemaphore = threading.Semaphore.new(0, 1)
+
+// Consume a long stream of single permits while the producer releases the
+// next permit as soon as the native semaphore reports free capacity.
+function semaphoreHandoffConsumer(count)
+  i = 0
+  while i < count
+    if not handoffSemaphore.acquireFor(10000) then
+      return error(1635, "semaphore handoff timed out")
+    end if
+    i = i + 1
+  end while
+end function
+
+function nativeSemaphoreCount(semaphore)
+  value = bytes(4, 0)
+  if _testSemGetValue(nativeBytesPtr(semaphore.handle), nativeBytesPtr(value)) != 0 then return -1 end if
+  return value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24)
+end function
+#endif
+
 struct SharedPayload
   name
   values
@@ -42,22 +66,26 @@ end function
 
 function main(args)
   badSemaphore = try(threading.Semaphore.new(-1, 1))
+  oversizedSemaphore = try(threading.Semaphore.new(0, 2147483648))
   badEvent = try(threading.Event.new(1, false))
   badList = try(concurrentList.ThreadSafeList.withCapacity(-1))
   badMap = try(concurrentMap.ThreadSafeHashMap.withCapacity(-1))
   if typeof(badSemaphore) != "error" or badSemaphore.code != 1601 then return 40 end if
+  if typeof(oversizedSemaphore) != "error" or oversizedSemaphore.code != 1601 then return 49 end if
   if typeof(badEvent) != "error" or badEvent.code != 1602 then return 41 end if
   if typeof(badList) != "error" or badList.code != 1610 then return 42 end if
   if typeof(badMap) != "error" or badMap.code != 1620 then return 43 end if
 
   // Lock: recursive acquire, timeout path and PascalCase aliases.
   localLock = threading.Lock.new()
+  if localLock.acquireFor(2147483648) then return 50 end if
   if not localLock.Acquire() or not localLock.TryAcquire() then return 1 end if
   if not localLock.Release() or not localLock.Release() then return 2 end if
   if not localLock.close() or localLock.close() then return 3 end if
 
   // Semaphore and manual-reset event basics.
   sem = threading.Semaphore.new(0, 3)
+  if sem.acquireFor(2147483648) then return 51 end if
   if sem.tryAcquire() then return 4 end if
   if not sem.releaseMany(2) then return 5 end if
   if not sem.acquireFor(100) or not sem.acquireFor(100) then return 6 end if
@@ -65,10 +93,37 @@ function main(args)
   if not sem.close() then return 8 end if
 
   event = threading.Event.new(true, false)
+  if event.waitFor(2147483648) then return 52 end if
   if event.tryWait() then return 9 end if
   if not event.set() or not event.waitFor(100) or not event.tryWait() then return 10 end if
   if not event.reset() or event.tryWait() then return 11 end if
   if not event.close() then return 12 end if
+
+#if TARGET_OS == "linux"
+  // A native count of zero makes every release below valid. The regression
+  // used to reject some releases because a completed sem_wait updated a
+  // separate MiniLang counter slightly later.
+  handoffCount = 20000
+  handoffWorker = Thread(semaphoreHandoffConsumer)
+  if not handoffWorker.Start(handoffCount) then return 45 end if
+  spuriousRelease = false
+  released = 0
+  while released < handoffCount
+    while nativeSemaphoreCount(handoffSemaphore) != 0
+      threadSleep(0)
+    end while
+    if not handoffSemaphore.release() then
+      spuriousRelease = true
+      while not handoffSemaphore.release()
+        threadSleep(0)
+      end while
+    end if
+    released = released + 1
+  end while
+  if not handoffWorker.Join(30000) or handoffWorker.Status() != "Completed" then return 46 end if
+  if spuriousRelease then return 47 end if
+  if not handoffWorker.Close() or not handoffSemaphore.close() then return 48 end if
+#endif
 
   // Full collection API on the main thread, including arbitrary managed values.
   probe = concurrentList.ThreadSafeList.fromArray([1, true, "abc", bytes("xyz")])

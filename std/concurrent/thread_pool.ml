@@ -19,6 +19,7 @@ const JOB_CANCELLED = "Cancelled"
 
 const MAX_WORKERS = 256
 const SIGNAL_MAXIMUM = 0x7FFFFFFF
+const MAX_PORTABLE_TIMEOUT_MS = 0x7FFFFFFF
 
 // Handle for one submitted callback and its eventual result.
 struct ThreadPoolJob
@@ -392,12 +393,21 @@ struct ThreadPool
 
   // Wait indefinitely for all workers after shutdown has begun.
   function join()
-    return this.joinFor(0xFFFFFFFF)
+    if not this.isShutdown() then return false end if
+    i = 0
+    while i < len(this.workers)
+      if not this.workers[i].Join() then return false end if
+      i = i + 1
+    end while
+    if not this.guard.acquire() then return false end if
+    this.stopped = true
+    this.guard.release()
+    return true
   end function
 
   // Wait for each worker with the supplied per-worker timeout.
   function joinFor(milliseconds)
-    if typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    if typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
     if not this.isShutdown() then return false end if
     i = 0
     while i < len(this.workers)

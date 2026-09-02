@@ -112,11 +112,20 @@ function stringifyWorker(task)
 end function
 
 function main(args)
+  badSleepType = try(threadSleep("1"))
+  badSleepNegative = try(threadSleep(-1))
+  badSleepLarge = try(threadSleep(2147483648))
+  if typeof(badSleepType) != "error" or typeof(badSleepNegative) != "error" or typeof(badSleepLarge) != "error" then return 53 end if
+
   neverStarted = Thread(worker)
   if neverStarted.Status() != "Created" then return 1 end if
   if neverStarted.IsAlive() then return 2 end if
   if neverStarted.Join(0) then return 3 end if
   if neverStarted.Stop() then return 4 end if
+  badJoinType = try(neverStarted.Join("1"))
+  badJoinNegative = try(neverStarted.Join(-1))
+  badJoinLarge = try(neverStarted.Join(2147483648))
+  if typeof(badJoinType) != "error" or typeof(badJoinNegative) != "error" or typeof(badJoinLarge) != "error" then return 54 end if
 
   a = Thread(worker)
   b = Thread(worker)

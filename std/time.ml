@@ -21,6 +21,7 @@ import std.fmt as fmt
 // Monotonic timing, durations and calendar conversion on Windows and Linux.
 
 const TIME_ERR = 300
+const MAX_PORTABLE_SLEEP_MS = 2147483647
 
 // Construct a consistent date/time validation error.
 function _timeErr(msg)
@@ -251,12 +252,12 @@ input: int ms
 returns: void
 */
 function sleep(ms)
-  // Sleeps for `ms` milliseconds.
-  // Negative/invalid -> no-op.
+  // Sleeps for `ms` milliseconds. Native timeout widths differ, so values
+  // outside the portable signed-32-bit range are rejected as a no-op.
   if typeof(ms) != "int" then
     return
   end if
-  if ms < 0 then
+  if ms < 0 or ms > MAX_PORTABLE_SLEEP_MS then
     return
   end if
 #if TARGET_OS == "windows"

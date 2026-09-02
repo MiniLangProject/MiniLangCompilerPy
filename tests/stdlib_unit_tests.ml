@@ -332,6 +332,9 @@ function test_math_fmt_time()
   t.sleep(10)
   t2 = t.ticks()
   chk(a.assertTrue(t2 >= t1, "time: ticks monotonic"))
+  oversizedSleepStart = t.ticks()
+  t.sleep(2147483648)
+  chk(a.assertTrue(t.elapsed(oversizedSleepStart, t.ticks()) < 1000, "time: oversized sleep is portable no-op"))
   dt = t.elapsed(t1, t2)
   chk(a.assertEq(typeof(dt), "int", "time: elapsed type"))
   chk(a.assertTrue(dt >= 0, "time: elapsed nonneg"))
@@ -581,15 +584,21 @@ function _tcpListenAny(backlog)
   return error(200, "no free TCP port")
 end function
 
-function _udpBindAny(sock)
+function _udpBindAny()
   base = 45000 +(t.ticks() % 15000)
   p = base
   i = 0
   while i < 200
-    rr = try(net.udpBind(sock, p))
+    // Winsock does not guarantee that one socket can be rebound after a failed
+    // bind. Use a fresh candidate so an occupied first port cannot poison all
+    // following attempts.
+    candidate = try(net.udpOpen())
+    if typeof(candidate) == "error" then return candidate end if
+    rr = try(net.udpBind(candidate, p))
     if typeof(rr) != "error" then
-      return p
+      return [candidate, p]
     end if
+    net.close(candidate)
     p = p + 1
     i = i + 1
   end while
@@ -676,23 +685,22 @@ function test_net_tcp_udp()
 
   // UDP datagram
   u1 = try(net.udpOpen())
-  u2 = try(net.udpOpen())
   chk(_assertNotError(u1, "net: udpOpen 1"))
-  chk(_assertNotError(u2, "net: udpOpen 2"))
-  if typeof(u1) == "error" or typeof(u2) == "error" then
+  if typeof(u1) == "error" then
     return
   end if
 
   chk(a.assertTrue(typeof(try(net.udpBind(u1, -1))) == "error", "net: udpBind rejects negative port"))
   chk(a.assertTrue(typeof(try(net.udpSendTo(u1, "127.0.0.1", 65536, "x"))) == "error", "net: udpSendTo rejects oversized port"))
 
-  up = try(_udpBindAny(u2))
-  chk(_assertNotError(up, "net: udpBindAny"))
-  if typeof(up) == "error" then
+  boundUdp = try(_udpBindAny())
+  chk(_assertNotError(boundUdp, "net: udpBindAny"))
+  if typeof(boundUdp) == "error" then
     net.close(u1)
-    net.close(u2)
     return
   end if
+  u2 = boundUdp[0]
+  up = boundUdp[1]
 
   u3 = try(net.udpOpen())
   chk(_assertNotError(u3, "net: udpOpen duplicate probe"))

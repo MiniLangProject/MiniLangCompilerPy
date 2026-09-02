@@ -16,6 +16,8 @@ limitations under the License.
 
 package std.net
 
+const MAX_PORTABLE_SOCKET_TIMEOUT_MS = 2147483647
+
 const NET_ERR = 200
 
 // Construct a consistent networking argument or socket error.
@@ -396,7 +398,7 @@ function setNoDelay(sock, enabled)
 end function
 
 function _setTimeout(sock, option, milliseconds, operation)
-  if not _isSockHandle(sock) or typeof(milliseconds) != "int" or milliseconds < 0 then return _netErr(operation + ": invalid args") end if
+  if not _isSockHandle(sock) or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_SOCKET_TIMEOUT_MS then return _netErr(operation + ": invalid args") end if
 #if TARGET_OS == "windows"
   raw = bytes(4, 0)
   _putU32(raw, 0, milliseconds)
@@ -426,7 +428,7 @@ end function
 /*
 Creates a TCP connection to an IPv4 address (dotted) or "localhost".
 input: string host, int port
-returns: socketPtr OR error(...)
+returns: socket handle (int or ptr) OR error(...)
 */
 function tcpConnect(host, port)
   if init() == false then
@@ -574,12 +576,12 @@ end function
 
 /*
 Sends all bytes on a TCP socket (loops until everything is sent).
-input: ptr socket, bytes data
+input: socket handle (int or ptr), bytes data
 returns: int bytesSent OR error(...)
 */
 function tcpSendAll(sock, data)
   if not _isSockHandle(sock) then
-    return _netErr("tcpSendAll: sock must be ptr")
+    return _netErr("tcpSendAll: invalid socket handle")
   end if
 
   // Convenience: allow sending UTF-8 text directly.
@@ -611,12 +613,12 @@ end function
 
 /*
 Receives up to maxBytes from a TCP socket.
-input: ptr socket, int maxBytes
+input: socket handle (int or ptr), int maxBytes
 returns: bytes data OR error(...) (empty bytes = connection closed)
 */
 function tcpRecv(sock, maxBytes)
   if not _isSockHandle(sock) then
-    return _netErr("tcpRecv: sock must be ptr")
+    return _netErr("tcpRecv: invalid socket handle")
   end if
   if typeof(maxBytes) != "int" then
     return _netErr("tcpRecv: maxBytes must be int")
@@ -642,7 +644,7 @@ end function
 
 /*
 Shuts down a TCP socket (best-effort).
-input: ptr socket, int how (SD_RECEIVE/SD_SEND/SD_BOTH)
+input: socket handle (int or ptr), int how (SD_RECEIVE/SD_SEND/SD_BOTH)
 returns: bool success
 */
 function tcpShutdown(sock, how)
@@ -659,7 +661,7 @@ end function
 
 /*
 Closes a socket handle.
-input: ptr socket
+input: socket handle (int or ptr)
 returns: bool success
 */
 function close(sock)
@@ -677,7 +679,7 @@ end function
 /*
 Opens a UDP socket.
 input: (none)
-returns: socketPtr OR error(...)
+returns: socket handle (int or ptr) OR error(...)
 */
 function udpOpen()
   if init() == false then
@@ -694,12 +696,12 @@ end function
 
 /*
 Binds a UDP socket to 0.0.0.0:port.
-input: ptr socket, int port
+input: socket handle (int or ptr), int port
 returns: bool success OR error(...)
 */
 function udpBind(sock, port)
   if not _isSockHandle(sock) then
-    return _netErr("udpBind: sock must be ptr")
+    return _netErr("udpBind: invalid socket handle")
   end if
   if not _isValidPort(port) then
     return _netErr("udpBind: port must be int in range 0..65535")
@@ -719,12 +721,12 @@ end function
 
 /*
 Sends a UDP datagram to an IPv4 host.
-input: ptr socket, string host, int port, bytes data
+input: socket handle (int or ptr), string host, int port, bytes data
 returns: int bytesSent OR error(...)
 */
 function udpSendTo(sock, host, port, data)
   if not _isSockHandle(sock) then
-    return _netErr("udpSendTo: sock must be ptr")
+    return _netErr("udpSendTo: invalid socket handle")
   end if
   if not _isValidPort(port) then
     return _netErr("udpSendTo: port must be int in range 0..65535")
@@ -754,12 +756,12 @@ end function
 
 /*
 Receives a UDP datagram.
-input: ptr socket, int maxBytes
+input: socket handle (int or ptr), int maxBytes
 returns: array [bytes data, string peerIp, int peerPort] OR error(...)
 */
 function udpRecvFrom(sock, maxBytes)
   if not _isSockHandle(sock) then
-    return _netErr("udpRecvFrom: sock must be ptr")
+    return _netErr("udpRecvFrom: invalid socket handle")
   end if
   if typeof(maxBytes) != "int" then
     return _netErr("udpRecvFrom: maxBytes must be int")

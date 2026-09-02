@@ -63,6 +63,9 @@ listeners retain `SO_REUSEADDR` restart semantics. An explicit
 exclusive default before it is bound, so intentional shared-port designs keep
 working. Process-wide socket initialization and cleanup are serialized; as
 before, applications must not call `cleanup()` while sockets are still in use.
+Native socket timeouts are portable for integer millisecond values in
+`0..2147483647`; negative, oversized and non-integer values return a managed
+network error rather than being truncated by the platform ABI.
 
 `std.tls` includes a native provider selected at compile time: Windows uses
 Schannel and the system certificate stores; Linux uses OpenSSL 3

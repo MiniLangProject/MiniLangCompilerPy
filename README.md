@@ -271,6 +271,9 @@ manifest, effective compiler arguments, content-based compiler identity, every
 escape those roots. An exact hit verifies the content-addressed executable and
 preserves its POSIX mode while restoring it. Any relevant change performs a
 full build; this is artifact caching, not per-module incremental compilation.
+Broad root discovery does not descend into directory symlinks or Windows
+junctions, matching `Path.rglob()` and preventing cyclic traversal. A quoted
+import that explicitly names a linked file is still followed and fingerprinted.
 Listing and label-dump builds bypass
 the cache. The Python compiler accepts `object_pipeline` for manifest
 compatibility and emits the equivalent monolithic image; the self-hosted
@@ -1387,7 +1390,9 @@ Thread methods:
 - `Stop()` atomically requests cooperative cancellation and returns whether an
   alive thread changed to `StopRequested`, including the short startup-publication window.
 - `Join()` waits indefinitely; `Join(timeoutMs)` waits at most the given number
-  of milliseconds. Both return `true` only when the thread terminated. A Join
+  of milliseconds. Explicit timeouts must be integers in the portable range
+  `0..2147483647`; invalid values produce a catchable `error`. Both return
+  `true` only when the thread terminated. A Join
   racing Start waits for native-handle publication instead of failing early;
   concurrent joins on one object share a single native join operation safely.
 - `Status()` returns `Created`, `Running`, `StopRequested`, `Completed`,
@@ -1417,7 +1422,9 @@ Worker helpers:
   (and returns `false` on the main thread).
 - `threadLogicalId()` returns the logical id of the current worker (`void` on
   the main thread).
-- `threadSleep(milliseconds)` calls the native sleep primitive.
+- `threadSleep(milliseconds)` calls the native sleep primitive for an integer
+  in `0..2147483647`; invalid values produce a catchable `error` instead of
+  being truncated by a target ABI.
 
 `Stop()` is safe and cooperative: the compiler inserts cancellation checks at
 statement boundaries. It never uses asynchronous thread termination. Long
@@ -1510,7 +1517,9 @@ This selection is automatic and does not change source semantics.
 - `Event.new(manualReset, initialState)` provides `wait()`, `tryWait()`,
   `waitFor(timeoutMs)`, `set()`, `reset()`, `isClosed()` and `close()`.
 
-All waits return `bool`; a timeout is reported as `false`. On Windows, a lock
+All timed waits accept integer milliseconds in `0..2147483647`; invalid values
+return `false`, and an ordinary timeout is also reported as `false`.
+`Semaphore.new` uses the same upper bound for its maximum count. On Windows, a lock
 acquired after `WAIT_ABANDONED` is treated as successfully acquired and must be
 released.
 
@@ -2062,6 +2071,9 @@ provides a built-in target-native Schannel/OpenSSL transport through
 provider-neutral callback contract remains available for custom transports.
 See [Platform services](docs/PLATFORM_SERVICES.md) for certificate references,
 trust behavior, socket ownership and the native integration test.
+Portable native sleep, socket and synchronization timeouts use the common
+millisecond range `0..2147483647`. `std.time.sleep` treats values outside that
+range as a no-op; APIs returning a result reject them as documented.
 
 New code should normally use native `error(...)` propagation with `try(...)`
 instead of `std.result.Result`. Managed objects already share one process-wide

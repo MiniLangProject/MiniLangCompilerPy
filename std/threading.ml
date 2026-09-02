@@ -10,6 +10,12 @@
 
 package std.threading
 
+// Native timeout/count parameters are signed 32-bit values on at least one
+// supported target. Keeping the shared API inside this range avoids truncation
+// and platform-dependent interpretations of the high bit.
+const MAX_PORTABLE_TIMEOUT_MS = 2147483647
+const MAX_NATIVE_SEMAPHORE_COUNT = 2147483647
+
 #if TARGET_OS == "windows"
 
 // Native Win32 synchronization primitives. All MiniLang objects live in the
@@ -58,7 +64,7 @@ struct Lock
 
   // Wait at most the requested number of milliseconds for ownership.
   function acquireFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
       return false
     end if
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
@@ -110,7 +116,7 @@ struct Semaphore
     if typeof(initialCount) != "int" or typeof(maximumCount) != "int" then
       return error(1601, "semaphore counts must be integers")
     end if
-    if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount then
+    if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount or maximumCount > MAX_NATIVE_SEMAPHORE_COUNT then
       return error(1601, "invalid semaphore counts")
     end if
     h = CreateSemaphoreW(void, initialCount, maximumCount, void)
@@ -128,7 +134,7 @@ struct Semaphore
 
   // Consume one permit within the requested timeout.
   function acquireFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
       return false
     end if
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
@@ -146,7 +152,7 @@ struct Semaphore
 
   // Return multiple permits in one native operation.
   function releaseMany(count)
-    if this.closed or typeof(count) != "int" or count <= 0 then
+    if this.closed or typeof(count) != "int" or count <= 0 or count > this.maximumCount then
       return false
     end if
     return ReleaseSemaphore(this.handle, count, void)
@@ -203,7 +209,7 @@ struct Event
 
   // Wait until signaled or until the timeout expires.
   function waitFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
       return false
     end if
     return _waitSucceeded(WaitForSingleObject(this.handle, milliseconds))
@@ -278,6 +284,7 @@ extern function _semInit(semaphore as ptr, shared as int, value as u32) from "li
 extern function _semWait(semaphore as ptr) from "libc.so.6" symbol "sem_wait" returns i32
 extern function _semTryWait(semaphore as ptr) from "libc.so.6" symbol "sem_trywait" returns i32
 extern function _semPost(semaphore as ptr) from "libc.so.6" symbol "sem_post" returns i32
+extern function _semGetValue(semaphore as ptr, value as ptr) from "libc.so.6" symbol "sem_getvalue" returns i32
 extern function _semDestroy(semaphore as ptr) from "libc.so.6" symbol "sem_destroy" returns i32
 extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
 
@@ -326,7 +333,7 @@ struct Lock
 
   // Poll for ownership until the requested timeout expires.
   function acquireFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
     return _acquireFor(this.handle, milliseconds)
   end function
 
@@ -359,18 +366,20 @@ struct Lock
   function IsClosed() return this.isClosed() end function
 end struct
 
-// POSIX counting semaphore plus guarded maximum-count bookkeeping.
+// POSIX counting semaphore. Releases are serialized and inspect the native
+// count while holding the release guard, so an acquire cannot leave stale
+// bookkeeping that spuriously rejects a valid handoff.
 struct Semaphore
   handle
   countGuard
+  countValue
   maximumCount
-  currentCount
   closed
 
   // Create a semaphore with validated initial and maximum permit counts.
   static function new(initialCount, maximumCount)
     if typeof(initialCount) != "int" or typeof(maximumCount) != "int" then return error(1601, "semaphore counts must be integers") end if
-    if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount then return error(1601, "invalid semaphore counts") end if
+    if initialCount < 0 or maximumCount <= 0 or initialCount > maximumCount or maximumCount > MAX_NATIVE_SEMAPHORE_COUNT then return error(1601, "invalid semaphore counts") end if
     semaphore = bytes(SEMAPHORE_SIZE, 0)
     guard = _newRecursiveMutex()
     if typeof(guard) != "bytes" then return error(1601, "could not create semaphore guard") end if
@@ -378,32 +387,22 @@ struct Semaphore
       _mutexDestroy(nativeBytesPtr(guard))
       return error(1601, "could not create native semaphore")
     end if
-    return Semaphore(semaphore, guard, maximumCount, initialCount, false)
-  end function
-
-  // Mirror a successful native wait under the bookkeeping mutex.
-  function _consumeCount()
-    _mutexLock(nativeBytesPtr(this.countGuard))
-    this.currentCount = this.currentCount - 1
-    _mutexUnlock(nativeBytesPtr(this.countGuard))
+    return Semaphore(semaphore, guard, bytes(4, 0), maximumCount, false)
   end function
 
   // Block until one permit can be consumed.
   function acquire()
     if this.closed then return false end if
     result = _semWait(nativeBytesPtr(this.handle))
-    if result != 0 then return false end if
-    this._consumeCount()
-    return true
+    return result == 0
   end function
 
   // Poll for one permit until the requested timeout expires.
   function acquireFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
     elapsed = 0
     while elapsed <= milliseconds
       if _semTryWait(nativeBytesPtr(this.handle)) == 0 then
-        this._consumeCount()
         return true
       end if
       if elapsed == milliseconds then return false end if
@@ -418,19 +417,26 @@ struct Semaphore
 
   // Validate and return multiple permits without exceeding the maximum.
   function releaseMany(count)
-    if this.closed or typeof(count) != "int" or count <= 0 then return false end if
+    if this.closed or typeof(count) != "int" or count <= 0 or count > this.maximumCount then return false end if
     _mutexLock(nativeBytesPtr(this.countGuard))
-    if this.currentCount + count > this.maximumCount then
+    if _semGetValue(nativeBytesPtr(this.handle), nativeBytesPtr(this.countValue)) != 0 then
       _mutexUnlock(nativeBytesPtr(this.countGuard))
       return false
     end if
-    this.currentCount = this.currentCount + count
-    _mutexUnlock(nativeBytesPtr(this.countGuard))
+    nativeCount = this.countValue[0] | (this.countValue[1] << 8) | (this.countValue[2] << 16) | (this.countValue[3] << 24)
+    if nativeCount + count > this.maximumCount then
+      _mutexUnlock(nativeBytesPtr(this.countGuard))
+      return false
+    end if
     i = 0
     while i < count
-      if _semPost(nativeBytesPtr(this.handle)) != 0 then return false end if
+      if _semPost(nativeBytesPtr(this.handle)) != 0 then
+        _mutexUnlock(nativeBytesPtr(this.countGuard))
+        return false
+      end if
       i = i + 1
     end while
+    _mutexUnlock(nativeBytesPtr(this.countGuard))
     return true
   end function
 
@@ -445,6 +451,7 @@ struct Semaphore
       this.closed = true
       this.handle = void
       this.countGuard = void
+      this.countValue = void
     end if
     return ok
   end function
@@ -491,7 +498,7 @@ struct Event
 
   // Poll for a signal until the requested timeout expires.
   function waitFor(milliseconds)
-    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 then return false end if
+    if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
     elapsed = 0
     while elapsed <= milliseconds
       _mutexLock(nativeBytesPtr(this.mutex))

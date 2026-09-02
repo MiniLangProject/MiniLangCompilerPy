@@ -92,6 +92,7 @@ function main(args)
   gc_collect()
   if not pool.Shutdown() or not pool.IsShutdown() then return 15 end if
   if typeof(pool.Submit(poolWorker, 99)) != "void" then return 16 end if
+  if pool.AwaitTerminationFor(2147483648) then return 57 end if
   if not pool.AwaitTerminationFor(20000) then return 17 end if
   i = 0
   while i < len(jobs)

@@ -4886,6 +4886,7 @@ class CodegenExpr:
 
                     fid = self.new_label_id()
                     l_fail = f'thread_method_fail_{fid}'
+                    l_bad_timeout = f'thread_method_bad_timeout_{fid}'
                     l_done = f'thread_method_done_{fid}'
                     a.mov_r64_membase_disp('rcx', 'rsp', base)
                     a.mov_r64_r64('r11', 'rcx')
@@ -4911,11 +4912,20 @@ class CodegenExpr:
                             a.mov_r64_r64('r11', 'rdx')
                             a.and_r64_imm('r11', 7)
                             a.cmp_r64_imm('r11', TAG_INT)
-                            a.jcc('ne', l_fail)
+                            a.jcc('ne', l_bad_timeout)
                             a.sar_r64_imm8('rdx', 3)
+                            a.cmp_r64_imm('rdx', 0)
+                            a.jcc('l', l_bad_timeout)
+                            a.cmp_r64_imm('rdx', 0x7FFFFFFF)
+                            a.jcc('g', l_bad_timeout)
                         else:
                             a.mov_r32_imm32('edx', 0xFFFFFFFF)
                     a.call(helper)
+                    a.jmp(l_done)
+                    a.mark(l_bad_timeout)
+                    self._emit_make_error_const(
+                        ERR_CALL_NOT_CALLABLE,
+                        'Thread.Join timeout must be an integer in range 0..2147483647')
                     a.jmp(l_done)
                     a.mark(l_fail)
                     self._emit_make_error_const(ERR_METHOD_NOT_FOUND,
@@ -5239,15 +5249,22 @@ class CodegenExpr:
                     raise self.error(f"threadSleep expects 1 argument, got {len(call_args)}", e)
                 self.emit_expr(call_args[0])
                 lid = self.new_label_id()
-                l_ok = f'thsleep_ok_{lid}'
+                l_type_ok = f'thsleep_type_ok_{lid}'
+                l_bad_range = f'thsleep_bad_range_{lid}'
+                l_done = f'thsleep_done_{lid}'
                 a.mov_r64_r64('r11', 'rax')
                 a.and_r64_imm('r11', 7)
                 a.cmp_r64_imm('r11', TAG_INT)
-                a.jcc('e', l_ok)
+                a.jcc('e', l_type_ok)
                 self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, 'threadSleep expects an integer millisecond value')
                 self._emit_auto_errprop()
-                a.mark(l_ok)
+                a.jmp(l_done)
+                a.mark(l_type_ok)
                 a.sar_rax_imm8(3)
+                a.cmp_r64_imm('rax', 0)
+                a.jcc('l', l_bad_range)
+                a.cmp_r64_imm('rax', 0x7FFFFFFF)
+                a.jcc('g', l_bad_range)
                 a.mov_r32_r32('r12d', 'eax')
                 threaded_native = bool(getattr(self, 'native_threads_possible', True))
                 if threaded_native:
@@ -5259,6 +5276,13 @@ class CodegenExpr:
                 if threaded_native:
                     a.call('fn_gc_native_leave')
                 a.mov_rax_imm64(enc_void())
+                a.jmp(l_done)
+                a.mark(l_bad_range)
+                self._emit_make_error_const(
+                    ERR_CALL_NOT_CALLABLE,
+                    'threadSleep milliseconds must be in range 0..2147483647')
+                self._emit_auto_errprop()
+                a.mark(l_done)
                 return
 
             def _fn_uses_this(fn_node) -> bool:

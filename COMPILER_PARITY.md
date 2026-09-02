@@ -826,3 +826,29 @@ cd ..\MiniLangCompilerML
 The final expression must be `True`. Equality is guaranteed only when source
 contents, imported files, include-root order, compiler options and canonical
 source names are equivalent.
+
+## Synchronization and project-cache hardening (2026-09-01)
+
+The cross-compiler audit closed a Linux semaphore handoff race, made all
+portable millisecond timeouts reject values outside `0..2147483647`, and
+hardened the self-hosted project walker against linked-directory recursion.
+The standard-library trees are byte-identical (46/46 files), and both
+compilers emit the same Linux threading test image with SHA-256
+`6656188D58E0905494398EEA9F5F6ACCFDC7CD281D0F8ADE635A05ED69824683`.
+
+The Python suite passes 132/132. The self-hosted wrapper passes its 126/126
+inner tests plus every outer Windows/Linux, FFI, GC, SIMD, object-pipeline and
+byte-identity gate in 152.314 seconds. A 20,000-handoff Linux semaphore stress
+run completes without a lost or spurious release in 18.828 seconds.
+
+Self-hosting remains a byte-for-byte fixed point:
+
+| Compiler image | Build path | Seconds | Peak working set | Bytes | SHA-256 |
+| --- | --- | ---: | ---: | ---: | --- |
+| Stage 1 | Python compiler | 74.771 | not sampled | 66,446,848 | `7B364F4BD511119CC5CA421449EAD9B80C9F7C647F83B7A581C208E90C8EE15A` |
+| Stage 2 | Stage 1 | 148.891 | not sampled | 66,446,848 | `7B364F4BD511119CC5CA421449EAD9B80C9F7C647F83B7A581C208E90C8EE15A` |
+| Stage 3 | Stage 2 | 147.133 | 881.7 MiB | 66,446,848 | `7B364F4BD511119CC5CA421449EAD9B80C9F7C647F83B7A581C208E90C8EE15A` |
+
+The self-hosted MLO cache now reuses one 1 MiB hashing buffer. On a 49-object
+restore benchmark, measured in-loop heap growth falls from 61,981,440 to
+10,600,432 bytes, saving 51,381,008 bytes of transient allocation per pass.
