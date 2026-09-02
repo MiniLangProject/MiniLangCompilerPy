@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+//! Provides the std ds queue package.
+
 package std.ds.queue
 
 // ------------------------------------------------------------
@@ -24,11 +26,8 @@ package std.ds.queue
 // - Capacity grows by powers of two.
 // ------------------------------------------------------------
 
-/*
-allocates an array of length n filled with `fill`
-input: int n, any fill
-returns: array output
-*/
+/// Allocates an array of length n filled with `fill`
+/// @internal
 function _allocArray(n, fill)
   if typeof(n) != "int" then
     return
@@ -39,11 +38,8 @@ function _allocArray(n, fill)
   return array(n, fill)
 end function
 
-/*
-returns the next power-of-two capacity (minimum 8)
-input: int n
-returns: int capPow2
-*/
+/// Returns the next power-of-two capacity (minimum 8).
+/// @internal
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 8
@@ -58,68 +54,51 @@ function _nextPow2(n)
   return c
 end function
 
-// FIFO queue backed by a compacting growable array.
+/// FIFO queue backed by a compacting growable array.
 struct Queue
+  /// Stores the buf member of `Queue`.
   buf
+  /// Stores the head member of `Queue`.
   head
+  /// Stores the tail member of `Queue`.
   tail
+  /// Stores the size member of `Queue`.
   size
+  /// Stores the cap member of `Queue`.
   cap
 
-  /*
-  creates a new queue with default capacity
-  input: (none)
-  returns: Queue q
-  */
+  /// Creates a new queue with default capacity.
   static function new()
   return Queue.withCapacity(8)
 end function
 
-/*
-creates a new queue with at least `minCap` capacity
-input: int minCap
-returns: Queue q
-*/
+/// Creates a new queue with at least `minCap` capacity.
+/// @param minCap Value supplied for `minCap`.
 static function withCapacity(minCap)
 c = _nextPow2(minCap)
 b = _allocArray(c, 0)
 return Queue(b, 0, 0, 0, c)
 end function
 
-/*
-returns the number of elements
-input: (none)
-returns: int length
-*/
+/// Returns the number of elements.
 function len()
   return this.size
 end function
 
-/*
-checks whether the queue is empty
-input: (none)
-returns: bool empty
-*/
+/// Checks whether the queue is empty.
 function isEmpty()
   return this.size == 0
 end function
 
-/*
-removes all items (keeps capacity)
-input: (none)
-returns: void
-*/
+/// Removes all items (keeps capacity).
 function clear()
   this.head = 0
   this.tail = 0
   this.size = 0
 end function
 
-/*
-grows the internal buffer to at least `newCap`
-input: int newCap
-returns: void
-*/
+/// Grows the internal buffer to at least `newCap`
+/// @internal
 function _grow(newCap)
   c2 = _nextPow2(newCap)
   nb = _allocArray(c2, 0)
@@ -137,11 +116,8 @@ function _grow(newCap)
   this.cap = c2
 end function
 
-/*
-adds an element to the back of the queue
-input: any v
-returns: void
-*/
+/// Adds an element to the back of the queue.
+/// @param v Value supplied for `v`.
 function enqueue(v)
   if this.size == this.cap then
     this._grow(this.cap << 1)
@@ -152,11 +128,7 @@ function enqueue(v)
   this.size = this.size + 1
 end function
 
-/*
-returns the front element without removing it
-input: (none)
-returns: any value (or void if empty)
-*/
+/// Returns the front element without removing it.
 function peek()
   if this.size == 0 then
     return
@@ -164,11 +136,7 @@ function peek()
   return this.buf[this.head]
 end function
 
-/*
-removes and returns the front element
-input: (none)
-returns: any value (or void if empty)
-*/
+/// Removes and returns the front element.
 function dequeue()
   if this.size == 0 then
     return
@@ -183,11 +151,7 @@ function dequeue()
   return v
 end function
 
-/*
-returns a snapshot of the queue contents (front -> back)
-input: (none)
-returns: array values
-*/
+/// Returns a snapshot of the queue contents (front -> back).
 function toArray()
   output = array(this.size)
   if this.size == 0 then

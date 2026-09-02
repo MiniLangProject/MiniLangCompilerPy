@@ -14,26 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std fmt package.
+
 package std.fmt
 
 import std.string_builder as sb
 
 // Small allocation-conscious helpers for padding, centering and quoting text.
 
-/*
-repeats a string `ch` exactly `count` times
-input: string ch, int count
-returns: string repeated
-*/
+/// Repeats a string `ch` exactly `count` times.
+/// @param ch Value supplied for `ch`.
+/// @param count Number of items to process.
 function repeat(ch, count)
   return stringRepeat(ch, count)
 end function
 
-/*
-pads a string on the left to a desired width
-input: string s, int width, string ch
-returns: string padded
-*/
+/// Pads a string on the left to a desired width.
+/// @param s Value supplied for `s`.
+/// @param width Value supplied for `width`.
+/// @param ch Value supplied for `ch`.
 function padLeft(s, width, ch)
   if typeof(s) != "string" or typeof(width) != "int" or typeof(ch) != "string" then
     return
@@ -45,11 +44,10 @@ function padLeft(s, width, ch)
   return repeat(ch, n) + s
 end function
 
-/*
-pads a string on the right to a desired width
-input: string s, int width, string ch
-returns: string padded
-*/
+/// Pads a string on the right to a desired width.
+/// @param s Value supplied for `s`.
+/// @param width Value supplied for `width`.
+/// @param ch Value supplied for `ch`.
 function padRight(s, width, ch)
   if typeof(s) != "string" or typeof(width) != "int" or typeof(ch) != "string" then
     return
@@ -61,11 +59,10 @@ function padRight(s, width, ch)
   return s + repeat(ch, n)
 end function
 
-/*
-centers a string within a given width
-input: string s, int width, string ch
-returns: string centered
-*/
+/// Centers a string within a given width.
+/// @param s Value supplied for `s`.
+/// @param width Value supplied for `width`.
+/// @param ch Value supplied for `ch`.
 function center(s, width, ch)
   if typeof(s) != "string" or typeof(width) != "int" or typeof(ch) != "string" then
     return
@@ -82,11 +79,8 @@ function center(s, width, ch)
   return repeat(ch, left) + s + repeat(ch, right)
 end function
 
-/*
-returns a JSON-like quoted string with minimal escaping
-input: string s
-returns: string quoted
-*/
+/// Returns a JSON-like quoted string with minimal escaping.
+/// @param s Value supplied for `s`.
 function quote(s)
   // Escapes: \\  \"  \\n  \\r  \\t
   if typeof(s) != "string" then
@@ -130,11 +124,9 @@ function quote(s)
   return bld.toString()
 end function
 
-/*
-creates a horizontal line
-input: string ch, int width
-returns: string line
-*/
+/// Creates a horizontal line.
+/// @param ch Value supplied for `ch`.
+/// @param width Value supplied for `width`.
 function line(ch, width)
   if typeof(ch) != "string" or typeof(width) != "int" then
     return

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std string package.
+
 package std.string
 
 import std.string_builder as sb
@@ -31,22 +33,21 @@ import std.string_builder as sb
 // - The case/character helpers are ASCII-only (fast + predictable).
 // ------------------------------------------------------------
 
-/*
-checks whether a character is ASCII whitespace
-input: string ch (1 character)
-returns: bool isWhitespace
-*/
+/// Checks whether a character is ASCII whitespace.
+/// @internal
 function _isWhitespace(ch)
   // Keep it minimal + predictable (ASCII whitespace).
   return ch == " " or ch == "\t" or ch == "\n" or ch == "\r"
 end function
 
-// Recognize the ASCII whitespace set used by trim and blank checks.
+/// Recognize the ASCII whitespace set used by trim and blank checks.
+/// @internal
 function _isWhitespaceByte(v)
   return v == 32 or v == 9 or v == 10 or v == 13
 end function
 
-// Lowercase one ASCII byte without locale-dependent behavior.
+/// Lowercase one ASCII byte without locale-dependent behavior.
+/// @internal
 function _lowerAsciiByte(v)
   if v >= 65 and v <= 90 then
     return v + 32
@@ -54,7 +55,8 @@ function _lowerAsciiByte(v)
   return v
 end function
 
-// Uppercase one ASCII byte without locale-dependent behavior.
+/// Uppercase one ASCII byte without locale-dependent behavior.
+/// @internal
 function _upperAsciiByte(v)
   if v >= 97 and v <= 122 then
     return v - 32
@@ -62,7 +64,8 @@ function _upperAsciiByte(v)
   return v
 end function
 
-// Decode bytes and normalize failed/void results to an empty string.
+/// Decode bytes and normalize failed/void results to an empty string.
+/// @internal
 function _decodeOrEmpty(b)
   if typeof(b) != "bytes" then
     return
@@ -73,7 +76,8 @@ function _decodeOrEmpty(b)
   return decode(b)
 end function
 
-// Use direct scanning for short byte strings.
+/// Use direct scanning for short byte strings.
+/// @internal
 function _indexOfBytesNaive(hay, needle, start)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1
@@ -119,7 +123,8 @@ function _indexOfBytesNaive(hay, needle, start)
   return -1
 end function
 
-// Select the optimized forward substring search implementation.
+/// Select the optimized forward substring search implementation.
+/// @internal
 function _indexOfBytes(hay, needle, start)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1
@@ -190,7 +195,8 @@ function _indexOfBytes(hay, needle, start)
   return -1
 end function
 
-// Search backward for the final byte-string occurrence.
+/// Search backward for the final byte-string occurrence.
+/// @internal
 function _lastIndexOfBytes(hay, needle)
   if typeof(hay) != "bytes" or typeof(needle) != "bytes" then
     return -1
@@ -221,11 +227,8 @@ function _lastIndexOfBytes(hay, needle)
   return -1
 end function
 
-/*
-checks whether a string is empty
-input: string s
-returns: bool isEmpty
-*/
+/// Checks whether a string is empty.
+/// @param s Value supplied for `s`.
 function isEmpty(s)
   if typeof(s) != "string" then
     return false
@@ -233,47 +236,39 @@ function isEmpty(s)
   return len(s) == 0
 end function
 
-/*
-repeats a string count times
-input: string s, int count
-returns: string repeated
-*/
+/// Repeats a string count times.
+/// @param s Value supplied for `s`.
+/// @param count Number of items to process.
 function repeat(s, count)
   return stringRepeat(s, count)
 end function
 
-/*
-returns a substring of s
-input: string s, int start, int length
-returns: string substring
-*/
+/// Returns a substring of s.
+/// @param s Value supplied for `s`.
+/// @param start Value supplied for `start`.
+/// @param length Number of elements or bytes to process.
 function substr(s, start, length)
   return stringSlice(s, start, length)
 end function
 
-/*
-checks whether s starts with prefix
-input: string s, string prefix
-returns: bool startsWith
-*/
+/// Checks whether s starts with prefix.
+/// @param s Value supplied for `s`.
+/// @param prefix Value supplied for `prefix`.
 function startsWith(s, prefix)
   return stringStartsWith(s, prefix)
 end function
 
-/*
-checks whether s ends with suffix
-input: string s, string suffix
-returns: bool endsWith
-*/
+/// Checks whether s ends with suffix.
+/// @param s Value supplied for `s`.
+/// @param suffix Value supplied for `suffix`.
 function endsWith(s, suffix)
   return stringEndsWith(s, suffix)
 end function
 
-/*
-finds needle in s starting from start
-input: string s, string needle, int start
-returns: int index (>=0) or -1 if not found
-*/
+/// Finds needle in s starting from start.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
+/// @param start Value supplied for `start`.
 function indexOf(s, needle, start)
   if typeof(s) != "string" then
     return
@@ -287,11 +282,9 @@ function indexOf(s, needle, start)
   return stringIndexOf(s, needle, start)
 end function
 
-/*
-finds the last occurrence of needle in s
-input: string s, string needle
-returns: int index (>=0) or -1 if not found
-*/
+/// Finds the last occurrence of needle in s.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
 function lastIndexOf(s, needle)
   if typeof(s) != "string" then
     return
@@ -302,11 +295,9 @@ function lastIndexOf(s, needle)
   return stringLastIndexOf(s, needle)
 end function
 
-/*
-checks whether s contains needle
-input: string s, string needle
-returns: bool contains
-*/
+/// Checks whether s contains needle.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
 function contains(s, needle)
   idx = stringIndexOf(s, needle, 0)
   if typeof(idx) == "void" then
@@ -315,47 +306,33 @@ function contains(s, needle)
   return idx >= 0
 end function
 
-/*
-trims ASCII whitespace on the left
-input: string s
-returns: string trimmed
-*/
+/// Trims ASCII whitespace on the left.
+/// @param s Value supplied for `s`.
 function ltrim(s)
   return stringTrimLeftAscii(s)
 end function
 
-/*
-trims ASCII whitespace on the right
-input: string s
-returns: string trimmed
-*/
+/// Trims ASCII whitespace on the right.
+/// @param s Value supplied for `s`.
 function rtrim(s)
   return stringTrimRightAscii(s)
 end function
 
-/*
-trims ASCII whitespace on both sides
-input: string s
-returns: string trimmed
-*/
+/// Trims ASCII whitespace on both sides.
+/// @param s Value supplied for `s`.
 function trim(s)
   return stringTrimAscii(s)
 end function
 
-/*
-checks whether a string is blank (empty after trim)
-input: string s
-returns: bool isBlank
-*/
+/// Checks whether a string is blank (empty after trim).
+/// @param s Value supplied for `s`.
 function isBlank(s)
   return stringIsBlankAscii(s)
 end function
 
-/*
-splits a string by a separator
-input: string s, string sep
-returns: array<string> parts
-*/
+/// Splits a string by a separator.
+/// @param s Value supplied for `s`.
+/// @param sep Value supplied for `sep`.
 function split(s, sep)
   if typeof(s) != "string" then
     return
@@ -405,20 +382,17 @@ function split(s, sep)
   return val
 end function
 
-/*
-joins string parts with a separator
-input: array<string> parts, string sep
-returns: string joined
-*/
+/// Joins string parts with a separator.
+/// @param parts Value supplied for `parts`.
+/// @param sep Value supplied for `sep`.
 function join(parts, sep)
   return stringJoin(parts, sep)
 end function
 
-/*
-replaces all occurrences of needle with repl
-input: string s, string needle, string repl
-returns: string replaced
-*/
+/// Replaces all occurrences of needle with repl.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
+/// @param repl Value supplied for `repl`.
 function replaceAll(s, needle, repl)
   if typeof(s) != "string" then
     return
@@ -465,11 +439,10 @@ function replaceAll(s, needle, repl)
   return bld.toString()
 end function
 
-/*
-replaces the first occurrence of needle with repl
-input: string s, string needle, string repl
-returns: string replaced
-*/
+/// Replaces the first occurrence of needle with repl.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
+/// @param repl Value supplied for `repl`.
 function replaceFirst(s, needle, repl)
   if typeof(s) != "string" then
     return
@@ -510,11 +483,9 @@ function replaceFirst(s, needle, repl)
   return bld.toString()
 end function
 
-/*
-counts non-overlapping occurrences of needle in s
-input: string s, string needle
-returns: int count
-*/
+/// Counts non-overlapping occurrences of needle in s.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
 function countOf(s, needle)
   if typeof(s) != "string" then
     return
@@ -543,20 +514,15 @@ function countOf(s, needle)
   return count
 end function
 
-/*
-removes all occurrences of needle from s
-input: string s, string needle
-returns: string result
-*/
+/// Removes all occurrences of needle from s.
+/// @param s Value supplied for `s`.
+/// @param needle Value supplied for `needle`.
 function removeAll(s, needle)
   return std.string.replaceAll(s, needle, "")
 end function
 
-/*
-reverses a string
-input: string s
-returns: string reversed
-*/
+/// Reverses a string.
+/// @param s Value supplied for `s`.
 function reverse(s)
   return stringReverse(s)
 end function
@@ -565,11 +531,8 @@ end function
 // ASCII character helpers
 // ------------------------------------------------------------
 
-/*
-checks whether a character is an ASCII digit
-input: string ch (1 character)
-returns: bool isDigit
-*/
+/// Checks whether a character is an ASCII digit.
+/// @param ch Value supplied for `ch`.
 function isDigitAscii(ch)
   if typeof(ch) != "string" then
     return false
@@ -580,11 +543,8 @@ function isDigitAscii(ch)
   return ch >= "0" and ch <= "9"
 end function
 
-/*
-checks whether a character is an ASCII letter (A-Z or a-z)
-input: string ch (1 character)
-returns: bool isAlpha
-*/
+/// Checks whether a character is an ASCII letter (A-Z or a-z).
+/// @param ch Value supplied for `ch`.
 function isAlphaAscii(ch)
   if typeof(ch) != "string" then
     return false
@@ -595,38 +555,27 @@ function isAlphaAscii(ch)
   return (ch >= "A" and ch <= "Z") or(ch >= "a" and ch <= "z")
 end function
 
-/*
-checks whether a character is ASCII alphanumeric
-input: string ch (1 character)
-returns: bool isAlnum
-*/
+/// Checks whether a character is ASCII alphanumeric.
+/// @param ch Value supplied for `ch`.
 function isAlnumAscii(ch)
   return std.string.isAlphaAscii(ch) or std.string.isDigitAscii(ch)
 end function
 
-/*
-converts a string to lowercase (ASCII)
-input: string s
-returns: string lower
-*/
+/// Converts a string to lowercase (ASCII).
+/// @param s Value supplied for `s`.
 function toLowerAscii(s)
   return stringToLowerAscii(s)
 end function
 
-/*
-converts a string to uppercase (ASCII)
-input: string s
-returns: string upper
-*/
+/// Converts a string to uppercase (ASCII).
+/// @param s Value supplied for `s`.
 function toUpperAscii(s)
   return stringToUpperAscii(s)
 end function
 
-/*
-compares two strings case-insensitively (ASCII)
-input: string a, string b
-returns: bool equalsIgnoreCase
-*/
+/// Compares two strings case-insensitively (ASCII).
+/// @param a First input value.
+/// @param b Second input value.
 function equalsIgnoreCaseAscii(a, b)
   return stringEqualsIgnoreCaseAscii(a, b)
 end function

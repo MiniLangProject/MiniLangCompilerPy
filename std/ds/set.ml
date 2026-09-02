@@ -14,100 +14,62 @@
    limitations under the License.
 */
 
+//! Provides the std ds set package.
+
 package std.ds.set
 
 import std.ds.hashmap as hm
 
-// ------------------------------------------------------------
-// std.ds.set
-// Simple set built on top of std.ds.hashmap.HashMap.
-//
-// Supported key types are the same as the underlying HashMap:
-// - int
-// - bytes
-// - string
-// ------------------------------------------------------------
-
+/// Std.ds.set Simple set built on top of std.ds.hashmap.HashMap. Supported key types are the same as the underlying HashMap: - int - bytes - string.
 struct HashSet
+  /// Stores the map member of `HashSet`.
   map
 
-  /*
-  creates a new empty hash set
-  input: (none)
-  returns: HashSet set
-  */
+  /// Creates a new empty hash set.
   static function new()
   return HashSet(hm.HashMap.new())
 end function
 
-/*
-returns the number of elements
-input: (none)
-returns: int length
-*/
+/// Returns the number of elements.
 function len()
   return this.map.count()
 end function
 
-/*
-checks whether the set is empty
-input: (none)
-returns: bool empty
-*/
+/// Checks whether the set is empty.
 function isEmpty()
   return this.map.isEmpty()
 end function
 
-/*
-removes all elements
-input: (none)
-returns: void
-*/
+/// Removes all elements.
 function clear()
   this.map.clear()
 end function
 
-/*
-adds a key to the set
- input: int|bytes|string key
-returns: bool ok
-*/
+/// Adds a key to the set.
+/// @param key Value supplied for `key`.
 function add(key)
   return this.map.set(key, true)
 end function
 
-/*
-checks whether the set contains a key
- input: int|bytes|string key
-returns: bool present
-*/
+/// Checks whether the set contains a key.
+/// @param key Value supplied for `key`.
 function has(key)
   return this.map.has(key)
 end function
 
-/*
-removes a key from the set
- input: int|bytes|string key
-returns: bool removed
-*/
+/// Removes a key from the set.
+/// @param key Value supplied for `key`.
 function remove(key)
   return this.map.remove(key)
 end function
 
-/*
-alias for remove(key) to match common naming in the stdlib/tests
- input: int|bytes|string key
-returns: bool removed
-*/
+/// Alias for remove(key) to match common naming in the stdlib/tests.
+/// @param key Value supplied for `key`.
 function delete(key)
   return this.remove(key)
 end function
 
-/*
-returns an array of all keys (order is unspecified)
-input: (none)
-returns: array keys
-*/
+/// Returns an array of all keys (order is unspecified).
 function keysArray()
   return this.map.keysArray()
 end function

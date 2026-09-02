@@ -1,0 +1,36 @@
+[project]
+name = "MiniLang Standard Library"
+description = "Cross-platform standard-library API shared by both MiniLang compiler implementations."
+entry = "std/core.ml"
+source_roots = ["std"]
+include = ["."]
+exclude = ["build", "docs/api"]
+target = "windows-x64"
+
+[documentation]
+include_internal = false
+reachable_only = false
+strict = true
+dependencies = "none"
+contract_warnings = "public"
+summary_quality_warnings = "public"
+duplicate_summary_threshold = 3
+page_granularity = "container"
+
+[output]
+formats = ["html", "markdown"]
+html_dir = "docs/api/std/html"
+markdown_dir = "docs/api/std/markdown"
+markdown_profile = "repository"
+
+[graphs]
+imports = true
+calls = true
+types = true
+format = "svg"
+max_nodes = 300
+granularity = "package"
+hide_empty = true
+
+[links]
+revision = "shared-stdlib-1.2.1"

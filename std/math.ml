@@ -14,25 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std math package.
+
 package std.math
 
 // Numeric predicates, integer helpers and native transcendental functions.
 
-/*
-checks whether a value is a numeric type
-input: any x
-returns: bool isNumber
-*/
+/// Checks whether a value is a numeric type.
+/// @param x Value supplied for `x`.
 function isNumber(x)
   t = typeof(x)
   return t == "int" or t == "float"
 end function
 
-/*
-absolute value
-input: int|float x
-returns: int|float absX (void on type mismatch)
-*/
+/// Absolute value.
+/// @param x Value supplied for `x`.
 function abs(x)
   if not std.math.isNumber(x) then
     return
@@ -43,11 +39,8 @@ function abs(x)
   return x
 end function
 
-/*
-sign of a number
-input: int|float x
-returns: int sign (-1, 0, 1) (void on type mismatch)
-*/
+/// Sign of a number.
+/// @param x Value supplied for `x`.
 function sign(x)
   if not std.math.isNumber(x) then
     return
@@ -61,11 +54,10 @@ function sign(x)
   return 0
 end function
 
-/*
-clamp a number to [lo, hi]
-input: int|float x, int|float lo, int|float hi
-returns: int|float clamped
-*/
+/// Clamp a number to [lo, hi].
+/// @param x Value supplied for `x`.
+/// @param lo Value supplied for `lo`.
+/// @param hi Value supplied for `hi`.
 function clamp(x, lo, hi)
   if x < lo then
     return lo
@@ -76,11 +68,9 @@ function clamp(x, lo, hi)
   return x
 end function
 
-/*
-minimum of two values
-input: comparable a, comparable b
-returns: comparable minValue
-*/
+/// Minimum of two values.
+/// @param a First input value.
+/// @param b Second input value.
 function min(a, b)
   if a < b then
     return a
@@ -88,11 +78,9 @@ function min(a, b)
   return b
 end function
 
-/*
-maximum of two values
-input: comparable a, comparable b
-returns: comparable maxValue
-*/
+/// Maximum of two values.
+/// @param a First input value.
+/// @param b Second input value.
 function max(a, b)
   if a > b then
     return a
@@ -100,11 +88,8 @@ function max(a, b)
   return b
 end function
 
-/*
-floor(x) -> integer-valued number
-input: int|float x
-returns: int if x is int, otherwise a float with an integer value
-*/
+/// Floor(x) -> integer-valued number.
+/// @param x Value supplied for `x`.
 function floor(x)
   // Fast path for int
   if typeof(x) == "int" then
@@ -123,11 +108,8 @@ function floor(x)
   return (x - r) - 1
 end function
 
-/*
-ceil(x) -> integer-valued number
-input: int|float x
-returns: int if x is int, otherwise a float with an integer value
-*/
+/// Ceil(x) -> integer-valued number.
+/// @param x Value supplied for `x`.
 function ceil(x)
   if typeof(x) == "int" then
     return x
@@ -139,11 +121,8 @@ function ceil(x)
   return f + 1
 end function
 
-/*
-truncates towards 0
-input: int|float x
-returns: int if x is int, otherwise a float with an integer value
-*/
+/// Truncates towards 0.
+/// @param x Value supplied for `x`.
 function trunc(x)
   if typeof(x) == "int" then
     return x
@@ -155,11 +134,8 @@ function trunc(x)
   return 0 -(0 - x -((0 - x) % 1))
 end function
 
-/*
-rounds to the nearest integer (half away from zero)
-input: int|float x
-returns: int if x is int, otherwise a float with an integer value
-*/
+/// Rounds to the nearest integer (half away from zero).
+/// @param x Value supplied for `x`.
 function round(x)
   if typeof(x) == "int" then
     return x
@@ -170,47 +146,30 @@ function round(x)
   return std.math.ceil(x - 0.5)
 end function
 
-/*
-mathematical constant pi
-input: none
-returns: float pi
-*/
+/// Mathematical constant pi.
 function pi()
   return 3.141592653589793
 end function
 
-/*
-mathematical constant tau (2*pi)
-input: none
-returns: float tau
-*/
+/// Mathematical constant tau (2*pi).
 function tau()
   return 2.0 * std.math.pi()
 end function
 
-/*
-converts degrees to radians
-input: int|float deg
-returns: float rad
-*/
+/// Converts degrees to radians.
+/// @param deg Value supplied for `deg`.
 function degToRad(deg)
   return deg *(std.math.pi() / 180.0)
 end function
 
-/*
-converts radians to degrees
-input: int|float rad
-returns: float deg
-*/
+/// Converts radians to degrees.
+/// @param rad Value supplied for `rad`.
 function radToDeg(rad)
   return rad *(180.0 / std.math.pi())
 end function
 
-/*
-square root (Newton iteration)
-input: int|float x
-returns: float sqrtX (0.0 for x<=0)
-*/
+/// Square root (Newton iteration).
+/// @param x Value supplied for `x`.
 function sqrt(x)
   if x <= 0 then
     return 0.0
@@ -235,11 +194,9 @@ function sqrt(x)
   return g
 end function
 
-/*
-integer power (exponentiation by squaring)
-input: int|float base, int exp
-returns: int|float base^exp (void on type mismatch)
-*/
+/// Integer power (exponentiation by squaring).
+/// @param base Value supplied for `base`.
+/// @param exp Value supplied for `exp`.
 function powi(base, exp)
   if typeof(exp) != "int" then
     return
@@ -277,11 +234,9 @@ function powi(base, exp)
   return result
 end function
 
-/*
-greatest common divisor (Euclidean algorithm)
-input: int a, int b
-returns: int gcd (void on type mismatch)
-*/
+/// Greatest common divisor (Euclidean algorithm).
+/// @param a First input value.
+/// @param b Second input value.
 function gcd(a, b)
   if typeof(a) != "int" or typeof(b) != "int" then
     return
@@ -298,11 +253,9 @@ function gcd(a, b)
   return a
 end function
 
-/*
-least common multiple
-input: int a, int b
-returns: int lcm (void on type mismatch)
-*/
+/// Least common multiple.
+/// @param a First input value.
+/// @param b Second input value.
 function lcm(a, b)
   if typeof(a) != "int" or typeof(b) != "int" then
     return
@@ -321,11 +274,8 @@ function lcm(a, b)
   return prod / g
 end function
 
-/*
-internal: range reduce to (-pi, pi]
-input: float x
-returns: float y in (-pi, pi]
-*/
+/// Internal: range reduce to (-pi, pi].
+/// @internal
 function _wrapPi(x)
   p = std.math.pi()
   twoPi = 2.0 * p
@@ -338,11 +288,8 @@ function _wrapPi(x)
   return v
 end function
 
-/*
-sine (fast approximation)
-input: int|float x (radians)
-returns: float sin(x)
-*/
+/// Sine (fast approximation).
+/// @param x Value supplied for `x`.
 function sin(x)
   v = std.math._wrapPi(x)
 
@@ -370,11 +317,8 @@ function sin(x)
   return sgn * r
 end function
 
-/*
-cosine (fast approximation)
-input: int|float x (radians)
-returns: float cos(x)
-*/
+/// Cosine (fast approximation).
+/// @param x Value supplied for `x`.
 function cos(x)
   v = std.math._wrapPi(x)
 
@@ -401,11 +345,8 @@ function cos(x)
   return negate * r
 end function
 
-/*
-tangent (sin/cos)
-input: int|float x (radians)
-returns: float tan(x)
-*/
+/// Tangent (sin/cos).
+/// @param x Value supplied for `x`.
 function tan(x)
   c = std.math.cos(x)
   if std.math.abs(c) < 0.0000001 then
@@ -418,11 +359,8 @@ function tan(x)
   return std.math.sin(x) / c
 end function
 
-/*
-arctangent (fast approximation)
-input: int|float x
-returns: float atan(x) (radians)
-*/
+/// Arctangent (fast approximation).
+/// @param x Value supplied for `x`.
 function atan(x)
   ax = std.math.abs(x)
   s = 1.0
@@ -445,11 +383,9 @@ function atan(x)
   return s *(halfPi - r)
 end function
 
-/*
-arctangent with quadrant handling
-input: int|float y, int|float x
-returns: float atan2(y, x) (radians)
-*/
+/// Arctangent with quadrant handling.
+/// @param y Value supplied for `y`.
+/// @param x Value supplied for `x`.
 function atan2(y, x)
   if x > 0 then
     return std.math.atan(y / x)
@@ -474,47 +410,30 @@ function atan2(y, x)
   return 0.0
 end function
 
-/*
-hypotenuse: sqrt(x*x + y*y)
-input: int|float x, int|float y
-returns: float hypot
-*/
+/// Hypotenuse: sqrt(x*x + y*y).
+/// @param x Value supplied for `x`.
+/// @param y Value supplied for `y`.
 function hypot(x, y)
   return std.math.sqrt((x * x) +(y * y))
 end function
 
-/*
-mathematical constant e
-input: none
-returns: float e
-*/
+/// Mathematical constant e.
 function e()
   return 2.718281828459045
 end function
 
-/*
-natural logarithm of 2
-input: none
-returns: float ln2
-*/
+/// Natural logarithm of 2.
 function ln2()
   return 0.6931471805599453
 end function
 
-/*
-natural logarithm of 10
-input: none
-returns: float ln10
-*/
+/// Natural logarithm of 10.
 function ln10()
   return 2.302585092994046
 end function
 
-/*
-checks whether a numeric value is an integer value
-input: int|float x
-returns: bool isIntegerValue
-*/
+/// Checks whether a numeric value is an integer value.
+/// @param x Value supplied for `x`.
 function isIntValue(x)
   if typeof(x) == "int" then
     return true
@@ -525,11 +444,8 @@ function isIntValue(x)
   return x == std.math.floor(x)
 end function
 
-/*
-exponential function exp(x)
-input: int|float x
-returns: float expX
-*/
+/// Exponential function exp(x).
+/// @param x Value supplied for `x`.
 function exp(x)
   // Range reduction: x = k*ln2 + r, r in [-ln2/2, ln2/2]
   ln2v = std.math.ln2()
@@ -550,11 +466,8 @@ function exp(x)
   return er * std.math.powi(2.0, k)
 end function
 
-/*
-expm1(x) = exp(x) - 1, with good accuracy near 0
-input: int|float x
-returns: float expXminus1
-*/
+/// Expm1(x) = exp(x) - 1, with good accuracy near 0.
+/// @param x Value supplied for `x`.
 function expm1(x)
   ax = std.math.abs(x)
   if ax < 0.000001 then
@@ -566,11 +479,8 @@ function expm1(x)
   return std.math.exp(x) - 1.0
 end function
 
-/*
-natural logarithm ln(x)
-input: int|float x
-returns: float lnX (void if x <= 0)
-*/
+/// Natural logarithm ln(x).
+/// @param x Value supplied for `x`.
 function ln(x)
   if x <= 0 then
     return
@@ -604,11 +514,8 @@ function ln(x)
   return r + ln_v
 end function
 
-/*
-ln1p(x) = ln(1+x), with good accuracy near 0
-input: int|float x
-returns: float ln1p
-*/
+/// Ln1p(x) = ln(1+x), with good accuracy near 0.
+/// @param x Value supplied for `x`.
 function ln1p(x)
   ax = std.math.abs(x)
   if ax < 0.000001 then
@@ -620,29 +527,21 @@ function ln1p(x)
   return std.math.ln(1.0 + x)
 end function
 
-/*
-base-10 logarithm log10(x)
-input: int|float x
-returns: float log10X (void if x <= 0)
-*/
+/// Base-10 logarithm log10(x).
+/// @param x Value supplied for `x`.
 function log10(x)
   return std.math.ln(x) / std.math.ln10()
 end function
 
-/*
-base-2 logarithm log2(x)
-input: int|float x
-returns: float log2X (void if x <= 0)
-*/
+/// Base-2 logarithm log2(x).
+/// @param x Value supplied for `x`.
 function log2(x)
   return std.math.ln(x) / std.math.ln2()
 end function
 
-/*
-pow(base, exponent)
-input: int|float base, int|float exponent
-returns: float powResult (void for unsupported cases)
-*/
+/// Pow(base, exponent).
+/// @param base Value supplied for `base`.
+/// @param exponent Value supplied for `exponent`.
 function pow(base, exponent)
   // Integer exponent -> use fast powi
   if typeof(exponent) == "int" then
@@ -671,11 +570,8 @@ function pow(base, exponent)
   return std.math.exp(exponent * std.math.ln(base))
 end function
 
-/*
-inverse square root 1/sqrt(x)
-input: int|float x
-returns: float invSqrt (0.0 for x<=0)
-*/
+/// Inverse square root 1/sqrt(x).
+/// @param x Value supplied for `x`.
 function invSqrt(x)
   s = std.math.sqrt(x)
   if s == 0.0 then
@@ -684,82 +580,62 @@ function invSqrt(x)
   return 1.0 / s
 end function
 
-/*
-arcsine asin(x)
-input: int|float x (expected in [-1,1])
-returns: float asin(x) (radians)
-*/
+/// Arcsine asin(x).
+/// @param x Value supplied for `x`.
 function asin(x)
   v = std.math.clamp(x, -1.0, 1.0)
   return std.math.atan2(v, std.math.sqrt(1.0 -(v * v)))
 end function
 
-/*
-arccosine acos(x)
-input: int|float x (expected in [-1,1])
-returns: float acos(x) (radians)
-*/
+/// Arccosine acos(x).
+/// @param x Value supplied for `x`.
 function acos(x)
   v = std.math.clamp(x, -1.0, 1.0)
   return std.math.atan2(std.math.sqrt(1.0 -(v * v)), v)
 end function
 
-/*
-hyperbolic sine sinh(x)
-input: int|float x
-returns: float sinh(x)
-*/
+/// Hyperbolic sine sinh(x).
+/// @param x Value supplied for `x`.
 function sinh(x)
   ex = std.math.exp(x)
   emx = 1.0 / ex
   return 0.5 *(ex - emx)
 end function
 
-/*
-hyperbolic cosine cosh(x)
-input: int|float x
-returns: float cosh(x)
-*/
+/// Hyperbolic cosine cosh(x).
+/// @param x Value supplied for `x`.
 function cosh(x)
   ex = std.math.exp(x)
   emx = 1.0 / ex
   return 0.5 *(ex + emx)
 end function
 
-/*
-hyperbolic tangent tanh(x)
-input: int|float x
-returns: float tanh(x)
-*/
+/// Hyperbolic tangent tanh(x).
+/// @param x Value supplied for `x`.
 function tanh(x)
   ex = std.math.exp(x)
   emx = 1.0 / ex
   return (ex - emx) /(ex + emx)
 end function
 
-/*
-fractional part of x
-input: int|float x
-returns: float frac in [0,1) for x>=0, in (-1,0] for x<0
-*/
+/// Fractional part of x.
+/// @param x Value supplied for `x`.
 function fract(x)
   return x - std.math.trunc(x)
 end function
 
-/*
-linear interpolation
-input: int|float a, int|float b, float t
-returns: float lerpValue
-*/
+/// Linear interpolation.
+/// @param a First input value.
+/// @param b Second input value.
+/// @param t Value supplied for `t`.
 function lerp(a, b, t)
   return a +((b - a) * t)
 end function
 
-/*
-smoothstep interpolation (Hermite)
-input: float edge0, float edge1, float x
-returns: float y in [0,1]
-*/
+/// Smoothstep interpolation (Hermite).
+/// @param edge0 Value supplied for `edge0`.
+/// @param edge1 Value supplied for `edge1`.
+/// @param x Value supplied for `x`.
 function smoothstep(edge0, edge1, x)
   if edge0 == edge1 then
     return 0.0

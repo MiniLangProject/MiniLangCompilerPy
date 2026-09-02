@@ -99,7 +99,7 @@ KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "fals
             "out", "static", "inline", "synchronized", "void", "is", "defer", "interface", "implements",
             "iterator", "yield", "async", "await",}
 
-TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTLINE", r"//.*"),
+TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTDOC", r"///.*"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
               ("IDENT", r"[A-Za-z_][A-Za-z0-9_]*"), ("ELLIPSIS", r"\.\.\."), ("SAFEDOT", r"\?\."),
               ("OP", r"=>|\?\?|==|!=|>=|<=|<<|>>|[+\-*/%=<>&|^~>]"),
@@ -133,7 +133,10 @@ def tokenize(code: str) -> List[Token]:
         kind = m.lastgroup
         text = m.group()
 
-        if kind in ("SKIP", "COMMENTLINE"):
+        # Declaration comments are deliberately not part of the executable AST.
+        # MiniDoc reads them from the original source while compilation treats
+        # them exactly like ordinary line comments.
+        if kind in ("SKIP", "COMMENTDOC", "COMMENTLINE"):
             pass
 
         elif kind == "COMMENTBLOCK":
@@ -2760,7 +2763,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.2.0",
+    "MINILANG_VERSION": "1.2.1",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

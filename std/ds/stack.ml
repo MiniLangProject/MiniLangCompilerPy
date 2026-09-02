@@ -14,25 +14,16 @@
    limitations under the License.
 */
 
+//! Provides the std ds stack package.
+
 package std.ds.stack
 
-/*
-std.ds.stack
-
-Simple LIFO stack implemented with an internal growable buffer.
-
-Notes:
-- push/pop are amortized O(1).
-- Methods keep compatibility with legacy Stack([...]) constructor payloads.
-*/
-
+/// Std.ds.stack Simple LIFO stack implemented with an internal growable buffer. Notes: - push/pop are amortized O(1). - Methods keep compatibility with legacy Stack([...]) constructor payloads.
+/// @internal
 const _STATE_TAG = "__std.ds.stack.v2__"
 
-/*
-allocates an array of length n filled with `fill`
-input: int n, any fill
-returns: array output (or void on invalid input)
-*/
+/// Allocates an array of length n filled with `fill`
+/// @internal
 function _allocArray(n, fill)
   if typeof(n) != "int" then
     return
@@ -43,11 +34,8 @@ function _allocArray(n, fill)
   return array(n, fill)
 end function
 
-/*
-returns the next power-of-two capacity (minimum 8)
-input: int n
-returns: int capPow2
-*/
+/// Returns the next power-of-two capacity (minimum 8).
+/// @internal
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 8
@@ -62,10 +50,8 @@ function _nextPow2(n)
   return c
 end function
 
-/*
-checks whether data is a valid v2 stack state
-shape: [buf(array), size(int), cap(int), tag]
-*/
+/// Checks whether data is a valid v2 stack state shape: [buf(array), size(int), cap(int), tag].
+/// @internal
 function _isState(data)
   if typeof(data) != "array" then
     return false
@@ -100,21 +86,15 @@ function _isState(data)
   return true
 end function
 
-/*
-creates a new internal stack state with at least minCap capacity
-input: int minCap
-returns: array state
-*/
+/// Creates a new internal stack state with at least minCap capacity.
+/// @internal
 function _newState(minCap)
   cap = _nextPow2(minCap)
   return [_allocArray(cap, 0), 0, cap, _STATE_TAG]
 end function
 
-/*
-creates stack state from a legacy flat array payload
-input: array values
-returns: array state
-*/
+/// Creates stack state from a legacy flat array payload.
+/// @internal
 function _stateFromArray(values)
   if typeof(values) != "array" then
     return _newState(8)
@@ -135,33 +115,24 @@ function _stateFromArray(values)
   return st
 end function
 
-// LIFO stack with geometric backing-array growth.
+/// LIFO stack with geometric backing-array growth.
 struct Stack
+  /// Stores the data member of `Stack`.
   data
 
-  /*
-  creates a new empty stack
-  input: (none)
-  returns: Stack emptyStack
-  */
+  /// Creates a new empty stack.
   static function new()
   return std.ds.stack.Stack(_newState(8))
 end function
 
-/*
-creates a stack from an array (copies the array)
-input: array values
-returns: Stack stack
-*/
+/// Creates a stack from an array (copies the array).
+/// @param values Values to process.
 static function fromArray(values)
 return std.ds.stack.Stack(_stateFromArray(values))
 end function
 
-/*
-ensures that this.data is in internal v2 state form
-input: (none)
-returns: array state
-*/
+/// Ensures that this.data is in internal v2 state form.
+/// @internal
 function _ensureState()
   if _isState(this.data) then
     return this.data
@@ -170,11 +141,8 @@ function _ensureState()
   return this.data
 end function
 
-/*
-grows internal capacity to at least minCap
-input: int minCap
-returns: void
-*/
+/// Grows internal capacity to at least minCap.
+/// @internal
 function _grow(minCap)
   st = this._ensureState()
   oldCap = st[2]
@@ -195,31 +163,19 @@ function _grow(minCap)
   this.data = st
 end function
 
-/*
-gets the number of elements
-input: (none)
-returns: int count
-*/
+/// Gets the number of elements.
 function len()
   st = this._ensureState()
   return st[1]
 end function
 
-/*
-checks whether the stack is empty
-input: (none)
-returns: bool empty
-*/
+/// Checks whether the stack is empty.
 function isEmpty()
   st = this._ensureState()
   return st[1] == 0
 end function
 
-/*
-removes all elements
-input: (none)
-returns: void
-*/
+/// Removes all elements.
 function clear()
   st = this._ensureState()
   cap = st[2]
@@ -228,11 +184,8 @@ function clear()
   this.data = st
 end function
 
-/*
-pushes a value onto the stack
-input: any value
-returns: void
-*/
+/// Pushes a value onto the stack.
+/// @param value Value to process.
 function push(value)
   st = this._ensureState()
   n = st[1]
@@ -249,11 +202,8 @@ function push(value)
   this.data = st
 end function
 
-/*
-pushes all values from an array onto the stack (in order)
-input: array values
-returns: void
-*/
+/// Pushes all values from an array onto the stack (in order).
+/// @param values Values to process.
 function pushAll(values)
   if typeof(values) != "array" then
     return
@@ -282,11 +232,7 @@ function pushAll(values)
   this.data = st
 end function
 
-/*
-peeks the top element without removing it
-input: (none)
-returns: any topValue (or void if empty)
-*/
+/// Peeks the top element without removing it.
 function peek()
   st = this._ensureState()
   n = st[1]
@@ -297,11 +243,8 @@ function peek()
   return buf[n - 1]
 end function
 
-/*
-peeks the top element or returns a fallback
-input: any fallbackValue
-returns: any topOrFallback
-*/
+/// Peeks the top element or returns a fallback.
+/// @param fallbackValue Value supplied for `fallbackValue`.
 function peekOr(fallbackValue)
   v = this.peek()
   if typeof(v) == "void" then
@@ -310,11 +253,7 @@ function peekOr(fallbackValue)
   return v
 end function
 
-/*
-pops the top element and returns it
-input: (none)
-returns: any poppedValue (or void if empty)
-*/
+/// Pops the top element and returns it.
 function pop()
   st = this._ensureState()
   n = st[1]
@@ -332,11 +271,8 @@ function pop()
   return v
 end function
 
-/*
-pops the top element or returns a fallback
-input: any fallbackValue
-returns: any poppedOrFallback
-*/
+/// Pops the top element or returns a fallback.
+/// @param fallbackValue Value supplied for `fallbackValue`.
 function popOr(fallbackValue)
   v = this.pop()
   if typeof(v) == "void" then
@@ -345,11 +281,7 @@ function popOr(fallbackValue)
   return v
 end function
 
-/*
-returns a shallow copy of the backing array
-input: (none)
-returns: array values
-*/
+/// Returns a shallow copy of the backing array.
 function toArray()
   st = this._ensureState()
   n = st[1]

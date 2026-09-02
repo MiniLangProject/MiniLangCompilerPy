@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std fs package.
+
 package std.fs
 
 // Portable high-level filesystem API. The target-specific implementations use
@@ -21,29 +23,71 @@ package std.fs
 #if TARGET_OS == "linux"
 import std._linux_fs as linuxfs
 
+/// Implements fs err.
+/// @internal
 function _fsErr(msg) return error(1, msg) end function
+/// Implements exists.
+/// @param path Path to operate on.
 function exists(path) return linuxfs.exists(path) end function
+/// Reports whether is dir.
+/// @param path Path to operate on.
 function isDir(path) return linuxfs.isDir(path) end function
+/// Reports whether is file.
+/// @param path Path to operate on.
 function isFile(path) return linuxfs.isFile(path) end function
+/// Implements join path.
+/// @param base Value supplied for `base`.
+/// @param name Name of the requested item.
 function joinPath(base, name) return linuxfs.joinPath(base, name) end function
+/// Implements list dir.
+/// @param path Path to operate on.
 function listDir(path) return linuxfs.listDir(path) end function
+/// Releases or resets delete.
+/// @param path Path to operate on.
 function delete(path) return linuxfs.delete(path) end function
+/// Updates write all bytes.
+/// @param path Path to operate on.
+/// @param data Data to process.
 function writeAllBytes(path, data) return linuxfs.writeAllBytes(path, data) end function
+/// Returns read all bytes.
+/// @param path Path to operate on.
 function readAllBytes(path) return linuxfs.readAllBytes(path) end function
+/// Updates write all text.
+/// @param path Path to operate on.
+/// @param text Text to process.
 function writeAllText(path, text) return linuxfs.writeAllText(path, text) end function
+/// Returns read all text.
+/// @param path Path to operate on.
 function readAllText(path) return linuxfs.readAllText(path) end function
+/// Implements copy file.
+/// @param sourcePath Value supplied for `sourcePath`.
+/// @param destPath Value supplied for `destPath`.
+/// @param overwrite Value supplied for `overwrite`.
 function copyFile(sourcePath, destPath, overwrite) return linuxfs.copyFile(sourcePath, destPath, overwrite) end function
+/// Implements move file.
+/// @param sourcePath Value supplied for `sourcePath`.
+/// @param destPath Value supplied for `destPath`.
+/// @param overwrite Value supplied for `overwrite`.
 function moveFile(sourcePath, destPath, overwrite) return linuxfs.moveFile(sourcePath, destPath, overwrite) end function
+/// Implements file size.
+/// @param path Path to operate on.
 function fileSize(path) return linuxfs.fileSize(path) end function
+/// Updates append all bytes.
+/// @param path Path to operate on.
+/// @param data Data to process.
 function appendAllBytes(path, data) return linuxfs.appendAllBytes(path, data) end function
+/// Updates append all text.
+/// @param path Path to operate on.
+/// @param text Text to process.
 function appendAllText(path, text) return linuxfs.appendAllText(path, text) end function
+/// Returns read all lines.
+/// @param path Path to operate on.
 function readAllLines(path) return linuxfs.readAllLines(path) end function
 
 #else
 
-// ------------------------------------------------------------
-// Error helper (stdlib migrated to value-or-error)
-// ------------------------------------------------------------
+/// Error helper (stdlib migrated to value-or-error).
+/// @internal
 function _fsErr(msg)
   return error(1, msg)
 end function
@@ -57,58 +101,86 @@ import std.string as s
 // Declaration-only: only imports/externs/functions.
 // ------------------------------------------------------------
 
-// ------------------------------------------------------------
-// Win32 constants (kept local to std.fs)
-// ------------------------------------------------------------
-
+/// Win32 constants (kept local to std.fs).
 const INVALID_HANDLE_VALUE = -1
+/// Stores the invalid file attributes.
 const INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF
 
-// Win32 generic access masks accepted by File.open().
+/// Win32 generic access masks accepted by File.open().
 enum Access
+  /// Selects the generic read value.
   GENERIC_READ = 0x80000000
+  /// Selects the generic write value.
   GENERIC_WRITE = 0x40000000
 end enum
 
-// Win32 file-sharing modes accepted by File.open().
+/// Win32 file-sharing modes accepted by File.open().
 enum Share
+  /// Selects the none value.
   NONE = 0
+  /// Selects the file share read value.
   FILE_SHARE_READ = 0x00000001
+  /// Selects the file share write value.
   FILE_SHARE_WRITE = 0x00000002
+  /// Selects the file share delete value.
   FILE_SHARE_DELETE = 0x00000004
 end enum
 
-// Win32 creation dispositions accepted by File.open().
+/// Win32 creation dispositions accepted by File.open().
 enum Creation
+  /// Selects the create new value.
   CREATE_NEW = 1
+  /// Selects the create always value.
   CREATE_ALWAYS = 2
+  /// Selects the open existing value.
   OPEN_EXISTING = 3
+  /// Selects the open always value.
   OPEN_ALWAYS = 4
+  /// Selects the truncate existing value.
   TRUNCATE_EXISTING = 5
 end enum
 
-// Common Win32 file attribute flags.
+/// Common Win32 file attribute flags.
 enum FileAttr
+  /// Selects the file attribute readonly value.
   FILE_ATTRIBUTE_READONLY = 0x00000001
+  /// Selects the file attribute hidden value.
   FILE_ATTRIBUTE_HIDDEN = 0x00000002
+  /// Selects the file attribute system value.
   FILE_ATTRIBUTE_SYSTEM = 0x00000004
+  /// Selects the file attribute directory value.
   FILE_ATTRIBUTE_DIRECTORY = 0x00000010
+  /// Selects the file attribute archive value.
   FILE_ATTRIBUTE_ARCHIVE = 0x00000020
+  /// Selects the file attribute normal value.
   FILE_ATTRIBUTE_NORMAL = 0x00000080
+  /// Selects the file attribute temporary value.
   FILE_ATTRIBUTE_TEMPORARY = 0x00000100
+  /// Selects the file attribute reparse point value.
   FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+  /// Selects the file attribute compressed value.
   FILE_ATTRIBUTE_COMPRESSED = 0x00000800
+  /// Selects the file attribute not content indexed value.
   FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
+  /// Selects the file attribute encrypted value.
   FILE_ATTRIBUTE_ENCRYPTED = 0x00004000
 end enum
 
+/// Stores the dword size.
 const DWORD_SIZE = 4
+/// Stores the io buf size.
 const IO_BUF_SIZE = 4096
+/// Stores the delete retry count.
 const DELETE_RETRY_COUNT = 30
+/// Stores the delete retry sleep ms.
 const DELETE_RETRY_SLEEP_MS = 5
+/// Stores the write retry count.
 const WRITE_RETRY_COUNT = 30
+/// Stores the write retry sleep ms.
 const WRITE_RETRY_SLEEP_MS = 10
 
+/// Creates create file w.
+/// @internal
 extern function CreateFileW(
 path as wstr,
 access as int,
@@ -119,6 +191,8 @@ flags as int,
 template as ptr
 ) from "kernel32.dll" returns ptr
 
+/// Returns read file.
+/// @internal
 extern function ReadFile(
 h as ptr,
 buf as bytes,
@@ -127,6 +201,8 @@ bytesRead as bytes,
 overlapped as ptr
 ) from "kernel32.dll" returns bool
 
+/// Updates write file.
+/// @internal
 extern function WriteFile(
 h as ptr,
 buf as bytes,
@@ -135,6 +211,8 @@ bytesWritten as bytes,
 overlapped as ptr
 ) from "kernel32.dll" returns bool
 
+/// Updates write file cstr.
+/// @internal
 extern function WriteFileCStr(
 h as ptr,
 buf as cstr,
@@ -143,48 +221,63 @@ bytesWritten as bytes,
 overlapped as ptr
 ) from "kernel32.dll" symbol "WriteFile" returns bool
 
+/// Releases or resets close handle.
+/// @internal
 extern function CloseHandle(h as ptr) from "kernel32.dll" returns bool
+/// Releases or resets delete file w.
+/// @internal
 extern function DeleteFileW(path as wstr) from "kernel32.dll" returns bool
+/// Implements copy file w.
+/// @internal
 extern function CopyFileW(existingPath as wstr, newPath as wstr, failIfExists as bool) from "kernel32.dll" returns bool
+/// Implements move file w.
+/// @internal
 extern function MoveFileW(existingPath as wstr, newPath as wstr) from "kernel32.dll" returns bool
+/// Returns get file attributes w.
+/// @internal
 extern function GetFileAttributesW(path as wstr) from "kernel32.dll" returns u32
+/// Returns get last error.
+/// @internal
 extern function GetLastError() from "kernel32.dll" returns u32
 
-// Directory enumeration (FindFirstFileW/FindNextFileW)
+/// Directory enumeration (FindFirstFileW/FindNextFileW).
 const FIND_DATA_SIZE = 592
+/// Stores the find name off.
 const FIND_NAME_OFF = 44
+/// Stores the find name len.
 const FIND_NAME_LEN = 520
 
+/// Returns find first file w.
+/// @internal
 extern function FindFirstFileW(pattern as wstr, data as bytes) from "kernel32.dll" returns ptr
+/// Returns find next file w.
+/// @internal
 extern function FindNextFileW(h as ptr, data as bytes) from "kernel32.dll" returns bool
+/// Returns find close.
+/// @internal
 extern function FindClose(h as ptr) from "kernel32.dll" returns bool
+/// Returns get file size ex.
+/// @internal
 extern function GetFileSizeEx(h as ptr, sizeBuf as bytes) from "kernel32.dll" returns bool
+/// Implements sleep.
+/// @internal
 extern function Sleep(ms as int) from "kernel32.dll" returns void
 
-/*
-decode a 32-bit little-endian unsigned integer from a bytes(4) buffer
-input: bytes b4
-returns: int value
-*/
+/// Decode a 32-bit little-endian unsigned integer from a bytes(4) buffer.
+/// @internal
 function _u32le4(b4)
   // b4 is bytes(4)
   return b4[0] + b4[1] * 256 + b4[2] * 65536 + b4[3] * 16777216
 end function
 
-/*
-decode a 64-bit little-endian unsigned integer from a bytes(8) buffer
-input: bytes b8
-returns: int value
-*/
+/// Decode a 64-bit little-endian unsigned integer from a bytes(8) buffer.
+/// @internal
 function _u64le8(b8)
   return b8[0] + b8[1] * 256 + b8[2] * 65536 + b8[3] * 16777216 + b8[4] * 4294967296 + b8[5] * 1099511627776 + b8[6] * 281474976710656 + b8[7] * 72057594037927936
 end function
 
-/*
-check whether a file or directory exists
-input: string path
-returns: bool exists
-*/
+/// Check whether a file or directory exists.
+/// @param path Path to operate on.
 function exists(path)
   a = GetFileAttributesW(path)
   if a == std.fs.INVALID_FILE_ATTRIBUTES then
@@ -193,11 +286,8 @@ function exists(path)
   return true
 end function
 
-/*
-check whether a path is a directory
-input: string path
-returns: bool is_dir
-*/
+/// Check whether a path is a directory.
+/// @param path Path to operate on.
 function isDir(path)
   if typeof(path) != "string" then
     return false
@@ -209,11 +299,8 @@ function isDir(path)
   return (a & std.fs.FileAttr.FILE_ATTRIBUTE_DIRECTORY) != 0
 end function
 
-/*
-check whether a path is a regular file
-input: string path
-returns: bool is_file
-*/
+/// Check whether a path is a regular file.
+/// @param path Path to operate on.
 function isFile(path)
   if exists(path) == false then
     return false
@@ -221,11 +308,9 @@ function isFile(path)
   return isDir(path) == false
 end function
 
-/*
-join two path components using the Windows separator
-input: string base, string name
-returns: string full
-*/
+/// Join two path components using the Windows separator.
+/// @param base Value supplied for `base`.
+/// @param name Name of the requested item.
 function joinPath(base, name)
   if typeof(base) != "string" or typeof(name) != "string" then
     return
@@ -239,7 +324,8 @@ function joinPath(base, name)
   return base + "\\" + name
 end function
 
-// Decode the UTF-16 filename field of a WIN32_FIND_DATAW buffer.
+/// Decode the UTF-16 filename field of a WIN32_FIND_DATAW buffer.
+/// @internal
 function _findDataName(buf)
   if typeof(buf) != "bytes" then
     return
@@ -251,7 +337,8 @@ function _findDataName(buf)
   return decode16Z(nameBuf)
 end function
 
-// Grow an internal string buffer geometrically for directory enumeration.
+/// Grow an internal string buffer geometrically for directory enumeration.
+/// @internal
 function _growStringArray(items, need)
   if typeof(items) != "array" then
     return
@@ -278,7 +365,8 @@ function _growStringArray(items, need)
   return grown
 end function
 
-// Trim an internal buffer to exactly its initialized elements.
+/// Trim an internal buffer to exactly its initialized elements.
+/// @internal
 function _takeStringArray(items, count)
   if typeof(items) != "array" then
     return
@@ -300,11 +388,8 @@ function _takeStringArray(items, count)
   return output
 end function
 
-/*
-list directory entries (names only, without '.' and '..')
-input: string path
-returns: array<string> names OR error(code=1)
-*/
+/// List directory entries (names only, without '.' and '..').
+/// @param path Path to operate on.
 function listDir(path)
   if typeof(path) != "string" then
     return _fsErr("listDir: invalid args")
@@ -350,11 +435,8 @@ function listDir(path)
   return std.fs._takeStringArray(names, count)
 end function
 
-/*
-delete a file (treats "already missing" as success)
-input: string path
-returns: bool success
-*/
+/// Delete a file (treats "already missing" as success).
+/// @param path Path to operate on.
 function delete(path)
   if typeof(path) != "string" then
     return false
@@ -382,7 +464,8 @@ function delete(path)
   return false
 end function
 
-// Open a file for replacement, creating it when necessary.
+/// Open a file for replacement, creating it when necessary.
+/// @internal
 function _openWriteAlways(path)
   last_error = 0
   i = 0
@@ -406,11 +489,9 @@ function _openWriteAlways(path)
   return _fsErr("CreateFileW failed last_error=" + last_error)
 end function
 
-/*
-write all bytes to a file (overwrites if it exists)
-input: string path, bytes data
-returns: bool ok OR error(...)
-*/
+/// Write all bytes to a file (overwrites if it exists).
+/// @param path Path to operate on.
+/// @param data Data to process.
 function writeAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then
     return _fsErr("writeAllBytes: invalid args")
@@ -433,11 +514,8 @@ function writeAllBytes(path, data)
   return true
 end function
 
-/*
-read all bytes from a file
-input: string path
-returns: bytes data OR error(...)
-*/
+/// Read all bytes from a file.
+/// @param path Path to operate on.
 function readAllBytes(path)
   if typeof(path) != "string" then
     return _fsErr("readAllBytes: invalid args")
@@ -513,11 +591,9 @@ function readAllBytes(path)
   return output
 end function
 
-/*
-write all text to a file (overwrites if it exists)
-input: string path, string text
-returns: bool ok OR error(...)
-*/
+/// Write all text to a file (overwrites if it exists).
+/// @param path Path to operate on.
+/// @param text Text to process.
 function writeAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then
     return _fsErr("writeAllText: invalid args")
@@ -540,11 +616,8 @@ function writeAllText(path, text)
   return true
 end function
 
-/*
-read all text from a file (assumes UTF-8)
-input: string path
-returns: string text OR error(...)
-*/
+/// Read all text from a file (assumes UTF-8).
+/// @param path Path to operate on.
 function readAllText(path)
   if typeof(path) != "string" then
     return _fsErr("readAllText: invalid args")
@@ -630,11 +703,10 @@ function readAllText(path)
   return t
 end function
 
-/*
-copy a file
-input: string sourcePath, string destPath, bool overwrite
-returns: bool ok OR error(...)
-*/
+/// Copy a file.
+/// @param sourcePath Value supplied for `sourcePath`.
+/// @param destPath Value supplied for `destPath`.
+/// @param overwrite Value supplied for `overwrite`.
 function copyFile(sourcePath, destPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destPath) != "string" then
     return _fsErr("copyFile: invalid args")
@@ -654,11 +726,10 @@ function copyFile(sourcePath, destPath, overwrite)
   return true
 end function
 
-/*
-move/rename a file
-input: string sourcePath, string destPath, bool overwrite
-returns: bool ok OR error(...)
-*/
+/// Move/rename a file.
+/// @param sourcePath Value supplied for `sourcePath`.
+/// @param destPath Value supplied for `destPath`.
+/// @param overwrite Value supplied for `overwrite`.
 function moveFile(sourcePath, destPath, overwrite)
   if typeof(sourcePath) != "string" or typeof(destPath) != "string" then
     return _fsErr("moveFile: invalid args")
@@ -683,11 +754,8 @@ function moveFile(sourcePath, destPath, overwrite)
   return true
 end function
 
-/*
-get the size of a file in bytes
-input: string path
-returns: int size OR error(...)
-*/
+/// Get the size of a file in bytes.
+/// @param path Path to operate on.
 function fileSize(path)
   if typeof(path) != "string" then
     return _fsErr("fileSize: invalid args")
@@ -708,11 +776,9 @@ function fileSize(path)
   return _u64le8(sizeBuf)
 end function
 
-/*
-append bytes to a file (simple implementation: read + rewrite)
-input: string path, bytes data
-returns: bool ok OR error(...)
-*/
+/// Append bytes to a file (simple implementation: read + rewrite).
+/// @param path Path to operate on.
+/// @param data Data to process.
 function appendAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then
     return _fsErr("appendAllBytes: invalid args")
@@ -730,11 +796,9 @@ function appendAllBytes(path, data)
   return writeAllBytes(path, prev + data)
 end function
 
-/*
-append text to a file (simple implementation: read + rewrite)
-input: string path, string text
-returns: bool ok OR error(...)
-*/
+/// Append text to a file (simple implementation: read + rewrite).
+/// @param path Path to operate on.
+/// @param text Text to process.
 function appendAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then
     return _fsErr("appendAllText: invalid args")
@@ -752,11 +816,8 @@ function appendAllText(path, text)
   return writeAllText(path, prev + text)
 end function
 
-/*
-read a file as lines (split by '\n', trims a trailing '\r')
-input: string path
-returns: array lines OR error(...)
-*/
+/// Read a file as lines (split by '\n', trims a trailing '\r').
+/// @param path Path to operate on.
 function readAllLines(path)
   t = readAllText(path)
   if typeof(t) == "error" then

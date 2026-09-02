@@ -14,62 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std result package.
+
 package std.result
 
-// ------------------------------------------------------------
-// std.result
-// Minimal Option/Result data structures.
-//
-// NOTE (important for packages):
-// Inside a `package`, names are qualified (e.g. std.result.Option).
-// Therefore constructors inside this file must use fully-qualified names.
-// ------------------------------------------------------------
-
+/// Std.result Minimal Option/Result data structures. NOTE (important for packages): Inside a `package`, names are qualified (e.g. std.result.Option). Therefore constructors inside this file must use fully-qualified names.
 struct Option
+  /// Stores the has member of `Option`.
   has
+  /// Stores the value member of `Option`.
   value
 
-  /*
-  creates an Option with a value
-  input: any v
-  returns: std.result.Option some
-  */
+  /// Creates an Option with a value.
+  /// @param v Value supplied for `v`.
   static function Some(v)
   return std.result.Option(true, v)
 end function
 
-/*
-creates an empty Option
-input: none
-returns: std.result.Option none
-*/
+/// Creates an empty Option.
 static function None()
 return std.result.Option(false, 0)
 end function
 
-/*
-checks whether this Option contains a value
-input: none
-returns: bool isSome
-*/
+/// Checks whether this Option contains a value.
 function isSome()
   return this.has
 end function
 
-/*
-checks whether this Option is empty
-input: none
-returns: bool isNone
-*/
+/// Checks whether this Option is empty.
 function isNone()
   return not this.has
 end function
 
-/*
-returns the contained value or fallback
-input: any fallback
-returns: any value
-*/
+/// Returns the contained value or fallback.
+/// @param fallback Value supplied for `fallback`.
 function unwrapOr(fallback)
   if this.has then
     return this.value
@@ -77,11 +55,7 @@ function unwrapOr(fallback)
   return fallback
 end function
 
-/*
-returns the contained value or void
-input: none
-returns: any value (void if none)
-*/
+/// Returns the contained value or void.
 function unwrap()
   if this.has then
     return this.value
@@ -89,11 +63,8 @@ function unwrap()
   return
 end function
 
-/*
-returns the contained value or computes a fallback
-input: function thunk() -> any
-returns: any value
-*/
+/// Returns the contained value or computes a fallback.
+/// @param thunk Value supplied for `thunk`.
 function unwrapOrElse(thunk)
   if this.has then
     return this.value
@@ -101,11 +72,8 @@ function unwrapOrElse(thunk)
   return thunk()
 end function
 
-/*
-transforms the contained value
-input: function f(any) -> any
-returns: std.result.Option mapped
-*/
+/// Transforms the contained value.
+/// @param f Function invoked by the operation.
 function map(f)
   if this.has then
     return std.result.Option.Some(f(this.value))
@@ -113,11 +81,8 @@ function map(f)
   return std.result.Option.None()
 end function
 
-/*
-chains Options (flatMap)
-input: function f(any) -> std.result.Option
-returns: std.result.Option chained
-*/
+/// Chains Options (flatMap).
+/// @param f Function invoked by the operation.
 function andThen(f)
   if this.has then
     return f(this.value)
@@ -126,53 +91,39 @@ function andThen(f)
 end function
 end struct
 
-// Explicit success/error container for APIs that avoid automatic propagation.
+/// Explicit success/error container for APIs that avoid automatic propagation.
 struct Result
+  /// Stores the ok member of `Result`.
   ok
+  /// Stores the value member of `Result`.
   value
+  /// Stores the message member of `Result`.
   message
 
-  /*
-  creates a successful Result
-  input: any v
-  returns: std.result.Result ok
-  */
+  /// Creates a successful Result.
+  /// @param v Value supplied for `v`.
   static function Ok(v)
   return std.result.Result(true, v, "")
 end function
 
-/*
-creates a failed Result
-input: string msg
-returns: std.result.Result err
-*/
+/// Creates a failed Result.
+/// @param msg Value supplied for `msg`.
 static function Err(msg)
 return std.result.Result(false, 0, msg)
 end function
 
-/*
-checks whether this Result is ok
-input: none
-returns: bool isOk
-*/
+/// Checks whether this Result is ok.
 function isOk()
   return this.ok
 end function
 
-/*
-checks whether this Result is an error
-input: none
-returns: bool isErr
-*/
+/// Checks whether this Result is an error.
 function isErr()
   return not this.ok
 end function
 
-/*
-returns the value if ok, otherwise fallback
-input: any fallback
-returns: any value
-*/
+/// Returns the value if ok, otherwise fallback.
+/// @param fallback Value supplied for `fallback`.
 function unwrapOr(fallback)
   if this.ok then
     return this.value
@@ -180,11 +131,7 @@ function unwrapOr(fallback)
   return fallback
 end function
 
-/*
-returns the value if ok, otherwise void
-input: none
-returns: any value (void if err)
-*/
+/// Returns the value if ok, otherwise void.
 function unwrap()
   if this.ok then
     return this.value
@@ -192,11 +139,8 @@ function unwrap()
   return
 end function
 
-/*
-transforms the ok value
-input: function f(any) -> any
-returns: std.result.Result mapped
-*/
+/// Transforms the ok value.
+/// @param f Function invoked by the operation.
 function map(f)
   if this.ok then
     return std.result.Result.Ok(f(this.value))
@@ -204,11 +148,8 @@ function map(f)
   return this
 end function
 
-/*
-chains Results (flatMap)
-input: function f(any) -> std.result.Result
-returns: std.result.Result chained
-*/
+/// Chains Results (flatMap).
+/// @param f Function invoked by the operation.
 function andThen(f)
   if this.ok then
     return f(this.value)

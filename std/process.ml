@@ -7,32 +7,64 @@ you may not use this file except in compliance with the License.
 
 // Portable process metadata and environment helpers.  Mutating the current
 // directory affects every thread and should therefore only happen at startup.
+//! Provides the std process package.
+
 package std.process
 
+/// Stores the process err.
 const PROCESS_ERR = 261
+/// Stores the max environment bytes.
 const MAX_ENVIRONMENT_BYTES = 1048576
+/// Stores the max path bytes.
 const MAX_PATH_BYTES = 32768
 
+/// Implements error.
+/// @internal
 function _error(message)
   return error(PROCESS_ERR, message)
 end function
 
 #if TARGET_OS == "windows"
+/// Returns get current process id.
+/// @internal
 extern function GetCurrentProcessId() from "kernel32.dll" returns u32
+/// Returns get module file name w.
+/// @internal
 extern function GetModuleFileNameW(module as ptr, output as bytes, size as u32) from "kernel32.dll" returns u32
+/// Returns get environment variable w.
+/// @internal
 extern function GetEnvironmentVariableW(name as wstr, output as bytes, size as u32) from "kernel32.dll" returns u32
+/// Returns get current directory w.
+/// @internal
 extern function GetCurrentDirectoryW(size as u32, output as bytes) from "kernel32.dll" returns u32
+/// Updates set current directory w.
+/// @internal
 extern function SetCurrentDirectoryW(path as wstr) from "kernel32.dll" returns bool
 #else
+/// Returns getpid.
+/// @internal
 extern function _getpid() from "libc.so.6" symbol "getpid" returns i32
+/// Returns readlink.
+/// @internal
 extern function _readlink(path as cstr, output as ptr, size as u64) from "libc.so.6" symbol "readlink" returns i64
+/// Returns getenv.
+/// @internal
 extern function _getenv(name as cstr) from "libc.so.6" symbol "getenv" returns ptr
+/// Implements strlen.
+/// @internal
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
+/// Implements copy from native.
+/// @internal
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+/// Returns getcwd.
+/// @internal
 extern function _getcwd(output as bytes, size as u64) from "libc.so.6" symbol "getcwd" returns ptr
+/// Implements chdir.
+/// @internal
 extern function _chdir(path as cstr) from "libc.so.6" symbol "chdir" returns i32
 #endif
 
+/// Implements id.
 function id()
 #if TARGET_OS == "windows"
   return GetCurrentProcessId()
@@ -41,7 +73,7 @@ function id()
 #endif
 end function
 
-// Return the absolute path of the currently running native image.
+/// Return the absolute path of the currently running native image.
 function executablePath()
 #if TARGET_OS == "windows"
   raw = bytes(MAX_PATH_BYTES * 2, 0)
@@ -57,7 +89,8 @@ function executablePath()
 #endif
 end function
 
-// Return an environment value, or void when the variable is absent.
+/// Return an environment value, or void when the variable is absent.
+/// @param name Name of the requested item.
 function environment(name)
   if typeof(name) != "string" or len(name) == 0 then return _error("environment name must be non-empty") end if
 #if TARGET_OS == "windows"
@@ -79,6 +112,7 @@ function environment(name)
 #endif
 end function
 
+/// Implements current directory.
 function currentDirectory()
 #if TARGET_OS == "windows"
   raw = bytes(MAX_PATH_BYTES * 2, 0)
@@ -93,6 +127,8 @@ function currentDirectory()
 #endif
 end function
 
+/// Updates set current directory.
+/// @param path Path to operate on.
 function setCurrentDirectory(path)
   if typeof(path) != "string" or len(path) == 0 then return _error("directory must be non-empty") end if
 #if TARGET_OS == "windows"

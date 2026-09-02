@@ -7,8 +7,11 @@ you may not use this file except in compliance with the License.
 
 // Compile-time target information exposed through a small runtime API.  The
 // values describe the selected output target, not the host running the compiler.
+//! Provides the std platform package.
+
 package std.platform
 
+/// Implements operating system.
 function operatingSystem()
 #if TARGET_OS == "windows"
   return "windows"
@@ -17,10 +20,12 @@ function operatingSystem()
 #endif
 end function
 
+/// Implements architecture.
 function architecture()
   return "x64"
 end function
 
+/// Reports whether is windows.
 function isWindows()
 #if TARGET_OS == "windows"
   return true
@@ -29,6 +34,7 @@ function isWindows()
 #endif
 end function
 
+/// Reports whether is linux.
 function isLinux()
 #if TARGET_OS == "linux"
   return true
@@ -37,6 +43,7 @@ function isLinux()
 #endif
 end function
 
+/// Implements path separator.
 function pathSeparator()
 #if TARGET_OS == "windows"
   return "\\"
@@ -45,6 +52,7 @@ function pathSeparator()
 #endif
 end function
 
+/// Implements line ending.
 function lineEnding()
 #if TARGET_OS == "windows"
   return "\r\n"
@@ -53,6 +61,7 @@ function lineEnding()
 #endif
 end function
 
+/// Implements executable extension.
 function executableExtension()
 #if TARGET_OS == "windows"
   return ".exe"
@@ -61,6 +70,7 @@ function executableExtension()
 #endif
 end function
 
+/// Implements dynamic library extension.
 function dynamicLibraryExtension()
 #if TARGET_OS == "windows"
   return ".dll"

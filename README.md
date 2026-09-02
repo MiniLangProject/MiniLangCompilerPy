@@ -2,8 +2,8 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.0**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.0.md).
+Current stable release: **1.2.1**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.2.1.md).
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
@@ -29,7 +29,8 @@ assistance of generative AI.
 - [1. Quickstart](#1-quickstart)
 - [2. Files & Running](#2-files--running)
 - [3. Comments](#3-comments)
-  - [3.1 Newlines & statement separators](#31-newlines--statement-separators)
+  - [3.1 Declaration comments and MiniDoc](#31-declaration-comments-and-minidoc)
+  - [3.2 Newlines & statement separators](#32-newlines--statement-separators)
 - [4. Types & Literals](#4-types--literals)
 - [5. Variables & Assignments](#5-variables--assignments)
 - [6. Operators & Expressions](#6-operators--expressions)
@@ -186,7 +187,7 @@ Common options:
   code generation remains serial; this switch does not alter its output bytes.
 
 `python mlc_win64.py -version` and `--version` both print
-`MiniLang Compiler 1.2.0`. `python mlc_win64.py --help` prints the full option
+`MiniLang Compiler 1.2.1`. `python mlc_win64.py --help` prints the full option
 list.
 
 Notes (current implementation):
@@ -323,8 +324,8 @@ not processed. Directives may be nested.
 
 The immutable target values are `TARGET_OS`, `TARGET_ARCH`, `TARGET_ABI`,
 `TARGET_FORMAT`, `POINTER_SIZE` and `MINILANG_VERSION`. Windows selects
-`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.0"`; Linux selects
-`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.0"`. No
+`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.1"`; Linux selects
+`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.1"`. No
 compiler-implementation value is exposed: the Python and self-hosted compilers
 must select the same source for identical inputs.
 
@@ -562,7 +563,38 @@ print "hi" // comment at end of line
 print "ok"
 ```
 
-### 3.1 Newlines & statement separators
+### 3.1 Declaration comments and MiniDoc
+
+`///` documents the declaration immediately following it. MiniDoc reads these
+comments from the original source while both compilers omit them from the
+executable AST, so documentation has no runtime cost.
+
+```ml
+/// Loads a user by identifier.
+/// @param id Stable user identifier.
+/// @returns The matching user.
+function loadUser(id as int) returns User
+  // ...
+end function
+```
+
+Use `//!` for file-level documentation. `/** ... */` and `/*! ... */` are the
+block forms for declaration and file documentation. MiniDoc also accepts a
+legacy `//` or `/* ... */` block directly before a declaration, but `///` is
+preferred because its intent is explicit. Supported structured tags include
+`@param`, `@returns`, `@error`, `@deprecated`, `@see`, `@since`, `@example`,
+`@group`, and `@internal`.
+
+The repository contains a ready-to-use `minidoc-std.toml` configuration. With
+a sibling MiniDoc checkout, regenerate the standard-library API reference:
+
+```powershell
+..\MiniDoc\build\minidoc.exe --config .\minidoc-std.toml
+```
+
+Generated HTML and Markdown are written below `docs/api/std`.
+
+### 3.2 Newlines & statement separators
 
 MiniLang is newline-oriented, but supports a few "robust syntax" rules to make formatting easier:
 

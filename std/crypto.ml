@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std crypto package.
+
 package std.crypto
 #if TARGET_OS == "windows"
 import std.crypto._cng as cng
@@ -21,13 +23,17 @@ import std.crypto._cng as cng
 import std.crypto._openssl as cng
 #endif
 
+/// Stores the crypto err.
 const CRYPTO_ERR = 240
 
+/// Implements crypto error.
+/// @internal
 function _cryptoError(message)
   return error(CRYPTO_ERR, message)
 end function
 
-// Compute SHA-256 through the platform crypto backend.
+/// Compute SHA-256 through the platform crypto backend.
+/// @param input Value supplied for `input`.
 function sha256(input)
   if typeof(input) != "bytes" then return _cryptoError("sha256 expects bytes") end if
   output = bytes(32, 0)
@@ -35,7 +41,8 @@ function sha256(input)
   return output
 end function
 
-// Compute SHA-384 through the platform crypto backend.
+/// Compute SHA-384 through the platform crypto backend.
+/// @param input Value supplied for `input`.
 function sha384(input)
   if typeof(input) != "bytes" then return _cryptoError("sha384 expects bytes") end if
   output = bytes(48, 0)
@@ -43,7 +50,9 @@ function sha384(input)
   return output
 end function
 
-// Compute HMAC-SHA-256 through the platform crypto backend.
+/// Compute HMAC-SHA-256 through the platform crypto backend.
+/// @param key Value supplied for `key`.
+/// @param input Value supplied for `input`.
 function hmacSha256(key, input)
   if typeof(key) != "bytes" or typeof(input) != "bytes" then return _cryptoError("hmacSha256 expects bytes") end if
   output = bytes(32, 0)
@@ -51,7 +60,9 @@ function hmacSha256(key, input)
   return output
 end function
 
-// Compute HMAC-SHA-384 through the platform crypto backend.
+/// Compute HMAC-SHA-384 through the platform crypto backend.
+/// @param key Value supplied for `key`.
+/// @param input Value supplied for `input`.
 function hmacSha384(key, input)
   if typeof(key) != "bytes" or typeof(input) != "bytes" then return _cryptoError("hmacSha384 expects bytes") end if
   output = bytes(48, 0)
@@ -59,6 +70,8 @@ function hmacSha384(key, input)
   return output
 end function
 
+/// Implements hkdf.
+/// @internal
 function _hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, length)
   if typeof(inputKeyMaterial) != "bytes" or typeof(salt) != "bytes" or typeof(info) != "bytes" then
     return _cryptoError("HKDF expects bytes")
@@ -73,16 +86,26 @@ function _hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, length
   return output
 end function
 
-// RFC-5869 HKDF-SHA-256 (extract and expand).
+/// RFC-5869 HKDF-SHA-256 (extract and expand).
+/// @param inputKeyMaterial Value supplied for `inputKeyMaterial`.
+/// @param salt Value supplied for `salt`.
+/// @param info Value supplied for `info`.
+/// @param length Number of elements or bytes to process.
 function hkdfSha256(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA256", 32, inputKeyMaterial, salt, info, length)
 end function
 
-// RFC-5869 HKDF-SHA-384 (extract and expand).
+/// RFC-5869 HKDF-SHA-384 (extract and expand).
+/// @param inputKeyMaterial Value supplied for `inputKeyMaterial`.
+/// @param salt Value supplied for `salt`.
+/// @param info Value supplied for `info`.
+/// @param length Number of elements or bytes to process.
 function hkdfSha384(inputKeyMaterial, salt, info, length)
   return _hkdf("SHA384", 48, inputKeyMaterial, salt, info, length)
 end function
 
+/// Implements pbkdf2.
+/// @internal
 function _pbkdf2(hashAlgorithm, password, salt, iterations, length)
   if typeof(password) != "bytes" or typeof(salt) != "bytes" then return _cryptoError("PBKDF2 expects bytes") end if
   if typeof(iterations) != "int" or iterations <= 0 or iterations > 0x7FFFFFFF then return _cryptoError("Invalid PBKDF2 iteration count") end if
@@ -92,17 +115,26 @@ function _pbkdf2(hashAlgorithm, password, salt, iterations, length)
   return output
 end function
 
-// Derive key material using PBKDF2-HMAC-SHA-256.
+/// Derive key material using PBKDF2-HMAC-SHA-256.
+/// @param password Value supplied for `password`.
+/// @param salt Value supplied for `salt`.
+/// @param iterations Value supplied for `iterations`.
+/// @param length Number of elements or bytes to process.
 function pbkdf2Sha256(password, salt, iterations, length)
   return _pbkdf2("SHA256", password, salt, iterations, length)
 end function
 
-// Derive key material using PBKDF2-HMAC-SHA-384.
+/// Derive key material using PBKDF2-HMAC-SHA-384.
+/// @param password Value supplied for `password`.
+/// @param salt Value supplied for `salt`.
+/// @param iterations Value supplied for `iterations`.
+/// @param length Number of elements or bytes to process.
 function pbkdf2Sha384(password, salt, iterations, length)
   return _pbkdf2("SHA384", password, salt, iterations, length)
 end function
 
-// Obtain cryptographically secure random bytes from the platform provider.
+/// Obtain cryptographically secure random bytes from the platform provider.
+/// @param length Number of elements or bytes to process.
 function secureRandom(length)
   if typeof(length) != "int" or length < 0 or length > 0x7FFFFFFF then return _cryptoError("Invalid random length") end if
   output = bytes(length, 0)
@@ -110,21 +142,24 @@ function secureRandom(length)
   return output
 end function
 
-// Compare two bytes values without content-dependent early exits.
+/// Compare two bytes values without content-dependent early exits.
+/// @param a First input value.
+/// @param b Second input value.
 function constantTimeEquals(a, b)
   if typeof(a) != "bytes" or typeof(b) != "bytes" then return false end if
   return bytesConstantTimeEquals(a, b)
 end function
 
-// Best-effort in-place erasure.  MiniLang's native fill helper performs the
-// observable write, but callers must still avoid prior copies of key material.
+/// Best-effort in-place erasure. MiniLang's native fill helper performs the observable write, but callers must still avoid prior copies of key material.
+/// @param buffer Buffer to process.
 function secureZero(buffer)
   if typeof(buffer) != "bytes" then return false end if
   if len(buffer) > 0 then fillBytes(buffer, 0, len(buffer), 0) end if
   return true
 end function
 
-// Derive the RFC-7748 public key for a 32-byte X25519 private scalar.
+/// Derive the RFC-7748 public key for a 32-byte X25519 private scalar.
+/// @param privateKey Value supplied for `privateKey`.
 function x25519PublicKey(privateKey)
   if typeof(privateKey) != "bytes" or len(privateKey) != 32 then return _cryptoError("X25519 private key must be 32 bytes") end if
   output = bytes(32, 0)
@@ -132,8 +167,9 @@ function x25519PublicKey(privateKey)
   return output
 end function
 
-// Derive an X25519 shared secret.  CNG errors and all-zero weak results are
-// rejected without returning secret bytes.
+/// Derive an X25519 shared secret. CNG errors and all-zero weak results are rejected without returning secret bytes.
+/// @param privateKey Value supplied for `privateKey`.
+/// @param peerPublicKey Value supplied for `peerPublicKey`.
 function x25519(privateKey, peerPublicKey)
   if typeof(privateKey) != "bytes" or len(privateKey) != 32 then return _cryptoError("X25519 private key must be 32 bytes") end if
   if typeof(peerPublicKey) != "bytes" or len(peerPublicKey) != 32 then return _cryptoError("X25519 public key must be 32 bytes") end if

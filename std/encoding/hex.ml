@@ -14,15 +14,17 @@
    limitations under the License.
 */
 
+//! Provides the std encoding hex package.
+
 package std.encoding.hex
 
 import std.string as s
 
-// Lower/uppercase hexadecimal encoding plus strict, error-preserving decoding.
-
+/// Lower/uppercase hexadecimal encoding plus strict, error-preserving decoding.
 const HEX_ERR = 210
 
-// Construct a consistent hexadecimal validation error.
+/// Construct a consistent hexadecimal validation error.
+/// @internal
 function _hexErr(msg)
   return error(HEX_ERR, msg)
 end function
@@ -35,20 +37,14 @@ end function
 // fromHex(str)  -> bytes (or void on error)
 // ------------------------------------------------------------
 
-/*
-encodes bytes to lowercase hex
-input: bytes b
-returns: string hexLower
-*/
+/// Encodes bytes to lowercase hex.
+/// @param b Second input value.
 function encode(b)
   return hex(b)
 end function
 
-/*
-encodes bytes to uppercase hex
-input: bytes b
-returns: string hexUpper
-*/
+/// Encodes bytes to uppercase hex.
+/// @param b Second input value.
 function encodeUpper(b)
   text = hex(b)
   if typeof(text) != "string" then
@@ -57,30 +53,22 @@ function encodeUpper(b)
   return s.toUpperAscii(text)
 end function
 
-/*
-decodes a hex string to bytes
-input: string s
-returns: bytes decoded (or void on error)
-*/
+/// Decodes a hex string to bytes.
+/// @param s Value supplied for `s`.
 function decode(s)
   return fromHex(s)
 end function
 
-/*
-checks whether a hex string is valid
-input: string s
-returns: bool ok
-*/
+/// Checks whether a hex string is valid.
+/// @param s Value supplied for `s`.
 function isValid(s)
   b = fromHex(s)
   return typeof(b) != "void"
 end function
 
-/*
-decodes a hex string or returns fallback bytes
-input: string s, bytes fallbackBytes
-returns: bytes decodedOrFallback
-*/
+/// Decodes a hex string or returns fallback bytes.
+/// @param s Value supplied for `s`.
+/// @param fallbackBytes Value supplied for `fallbackBytes`.
 function decodeOr(s, fallbackBytes)
   b = fromHex(s)
   if typeof(b) == "void" then
@@ -90,11 +78,8 @@ function decodeOr(s, fallbackBytes)
 end function
 
 
-/*
-decodes a hex string or returns an error on failure
-input: string s
-returns: bytes decoded OR error(code=HEX_ERR)
-*/
+/// Decodes a hex string or returns an error on failure.
+/// @param s Value supplied for `s`.
 function decodeOrError(s)
   if typeof(s) != "string" then
     return _hexErr("hex.decodeOrError expects a string")

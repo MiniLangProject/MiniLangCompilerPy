@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 1 September 2026 against the matching 1.2.0 revisions of:
+Verified through 2 September 2026 against the matching 1.2.1 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,27 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.1 release fixed point and MiniDoc contract
+
+Verified on 2 September 2026 after making `///` an explicit compile-time-only
+declaration comment and documenting the shared standard library and complete
+self-hosted compiler with MiniDoc 0.4.1.
+
+| Compiler image | Size | SHA-256 | Build time |
+| --- | ---: | --- | ---: |
+| Windows Stage 1, built by Python | 66,457,600 | `CD9FCF06C7F9FE97F3FEA8B0F7063566BB0F1C160452620826BD79279E2BE306` | 97.293 s |
+| Windows Stage 2, built by Stage 1 | 66,457,600 | `CD9FCF06C7F9FE97F3FEA8B0F7063566BB0F1C160452620826BD79279E2BE306` | 154.506 s |
+| Linux Stage 1, cross-built by Python | 66,428,464 | `F56371AEC2007B3CF2E872E16A1507512300CC2894723166E470E604569A7250` | 76.458 s |
+
+The byte-identical Windows images establish the 1.2.1 self-host fixed point.
+The Linux image reports 1.2.1 and successfully builds and runs MiniDoc plus its
+complete native Linux test suite. The Python compiler suite passes 133/133 and
+the self-hosted inner harness passes 127/127. All 46 standard-library source
+files, both MiniDoc configurations and all 289 generated standard-library
+documentation files are byte-identical between the compiler repositories.
+Strict MiniDoc generation reports zero warnings for the compiler and both
+standard-library trees.
 
 ## Post-release ownership and cache hardening fixed point
 

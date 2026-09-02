@@ -1,0 +1,52 @@
+# Files
+
+[Home](README.md)
+
+| File | Package | Reachable | Symbols |
+| --- | --- | --- | ---: |
+| [std/_linux_fs.ml](File-std-linux-fs-ml-2121665983.md) | `std._linux_fs` | no | 53 |
+| [std/array.ml](File-std-array-ml-1258125823.md) | `std.array` | no | 18 |
+| [std/assert.ml](File-std-assert-ml-1772521196.md) | `std.assert` | no | 8 |
+| [std/bytes.ml](File-std-bytes-ml-1351945333.md) | `std.bytes` | no | 39 |
+| [std/checksum/crc32.ml](File-std-checksum-crc32-ml-1964480723.md) | `std.checksum.crc32` | no | 5 |
+| [std/checksum/crc32c.ml](File-std-checksum-crc32c-ml-144026660.md) | `std.checksum.crc32c` | no | 5 |
+| [std/concurrent/cancellation.ml](File-std-concurrent-cancellation-ml-1392694543.md) | `std.concurrent.cancellation` | no | 27 |
+| [std/concurrent/channel.ml](File-std-concurrent-channel-ml-2137315633.md) | `std.concurrent.channel` | no | 45 |
+| [std/concurrent/shared_value.ml](File-std-concurrent-shared-value-ml-2112657235.md) | `std.concurrent.shared_value` | no | 28 |
+| [std/concurrent/task.ml](File-std-concurrent-task-ml-139288457.md) | `std.concurrent.task` | no | 27 |
+| [std/concurrent/thread_pool.ml](File-std-concurrent-thread-pool-ml-72857761.md) | `std.concurrent.thread_pool` | no | 72 |
+| [std/console.ml](File-std-console-ml-1875579671.md) | `std.console` | no | 24 |
+| [std/core.ml](File-std-core-ml-750389783.md) | `std.core` | yes | 16 |
+| [std/cpu.ml](File-std-cpu-ml-1561418518.md) | `std.cpu` | no | 10 |
+| [std/crypto.ml](File-std-crypto-ml-1263151193.md) | `std.crypto` | no | 17 |
+| [std/crypto/_cng.ml](File-std-crypto-cng-ml-1099901917.md) | `std.crypto._cng` | no | 37 |
+| [std/crypto/_openssl.ml](File-std-crypto-openssl-ml-882852629.md) | `std.crypto._openssl` | no | 41 |
+| [std/crypto/aes_gcm.ml](File-std-crypto-aes-gcm-ml-264581731.md) | `std.crypto.aes_gcm` | no | 10 |
+| [std/ds/concurrent_hashmap.ml](File-std-ds-concurrent-hashmap-ml-1798836270.md) | `std.ds.concurrent_hashmap` | no | 37 |
+| [std/ds/concurrent_list.ml](File-std-ds-concurrent-list-ml-291130726.md) | `std.ds.concurrent_list` | no | 32 |
+| [std/ds/hashmap.ml](File-std-ds-hashmap-ml-1269372918.md) | `std.ds.hashmap` | no | 30 |
+| [std/ds/list.ml](File-std-ds-list-ml-2070188142.md) | `std.ds.list` | no | 26 |
+| [std/ds/queue.ml](File-std-ds-queue-ml-1555253413.md) | `std.ds.queue` | no | 18 |
+| [std/ds/set.ml](File-std-ds-set-ml-1393232564.md) | `std.ds.set` | no | 11 |
+| [std/ds/stack.ml](File-std-ds-stack-ml-117945432.md) | `std.ds.stack` | no | 22 |
+| [std/encoding/base64.ml](File-std-encoding-base64-ml-1044483879.md) | `std.encoding.base64` | no | 8 |
+| [std/encoding/hex.ml](File-std-encoding-hex-ml-900742095.md) | `std.encoding.hex` | no | 8 |
+| [std/fmt.ml](File-std-fmt-ml-2123112301.md) | `std.fmt` | no | 6 |
+| [std/fs.ml](File-std-fs-ml-1285967051.md) | `std.fs` | no | 75 |
+| [std/io/file.ml](File-std-io-file-ml-2074692665.md) | `std.io.file` | no | 79 |
+| [std/math.ml](File-std-math-ml-790065500.md) | `std.math` | no | 45 |
+| [std/net.ml](File-std-net-ml-1989130045.md) | `std.net` | no | 75 |
+| [std/path.ml](File-std-path-ml-701536411.md) | `std.path` | no | 10 |
+| [std/platform.ml](File-std-platform-ml-201801091.md) | `std.platform` | no | 8 |
+| [std/process.ml](File-std-process-ml-507069519.md) | `std.process` | no | 14 |
+| [std/random.ml](File-std-random-ml-66683891.md) | `std.random` | no | 15 |
+| [std/result.ml](File-std-result-ml-986518417.md) | `std.result` | no | 24 |
+| [std/sort.ml](File-std-sort-ml-1000391650.md) | `std.sort` | no | 11 |
+| [std/string.ml](File-std-string-ml-1276545685.md) | `std.string` | no | 33 |
+| [std/string_builder.ml](File-std-string-builder-ml-412876577.md) | `std.string_builder` | no | 15 |
+| [std/threading.ml](File-std-threading-ml-508437988.md) | `std.threading` | no | 67 |
+| [std/time.ml](File-std-time-ml-975894601.md) | `std.time` | no | 95 |
+| [std/tls.ml](File-std-tls-ml-2076630303.md) | `std.tls` | no | 43 |
+| [std/tls/_openssl.ml](File-std-tls-openssl-ml-961424543.md) | `std.tls._openssl` | no | 69 |
+| [std/tls/_schannel.ml](File-std-tls-schannel-ml-805501109.md) | `std.tls._schannel` | no | 223 |
+| [std/uuid.ml](File-std-uuid-ml-1903850359.md) | `std.uuid` | no | 7 |

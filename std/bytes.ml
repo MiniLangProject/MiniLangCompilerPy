@@ -14,11 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std bytes package.
+
 package std.bytes
 
+/// Stores the bytes err.
 const BYTES_ERR = 211
 
-// Construct a consistent argument/range error for this module.
+/// Construct a consistent argument/range error for this module.
+/// @internal
 function _bytesErr(msg)
   return error(BYTES_ERR, msg)
 end function
@@ -29,11 +33,8 @@ import std.encoding.hex as hx
 // Byte-sequence allocation, slicing, comparison, encoding and endian-aware
 // integer I/O. Functions validate types and avoid implicit string conversion.
 
-// ------------------------------------------------------------
-// std.bytes
-// Bytes helpers built on top of the built-in `bytes` type and operations.
-// ------------------------------------------------------------
-
+/// Std.bytes Bytes helpers built on top of the built-in `bytes` type and operations.
+/// @param size Value supplied for `size`.
 function alloc(size)
   if typeof(size) != "int" then
     return
@@ -44,7 +45,9 @@ function alloc(size)
   return bytes(size)
 end function
 
-// Allocate size bytes initialized to the low eight bits of fill.
+/// Allocate size bytes initialized to the low eight bits of fill.
+/// @param size Value supplied for `size`.
+/// @param fill Value supplied for `fill`.
 function allocFill(size, fill)
   if typeof(size) != "int" then
     return
@@ -58,7 +61,8 @@ function allocFill(size, fill)
   return bytes(size, fill)
 end function
 
-// Return a detached copy of a bytes value.
+/// Return a detached copy of a bytes value.
+/// @param b Second input value.
 function copy(b)
   if typeof(b) != "bytes" then
     return
@@ -66,7 +70,10 @@ function copy(b)
   return slice(b, 0, len(b))
 end function
 
-// Return a clamped slice, or void when the input is not bytes.
+/// Return a clamped slice, or void when the input is not bytes.
+/// @param b Second input value.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
 function sub(b, offset, length)
   // wrapper for builtin slice(bytes, offset, length)
   if typeof(b) != "bytes" then
@@ -81,7 +88,10 @@ function sub(b, offset, length)
   return slice(b, offset, length)
 end function
 
-// Return an exact validated slice or a descriptive error value.
+/// Return an exact validated slice or a descriptive error value.
+/// @param b Second input value.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
 function subOrError(b, offset, length)
   if typeof(b) != "bytes" then
     return _bytesErr("bytes.subOrError expects bytes")
@@ -117,7 +127,9 @@ function subOrError(b, offset, length)
 end function
 
 
-// Concatenate two byte sequences into newly allocated storage.
+/// Concatenate two byte sequences into newly allocated storage.
+/// @param a First input value.
+/// @param b Second input value.
 function concat(a, b)
   if typeof(a) != "bytes" then
     return
@@ -128,7 +140,9 @@ function concat(a, b)
   return a + b
 end function
 
-// Compare two byte sequences with ordinary early-exit semantics.
+/// Compare two byte sequences with ordinary early-exit semantics.
+/// @param a First input value.
+/// @param b Second input value.
 function equals(a, b)
   if typeof(a) != "bytes" then
     return false
@@ -139,7 +153,9 @@ function equals(a, b)
   return a == b
 end function
 
-// Compare equal-length sequences without data-dependent early exit.
+/// Compare equal-length sequences without data-dependent early exit.
+/// @param a First input value.
+/// @param b Second input value.
 function ctEquals(a, b)
   /*
   Constant-time-ish equality check for bytes.
@@ -180,7 +196,9 @@ function ctEquals(a, b)
   return diff == 0
 end function
 
-// Replace every byte in b with the low eight bits of value.
+/// Replace every byte in b with the low eight bits of value.
+/// @param b Second input value.
+/// @param value Value to process.
 function fill(b, value)
   if typeof(b) != "bytes" then
     return
@@ -197,7 +215,9 @@ function fill(b, value)
   fillBytes(b, 0, n, value)
 end function
 
-// Report whether b begins with prefix.
+/// Report whether b begins with prefix.
+/// @param b Second input value.
+/// @param prefix Value supplied for `prefix`.
 function startsWith(b, prefix)
   if typeof(b) != "bytes" then
     return false
@@ -208,7 +228,9 @@ function startsWith(b, prefix)
   return bytesStartsWith(b, prefix)
 end function
 
-// Report whether b ends with suffix.
+/// Report whether b ends with suffix.
+/// @param b Second input value.
+/// @param suffix Value supplied for `suffix`.
 function endsWith(b, suffix)
   if typeof(b) != "bytes" then
     return false
@@ -219,7 +241,8 @@ function endsWith(b, suffix)
   return bytesEndsWith(b, suffix)
 end function
 
-// Use direct scanning for short inputs where preprocessing would cost more.
+/// Use direct scanning for short inputs where preprocessing would cost more.
+/// @internal
 function _indexOfNaive(hay, needle, start)
   if typeof(hay) != "bytes" then
     return
@@ -270,7 +293,10 @@ function _indexOfNaive(hay, needle, start)
   return -1
 end function
 
-// Find the first needle occurrence at or after start, or return -1.
+/// Find the first needle occurrence at or after start, or return -1.
+/// @param hay Value supplied for `hay`.
+/// @param needle Value supplied for `needle`.
+/// @param start Value supplied for `start`.
 function indexOf(hay, needle, start)
   if typeof(hay) != "bytes" then
     return
@@ -284,7 +310,9 @@ function indexOf(hay, needle, start)
   return bytesIndexOf(hay, needle, start)
 end function
 
-// Find the final needle occurrence, or return -1.
+/// Find the final needle occurrence, or return -1.
+/// @param hay Value supplied for `hay`.
+/// @param needle Value supplied for `needle`.
 function lastIndexOf(hay, needle)
   if typeof(hay) != "bytes" then
     return
@@ -295,7 +323,9 @@ function lastIndexOf(hay, needle)
   return bytesLastIndexOf(hay, needle)
 end function
 
-// Return a lexicographic three-way comparison result.
+/// Return a lexicographic three-way comparison result.
+/// @param a First input value.
+/// @param b Second input value.
 function compare(a, b)
   if typeof(a) != "bytes" then
     return
@@ -306,17 +336,20 @@ function compare(a, b)
   return bytesCompare(a, b)
 end function
 
-// Encode bytes as lowercase hexadecimal text.
+/// Encode bytes as lowercase hexadecimal text.
+/// @param b Second input value.
 function toHex(b)
   return hx.encode(b)
 end function
 
-// Decode hexadecimal text, returning void on invalid input.
+/// Decode hexadecimal text, returning void on invalid input.
+/// @param s Value supplied for `s`.
 function fromHex(s)
   return hx.decode(s)
 end function
 
-// Decode hexadecimal text, preserving validation failures as errors.
+/// Decode hexadecimal text, preserving validation failures as errors.
+/// @param s Value supplied for `s`.
 function fromHexOrError(s)
   if typeof(s) != "string" then
     return _bytesErr("bytes.fromHexOrError expects a string")
@@ -329,12 +362,14 @@ function fromHexOrError(s)
 end function
 
 
-// Decode UTF-8 bytes, returning void on invalid input.
+/// Decode UTF-8 bytes, returning void on invalid input.
+/// @param b Second input value.
 function decodeUtf8(b)
   return decode(b)
 end function
 
-// Decode UTF-8 bytes, preserving validation failures as errors.
+/// Decode UTF-8 bytes, preserving validation failures as errors.
+/// @param b Second input value.
 function decodeUtf8OrError(b)
   if typeof(b) != "bytes" then
     return _bytesErr("bytes.decodeUtf8OrError expects bytes")
@@ -347,32 +382,34 @@ function decodeUtf8OrError(b)
 end function
 
 
-// Decode UTF-8 bytes up to the first zero terminator.
+/// Decode UTF-8 bytes up to the first zero terminator.
+/// @param b Second input value.
 function decodeUtf8Z(b)
   // Wrapper around builtin decodeZ(bytes)
   return decodeZ(b)
 end function
 
-// Decode little-endian UTF-16 bytes up to the first zero code unit.
+/// Decode little-endian UTF-16 bytes up to the first zero code unit.
+/// @param b Second input value.
 function decodeUtf16Z(b)
   // Wrapper around builtin decode16Z(bytes)
   return decode16Z(b)
 end function
 
-// ------------------------------------------------------------
-// Binary read/write helpers (little-/big-endian)
-// ------------------------------------------------------------
-
+/// Binary read/write helpers (little-/big-endian).
+/// @internal
 function _bytes_ok(b)
   return typeof(b) == "bytes"
 end function
 
-// Centralize integer validation for binary read/write offsets.
+/// Centralize integer validation for binary read/write offsets.
+/// @internal
 function _int_ok(x)
   return typeof(x) == "int"
 end function
 
-// Validate that a fixed-width access fits completely inside a buffer.
+/// Validate that a fixed-width access fits completely inside a buffer.
+/// @internal
 function _check_range(off, need, n)
   if off < 0 then
     return false
@@ -386,7 +423,10 @@ function _check_range(off, need, n)
   return true
 end function
 
-// Write one unsigned byte and return the next offset.
+/// Write one unsigned byte and return the next offset.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
+/// @param value Value to process.
 function writeU8(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -408,7 +448,9 @@ function writeU8(b, off, value)
   return true
 end function
 
-// Read one unsigned byte or return a range/type error.
+/// Read one unsigned byte or return a range/type error.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
 function readU8(b, off)
   if not _bytes_ok(b) then
     return
@@ -423,7 +465,10 @@ function readU8(b, off)
   return b[off] & 0xFF
 end function
 
-// Write an unsigned 16-bit integer in little-endian order.
+/// Write an unsigned 16-bit integer in little-endian order.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
+/// @param value Value to process.
 function writeU16LE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -446,7 +491,10 @@ function writeU16LE(b, off, value)
   return true
 end function
 
-// Write an unsigned 16-bit integer in big-endian order.
+/// Write an unsigned 16-bit integer in big-endian order.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
+/// @param value Value to process.
 function writeU16BE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -469,7 +517,9 @@ function writeU16BE(b, off, value)
   return true
 end function
 
-// Read an unsigned little-endian 16-bit integer.
+/// Read an unsigned little-endian 16-bit integer.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
 function readU16LE(b, off)
   if not _bytes_ok(b) then
     return
@@ -486,7 +536,9 @@ function readU16LE(b, off)
   return lo |(hi << 8)
 end function
 
-// Read an unsigned big-endian 16-bit integer.
+/// Read an unsigned big-endian 16-bit integer.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
 function readU16BE(b, off)
   if not _bytes_ok(b) then
     return
@@ -503,7 +555,10 @@ function readU16BE(b, off)
   return (hi << 8) | lo
 end function
 
-// Write an unsigned 32-bit integer in little-endian order.
+/// Write an unsigned 32-bit integer in little-endian order.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
+/// @param value Value to process.
 function writeU32LE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -528,7 +583,10 @@ function writeU32LE(b, off, value)
   return true
 end function
 
-// Write an unsigned 32-bit integer in big-endian order.
+/// Write an unsigned 32-bit integer in big-endian order.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
+/// @param value Value to process.
 function writeU32BE(b, off, value)
   if not _bytes_ok(b) then
     return false
@@ -553,7 +611,9 @@ function writeU32BE(b, off, value)
   return true
 end function
 
-// Read an unsigned little-endian 32-bit integer.
+/// Read an unsigned little-endian 32-bit integer.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
 function readU32LE(b, off)
   if not _bytes_ok(b) then
     return
@@ -572,7 +632,9 @@ function readU32LE(b, off)
   return b0 |(b1 << 8) |(b2 << 16) |(b3 << 24)
 end function
 
-// Read an unsigned big-endian 32-bit integer.
+/// Read an unsigned big-endian 32-bit integer.
+/// @param b Second input value.
+/// @param off Value supplied for `off`.
 function readU32BE(b, off)
   if not _bytes_ok(b) then
     return
@@ -591,7 +653,9 @@ function readU32BE(b, off)
   return (b0 << 24) |(b1 << 16) |(b2 << 8) | b3
 end function
 
-// Return the bytewise XOR of two equal-length sequences.
+/// Return the bytewise XOR of two equal-length sequences.
+/// @param a First input value.
+/// @param b Second input value.
 function xor(a, b)
   if typeof(a) != "bytes" then
     return
@@ -614,7 +678,9 @@ function xor(a, b)
 end function
 
 
-// XOR b into a in place; both sequences must have equal length.
+/// XOR b into a in place; both sequences must have equal length.
+/// @param a First input value.
+/// @param b Second input value.
 function xorInPlace(a, b)
   if typeof(a) != "bytes" then
     return

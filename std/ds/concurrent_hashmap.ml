@@ -3,16 +3,17 @@
    Licensed under the Apache License, Version 2.0.
 */
 
+//! Provides the std ds concurrent_hashmap package.
+
 package std.ds.concurrent_hashmap
 
 import std.threading as threading
 
-// A Lock-protected open-addressing hash map in the process-wide managed heap.
-// Keys remain int/string/bytes; values may be arbitrary MiniLang object graphs.
-
+/// A Lock-protected open-addressing hash map in the process-wide managed heap. Keys remain int/string/bytes; values may be arbitrary MiniLang object graphs.
 const DEFAULT_BUCKETS = 64
 
-// Return a power-of-two bucket count suitable for masked probing.
+/// Return a power-of-two bucket count suitable for masked probing.
+/// @internal
 function _nextBuckets(value)
   count = 16
   while count < value
@@ -21,13 +22,15 @@ function _nextBuckets(value)
   return count
 end function
 
-// Allocate a zero-filled bucket array.
+/// Allocate a zero-filled bucket array.
+/// @internal
 function _newArray(size)
   if size <= 0 then return [] end if
   return array(size, 0)
 end function
 
-// Avalanche integer keys into a stable unsigned 32-bit hash.
+/// Avalanche integer keys into a stable unsigned 32-bit hash.
+/// @internal
 function _mix32(value)
   h = value & 0xFFFFFFFF
   h = h ^ (h >> 16)
@@ -38,13 +41,15 @@ function _mix32(value)
   return h & 0xFFFFFFFF
 end function
 
-// Keep equality and hashing semantics limited to immutable key categories.
+/// Keep equality and hashing semantics limited to immutable key categories.
+/// @internal
 function _keySupported(key)
   t = typeof(key)
   return t == "int" or t == "string" or t == "bytes"
 end function
 
-// Dispatch to the deterministic hash implementation for each key type.
+/// Dispatch to the deterministic hash implementation for each key type.
+/// @internal
 function _hashKey(key)
   t = typeof(key)
   if t == "int" then return _mix32(key) end if
@@ -53,7 +58,8 @@ function _hashKey(key)
   return -1
 end function
 
-// states: 0=empty, 1=used, 2=tombstone
+/// States: 0=empty, 1=used, 2=tombstone.
+/// @internal
 function _findSlot(keys, states, capacity, key, forInsert)
   index = _hashKey(key) & (capacity - 1)
   firstTombstone = -1
@@ -73,28 +79,38 @@ function _findSlot(keys, states, capacity, key, forInsert)
   return firstTombstone
 end function
 
-// Detached key/value snapshot returned by entriesArray().
+/// Detached key/value snapshot returned by entriesArray().
 struct Entry
+  /// Stores the key member of `Entry`.
   key
+  /// Stores the value member of `Entry`.
   value
 end struct
 
-// Lock-protected open-addressing map for shared managed values.
+/// Lock-protected open-addressing map for shared managed values.
 struct ThreadSafeHashMap
+  /// Stores the guard member of `ThreadSafeHashMap`.
   guard
+  /// Stores the bucket count member of `ThreadSafeHashMap`.
   bucketCount
+  /// Stores the size member of `ThreadSafeHashMap`.
   size
+  /// Stores the keys member of `ThreadSafeHashMap`.
   keys
+  /// Stores the values member of `ThreadSafeHashMap`.
   values
+  /// Stores the states member of `ThreadSafeHashMap`.
   states
+  /// Stores the closed member of `ThreadSafeHashMap`.
   closed
 
-  // Create a map with the default bucket count.
+  /// Create a map with the default bucket count.
   static function new()
     return ThreadSafeHashMap.withCapacity(DEFAULT_BUCKETS)
   end function
 
-  // Create a map with at least the requested power-of-two capacity.
+  /// Create a map with at least the requested power-of-two capacity.
+  /// @param minimumBuckets Value supplied for `minimumBuckets`.
   static function withCapacity(minimumBuckets)
     if typeof(minimumBuckets) != "int" or minimumBuckets < 0 then
       return error(1620, "hash map capacity must be a non-negative integer")
@@ -104,7 +120,8 @@ struct ThreadSafeHashMap
     return ThreadSafeHashMap(guard, bucketCount, 0, _newArray(bucketCount), _newArray(bucketCount), _newArray(bucketCount), false)
   end function
 
-  // Rebuild live entries into a larger table; guard must already be held.
+  /// Rebuild live entries into a larger table; guard must already be held.
+  /// @internal
   function _rehashLocked(minimumBuckets)
     newCount = _nextBuckets(minimumBuckets)
     newKeys = _newArray(newCount)
@@ -126,7 +143,7 @@ struct ThreadSafeHashMap
     this.states = newStates
   end function
 
-  // Return a synchronized snapshot of the live entry count.
+  /// Return a synchronized snapshot of the live entry count.
   function count()
     if not this.guard.acquire() then return 0 end if
     result = 0
@@ -135,22 +152,24 @@ struct ThreadSafeHashMap
     return result
   end function
 
-  // Alias for count().
+  /// Alias for count().
   function len()
     return this.count()
   end function
 
-  // Report whether the map contains no live entries.
+  /// Report whether the map contains no live entries.
   function isEmpty()
     return this.count() == 0
   end function
 
-  // Report whether storage and its native lock have been released.
+  /// Report whether storage and its native lock have been released.
   function isClosed()
     return this.closed
   end function
 
-  // Insert or replace one key/value pair atomically.
+  /// Insert or replace one key/value pair atomically.
+  /// @param key Value supplied for `key`.
+  /// @param value Value to process.
   function set(key, value)
     if not _keySupported(key) or not this.guard.acquire() then return false end if
     if this.closed then
@@ -175,7 +194,8 @@ struct ThreadSafeHashMap
     return true
   end function
 
-  // Test whether a supported key is present.
+  /// Test whether a supported key is present.
+  /// @param key Value supplied for `key`.
   function has(key)
     if not _keySupported(key) or not this.guard.acquire() then return false end if
     result = false
@@ -186,7 +206,8 @@ struct ThreadSafeHashMap
     return result
   end function
 
-  // Return a key's value, or void when absent or unavailable.
+  /// Return a key's value, or void when absent or unavailable.
+  /// @param key Value supplied for `key`.
   function get(key)
     if not _keySupported(key) or not this.guard.acquire() then return end if
     if this.closed then
@@ -203,7 +224,9 @@ struct ThreadSafeHashMap
     return result
   end function
 
-  // Return a key's value or the caller-supplied fallback.
+  /// Return a key's value or the caller-supplied fallback.
+  /// @param key Value supplied for `key`.
+  /// @param fallback Value supplied for `fallback`.
   function getOr(key, fallback)
     if not _keySupported(key) or not this.guard.acquire() then return fallback end if
     if this.closed then
@@ -220,7 +243,9 @@ struct ThreadSafeHashMap
     return result
   end function
 
-  // Atomically add delta to an integer value, inserting delta when absent.
+  /// Atomically add delta to an integer value, inserting delta when absent.
+  /// @param key Value supplied for `key`.
+  /// @param delta Value supplied for `delta`.
   function increment(key, delta)
     if not _keySupported(key) or typeof(delta) != "int" then return end if
     if not this.guard.acquire() then return end if
@@ -252,7 +277,8 @@ struct ThreadSafeHashMap
     return result
   end function
 
-  // Remove a live key and leave a tombstone for the probe chain.
+  /// Remove a live key and leave a tombstone for the probe chain.
+  /// @param key Value supplied for `key`.
   function remove(key)
     if not _keySupported(key) or not this.guard.acquire() then return false end if
     if this.closed then
@@ -272,12 +298,13 @@ struct ThreadSafeHashMap
     return true
   end function
 
-  // Alias for remove().
+  /// Alias for remove().
+  /// @param key Value supplied for `key`.
   function delete(key)
     return this.remove(key)
   end function
 
-  // Replace all bucket arrays while retaining the current capacity.
+  /// Replace all bucket arrays while retaining the current capacity.
   function clear()
     if not this.guard.acquire() then return false end if
     if this.closed then
@@ -292,7 +319,7 @@ struct ThreadSafeHashMap
     return true
   end function
 
-  // Copy a consistent snapshot of all live keys.
+  /// Copy a consistent snapshot of all live keys.
   function keysArray()
     if not this.guard.acquire() then return [] end if
     if this.closed then
@@ -313,7 +340,7 @@ struct ThreadSafeHashMap
     return output
   end function
 
-  // Copy a consistent snapshot of all live values.
+  /// Copy a consistent snapshot of all live values.
   function valuesArray()
     if not this.guard.acquire() then return [] end if
     if this.closed then
@@ -334,7 +361,7 @@ struct ThreadSafeHashMap
     return output
   end function
 
-  // Copy live pairs into detached Entry snapshots.
+  /// Copy live pairs into detached Entry snapshots.
   function entriesArray()
     if not this.guard.acquire() then return [] end if
     if this.closed then
@@ -355,7 +382,7 @@ struct ThreadSafeHashMap
     return output
   end function
 
-  // Drop all managed references and release the native lock.
+  /// Drop all managed references and release the native lock.
   function close()
     if this.closed or not this.guard.acquire() then return false end if
     this.keys = []

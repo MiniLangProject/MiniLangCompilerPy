@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std assert package.
+
 package std.assert
 
 // ------------------------------------------------------------
@@ -22,11 +24,9 @@ package std.assert
 // Intended for tests and quick sanity checks.
 // ------------------------------------------------------------
 
-/*
-asserts that a condition is true
-input: bool cond, string label
-returns: bool success
-*/
+/// Asserts that a condition is true.
+/// @param cond Value supplied for `cond`.
+/// @param label Value supplied for `label`.
 function assertTrue(cond, label)
   if cond then
     print label + " [OK]"
@@ -38,11 +38,9 @@ function assertTrue(cond, label)
   return false
 end function
 
-/*
-asserts that a condition is false
-input: bool cond, string label
-returns: bool success
-*/
+/// Asserts that a condition is false.
+/// @param cond Value supplied for `cond`.
+/// @param label Value supplied for `label`.
 function assertFalse(cond, label)
   if not cond then
     print label + " [OK]"
@@ -54,11 +52,10 @@ function assertFalse(cond, label)
   return false
 end function
 
-/*
-asserts that two values are equal (==)
-input: any actual, any expected, string label
-returns: bool success
-*/
+/// Asserts that two values are equal (==).
+/// @param actual Value supplied for `actual`.
+/// @param expected Value supplied for `expected`.
+/// @param label Value supplied for `label`.
 function assertEq(actual, expected, label)
   if actual == expected then
     print label + " [OK]"
@@ -73,11 +70,10 @@ function assertEq(actual, expected, label)
   return false
 end function
 
-/*
-asserts that two values are not equal (!=)
-input: any actual, any expected, string label
-returns: bool success
-*/
+/// Asserts that two values are not equal (!=).
+/// @param actual Value supplied for `actual`.
+/// @param expected Value supplied for `expected`.
+/// @param label Value supplied for `label`.
 function assertNe(actual, expected, label)
   if actual != expected then
     print label + " [OK]"
@@ -90,11 +86,10 @@ function assertNe(actual, expected, label)
   return false
 end function
 
-/*
-asserts that a is greater than b
-input: comparable a, comparable b, string label
-returns: bool success
-*/
+/// Asserts that a is greater than b.
+/// @param a First input value.
+/// @param b Second input value.
+/// @param label Value supplied for `label`.
 function assertGt(a, b, label)
   if a > b then
     print label + " [OK]"
@@ -109,11 +104,10 @@ function assertGt(a, b, label)
   return false
 end function
 
-/*
-asserts that a is less than b
-input: comparable a, comparable b, string label
-returns: bool success
-*/
+/// Asserts that a is less than b.
+/// @param a First input value.
+/// @param b Second input value.
+/// @param label Value supplied for `label`.
 function assertLt(a, b, label)
   if a < b then
     print label + " [OK]"
@@ -128,11 +122,11 @@ function assertLt(a, b, label)
   return false
 end function
 
-/*
-asserts that two numbers are approximately equal
-input: int|float actual, int|float expected, float eps, string label
-returns: bool success
-*/
+/// Asserts that two numbers are approximately equal.
+/// @param actual Value supplied for `actual`.
+/// @param expected Value supplied for `expected`.
+/// @param eps Value supplied for `eps`.
+/// @param label Value supplied for `label`.
 function assertApprox(actual, expected, eps, label)
   // Avoid importing std.math from std.assert (keep this dependency-free).
   d = actual - expected
@@ -154,11 +148,9 @@ function assertApprox(actual, expected, eps, label)
   return false
 end function
 
-/*
-asserts that a value is not void
-input: any x, string label
-returns: bool success
-*/
+/// Asserts that a value is not void.
+/// @param x Value supplied for `x`.
+/// @param label Value supplied for `label`.
 function assertNotVoid(x, label)
   if typeof(x) != "void" then
     print label + " [OK]"

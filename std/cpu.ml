@@ -14,29 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std cpu package.
+
 package std.cpu
 
+/// Stores the sse2.
 const SSE2 = 1
+/// Stores the sse42.
 const SSE42 = 2
+/// Stores the avx.
 const AVX = 4
+/// Stores the avx2.
 const AVX2 = 8
+/// Stores the aes ni.
 const AES_NI = 16
+/// Stores the pclmulqdq.
 const PCLMULQDQ = 32
+/// Stores the sha.
 const SHA = 64
 
-// Return capabilities detected once during process startup.
+/// Return capabilities detected once during process startup.
 function features()
   return runtimeCpuFeatures()
 end function
 
-// Return the feature mask currently used by runtime dispatch.
+/// Return the feature mask currently used by runtime dispatch.
 function activeFeatures()
   return runtimeCpuActiveFeatures()
 end function
 
-// Restrict dispatch for differential tests and benchmarks.  The mask cannot
-// enable unsupported instructions.  A negative value restores all detected
-// features; the previous active mask is returned.
+/// Restrict dispatch for differential tests and benchmarks. The mask cannot enable unsupported instructions. A negative value restores all detected features; the previous active mask is returned.
+/// @param mask Value supplied for `mask`.
 function setDispatchMaskForTesting(mask)
   return runtimeCpuSetMask(mask)
 end function

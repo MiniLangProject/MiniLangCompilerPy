@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std sort package.
+
 package std.sort
 
 // -----------------------------------------------------------------------------
@@ -32,20 +34,15 @@ package std.sort
 // All sort functions return the (sorted) array, or void on invalid input.
 // -----------------------------------------------------------------------------
 
-/*
-stable in-place sort using the default comparator (ascending)
-input: array arr
-returns: array arr_sorted (or void on invalid input)
-*/
+/// Stable in-place sort using the default comparator (ascending).
+/// @param arr Value supplied for `arr`.
 function sort(arr)
   return sortBy(arr, __defaultLess)
 end function
 
-/*
-stable in-place sort with a custom comparator (insertion sort)
-input: array arr, function lessFn(a, b) -> bool|int
-returns: array arr_sorted (or void on invalid input)
-*/
+/// Stable in-place sort with a custom comparator (insertion sort).
+/// @param arr Value supplied for `arr`.
+/// @param lessFn Value supplied for `lessFn`.
 function sortBy(arr, lessFn)
   if typeof(arr) != "array" then
     return
@@ -79,24 +76,15 @@ function sortBy(arr, lessFn)
   return arr
 end function
 
-/*
-faster in-place sort using the default comparator (ascending)
-- uses an iterative quicksort with insertion-sort fallback for small ranges
-- not guaranteed stable
-input: array arr
-returns: array arr_sorted (or void on invalid input)
-*/
+/// Faster in-place sort using the default comparator (ascending) - uses an iterative quicksort with insertion-sort fallback for small ranges - not guaranteed stable.
+/// @param arr Value supplied for `arr`.
 function sortFast(arr)
   return sortFastBy(arr, __defaultLess)
 end function
 
-/*
-faster in-place sort with a custom comparator
-- uses an iterative quicksort with insertion-sort fallback for small ranges
-- not guaranteed stable
-input: array arr, function lessFn(a, b) -> bool|int
-returns: array arr_sorted (or void on invalid input)
-*/
+/// Faster in-place sort with a custom comparator - uses an iterative quicksort with insertion-sort fallback for small ranges - not guaranteed stable.
+/// @param arr Value supplied for `arr`.
+/// @param lessFn Value supplied for `lessFn`.
 function sortFastBy(arr, lessFn)
   if typeof(arr) != "array" then
     return
@@ -174,11 +162,9 @@ function sortFastBy(arr, lessFn)
   return arr
 end function
 
-/*
-checks whether an array is sorted according to the given comparator
-input: array arr, function lessFn(a, b) -> bool|int
-returns: bool is_sorted (false on invalid input)
-*/
+/// Checks whether an array is sorted according to the given comparator.
+/// @param arr Value supplied for `arr`.
+/// @param lessFn Value supplied for `lessFn`.
 function isSorted(arr, lessFn)
   if typeof(arr) != "array" then
     return false
@@ -201,11 +187,8 @@ function isSorted(arr, lessFn)
   return true
 end function
 
-/*
-internal helper: comparator adapter (bool|int -> bool)
-input: any a, any b, function lessFn
-returns: bool a_before_b
-*/
+/// Internal helper: comparator adapter (bool|int -> bool).
+/// @internal
 function __less(a, b, lessFn)
   r = lessFn(a, b)
   if typeof(r) == "bool" then
@@ -218,20 +201,14 @@ function __less(a, b, lessFn)
   return __defaultLess(a, b)
 end function
 
-/*
-internal helper: default comparator (ascending)
-input: any a, any b
-returns: bool a_before_b
-*/
+/// Internal helper: default comparator (ascending).
+/// @internal
 function __defaultLess(a, b)
   return a < b
 end function
 
-/*
-internal helper: allocate an array of length n filled with 'fill'
-input: int n, any fill
-returns: array arr (or void on invalid input)
-*/
+/// Internal helper: allocate an array of length n filled with 'fill'.
+/// @internal
 function __allocArray(n, fill)
   if typeof(n) != "int" then
     return
@@ -242,22 +219,16 @@ function __allocArray(n, fill)
   return array(n, fill)
 end function
 
-/*
-internal helper: swap two elements in an array
-input: array arr, int i, int j
-returns: void
-*/
+/// Internal helper: swap two elements in an array.
+/// @internal
 function __swap(arr, i, j)
   tmp = arr[i]
   arr[i] = arr[j]
   arr[j] = tmp
 end function
 
-/*
-internal helper: partition for quicksort (Hoare-style)
-input: array arr, int lo, int hi, function lessFn
-returns: int split_index
-*/
+/// Internal helper: partition for quicksort (Hoare-style).
+/// @internal
 function __partition(arr, lo, hi, lessFn)
   // Middle pivot
   pivot = arr[(lo + hi) / 2]
@@ -284,11 +255,8 @@ function __partition(arr, lo, hi, lessFn)
   return i
 end function
 
-/*
-internal helper: insertion sort for a slice [lo..hi]
-input: array arr, int lo, int hi, function lessFn
-returns: void
-*/
+/// Internal helper: insertion sort for a slice [lo..hi].
+/// @internal
 function __insertionSortRange(arr, lo, hi, lessFn)
   i = lo + 1
   while i <= hi

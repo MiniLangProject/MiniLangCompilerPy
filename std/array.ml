@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std array package.
+
 package std.array
 
 import std.string as s
@@ -24,20 +26,14 @@ import std.string as s
 // Indexing is 0-based (see README).
 // ------------------------------------------------------------
 
-/*
-checks whether a value is an array
-input: any x
-returns: bool is_array
-*/
+/// Checks whether a value is an array.
+/// @param x Value supplied for `x`.
 function isArray(x)
   return typeof(x) == "array"
 end function
 
-/*
-creates a shallow copy of an array
-input: array a
-returns: array copy (or void on invalid input)
-*/
+/// Creates a shallow copy of an array.
+/// @param a First input value.
 function copy(a)
   if typeof(a) != "array" then
     return
@@ -55,12 +51,10 @@ function copy(a)
   return val
 end function
 
-/*
-returns a slice of an array with strict bounds
-- supports negative offsets (like Python): offset < 0 means "from end"
-input: array a, int offset, int length
-returns: array slice (or void on invalid input / out-of-bounds)
-*/
+/// Returns a slice of an array with strict bounds - supports negative offsets (like Python): offset < 0 means "from end".
+/// @param a First input value.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
 function slice(a, offset, length)
   if typeof(a) != "array" then
     return
@@ -103,11 +97,10 @@ function slice(a, offset, length)
   return val
 end function
 
-/*
-finds the first index of a value in an array starting at 'start'
-input: array a, any value, int start
-returns: int index (>=0) or -1 if not found (or void on invalid input)
-*/
+/// Finds the first index of a value in an array starting at 'start'.
+/// @param a First input value.
+/// @param value Value to process.
+/// @param start Value supplied for `start`.
 function indexOf(a, value, start)
   if typeof(a) != "array" then
     return
@@ -133,11 +126,9 @@ function indexOf(a, value, start)
   return -1
 end function
 
-/*
-finds the last index of a value in an array
-input: array a, any value
-returns: int index (>=0) or -1 if not found (or void on invalid input)
-*/
+/// Finds the last index of a value in an array.
+/// @param a First input value.
+/// @param value Value to process.
 function lastIndexOf(a, value)
   if typeof(a) != "array" then
     return
@@ -158,11 +149,9 @@ function lastIndexOf(a, value)
   return -1
 end function
 
-/*
-checks whether an array contains a value
-input: array a, any value
-returns: bool contains (false on invalid input)
-*/
+/// Checks whether an array contains a value.
+/// @param a First input value.
+/// @param value Value to process.
 function contains(a, value)
   if typeof(a) != "array" then
     return false
@@ -172,11 +161,9 @@ function contains(a, value)
   return std.array.indexOf(a, value, 0) >= 0
 end function
 
-/*
-applies a function to every element and returns a new array
-input: array a, function fn(element) -> any
-returns: array mapped (or void on invalid input)
-*/
+/// Applies a function to every element and returns a new array.
+/// @param a First input value.
+/// @param fn Function invoked by the operation.
 function map(a, fn)
   if typeof(a) != "array" then
     return
@@ -197,11 +184,9 @@ function map(a, fn)
   return val
 end function
 
-/*
-filters elements by predicate and returns a new array
-input: array a, function pred(element) -> bool
-returns: array filtered (or void on invalid input)
-*/
+/// Filters elements by predicate and returns a new array.
+/// @param a First input value.
+/// @param pred Predicate applied to each candidate value.
 function filter(a, pred)
   if typeof(a) != "array" then
     return
@@ -234,11 +219,10 @@ function filter(a, pred)
   return std.array.slice(tmp, 0, count)
 end function
 
-/*
-reduces an array to a single value using an accumulator function
-input: array arr, function f(acc, element) -> any, any init
-returns: any reduced_value (or void on invalid input)
-*/
+/// Reduces an array to a single value using an accumulator function.
+/// @param arr Value supplied for `arr`.
+/// @param f Function invoked by the operation.
+/// @param init Value supplied for `init`.
 function reduce(arr, f, init)
   if typeof(arr) != "array" then
     return
@@ -254,11 +238,9 @@ function reduce(arr, f, init)
   return acc
 end function
 
-/*
-returns true if any element satisfies the predicate
-input: array a, function pred(element) -> bool
-returns: bool any_true (false on invalid input)
-*/
+/// Returns true if any element satisfies the predicate.
+/// @param a First input value.
+/// @param pred Predicate applied to each candidate value.
 function any(a, pred)
   if typeof(a) != "array" then
     return false
@@ -276,11 +258,9 @@ function any(a, pred)
   return false
 end function
 
-/*
-returns true if all elements satisfy the predicate
-input: array a, function pred(element) -> bool
-returns: bool all_true (false on invalid input)
-*/
+/// Returns true if all elements satisfy the predicate.
+/// @param a First input value.
+/// @param pred Predicate applied to each candidate value.
 function all(a, pred)
   if typeof(a) != "array" then
     return false
@@ -298,11 +278,9 @@ function all(a, pred)
   return true
 end function
 
-/*
-joins an array of strings using a separator
-input: array a (strings), string sep
-returns: string joined (or void on invalid input)
-*/
+/// Joins an array of strings using a separator.
+/// @param a First input value.
+/// @param sep Value supplied for `sep`.
 function joinStrings(a, sep)
   if typeof(a) != "array" then
     return
@@ -314,11 +292,8 @@ function joinStrings(a, sep)
   return stringJoin(a, sep)
 end function
 
-/*
-returns the number of elements in the array
-input: array a
-returns: int length (or void on invalid input)
-*/
+/// Returns the number of elements in the array.
+/// @param a First input value.
 function length(a)
   if typeof(a) != "array" then
     return
@@ -326,11 +301,8 @@ function length(a)
   return len(a)
 end function
 
-/*
-returns true if an array is empty
-input: array a
-returns: bool is_empty (false on invalid input)
-*/
+/// Returns true if an array is empty.
+/// @param a First input value.
 function isEmpty(a)
   if typeof(a) != "array" then
     return false
@@ -338,11 +310,8 @@ function isEmpty(a)
   return len(a) == 0
 end function
 
-/*
-returns the first element of an array
-input: array a
-returns: any first (or void if invalid input or empty)
-*/
+/// Returns the first element of an array.
+/// @param a First input value.
 function first(a)
   if typeof(a) != "array" then
     return
@@ -353,11 +322,8 @@ function first(a)
   return a[0]
 end function
 
-/*
-returns the last element of an array
-input: array a
-returns: any last (or void if invalid input or empty)
-*/
+/// Returns the last element of an array.
+/// @param a First input value.
 function last(a)
   if typeof(a) != "array" then
     return
@@ -369,11 +335,9 @@ function last(a)
   return a[n - 1]
 end function
 
-/*
-appends a value to an array and returns a new array
-input: array a, any value
-returns: array new_array (or void on invalid input)
-*/
+/// Appends a value to an array and returns a new array.
+/// @param a First input value.
+/// @param value Value to process.
 function append(a, value)
   if typeof(a) != "array" then
     return
@@ -390,11 +354,9 @@ function append(a, value)
   return val
 end function
 
-/*
-concatenates two arrays and returns a new array
-input: array a, array b
-returns: array combined (or void on invalid input)
-*/
+/// Concatenates two arrays and returns a new array.
+/// @param a First input value.
+/// @param b Second input value.
 function concat(a, b)
   if typeof(a) != "array" then
     return

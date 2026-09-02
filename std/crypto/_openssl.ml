@@ -6,42 +6,106 @@ you may not use this file except in compliance with the License.
 */
 
 // Internal OpenSSL 3 bridge for the public std.crypto modules on Linux.
+//! Provides the std crypto _openssl package.
+
 package std.crypto._openssl
 
+/// Stores the evp ctrl gcm set ivlen.
+/// @internal
 const EVP_CTRL_GCM_SET_IVLEN = 0x09
+/// Stores the evp ctrl gcm get tag.
+/// @internal
 const EVP_CTRL_GCM_GET_TAG = 0x10
+/// Stores the evp ctrl gcm set tag.
+/// @internal
 const EVP_CTRL_GCM_SET_TAG = 0x11
+/// Stores the evp pkey x25519.
+/// @internal
 const EVP_PKEY_X25519 = 1034
 
+/// Implements sha256.
+/// @internal
 extern function _sha256(input as ptr, length as u64, output as ptr) from "libcrypto.so.3" symbol "SHA256" returns ptr
+/// Implements sha384.
+/// @internal
 extern function _sha384(input as ptr, length as u64, output as ptr) from "libcrypto.so.3" symbol "SHA384" returns ptr
+/// Implements evp sha256.
+/// @internal
 extern function _evpSha256() from "libcrypto.so.3" symbol "EVP_sha256" returns ptr
+/// Implements evp sha384.
+/// @internal
 extern function _evpSha384() from "libcrypto.so.3" symbol "EVP_sha384" returns ptr
+/// Implements hmac.
+/// @internal
 extern function _hmac(digest as ptr, key as ptr, keyLength as int, input as ptr, inputLength as u64, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "HMAC" returns ptr
+/// Implements random.
+/// @internal
 extern function _random(output as ptr, length as int) from "libcrypto.so.3" symbol "RAND_bytes" returns i32
+/// Implements native pbkdf2.
+/// @internal
 extern function _nativePbkdf2(password as ptr, passwordLength as int, salt as ptr, saltLength as int, iterations as int, digest as ptr, outputLength as int, output as ptr) from "libcrypto.so.3" symbol "PKCS5_PBKDF2_HMAC" returns i32
 
+/// Implements cipher context new.
+/// @internal
 extern function _cipherContextNew() from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_new" returns ptr
+/// Implements cipher context free.
+/// @internal
 extern function _cipherContextFree(context as ptr) from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_free" returns void
+/// Implements aes256 gcm.
+/// @internal
 extern function _aes256Gcm() from "libcrypto.so.3" symbol "EVP_aes_256_gcm" returns ptr
+/// Implements encrypt init.
+/// @internal
 extern function _encryptInit(context as ptr, cipher as ptr, implementation as ptr, key as ptr, iv as ptr) from "libcrypto.so.3" symbol "EVP_EncryptInit_ex" returns i32
+/// Implements encrypt update.
+/// @internal
 extern function _encryptUpdate(context as ptr, output as ptr, outputLength as bytes, input as ptr, inputLength as int) from "libcrypto.so.3" symbol "EVP_EncryptUpdate" returns i32
+/// Implements encrypt final.
+/// @internal
 extern function _encryptFinal(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_EncryptFinal_ex" returns i32
+/// Implements decrypt init.
+/// @internal
 extern function _decryptInit(context as ptr, cipher as ptr, implementation as ptr, key as ptr, iv as ptr) from "libcrypto.so.3" symbol "EVP_DecryptInit_ex" returns i32
+/// Implements decrypt update.
+/// @internal
 extern function _decryptUpdate(context as ptr, output as ptr, outputLength as bytes, input as ptr, inputLength as int) from "libcrypto.so.3" symbol "EVP_DecryptUpdate" returns i32
+/// Implements decrypt final.
+/// @internal
 extern function _decryptFinal(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_DecryptFinal_ex" returns i32
+/// Implements cipher control.
+/// @internal
 extern function _cipherControl(context as ptr, operation as int, argument as int, data as ptr) from "libcrypto.so.3" symbol "EVP_CIPHER_CTX_ctrl" returns i32
 
+/// Creates new raw private key.
+/// @internal
 extern function _newRawPrivateKey(kind as int, engine as ptr, key as ptr, keyLength as u64) from "libcrypto.so.3" symbol "EVP_PKEY_new_raw_private_key" returns ptr
+/// Creates new raw public key.
+/// @internal
 extern function _newRawPublicKey(kind as int, engine as ptr, key as ptr, keyLength as u64) from "libcrypto.so.3" symbol "EVP_PKEY_new_raw_public_key" returns ptr
+/// Returns get raw public key.
+/// @internal
 extern function _getRawPublicKey(key as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_PKEY_get_raw_public_key" returns i32
+/// Implements key free.
+/// @internal
 extern function _keyFree(key as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_free" returns void
+/// Implements derive context new.
+/// @internal
 extern function _deriveContextNew(key as ptr, engine as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_CTX_new" returns ptr
+/// Implements derive context free.
+/// @internal
 extern function _deriveContextFree(context as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_CTX_free" returns void
+/// Implements derive init.
+/// @internal
 extern function _deriveInit(context as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_derive_init" returns i32
+/// Implements derive set peer.
+/// @internal
 extern function _deriveSetPeer(context as ptr, peer as ptr) from "libcrypto.so.3" symbol "EVP_PKEY_derive_set_peer" returns i32
+/// Implements derive.
+/// @internal
 extern function _derive(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_PKEY_derive" returns i32
 
+/// Implements put u64.
+/// @internal
 function _putU64(buffer, value)
   i = 0
   while i < 8
@@ -50,20 +114,28 @@ function _putU64(buffer, value)
   end while
 end function
 
+/// Returns get u32.
+/// @internal
 function _getU32(buffer)
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
 end function
 
+/// Implements zero.
+/// @internal
 function _zero(buffer)
   if typeof(buffer) == "bytes" and len(buffer) > 0 then fillBytes(buffer, 0, len(buffer), 0) end if
 end function
 
+/// Implements digest.
+/// @internal
 function _digest(algorithm)
   if algorithm == "SHA256" then return _evpSha256() end if
   if algorithm == "SHA384" then return _evpSha384() end if
   return 0
 end function
 
+/// Reports whether hash.
+/// @internal
 function hash(algorithm, key, input, output)
   if typeof(key) == "bytes" then
     outputLength = bytes(4, 0)
@@ -81,6 +153,8 @@ function hash(algorithm, key, input, output)
   return result != 0
 end function
 
+/// Implements random.
+/// @internal
 function random(output)
   if len(output) == 0 then return true end if
   ok = _random(nativeBytesPtr(output), len(output)) == 1
@@ -88,7 +162,8 @@ function random(output)
   return ok
 end function
 
-// Derive PBKDF2 output through OpenSSL's constant-time HMAC implementation.
+/// Derive PBKDF2 output through OpenSSL's constant-time HMAC implementation.
+/// @internal
 function pbkdf2(hashAlgorithm, password, salt, iterations, output)
   digest = _digest(hashAlgorithm)
   if digest == 0 then return false end if
@@ -100,7 +175,8 @@ function pbkdf2(hashAlgorithm, password, salt, iterations, output)
   return ok
 end function
 
-// RFC-5869 extract-and-expand using OpenSSL's HMAC primitive.
+/// RFC-5869 extract-and-expand using OpenSSL's HMAC primitive.
+/// @internal
 function hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, output)
   effectiveSalt = salt
   if len(effectiveSalt) == 0 then effectiveSalt = bytes(digestLength, 0) end if
@@ -132,6 +208,8 @@ function hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, output)
   return ok
 end function
 
+/// Implements aes gcm.
+/// @internal
 function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   context = _cipherContextNew()
   if context == 0 then return false end if
@@ -168,6 +246,8 @@ function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   return ok
 end function
 
+/// Implements x25519 public.
+/// @internal
 function x25519Public(privateKey, output)
   key = _newRawPrivateKey(EVP_PKEY_X25519, 0, nativeBytesPtr(privateKey), len(privateKey))
   if key == 0 then return false end if
@@ -180,6 +260,8 @@ function x25519Public(privateKey, output)
   return ok
 end function
 
+/// Implements x25519.
+/// @internal
 function x25519(privateKey, publicKey, output)
   privateHandle = _newRawPrivateKey(EVP_PKEY_X25519, 0, nativeBytesPtr(privateKey), len(privateKey))
   publicHandle = _newRawPublicKey(EVP_PKEY_X25519, 0, nativeBytesPtr(publicKey), len(publicKey))

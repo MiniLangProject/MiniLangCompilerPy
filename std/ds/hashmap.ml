@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+//! Provides the std ds hashmap package.
+
 package std.ds.hashmap
 
 // ------------------------------------------------------------
@@ -30,11 +32,8 @@ package std.ds.hashmap
 // - set/remove return true/false.
 // ------------------------------------------------------------
 
-/*
-allocates an array of length n filled with `fill`
-input: int n, any fill
-returns: array output
-*/
+/// Allocates an array of length n filled with `fill`
+/// @internal
 function _allocArray(n, fill)
   if typeof(n) != "int" then
     return
@@ -45,11 +44,8 @@ function _allocArray(n, fill)
   return array(n, fill)
 end function
 
-/*
-returns the next power-of-two capacity (minimum 16)
-input: int n
-returns: int capPow2
-*/
+/// Returns the next power-of-two capacity (minimum 16).
+/// @internal
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 16
@@ -64,11 +60,8 @@ function _nextPow2(n)
   return c
 end function
 
-/*
-mixes an integer into a 32-bit hash value
-input: int x
-returns: int hashU32
-*/
+/// Mixes an integer into a 32-bit hash value.
+/// @internal
 function _mix32(x)
   // 32-bit finalizer (Murmur-style), masked to u32.
   h = x & 0xFFFFFFFF
@@ -80,11 +73,8 @@ function _mix32(x)
   return h & 0xFFFFFFFF
 end function
 
-/*
-hashes a supported key type (int|bytes|string)
-input: int|bytes|string k
-returns: int hashU32 (or void)
-*/
+/// Hashes a supported key type (int|bytes|string).
+/// @internal
 function _hashKey(k)
   t = typeof(k)
   if t == "int" then
@@ -99,11 +89,8 @@ function _hashKey(k)
   return
 end function
 
-/*
-finds a slot index for lookup/insert
-input: array keys, array states, int cap, int|bytes|string key, bool forInsert
-returns: int index (or -1)
-*/
+/// Finds a slot index for lookup/insert.
+/// @internal
 function _findSlot(keys, states, cap, key, forInsert)
   // states: 0=empty, 1=used, 2=tomb
   h = _hashKey(key)
@@ -149,34 +136,34 @@ function _findSlot(keys, states, cap, key, forInsert)
   return -1
 end function
 
-// Detached key/value pair returned by entry-oriented operations.
+/// Detached key/value pair returned by entry-oriented operations.
 struct Entry
+  /// Stores the key member of `Entry`.
   key
+  /// Stores the value member of `Entry`.
   value
 end struct
 
-// Open-addressing map with deterministic hashing for supported key types.
+/// Open-addressing map with deterministic hashing for supported key types.
 struct HashMap
+  /// Stores the cap member of `HashMap`.
   cap
+  /// Stores the size member of `HashMap`.
   size
+  /// Stores the keys member of `HashMap`.
   keys
+  /// Stores the values member of `HashMap`.
   values
+  /// Stores the states member of `HashMap`.
   states
 
-  /*
-  creates a new empty hash map
-  input: (none)
-  returns: HashMap map
-  */
+  /// Creates a new empty hash map.
   static function new()
   return HashMap.withCapacity(16)
 end function
 
-/*
-creates a hash map with at least `minCap` capacity
-input: int minCap
-returns: HashMap map
-*/
+/// Creates a hash map with at least `minCap` capacity.
+/// @param minCap Value supplied for `minCap`.
 static function withCapacity(minCap)
 c = _nextPow2(minCap)
 k = _allocArray(c, 0)
@@ -185,29 +172,17 @@ s = _allocArray(c, 0)
 return HashMap(c, 0, k, v, s)
 end function
 
-/*
-returns number of entries
-input: (none)
-returns: int count
-*/
+/// Returns number of entries.
 function count()
   return this.size
 end function
 
-/*
-checks whether map is empty
-input: (none)
-returns: bool empty
-*/
+/// Checks whether map is empty.
 function isEmpty()
   return this.size == 0
 end function
 
-/*
-removes all entries (keeps capacity)
-input: (none)
-returns: void
-*/
+/// Removes all entries (keeps capacity).
 function clear()
   // keep capacity, reset arrays
   this.keys = _allocArray(this.cap, 0)
@@ -216,21 +191,15 @@ function clear()
   this.size = 0
 end function
 
-/*
-checks whether inserting one element would exceed load factor
-input: (none)
-returns: bool shouldGrow
-*/
+/// Checks whether inserting one element would exceed load factor.
+/// @internal
 function _maybeGrow()
   // Grow at ~0.7 load factor
   return (this.size + 1) * 10 >= this.cap * 7
 end function
 
-/*
-rehashes entries into a new table size
-input: int newCap
-returns: void
-*/
+/// Rehashes entries into a new table size.
+/// @internal
 function _rehash(newCap)
   c2 = _nextPow2(newCap)
   nk = _allocArray(c2, 0)
@@ -254,11 +223,9 @@ function _rehash(newCap)
   this.states = ns
 end function
 
-/*
-inserts or updates a key/value pair
-input: int|bytes|string key, any value
-returns: bool ok
-*/
+/// Inserts or updates a key/value pair.
+/// @param key Value supplied for `key`.
+/// @param value Value to process.
 function set(key, value)
   kt = typeof(key)
   if kt != "int" and kt != "bytes" and kt != "string" then
@@ -283,11 +250,8 @@ function set(key, value)
   return true
 end function
 
-/*
-checks if a key exists
-input: int|bytes|string key
-returns: bool present
-*/
+/// Checks if a key exists.
+/// @param key Value supplied for `key`.
 function has(key)
   kt = typeof(key)
   if kt != "int" and kt != "bytes" and kt != "string" then
@@ -297,11 +261,8 @@ function has(key)
   return idx >= 0
 end function
 
-/*
-gets value by key
-input: int|bytes|string key
-returns: any value (or void)
-*/
+/// Gets value by key.
+/// @param key Value supplied for `key`.
 function get(key)
   kt = typeof(key)
   if kt != "int" and kt != "bytes" and kt != "string" then
@@ -314,11 +275,9 @@ function get(key)
   return this.values[idx]
 end function
 
-/*
-gets value by key or returns fallback
-input: int|bytes|string key, any fallback
-returns: any valueOrFallback
-*/
+/// Gets value by key or returns fallback.
+/// @param key Value supplied for `key`.
+/// @param fallback Value supplied for `fallback`.
 function getOr(key, fallback)
   v = this.get(key)
   if typeof(v) == "void" then
@@ -327,11 +286,8 @@ function getOr(key, fallback)
   return v
 end function
 
-/*
-removes a key from the map
-input: int|bytes|string key
-returns: bool removed
-*/
+/// Removes a key from the map.
+/// @param key Value supplied for `key`.
 function remove(key)
   kt = typeof(key)
   if kt != "int" and kt != "bytes" and kt != "string" then
@@ -349,20 +305,13 @@ function remove(key)
   return true
 end function
 
-/*
-alias for remove(key) to match common naming in the stdlib/tests
-input: int|bytes|string key
-returns: bool removed
-*/
+/// Alias for remove(key) to match common naming in the stdlib/tests.
+/// @param key Value supplied for `key`.
 function delete(key)
   return this.remove(key)
 end function
 
-/*
-returns all keys (order unspecified)
-input: (none)
-returns: array keys
-*/
+/// Returns all keys (order unspecified).
 function keysArray()
   output = array(this.size)
   oi = 0
@@ -375,11 +324,7 @@ function keysArray()
   return output
 end function
 
-/*
-returns all values (order unspecified)
-input: (none)
-returns: array values
-*/
+/// Returns all values (order unspecified).
 function valuesArray()
   output = array(this.size)
   oi = 0
@@ -392,11 +337,7 @@ function valuesArray()
   return output
 end function
 
-/*
-returns all entries (order unspecified)
-input: (none)
-returns: array<Entry> entries
-*/
+/// Returns all entries (order unspecified).
 function entriesArray()
   output = array(this.size)
   oi = 0

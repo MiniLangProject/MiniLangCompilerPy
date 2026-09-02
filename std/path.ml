@@ -7,19 +7,27 @@ you may not use this file except in compliance with the License.
 
 // Pure path manipulation for the selected target.  These helpers do not touch
 // the filesystem and therefore also work for paths that do not exist yet.
+//! Provides the std path package.
+
 package std.path
 import std.platform as platform
 
+/// Stores the path err.
 const PATH_ERR = 260
 
+/// Implements error.
+/// @internal
 function _error(message)
   return error(PATH_ERR, message)
 end function
 
+/// Implements separator.
 function separator()
   return platform.pathSeparator()
 end function
 
+/// Implements separator byte.
+/// @internal
 function _separatorByte(value)
 #if TARGET_OS == "windows"
   return value == 47 or value == 92
@@ -28,6 +36,8 @@ function _separatorByte(value)
 #endif
 end function
 
+/// Reports whether is absolute.
+/// @param path Path to operate on.
 function isAbsolute(path)
   if typeof(path) != "string" or len(path) == 0 then return false end if
   raw = bytes(path)
@@ -40,6 +50,9 @@ function isAbsolute(path)
 #endif
 end function
 
+/// Implements join.
+/// @param left Left input value.
+/// @param right Right input value.
 function join(left, right)
   if typeof(left) != "string" or typeof(right) != "string" then return _error("join expects strings") end if
   if left == "" then return right end if
@@ -54,6 +67,8 @@ function join(left, right)
   return left + separator() + right
 end function
 
+/// Implements file name.
+/// @param path Path to operate on.
 function fileName(path)
   if typeof(path) != "string" then return _error("fileName expects string") end if
   raw = bytes(path)
@@ -69,6 +84,8 @@ function fileName(path)
   return path
 end function
 
+/// Implements directory name.
+/// @param path Path to operate on.
 function directoryName(path)
   if typeof(path) != "string" then return _error("directoryName expects string") end if
   raw = bytes(path)
@@ -84,6 +101,8 @@ function directoryName(path)
   return ""
 end function
 
+/// Implements extension.
+/// @param path Path to operate on.
 function extension(path)
   name = fileName(path)
   if typeof(name) == "error" or len(name) == 0 then return "" end if
@@ -96,6 +115,9 @@ function extension(path)
   return ""
 end function
 
+/// Implements change extension.
+/// @param path Path to operate on.
+/// @param newExtension Value supplied for `newExtension`.
 function changeExtension(path, newExtension)
   if typeof(path) != "string" or typeof(newExtension) != "string" then return _error("changeExtension expects strings") end if
   ext = extension(path)

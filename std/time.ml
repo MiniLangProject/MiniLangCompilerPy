@@ -14,16 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std time package.
+
 package std.time
 import std.string as s
 import std.fmt as fmt
 
-// Monotonic timing, durations and calendar conversion on Windows and Linux.
-
+/// Monotonic timing, durations and calendar conversion on Windows and Linux.
 const TIME_ERR = 300
+/// Stores the max portable sleep ms.
 const MAX_PORTABLE_SLEEP_MS = 2147483647
 
-// Construct a consistent date/time validation error.
+/// Construct a consistent date/time validation error.
+/// @internal
 function _timeErr(msg)
   return error(TIME_ERR, msg)
 end function
@@ -37,25 +40,31 @@ Native platform time helpers plus a portable calendar/date/time library.
 - date/clock/datetime: parsing, formatting, arithmetic
 */
 
-// ------------------------------------------------------------
-// SYSTEMTIME decoding helpers (used for WinAPI GetLocalTime/GetSystemTime)
-// ------------------------------------------------------------
-
+/// SYSTEMTIME decoding helpers (used for WinAPI GetLocalTime/GetSystemTime).
 const SYSTEMTIME_SIZE = 16
 
-// Managed wall-clock representation shared by the Win32 and POSIX adapters.
+/// Managed wall-clock representation shared by the Win32 and POSIX adapters.
 struct SystemTime
+  /// Stores the year member of `SystemTime`.
   year,
+  /// Stores the month member of `SystemTime`.
   month,
+  /// Stores the day of week member of `SystemTime`.
   dayOfWeek,
+  /// Stores the day member of `SystemTime`.
   day,
+  /// Stores the hour member of `SystemTime`.
   hour,
+  /// Stores the minute member of `SystemTime`.
   minute,
+  /// Stores the second member of `SystemTime`.
   second,
+  /// Stores the millisecond member of `SystemTime`.
   millisecond,
 end struct
 
-// Decode one little-endian 16-bit field from a native structure buffer.
+/// Decode one little-endian 16-bit field from a native structure buffer.
+/// @internal
 function _u16le(b, off)
   /*
   read an unsigned 16-bit little-endian value from a byte buffer
@@ -65,7 +74,8 @@ function _u16le(b, off)
   return b[off] + b[off + 1] * 256
 end function
 
-// Convert a 16-byte SYSTEMTIME buffer into a managed value.
+/// Convert a 16-byte SYSTEMTIME buffer into a managed value.
+/// @internal
 function _decodeSystemTime(buf)
   /*
   decode a native little-endian wall-clock buffer into a SystemTime struct
@@ -99,42 +109,46 @@ end function
 namespace win32
   // SYSTEMTIME layout for GetLocalTime/GetSystemTime
   extern struct SYSTEMTIME
+    /// Stores the year member of `SYSTEMTIME`.
     year as u16
+    /// Stores the month member of `SYSTEMTIME`.
     month as u16
+    /// Stores the day of week member of `SYSTEMTIME`.
     dayOfWeek as u16
+    /// Stores the day member of `SYSTEMTIME`.
     day as u16
+    /// Stores the hour member of `SYSTEMTIME`.
     hour as u16
+    /// Stores the minute member of `SYSTEMTIME`.
     minute as u16
+    /// Stores the second member of `SYSTEMTIME`.
     second as u16
+    /// Stores the millisecond member of `SYSTEMTIME`.
     millisecond as u16
   end struct
 
-  // Use the 64-bit tick counter to avoid 32-bit wrap-around.
+  /// Use the 64-bit tick counter to avoid 32-bit wrap-around.
+  /// @internal
   extern function GetTickCount64() from "kernel32.dll" returns u64
+  /// Implements sleep.
+  /// @internal
   extern function Sleep(dwMilliseconds as u32) from "kernel32.dll" returns void
 
-  // Wall-clock (local / UTC)
-  // WinAPI uses an out-pointer. The MiniLang stdlib provides 0-arg wrappers that
-  // return a decoded std.time.SystemTime value.
+  /// Wall-clock (local / UTC) WinAPI uses an out-pointer. The MiniLang stdlib provides 0-arg wrappers that return a decoded std.time.SystemTime value.
+  /// @internal
   extern function _GetLocalTime(outBuf as bytes) from "kernel32.dll" symbol "GetLocalTime" returns void
+  /// Returns get system time.
+  /// @internal
   extern function _GetSystemTime(outBuf as bytes) from "kernel32.dll" symbol "GetSystemTime" returns void
 
-  /*
-  get local wall-clock time via Win32 GetLocalTime
-  input: none
-  returns: SystemTime value (or void on failure)
-  */
+  /// Get local wall-clock time via Win32 GetLocalTime.
   function GetLocalTime()
     buf = bytes(std.time.SYSTEMTIME_SIZE)
     _GetLocalTime(buf)
     return std.time._decodeSystemTime(buf)
   end function
 
-  /*
-  get UTC wall-clock time via Win32 GetSystemTime
-  input: none
-  returns: SystemTime value (or void on failure)
-  */
+  /// Get UTC wall-clock time via Win32 GetSystemTime.
   function GetSystemTime()
     buf = bytes(std.time.SYSTEMTIME_SIZE)
     _GetSystemTime(buf)
@@ -142,35 +156,57 @@ namespace win32
   end function
 end namespace
 
+/// Implements native ticks.
+/// @internal
 function _nativeTicks()
   return std.time.win32.GetTickCount64()
 end function
 
+/// Implements native local time.
+/// @internal
 function _nativeLocalTime()
   return std.time.win32.GetLocalTime()
 end function
 
+/// Implements native utc time.
+/// @internal
 function _nativeUtcTime()
   return std.time.win32.GetSystemTime()
 end function
 #else
 namespace linux
+  /// Stores the clock realtime.
   const CLOCK_REALTIME = 0
+  /// Stores the clock monotonic.
   const CLOCK_MONOTONIC = 1
+  /// Stores the timespec size.
   const TIMESPEC_SIZE = 16
+  /// Stores the tm size.
   const TM_SIZE = 56
 
+  /// Implements clock gettime.
+  /// @internal
   extern function clock_gettime(clockId as int, output as bytes) from "libc.so.6" returns i32
+  /// Implements nanosleep.
+  /// @internal
   extern function nanosleep(request as bytes, remaining as ptr) from "libc.so.6" returns i32
+  /// Implements localtime r.
+  /// @internal
   extern function localtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
+  /// Implements gmtime r.
+  /// @internal
   extern function gmtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
 
+  /// Implements i32le.
+  /// @internal
   function _i32le(buffer, offset)
     value = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24)
     if (value & 0x80000000) != 0 then value = value - 0x100000000 end if
     return value
   end function
 
+  /// Implements i64le.
+  /// @internal
   function _i64le(buffer, offset)
     value = buffer[offset + 7]
     if value >= 128 then value = value - 256 end if
@@ -182,6 +218,8 @@ namespace linux
     return value
   end function
 
+  /// Implements put i64.
+  /// @internal
   function _putI64(buffer, offset, value)
     i = 0
     while i < 8
@@ -190,6 +228,8 @@ namespace linux
     end while
   end function
 
+  /// Returns decode tm.
+  /// @internal
   function _decodeTm(buffer, milliseconds)
     return std.time.SystemTime(
       _i32le(buffer, 20) + 1900,
@@ -203,6 +243,8 @@ namespace linux
     )
   end function
 
+  /// Implements wall clock.
+  /// @internal
   function _wallClock(localTime)
     stamp = bytes(TIMESPEC_SIZE, 0)
     if clock_gettime(CLOCK_REALTIME, stamp) != 0 then return end if
@@ -220,6 +262,8 @@ namespace linux
   end function
 end namespace
 
+/// Implements native ticks.
+/// @internal
 function _nativeTicks()
   stamp = bytes(std.time.linux.TIMESPEC_SIZE, 0)
   if std.time.linux.clock_gettime(std.time.linux.CLOCK_MONOTONIC, stamp) != 0 then return 0 end if
@@ -227,30 +271,27 @@ function _nativeTicks()
   return std.time.linux._i64le(stamp, 0) * 1000 + (nanoseconds - (nanoseconds % 1000000)) / 1000000
 end function
 
+/// Implements native local time.
+/// @internal
 function _nativeLocalTime()
   return std.time.linux._wallClock(true)
 end function
 
+/// Implements native utc time.
+/// @internal
 function _nativeUtcTime()
   return std.time.linux._wallClock(false)
 end function
 #endif
 
-/*
-read monotonic milliseconds since system start (no wall-clock)
-input: none
-returns: int milliseconds (u64)
-*/
+/// Read monotonic milliseconds since system start (no wall-clock).
 function ticks()
   // Milliseconds since system start (monotonic). Returns an int-compatible u64.
   return std.time._nativeTicks()
 end function
 
-/*
-sleep for a number of milliseconds
-input: int ms
-returns: void
-*/
+/// Sleep for a number of milliseconds.
+/// @param ms Value supplied for `ms`.
 function sleep(ms)
   // Sleeps for `ms` milliseconds. Native timeout widths differ, so values
   // outside the portable signed-32-bit range are rejected as a no-op.
@@ -276,11 +317,9 @@ function sleep(ms)
 #endif
 end function
 
-/*
-compute elapsed milliseconds between two tick readings
-input: int start_time, int end_time
-returns: int elapsedMs (or void on invalid input)
-*/
+/// Compute elapsed milliseconds between two tick readings.
+/// @param start_time Value supplied for `start_time`.
+/// @param end_time Value supplied for `end_time`.
 function elapsed(start_time, end_time)
   // Returns elapsed milliseconds between two tick readings.
   // With GetTickCount64, wrap-around is not a practical concern.
@@ -293,34 +332,41 @@ function elapsed(start_time, end_time)
   return end_time - start_time
 end function
 
-// ------------------------------------------------------------
-// Calendar date/time (proleptic Gregorian, year 1..9999)
-// ------------------------------------------------------------
-
+/// Calendar date/time (proleptic Gregorian, year 1..9999).
 struct Date
+  /// Stores the year member of `Date`.
   year,
+  /// Stores the month member of `Date`.
   month,
+  /// Stores the day member of `Date`.
   day,
 end struct
 
-// Time-of-day value with millisecond precision.
+/// Time-of-day value with millisecond precision.
 struct Time
+  /// Stores the hour member of `Time`.
   hour,
+  /// Stores the minute member of `Time`.
   minute,
+  /// Stores the second member of `Time`.
   second,
+  /// Stores the millisecond member of `Time`.
   millisecond,
 end struct
 
-// Calendar date plus time-of-day with millisecond precision.
+/// Calendar date plus time-of-day with millisecond precision.
 struct DateTime
+  /// Stores the date member of `DateTime`.
   date,
+  /// Stores the time member of `DateTime`.
   time,
 end struct
 
-// Ordinal day count for 1970-01-01, with 0001-01-01 as day 0.
+/// Ordinal day count for 1970-01-01, with 0001-01-01 as day 0.
 const UNIX_EPOCH_ORDINAL = 719162
 
-// Normalize integer-like values for calendar arithmetic.
+/// Normalize integer-like values for calendar arithmetic.
+/// @internal
 function _toInt(x)
   /*
   convert a value to int if possible
@@ -340,7 +386,8 @@ function _toInt(x)
   return
 end function
 
-// Integer division that truncates toward zero.
+/// Integer division that truncates toward zero.
+/// @internal
 function _idiv(a, b)
   /*
   integer floor division for ints (using '%' semantics)
@@ -357,40 +404,28 @@ function _idiv(a, b)
   return (a - rem) / b
 end function
 
-/*
-format an int as two digits (zero padded)
-input: int n
-returns: string text
-*/
+/// Format an int as two digits (zero padded).
+/// @internal
 function _pad2(n)
   return fmt.padLeft("" + n, 2, "0")
 end function
 
-/*
-format an int as three digits (zero padded)
-input: int n
-returns: string text
-*/
+/// Format an int as three digits (zero padded).
+/// @internal
 function _pad3(n)
   return fmt.padLeft("" + n, 3, "0")
 end function
 
-/*
-format an int as four digits (zero padded)
-input: int n
-returns: string text
-*/
+/// Format an int as four digits (zero padded).
+/// @internal
 function _pad4(n)
   return fmt.padLeft("" + n, 4, "0")
 end function
 
 // Calendar-date construction, validation and arithmetic.
 namespace date
-  /*
-  check if a year is a leap year (Gregorian rules)
-  input: int year
-  returns: bool isLeap
-  */
+  /// Check if a year is a leap year (Gregorian rules).
+  /// @param year Value supplied for `year`.
   function isLeapYear(year)
     if typeof(year) != "int" then
       return false
@@ -404,11 +439,9 @@ namespace date
     return (year % 400) == 0
   end function
 
-  /*
-  number of days in a month for a given year
-  input: int year, int month (1..12)
-  returns: int days (or void on invalid input)
-  */
+  /// Number of days in a month for a given year.
+  /// @param year Value supplied for `year`.
+  /// @param month Value supplied for `month`.
   function daysInMonth(year, month)
     if typeof(year) != "int" or typeof(month) != "int" then
       return
@@ -434,11 +467,10 @@ namespace date
     return 31 // month == 12
   end function
 
-  /*
-  validate a date triple (year, month, day)
-  input: int year, int month, int day
-  returns: bool valid
-  */
+  /// Validate a date triple (year, month, day).
+  /// @param year Value supplied for `year`.
+  /// @param month Value supplied for `month`.
+  /// @param day Value supplied for `day`.
   function isValidYMD(year, month, day)
     if typeof(year) != "int" or typeof(month) != "int" or typeof(day) != "int" then
       return false
@@ -455,20 +487,14 @@ namespace date
     return day >= 1 and day <= dim
   end function
 
-  /*
-  validate a Date struct
-  input: Date d
-  returns: bool valid
-  */
+  /// Validate a Date struct.
+  /// @param d Value supplied for `d`.
   function isValid(d)
     return std.time.date.isValidYMD(d.year, d.month, d.day)
   end function
 
-  /*
-  convert a Date to an ordinal day count
-  input: Date d
-  returns: int daysSince00010101 (or void on invalid input)
-  */
+  /// Convert a Date to an ordinal day count.
+  /// @param d Value supplied for `d`.
   function toOrdinal(d)
     // Days since 0001-01-01 (day 0). Valid for year 1..9999.
     if not std.time.date.isValid(d) then
@@ -494,11 +520,8 @@ namespace date
     return days +(dd - 1)
   end function
 
-  /*
-  inverse of toOrdinal
-  input: int daysSince00010101
-  returns: Date value (or void on invalid input)
-  */
+  /// Inverse of toOrdinal.
+  /// @param days Value supplied for `days`.
   function fromOrdinal(days)
     // Inverse of toOrdinal. `days` is days since 0001-01-01 (day 0).
     if typeof(days) != "int" then
@@ -551,11 +574,9 @@ namespace date
     return std.time.Date(y, m, doy + 1)
   end function
 
-  /*
-  compare two dates
-  input: Date a, Date b
-  returns: int (-1, 0, 1)
-  */
+  /// Compare two dates.
+  /// @param a First input value.
+  /// @param b Second input value.
   function compare(a, b)
     if a.year < b.year then return -1 end if
     if a.year > b.year then return 1 end if
@@ -566,11 +587,9 @@ namespace date
     return 0
   end function
 
-  /*
-  add days to a date
-  input: Date d, int deltaDays
-  returns: Date newDate (or void on invalid input)
-  */
+  /// Add days to a date.
+  /// @param d Value supplied for `d`.
+  /// @param delta Value supplied for `delta`.
   function addDays(d, delta)
     if typeof(delta) != "int" then
       return
@@ -582,11 +601,9 @@ namespace date
     return std.time.date.fromOrdinal(ord + delta)
   end function
 
-  /*
-  difference in days between two dates
-  input: Date a, Date b
-  returns: int (b - a) in days (or void on invalid input)
-  */
+  /// Difference in days between two dates.
+  /// @param a First input value.
+  /// @param b Second input value.
   function diffDays(a, b)
     oa = std.time.date.toOrdinal(a)
     ob = std.time.date.toOrdinal(b)
@@ -596,11 +613,8 @@ namespace date
     return ob - oa
   end function
 
-  /*
-  compute day of week for a date
-  input: Date d
-  returns: int (Monday=1 .. Sunday=7) (or void on invalid input)
-  */
+  /// Compute day of week for a date.
+  /// @param d Value supplied for `d`.
   function dayOfWeek(d)
     // Monday=1 .. Sunday=7
     ord = std.time.date.toOrdinal(d)
@@ -611,11 +625,8 @@ namespace date
     return ((ord % 7) + 1)
   end function
 
-  /*
-  format date as YYYY-MM-DD
-  input: Date d
-  returns: string (or void on invalid input)
-  */
+  /// Format date as YYYY-MM-DD.
+  /// @param d Value supplied for `d`.
   function toString(d)
     if not std.time.date.isValid(d) then
       return
@@ -623,11 +634,8 @@ namespace date
     return std.time._pad4(d.year) + "-" + std.time._pad2(d.month) + "-" + std.time._pad2(d.day)
   end function
 
-  /*
-  parse a date in the form YYYY-MM-DD
-  input: string text
-  returns: Date OR error(...)
-  */
+  /// Parse a date in the form YYYY-MM-DD.
+  /// @param text Text to process.
   function parse(text)
     // Returns Date OR error(...)
     if typeof(text) != "string" then
@@ -658,11 +666,11 @@ end namespace
 
 // Time-of-day construction, formatting and arithmetic.
 namespace clock
-  /*
-  validate a time quadruple (hour, minute, second, millisecond)
-  input: int hour, int minute, int second, int millisecond
-  returns: bool valid
-  */
+  /// Validate a time quadruple (hour, minute, second, millisecond).
+  /// @param h Value supplied for `h`.
+  /// @param m Value supplied for `m`.
+  /// @param s0 Value supplied for `s0`.
+  /// @param ms Value supplied for `ms`.
   function isValidHMSM(h, m, s0, ms)
     if typeof(h) != "int" or typeof(m) != "int" or typeof(s0) != "int" or typeof(ms) != "int" then
       return false
@@ -674,20 +682,15 @@ namespace clock
     return true
   end function
 
-  /*
-  validate a Time struct
-  input: Time t
-  returns: bool valid
-  */
+  /// Validate a Time struct.
+  /// @param t Value supplied for `t`.
   function isValid(t)
     return std.time.clock.isValidHMSM(t.hour, t.minute, t.second, t.millisecond)
   end function
 
-  /*
-  compare two times
-  input: Time a, Time b
-  returns: int (-1, 0, 1)
-  */
+  /// Compare two times.
+  /// @param a First input value.
+  /// @param b Second input value.
   function compare(a, b)
     if a.hour < b.hour then return -1 end if
     if a.hour > b.hour then return 1 end if
@@ -700,11 +703,8 @@ namespace clock
     return 0
   end function
 
-  /*
-  convert a Time into milliseconds since 00:00:00.000
-  input: Time t
-  returns: int msOfDay (or void on invalid input)
-  */
+  /// Convert a Time into milliseconds since 00:00:00.000.
+  /// @param t Value supplied for `t`.
   function toMillis(t)
     if not std.time.clock.isValid(t) then
       return
@@ -712,11 +712,8 @@ namespace clock
     return (((t.hour * 60 + t.minute) * 60 + t.second) * 1000) + t.millisecond
   end function
 
-  /*
-  convert milliseconds since 00:00 into a Time
-  input: int msOfDay (0..86399999)
-  returns: Time value (or void on invalid input)
-  */
+  /// Convert milliseconds since 00:00 into a Time.
+  /// @param ms Value supplied for `ms`.
   function fromMillis(ms)
     if typeof(ms) != "int" then
       return
@@ -735,11 +732,9 @@ namespace clock
     return std.time.Time(h, mi, ss, mss)
   end function
 
-  /*
-  add milliseconds to a time (wraps within 24h)
-  input: Time t, int deltaMs
-  returns: Time newTime (or void on invalid input)
-  */
+  /// Add milliseconds to a time (wraps within 24h).
+  /// @param t Value supplied for `t`.
+  /// @param delta Value supplied for `delta`.
   function addMillis(t, delta)
     if typeof(delta) != "int" then
       return
@@ -758,11 +753,8 @@ namespace clock
     return std.time.clock.fromMillis(total)
   end function
 
-  /*
-  format time as HH:MM:SS.mmm
-  input: Time t
-  returns: string (or void on invalid input)
-  */
+  /// Format time as HH:MM:SS.mmm.
+  /// @param t Value supplied for `t`.
   function toString(t)
     if not std.time.clock.isValid(t) then
       return
@@ -770,11 +762,8 @@ namespace clock
     return std.time._pad2(t.hour) + ":" + std.time._pad2(t.minute) + ":" + std.time._pad2(t.second) + "." + std.time._pad3(t.millisecond)
   end function
 
-  /*
-  parse time in the form HH:MM or HH:MM:SS[.mmm]
-  input: string text
-  returns: Time OR error(...)
-  */
+  /// Parse time in the form HH:MM or HH:MM:SS[.mmm].
+  /// @param text Text to process.
   function parse(text)
     // Returns Time OR error(...)
     if typeof(text) != "string" then
@@ -829,20 +818,15 @@ end namespace
 
 // Combined local/UTC date-time conversion and arithmetic.
 namespace datetime
-  /*
-  validate a DateTime struct
-  input: DateTime dt
-  returns: bool valid
-  */
+  /// Validate a DateTime struct.
+  /// @param dt Value supplied for `dt`.
   function isValid(dt)
     return std.time.date.isValid(dt.date) and std.time.clock.isValid(dt.time)
   end function
 
-  /*
-  compare two date-times
-  input: DateTime a, DateTime b
-  returns: int (-1, 0, 1)
-  */
+  /// Compare two date-times.
+  /// @param a First input value.
+  /// @param b Second input value.
   function compare(a, b)
     c = std.time.date.compare(a.date, b.date)
     if c != 0 then
@@ -851,11 +835,8 @@ namespace datetime
     return std.time.clock.compare(a.time, b.time)
   end function
 
-  /*
-  convert a DateTime to milliseconds since 0001-01-01 00:00:00.000
-  input: DateTime dt
-  returns: int ms (or void on invalid input)
-  */
+  /// Convert a DateTime to milliseconds since 0001-01-01 00:00:00.000.
+  /// @param dt Value supplied for `dt`.
   function toMillis(dt)
     if not std.time.datetime.isValid(dt) then
       return
@@ -872,11 +853,9 @@ namespace datetime
     return (ord * day_ms) + ms
   end function
 
-  /*
-  add milliseconds to a DateTime
-  input: DateTime dt, int deltaMs
-  returns: DateTime newDateTime (or void on invalid input)
-  */
+  /// Add milliseconds to a DateTime.
+  /// @param dt Value supplied for `dt`.
+  /// @param delta Value supplied for `delta`.
   function addMillis(dt, delta)
     if typeof(delta) != "int" then
       return
@@ -908,11 +887,9 @@ namespace datetime
     return std.time.DateTime(nd, nt)
   end function
 
-  /*
-  add whole days to a DateTime (keeps clock time)
-  input: DateTime dt, int deltaDays
-  returns: DateTime newDateTime (or void on invalid input)
-  */
+  /// Add whole days to a DateTime (keeps clock time).
+  /// @param dt Value supplied for `dt`.
+  /// @param deltaDays Value supplied for `deltaDays`.
   function addDays(dt, deltaDays)
     if typeof(deltaDays) != "int" then
       return
@@ -927,11 +904,8 @@ namespace datetime
     return std.time.DateTime(nd, dt.time)
   end function
 
-  /*
-  format a DateTime as "YYYY-MM-DD HH:MM:SS.mmm"
-  input: DateTime dt
-  returns: string (or void on invalid input)
-  */
+  /// Format a DateTime as "YYYY-MM-DD HH:MM:SS.mmm".
+  /// @param dt Value supplied for `dt`.
   function toString(dt)
     if not std.time.datetime.isValid(dt) then
       return
@@ -939,11 +913,8 @@ namespace datetime
     return std.time.date.toString(dt.date) + " " + std.time.clock.toString(dt.time)
   end function
 
-  /*
-  parse a DateTime in the form "YYYY-MM-DD HH:MM:SS[.mmm]" (also accepts 'T')
-  input: string text
-  returns: DateTime OR error(...)
-  */
+  /// Parse a DateTime in the form "YYYY-MM-DD HH:MM:SS[.mmm]" (also accepts 'T').
+  /// @param text Text to process.
   function parse(text)
     // Returns DateTime OR error(...)
     if typeof(text) != "string" then
@@ -976,11 +947,8 @@ namespace datetime
     return std.time.DateTime(dr, tr)
   end function
 
-  /*
-  convert a native SystemTime value to a DateTime
-  input: SystemTime st
-  returns: DateTime (or void on invalid input)
-  */
+  /// Convert a native SystemTime value to a DateTime.
+  /// @param st Value supplied for `st`.
   function fromSystemTime(st)
     // Convert the common native wall-clock value (returns void on invalid).
     if typeof(st) == "void" then
@@ -1012,31 +980,20 @@ namespace datetime
     return dt
   end function
 
-  /*
-  current local wall-clock DateTime
-  input: none
-  returns: DateTime (or void on failure)
-  */
+  /// Current local wall-clock DateTime.
   function nowLocal()
     st = std.time._nativeLocalTime()
     return std.time.datetime.fromSystemTime(st)
   end function
 
-  /*
-  current UTC wall-clock DateTime
-  input: none
-  returns: DateTime (or void on failure)
-  */
+  /// Current UTC wall-clock DateTime.
   function nowUtc()
     st = std.time._nativeUtcTime()
     return std.time.datetime.fromSystemTime(st)
   end function
 
-  /*
-  convert a DateTime to Unix milliseconds since 1970-01-01T00:00:00Z
-  input: DateTime dt
-  returns: int unixMs (or void on invalid input)
-  */
+  /// Convert a DateTime to Unix milliseconds since 1970-01-01T00:00:00Z.
+  /// @param dt Value supplied for `dt`.
   function toUnixMillis(dt)
     ms = std.time.datetime.toMillis(dt)
     if typeof(ms) == "void" then
@@ -1045,11 +1002,8 @@ namespace datetime
     return ms -(std.time.UNIX_EPOCH_ORDINAL * 86400000)
   end function
 
-  /*
-  convert Unix milliseconds since 1970-01-01T00:00:00Z to a DateTime
-  input: int unixMs
-  returns: DateTime (or void on invalid input)
-  */
+  /// Convert Unix milliseconds since 1970-01-01T00:00:00Z to a DateTime.
+  /// @param unixMs Value supplied for `unixMs`.
   function fromUnixMillis(unixMs)
     if typeof(unixMs) != "int" then
       return
@@ -1076,11 +1030,7 @@ namespace datetime
     return std.time.DateTime(d, t0)
   end function
 
-  /*
-  current Unix milliseconds based on UTC time
-  input: none
-  returns: int unixMs (or void on failure)
-  */
+  /// Current Unix milliseconds based on UTC time.
   function nowUnixMillisUtc()
     dt = std.time.datetime.nowUtc()
     if typeof(dt) == "void" then
@@ -1090,11 +1040,8 @@ namespace datetime
   end function
 end namespace
 
-/*
-format a duration in milliseconds into a readable string
-input: int ms
-returns: string text (e.g., "3s 120ms", "2m 05s", "1h 02m 03s")
-*/
+/// Format a duration in milliseconds into a readable string.
+/// @param ms Value supplied for `ms`.
 function formatDuration(ms)
   if typeof(ms) != "int" then
     return
@@ -1128,29 +1075,20 @@ function formatDuration(ms)
   return sign +("" + hr) + "h " + std.time._pad2(remMin) + "m " + std.time._pad2(remSec) + "s"
 end function
 
-/*
-format a Date as a string (YYYY-MM-DD)
-input: Date d
-returns: string text (or void on invalid input)
-*/
+/// Format a Date as a string (YYYY-MM-DD).
+/// @param d Value supplied for `d`.
 function dateToString(d)
   return std.time.date.toString(d)
 end function
 
-/*
-format a Time as a string (HH:MM:SS.mmm)
-input: Time t
-returns: string text (or void on invalid input)
-*/
+/// Format a Time as a string (HH:MM:SS.mmm).
+/// @param t Value supplied for `t`.
 function clockToString(t)
   return std.time.clock.toString(t)
 end function
 
-/*
-format a DateTime as a string (YYYY-MM-DD HH:MM:SS.mmm)
-input: DateTime dt
-returns: string text (or void on invalid input)
-*/
+/// Format a DateTime as a string (YYYY-MM-DD HH:MM:SS.mmm).
+/// @param dt Value supplied for `dt`.
 function datetimeToString(dt)
   return std.time.datetime.toString(dt)
 end function

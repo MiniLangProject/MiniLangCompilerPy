@@ -2,7 +2,13 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.1 - 2026-09-02
+
+- Added explicit `///` declaration-comment handling to the reference parser,
+  documented the shared standard library in English, and added a strict MiniDoc
+  configuration plus generated HTML and Markdown API references. Documentation
+  comments remain compile-time-only and do not enter the AST or affect generated
+  target bytes.
 
 - Made native millisecond timeouts portable and explicit: `threadSleep` and
   `Thread.Join(timeout)` now reject non-integers, negatives and values above

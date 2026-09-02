@@ -14,13 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std net package.
+
 package std.net
 
+/// Stores the max portable socket timeout ms.
 const MAX_PORTABLE_SOCKET_TIMEOUT_MS = 2147483647
 
+/// Stores the net err.
 const NET_ERR = 200
 
-// Construct a consistent networking argument or socket error.
+/// Construct a consistent networking argument or socket error.
+/// @internal
 function _netErr(msg)
   return error(NET_ERR, msg)
 end function
@@ -38,44 +43,62 @@ end function
 // - Socket handles are exposed as MiniLang integers on both native ABIs.
 // ------------------------------------------------------------
 
-// ---------------------------
-// Portable socket constants plus the few target-specific option values.
-// ---------------------------
-
+/// Portable socket constants plus the few target-specific option values.
 const AF_INET = 2
+/// Stores the sock stream.
 const SOCK_STREAM = 1
+/// Stores the sock dgram.
 const SOCK_DGRAM = 2
 
+/// Stores the ipproto tcp.
 const IPPROTO_TCP = 6
+/// Stores the ipproto udp.
 const IPPROTO_UDP = 17
 
+/// Stores the invalid socket.
 const INVALID_SOCKET = -1
+/// Stores the socket error.
 const SOCKET_ERROR = -1
 
 #if TARGET_OS == "windows"
+/// Stores the sol socket.
 const SOL_SOCKET = 0xFFFF
+/// Stores the so reuseaddr.
 const SO_REUSEADDR = 0x0004
+/// Stores the so exclusiveaddruse.
 const SO_EXCLUSIVEADDRUSE = -5
+/// Stores the so keepalive.
 const SO_KEEPALIVE = 0x0008
+/// Stores the so sndtimeo.
 const SO_SNDTIMEO = 0x1005
+/// Stores the so rcvtimeo.
 const SO_RCVTIMEO = 0x1006
 #else
+/// Stores the sol socket.
 const SOL_SOCKET = 1
+/// Stores the so reuseaddr.
 const SO_REUSEADDR = 2
+/// Stores the so keepalive.
 const SO_KEEPALIVE = 9
+/// Stores the so sndtimeo.
 const SO_SNDTIMEO = 21
+/// Stores the so rcvtimeo.
 const SO_RCVTIMEO = 20
 #endif
+/// Stores the tcp nodelay.
 const TCP_NODELAY = 1
 
+/// Stores the sd receive.
 const SD_RECEIVE = 0
+/// Stores the sd send.
 const SD_SEND = 1
+/// Stores the sd both.
 const SD_BOTH = 2
 
-// MAKEWORD(2,2)
+/// MAKEWORD(2,2).
 const WSA_VERSION_2_2 = 0x0202
 
-// sockaddr_in size
+/// Sockaddr_in size.
 const SOCKADDR_IN_SIZE = 16
 
 // ---------------------------
@@ -83,48 +106,115 @@ const SOCKADDR_IN_SIZE = 16
 // ---------------------------
 
 #if TARGET_OS == "windows"
+/// Implements wsastartup.
+/// @internal
 extern function WSAStartup(version as int, wsaData as bytes) from "ws2_32.dll" returns int
+/// Implements wsacleanup.
+/// @internal
 extern function WSACleanup() from "ws2_32.dll" returns int
+/// Implements wsaget last error.
+/// @internal
 extern function WSAGetLastError() from "ws2_32.dll" returns int
 
+/// Implements socket.
+/// @internal
 extern function socket(af as int, type as int, protocol as int) from "ws2_32.dll" returns ptr
+/// Releases or resets closesocket.
+/// @internal
 extern function closesocket(s as ptr) from "ws2_32.dll" returns int
 
+/// Implements connect.
+/// @internal
 extern function connect(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
+/// Implements bind.
+/// @internal
 extern function bind(s as ptr, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
+/// Implements listen.
+/// @internal
 extern function listen(s as ptr, backlog as int) from "ws2_32.dll" returns int
+/// Implements accept.
+/// @internal
 extern function accept(s as ptr, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns ptr
+/// Implements accept no address.
+/// @internal
 extern function acceptNoAddress(s as ptr, addr as ptr, addrlen as ptr) from "ws2_32.dll" symbol "accept" returns ptr
 
+/// Implements send.
+/// @internal
 extern function send(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
+/// Implements recv.
+/// @internal
 extern function recv(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
 
+/// Implements sendto.
+/// @internal
 extern function sendto(s as ptr, buf as bytes, len as int, flags as int, addr as bytes, addrlen as int) from "ws2_32.dll" returns int
+/// Implements recvfrom.
+/// @internal
 extern function recvfrom(s as ptr, buf as bytes, len as int, flags as int, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns int
 
+/// Implements shutdown.
+/// @internal
 extern function shutdown(s as ptr, how as int) from "ws2_32.dll" returns int
 
+/// Updates setsockopt.
+/// @internal
 extern function setsockopt(s as ptr, level as int, optname as int, optval as bytes, optlen as int) from "ws2_32.dll" returns int
+/// Returns getsockopt.
+/// @internal
 extern function getsockopt(s as ptr, level as int, optname as int, optval as bytes, optlen as bytes) from "ws2_32.dll" returns int
 
-// inet_addr parses dotted IPv4; returns address in network byte order (INADDR_NONE=0xFFFFFFFF on error)
+/// Inet_addr parses dotted IPv4; returns address in network byte order (INADDR_NONE=0xFFFFFFFF on error).
+/// @internal
 extern function inet_addr(addr as cstr) from "ws2_32.dll" returns u32
 #else
+/// Implements socket.
+/// @internal
 extern function socket(af as int, type as int, protocol as int) from "libc.so.6" returns i32
+/// Releases or resets closesocket.
+/// @internal
 extern function closesocket(s as int) from "libc.so.6" symbol "close" returns i32
+/// Implements connect.
+/// @internal
 extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+/// Implements bind.
+/// @internal
 extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+/// Implements listen.
+/// @internal
 extern function listen(s as int, backlog as int) from "libc.so.6" returns i32
+/// Implements accept.
+/// @internal
 extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i32
+/// Implements accept no address.
+/// @internal
 extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "libc.so.6" symbol "accept" returns i32
+/// Implements send.
+/// @internal
 extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+/// Implements recv.
+/// @internal
 extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+/// Implements sendto.
+/// @internal
 extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
+/// Implements recvfrom.
+/// @internal
 extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i64
+/// Implements shutdown.
+/// @internal
 extern function shutdown(s as int, how as int) from "libc.so.6" returns i32
+/// Updates setsockopt.
+/// @internal
 extern function setsockopt(s as int, level as int, optname as int, optval as bytes, optlen as u32) from "libc.so.6" returns i32
+/// Implements inet addr.
+/// @internal
 extern function inet_addr(addr as cstr) from "libc.so.6" returns u32
+/// Implements errno location.
+/// @internal
 extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
+/// Implements copy errno.
+/// @internal
 extern function _copyErrno(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
 #endif
 
@@ -138,19 +228,14 @@ extern function _copyErrno(destination as bytes, source as ptr, count as u64) fr
 // in use.
 _wsaReady = false
 
-// In the native backend, extern return type `ptr` is represented as a MiniLang
-// int (TAG_INT). Therefore socket handles appear as type "int" to MiniLang.
-// We accept both "int" and "ptr" here to keep the API stable.
+/// In the native backend, extern return type `ptr` is represented as a MiniLang int (TAG_INT). Therefore socket handles appear as type "int" to MiniLang. We accept both "int" and "ptr" here to keep the API stable.
+/// @internal
 function _isSockHandle(x)
   t = typeof(x)
   return t == "int" or t == "ptr"
 end function
 
-/*
-Initializes the platform socket layer. Safe to call multiple times.
-input: (none)
-returns: bool ready
-*/
+/// Initializes the platform socket layer. Safe to call multiple times.
 function synchronized init()
 #if TARGET_OS == "windows"
   if _wsaReady == true then
@@ -175,11 +260,7 @@ function synchronized init()
 #endif
 end function
 
-/*
-Cleans up the platform socket layer.
-input: (none)
-returns: bool success
-*/
+/// Cleans up the platform socket layer.
 function synchronized cleanup()
 #if TARGET_OS == "windows"
   if _wsaReady == false then
@@ -199,11 +280,7 @@ function synchronized cleanup()
 #endif
 end function
 
-/*
-Returns the last platform socket error code.
-input: (none)
-returns: int errorCode
-*/
+/// Returns the last platform socket error code.
 function lastError()
 #if TARGET_OS == "windows"
   return WSAGetLastError()
@@ -220,15 +297,14 @@ end function
 // sockaddr helpers (IPv4)
 // ---------------------------
 
-/*
-Builds a sockaddr_in (IPv4) for connect/bind.
-input: u32 ipv4NetworkOrder, int port
-returns: bytes sockaddrIn (16 bytes)
-*/
+/// Builds a sockaddr_in (IPv4) for connect/bind.
+/// @internal
 function _isValidPort(port)
   return typeof(port) == "int" and port >= 0 and port <= 65535
 end function
 
+/// Implements sockaddr in.
+/// @internal
 function _sockaddrIn(ipv4, port)
   a = bytes(SOCKADDR_IN_SIZE, 0)
 
@@ -251,11 +327,8 @@ function _sockaddrIn(ipv4, port)
   return a
 end function
 
-/*
-Parses a dotted IPv4 string (or "localhost") using inet_addr.
-input: string host
-returns: u32 ipv4NetworkOrder OR void on failure
-*/
+/// Parses a dotted IPv4 string (or "localhost") using inet_addr.
+/// @internal
 function _parseIPv4(host)
   if typeof(host) != "string" then
     return
@@ -276,11 +349,8 @@ function _parseIPv4(host)
   return ip
 end function
 
-/*
-Converts an IPv4 address stored in sockaddr_in bytes to dotted string.
-input: bytes sockaddrIn
-returns: string ipv4
-*/
+/// Converts an IPv4 address stored in sockaddr_in bytes to dotted string.
+/// @internal
 function _ipv4ToStringFromSockaddr(addr)
   if typeof(addr) != "bytes" then
     return ""
@@ -297,11 +367,8 @@ function _ipv4ToStringFromSockaddr(addr)
   return b0 + "." + b1 + "." + b2 + "." + b3
 end function
 
-/*
-Extracts port (host order int) from sockaddr_in bytes.
-input: bytes sockaddrIn
-returns: int port
-*/
+/// Extracts port (host order int) from sockaddr_in bytes.
+/// @internal
 function _portFromSockaddr(addr)
   if typeof(addr) != "bytes" then
     return 0
@@ -314,6 +381,8 @@ function _portFromSockaddr(addr)
   return addr[2] * 256 + addr[3]
 end function
 
+/// Implements put u32.
+/// @internal
 function _putU32(buffer, offset, value)
   buffer[offset] = value & 0xFF
   buffer[offset + 1] = (value >> 8) & 0xFF
@@ -321,6 +390,8 @@ function _putU32(buffer, offset, value)
   buffer[offset + 3] = (value >> 24) & 0xFF
 end function
 
+/// Implements put i64.
+/// @internal
 function _putI64(buffer, offset, value)
   i = 0
   while i < 8
@@ -329,6 +400,8 @@ function _putI64(buffer, offset, value)
   end while
 end function
 
+/// Updates set boolean option.
+/// @internal
 function _setBooleanOption(sock, level, option, enabled, operation)
   if not _isSockHandle(sock) or typeof(enabled) != "bool" then return _netErr(operation + ": invalid args") end if
   raw = bytes(4, 0)
@@ -338,6 +411,8 @@ function _setBooleanOption(sock, level, option, enabled, operation)
 end function
 
 #if TARGET_OS == "windows"
+/// Returns get boolean option.
+/// @internal
 function _getBooleanOption(sock, level, option, operation)
   if not _isSockHandle(sock) then return _netErr(operation + ": invalid socket") end if
   raw = bytes(4, 0)
@@ -348,7 +423,9 @@ function _getBooleanOption(sock, level, option, operation)
 end function
 #endif
 
-// Enable or disable address reuse on an existing socket.
+/// Enable or disable address reuse on an existing socket.
+/// @param sock Value supplied for `sock`.
+/// @param enabled Value supplied for `enabled`.
 function setReuseAddress(sock, enabled)
 #if TARGET_OS == "windows"
   // SO_REUSEADDR and SO_EXCLUSIVEADDRUSE are mutually exclusive on Winsock.
@@ -362,6 +439,8 @@ function setReuseAddress(sock, enabled)
   return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, enabled, "setReuseAddress")
 end function
 
+/// Implements prepare tcp listener.
+/// @internal
 function _prepareTcpListener(sock, operation)
   // Winsock's SO_REUSEADDR permits unrelated processes to bind the same port
   // and receive each other's traffic. Linux uses the option for prompt restart
@@ -373,6 +452,8 @@ function _prepareTcpListener(sock, operation)
 #endif
 end function
 
+/// Implements prepare udp bind.
+/// @internal
 function _prepareUdpBind(sock)
   // Winsock also permits overlapping UDP binds unless exclusive ownership is
   // requested. An explicit setReuseAddress(true) deliberately opts out;
@@ -387,16 +468,22 @@ function _prepareUdpBind(sock)
 #endif
 end function
 
-// Enable or disable TCP keepalive probes.
+/// Enable or disable TCP keepalive probes.
+/// @param sock Value supplied for `sock`.
+/// @param enabled Value supplied for `enabled`.
 function setKeepAlive(sock, enabled)
   return _setBooleanOption(sock, SOL_SOCKET, SO_KEEPALIVE, enabled, "setKeepAlive")
 end function
 
-// Disable or enable Nagle's algorithm for latency-sensitive protocols.
+/// Disable or enable Nagle's algorithm for latency-sensitive protocols.
+/// @param sock Value supplied for `sock`.
+/// @param enabled Value supplied for `enabled`.
 function setNoDelay(sock, enabled)
   return _setBooleanOption(sock, IPPROTO_TCP, TCP_NODELAY, enabled, "setNoDelay")
 end function
 
+/// Updates set timeout.
+/// @internal
 function _setTimeout(sock, option, milliseconds, operation)
   if not _isSockHandle(sock) or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_SOCKET_TIMEOUT_MS then return _netErr(operation + ": invalid args") end if
 #if TARGET_OS == "windows"
@@ -411,12 +498,16 @@ function _setTimeout(sock, option, milliseconds, operation)
   return true
 end function
 
-// Configure the maximum blocking receive duration. Zero restores no timeout.
+/// Configure the maximum blocking receive duration. Zero restores no timeout.
+/// @param sock Value supplied for `sock`.
+/// @param milliseconds Maximum duration in milliseconds.
 function setReceiveTimeout(sock, milliseconds)
   return _setTimeout(sock, SO_RCVTIMEO, milliseconds, "setReceiveTimeout")
 end function
 
-// Configure the maximum blocking send duration. Zero restores no timeout.
+/// Configure the maximum blocking send duration. Zero restores no timeout.
+/// @param sock Value supplied for `sock`.
+/// @param milliseconds Maximum duration in milliseconds.
 function setSendTimeout(sock, milliseconds)
   return _setTimeout(sock, SO_SNDTIMEO, milliseconds, "setSendTimeout")
 end function
@@ -425,11 +516,9 @@ end function
 // TCP
 // ---------------------------
 
-/*
-Creates a TCP connection to an IPv4 address (dotted) or "localhost".
-input: string host, int port
-returns: socket handle (int or ptr) OR error(...)
-*/
+/// Creates a TCP connection to an IPv4 address (dotted) or "localhost".
+/// @param host Value supplied for `host`.
+/// @param port Value supplied for `port`.
 function tcpConnect(host, port)
   if init() == false then
     return _netErr("net.init failed")
@@ -459,11 +548,9 @@ function tcpConnect(host, port)
   return s
 end function
 
-/*
-Creates a TCP listening socket on 0.0.0.0:port.
-input: int port, int backlog
-returns: serverSocketPtr OR error(...)
-*/
+/// Creates a TCP listening socket on 0.0.0.0:port.
+/// @param port Value supplied for `port`.
+/// @param backlog Value supplied for `backlog`.
 function tcpListen(port, backlog)
   if init() == false then
     return _netErr("net.init failed")
@@ -501,7 +588,10 @@ function tcpListen(port, backlog)
   return s
 end function
 
-// Create an IPv4 listener bound to an explicit dotted address.
+/// Create an IPv4 listener bound to an explicit dotted address.
+/// @param host Value supplied for `host`.
+/// @param port Value supplied for `port`.
+/// @param backlog Value supplied for `backlog`.
 function tcpListenAddress(host, port, backlog)
   if init() == false then return _netErr("net.init failed") end if
   if not _isValidPort(port) then return _netErr("tcpListenAddress: port must be int in range 0..65535") end if
@@ -526,11 +616,8 @@ function tcpListenAddress(host, port, backlog)
   return server
 end function
 
-/*
-Accepts a client connection on a listening socket.
-input: ptr serverSocket
-returns: clientSocketPtr OR error(...)
-*/
+/// Accepts a client connection on a listening socket.
+/// @param serverSocket Value supplied for `serverSocket`.
 function tcpAccept(serverSocket)
   if not _isSockHandle(serverSocket) then
     return _netErr("tcpAccept: serverSocket must be ptr")
@@ -545,11 +632,8 @@ function tcpAccept(serverSocket)
   return c
 end function
 
-/*
-Accepts a client connection and returns peer info.
-input: ptr serverSocket
-returns: array [ptr clientSocket, string peerIp, int peerPort] OR error(...)
-*/
+/// Accepts a client connection and returns peer info.
+/// @param serverSocket Value supplied for `serverSocket`.
 function tcpAcceptPeer(serverSocket)
   if not _isSockHandle(serverSocket) then
     return _netErr("tcpAcceptPeer: serverSocket must be ptr")
@@ -574,11 +658,9 @@ function tcpAcceptPeer(serverSocket)
   return [c, ipStr, port]
 end function
 
-/*
-Sends all bytes on a TCP socket (loops until everything is sent).
-input: socket handle (int or ptr), bytes data
-returns: int bytesSent OR error(...)
-*/
+/// Sends all bytes on a TCP socket (loops until everything is sent).
+/// @param sock Value supplied for `sock`.
+/// @param data Data to process.
 function tcpSendAll(sock, data)
   if not _isSockHandle(sock) then
     return _netErr("tcpSendAll: invalid socket handle")
@@ -611,11 +693,9 @@ function tcpSendAll(sock, data)
   return total
 end function
 
-/*
-Receives up to maxBytes from a TCP socket.
-input: socket handle (int or ptr), int maxBytes
-returns: bytes data OR error(...) (empty bytes = connection closed)
-*/
+/// Receives up to maxBytes from a TCP socket.
+/// @param sock Value supplied for `sock`.
+/// @param maxBytes Value supplied for `maxBytes`.
 function tcpRecv(sock, maxBytes)
   if not _isSockHandle(sock) then
     return _netErr("tcpRecv: invalid socket handle")
@@ -642,11 +722,9 @@ function tcpRecv(sock, maxBytes)
   return slice(buf, 0, got)
 end function
 
-/*
-Shuts down a TCP socket (best-effort).
-input: socket handle (int or ptr), int how (SD_RECEIVE/SD_SEND/SD_BOTH)
-returns: bool success
-*/
+/// Shuts down a TCP socket (best-effort).
+/// @param sock Value supplied for `sock`.
+/// @param how Value supplied for `how`.
 function tcpShutdown(sock, how)
   if not _isSockHandle(sock) then
     return false
@@ -659,11 +737,8 @@ function tcpShutdown(sock, how)
   return rc == 0
 end function
 
-/*
-Closes a socket handle.
-input: socket handle (int or ptr)
-returns: bool success
-*/
+/// Closes a socket handle.
+/// @param sock Value supplied for `sock`.
 function close(sock)
   if not _isSockHandle(sock) then
     return false
@@ -676,11 +751,7 @@ end function
 // UDP
 // ---------------------------
 
-/*
-Opens a UDP socket.
-input: (none)
-returns: socket handle (int or ptr) OR error(...)
-*/
+/// Opens a UDP socket.
 function udpOpen()
   if init() == false then
     return _netErr("net.init failed")
@@ -694,11 +765,9 @@ function udpOpen()
   return s
 end function
 
-/*
-Binds a UDP socket to 0.0.0.0:port.
-input: socket handle (int or ptr), int port
-returns: bool success OR error(...)
-*/
+/// Binds a UDP socket to 0.0.0.0:port.
+/// @param sock Value supplied for `sock`.
+/// @param port Value supplied for `port`.
 function udpBind(sock, port)
   if not _isSockHandle(sock) then
     return _netErr("udpBind: invalid socket handle")
@@ -719,11 +788,11 @@ function udpBind(sock, port)
   return true
 end function
 
-/*
-Sends a UDP datagram to an IPv4 host.
-input: socket handle (int or ptr), string host, int port, bytes data
-returns: int bytesSent OR error(...)
-*/
+/// Sends a UDP datagram to an IPv4 host.
+/// @param sock Value supplied for `sock`.
+/// @param host Value supplied for `host`.
+/// @param port Value supplied for `port`.
+/// @param data Data to process.
 function udpSendTo(sock, host, port, data)
   if not _isSockHandle(sock) then
     return _netErr("udpSendTo: invalid socket handle")
@@ -754,11 +823,9 @@ function udpSendTo(sock, host, port, data)
   return sent
 end function
 
-/*
-Receives a UDP datagram.
-input: socket handle (int or ptr), int maxBytes
-returns: array [bytes data, string peerIp, int peerPort] OR error(...)
-*/
+/// Receives a UDP datagram.
+/// @param sock Value supplied for `sock`.
+/// @param maxBytes Value supplied for `maxBytes`.
 function udpRecvFrom(sock, maxBytes)
   if not _isSockHandle(sock) then
     return _netErr("udpRecvFrom: invalid socket handle")

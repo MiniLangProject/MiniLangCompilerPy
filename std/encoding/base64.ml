@@ -14,36 +14,27 @@
    limitations under the License.
 */
 
+//! Provides the std encoding base64 package.
+
 package std.encoding.base64
 
-// ------------------------------------------------------------
-// std.encoding.base64
-// Minimal Base64 (RFC 4648) utilities:
-//
-// toBase64(bytes)    -> string
-// fromBase64(string) -> bytes | void
-//
-// Notes:
-// - fromBase64 ignores ASCII whitespace (space/tab/CR/LF).
-// - returns void on invalid input.
-// ------------------------------------------------------------
-
+/// Std.encoding.base64 Minimal Base64 (RFC 4648) utilities: toBase64(bytes) -> string fromBase64(string) -> bytes | void Notes: - fromBase64 ignores ASCII whitespace (space/tab/CR/LF). - returns void on invalid input.
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
-// ------------------------------------------------------------
-// helpers (internal)
-// ------------------------------------------------------------
-
+/// Helpers (internal).
+/// @internal
 function _isWs(ch)
   return ch == " " or ch == "\t" or ch == "\n" or ch == "\r"
 end function
 
-// Recognize ASCII whitespace permitted inside encoded input.
+/// Recognize ASCII whitespace permitted inside encoded input.
+/// @internal
 function _isWsByte(v)
   return v == 32 or v == 9 or v == 10 or v == 13
 end function
 
-// Remove permitted whitespace and reject non-string input.
+/// Remove permitted whitespace and reject non-string input.
+/// @internal
 function _cleanBytes(text)
   if typeof(text) != "string" then
     return
@@ -72,7 +63,8 @@ function _cleanBytes(text)
   return slice(output, 0, oi)
 end function
 
-// Decode a validated block or return the canonical empty bytes value.
+/// Decode a validated block or return the canonical empty bytes value.
+/// @internal
 function _decodeOrEmpty(b)
   if typeof(b) != "bytes" then
     return
@@ -83,7 +75,8 @@ function _decodeOrEmpty(b)
   return decode(b)
 end function
 
-// Convert one Base64 alphabet byte to its six-bit value.
+/// Convert one Base64 alphabet byte to its six-bit value.
+/// @internal
 function _valByte(v)
   if v >= 65 and v <= 90 then
     return v - 65
@@ -103,10 +96,8 @@ function _valByte(v)
   return -1
 end function
 
-// ------------------------------------------------------------
-// encoding: bytes -> base64 string (with '=' padding)
-// ------------------------------------------------------------
-
+/// Encoding: bytes -> base64 string (with '=' padding).
+/// @param b Second input value.
 function toBase64(b)
   if typeof(b) != "bytes" then
     return
@@ -162,10 +153,8 @@ function toBase64(b)
   return _decodeOrEmpty(output)
 end function
 
-// ------------------------------------------------------------
-// decoding: base64 string -> bytes (or void on error)
-// ------------------------------------------------------------
-
+/// Decoding: base64 string -> bytes (or void on error).
+/// @param text Text to process.
 function fromBase64(text)
   if typeof(text) != "string" then
     return

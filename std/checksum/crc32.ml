@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std checksum crc32 package.
+
 package std.checksum.crc32
 
 // CRC-32/IEEE uses polynomial 0x04C11DB7 (reflected 0xEDB88320), initial
@@ -21,32 +23,46 @@ package std.checksum.crc32
 // CRC-32C: the x86 CRC32 instruction computes CRC-32C and cannot implement
 // this format.
 
-// Compute CRC-32/IEEE over an entire bytes value.
+/// Compute CRC-32/IEEE over an entire bytes value.
+/// @param buffer Buffer to process.
 function compute(buffer)
   if typeof(buffer) != "bytes" then return end if
   return nativeCrc32(0, buffer, 0, len(buffer))
 end function
 
-// Compute CRC-32/IEEE over one validated byte range.
+/// Compute CRC-32/IEEE over one validated byte range.
+/// @param buffer Buffer to process.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
 function computeRange(buffer, offset, length)
   if typeof(buffer) != "bytes" then return end if
   return nativeCrc32(0, buffer, offset, length)
 end function
 
-// Continue a finalized CRC-32/IEEE value over one byte range.
+/// Continue a finalized CRC-32/IEEE value over one byte range.
+/// @param previous Value supplied for `previous`.
+/// @param buffer Buffer to process.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
 function update(previous, buffer, offset, length)
   if typeof(buffer) != "bytes" then return end if
   return nativeCrc32(previous, buffer, offset, length)
 end function
 
-// Compare the CRC-32/IEEE of an entire buffer with expected.
+/// Compare the CRC-32/IEEE of an entire buffer with expected.
+/// @param buffer Buffer to process.
+/// @param expected Value supplied for `expected`.
 function verify(buffer, expected)
   actual = compute(buffer)
   if typeof(actual) != "int" or typeof(expected) != "int" then return false end if
   return actual == expected
 end function
 
-// Compare the CRC-32/IEEE of one range with expected.
+/// Compare the CRC-32/IEEE of one range with expected.
+/// @param buffer Buffer to process.
+/// @param offset Zero-based starting offset.
+/// @param length Number of elements or bytes to process.
+/// @param expected Value supplied for `expected`.
 function verifyRange(buffer, offset, length, expected)
   actual = computeRange(buffer, offset, length)
   if typeof(actual) != "int" or typeof(expected) != "int" then return false end if

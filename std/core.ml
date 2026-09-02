@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std core package.
+
 package std.core
 
 // ------------------------------------------------------------
@@ -25,84 +27,58 @@ package std.core
 // - These helpers make it easy to check types and provide fallbacks.
 // ------------------------------------------------------------
 
-/*
-checks whether a value is void
-input: any x
-returns: bool isVoid
-*/
+/// Checks whether a value is void.
+/// @param x Value supplied for `x`.
 function isVoid(x)
   return typeof(x) == "void"
 end function
 
-/*
-checks whether a value is an int
-input: any x
-returns: bool isInt
-*/
+/// Checks whether a value is an int.
+/// @param x Value supplied for `x`.
 function isInt(x)
   return typeof(x) == "int"
 end function
 
-/*
-checks whether a value is a float
-input: any x
-returns: bool isFloat
-*/
+/// Checks whether a value is a float.
+/// @param x Value supplied for `x`.
 function isFloat(x)
   return typeof(x) == "float"
 end function
 
-/*
-checks whether a value is a number (int or float)
-input: any x
-returns: bool isNumber
-*/
+/// Checks whether a value is a number (int or float).
+/// @param x Value supplied for `x`.
 function isNumber(x)
   ty = typeof(x)
   return ty == "int" or ty == "float"
 end function
 
-/*
-checks whether a value is a bool
-input: any x
-returns: bool isBool
-*/
+/// Checks whether a value is a bool.
+/// @param x Value supplied for `x`.
 function isBool(x)
   return typeof(x) == "bool"
 end function
 
-/*
-checks whether a value is a string
-input: any x
-returns: bool isString
-*/
+/// Checks whether a value is a string.
+/// @param x Value supplied for `x`.
 function isString(x)
   return typeof(x) == "string"
 end function
 
-/*
-checks whether a value is an array
-input: any x
-returns: bool isArray
-*/
+/// Checks whether a value is an array.
+/// @param x Value supplied for `x`.
 function isArray(x)
   return typeof(x) == "array"
 end function
 
-/*
-checks whether a value is a function
-input: any x
-returns: bool isFunction
-*/
+/// Checks whether a value is a function.
+/// @param x Value supplied for `x`.
 function isFunction(x)
   return typeof(x) == "function"
 end function
 
-/*
-returns fallback if x is void, otherwise x
-input: any x, any fallback
-returns: any value
-*/
+/// Returns fallback if x is void, otherwise x.
+/// @param x Value supplied for `x`.
+/// @param fallback Value supplied for `fallback`.
 function coalesce(x, fallback)
   if typeof(x) == "void" then
     return fallback
@@ -110,11 +86,9 @@ function coalesce(x, fallback)
   return x
 end function
 
-/*
-minimum of two comparable values
-input: comparable a, comparable b
-returns: comparable minValue
-*/
+/// Minimum of two comparable values.
+/// @param a First input value.
+/// @param b Second input value.
 function min(a, b)
   if a < b then
     return a
@@ -122,11 +96,9 @@ function min(a, b)
   return b
 end function
 
-/*
-maximum of two comparable values
-input: comparable a, comparable b
-returns: comparable maxValue
-*/
+/// Maximum of two comparable values.
+/// @param a First input value.
+/// @param b Second input value.
 function max(a, b)
   if a > b then
     return a
@@ -134,11 +106,10 @@ function max(a, b)
   return b
 end function
 
-/*
-clamp a value into [lo, hi]
-input: comparable x, comparable lo, comparable hi
-returns: comparable clamped
-*/
+/// Clamp a value into [lo, hi].
+/// @param x Value supplied for `x`.
+/// @param lo Value supplied for `lo`.
+/// @param hi Value supplied for `hi`.
 function clamp(x, lo, hi)
   if x < lo then
     return lo
@@ -149,11 +120,8 @@ function clamp(x, lo, hi)
   return x
 end function
 
-/*
-absolute value
-input: int|float x
-returns: int|float absX
-*/
+/// Absolute value.
+/// @param x Value supplied for `x`.
 function abs(x)
   if x < 0 then
     return - x
@@ -161,11 +129,8 @@ function abs(x)
   return x
 end function
 
-/*
-sign of a number
-input: int|float x
-returns: int sign (-1, 0, 1)
-*/
+/// Sign of a number.
+/// @param x Value supplied for `x`.
 function sign(x)
   if x < 0 then
     return -1
@@ -176,11 +141,9 @@ function sign(x)
   return 0
 end function
 
-/*
-safe len(): returns len(x) if x supports it, otherwise fallback
-input: any x, int fallback
-returns: int length
-*/
+/// Safe len(): returns len(x) if x supports it, otherwise fallback.
+/// @param x Value supplied for `x`.
+/// @param fallback Value supplied for `fallback`.
 function safeLen(x, fallback)
   ty = typeof(x)
   if ty == "string" or ty == "array" or ty == "bytes" then
@@ -189,11 +152,9 @@ function safeLen(x, fallback)
   return fallback
 end function
 
-/*
-safe toNumber(): returns converted value or fallback
-input: any x, int|float fallback
-returns: int|float number
-*/
+/// Safe toNumber(): returns converted value or fallback.
+/// @param x Value supplied for `x`.
+/// @param fallback Value supplied for `fallback`.
 function safeToNumber(x, fallback)
   n = toNumber(x)
   if typeof(n) == "void" then

@@ -346,7 +346,7 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.0"
+    expected = "MiniLang Compiler 1.2.1"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -3856,7 +3856,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.0", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.1", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_linux_x64_target(
@@ -3882,6 +3882,11 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="language_suite.ml (full language suite)", status="SKIP",
                                         details="language_suite.ml not found"))
+
+    tests.append(lambda: test_program_no_fail(
+        name="declaration comments remain compile-time-only",
+        mlc_runner=mlc_runner, ml_path=tests_root / "declaration_comments.ml",
+        must_contain=["[OK] declaration comments"]))
 
     if language_extensions_ml is not None:
         tests.append(lambda: test_program_no_fail(

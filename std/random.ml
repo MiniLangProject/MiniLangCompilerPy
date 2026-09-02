@@ -14,28 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std random package.
+
 package std.random
 
-// ------------------------------------------------------------
-// std.random
-// Simple deterministic PRNG (xorshift32).
-// - Deterministic across runs.
-// - Not cryptographically secure.
-// ------------------------------------------------------------
-
+/// Std.random Simple deterministic PRNG (xorshift32). - Deterministic across runs. - Not cryptographically secure.
 const U32_MASK = 0xFFFFFFFF
+/// Stores the default seed.
 const DEFAULT_SEED = 0x6d2b79f5
+/// Stores the u32 range float.
 const U32_RANGE_FLOAT = 4294967296.0
 
-// Deterministic per-instance pseudorandom number generator.
+/// Deterministic per-instance pseudorandom number generator.
 struct RNG
+  /// Stores the state member of `RNG`.
   state
 
-  /*
-  creates a deterministic RNG from a seed
-  input: int seed (other types are converted via toNumber)
-  returns: std.random.RNG rng
-  */
+  /// Creates a deterministic RNG from a seed.
+  /// @param seed Value supplied for `seed`.
   static function Seed(seed)
   s = seed
   if typeof(s) != "int" then
@@ -55,11 +51,7 @@ struct RNG
   return std.random.RNG(s & std.random.U32_MASK)
 end function
 
-/*
-generates the next 32-bit unsigned value
-input: none
-returns: int u32
-*/
+/// Generates the next 32-bit unsigned value.
 function nextU32()
   x = this.state
   x = x ^((x << 13) & std.random.U32_MASK)
@@ -69,11 +61,8 @@ function nextU32()
   return this.state
 end function
 
-/*
-generates an integer in [0, maxExclusive)
-input: int maxExclusive
-returns: int value (void on type mismatch)
-*/
+/// Generates an integer in [0, maxExclusive).
+/// @param maxExclusive Value supplied for `maxExclusive`.
 function nextInt(maxExclusive)
   if typeof(maxExclusive) != "int" then
     return
@@ -84,30 +73,20 @@ function nextInt(maxExclusive)
   return this.nextU32() % maxExclusive
 end function
 
-/*
-generates a float in [0, 1)
-input: none
-returns: float value
-*/
+/// Generates a float in [0, 1).
 function nextFloat()
   // [0,1)
   return this.nextU32() / std.random.U32_RANGE_FLOAT
 end function
 
-/*
-generates a random boolean
-input: none
-returns: bool value
-*/
+/// Generates a random boolean.
 function nextBool()
   return (this.nextU32() & 1) == 1
 end function
 
-/*
-generates an integer in [minInclusive, maxExclusive)
-input: int minInclusive, int maxExclusive
-returns: int value (void on type mismatch)
-*/
+/// Generates an integer in [minInclusive, maxExclusive).
+/// @param minInclusive Value supplied for `minInclusive`.
+/// @param maxExclusive Value supplied for `maxExclusive`.
 function rangeInt(minInclusive, maxExclusive)
   if typeof(minInclusive) != "int" or typeof(maxExclusive) != "int" then
     return
@@ -118,30 +97,23 @@ function rangeInt(minInclusive, maxExclusive)
   return minInclusive + this.nextInt(maxExclusive - minInclusive)
 end function
 
-/*
-generates a float in [minInclusive, maxExclusive)
-input: int|float minInclusive, int|float maxExclusive
-returns: float value
-*/
+/// Generates a float in [minInclusive, maxExclusive).
+/// @param minInclusive Value supplied for `minInclusive`.
+/// @param maxExclusive Value supplied for `maxExclusive`.
 function rangeFloat(minInclusive, maxExclusive)
   return minInclusive +(this.nextFloat() *(maxExclusive - minInclusive))
 end function
 end struct
 
-/*
-constructs a seeded RNG
-input: int seed
-returns: std.random.RNG rng
-*/
+/// Constructs a seeded RNG.
+/// @param seed Value supplied for `seed`.
 function seeded(seed)
   return std.random.RNG.Seed(seed)
 end function
 
-/*
-shuffles an array in place using Fisher-Yates
-input: std.random.RNG rng, array xs
-returns: array xs (same instance)
-*/
+/// Shuffles an array in place using Fisher-Yates.
+/// @param rng Value supplied for `rng`.
+/// @param xs Value supplied for `xs`.
 function shuffleInPlace(rng, xs)
   if typeof(xs) != "array" then
     return xs
@@ -158,11 +130,9 @@ function shuffleInPlace(rng, xs)
   return xs
 end function
 
-/*
-picks a random element from an array
-input: std.random.RNG rng, array xs
-returns: any element (void if xs is empty)
-*/
+/// Picks a random element from an array.
+/// @param rng Value supplied for `rng`.
+/// @param xs Value supplied for `xs`.
 function choice(rng, xs)
   if typeof(xs) != "array" then
     return

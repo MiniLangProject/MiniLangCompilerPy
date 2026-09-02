@@ -14,12 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Provides the std string_builder package.
+
 package std.string_builder
 
 // Mutable UTF-8 builder used where repeated immutable concatenation would copy
 // the growing prefix on every append.
 
-// Round capacities to powers of two so repeated appends grow geometrically.
+/// Round capacities to powers of two so repeated appends grow geometrically.
+/// @internal
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 16
@@ -34,18 +37,22 @@ function _nextPow2(n)
   return c
 end function
 
-// Mutable UTF-8 byte builder for append-heavy string construction.
+/// Mutable UTF-8 byte builder for append-heavy string construction.
 struct StringBuilder
+  /// Stores the buf member of `StringBuilder`.
   buf
+  /// Stores the len bytes member of `StringBuilder`.
   lenBytes
+  /// Stores the capacity member of `StringBuilder`.
   capacity
 
-  // Create an empty builder with a practical default capacity.
+  /// Create an empty builder with a practical default capacity.
   static function new()
     return std.string_builder.StringBuilder.withCapacity(64)
   end function
 
-  // Create an empty builder with at least cap bytes of capacity.
+  /// Create an empty builder with at least cap bytes of capacity.
+  /// @param cap Value supplied for `cap`.
   static function withCapacity(cap)
     if typeof(cap) != "int" then
       cap = 64
@@ -57,17 +64,18 @@ struct StringBuilder
     return std.string_builder.StringBuilder(bytes(cap, 0), 0, cap)
   end function
 
-  // Return the number of UTF-8 bytes currently stored.
+  /// Return the number of UTF-8 bytes currently stored.
   function len()
     return this.lenBytes
   end function
 
-  // Reset the logical length while retaining allocated capacity.
+  /// Reset the logical length while retaining allocated capacity.
   function clear()
     this.lenBytes = 0
   end function
 
-  // Ensure room for at least extra additional bytes.
+  /// Ensure room for at least extra additional bytes.
+  /// @param extra Value supplied for `extra`.
   function reserve(extra)
     if typeof(extra) != "int" then
       return
@@ -89,7 +97,8 @@ struct StringBuilder
     this.capacity = newCap
   end function
 
-  // Append a string without creating an intermediate concatenation.
+  /// Append a string without creating an intermediate concatenation.
+  /// @param s Value supplied for `s`.
   function appendString(s)
     if typeof(s) != "string" then
       return
@@ -103,7 +112,10 @@ struct StringBuilder
     this.lenBytes = this.lenBytes + sl
   end function
 
-  // Append a clamped byte slice; negative offsets count from the end.
+  /// Append a clamped byte slice; negative offsets count from the end.
+  /// @param s Value supplied for `s`.
+  /// @param offset Zero-based starting offset.
+  /// @param length Number of elements or bytes to process.
   function appendSlice(s, offset, length)
     if typeof(s) != "string" then
       return
@@ -144,7 +156,8 @@ struct StringBuilder
     this.lenBytes = this.lenBytes + take
   end function
 
-  // Convert a value with str() and append its textual representation.
+  /// Convert a value with str() and append its textual representation.
+  /// @param value Value to process.
   function append(value)
     sv = str(value)
     if typeof(sv) != "string" then
@@ -153,13 +166,14 @@ struct StringBuilder
     this.appendString(sv)
   end function
 
-  // Append a value followed by a newline byte.
+  /// Append a value followed by a newline byte.
+  /// @param value Value to process.
   function appendLine(value)
     this.append(value)
     this.appendString("\n")
   end function
 
-  // Materialize exactly the initialized bytes as an immutable string.
+  /// Materialize exactly the initialized bytes as an immutable string.
   function toString()
     if this.lenBytes <= 0 then
       return ""

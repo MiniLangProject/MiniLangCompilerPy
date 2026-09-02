@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+//! Provides the std ds list package.
+
 package std.ds.list
 
 // ------------------------------------------------------------
@@ -25,11 +27,8 @@ package std.ds.list
 // - keeps capacity on clear() to stay fast under reuse
 // ------------------------------------------------------------
 
-/*
-allocates an array of length n filled with `fill`
-input: int n, any fill
-returns: array output
-*/
+/// Allocates an array of length n filled with `fill`
+/// @internal
 function _allocArray(n, fill)
   if typeof(n) != "int" then
     return
@@ -40,11 +39,8 @@ function _allocArray(n, fill)
   return array(n, fill)
 end function
 
-/*
-returns the next power-of-two capacity (minimum 8)
-input: int n
-returns: int capPow2
-*/
+/// Returns the next power-of-two capacity (minimum 8).
+/// @internal
 function _nextPow2(n)
   if typeof(n) != "int" then
     return 8
@@ -59,37 +55,30 @@ function _nextPow2(n)
   return c
 end function
 
-// Mutable growable sequence with indexed insertion and removal.
+/// Mutable growable sequence with indexed insertion and removal.
 struct List
+  /// Stores the buf member of `List`.
   buf
+  /// Stores the size member of `List`.
   size
+  /// Stores the cap member of `List`.
   cap
 
-  /*
-  creates a new empty list
-  input: (none)
-  returns: List list
-  */
+  /// Creates a new empty list.
   static function new()
   return List.withCapacity(8)
 end function
 
-/*
-creates a new list with at least `minCap` capacity
-input: int minCap
-returns: List list
-*/
+/// Creates a new list with at least `minCap` capacity.
+/// @param minCap Value supplied for `minCap`.
 static function withCapacity(minCap)
 c = _nextPow2(minCap)
 b = _allocArray(c, 0)
 return List(b, 0, c)
 end function
 
-/*
-creates a new list from an array
-input: array values
-returns: List list
-*/
+/// Creates a new list from an array.
+/// @param values Values to process.
 static function fromArray(values)
 if typeof(values) != "array" then
   return List.new()
@@ -103,29 +92,17 @@ end if
 return lst
 end function
 
-/*
-returns number of elements
-input: (none)
-returns: int count
-*/
+/// Returns number of elements.
 function len()
   return this.size
 end function
 
-/*
-checks whether the list is empty
-input: (none)
-returns: bool empty
-*/
+/// Checks whether the list is empty.
 function isEmpty()
   return this.size == 0
 end function
 
-/*
-removes all elements while keeping capacity
-input: (none)
-returns: void
-*/
+/// Removes all elements while keeping capacity.
 function clear()
   if this.size > 0 then
     for i = 0 to(this.size - 1)
@@ -135,11 +112,8 @@ function clear()
   this.size = 0
 end function
 
-/*
-ensures that the capacity is at least `minCap`
-input: int minCap
-returns: void
-*/
+/// Ensures that the capacity is at least `minCap`
+/// @param minCap Value supplied for `minCap`.
 function reserve(minCap)
   if typeof(minCap) != "int" then
     return
@@ -150,11 +124,8 @@ function reserve(minCap)
   this._grow(minCap)
 end function
 
-/*
-grows the internal buffer to at least `newCap`
-input: int newCap
-returns: void
-*/
+/// Grows the internal buffer to at least `newCap`
+/// @internal
 function _grow(newCap)
   c2 = _nextPow2(newCap)
   nb = _allocArray(c2, 0)
@@ -165,11 +136,8 @@ function _grow(newCap)
   this.cap = c2
 end function
 
-/*
-adds an element at the end of the list
-input: any value
-returns: void
-*/
+/// Adds an element at the end of the list.
+/// @param value Value to process.
 function add(value)
   if this.size == this.cap then
     this._grow(this.cap << 1)
@@ -178,20 +146,14 @@ function add(value)
   this.size = this.size + 1
 end function
 
-/*
-alias for add(value)
-input: any value
-returns: void
-*/
+/// Alias for add(value).
+/// @param value Value to process.
 function push(value)
   this.add(value)
 end function
 
-/*
-appends all values from an array
-input: array values
-returns: void
-*/
+/// Appends all values from an array.
+/// @param values Values to process.
 function addAll(values)
   if typeof(values) != "array" then
     return
@@ -209,11 +171,8 @@ function addAll(values)
   this.size = needed
 end function
 
-/*
-returns the element at `index`
-input: int index
-returns: any value (or void if out of bounds)
-*/
+/// Returns the element at `index`
+/// @param index Zero-based item index.
 function get(index)
   if typeof(index) != "int" then
     return
@@ -224,11 +183,9 @@ function get(index)
   return this.buf[index]
 end function
 
-/*
-replaces the element at `index`
-input: int index, any value
-returns: bool ok
-*/
+/// Replaces the element at `index`
+/// @param index Zero-based item index.
+/// @param value Value to process.
 function set(index, value)
   if typeof(index) != "int" then
     return false
@@ -240,11 +197,7 @@ function set(index, value)
   return true
 end function
 
-/*
-returns the first element
-input: (none)
-returns: any value (or void if empty)
-*/
+/// Returns the first element.
 function first()
   if this.size <= 0 then
     return
@@ -252,11 +205,7 @@ function first()
   return this.buf[0]
 end function
 
-/*
-returns the last element
-input: (none)
-returns: any value (or void if empty)
-*/
+/// Returns the last element.
 function last()
   if this.size <= 0 then
     return
@@ -264,11 +213,7 @@ function last()
   return this.buf[this.size - 1]
 end function
 
-/*
-removes and returns the last element
-input: (none)
-returns: any value (or void if empty)
-*/
+/// Removes and returns the last element.
 function pop()
   if this.size <= 0 then
     return
@@ -280,11 +225,8 @@ function pop()
   return v
 end function
 
-/*
-removes and returns the last element or a fallback
-input: any fallbackValue
-returns: any value
-*/
+/// Removes and returns the last element or a fallback.
+/// @param fallbackValue Value supplied for `fallbackValue`.
 function popOr(fallbackValue)
   v = this.pop()
   if typeof(v) == "void" then
@@ -293,11 +235,9 @@ function popOr(fallbackValue)
   return v
 end function
 
-/*
-inserts a value at `index`
-input: int index, any value
-returns: bool ok
-*/
+/// Inserts a value at `index`
+/// @param index Zero-based item index.
+/// @param value Value to process.
 function insert(index, value)
   if typeof(index) != "int" then
     return false
@@ -322,11 +262,8 @@ function insert(index, value)
   return true
 end function
 
-/*
-removes and returns the value at `index`
-input: int index
-returns: any value (or void if out of bounds)
-*/
+/// Removes and returns the value at `index`
+/// @param index Zero-based item index.
 function removeAt(index)
   if typeof(index) != "int" then
     return
@@ -345,11 +282,7 @@ function removeAt(index)
   return v
 end function
 
-/*
-returns a snapshot array of all elements
-input: (none)
-returns: array values
-*/
+/// Returns a snapshot array of all elements.
 function toArray()
   output = array(this.size)
   if this.size <= 0 then

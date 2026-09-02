@@ -17,39 +17,88 @@ limitations under the License.
 // Internal Windows CNG bridge.  Public callers use std.crypto and
 // std.crypto.aes_gcm; this module only marshals validated byte buffers into
 // BCrypt.  Cryptographic transformations never run in MiniLang loops.
+//! Provides the std crypto _cng package.
+
 package std.crypto._cng
 
+/// Implements bcrypt open algorithm provider.
+/// @internal
 extern function BCryptOpenAlgorithmProvider(result as bytes, algorithm as wstr, implementation as ptr, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt close algorithm provider.
+/// @internal
 extern function BCryptCloseAlgorithmProvider(handle as ptr, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt hash.
+/// @internal
 extern function BCryptHash(handle as ptr, secret as ptr, secretLength as u32, input as ptr, inputLength as u32, output as ptr, outputLength as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt gen random.
+/// @internal
 extern function BCryptGenRandom(handle as ptr, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt set property w.
+/// @internal
 extern function BCryptSetPropertyW(handle as ptr, property as wstr, value as wstr, valueLength as u32, flags as u32) from "bcrypt.dll" symbol "BCryptSetProperty" returns i32
+/// Implements bcrypt set property bytes.
+/// @internal
 extern function BCryptSetPropertyBytes(handle as ptr, property as wstr, value as bytes, valueLength as u32, flags as u32) from "bcrypt.dll" symbol "BCryptSetProperty" returns i32
+/// Implements bcrypt generate symmetric key.
+/// @internal
 extern function BCryptGenerateSymmetricKey(handle as ptr, result as bytes, keyObject as ptr, keyObjectLength as u32, secret as ptr, secretLength as u32, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt destroy key.
+/// @internal
 extern function BCryptDestroyKey(handle as ptr) from "bcrypt.dll" returns i32
+/// Implements bcrypt encrypt.
+/// @internal
 extern function BCryptEncrypt(key as ptr, input as ptr, inputLength as u32, paddingInfo as ptr, iv as ptr, ivLength as u32, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt decrypt.
+/// @internal
 extern function BCryptDecrypt(key as ptr, input as ptr, inputLength as u32, paddingInfo as ptr, iv as ptr, ivLength as u32, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt key derivation.
+/// @internal
 extern function BCryptKeyDerivation(key as ptr, parameters as ptr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt import key pair.
+/// @internal
 extern function BCryptImportKeyPair(algorithm as ptr, importKey as ptr, blobType as wstr, result as bytes, input as ptr, inputLength as u32, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt export key.
+/// @internal
 extern function BCryptExportKey(key as ptr, exportKey as ptr, blobType as wstr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt secret agreement.
+/// @internal
 extern function BCryptSecretAgreement(privateKey as ptr, publicKey as ptr, result as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt derive key.
+/// @internal
 extern function BCryptDeriveKey(secret as ptr, kdf as wstr, parameters as ptr, output as ptr, outputLength as u32, resultLength as bytes, flags as u32) from "bcrypt.dll" returns i32
+/// Implements bcrypt destroy secret.
+/// @internal
 extern function BCryptDestroySecret(secret as ptr) from "bcrypt.dll" returns i32
+/// Implements bcrypt derive key pbkdf2.
+/// @internal
 extern function BCryptDeriveKeyPBKDF2(provider as ptr, password as ptr, passwordLength as u32, salt as ptr, saltLength as u32, iterations as u64, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
 
+/// Stores the bcrypt alg handle hmac flag.
+/// @internal
 const BCRYPT_ALG_HANDLE_HMAC_FLAG = 0x00000008
+/// Stores the bcrypt use system preferred rng.
+/// @internal
 const BCRYPT_USE_SYSTEM_PREFERRED_RNG = 0x00000002
+/// Stores the bcrypt kdf hkdf info.
+/// @internal
 const BCRYPT_KDF_HKDF_INFO = 0x14
+/// Stores the bcrypt ecdh public generic magic.
+/// @internal
 const BCRYPT_ECDH_PUBLIC_GENERIC_MAGIC = 0x504B4345
+/// Stores the bcrypt ecdh private generic magic.
+/// @internal
 const BCRYPT_ECDH_PRIVATE_GENERIC_MAGIC = 0x564B4345
 
-// Encode a low 64-bit native address into a C structure.
+/// Encode a low 64-bit native address into a C structure.
+/// @internal
 function _putPtr(buffer, offset, value)
   for i = 0 to 7
     buffer[offset + i] = (value >> (i * 8)) & 0xFF
   end for
 end function
 
+/// Implements put u32.
+/// @internal
 function _putU32(buffer, offset, value)
   buffer[offset] = value & 0xFF
   buffer[offset + 1] = (value >> 8) & 0xFF
@@ -57,6 +106,8 @@ function _putU32(buffer, offset, value)
   buffer[offset + 3] = (value >> 24) & 0xFF
 end function
 
+/// Returns get ptr.
+/// @internal
 function _getPtr(buffer)
   value = 0
   for i = 0 to 7
@@ -65,17 +116,22 @@ function _getPtr(buffer)
   return value
 end function
 
+/// Returns get u32.
+/// @internal
 function _getU32(buffer)
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24)
 end function
 
+/// Implements zero.
+/// @internal
 function _zero(buffer)
   if typeof(buffer) == "bytes" and len(buffer) > 0 then
     fillBytes(buffer, 0, len(buffer), 0)
   end if
 end function
 
-// Run SHA-2 or HMAC-SHA-2 through the BCrypt one-shot hash API.
+/// Run SHA-2 or HMAC-SHA-2 through the BCrypt one-shot hash API.
+/// @internal
 function hash(algorithm, key, input, output)
   providerBytes = bytes(8, 0)
   flags = 0
@@ -100,7 +156,8 @@ function hash(algorithm, key, input, output)
   return ok
 end function
 
-// Fill output with bytes from the system-preferred CNG random provider.
+/// Fill output with bytes from the system-preferred CNG random provider.
+/// @internal
 function random(output)
   if len(output) == 0 then return true end if
   status = BCryptGenRandom(0, nativeBytesPtr(output), len(output), BCRYPT_USE_SYSTEM_PREFERRED_RNG)
@@ -108,7 +165,8 @@ function random(output)
   return status == 0
 end function
 
-// Derive PBKDF2 output with the native CNG password-based KDF.
+/// Derive PBKDF2 output with the native CNG password-based KDF.
+/// @internal
 function pbkdf2(hashAlgorithm, password, salt, iterations, output)
   providerBytes = bytes(8, 0)
   status = BCryptOpenAlgorithmProvider(providerBytes, hashAlgorithm, 0, BCRYPT_ALG_HANDLE_HMAC_FLAG)
@@ -124,7 +182,8 @@ function pbkdf2(hashAlgorithm, password, salt, iterations, output)
   return ok
 end function
 
-// Derive HKDF output using the native CNG HKDF provider.
+/// Derive HKDF output using the native CNG HKDF provider.
+/// @internal
 function hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, output)
   providerBytes = bytes(8, 0)
   keyBytes = bytes(8, 0)
@@ -179,9 +238,8 @@ function hkdf(hashAlgorithm, digestLength, inputKeyMaterial, salt, info, output)
   return ok
 end function
 
-// Encrypt/decrypt one AES-GCM message.  For encryption input is plaintext and
-// output is ciphertext||tag.  For decryption input is ciphertext||tag and
-// output is plaintext.  CNG authenticates before this function reports success.
+/// Encrypt/decrypt one AES-GCM message. For encryption input is plaintext and output is ciphertext||tag. For decryption input is ciphertext||tag and output is plaintext. CNG authenticates before this function reports success.
+/// @internal
 function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   providerBytes = bytes(8, 0)
   keyBytes = bytes(8, 0)
@@ -238,6 +296,8 @@ function aesGcm(encrypting, key, nonce, aad, input, output, tagLength)
   return ok
 end function
 
+/// Implements open x25519.
+/// @internal
 function _openX25519(providerBytes)
   status = BCryptOpenAlgorithmProvider(providerBytes, "ECDH", 0, 0)
   provider = _getPtr(providerBytes)
@@ -250,6 +310,8 @@ function _openX25519(providerBytes)
   return provider
 end function
 
+/// Creates make x25519 private blob.
+/// @internal
 function _makeX25519PrivateBlob(privateKey)
   blob = bytes(104, 0)
   _putU32(blob, 0, BCRYPT_ECDH_PRIVATE_GENERIC_MAGIC)
@@ -261,6 +323,8 @@ function _makeX25519PrivateBlob(privateKey)
   return blob
 end function
 
+/// Creates make x25519 public blob.
+/// @internal
 function _makeX25519PublicBlob(publicKey)
   blob = bytes(72, 0)
   _putU32(blob, 0, BCRYPT_ECDH_PUBLIC_GENERIC_MAGIC)
@@ -269,7 +333,8 @@ function _makeX25519PublicBlob(publicKey)
   return blob
 end function
 
-// Derive an RFC-7748 public key from a 32-byte private scalar.
+/// Derive an RFC-7748 public key from a 32-byte private scalar.
+/// @internal
 function x25519Public(privateKey, output)
   providerBytes = bytes(8, 0)
   privateHandleBytes = bytes(8, 0)
@@ -300,7 +365,8 @@ function x25519Public(privateKey, output)
   return ok
 end function
 
-// Perform RFC-7748 X25519 and reject all-zero shared secrets.
+/// Perform RFC-7748 X25519 and reject all-zero shared secrets.
+/// @internal
 function x25519(privateKey, publicKey, output)
   providerBytes = bytes(8, 0)
   privateHandleBytes = bytes(8, 0)
