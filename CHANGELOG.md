@@ -2,6 +2,18 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.2 - 2026-09-02
+
+- Synchronized the release contract with the optimized self-hosted compiler,
+  whose MiniDoc-guided fixed-point profile removed redundant lexical-frame
+  fallback scans and cached stable package-suffix resolution without changing
+  generated Windows or Linux program bytes.
+- Hardened the shared Windows networking regression so candidate sockets stay
+  below the dynamic ephemeral range. This avoids false failures on hosts where
+  virtualization reserves long consecutive port ranges.
+- Revalidated the complete Python suite, cross-compiler Windows/Linux output,
+  strict MiniDoc documentation and the 1.2.2 version/predefined-value contract.
+
 ## 1.2.1 - 2026-09-02
 
 - Added explicit `///` declaration-comment handling to the reference parser,

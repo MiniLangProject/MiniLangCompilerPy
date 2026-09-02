@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 2 September 2026 against the matching 1.2.1 revisions of:
+Verified through 2 September 2026 against the matching 1.2.2 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,34 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.2 MiniDoc-profile fixed point
+
+Verified on 2 September 2026 after the MiniDoc-guided self-host optimization,
+focused cache regressions, compiler call-profile harness and dynamic-port test
+hardening. Every compiler reports `MiniLang Compiler 1.2.2`, and the
+`MINILANG_VERSION` predefined value is `"1.2.2"`.
+
+| Compiler image | Size | SHA-256 | Build time |
+| --- | ---: | --- | ---: |
+| Windows Stage 1, built by Python | 66,487,808 | `5C4AF305EAB1D825E6304A628FF43C9D1D1B9AE0100300B1DEBD4A4C4837E61A` | 67.534 s |
+| Windows Stage 2, built by Stage 1 | 66,487,808 | `5C4AF305EAB1D825E6304A628FF43C9D1D1B9AE0100300B1DEBD4A4C4837E61A` | 87.306 s |
+| Windows Stage 3, built by Stage 2 | 66,487,808 | `5C4AF305EAB1D825E6304A628FF43C9D1D1B9AE0100300B1DEBD4A4C4837E61A` | 86.117 s |
+| Linux cross-build by Python | 66,461,232 | `38259A7747C8389221461984237952C4D4492F6C1C0AD3AEF31223FA57426A88` | 69.760 s |
+| Linux cross-build by Windows Stage 3 | 66,461,232 | `38259A7747C8389221461984237952C4D4492F6C1C0AD3AEF31223FA57426A88` | 98.641 s |
+
+The three byte-identical Windows images establish the 1.2.2 fixed point. The
+two Linux builders also emit the exact same ELF image. That Linux compiler
+reports 1.2.2, successfully compiles the Linux target smoke test natively under
+WSL and the resulting program passes its argv and `copyArray` checks. The
+complete acceptance suites and strict MiniDoc regeneration are recorded with
+the release commit. The Python suite passes 133/133, while the self-hosted
+suite completes in 207.376 seconds with its embedded MiniLang harness at
+127/127 and all outer Windows, WSL/Linux, FFI, thread, GC, MLO determinism and
+monolithic/MLO identity gates passing. Strict MiniDoc generation reports zero
+warnings. All 46 shared standard-library sources, both MiniDoc configurations
+and all 289 generated standard-library documentation files are byte-identical
+between the repositories.
 
 ## 1.2.1 release fixed point and MiniDoc contract
 

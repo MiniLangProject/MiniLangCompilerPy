@@ -568,8 +568,10 @@ function test_base64_ds()
 end function
 
 function _tcpListenAny(backlog)
-  // Pick a port range that is usually free; try a small number of attempts.
-  base = 40000 +(t.ticks() % 20000)
+  // Stay below the platform's dynamic port range. Windows virtualization can
+  // reserve more than 1,000 consecutive ephemeral ports, making a short scan
+  // starting above 49151 flaky even when no application owns the ports.
+  base = 20000 +(t.ticks() % 19000)
   p = base
   i = 0
   while i < 200
@@ -585,7 +587,7 @@ function _tcpListenAny(backlog)
 end function
 
 function _udpBindAny()
-  base = 45000 +(t.ticks() % 15000)
+  base = 20000 +(t.ticks() % 19000)
   p = base
   i = 0
   while i < 200
