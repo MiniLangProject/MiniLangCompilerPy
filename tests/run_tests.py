@@ -360,6 +360,161 @@ def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     return TestResult(name=name, status="PASS", stdout="".join(outputs))
 
 
+def test_formatter_cli(*, name: str, mlc_runner: Path, tests_root: Path) -> TestResult:
+    """Build mlfmt and verify modern syntax, semantics and both native targets."""
+    project_root = mlc_runner.parent.resolve()
+    formatter_source = project_root / "tools" / "mlfmt.ml"
+    input_fixture = tests_root / "formatter_modern_input.ml"
+    expected_fixture = tests_root / "formatter_modern_expected.ml"
+    if not formatter_source.is_file() or not input_fixture.is_file() or not expected_fixture.is_file():
+        return TestResult(name=name, status="FAIL", details="formatter source or fixture is missing")
+
+    expected = normalize_out(expected_fixture.read_text(encoding="utf-8"))
+    marker = "[OK] formatter modern syntax"
+    output_log: list[str] = []
+
+    def fail(details: str, result: Optional[CmdResult] = None) -> TestResult:
+        return TestResult(name=name, status="FAIL", details=details,
+                          stdout="" if result is None else result.stdout,
+                          stderr="" if result is None else result.stderr)
+
+    with tempfile.TemporaryDirectory(prefix="mltests_formatter_") as td:
+        root = Path(td)
+        formatter_exe = root / "mlfmt.exe"
+        built = compile_native(mlc_runner, formatter_source, formatter_exe, timeout_s=180)
+        if built.returncode != 0:
+            return fail("Windows formatter build failed", built)
+
+        source = root / "formatter_modern.ml"
+        shutil.copyfile(input_fixture, source)
+        before_exe = root / "before.exe"
+        before_build = compile_native(mlc_runner, source, before_exe, timeout_s=180)
+        if before_build.returncode != 0:
+            return fail("unformatted fixture did not compile", before_build)
+        before_run = run_exe(before_exe, timeout_s=120)
+        if before_run.returncode == 999:
+            return TestResult(name=name, status="SKIP", details=before_run.stderr)
+        if before_run.returncode != 0 or marker not in normalize_out(before_run.stdout):
+            return fail("unformatted fixture failed at runtime", before_run)
+
+        formatted = run_exe(formatter_exe, exe_args=[str(source), "--inplace"], timeout_s=120)
+        if formatted.returncode != 0:
+            return fail("Windows formatter execution failed", formatted)
+        actual = normalize_out(source.read_text(encoding="utf-8"))
+        if actual != expected:
+            return fail("formatted source differs from formatter_modern_expected.ml")
+        for required in ("=>", "?.", "??", "///", "/**", "lazy iterator function",
+                         "async function", "synchronized(guard)", "end match"):
+            if required not in actual:
+                return fail(f"formatted source lost required syntax: {required}")
+
+        first_pass = source.read_bytes()
+        repeated = run_exe(formatter_exe, exe_args=[str(source), "--inplace"], timeout_s=120)
+        if repeated.returncode != 0 or source.read_bytes() != first_pass:
+            return fail("formatter is not byte-idempotent", repeated)
+
+        after_exe = root / "after.exe"
+        after_build = compile_native(mlc_runner, source, after_exe, timeout_s=180)
+        if after_build.returncode != 0:
+            return fail("formatted fixture did not compile", after_build)
+        after_run = run_exe(after_exe, timeout_s=120)
+        if after_run.returncode != 0 or marker not in normalize_out(after_run.stdout):
+            return fail("formatted fixture failed at runtime", after_run)
+        if before_exe.read_bytes() != after_exe.read_bytes():
+            return fail("formatting changed the generated Windows executable")
+
+        # Exercise recursive directory mode separately from single-file mode.
+        tree_source = root / "tree" / "nested" / "tree.ml"
+        tree_source.parent.mkdir(parents=True)
+        tree_source.write_text(
+            'function main(args)\nif true then\nprint "tree"\nend if\nreturn 0\nend function\n',
+            encoding="utf-8",
+        )
+        tree_run = run_exe(formatter_exe, exe_args=[str(root / "tree")], timeout_s=120)
+        if tree_run.returncode != 0:
+            return fail("recursive Windows formatter execution failed", tree_run)
+        tree_expected = ('function main(args)\n  if true then\n    print "tree"\n'
+                         '  end if\n  return 0\nend function\n')
+        if normalize_out(tree_source.read_text(encoding="utf-8")) != tree_expected:
+            return fail("recursive directory formatting produced unexpected output")
+
+        # The formatter itself must also be a native Linux tool. Run it when a
+        # native Linux host or WSL is available, then compile and execute its output.
+        linux_formatter = root / "mlfmt-linux"
+        linux_build = compile_native(
+            mlc_runner, formatter_source, linux_formatter,
+            extra_args=["--target", "linux-x64"], timeout_s=180,
+        )
+        if linux_build.returncode != 0:
+            return fail("Linux formatter build failed", linux_build)
+        if not linux_formatter.read_bytes().startswith(b"\x7fELF"):
+            return fail("Linux formatter output is not ELF64")
+
+        linux_source = root / "formatter_modern_linux.ml"
+        shutil.copyfile(input_fixture, linux_source)
+        linux_image = root / "formatter_modern_linux"
+
+        if os.name == "nt":
+            wsl = shutil.which("wsl.exe")
+            if wsl:
+                def to_wsl(path_value: Path) -> Optional[str]:
+                    converted = run_cmd([wsl, "wslpath", "-a", "-u", str(path_value).replace("\\", "/")],
+                                        timeout_s=30)
+                    value = normalize_out(converted.stdout).strip()
+                    return value if converted.returncode == 0 and value else None
+
+                formatter_linux_path = to_wsl(linux_formatter)
+                source_linux_path = to_wsl(linux_source)
+                if formatter_linux_path is None or source_linux_path is None:
+                    return fail("WSL path conversion failed for formatter regression")
+                run_cmd([wsl, "chmod", "+x", formatter_linux_path], timeout_s=30)
+                linux_format = run_cmd(
+                    [wsl, "timeout", "120s", formatter_linux_path, source_linux_path, "--inplace"],
+                    timeout_s=130,
+                )
+                if linux_format.returncode != 0:
+                    return fail("Linux formatter execution failed", linux_format)
+                if normalize_out(linux_source.read_text(encoding="utf-8")) != expected:
+                    return fail("Linux and Windows formatter output differs")
+                linux_program_build = compile_native(
+                    mlc_runner, linux_source, linux_image,
+                    extra_args=["--target", "linux-x64"], timeout_s=180,
+                )
+                if linux_program_build.returncode != 0:
+                    return fail("Linux formatted fixture did not compile", linux_program_build)
+                program_linux_path = to_wsl(linux_image)
+                if program_linux_path is None:
+                    return fail("WSL path conversion failed for formatted program")
+                run_cmd([wsl, "chmod", "+x", program_linux_path], timeout_s=30)
+                linux_program = run_cmd([wsl, "timeout", "120s", program_linux_path], timeout_s=130)
+                if linux_program.returncode != 0 or marker not in normalize_out(linux_program.stdout):
+                    return fail("Linux formatted fixture failed at runtime", linux_program)
+                output_log.append(linux_program.stdout)
+            else:
+                output_log.append("Linux formatter runtime check skipped: WSL is unavailable.\n")
+        else:
+            linux_formatter.chmod(0o755)
+            linux_format = run_cmd([str(linux_formatter), str(linux_source), "--inplace"], timeout_s=120)
+            if linux_format.returncode != 0:
+                return fail("Linux formatter execution failed", linux_format)
+            if normalize_out(linux_source.read_text(encoding="utf-8")) != expected:
+                return fail("native Linux formatter output differs from the golden file")
+            linux_program_build = compile_native(
+                mlc_runner, linux_source, linux_image,
+                extra_args=["--target", "linux-x64"], timeout_s=180,
+            )
+            if linux_program_build.returncode != 0:
+                return fail("Linux formatted fixture did not compile", linux_program_build)
+            linux_image.chmod(0o755)
+            linux_program = run_cmd([str(linux_image)], timeout_s=120)
+            if linux_program.returncode != 0 or marker not in normalize_out(linux_program.stdout):
+                return fail("Linux formatted fixture failed at runtime", linux_program)
+            output_log.append(linux_program.stdout)
+
+        output_log.insert(0, before_run.stdout + after_run.stdout)
+        return TestResult(name=name, status="PASS", stdout="".join(output_log))
+
+
 def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Pipeline/worker compatibility switches must preserve Python target bytes."""
     with tempfile.TemporaryDirectory(prefix="mltests_object_compat_") as td:
@@ -3859,6 +4014,9 @@ def main() -> int:
         name="compiler CLI reports version 1.2.3", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
+    tests.append(lambda: test_formatter_cli(
+        name="formatter: mlfmt modern syntax, idempotence and Windows/Linux parity",
+        mlc_runner=mlc_runner, tests_root=tests_root))
     tests.append(lambda: test_linux_x64_target(
         name="linux-x64 ELF, argv, shared heap and native threads", mlc_runner=mlc_runner, tests_root=tests_root))
     tests.append(lambda: test_linux_dynamic_import_module(

@@ -15,6 +15,7 @@
 */
 
 import std.fs as fs
+import std.path as path
 import std.time as time
 
 // Standalone formatter for MiniLang source files. It tokenizes layout-sensitive
@@ -271,17 +272,54 @@ function _normalizeLineComment(c)
   return bytes("// " + decode(slice(c, i, len(c) - i)))
 end function
 
-// block comment marker scan
-function _hasSubseq(b, a, c)
-  if len(b) < 2 then
-    return false
+// Find a two-byte marker at or after start. This is used only while already
+// inside a block comment, where string and line-comment rules do not apply.
+function _findSubseqFrom(b, start, a, c)
+  if len(b) < 2 or start >= len(b) - 1 then
+    return -1
   end if
-  for i = 0 to len(b) - 2
+  i = start
+  if i < 0 then i = 0 end if
+  while i < len(b) - 1
     if b[i] == a and b[i + 1] == c then
-      return true
+      return i
     end if
-  end for
-  return false
+    i = i + 1
+  end while
+  return -1
+end function
+
+// Locate /* in executable text. Markers inside strings or after // are data,
+// not comments; treating them as comments used to corrupt following indents.
+function _findBlockCommentOpenIdx(b)
+  if len(b) < 2 then
+    return -1
+  end if
+
+  i = 0
+  inStr = false
+  while i < len(b) - 1
+    ch = b[i]
+    if inStr then
+      if ch == 92 then
+        i = i + 2
+        continue
+      end if
+      if ch == 34 then inStr = false end if
+      i = i + 1
+      continue
+    end if
+
+    if ch == 34 then
+      inStr = true
+      i = i + 1
+      continue
+    end if
+    if ch == 47 and b[i + 1] == 47 then return -1 end if
+    if ch == 47 and b[i + 1] == 42 then return i end if
+    i = i + 1
+  end while
+  return -1
 end function
 
 // ------------------------------------------------------------
@@ -371,6 +409,44 @@ function _firstTwoWords(code)
   return Words(w0, w1)
 end function
 
+// Return true when the next non-empty, non-comment source line is `end loop`.
+// The parser uses the same look-ahead to distinguish a do-while footer from a
+// normal nested while statement.
+function _nextLineIsEndLoop(source, start)
+  pos = start
+  inComment = false
+  while pos < len(source)
+    lineEnd = pos
+    while lineEnd < len(source) and source[lineEnd] != 10
+      lineEnd = lineEnd + 1
+    end while
+    line = _trimLeftBytes(_trimRightBytes(slice(source, pos, lineEnd - pos)))
+
+    if inComment then
+      closeAt = _findSubseqFrom(line, 0, 42, 47)
+      if closeAt >= 0 then inComment = false end if
+    else
+      if len(line) > 0 then
+        if len(line) >= 2 and line[0] == 47 and line[1] == 47 then
+          // Skip a line comment.
+        else
+          if len(line) >= 2 and line[0] == 47 and line[1] == 42 then
+            closeAt = _findSubseqFrom(line, 2, 42, 47)
+            if closeAt < 0 then inComment = true end if
+          else
+            words = _firstTwoWords(line)
+            return words.w0 == "end" and words.w1 == "loop"
+          end if
+        end if
+      end if
+    end if
+
+    if lineEnd >= len(source) then return false end if
+    pos = lineEnd + 1
+  end while
+  return false
+end function
+
 // ------------------------------------------------------------
 // Switch-Base-Indent Stack (as "123\n456\n" in bytes)
 // ------------------------------------------------------------
@@ -420,7 +496,7 @@ end function
 // Code-Formatter for ONE Code part (without // comment)
 // ------------------------------------------------------------
 function _isControlKw(w)
-  return w == "if" or w == "while" or w == "for" or w == "switch" or w == "return"
+  return w == "if" or w == "while" or w == "for" or w == "switch" or w == "match" or w == "return"
 end function
 
 function emit_formatted_code(bb, code)
@@ -509,8 +585,9 @@ function emit_formatted_code(bb, code)
       continue
     end if
 
-    // number (inkl. -123)
-    if _isDigit(ch) or(ch == 45 and(i + 1) < len(code2) and _isDigit(code2[i + 1])) then
+    // number. A leading '-' is handled by the operator path so subtraction
+    // (`left-1`) cannot accidentally become a glued negative literal.
+    if _isDigit(ch) then
       st = i
       i = i + 1
       while i < len(code2)
@@ -542,8 +619,20 @@ function emit_formatted_code(bb, code)
     if (i + 1) < len(code2) then
       ch2 = code2[i + 1]
 
-      // comparisons / shifts
-      if (ch == 61 and ch2 == 61) or(ch == 33 and ch2 == 61) or(ch == 60 and ch2 == 61) or(ch == 62 and ch2 == 61) or(ch == 60 and ch2 == 60) or(ch == 62 and ch2 == 62) then
+      // Safe member access is member punctuation and must stay joined.
+      if ch == 63 and ch2 == 46 then
+        pendingSpace = false
+        bb = bb_trimRightSpaces(bb)
+        bb = bb_pushByte(bb, ch)
+        bb = bb_pushByte(bb, ch2)
+        prevCat = 5
+        prevWord = ""
+        i = i + 2
+        continue
+      end if
+
+      // comparisons, shifts, lambdas and null coalescing
+      if (ch == 61 and ch2 == 61) or(ch == 33 and ch2 == 61) or(ch == 60 and ch2 == 61) or(ch == 62 and ch2 == 61) or(ch == 60 and ch2 == 60) or(ch == 62 and ch2 == 62) or(ch == 61 and ch2 == 62) or(ch == 63 and ch2 == 63) then
         if prevCat != 0 and prevCat != 6 and prevCat != 5 then
           bb = bb_pushByte(bb, 32)
         end if
@@ -571,6 +660,19 @@ function emit_formatted_code(bb, code)
           continue
         end if
       end if
+    end if
+
+    // Variadic marker. It belongs to the preceding parameter name.
+    if (i + 2) < len(code2) and ch == 46 and code2[i + 1] == 46 and code2[i + 2] == 46 then
+      pendingSpace = false
+      bb = bb_trimRightSpaces(bb)
+      bb = bb_pushByte(bb, 46)
+      bb = bb_pushByte(bb, 46)
+      bb = bb_pushByte(bb, 46)
+      prevCat = 7
+      prevWord = ""
+      i = i + 3
+      continue
     end if
 
     // single-char tokens
@@ -623,6 +725,31 @@ function emit_formatted_code(bb, code)
       bb = bb_pushByte(bb, 44)
       pendingSpace = true
       prevCat = 7
+      prevWord = ""
+      i = i + 1
+      continue
+    end if
+
+    if ch == 63 then
+      // Optional type marker, e.g. `Person?`. Keep it attached while making
+      // the next binary operator insert its normal leading space.
+      pendingSpace = false
+      bb = bb_trimRightSpaces(bb)
+      bb = bb_pushByte(bb, ch)
+      prevCat = 7
+      prevWord = ""
+      i = i + 1
+      continue
+    end if
+
+    if ch == 58 then
+      // Type separator used by compile-time #option declarations. Directives
+      // are emitted verbatim, but handling ':' keeps this tokenizer complete.
+      pendingSpace = false
+      bb = bb_trimRightSpaces(bb)
+      bb = bb_pushByte(bb, ch)
+      pendingSpace = true
+      prevCat = 0
       prevWord = ""
       i = i + 1
       continue
@@ -711,12 +838,17 @@ function format_source(src, indentSize, maxBlankLines)
   bb = bb_new(len(b) + 128)
 
   indent = 0
-  switchBases = bytes(0)
+  branchBases = bytes(0)
+  interfaceDepth = 0
+  pendingLoopFooterEnds = 0
   inBlockComment = false
   blankRun = 0
 
   lineStart = 0
   while true
+    // A trailing newline terminates the preceding line; it must not synthesize
+    // an additional empty line on the next iteration.
+    if lineStart >= len(b) then break end if
     // find next '\n'
     j = lineStart
     while j < len(b) and b[j] != 10
@@ -754,9 +886,11 @@ function format_source(src, indentSize, maxBlankLines)
     // block comment handling (simple)
     if inBlockComment then
       bb = _emitIndent(bb, indent, indentSize)
-      bb = bb_pushBytes(bb, _trimLeftBytes(lineR))
+      commentLine = _trimLeftBytes(lineR)
+      if len(commentLine) > 0 and commentLine[0] == 42 then bb = bb_pushByte(bb, 32) end if
+      bb = bb_pushBytes(bb, commentLine)
       bb = bb_pushByte(bb, 10)
-      if _hasSubseq(lineR, 42, 47) then
+      if _findSubseqFrom(lineR, 0, 42, 47) >= 0 then
         inBlockComment = false
       end if
       if j >= len(b) then break end if
@@ -764,11 +898,12 @@ function format_source(src, indentSize, maxBlankLines)
       continue
     end if
 
-    if _hasSubseq(lineR, 47, 42) then
+    blockOpen = _findBlockCommentOpenIdx(lineR)
+    if blockOpen >= 0 then
       bb = _emitIndent(bb, indent, indentSize)
       bb = bb_pushBytes(bb, _trimLeftBytes(lineR))
       bb = bb_pushByte(bb, 10)
-      if not _hasSubseq(lineR, 42, 47) then
+      if _findSubseqFrom(lineR, blockOpen + 2, 42, 47) < 0 then
         inBlockComment = true
       end if
       if j >= len(b) then break end if
@@ -791,35 +926,57 @@ function format_source(src, indentSize, maxBlankLines)
     w0 = w.w0
     w1 = w.w1
 
+    // Conditional-compilation directives have their own expression grammar.
+    // Preserve their spelling exactly instead of feeding them through the
+    // runtime-token formatter (which historically removed spaces after ':').
+    isDirective = len(codeTL) > 0 and codeTL[0] == 35
+    inlineLoopFooter = w0 == "while" and _containsEndOf(codeTL, "loop")
+    isLoopFooter = inlineLoopFooter or (w0 == "while" and _nextLineIsEndLoop(b, j + 1))
+
     // pre-indent adjustments
     if w0 == "end" then
-      if w1 == "switch" and not sb_isEmpty(switchBases) then
-        base = sb_top(switchBases)
-        switchBases = sb_pop(switchBases)
+      if w1 == "loop" and pendingLoopFooterEnds > 0 then
+        pendingLoopFooterEnds = pendingLoopFooterEnds - 1
+      else
+        if (w1 == "switch" or w1 == "match") and not sb_isEmpty(branchBases) then
+        base = sb_top(branchBases)
+        branchBases = sb_pop(branchBases)
         indent = base - 1
         if indent < 0 then indent = 0 end if
-      else
-        indent = indent - 1
-        if indent < 0 then indent = 0 end if
+        else
+          indent = indent - 1
+          if indent < 0 then indent = 0 end if
+        end if
       end if
     else
-      if w0 == "else" then
+      if isLoopFooter then
         indent = indent - 1
         if indent < 0 then indent = 0 end if
+        if not inlineLoopFooter then pendingLoopFooterEnds = pendingLoopFooterEnds + 1 end if
       else
-        if (w0 == "case" or w0 == "default") and not sb_isEmpty(switchBases) then
-          base = sb_top(switchBases)
-          indent = base
+        if w0 == "else" then
+        indent = indent - 1
+        if indent < 0 then indent = 0 end if
+        else
+          if (w0 == "case" or w0 == "default") and not sb_isEmpty(branchBases) then
+            base = sb_top(branchBases)
+            indent = base
+          end if
         end if
       end if
     end if
 
-    // emit indent
-    bb = _emitIndent(bb, indent, indentSize)
+    // Keep preprocessor directives at column zero. Their selected runtime
+    // statements still use the surrounding language-block indentation.
+    if not isDirective then bb = _emitIndent(bb, indent, indentSize) end if
 
     // emit formatted code + comment
-    if len(codeTL) > 0 then
-      bb = emit_formatted_code(bb, codeTL)
+    if len(codeTL) > 0 and isDirective then
+      bb = bb_pushBytes(bb, codeTL)
+    else
+      if len(codeTL) > 0 then
+        bb = emit_formatted_code(bb, codeTL)
+      end if
     end if
 
     if len(comment) > 0 then
@@ -836,15 +993,31 @@ function format_source(src, indentSize, maxBlankLines)
     if w0 == "else" then
       indent = indent + 1
     else
-      if (w0 == "case" or w0 == "default") and not sb_isEmpty(switchBases) then
-        base2 = sb_top(switchBases)
+      if (w0 == "case" or w0 == "default") and not sb_isEmpty(branchBases) then
+        base2 = sb_top(branchBases)
         indent = base2 + 1
       else
         // openers
         opener = ""
-        if w0 == "function" or w0 == "struct" or w0 == "enum" or w0 == "namespace" or w0 == "switch" or w0 == "if" or w0 == "while" or w0 == "for" or w0 == "loop" then
+        if w0 == "function" or w0 == "struct" or w0 == "enum" or w0 == "namespace" or w0 == "interface" or w0 == "switch" or w0 == "match" or w0 == "if" or w0 == "while" or w0 == "for" or w0 == "loop" then
           opener = w0
         end if
+
+        // Interface methods are signatures and therefore have no individual
+        // `end function` block.
+        if w0 == "function" and interfaceDepth > 0 then opener = "" end if
+
+        // Modern declaration prefixes all close with `end function`.
+        if (w0 == "async" or w0 == "iterator") and w1 == "function" then
+          opener = "function"
+        end if
+        if w0 == "lazy" and w1 == "iterator" then opener = "function" end if
+        if w0 == "static" and w1 == "function" then opener = "function" end if
+        if isLoopFooter then opener = "" end if
+
+        // Fine-grained synchronization is a block only in call form;
+        // `synchronized name = value` remains a declaration.
+        if w0 == "synchronized" and w1 == "" then opener = "synchronized" end if
 
         // extern struct ...
         if w0 == "extern" and w1 == "struct" then
@@ -855,13 +1028,18 @@ function format_source(src, indentSize, maxBlankLines)
           // avoid indenting inline blocks like: if .. then .. end if
           if not _containsEndOf(codeTL, opener) then
             indent = indent + 1
-            if w0 == "switch" then
-              // indent is now switch-body base
-              switchBases = sb_push(switchBases, indent)
+            if w0 == "switch" or w0 == "match" then
+              // indent is now the case-header base
+              branchBases = sb_push(branchBases, indent)
             end if
+            if w0 == "interface" then interfaceDepth = interfaceDepth + 1 end if
           end if
         end if
       end if
+    end if
+
+    if w0 == "end" and w1 == "interface" and interfaceDepth > 0 then
+      interfaceDepth = interfaceDepth - 1
     end if
 
     if j >= len(b) then
@@ -876,84 +1054,32 @@ function format_source(src, indentSize, maxBlankLines)
 end function
 
 // ------------------------------------------------------------
-// Batch formatting helpers (recursive directory walk on Win32)
+// Batch formatting helpers (portable recursive directory walk)
 // ------------------------------------------------------------
 
-const WIN32_FIND_DATAW_SIZE = 592
-const WIN32_FIND_NAME_OFF = 44
-const WIN32_FIND_NAME_BYTES = 520
-
-struct DirEntry
-  name
-  attrs
-end struct
-
-namespace win32
-  extern function FindFirstFileW(pattern as wstr, findData as bytes) from "kernel32.dll" returns ptr
-  extern function FindNextFileW(hFind as ptr, findData as bytes) from "kernel32.dll" returns bool
-  extern function FindClose(hFind as ptr) from "kernel32.dll" returns bool
-end namespace
+#if TARGET_OS == "windows"
+extern function _formatterGetFileAttributesW(path as wstr) from "kernel32.dll" symbol "GetFileAttributesW" returns u32
+#else
+extern function _formatterLstat(path as cstr, info as bytes) from "libc.so.6" symbol "lstat" returns i32
+#endif
 
 function _u32le(b, off)
   return b[off] + b[off + 1] * 256 + b[off + 2] * 65536 + b[off + 3] * 16777216
 end function
 
-function _pathJoin(a, b)
-  if a == "" then
-    return b
-  end if
-
-  ba = bytes(a)
-  if len(ba) <= 0 then
-    return b
-  end if
-
-  last = ba[len(ba) - 1]
-  if last == 47 or last == 92 then
-    return a + b
-  end if
-  return a + "\\" + b
-end function
-
-function _isDirPath(path)
-  a = fs.GetFileAttributesW(path)
-  if a == fs.INVALID_FILE_ATTRIBUTES then
-    return false
-  end if
-  return (a & fs.FileAttr.FILE_ATTRIBUTE_DIRECTORY) != 0
-end function
-
-function _findDataName(findData)
-  // cFileName is a UTF-16LE, NUL-terminated string at offset 44 (WIN32_FIND_DATAW)
-  nb = slice(findData, WIN32_FIND_NAME_OFF, WIN32_FIND_NAME_BYTES)
-  return decode16Z(nb)
-end function
-
-function _listDir(dirPath)
-  // returns array of DirEntry (name, attrs)
-  entries =[]
-  data = bytes(WIN32_FIND_DATAW_SIZE)
-  pattern = _pathJoin(dirPath, "*")
-  h = win32.FindFirstFileW(pattern, data)
-  if h == fs.INVALID_HANDLE_VALUE then
-    return entries
-  end if
-
-  while true
-    name = _findDataName(data)
-    if name != "." and name != ".." then
-      attrs = _u32le(data, 0)
-      entries = entries +[DirEntry(name, attrs)]
-    end if
-
-    ok = win32.FindNextFileW(h, data)
-    if ok == false then
-      break
-    end if
-  end while
-
-  win32.FindClose(h)
-  return entries
+// Recursive tree formatting must not follow junctions or symbolic-link
+// directories. Besides preventing cycles, this matches compiler project scans.
+function _isDirectoryLink(pathValue)
+#if TARGET_OS == "windows"
+  attributes = _formatterGetFileAttributesW(pathValue)
+  if attributes == 0xFFFFFFFF then return false end if
+  return (attributes & 0x10) != 0 and (attributes & 0x400) != 0
+#else
+  info = bytes(144, 0)
+  if _formatterLstat(pathValue, info) != 0 then return false end if
+  mode = _u32le(info, 24)
+  return (mode & 61440) == 40960 and fs.isDir(pathValue)
+#endif
 end function
 
 function _isMlFile(name)
@@ -1018,6 +1144,24 @@ function _hasApacheHeader(src)
   return false
 end function
 
+// Grow a managed-value vector without repeatedly concatenating immutable
+// arrays. Directory mode can encounter thousands of source files.
+function _growValues(items, need)
+  newLength = len(items)
+  if newLength < 16 then newLength = 16 end if
+  while newLength < need newLength = newLength * 2 end while
+  grown = array(newLength)
+  if len(items) > 0 then copyArray(grown, 0, items, 0, len(items)) end if
+  return grown
+end function
+
+function _takeValues(items, count)
+  if count <= 0 then return [] end if
+  result = array(count)
+  copyArray(result, 0, items, 0, count)
+  return result
+end function
+
 function _apacheHeader(author, year)
   return "/*
   Copyright " + year + " " + author + "
@@ -1074,27 +1218,36 @@ function _formatOneFile(path, outPath, indentSize, maxBlankLines, addApache, aut
 end function
 
 function _collectMlFiles(rootDir)
-  files =[]
-  stack =[rootDir]
+  files = array(16)
+  fileCount = 0
+  stack = array(16)
+  stack[0] = rootDir
+  stackCount = 1
 
-  while len(stack) > 0
-    dir = stack[len(stack) - 1]
-    stack = slice(stack, 0, len(stack) - 1)
+  while stackCount > 0
+    stackCount = stackCount - 1
+    dir = stack[stackCount]
 
-    entries = _listDir(dir)
+    entries = fs.listDir(dir)
+    if typeof(entries) == "error" then
+      return error(entries.code, "listDir failed for " + dir + ": " + entries.message)
+    end if
     i = 0
     while i < len(entries)
-      e = entries[i]
-      full = _pathJoin(dir, e.name)
+      name = entries[i]
+      full = path.join(dir, name)
 
-      isDir =(e.attrs & fs.FileAttr.FILE_ATTRIBUTE_DIRECTORY) != 0
-      isReparse =(e.attrs & fs.FileAttr.FILE_ATTRIBUTE_REPARSE_POINT) != 0
-
-      if isDir and not isReparse then
-        stack = stack +[full]
+      if fs.isDir(full) then
+        if not _isDirectoryLink(full) then
+          if stackCount == len(stack) then stack = _growValues(stack, stackCount + 1) end if
+          stack[stackCount] = full
+          stackCount = stackCount + 1
+        end if
       else
-        if _isMlFile(e.name) then
-          files = files +[full]
+        if _isMlFile(name) then
+          if fileCount == len(files) then files = _growValues(files, fileCount + 1) end if
+          files[fileCount] = full
+          fileCount = fileCount + 1
         end if
       end if
 
@@ -1102,11 +1255,15 @@ function _collectMlFiles(rootDir)
     end while
   end while
 
-  return files
+  return _takeValues(files, fileCount)
 end function
 
 function _formatTree(rootDir, indentSize, maxBlankLines, addApache, author, year)
   files = _collectMlFiles(rootDir)
+  if typeof(files) == "error" then
+    print files.message
+    return false
+  end if
   okAll = true
   i = 0
   while i < len(files)
@@ -1122,10 +1279,10 @@ function _formatTree(rootDir, indentSize, maxBlankLines, addApache, author, year
 end function
 
 function _currentYear()
-  st = time.win32.GetLocalTime()
   year = 1970
-  if typeof(st) != "void" then
-    year = st.year
+  current = time.datetime.nowLocal()
+  if typeof(current) != "void" then
+    year = current.date.year
   end if
   return year
 end function
@@ -1251,7 +1408,7 @@ function main(args)
 
   year = _currentYear()
 
-  if _isDirPath(inPath) then
+  if fs.isDir(inPath) then
     if outPath != "" then
       print "output.ml is only valid for single-file formatting."
       return 1

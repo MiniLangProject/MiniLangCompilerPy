@@ -2,6 +2,14 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Updated `mlfmt` for the complete modern MiniLang syntax, preserving atomic
+  lambda/optional/variadic tokens and correctly indenting interfaces, match
+  cases, prefixed functions, synchronized blocks and both loop forms.
+- Made recursive formatting native on Windows and Linux with directory-link
+  cycle protection, and added golden, semantic, idempotence and target tests.
+
 ## 1.2.3 - 2026-09-02
 
 - Added meaningful docstrings for every public module-level Python declaration

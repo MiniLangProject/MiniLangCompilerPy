@@ -347,10 +347,16 @@ compiler implementation is running.
 
 There is a small auto-formatter written in MiniLang: `tools/mlfmt.ml`.
 
-Compile it once:
+Compile it for Windows x64:
 
 ```bash
 python mlc_win64.py tools/mlfmt.ml mlfmt.exe -I .
+```
+
+Or build the native Linux x64 formatter:
+
+```bash
+python mlc_win64.py tools/mlfmt.ml mlfmt -I . --target linux-x64
 ```
 
 Format a single file:
@@ -360,7 +366,7 @@ mlfmt.exe src.ml --inplace
 mlfmt.exe src.ml out.ml --indent 2 --max-blank 2
 ```
 
-Format a whole tree (recursive, **in-place**):
+Format a whole tree on Windows or Linux (recursive, **in-place**):
 
 ```bash
 mlfmt.exe .
@@ -376,10 +382,19 @@ mlfmt.exe . --author "Authorname"
 
 Notes:
 - `--max-blank -1` allows unlimited blank lines.
-- Directory formatting uses Win32 directory enumeration (so it is meant to run on Windows / Wine).
+- The formatter understands the complete current language surface, including
+  typed/optional declarations, lambdas, interfaces, `match`, eager and lazy
+  iterators, async/static functions, conditional compilation, fine-grained
+  `synchronized(lock)` blocks and both `loop` footer spellings.
+- Multi-character tokens such as `=>`, `?.`, `??` and `...` remain atomic;
+  declaration comments (`///` and `//!`) and block comments remain intact.
+- Directory formatting uses the portable standard-library filesystem API and
+  deliberately skips junction and symbolic-link directories to avoid cycles.
 - When `<path>` is a directory, `mlfmt` formats all `*.ml` files recursively **in-place** (the optional `output.ml` argument is only valid for single-file formatting).
-- `--apache/--author` uses the local year (via `std.time.win32.GetLocalTime()` in the compiled binary).
+- `--apache/--author` uses the portable local clock on Windows and Linux.
 - The formatter is intentionally conservative (it does not change program semantics).
+- The compiler suites verify canonical output, recompilation, runtime behavior,
+  byte-idempotence, unchanged generated code and Windows/Linux formatter parity.
 
 
 ### Run
