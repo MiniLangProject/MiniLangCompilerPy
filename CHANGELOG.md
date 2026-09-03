@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Added the cross-platform `std.test` unit-test runtime with suites, lifecycle
+  fixtures, assertions, filtering, deterministic repetition, bounded timeouts,
+  and console, JSON, and JUnit reporting.
+- Added the self-hosted `mltest` declaration-tag discovery generator plus
+  Windows/Linux launch scripts and end-to-end regression coverage.
 - Updated `mlfmt` for the complete modern MiniLang syntax, preserving atomic
   lambda/optional/variadic tokens and correctly indenting interfaces, match
   cases, prefixed functions, synchronized blocks and both loop forms.

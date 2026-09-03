@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2552 |
-| Clone groups | 163 |
-| Cognitive complexity | 2631 (maximum per function: 43) |
-| Comment lines | 3812 |
-| Cyclomatic complexity | 3172 (average: 3.51, maximum: 26) |
-| Documentation coverage | 100% (1684 of 1684 documentation items) |
-| Duplicated lines | 1016 (10.73%) |
-| Files | 46 |
-| Functions | 904 |
-| Maintainability index | 8.66 / 100 |
-| Physical lines | 15828 |
-| Source lines | 9467 |
-| Statements | 6677 |
+| Blank lines | 2617 |
+| Clone groups | 164 |
+| Cognitive complexity | 2983 (maximum per function: 116) |
+| Comment lines | 3999 |
+| Cyclomatic complexity | 3393 (average: 3.58, maximum: 32) |
+| Documentation coverage | 100% (1815 of 1815 documentation items) |
+| Duplicated lines | 1028 (10.28%) |
+| Files | 47 |
+| Functions | 949 |
+| Maintainability index | 8.2 / 100 |
+| Physical lines | 16609 |
+| Source lines | 9996 |
+| Statements | 7085 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 679 | 679 | 100% |
-| Constants | 115 | 115 | 100% |
+| API declarations | 714 | 714 | 100% |
+| Constants | 121 | 121 | 100% |
 | Enum variants | 22 | 22 | 100% |
-| Fields | 147 | 147 | 100% |
+| Fields | 186 | 186 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1684 | 1684 | 100% |
-| Parameters | 720 | 720 | 100% |
+| Overall | 1815 | 1815 | 100% |
+| Parameters | 771 | 771 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 2785 | 38272 | 25929 | 2841 | 64201 | 736525.63 | 260.69 | 192002313.96 | 245.51 |
+| 56 | 3018 | 40757 | 27690 | 3074 | 68447 | 793020.2 | 256.9 | 203725784.78 | 264.34 |
 
 ## Files
 
@@ -86,6 +86,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/sort.ml`](File-std-sort-ml-1000391650.md) | 167 | 11 | 43 / 3.91 / 11 | 53 / 25 | 8 (4.79%) | 5176.37 | 19.72 |
 | [`std/string.ml`](File-std-string-ml-1276545685.md) | 394 | 33 | 121 / 3.67 / 20 | 109 / 27 | 107 (27.16%) | 13558.13 | 0 |
 | [`std/string_builder.ml`](File-std-string-builder-ml-412876577.md) | 122 | 11 | 33 / 3 / 10 | 22 / 9 | 21 (17.21%) | 3285.3 | 25.43 |
+| [`std/test.ml`](File-std-test-ml-828131286.md) | 529 | 45 | 221 / 4.91 / 32 | 352 / 116 | 12 (2.27%) | 36322.78 | 0 |
 | [`std/threading.ml`](File-std-threading-ml-508437988.md) | 176 | 41 | 80 / 1.95 / 8 | 39 / 7 | 39 (22.16%) | 7850.03 | 12.98 |
 | [`std/time.ml`](File-std-time-ml-975894601.md) | 619 | 53 | 203 / 3.83 / 17 | 159 / 19 | 0 (0%) | 32686.86 | 0 |
 | [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 134 | 18 | 69 / 3.83 / 14 | 54 / 13 | 0 (0%) | 7572.72 | 17.16 |
@@ -632,6 +633,36 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.string_builder.StringBuilder.reserve`](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-reserve-function-reserve-extra-std-string-builder-ml-1183173349) | `std/string_builder.ml:79` | 19 | 13 | 5 | 4 | 1 | 446.93 | 52.88 |
 | [`std.string_builder.StringBuilder.toString`](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-tostring-function-tostring-std-string-builder-ml-1779129711) | `std/string_builder.ml:177` | 6 | 3 | 2 | 1 | 1 | 137.61 | 67.78 |
 | [`std.string_builder.StringBuilder.withCapacity`](Type-std-string-builder-stringbuilder-567404247.md#static_method-static-method-std-string-builder-stringbuilder-withcapacity-static-function-withcapacity-cap-std-string-builder-ml-306477140) | `std/string_builder.ml:56` | 10 | 6 | 3 | 2 | 1 | 255.41 | 60.93 |
+| [`std.test.assertApproxEqual`](File-std-test-ml-828131286.md#function-function-std-test-assertapproxequal-function-assertapproxequal-actual-expected-epsilon-message-std-test-ml-1132070524) | `std/test.ml:167` | 12 | 13 | 7 | 6 | 1 | 599.71 | 56.07 |
+| [`std.test.assertContains`](File-std-test-ml-828131286.md#function-function-std-test-assertcontains-function-assertcontains-container-expected-message-std-test-ml-825710629) | `std/test.ml:143` | 18 | 15 | 9 | 14 | 4 | 708.45 | 51.45 |
+| [`std.test.assertEqual`](File-std-test-ml-828131286.md#function-function-std-test-assertequal-function-assertequal-actual-expected-message-std-test-ml-356634818) | `std/test.ml:79` | 6 | 6 | 3 | 2 | 1 | 256.76 | 65.75 |
+| [`std.test.assertError`](File-std-test-ml-828131286.md#function-function-std-test-asserterror-function-asserterror-callback-message-std-test-ml-550210097) | `std/test.ml:183` | 8 | 9 | 4 | 3 | 1 | 350.94 | 61.94 |
+| [`std.test.assertErrorCode`](File-std-test-ml-828131286.md#function-function-std-test-asserterrorcode-function-asserterrorcode-callback-expected-code-message-std-test-ml-1026261057) | `std/test.ml:196` | 13 | 14 | 6 | 6 | 2 | 595.24 | 55.47 |
+| [`std.test.assertFalse`](File-std-test-ml-828131286.md#function-function-std-test-assertfalse-function-assertfalse-condition-message-std-test-ml-88733509) | `std/test.ml:69` | 5 | 5 | 3 | 2 | 1 | 141.78 | 69.28 |
+| [`std.test.assertNotEqual`](File-std-test-ml-828131286.md#function-function-std-test-assertnotequal-function-assertnotequal-actual-unexpected-message-std-test-ml-1259841807) | `std/test.ml:90` | 6 | 6 | 3 | 2 | 1 | 218.51 | 66.24 |
+| [`std.test.assertNotNull`](File-std-test-ml-828131286.md#function-function-std-test-assertnotnull-function-assertnotnull-value-message-std-test-ml-1381145391) | `std/test.ml:121` | 5 | 5 | 3 | 2 | 1 | 155.59 | 69 |
+| [`std.test.assertNull`](File-std-test-ml-828131286.md#function-function-std-test-assertnull-function-assertnull-value-message-std-test-ml-1376579519) | `std/test.ml:111` | 6 | 6 | 3 | 2 | 1 | 212.61 | 66.32 |
+| [`std.test.assertSame`](File-std-test-ml-828131286.md#function-function-std-test-assertsame-function-assertsame-actual-expected-message-std-test-ml-1020169278) | `std/test.ml:101` | 6 | 6 | 3 | 2 | 1 | 226.18 | 66.14 |
+| [`std.test.assertTrue`](File-std-test-ml-828131286.md#function-function-std-test-asserttrue-function-asserttrue-condition-message-std-test-ml-139217435) | `std/test.ml:60` | 5 | 5 | 3 | 2 | 1 | 134.89 | 69.44 |
+| [`std.test.assertType`](File-std-test-ml-828131286.md#function-function-std-test-asserttype-function-asserttype-value-expected-type-message-std-test-ml-1636061718) | `std/test.ml:131` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
+| [`std.test.execute`](File-std-test-ml-828131286.md#function-function-std-test-execute-function-execute-suites-options-std-test-ml-1764874293) | `std/test.ml:512` | 71 | 70 | 32 | 116 | 7 | 4941.5 | 29.45 |
+| [`std.test.fail`](File-std-test-ml-828131286.md#function-function-std-test-fail-function-fail-message-test-failed-std-test-ml-285971369) | `std/test.ml:212` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.test.parseOptions`](File-std-test-ml-828131286.md#function-function-std-test-parseoptions-function-parseoptions-args-std-test-ml-1147878359) | `std/test.ml:729` | 32 | 33 | 26 | 47 | 4 | 1893.64 | 40.72 |
+| [`std.test.printConsole`](File-std-test-ml-828131286.md#function-function-std-test-printconsole-function-printconsole-summary-std-test-ml-1165059960) | `std/test.ml:696` | 16 | 14 | 7 | 15 | 3 | 1005.93 | 51.77 |
+| [`std.test.run`](File-std-test-ml-828131286.md#function-function-std-test-run-function-run-suites-args-std-test-ml-695526029) | `std/test.ml:765` | 17 | 17 | 7 | 8 | 2 | 797.66 | 51.9 |
+| [`std.test.RunOptions.defaults`](Type-std-test-runoptions-1972408287.md#static_method-static-method-std-test-runoptions-defaults-static-function-defaults-std-test-ml-1314628537) | `std/test.ml:339` | 3 | 1 | 1 | 0 | 0 | 114.22 | 75.05 |
+| [`std.test.RunSummary.exitCode`](Type-std-test-runsummary-1084060661.md#method-method-std-test-runsummary-exitcode-function-exitcode-std-test-ml-1038758472) | `std/test.ml:385` | 4 | 3 | 2 | 1 | 1 | 72.34 | 73.58 |
+| [`std.test.RunSummary.total`](Type-std-test-runsummary-1084060661.md#method-method-std-test-runsummary-total-function-total-std-test-ml-305676144) | `std/test.ml:380` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.test.Suite.add`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-add-function-add-name-callback-std-test-ml-1211349449) | `std/test.ml:280` | 5 | 3 | 1 | 0 | 0 | 135.93 | 69.68 |
+| [`std.test.Suite.addCase`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-addcase-function-addcase-test-case-std-test-ml-1923928176) | `std/test.ml:271` | 5 | 4 | 2 | 1 | 1 | 167.37 | 68.91 |
+| [`std.test.Suite.new`](Type-std-test-suite-2053891654.md#static_method-static-method-std-test-suite-new-static-function-new-name-std-test-ml-1686384689) | `std/test.ml:264` | 4 | 3 | 3 | 2 | 1 | 206.32 | 70.26 |
+| [`std.test.Suite.setAfterAll`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setafterall-function-setafterall-callback-std-test-ml-1919038420) | `std/test.ml:295` | 4 | 2 | 1 | 0 | 0 | 48.43 | 74.93 |
+| [`std.test.Suite.setAfterEach`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setaftereach-function-setaftereach-callback-std-test-ml-1141614794) | `std/test.ml:309` | 4 | 2 | 1 | 0 | 0 | 48.43 | 74.93 |
+| [`std.test.Suite.setBeforeAll`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setbeforeall-function-setbeforeall-callback-std-test-ml-161451938) | `std/test.ml:288` | 4 | 2 | 1 | 0 | 0 | 48.43 | 74.93 |
+| [`std.test.Suite.setBeforeEach`](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setbeforeeach-function-setbeforeeach-callback-std-test-ml-923959146) | `std/test.ml:302` | 4 | 2 | 1 | 0 | 0 | 48.43 | 74.93 |
+| [`std.test.TestCase.new`](Type-std-test-testcase-658817446.md#static_method-static-method-std-test-testcase-new-static-function-new-name-callback-std-test-ml-1889384904) | `std/test.ml:240` | 5 | 5 | 4 | 3 | 1 | 341.32 | 66.48 |
+| [`std.test.toJson`](File-std-test-ml-828131286.md#function-function-std-test-tojson-function-tojson-summary-std-test-ml-1607339476) | `std/test.ml:646` | 13 | 10 | 4 | 6 | 3 | 1220.97 | 53.55 |
+| [`std.test.toJUnit`](File-std-test-ml-828131286.md#function-function-std-test-tojunit-function-tojunit-summary-std-test-ml-760967806) | `std/test.ml:662` | 31 | 22 | 11 | 31 | 5 | 1998.67 | 42.88 |
 | [`std.threading.Event.close`](Type-std-threading-event-883500562.md#method-method-std-threading-event-close-function-close-std-threading-ml-458936001) | `std/threading.ml:289` | 9 | 7 | 3 | 2 | 1 | 166.8 | 63.22 |
 | [`std.threading.Event.isClosed`](Type-std-threading-event-883500562.md#method-method-std-threading-event-isclosed-function-isclosed-std-threading-ml-424965693) | `std/threading.ml:284` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
 | [`std.threading.Event.IsClosed`](Type-std-threading-event-883500562.md#method-method-std-threading-event-isclosed-function-isclosed-std-threading-ml-2083169725) | `std/threading.ml:311` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
@@ -741,7 +772,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 A clone group is an exact sequence of 6 normalized, contiguous code lines found more than once. Comments and formatting whitespace are ignored. Duplicated-line totals count overlapping windows only once.
 
-Found 163 clone group(s). At most 163 groups are shown.
+Found 164 clone group(s). At most 164 groups are shown.
 
 <details>
 <summary>Clone 1 — 3 occurrences</summary>
@@ -2885,7 +2916,22 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 140 — 3 occurrences</summary>
+<summary>Clone 140 — 2 occurrences</summary>
+
+    else result . appendString ( ch )
+    end if
+    end for
+    end if
+    return result . toString ( )
+    end function
+
+- [`std/test.ml:604`](File-std-test-ml-828131286.md)
+- [`std/test.ml:637`](File-std-test-ml-828131286.md)
+
+</details>
+
+<details>
+<summary>Clone 141 — 3 occurrences</summary>
 
     function close ( )
     if this . closed then return false end if
@@ -2901,7 +2947,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 141 — 3 occurrences</summary>
+<summary>Clone 142 — 3 occurrences</summary>
 
     if this . closed then return false end if
     ok = CloseHandle ( this . handle )
@@ -2917,7 +2963,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 142 — 3 occurrences</summary>
+<summary>Clone 143 — 3 occurrences</summary>
 
     ok = CloseHandle ( this . handle )
     if ok then
@@ -2933,7 +2979,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 143 — 3 occurrences</summary>
+<summary>Clone 144 — 3 occurrences</summary>
 
     if ok then
     this . closed = true
@@ -2949,7 +2995,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 144 — 2 occurrences</summary>
+<summary>Clone 145 — 2 occurrences</summary>
 
     function acquireFor ( milliseconds )
     if this . closed or typeof ( milliseconds ) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
@@ -2964,7 +3010,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 145 — 2 occurrences</summary>
+<summary>Clone 146 — 2 occurrences</summary>
 
     if secBufferType ( buffers , index ) == SECBUFFER_EXTRA then
     extraLength = secBufferLength ( buffers , index )
@@ -2979,7 +3025,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 146 — 2 occurrences</summary>
+<summary>Clone 147 — 2 occurrences</summary>
 
     extraLength = secBufferLength ( buffers , index )
     pointerResult = try ( secBufferPointer ( buffers , index ) )
@@ -2994,7 +3040,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 147 — 2 occurrences</summary>
+<summary>Clone 148 — 2 occurrences</summary>
 
     pointerResult = try ( secBufferPointer ( buffers , index ) )
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
@@ -3009,7 +3055,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 148 — 2 occurrences</summary>
+<summary>Clone 149 — 2 occurrences</summary>
 
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
     end if
@@ -3024,7 +3070,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 149 — 2 occurrences</summary>
+<summary>Clone 150 — 2 occurrences</summary>
 
     end if
     index = index + 1
@@ -3039,7 +3085,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 150 — 2 occurrences</summary>
+<summary>Clone 151 — 2 occurrences</summary>
 
     index = index + 1
     end while
@@ -3054,7 +3100,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 151 — 2 occurrences</summary>
+<summary>Clone 152 — 2 occurrences</summary>
 
     inbound = try ( appendBytes ( inbound , received ) )
     if typeof ( inbound ) == "error" then closeContext ( context ) ; return inbound end if
@@ -3069,7 +3115,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 152 — 2 occurrences</summary>
+<summary>Clone 153 — 2 occurrences</summary>
 
     sent = try ( network . tcpSendAll ( socketHandle , outputToken ) )
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
@@ -3084,7 +3130,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 153 — 2 occurrences</summary>
+<summary>Clone 154 — 2 occurrences</summary>
 
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
     end if
@@ -3099,7 +3145,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 154 — 2 occurrences</summary>
+<summary>Clone 155 — 2 occurrences</summary>
 
     end if
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
@@ -3114,7 +3160,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 155 — 2 occurrences</summary>
+<summary>Clone 156 — 2 occurrences</summary>
 
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
@@ -3129,7 +3175,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 156 — 2 occurrences</summary>
+<summary>Clone 157 — 2 occurrences</summary>
 
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
     inbound = extra
@@ -3144,7 +3190,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 157 — 2 occurrences</summary>
+<summary>Clone 158 — 2 occurrences</summary>
 
     inbound = extra
     end while
@@ -3159,7 +3205,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 158 — 2 occurrences</summary>
+<summary>Clone 159 — 2 occurrences</summary>
 
     end while
     context . encryptedInput = inbound
@@ -3174,7 +3220,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 159 — 2 occurrences</summary>
+<summary>Clone 160 — 2 occurrences</summary>
 
     inputBytes = context . encryptedInput
     buffers = createSecBufferArray ( 4 )
@@ -3189,7 +3235,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 160 — 2 occurrences</summary>
+<summary>Clone 161 — 2 occurrences</summary>
 
     buffers = createSecBufferArray ( 4 )
     writeSecBuffer ( buffers , 0 , SECBUFFER_DATA , nativeBytesPtr ( inputBytes ) , len ( inputBytes ) )
@@ -3204,7 +3250,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 161 — 2 occurrences</summary>
+<summary>Clone 162 — 2 occurrences</summary>
 
     writeSecBuffer ( buffers , 0 , SECBUFFER_DATA , nativeBytesPtr ( inputBytes ) , len ( inputBytes ) )
     writeSecBuffer ( buffers , 1 , SECBUFFER_EMPTY , 0 , 0 )
@@ -3219,7 +3265,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 162 — 2 occurrences</summary>
+<summary>Clone 163 — 2 occurrences</summary>
 
     writeSecBuffer ( buffers , 1 , SECBUFFER_EMPTY , 0 , 0 )
     writeSecBuffer ( buffers , 2 , SECBUFFER_EMPTY , 0 , 0 )
@@ -3234,7 +3280,7 @@ Found 163 clone group(s). At most 163 groups are shown.
 </details>
 
 <details>
-<summary>Clone 163 — 2 occurrences</summary>
+<summary>Clone 164 — 2 occurrences</summary>
 
     plain = try ( decryptedData ( inputBytes , buffers ) )
     if typeof ( plain ) == "error" then return plain end if

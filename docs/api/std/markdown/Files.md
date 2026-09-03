@@ -44,6 +44,7 @@
 | [std/sort.ml](File-std-sort-ml-1000391650.md) | `std.sort` | no | 11 |
 | [std/string.ml](File-std-string-ml-1276545685.md) | `std.string` | no | 33 |
 | [std/string_builder.ml](File-std-string-builder-ml-412876577.md) | `std.string_builder` | no | 15 |
+| [std/test.ml](File-std-test-ml-828131286.md) | `std.test` | no | 98 |
 | [std/threading.ml](File-std-threading-ml-508437988.md) | `std.threading` | no | 67 |
 | [std/time.ml](File-std-time-ml-975894601.md) | `std.time` | no | 95 |
 | [std/tls.ml](File-std-tls-ml-2076630303.md) | `std.tls` | no | 43 |

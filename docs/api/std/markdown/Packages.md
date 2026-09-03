@@ -42,6 +42,7 @@
 - [std.sort](Package-std-sort-698049104.md)
 - [std.string](Package-std-string-55421397.md)
 - [std.string_builder](Package-std-string-builder-1485530001.md)
+- [std.test](Package-std-test-298069872.md)
 - [std.threading](Package-std-threading-978326764.md)
 - [std.time](Package-std-time-1528865365.md)
 - [std.tls](Package-std-tls-1723050133.md)

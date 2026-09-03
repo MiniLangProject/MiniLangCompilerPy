@@ -43,6 +43,7 @@ file-std-result-ml-986518417.html
 file-std-sort-ml-1000391650.html
 file-std-string-builder-ml-412876577.html
 file-std-string-ml-1276545685.html
+file-std-test-ml-828131286.html
 file-std-threading-ml-508437988.html
 file-std-time-ml-975894601.html
 file-std-tls-ml-2076630303.html
@@ -94,6 +95,7 @@ package-std-result-943588909.html
 package-std-sort-698049104.html
 package-std-string-55421397.html
 package-std-string-builder-1485530001.html
+package-std-test-298069872.html
 package-std-threading-978326764.html
 package-std-time-1528865365.html
 package-std-tls-1723050133.html
@@ -103,6 +105,7 @@ package-std-uuid-358467167.html
 packages.html
 search-index.json
 symbols.html
+tests.html
 type-std-concurrent-cancellation-cancellationtoken-2126484772.html
 type-std-concurrent-cancellation-cancellationtokensource-1458442689.html
 type-std-concurrent-channel-boundedqueue-1937801506.html
@@ -131,6 +134,11 @@ type-std-random-rng-1201142756.html
 type-std-result-option-1652402760.html
 type-std-result-result-654473432.html
 type-std-string-builder-stringbuilder-567404247.html
+type-std-test-runoptions-1972408287.html
+type-std-test-runsummary-1084060661.html
+type-std-test-suite-2053891654.html
+type-std-test-testcase-658817446.html
+type-std-test-testresult-247927011.html
 type-std-threading-event-883500562.html
 type-std-threading-lock-164120817.html
 type-std-threading-semaphore-750847000.html

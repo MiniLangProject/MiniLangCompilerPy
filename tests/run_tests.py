@@ -21,12 +21,14 @@ Options:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -513,6 +515,176 @@ def test_formatter_cli(*, name: str, mlc_runner: Path, tests_root: Path) -> Test
 
         output_log.insert(0, before_run.stdout + after_run.stdout)
         return TestResult(name=name, status="PASS", stdout="".join(output_log))
+
+
+def test_mltest_cli(*, name: str, mlc_runner: Path, tests_root: Path) -> TestResult:
+    """Verify std.test discovery, generated execution, reports and Linux runtime."""
+    project_root = mlc_runner.parent.resolve()
+    tool_source = project_root / "tools" / "mltest.ml"
+    framework_source = tests_root / "std_test_framework.ml"
+    fixture_root = tests_root / "mltest_fixture"
+    invalid_fixture_root = tests_root / "mltest_invalid_fixture"
+    if (not tool_source.is_file() or not framework_source.is_file() or not fixture_root.is_dir()
+            or not invalid_fixture_root.is_dir()):
+        return TestResult(name=name, status="FAIL", details="std.test sources or mltest fixture are missing")
+
+    outputs: list[str] = []
+
+    def fail(details: str, result: Optional[CmdResult] = None) -> TestResult:
+        return TestResult(name=name, status="FAIL", details=details,
+                          stdout="" if result is None else result.stdout,
+                          stderr="" if result is None else result.stderr)
+
+    with tempfile.TemporaryDirectory(prefix="mltests_mltest_") as td:
+        root = Path(td)
+        tool_exe = root / "mltest.exe"
+        built = compile_native(mlc_runner, tool_source, tool_exe, timeout_s=180)
+        if built.returncode != 0:
+            return fail("Windows mltest build failed", built)
+
+        listed = run_exe(tool_exe, exe_args=["list", str(fixture_root)], timeout_s=120)
+        if listed.returncode != 0 or "Discovered 3 test(s) in 1 suite(s)." not in normalize_out(listed.stdout):
+            return fail("tagged test listing failed", listed)
+        outputs.append(listed.stdout)
+
+        invalid = run_exe(tool_exe, exe_args=["list", str(invalid_fixture_root)], timeout_s=120)
+        if invalid.returncode == 0 or "must have zero parameters" not in normalize_out(invalid.stderr + invalid.stdout):
+            return fail("invalid tagged callback was not rejected", invalid)
+
+        invalid_sources = (
+            ("duplicate-role", "/// @testmethod\n/// @testmethod\nfunction duplicateRole()\nend function\n",
+             "only one test lifecycle tag"),
+            ("orphan-metadata", "/// @category unit\nfunction orphanMetadata()\nend function\n",
+             "require @testmethod"),
+            ("empty-category", "/// @testmethod\n/// @category\nfunction emptyCategory()\nend function\n",
+             "@category requires a value"),
+        )
+        for directory_name, declaration, expected_error in invalid_sources:
+            invalid_root = root / directory_name
+            invalid_root.mkdir()
+            (invalid_root / "case.ml").write_text(
+                "package generated.invalid\n\n" + declaration, encoding="utf-8")
+            invalid_run = run_exe(tool_exe, exe_args=["list", str(invalid_root)], timeout_s=120)
+            invalid_output = normalize_out(invalid_run.stderr + invalid_run.stdout)
+            if invalid_run.returncode == 0 or expected_error not in invalid_output:
+                return fail(f"invalid test metadata was not rejected: {directory_name}", invalid_run)
+
+        generated_source = root / "runner.ml"
+        generated = run_exe(
+            tool_exe, exe_args=["generate", str(fixture_root), str(generated_source)], timeout_s=120)
+        if generated.returncode != 0 or not generated_source.is_file():
+            return fail("test-runner generation failed", generated)
+        generated_text = normalize_out(generated_source.read_text(encoding="utf-8"))
+        for expected in ("mltest_module_0.additionWorks", "StaticCases.containmentWorks",
+                         ".skipped = true", ".timeout_ms = 1000",
+                         '.categories = ["unit"]', '.covers = ["std.test.assertEqual"]'):
+            if expected not in generated_text:
+                return fail(f"generated runner lost metadata: {expected}")
+
+        runner_exe = root / "runner.exe"
+        runner_build = compile_native(mlc_runner, generated_source, runner_exe, timeout_s=180)
+        if runner_build.returncode != 0:
+            return fail("generated Windows test runner did not compile", runner_build)
+        executed = run_exe(runner_exe, timeout_s=120)
+        normalized = normalize_out(executed.stdout)
+        if executed.returncode != 0 or "passed: 2, failed: 0, skipped: 1" not in normalized:
+            return fail("generated Windows test runner failed", executed)
+        outputs.append(executed.stdout)
+
+        filtered = run_exe(
+            runner_exe, exe_args=["--category", "unit", "--repeat", "2", "--seed", "17"], timeout_s=120)
+        if filtered.returncode != 0 or "passed: 4, failed: 0, skipped: 0" not in normalize_out(filtered.stdout):
+            return fail("category, repeat, or seed handling failed", filtered)
+
+        json_path = root / "results.json"
+        json_run = run_exe(
+            runner_exe, exe_args=["--quiet", "--format", "json", "--output", str(json_path)], timeout_s=120)
+        if json_run.returncode != 0 or not json_path.is_file():
+            return fail("JSON reporter failed", json_run)
+        try:
+            json_report = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return fail(f"JSON reporter emitted invalid JSON: {exc}")
+        if (json_report.get("passed"), json_report.get("failed"), json_report.get("skipped")) != (2, 0, 1):
+            return fail("JSON reporter counts are incorrect")
+        json_results = json_report.get("results", [])
+        if (not json_results or json_results[0].get("categories") != ["unit"]
+                or json_results[0].get("covers") != ["std.test.assertEqual"]):
+            return fail("JSON reporter lost discovered test metadata")
+
+        junit_path = root / "results.xml"
+        junit_run = run_exe(
+            runner_exe, exe_args=["--quiet", "--format", "junit", "--output", str(junit_path)], timeout_s=120)
+        if junit_run.returncode != 0 or not junit_path.is_file():
+            return fail("JUnit reporter failed", junit_run)
+        junit_text = junit_path.read_text(encoding="utf-8")
+        if '<testsuite name="MiniLang" tests="3" failures="0" skipped="1"' not in junit_text:
+            return fail("JUnit reporter counts are incorrect")
+        try:
+            junit_root = ET.fromstring(junit_text)
+        except ET.ParseError as exc:
+            return fail(f"JUnit reporter emitted invalid XML: {exc}")
+        properties = {(item.get("name"), item.get("value"))
+                      for item in junit_root.findall(".//property")}
+        if ("category", "slow") not in properties:
+            return fail("JUnit reporter lost discovered test metadata")
+
+        framework_exe = root / "std_test_framework.exe"
+        framework_build = compile_native(mlc_runner, framework_source, framework_exe, timeout_s=180)
+        if framework_build.returncode != 0:
+            return fail("std.test Windows unit program did not compile", framework_build)
+        framework_run = run_exe(framework_exe, timeout_s=120)
+        if framework_run.returncode != 0 or "[OK] std.test framework" not in normalize_out(framework_run.stdout):
+            return fail("std.test Windows unit program failed", framework_run)
+
+        linux_tool = root / "mltest-linux"
+        linux_framework = root / "std-test-linux"
+        linux_tool_build = compile_native(
+            mlc_runner, tool_source, linux_tool, extra_args=["--target", "linux-x64"], timeout_s=180)
+        linux_framework_build = compile_native(
+            mlc_runner, framework_source, linux_framework,
+            extra_args=["--target", "linux-x64"], timeout_s=180)
+        if linux_tool_build.returncode != 0 or linux_framework_build.returncode != 0:
+            return fail("Linux std.test or mltest build failed",
+                        linux_tool_build if linux_tool_build.returncode != 0 else linux_framework_build)
+
+        if os.name == "nt":
+            wsl = shutil.which("wsl.exe")
+            if wsl:
+                def to_wsl(path_value: Path) -> Optional[str]:
+                    converted = run_cmd([wsl, "wslpath", "-a", "-u", str(path_value).replace("\\", "/")],
+                                        timeout_s=30)
+                    value = normalize_out(converted.stdout).strip()
+                    return value if converted.returncode == 0 and value else None
+
+                linux_tool_path = to_wsl(linux_tool)
+                linux_framework_path = to_wsl(linux_framework)
+                linux_fixture_path = to_wsl(fixture_root)
+                if not linux_tool_path or not linux_framework_path or not linux_fixture_path:
+                    return fail("WSL path conversion failed for std.test")
+                run_cmd([wsl, "chmod", "+x", linux_tool_path, linux_framework_path], timeout_s=30)
+                linux_list = run_cmd(
+                    [wsl, "timeout", "120s", linux_tool_path, "list", linux_fixture_path], timeout_s=130)
+                linux_run = run_cmd([wsl, "timeout", "120s", linux_framework_path], timeout_s=130)
+                if linux_list.returncode != 0 or "Discovered 3 test(s)" not in normalize_out(linux_list.stdout):
+                    return fail("Linux mltest discovery failed", linux_list)
+                if linux_run.returncode != 0 or "[OK] std.test framework" not in normalize_out(linux_run.stdout):
+                    return fail("Linux std.test runtime failed", linux_run)
+                outputs.append(linux_list.stdout + linux_run.stdout)
+            else:
+                outputs.append("Linux std.test runtime check skipped: WSL is unavailable.\n")
+        else:
+            linux_tool.chmod(0o755)
+            linux_framework.chmod(0o755)
+            linux_list = run_cmd([str(linux_tool), "list", str(fixture_root)], timeout_s=120)
+            linux_run = run_cmd([str(linux_framework)], timeout_s=120)
+            if linux_list.returncode != 0 or "Discovered 3 test(s)" not in normalize_out(linux_list.stdout):
+                return fail("native Linux mltest discovery failed", linux_list)
+            if linux_run.returncode != 0 or "[OK] std.test framework" not in normalize_out(linux_run.stdout):
+                return fail("native Linux std.test runtime failed", linux_run)
+            outputs.append(linux_list.stdout + linux_run.stdout)
+
+        return TestResult(name=name, status="PASS", stdout="".join(outputs))
 
 
 def test_object_pipeline_compat_cli(*, name: str, mlc_runner: Path) -> TestResult:
@@ -4016,6 +4188,9 @@ def main() -> int:
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
         name="formatter: mlfmt modern syntax, idempotence and Windows/Linux parity",
+        mlc_runner=mlc_runner, tests_root=tests_root))
+    tests.append(lambda: test_mltest_cli(
+        name="std.test: tagged discovery, reports and Windows/Linux runtime",
         mlc_runner=mlc_runner, tests_root=tests_root))
     tests.append(lambda: test_linux_x64_target(
         name="linux-x64 ELF, argv, shared heap and native threads", mlc_runner=mlc_runner, tests_root=tests_root))

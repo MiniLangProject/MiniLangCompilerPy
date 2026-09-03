@@ -2091,11 +2091,11 @@ Linux images that use only libc-backed modules need no dependency beyond the
 normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
 requires the OpenSSL 3 runtime package.
 
-The current library contains 46 source modules, byte-for-byte identical in both
+The current library contains 47 source modules, byte-for-byte identical in both
 compiler repositories:
 
-- **Core:** `std.core`, `std.assert`, `std.array`, `std.sort`, `std.math`,
-  `std.random`, `std.fmt`
+- **Core:** `std.core`, `std.assert`, `std.test`, `std.array`, `std.sort`,
+  `std.math`, `std.random`, `std.fmt`
 - **Text and bytes:** `std.string`, `std.string_builder`, `std.bytes`,
   `std.encoding.hex`, `std.encoding.base64`
 - **System APIs:** `std.platform`, `std.path`, `std.process`, `std.console`,
@@ -2141,6 +2141,70 @@ if typeof(w) == "error" then
   print "write failed: " + w.message
 end if
 ```
+
+### Unit testing with `std.test` and `mltest`
+
+`std.test` is the portable unit-test runtime. It is linked only into programs
+which import it, so production executables have no test-framework overhead.
+Assertions return MiniLang `error` values and therefore stop the current test
+through normal error propagation while the runner catches the failure and
+continues with the remaining cases.
+
+Tests can be registered manually with `test.Suite`, or discovered without any
+compiler extension. The `mltest` source tool reads explicit declaration
+comments and generates a normal MiniLang entrypoint with explicit registrations:
+
+```ml
+package tests.math
+
+import std.test as test
+
+/// Verifies integer addition.
+/// @testmethod addition
+/// @category unit
+/// @covers app.math.add
+/// @timeout 1000
+function additionWorks()
+  test.assertEqual(2 + 3, 5)
+end function
+```
+
+Discovery recognizes synchronous zero-argument top-level functions and
+synchronous zero-argument static struct methods. The tagged declaration header
+must keep its function name and parameter list on one line. Test source files
+must declare a package. Supported metadata is
+`@testmethod`, `@beforeall`, `@afterall`, `@beforeeach`, `@aftereach`,
+`@category`, `@covers`, `@timeout`, and `@skip`. Tags remain ordinary
+`///` or `/** ... */` documentation, so both compilers require no special
+syntax or runtime reflection.
+
+Run discovery, compilation, and execution on Windows:
+
+```powershell
+.\scripts\run_mltest.ps1 -TestRoot .\tests\mltest_fixture
+```
+
+On Linux:
+
+```bash
+bash ./scripts/run_mltest.sh tests/mltest_fixture --category unit
+```
+
+The generated executable accepts `--filter TEXT`, `--category NAME`,
+`--exclude-category NAME`, `--repeat N`, `--seed N`, `--fail-fast`,
+`--list`, and `--quiet`. Console output is the default; machine-readable
+reports use `--format json --output results.json` or
+`--format junit --output results.xml`. The exit code is 0 for a successful
+run, 1 when any test failed, and 2 for invalid runner configuration. JSON and
+JUnit reports retain discovered categories and coverage declarations. Listing
+does not execute fixtures or test callbacks.
+
+The assertion API includes `assertTrue`, `assertFalse`, `assertEqual`,
+`assertNotEqual`, `assertSame`, `assertNull`, `assertNotNull`,
+`assertType`, `assertContains`, `assertApproxEqual`, `assertError`,
+`assertErrorCode`, and `fail`. Runs are deterministic and sequential;
+`--seed` changes test order reproducibly. A positive `@timeout` executes that
+case on a bounded test thread.
 
 ### 13.2 Builtins: basics
 

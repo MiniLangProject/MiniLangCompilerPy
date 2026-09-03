@@ -787,6 +787,86 @@
 | [std.string_builder.StringBuilder.reserve](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-reserve-function-reserve-extra-std-string-builder-ml-1183173349) | `method` | `function reserve(extra)` |
 | [std.string_builder.StringBuilder.toString](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-tostring-function-tostring-std-string-builder-ml-1779129711) | `method` | `function toString()` |
 | [std.string_builder.StringBuilder.withCapacity](Type-std-string-builder-stringbuilder-567404247.md#static_method-static-method-std-string-builder-stringbuilder-withcapacity-static-function-withcapacity-cap-std-string-builder-ml-306477140) | `static_method` | `static function withCapacity(cap)` |
+| [std.test.assertApproxEqual](File-std-test-ml-828131286.md#function-function-std-test-assertapproxequal-function-assertapproxequal-actual-expected-epsilon-message-std-test-ml-1132070524) | `function` | `function assertApproxEqual(actual, expected, epsilon, message = "")` |
+| [std.test.assertContains](File-std-test-ml-828131286.md#function-function-std-test-assertcontains-function-assertcontains-container-expected-message-std-test-ml-825710629) | `function` | `function assertContains(container, expected, message = "")` |
+| [std.test.assertEqual](File-std-test-ml-828131286.md#function-function-std-test-assertequal-function-assertequal-actual-expected-message-std-test-ml-356634818) | `function` | `function assertEqual(actual, expected, message = "")` |
+| [std.test.assertError](File-std-test-ml-828131286.md#function-function-std-test-asserterror-function-asserterror-callback-message-std-test-ml-550210097) | `function` | `function assertError(callback, message = "")` |
+| [std.test.assertErrorCode](File-std-test-ml-828131286.md#function-function-std-test-asserterrorcode-function-asserterrorcode-callback-expected-code-message-std-test-ml-1026261057) | `function` | `function assertErrorCode(callback, expected_code, message = "")` |
+| [std.test.assertFalse](File-std-test-ml-828131286.md#function-function-std-test-assertfalse-function-assertfalse-condition-message-std-test-ml-88733509) | `function` | `function assertFalse(condition, message = "")` |
+| [std.test.ASSERTION_ERROR](File-std-test-ml-828131286.md#constant-constant-std-test-assertion-error-const-assertion-error-1800-std-test-ml-249620278) | `constant` | `const ASSERTION_ERROR = 1800` |
+| [std.test.assertNotEqual](File-std-test-ml-828131286.md#function-function-std-test-assertnotequal-function-assertnotequal-actual-unexpected-message-std-test-ml-1259841807) | `function` | `function assertNotEqual(actual, unexpected, message = "")` |
+| [std.test.assertNotNull](File-std-test-ml-828131286.md#function-function-std-test-assertnotnull-function-assertnotnull-value-message-std-test-ml-1381145391) | `function` | `function assertNotNull(value, message = "")` |
+| [std.test.assertNull](File-std-test-ml-828131286.md#function-function-std-test-assertnull-function-assertnull-value-message-std-test-ml-1376579519) | `function` | `function assertNull(value, message = "")` |
+| [std.test.assertSame](File-std-test-ml-828131286.md#function-function-std-test-assertsame-function-assertsame-actual-expected-message-std-test-ml-1020169278) | `function` | `function assertSame(actual, expected, message = "")` |
+| [std.test.assertTrue](File-std-test-ml-828131286.md#function-function-std-test-asserttrue-function-asserttrue-condition-message-std-test-ml-139217435) | `function` | `function assertTrue(condition, message = "")` |
+| [std.test.assertType](File-std-test-ml-828131286.md#function-function-std-test-asserttype-function-asserttype-value-expected-type-message-std-test-ml-1636061718) | `function` | `function assertType(value, expected_type, message = "")` |
+| [std.test.CONFIGURATION_ERROR](File-std-test-ml-828131286.md#constant-constant-std-test-configuration-error-const-configuration-error-1802-std-test-ml-1804814304) | `constant` | `const CONFIGURATION_ERROR = 1802` |
+| [std.test.execute](File-std-test-ml-828131286.md#function-function-std-test-execute-function-execute-suites-options-std-test-ml-1764874293) | `function` | `function execute(suites, options)` |
+| [std.test.fail](File-std-test-ml-828131286.md#function-function-std-test-fail-function-fail-message-test-failed-std-test-ml-285971369) | `function` | `function fail(message = "test failed")` |
+| [std.test.parseOptions](File-std-test-ml-828131286.md#function-function-std-test-parseoptions-function-parseoptions-args-std-test-ml-1147878359) | `function` | `function parseOptions(args)` |
+| [std.test.printConsole](File-std-test-ml-828131286.md#function-function-std-test-printconsole-function-printconsole-summary-std-test-ml-1165059960) | `function` | `function printConsole(summary)` |
+| [std.test.run](File-std-test-ml-828131286.md#function-function-std-test-run-function-run-suites-args-std-test-ml-695526029) | `function` | `function run(suites, args = [])` |
+| [std.test.RunOptions](Type-std-test-runoptions-1972408287.md) | `struct` | `struct RunOptions` |
+| [std.test.RunOptions.category](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-category-category-std-test-ml-1108435530) | `field` | `category` |
+| [std.test.RunOptions.defaults](Type-std-test-runoptions-1972408287.md#static_method-static-method-std-test-runoptions-defaults-static-function-defaults-std-test-ml-1314628537) | `static_method` | `static function defaults()` |
+| [std.test.RunOptions.excluded_category](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-excluded-category-excluded-category-std-test-ml-717543914) | `field` | `excluded_category` |
+| [std.test.RunOptions.fail_fast](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-fail-fast-fail-fast-std-test-ml-253985606) | `field` | `fail_fast` |
+| [std.test.RunOptions.filter](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-filter-filter-std-test-ml-216615270) | `field` | `filter` |
+| [std.test.RunOptions.format](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-format-format-std-test-ml-1102417340) | `field` | `format` |
+| [std.test.RunOptions.list_only](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-list-only-list-only-std-test-ml-1281222586) | `field` | `list_only` |
+| [std.test.RunOptions.output](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-output-output-std-test-ml-1719576348) | `field` | `output` |
+| [std.test.RunOptions.quiet](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-quiet-quiet-std-test-ml-1750478754) | `field` | `quiet` |
+| [std.test.RunOptions.repeat](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-repeat-repeat-std-test-ml-284532504) | `field` | `repeat` |
+| [std.test.RunOptions.seed](Type-std-test-runoptions-1972408287.md#field-field-std-test-runoptions-seed-seed-std-test-ml-439076372) | `field` | `seed` |
+| [std.test.RunSummary](Type-std-test-runsummary-1084060661.md) | `struct` | `struct RunSummary` |
+| [std.test.RunSummary.duration_ms](Type-std-test-runsummary-1084060661.md#field-field-std-test-runsummary-duration-ms-duration-ms-std-test-ml-691772892) | `field` | `duration_ms` |
+| [std.test.RunSummary.exitCode](Type-std-test-runsummary-1084060661.md#method-method-std-test-runsummary-exitcode-function-exitcode-std-test-ml-1038758472) | `method` | `function exitCode()` |
+| [std.test.RunSummary.failed](Type-std-test-runsummary-1084060661.md#field-field-std-test-runsummary-failed-failed-std-test-ml-1351910958) | `field` | `failed` |
+| [std.test.RunSummary.passed](Type-std-test-runsummary-1084060661.md#field-field-std-test-runsummary-passed-passed-std-test-ml-126724548) | `field` | `passed` |
+| [std.test.RunSummary.results](Type-std-test-runsummary-1084060661.md#field-field-std-test-runsummary-results-results-std-test-ml-558766260) | `field` | `results` |
+| [std.test.RunSummary.skipped](Type-std-test-runsummary-1084060661.md#field-field-std-test-runsummary-skipped-skipped-std-test-ml-193997996) | `field` | `skipped` |
+| [std.test.RunSummary.total](Type-std-test-runsummary-1084060661.md#method-method-std-test-runsummary-total-function-total-std-test-ml-305676144) | `method` | `function total()` |
+| [std.test.STATUS_FAILED](File-std-test-ml-828131286.md#constant-constant-std-test-status-failed-const-status-failed-failed-std-test-ml-885630280) | `constant` | `const STATUS_FAILED = "failed"` |
+| [std.test.STATUS_PASSED](File-std-test-ml-828131286.md#constant-constant-std-test-status-passed-const-status-passed-passed-std-test-ml-1171109675) | `constant` | `const STATUS_PASSED = "passed"` |
+| [std.test.STATUS_SKIPPED](File-std-test-ml-828131286.md#constant-constant-std-test-status-skipped-const-status-skipped-skipped-std-test-ml-2350847) | `constant` | `const STATUS_SKIPPED = "skipped"` |
+| [std.test.Suite](Type-std-test-suite-2053891654.md) | `struct` | `struct Suite` |
+| [std.test.Suite.add](Type-std-test-suite-2053891654.md#method-method-std-test-suite-add-function-add-name-callback-std-test-ml-1211349449) | `method` | `function add(name, callback)` |
+| [std.test.Suite.addCase](Type-std-test-suite-2053891654.md#method-method-std-test-suite-addcase-function-addcase-test-case-std-test-ml-1923928176) | `method` | `function addCase(test_case)` |
+| [std.test.Suite.after_all](Type-std-test-suite-2053891654.md#field-field-std-test-suite-after-all-after-all-std-test-ml-1717980127) | `field` | `after_all` |
+| [std.test.Suite.after_each](Type-std-test-suite-2053891654.md#field-field-std-test-suite-after-each-after-each-std-test-ml-1666292567) | `field` | `after_each` |
+| [std.test.Suite.before_all](Type-std-test-suite-2053891654.md#field-field-std-test-suite-before-all-before-all-std-test-ml-1234210229) | `field` | `before_all` |
+| [std.test.Suite.before_each](Type-std-test-suite-2053891654.md#field-field-std-test-suite-before-each-before-each-std-test-ml-400138663) | `field` | `before_each` |
+| [std.test.Suite.cases](Type-std-test-suite-2053891654.md#field-field-std-test-suite-cases-cases-std-test-ml-1484325443) | `field` | `cases` |
+| [std.test.Suite.name](Type-std-test-suite-2053891654.md#field-field-std-test-suite-name-name-std-test-ml-125367025) | `field` | `name` |
+| [std.test.Suite.new](Type-std-test-suite-2053891654.md#static_method-static-method-std-test-suite-new-static-function-new-name-std-test-ml-1686384689) | `static_method` | `static function new(name)` |
+| [std.test.Suite.setAfterAll](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setafterall-function-setafterall-callback-std-test-ml-1919038420) | `method` | `function setAfterAll(callback)` |
+| [std.test.Suite.setAfterEach](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setaftereach-function-setaftereach-callback-std-test-ml-1141614794) | `method` | `function setAfterEach(callback)` |
+| [std.test.Suite.setBeforeAll](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setbeforeall-function-setbeforeall-callback-std-test-ml-161451938) | `method` | `function setBeforeAll(callback)` |
+| [std.test.Suite.setBeforeEach](Type-std-test-suite-2053891654.md#method-method-std-test-suite-setbeforeeach-function-setbeforeeach-callback-std-test-ml-923959146) | `method` | `function setBeforeEach(callback)` |
+| [std.test.TestCase](Type-std-test-testcase-658817446.md) | `struct` | `struct TestCase` |
+| [std.test.TestCase.callback](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-callback-callback-std-test-ml-92275433) | `field` | `callback` |
+| [std.test.TestCase.categories](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-categories-categories-std-test-ml-619685363) | `field` | `categories` |
+| [std.test.TestCase.covers](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-covers-covers-std-test-ml-2010190059) | `field` | `covers` |
+| [std.test.TestCase.line](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-line-line-std-test-ml-835165051) | `field` | `line` |
+| [std.test.TestCase.name](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-name-name-std-test-ml-61076661) | `field` | `name` |
+| [std.test.TestCase.new](Type-std-test-testcase-658817446.md#static_method-static-method-std-test-testcase-new-static-function-new-name-callback-std-test-ml-1889384904) | `static_method` | `static function new(name, callback)` |
+| [std.test.TestCase.skip_reason](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-skip-reason-skip-reason-std-test-ml-1965380191) | `field` | `skip_reason` |
+| [std.test.TestCase.skipped](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-skipped-skipped-std-test-ml-768396451) | `field` | `skipped` |
+| [std.test.TestCase.source](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-source-source-std-test-ml-91860317) | `field` | `source` |
+| [std.test.TestCase.timeout_ms](Type-std-test-testcase-658817446.md#field-field-std-test-testcase-timeout-ms-timeout-ms-std-test-ml-1164269403) | `field` | `timeout_ms` |
+| [std.test.TestResult](Type-std-test-testresult-247927011.md) | `struct` | `struct TestResult` |
+| [std.test.TestResult.categories](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-categories-categories-std-test-ml-1816047890) | `field` | `categories` |
+| [std.test.TestResult.covers](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-covers-covers-std-test-ml-982627850) | `field` | `covers` |
+| [std.test.TestResult.duration_ms](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-duration-ms-duration-ms-std-test-ml-1437970146) | `field` | `duration_ms` |
+| [std.test.TestResult.line](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-line-line-std-test-ml-2040947546) | `field` | `line` |
+| [std.test.TestResult.message](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-message-message-std-test-ml-2065982894) | `field` | `message` |
+| [std.test.TestResult.name](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-name-name-std-test-ml-258265472) | `field` | `name` |
+| [std.test.TestResult.source](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-source-source-std-test-ml-1625667844) | `field` | `source` |
+| [std.test.TestResult.status](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-status-status-std-test-ml-729565510) | `field` | `status` |
+| [std.test.TestResult.suite](Type-std-test-testresult-247927011.md#field-field-std-test-testresult-suite-suite-std-test-ml-568492878) | `field` | `suite` |
+| [std.test.TIMEOUT_ERROR](File-std-test-ml-828131286.md#constant-constant-std-test-timeout-error-const-timeout-error-1801-std-test-ml-1922440569) | `constant` | `const TIMEOUT_ERROR = 1801` |
+| [std.test.toJson](File-std-test-ml-828131286.md#function-function-std-test-tojson-function-tojson-summary-std-test-ml-1607339476) | `function` | `function toJson(summary)` |
+| [std.test.toJUnit](File-std-test-ml-828131286.md#function-function-std-test-tojunit-function-tojunit-summary-std-test-ml-760967806) | `function` | `function toJUnit(summary)` |
 | [std.threading.Event](Type-std-threading-event-883500562.md) | `struct` | `struct Event` |
 | [std.threading.Event.close](Type-std-threading-event-883500562.md#method-method-std-threading-event-close-function-close-std-threading-ml-458936001) | `method` | `function close()` |
 | [std.threading.Event.closed](Type-std-threading-event-883500562.md#field-field-std-threading-event-closed-closed-std-threading-ml-1682840367) | `field` | `closed` |
