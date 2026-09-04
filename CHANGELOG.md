@@ -4,6 +4,13 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.4 - 2026-09-05
+
+- Added exact, statically resolved struct operator overloads for arithmetic,
+  comparison, bitwise and unary operators, including inline declarations,
+  overload sets and deterministic ambiguity diagnostics.
+- Added variable compound assignments and unary numeric `+`, updated `mlfmt`,
+  and covered positive, invalid, ambiguous, Windows and Linux operator cases.
 - Added the cross-platform `std.test` unit-test runtime with suites, lifecycle
   fixtures, assertions, filtering, deterministic repetition, bounded timeouts,
   and console, JSON, and JUnit reporting.

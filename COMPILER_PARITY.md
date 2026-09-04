@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 2 September 2026 against the matching 1.2.3 revisions of:
+Verified through 5 September 2026 against the matching 1.2.4 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,31 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.4 user-defined operator fixed point
+
+Both frontends now parse and statically resolve the same struct-owned unary and
+binary operator declarations. Resolution uses exact canonical operand types,
+supports overload sets and inline declarations, and reports missing or
+ambiguous matches at compile time. Variable compound assignments lower through
+the corresponding binary operator without changing built-in behavior.
+
+The shared `operator_overloading.ml` regression covers every supported symbol,
+all ten compound assignments, multiple signatures, typed-parameter and typed-
+return flow, single left-to-right operand evaluation, and Windows/Linux runtime
+execution. Python, self-hosted monolithic and self-hosted `.mlo` Windows builds
+are the same 316,416-byte PE with SHA-256
+`A0BD75FA9668B96ABDF9CA239C3D31517E565C7DE678E319641A457D265302E4`.
+Python and self-hosted Linux builds are the same 325,488-byte ELF with SHA-256
+`0B28E34C9A2CB6BEFC7AFD67403D3B509A73DD9F45C18368311A49CCE36A1B07`.
+
+The operator analysis has a whole-program fast gate, so sources without an
+operator declaration do not pay per-expression resolution costs. The 1.2.4
+release-script builds completed in 81.964 seconds for the Python bootstrap,
+121.389 seconds for Stage 2 with the memory probe enabled, and 139.619 seconds
+for Stage 3 without the probe. All three stages converge to the same
+67,050,496-byte image with SHA-256
+`DE7FAF4095146D466A8D7F0C17422D3EF0375647385DB36470792FDF72960F18`.
 
 ## 1.2.3 documentation and maintainability fixed point
 

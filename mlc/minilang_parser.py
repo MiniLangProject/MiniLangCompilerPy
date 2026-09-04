@@ -97,12 +97,12 @@ KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "fals
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
             "out", "static", "inline", "synchronized", "void", "is", "defer", "interface", "implements",
-            "iterator", "yield", "async", "await",}
+            "iterator", "yield", "async", "await", "operator",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTDOC", r"///.*"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
               ("IDENT", r"[A-Za-z_][A-Za-z0-9_]*"), ("ELLIPSIS", r"\.\.\."), ("SAFEDOT", r"\?\."),
-              ("OP", r"=>|\?\?|==|!=|>=|<=|<<|>>|[+\-*/%=<>&|^~>]"),
+              ("OP", r"<<=|>>=|\+=|-=|\*=|/=|%=|&=|\|=|\^=|=>|\?\?|==|!=|>=|<=|<<|>>|[+\-*/%=<>&|^~>]"),
               ("QMARK", r"\?"), ("DOT", r"\."), ("LPAREN", r"\("), ("RPAREN", r"\)"),
               ("LBRACK", r"\["), ("RBRACK", r"\]"), ("COMMA", r","), ("SEMI", r";"),  # include % for modulo
               ("NEWLINE", r"\n"), ("SKIP", r"[ \t]+"), ]
@@ -575,6 +575,42 @@ class ExternFunctionDef(Stmt):
 
 PRECEDENCE = {"??": 0, "or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, "is": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
               ">>": 8, "+": 9, "-": 9, "*": 10, "/": 10, "%": 10, }
+
+# Source operators are represented as reserved static struct methods after
+# parsing.  The names are ordinary identifiers so every later compiler stage
+# can reuse the existing function collection, type guards, calls and inliner.
+OPERATOR_METHOD_NAMES = {
+    ("+", 1): "__operator_pos",
+    ("-", 1): "__operator_neg",
+    ("not", 1): "__operator_not",
+    ("~", 1): "__operator_bitnot",
+    ("+", 2): "__operator_add",
+    ("-", 2): "__operator_sub",
+    ("*", 2): "__operator_mul",
+    ("/", 2): "__operator_div",
+    ("%", 2): "__operator_mod",
+    ("==", 2): "__operator_eq",
+    ("!=", 2): "__operator_ne",
+    ("<", 2): "__operator_lt",
+    ("<=", 2): "__operator_le",
+    (">", 2): "__operator_gt",
+    (">=", 2): "__operator_ge",
+    ("&", 2): "__operator_bitand",
+    ("|", 2): "__operator_bitor",
+    ("^", 2): "__operator_bitxor",
+    ("<<", 2): "__operator_shl",
+    (">>", 2): "__operator_shr",
+}
+
+COMPOUND_ASSIGNMENT_OPERATORS = {
+    "+=": "+", "-=": "-", "*=": "*", "/=": "/", "%=": "%",
+    "&=": "&", "|=": "|", "^=": "^", "<<=": "<<", ">>=": ">>",
+}
+
+
+def operator_method_name(symbol: str, arity: int) -> Optional[str]:
+    """Return the reserved method name for one supported operator signature."""
+    return OPERATOR_METHOD_NAMES.get((str(symbol), int(arity)))
 
 
 class Parser:
@@ -1532,6 +1568,67 @@ class Parser:
                 if self.peek().kind == "EOF":
                     raise ParseError(f"struct ended unexpectedly (missing 'end struct'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
 
+                # Statically dispatched operator overload.  The owning value is
+                # always the first explicit operand; no implicit `this` exists.
+                if self.peek().kind == "KW" and self.peek().value == "operator":
+                    op_start = self.advance().pos
+                    op_inline = False
+                    if self.peek().kind == "KW" and self.peek().value == "inline":
+                        self.advance()
+                        op_inline = True
+
+                    op_tok = self.peek()
+                    if op_tok.kind == "OP" or (op_tok.kind == "KW" and op_tok.value == "not"):
+                        op_symbol = self.advance().value
+                    else:
+                        raise ParseError("Expected a supported operator after 'operator'", op_tok.pos)
+
+                    self.expect("LPAREN")
+                    op_params, op_types, op_optional, op_defaults, op_variadic = self.parse_parameters()
+                    op_name_base = operator_method_name(op_symbol, len(op_params))
+                    if op_name_base is None:
+                        raise ParseError(f"Operator '{op_symbol}' does not support {len(op_params)} operand(s)", op_tok.pos)
+                    if op_variadic >= 0 or any(default is not None for default in op_defaults):
+                        raise ParseError("Operator parameters cannot be variadic or have default values", op_start)
+                    if any(ty is None for ty in op_types) or any(op_optional):
+                        raise ParseError("Every operator operand requires a non-optional type", op_start)
+                    first_type = str(op_types[0])
+                    if first_type.rsplit(".", 1)[-1] != name:
+                        raise ParseError(f"The first operator operand must have the owning struct type '{name}'", op_start)
+
+                    if not (self.peek().kind == "KW" and self.peek().value == "returns"):
+                        raise ParseError("Operator declarations require an explicit return type", self.peek().pos)
+                    self.advance()
+                    op_return_type, op_return_optional = self.parse_type_ref()
+                    if op_return_optional:
+                        raise ParseError("Operator return types cannot be optional", op_start)
+                    if op_return_type.lower() == "void":
+                        raise ParseError("Operator return types cannot be void", op_start)
+                    if op_symbol in ("==", "!=", "<", "<=", ">", ">=", "not") and op_return_type.lower() not in ("bool", "boolean"):
+                        raise ParseError(f"Operator '{op_symbol}' must return bool", op_start)
+
+                    same_operator = [method for method in methods
+                                     if str(getattr(method, 'name', '')).startswith(op_name_base + "__overload_")]
+                    if any(list(getattr(method, 'param_types', []) or []) == list(op_types)
+                           for method in same_operator):
+                        raise ParseError(f"Duplicate operator '{op_symbol}' signature", op_start)
+                    op_name = op_name_base + "__overload_" + str(len(same_operator))
+
+                    self.expect_block_nl()
+                    self._func_depth += 1
+                    try:
+                        op_body = self.parse_block_until_end("operator", op_start)
+                    finally:
+                        self._func_depth -= 1
+                    self.expect_end_of("operator")
+                    operator_fn = self._attach_pos(FunctionDef(
+                        op_name, op_params, op_body, is_static=True, is_inline=op_inline,
+                        param_types=op_types, param_optional=op_optional,
+                        param_defaults=op_defaults, variadic_index=-1,
+                        return_type=op_return_type, return_optional=False), op_start)
+                    methods.append(self._apply_function_contracts(operator_fn))
+                    continue
+
                 # method inside struct (instance or static)
                 if self.peek().kind == "KW" and self.peek().value in ("function", "static"):
                     m_start = self.peek().pos
@@ -1558,6 +1655,8 @@ class Parser:
                             is_synchronized = True
 
                     m_name_tok = self.expect("IDENT")
+                    if m_name_tok.value.startswith("__operator_"):
+                        raise ParseError("Method names beginning with '__operator_' are reserved", m_name_tok.pos)
                     self.expect("LPAREN")
                     m_params, m_types, m_optional, m_defaults, m_variadic = self.parse_parameters()
                     m_return_type: Optional[str] = None
@@ -1850,8 +1949,19 @@ class Parser:
                 self.advance()
                 declared_type, declared_optional = self.parse_type_ref()
 
-            if self.match("OP", "="):
+            assignment_op: Optional[str] = None
+            if self.peek().kind == "OP" and self.peek().value in ({"="} | set(COMPOUND_ASSIGNMENT_OPERATORS)):
+                assignment_op = self.advance().value
+
+            if assignment_op is not None:
                 rhs = self.parse_expr()
+
+                if assignment_op != "=":
+                    if declared_type is not None:
+                        raise ParseError("A compound assignment cannot redeclare a variable type", start_pos)
+                    if not isinstance(expr, Var):
+                        raise ParseError("Compound assignment currently requires a variable target", start_pos)
+                    rhs = self._attach_pos(Bin(expr, COMPOUND_ASSIGNMENT_OPERATORS[assignment_op], rhs), start_pos)
 
                 if isinstance(expr, Var):
                     rhs = self._guard_expr(rhs, declared_type, declared_optional, start_pos)
@@ -2025,6 +2135,12 @@ class Parser:
     def parse_unary(self) -> Expr:
         """Parse unary expressions (prefix operators) or fall back to postfix parsing."""
         t = self.peek()
+
+        if t.kind == "OP" and t.value == "+":
+            start_pos = t.pos
+            self.advance()
+            self.skip_newlines()
+            return self._attach_pos(Unary("+", self.parse_unary()), start_pos)
 
         if t.kind == "OP" and t.value == "-":
             start_pos = t.pos
@@ -2802,7 +2918,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.2.3",
+    "MINILANG_VERSION": "1.2.4",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

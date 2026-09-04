@@ -2,8 +2,8 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.3**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.3.md).
+Current stable release: **1.2.4**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.2.4.md).
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
@@ -187,7 +187,7 @@ Common options:
   code generation remains serial; this switch does not alter its output bytes.
 
 `python mlc_win64.py -version` and `--version` both print
-`MiniLang Compiler 1.2.3`. `python mlc_win64.py --help` prints the full option
+`MiniLang Compiler 1.2.4`. `python mlc_win64.py --help` prints the full option
 list.
 
 Notes (current implementation):
@@ -324,8 +324,8 @@ not processed. Directives may be nested.
 
 The immutable target values are `TARGET_OS`, `TARGET_ARCH`, `TARGET_ABI`,
 `TARGET_FORMAT`, `POINTER_SIZE` and `MINILANG_VERSION`. Windows selects
-`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.3"`; Linux selects
-`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.3"`. No
+`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.4"`; Linux selects
+`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.4"`. No
 compiler-implementation value is exposed: the Python and self-hosted compilers
 must select the same source for identical inputs.
 
@@ -900,11 +900,63 @@ end if
 8. `<<`, `>>`
 9. `+`, `-`
 10. `*`, `/`, `%`
-11. unary: `not`, `-x`, `~x`
+11. unary: `not`, `+x`, `-x`, `~x`
 
 Parentheses override precedence.
 
 Newlines may appear after operators (see [3.1](#31-newlines--statement-separators)).
+
+### User-defined operators
+
+Structs may overload MiniLang's existing operator symbols. Declarations are
+static functions: every operand is explicit, there is no implicit `this`, and
+`inline` requests the same bounded expansion as an inline function.
+
+```ml
+struct Vector2
+  x as int,
+  y as int,
+
+  operator inline +(left as Vector2, right as Vector2) returns Vector2
+    return Vector2(left.x + right.x, left.y + right.y)
+  end operator
+
+  operator ==(left as Vector2, right as Vector2) returns bool
+    return left.x == right.x and left.y == right.y
+  end operator
+end struct
+
+sum = Vector2(1, 2) + Vector2(3, 4)
+sum += Vector2(5, 6)
+```
+
+The overloadable binary symbols are `+ - * / % == != < <= > >= & | ^ << >>`.
+The overloadable unary symbols are `+ - not ~`. Multiple signatures may be
+declared for one symbol, for example `Vector2 + Vector2` and `Vector2 + int`.
+Comparison overloads and unary `not` must return `bool`.
+
+Resolution is compile-time-only and exact:
+
+- every operand parameter and the result must have a required, non-optional
+  declared type, and the result cannot be `void`;
+- the first operand must be the struct that contains the declaration;
+- aliases such as `integer` and `int` denote the same type, but no implicit
+  numeric, string or object conversion is attempted;
+- a missing exact signature or two matching canonical signatures is a compile
+  error whenever the owning struct type is statically known;
+- without an applicable struct declaration, the existing built-in operator
+  behavior is unchanged. Built-in unary `+value` is the numeric identity.
+
+Variable compound assignments `+= -= *= /= %= &= |= ^= <<= >>=` use the
+corresponding binary overload and assign its result. Member and index compound
+assignments are intentionally not accepted, so a side-effecting receiver or
+index can never be evaluated twice implicitly. Write the read, operation and
+assignment explicitly when needed.
+
+`and` and `or` remain fixed short-circuit control-flow operators. Assignment,
+`is`, `is not`, `as`, `??` and member/index access cannot be overloaded, and
+programs cannot add new symbols or precedence levels. These limits keep parsing,
+evaluation order and generated code deterministic across both compilers.
 
 ---
 
@@ -2862,10 +2914,12 @@ Statements are separated by newlines or `;`.
   - `<ident> = ...`
   - `<expr>.<field> = ...`
   - `<expr>[<index>] = ...` (multiline indexing allowed)
+- compound variable assignment: `x += value`, `x -= value`, `x *= value`, `x /= value`, `x %= value`, `x &= value`, `x |= value`, `x ^= value`, `x <<= value`, or `x >>= value`
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
 - `function name(a as int, b as string? = void, rest...) returns int ... end function`
 - `async function name(...) ... end function` / `[lazy] iterator function name(...) ... end function`
 - `interface Name ... end interface`; `struct Name implements Interface ... end struct`
+- `operator [inline] <symbol>(typed operands) returns <type> ... end operator` (inside a struct)
 - `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
 - optional entrypoint: `function main(args) ... end function`
 - `return` / `return <expr>` / `return;` (and bare `return` directly before `end/else/case` in inline blocks)
@@ -2899,7 +2953,7 @@ Statements are separated by newlines or `;`.
 - native thread: `Thread(topLevelFunction)`; methods `Start`, `Stop`, `Join`, `Status`, `IsAlive`, `Id`, `Close`
 - index: `arr[i]`
 - member: `obj.field`
-- unary: `-x`, `not x`, `~x`
+- unary: `+x`, `-x`, `not x`, `~x`
 - binary: `+ - * / % == != > < >= <= and or`
 - bitwise: `<< >> & | ^`
 

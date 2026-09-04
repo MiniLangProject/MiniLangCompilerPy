@@ -34,4 +34,4 @@ granularity = "package"
 hide_empty = true
 
 [links]
-revision = "shared-stdlib-1.2.3"
+revision = "shared-stdlib-1.2.4"

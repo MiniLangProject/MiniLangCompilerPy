@@ -139,6 +139,9 @@ class CodegenCore:
         self.struct_methods: Dict[str, Dict[str, str]] = {}
         # struct_qname -> {static_method_name -> function_qname}
         self.struct_static_methods: Dict[str, Dict[str, str]] = {}
+        # Whole-program fast gate: ordinary programs must not pay for operator
+        # type resolution on every unary/binary expression.
+        self.operator_overloads_present = False
         self.enum_variants: Dict[str, List[str]] = {}
         self.enum_id: Dict[str, int] = {}
 

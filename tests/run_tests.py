@@ -348,7 +348,7 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.3"
+    expected = "MiniLang Compiler 1.2.4"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4132,6 +4132,7 @@ def main() -> int:
     language_suite_ml = (find_file_by_name(tests_root, "language_suite.ml") or find_ml_containing(tests_root,
                                                                                                   "=== BASIC (INT/BOOL) ==="))
     language_extensions_ml = find_file_by_name(tests_root, "language_extensions.ml")
+    operator_overloading_ml = find_file_by_name(tests_root, "operator_overloading.ml")
     language_performance_features_ml = find_file_by_name(tests_root, "language_performance_features.ml")
     language_type_guard_object_ml = find_file_by_name(tests_root, "language_type_guard_object.ml")
     language_async_variadic_ml = find_file_by_name(tests_root, "language_async_variadic.ml")
@@ -4183,7 +4184,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.3", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.4", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4231,6 +4232,16 @@ def main() -> int:
             name="language extensions: types, calls, lambdas, match, iterators, interfaces and async",
             status="SKIP", details="language_extensions.ml not found"))
 
+    if operator_overloading_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="operator overloads: exact static dispatch, inline calls and compound assignment",
+            mlc_runner=mlc_runner, ml_path=operator_overloading_ml,
+            must_contain=["[OK] operator overloading"], timeout_compile_s=180, timeout_run_s=120))
+    else:
+        tests.append(lambda: TestResult(
+            name="operator overloads: exact static dispatch, inline calls and compound assignment",
+            status="SKIP", details="operator_overloading.ml not found"))
+
     if language_type_guard_object_ml is not None:
         tests.append(lambda: test_program_no_fail(
             name="typed struct fields retain runtime guards",
@@ -4268,6 +4279,13 @@ def main() -> int:
         ("language lazy iterator rejects suspended synchronization", "language_lazy_iterator_invalid.ml", "yield inside match/switch or synchronized"),
         ("language named arguments reject duplicates", "language_named_argument_error.ml", "supplied more than once"),
         ("language lambda rejects unresolved call-shape metadata", "language_lambda_parameter_error.ml", "Lambda parameters do not support"),
+        ("operator declarations reject logical short-circuit operators", "operator_invalid_and.ml", "Expected a supported operator"),
+        ("operator declarations require the owning struct as their first operand", "operator_invalid_owner.ml", "first operator operand"),
+        ("comparison operator overloads require bool results", "operator_invalid_comparison_return.ml", "must return bool"),
+        ("operator declarations reject void results", "operator_invalid_void_return.ml", "cannot be void"),
+        ("operator declarations reject duplicate signatures", "operator_duplicate_signature.ml", "Duplicate operator"),
+        ("operator calls reject missing exact overloads", "operator_no_matching_overload.ml", "No operator '+' overload matches"),
+        ("operator calls diagnose canonical-type ambiguity", "operator_ambiguous_alias.ml", "Operator '+' is ambiguous"),
     ]:
         negative_path = find_file_by_name(tests_root, negative_file)
         if negative_path is not None:

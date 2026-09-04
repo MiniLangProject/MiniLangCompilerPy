@@ -517,6 +517,111 @@ class CodegenExpr:
             return None
         return value if value >= 0 else None
 
+    def _operator_declared_type_fact(self, raw_type: Any, owner_qname: str, node: Any) -> Optional[str]:
+        """Canonicalize an operator signature type to the local type-flow lattice."""
+        if not isinstance(raw_type, str) or not raw_type:
+            return None
+        raw = raw_type.strip()
+        lowered = raw.lower()
+        aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+        lowered = aliases.get(lowered, lowered)
+        primitive = {'int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread', 'error', 'void'}
+        if lowered in primitive and '.' not in raw:
+            return lowered
+
+        structs = getattr(self, 'struct_fields', {}) or {}
+        try:
+            aliased = self._apply_import_alias(raw)
+        except Exception:
+            aliased = raw
+        candidates = [aliased]
+        if owner_qname and owner_qname.rsplit('.', 1)[-1] == raw.rsplit('.', 1)[-1]:
+            candidates.insert(0, owner_qname)
+        if '.' not in aliased and '.' in owner_qname:
+            candidates.append(owner_qname.rsplit('.', 1)[0] + '.' + aliased)
+        try:
+            candidates.append(self._qualify_identifier(aliased, node, kind='struct'))
+        except Exception:
+            pass
+        for candidate in candidates:
+            if candidate in structs:
+                return 'struct:' + str(candidate)
+        suffix = '.' + aliased
+        matches = sorted(str(name) for name in structs if str(name).endswith(suffix))
+        if len(matches) == 1:
+            return 'struct:' + matches[0]
+        return None
+
+    def _resolve_operator_overload(self, symbol: str, operands: List[Any], node: Any,
+                                   *, strict: bool = False) -> Optional[tuple[str, Any, Optional[str]]]:
+        """Resolve a struct-owned operator to one statically known hoisted function."""
+        if not bool(getattr(self, 'operator_overloads_present', False)):
+            return None
+        facts = [self._opt_expr_known_type(operand) for operand in operands]
+        return self._resolve_operator_overload_facts(symbol, facts, node, strict=strict)
+
+    def _resolve_operator_overload_facts(self, symbol: str, facts: List[Optional[str]], node: Any,
+                                         *, strict: bool = False) -> Optional[tuple[str, Any, Optional[str]]]:
+        """Resolve an overload from facts already computed by a flow analysis."""
+        if not bool(getattr(self, 'operator_overloads_present', False)):
+            return None
+        method_name_fn = getattr(self.ml, 'operator_method_name', None)
+        method_name = method_name_fn(symbol, len(facts)) if callable(method_name_fn) else None
+        if not method_name or not facts:
+            return None
+        left_fact = facts[0]
+        if not isinstance(left_fact, str) or not left_fact.startswith('struct:'):
+            return None
+        owner_qname = left_fact.split(':', 1)[1]
+        method_map = ((getattr(self, 'struct_static_methods', {}) or {}).get(owner_qname, {}) or {})
+        prefix = method_name + '__overload_'
+        candidate_qfns = [qfn for name, qfn in method_map.items()
+                          if name == method_name or str(name).startswith(prefix)]
+        if not candidate_qfns:
+            return None
+        matches: list[tuple[str, Any, Optional[str]]] = []
+        for qfn in candidate_qfns:
+            fn = (getattr(self, 'user_functions', {}) or {}).get(qfn)
+            if fn is None:
+                continue
+            expected_types = list(getattr(fn, 'param_types', []) or [])
+            if len(expected_types) != len(facts):
+                continue
+            compatible = True
+            for fact, raw_expected in zip(facts, expected_types):
+                expected = self._operator_declared_type_fact(raw_expected, owner_qname, fn)
+                if (fact is None or expected is None or
+                        self._opt_value_type_base(fact) != self._opt_value_type_base(expected) or
+                        (expected.startswith('struct:') and fact != expected)):
+                    compatible = False
+                    break
+            if compatible:
+                result_fact = self._operator_declared_type_fact(
+                    getattr(fn, 'return_type', None), owner_qname, fn)
+                matches.append((str(qfn), fn, result_fact))
+        if len(matches) == 1:
+            return matches[0]
+        if strict:
+            actual = ', '.join(str(fact or 'unknown') for fact in facts)
+            if len(matches) > 1:
+                raise self.error(f"Operator '{symbol}' is ambiguous for operand types ({actual})", node)
+            raise self.error(f"No operator '{symbol}' overload matches operand types ({actual})", node)
+        return None
+
+    def _emit_operator_overload(self, symbol: str, operands: List[Any], node: Any) -> bool:
+        """Emit a resolved overload through the normal direct-call/inlining path."""
+        resolved = self._resolve_operator_overload(symbol, operands, node, strict=True)
+        if resolved is None:
+            return False
+        qfn, _fn, _result = resolved
+        call = self.ml.Call(self.ml.Var(qfn), list(operands))
+        for attr in ('_pos', '_filename', '_line'):
+            if hasattr(node, attr):
+                setattr(call, attr, getattr(node, attr))
+                setattr(call.callee, attr, getattr(node, attr))
+        self.emit_expr(call)
+        return True
+
     def _opt_expr_known_type(self, e: Any) -> Optional[str]:
         """Return a conservative local representation fact for an expression."""
         ml = self.ml
@@ -549,6 +654,9 @@ class CodegenExpr:
             return 'bool'
         if isinstance(e, getattr(ml, 'Unary', ())):
             op = str(getattr(e, 'op', '') or '')
+            overload = self._resolve_operator_overload(op, [getattr(e, 'right', None)], e)
+            if overload is not None:
+                return overload[2]
             rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
             if op == 'not' and rb:
                 return 'bool'
@@ -561,6 +669,10 @@ class CodegenExpr:
             return None
         if isinstance(e, getattr(ml, 'Bin', ())):
             op = str(getattr(e, 'op', '') or '')
+            overload = self._resolve_operator_overload(
+                op, [getattr(e, 'left', None), getattr(e, 'right', None)], e)
+            if overload is not None:
+                return overload[2]
             lb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'left', None)))
             rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
             if op in ('==', '!='):
@@ -599,6 +711,33 @@ class CodegenExpr:
                 return 'int'
             if base == 'string' and index_base == 'int':
                 return 'string'
+        if bool(getattr(self, 'operator_overloads_present', False)) and isinstance(e, getattr(ml, 'Call', ())):
+            callee = getattr(e, 'callee', None)
+            try:
+                fn_qname = self._native_callback_resolve_user_fn(callee)
+            except Exception:
+                fn_qname = ''
+            declared = (getattr(self, 'user_functions', {}) or {}).get(fn_qname) if fn_qname else None
+            if declared is not None and not bool(getattr(declared, 'return_optional', False)):
+                result = self._operator_declared_type_fact(
+                    getattr(declared, 'return_type', None), '', declared)
+                if result:
+                    return result
+            parts: list[str] = []
+            current = callee
+            while isinstance(current, getattr(ml, 'Member', ())):
+                parts.append(str(getattr(current, 'name', '') or ''))
+                current = getattr(current, 'target', None)
+            if isinstance(current, getattr(ml, 'Var', ())):
+                parts.append(str(getattr(current, 'name', '') or ''))
+                raw = '.'.join(reversed(parts))
+                try:
+                    raw = self._apply_import_alias(raw)
+                    qualified = self._qualify_identifier(raw, e, kind='struct')
+                except Exception:
+                    qualified = raw
+                if qualified in (getattr(self, 'struct_fields', {}) or {}):
+                    return 'struct:' + str(qualified)
         return None
 
     def _opt_type_query_can_elide_evaluation(self, e: Any) -> bool:
@@ -3270,7 +3409,34 @@ class CodegenExpr:
             return
 
         if isinstance(e, ml.Unary):
+            if self._emit_operator_overload(str(e.op), [e.right], e):
+                return
             self.emit_expr(e.right)
+            if e.op == '+':
+                # Unary plus is an identity operation, but it still enforces
+                # the language's numeric-only contract at runtime.
+                lid = self.new_label_id()
+                l_ok = f"uplus_ok_{lid}"
+                l_fail = f"uplus_fail_{lid}"
+                l_end = f"uplus_end_{lid}"
+                a.mov_r64_r64("rdx", "rax")
+                a.and_r64_imm("rdx", 7)
+                a.cmp_r64_imm("rdx", TAG_INT)
+                a.jcc('e', l_ok)
+                a.cmp_r64_imm("rdx", TAG_FLOAT)
+                a.jcc('e', l_ok)
+                a.cmp_r64_imm("rdx", TAG_PTR)
+                a.jcc('ne', l_fail)
+                a.mov_r32_membase_disp("edx", "rax", 0)
+                a.cmp_r32_imm("edx", OBJ_FLOAT)
+                a.jcc('e', l_ok)
+                a.mark(l_fail)
+                a.mov_rax_imm64(enc_void())
+                a.jmp(l_end)
+                a.mark(l_ok)
+                # RAX already contains the original numeric value.
+                a.mark(l_end)
+                return
             if e.op == '-':
                 # unary minus: int or float
                 lid = self.new_label_id()
@@ -3404,6 +3570,8 @@ class CodegenExpr:
             raise self.error(f"Unsupported unary op: {e.op}", e)
 
         if isinstance(e, ml.Bin):
+            if self._emit_operator_overload(str(e.op), [e.left, e.right], e):
+                return
             # logical short-circuit
             if e.op in ('and', 'or'):
                 if e.op == 'and':

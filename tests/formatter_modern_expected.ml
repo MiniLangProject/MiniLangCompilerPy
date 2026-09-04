@@ -25,6 +25,13 @@ struct Person implements Named
   end function
 end struct
 
+struct Counter
+  value as int,
+  operator inline +(left as Counter, right as Counter) returns Counter
+    return Counter(left.value + right.value)
+  end operator
+end struct
+
 function inline increment(value as int) returns int
   return value + 1
 end function
@@ -106,6 +113,10 @@ function main(args)
   pull = lazyNumbers(2)
   job = doubled(6)
   url = "http://example.test/*not-a-comment*/"
+  counter = Counter(2)
+  counter += Counter(3)
+  flags = +1
+  flags <<= 2
   if person.name() != "MiniLang" or fallback != "fallback" then return 1 end if
   if transform(3) != 5 or increment(4) != 5 then return 2 end if
   if len(eager) != 3 or eager[2] != 2 or pull() != 10 or pull() != 11 then return 3 end if
@@ -113,6 +124,7 @@ function main(args)
   if guardedClassify(2, guard) != "small" or deferredValue() != 7 then return 5 end if
   if loopValue() != 4 or branchValue(1) != "one" then return 6 end if
   if url != "http://example.test/*not-a-comment*/" then return 7 end if
+  if counter.value != 5 or flags != 4 then return 8 end if
   guard.close()
   print "[OK] formatter modern syntax"
   return 0

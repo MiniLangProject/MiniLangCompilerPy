@@ -615,6 +615,26 @@ function emit_formatted_code(bb, code)
       continue
     end if
 
+    // Three-character shift assignments must be recognized before their
+    // two-character shift prefixes.
+    if (i + 2) < len(code2) then
+      ch2 = code2[i + 1]
+      ch3 = code2[i + 2]
+      if ((ch == 60 and ch2 == 60) or (ch == 62 and ch2 == 62)) and ch3 == 61 then
+        if prevCat != 0 and prevCat != 6 and prevCat != 5 then
+          bb = bb_pushByte(bb, 32)
+        end if
+        bb = bb_pushByte(bb, ch)
+        bb = bb_pushByte(bb, ch2)
+        bb = bb_pushByte(bb, ch3)
+        pendingSpace = true
+        prevCat = 4
+        prevWord = ""
+        i = i + 3
+        continue
+      end if
+    end if
+
     // two-char operators
     if (i + 1) < len(code2) then
       ch2 = code2[i + 1]
@@ -771,7 +791,7 @@ function emit_formatted_code(bb, code)
     isOp =(ch == 43 or ch == 45 or ch == 42 or ch == 47 or ch == 37 or ch == 61 or ch == 38 or ch == 124 or ch == 94 or ch == 126 or ch == 60 or ch == 62)
     if isOp then
       unary = false
-      if ch == 45 or ch == 126 then
+      if ch == 43 or ch == 45 or ch == 126 then
         if prevCat == 0 or prevCat == 4 or prevCat == 6 then
           unary = true
         end if
@@ -1013,6 +1033,7 @@ function format_source(src, indentSize, maxBlankLines)
         end if
         if w0 == "lazy" and w1 == "iterator" then opener = "function" end if
         if w0 == "static" and w1 == "function" then opener = "function" end if
+        if w0 == "operator" then opener = "operator" end if
         if isLoopFooter then opener = "" end if
 
         // Fine-grained synchronization is a block only in call form;

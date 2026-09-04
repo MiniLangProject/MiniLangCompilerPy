@@ -843,11 +843,20 @@ class CodegenStmt:
         param_types = list(getattr(fn, 'param_types', []) or [])
         param_optional = list(getattr(fn, 'param_optional', []) or [])
         excluded: set[str] = set()
+        typed_param_facts: dict[str, str] = {}
+        operator_types_enabled = bool(getattr(self, 'operator_overloads_present', False))
         for index, param in enumerate(params):
             ty = param_types[index] if index < len(param_types) else None
             optional = bool(param_optional[index]) if index < len(param_optional) else False
             if not ty or optional:
                 excluded.add(str(param))
+                continue
+            if operator_types_enabled:
+                fact = self._operator_declared_type_fact(ty, '', fn)
+                if fact:
+                    typed_param_facts[str(param)] = fact
+                else:
+                    excluded.add(str(param))
         excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
@@ -906,7 +915,7 @@ class CodegenStmt:
         # Function-wide facts are only safe when the unconditional initializer
         # dominates every read. MiniLang predeclares locals, so a read before
         # the first assignment observes void and must retain dynamic lowering.
-        tracked_names = set(assignments) | set(loop_names)
+        tracked_names = set(assignments) | set(loop_names) | set(typed_param_facts)
         read_before_init: set[str] = set()
 
         def scan_read_expr(expr: Any, initialized: set[str]) -> None:
@@ -967,7 +976,7 @@ class CodegenStmt:
                 else:
                     scan_read_order(list(getattr(st, 'body', []) or []), set(initialized), direct=False)
 
-        scan_read_order(list(getattr(fn, 'body', []) or []), set(), direct=True)
+        scan_read_order(list(getattr(fn, 'body', []) or []), set(typed_param_facts), direct=True)
         excluded.update(read_before_init)
 
         def callee_qname(expr: Any) -> Optional[str]:
@@ -1038,7 +1047,12 @@ class CodegenStmt:
                 return 'bool'
             if isinstance(expr, getattr(ml, 'Unary', ())):
                 op = str(getattr(expr, 'op', '') or '')
-                rt = infer_expr(getattr(expr, 'right', None), known)
+                operand = getattr(expr, 'right', None)
+                operand_fact = infer_expr(operand, known)
+                overload = self._resolve_operator_overload_facts(op, [operand_fact], expr)
+                if overload is not None:
+                    return overload[2]
+                rt = operand_fact
                 rb = self._value_type_base(rt)
                 if op == 'not' and rb:
                     return 'bool'
@@ -1051,8 +1065,13 @@ class CodegenStmt:
                 return None
             if isinstance(expr, getattr(ml, 'Bin', ())):
                 op = str(getattr(expr, 'op', '') or '')
-                lt = infer_expr(getattr(expr, 'left', None), known)
-                rt = infer_expr(getattr(expr, 'right', None), known)
+                left_fact = infer_expr(getattr(expr, 'left', None), known)
+                right_fact = infer_expr(getattr(expr, 'right', None), known)
+                overload = self._resolve_operator_overload_facts(op, [left_fact, right_fact], expr)
+                if overload is not None:
+                    return overload[2]
+                lt = left_fact
+                rt = right_fact
                 lb = self._value_type_base(lt)
                 rb = self._value_type_base(rt)
                 if op in ('==', '!='):
@@ -1132,9 +1151,11 @@ class CodegenStmt:
                     return 'struct:' + name
             return None
 
-        initialized_names = {name for name, _ in direct_initializers} | set(loop_names)
-        candidates = ((set(assignments) | set(loop_names)) & initialized_names) - excluded
-        facts: dict[str, str] = {name: 'int' for name in loop_names if name in candidates}
+        initialized_names = ({name for name, _ in direct_initializers} | set(loop_names) |
+                             set(typed_param_facts))
+        candidates = ((set(assignments) | set(loop_names) | set(typed_param_facts)) & initialized_names) - excluded
+        facts: dict[str, str] = dict(typed_param_facts)
+        facts.update({name: 'int' for name in loop_names if name in candidates})
 
         # Seed from unconditional initializers, then propagate through local
         # aliases and induction updates until no new fact is discovered.
@@ -1174,6 +1195,8 @@ class CodegenStmt:
         while changed:
             changed = False
             for name in list(facts):
+                if name in typed_param_facts and name not in assignments:
+                    continue
                 if name in loop_names and name not in assignments:
                     continue
                 values = assignments.get(name, [])
@@ -4745,6 +4768,8 @@ class CodegenStmt:
                                 qfn = f"{qname}.__static__.{mbase}"
                                 params = list(getattr(mfn, "params", []) or [])
                                 sdict[mbase] = qfn
+                                if mbase.startswith("__operator_"):
+                                    self.operator_overloads_present = True
                             else:
                                 qfn = f"{qname}.{mbase}"
                                 params = ['this'] + list(getattr(mfn, "params", []) or [])
