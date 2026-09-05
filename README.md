@@ -7,8 +7,9 @@ Current stable release: **1.2.6**. See the [changelog](CHANGELOG.md) and
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
-Release 1.0.0 and later are source-only: generated `.exe` files are not
-tracked in Git and are not attached to GitHub releases.
+Release 1.2.6 includes ready-to-run **Windows and Linux binary packages**,
+with an embedded Python runtime and the MiniLang standard library. See
+[binary installation](README-BINARY.md). Generated binaries remain outside Git.
 
 MiniLang (`.ml`) is a small, dynamically typed language that compiles with
 `mlc_win64.py` to native Windows x64 (PE32+) or Linux x64 (ELF64) images.

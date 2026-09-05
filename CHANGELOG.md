@@ -4,6 +4,9 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.2.6 - 2026-09-05
 
+- Published ready-to-run Windows/Linux compiler archives with the standard
+  library, binary manifests and checksums; added reproducible packaging tools.
+
 - Fixed the Python emitter's native C-string return conversion after the copy
   helper clobbers its volatile length register, preventing GTK text-return crashes.
 - Added matching Unicode, empty and null C-string return regressions in both

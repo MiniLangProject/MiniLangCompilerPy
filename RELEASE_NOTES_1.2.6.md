@@ -16,6 +16,17 @@ FFI regression emitted by both compilers, CLI/predefined-version checks and
 MiniGui's Windows/Linux control, generator and startup tests. Earlier full-suite
 and fixed-point results remain identified as 1.2.5 results in COMPILER_PARITY.md.
 
-Following existing compiler releases, GitHub publishes source archives only.
-Build the self-hosted compiler with build.ps1 on Windows or build.sh on Linux,
-using the matching MiniLangCompilerPy checkout for bootstrap.
+## Binary downloads
+
+- [Windows x64 ZIP](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/download/v1.2.6/MiniLangCompilerPy-1.2.6-windows-x64.zip)
+- [Linux x64 tar.gz](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/download/v1.2.6/MiniLangCompilerPy-1.2.6-linux-x64.tar.gz)
+
+Extract the complete package, including `std/`. Run `mlc.exe` on Windows or
+`./mlc` on Linux. Compile with `-I .` from the package directory; select
+`--target linux-x64` explicitly for Linux output. Each archive has a SHA-256
+sidecar and includes a quick-start guide. No installed Python is required.
+Linux binaries were built and tested on Ubuntu 24.04 x86-64 (glibc 2.39).
+
+The reference compiler is distributed as a PyInstaller executable with its
+Python runtime embedded. The runtime extracts to a temporary directory
+when launched. It does not launch a system Python interpreter.
