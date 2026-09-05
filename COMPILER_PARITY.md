@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 5 September 2026 against the matching 1.2.4 revisions of:
+Verified through 5 September 2026 against the matching 1.2.5 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -23,6 +23,55 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.5 release verification
+
+The release-stamped Windows compiler was rebuilt with `build.ps1` from the
+matching Python bootstrap, then rebuilt twice through the native MLO pipeline.
+All three stages are **66,048,000 bytes** and have SHA-256
+`B07A717E2D14B11F9AD8AC868E738B1DB6EA2493D272F6D4EC70E25E1DC759FE`.
+Both `-version` and `--version` print `MiniLang Compiler 1.2.5`.
+
+Observed build times were 85.176 s (Python Stage 1), 99.844 s (native Stage 2)
+and 83.706 s (native Stage 3). These are verification-run wall times with
+other checks running concurrently, not controlled performance comparisons.
+The build scripts use the documented 8 GiB reserve, 512 MiB initial commit,
+16 MiB shrink floor and 1,536 MiB GC limit; the earlier size experiment below
+retains its own pre-release image hashes.
+
+The native Linux compiler was independently bootstrapped and self-built with
+`build.sh`. Both stages are **66,023,072 bytes**, SHA-256
+`A637775EB294EDD357FC9D4EC68101D6DB82ADCD327A6CA5877AE0CC7AB66680`.
+Observed verification wall times were 101 s for the bootstrap and 300 s for
+the Linux self-build, including the build script's smoke checks. Native Linux
+regressions pass executable-mode/umask handling, case-sensitive imports,
+monolithic/object identity and incremental project-cache restoration and
+invalidation. Both Linux version switches report 1.2.5; Linux-hosted MLO
+compilation also reproduces the same Windows and Linux version-smoke hashes
+listed below.
+
+A release smoke source asserts `MINILANG_VERSION == "1.2.5"` at compile time.
+Python, self-hosted monolithic and MLO builds of that same source are identical
+for each target and execute successfully:
+
+- Windows PE: `98E2FC67B684130FEE92F07EA67C5AA55AAE58147C08BECC59F51098C8EFB9CE`.
+- Linux ELF: `D36AC267C682C191881660107195855C142D639EBEF8AC9F58BF0F0AB47BCF59`.
+
+The release-stamped Python suite passes **144/144**, and the complete ML suite
+passes **136/136** internal tests plus all outer Windows, WSL/Linux, FFI, GC,
+threading, assembly-listing and monolithic/MLO gates. The full ML run completed
+in 203.961 s. Eight independent assembler unit tests pass; only the optional,
+not-enabled NASM cross-check is skipped. The source-documentation policy and
+canonical Linux runtime-blob checks pass.
+
+Strict MiniDoc regeneration identifies revision `v1.2.5` and reports 37 files,
+3,269 symbols and zero warnings. All 47 shared standard-library files and all
+305 generated standard-library documentation files are identical between
+repositories. The standard-library sources are unchanged, so their existing
+`shared-stdlib-1.2.4` documentation revision remains intentional.
+
+These are source-only GitHub releases. The verified native artifacts are
+local build outputs and are not committed or attached as release assets.
 
 ## Compact x64 experiment before the 1.2.5 version stamp (5 September 2026)
 

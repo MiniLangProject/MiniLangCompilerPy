@@ -30,7 +30,13 @@ self-hosted outputs retain the canonical byte-identity contract; see
 [release verification](COMPILER_PARITY.md) for the fixed point and test results.
 The shared standard-library sources are unchanged from 1.2.4.
 
+Release verification passes 144/144 Python tests and 136/136 internal ML tests,
+plus the outer Windows/Linux runtime and object-pipeline checks. Three Windows
+compiler stages are byte-identical; the native Linux bootstrap and self-build
+also match exactly. Native Linux filesystem/cache regressions pass.
+
 This remains a source-only release. Generated executables are excluded from
 Git and GitHub release assets; native build verification is performed locally.
 Bootstrap from the matching Python repository and rebuild the self-hosted
-compiler with `build.ps1`. Existing 1.2.4 tags and releases remain available.
+compiler with `MiniLangCompilerML/build.ps1` (Windows) or `build.sh` (Linux).
+Existing 1.2.4 tags and releases remain available.
