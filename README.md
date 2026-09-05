@@ -2,8 +2,8 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.4**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.4.md).
+Current stable release: **1.2.5**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.2.5.md).
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
@@ -187,7 +187,7 @@ Common options:
   code generation remains serial; this switch does not alter its output bytes.
 
 `python mlc_win64.py -version` and `--version` both print
-`MiniLang Compiler 1.2.4`. `python mlc_win64.py --help` prints the full option
+`MiniLang Compiler 1.2.5`. `python mlc_win64.py --help` prints the full option
 list.
 
 Notes (current implementation):
@@ -324,8 +324,8 @@ not processed. Directives may be nested.
 
 The immutable target values are `TARGET_OS`, `TARGET_ARCH`, `TARGET_ABI`,
 `TARGET_FORMAT`, `POINTER_SIZE` and `MINILANG_VERSION`. Windows selects
-`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.4"`; Linux selects
-`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.4"`. No
+`"windows"`, `"x64"`, `"win64"`, `"pe"`, `8` and `"1.2.5"`; Linux selects
+`"linux"`, `"x64"`, `"sysv"`, `"elf"`, `8` and `"1.2.5"`. No
 compiler-implementation value is exposed: the Python and self-hosted compilers
 must select the same source for identical inputs.
 
@@ -3128,7 +3128,14 @@ Optimizations (always-on, conservative):
   identity space.
 - **Branch/peephole optimization**: resolved backward edges use x64 short
   branches when in range, jumps to the immediately following label disappear,
-  and local redundant instruction patterns are folded.
+  and adjacent conditional/unconditional branch pairs become one inverted
+  conditional branch when the first target is the fallthrough. Labels and
+  intervening instructions prevent unsafe folding.
+- **Compact x64 encodings**: accumulator-immediate opcodes, implicit-one
+  shifts and safe 32-bit AND masks reduce actual machine-code size without
+  packing the executable or removing runtime checks. Both native targets use
+  the same encoding rules; defined arithmetic flags and full register results
+  are preserved. See the [size experiment](docs/reports/CODE_SIZE_2026-09-05.md).
 - **Helper pruning**: only referenced `fn_*` runtime helpers are emitted.
 
 GC flags:

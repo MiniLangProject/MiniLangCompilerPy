@@ -348,7 +348,7 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.4"
+    expected = "MiniLang Compiler 1.2.5"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4184,7 +4184,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.4", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.5", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4255,6 +4255,12 @@ def main() -> int:
             mlc_runner=mlc_runner, ml_path=language_performance_features_ml,
             must_contain=["[OK] optimized language features"],
             timeout_compile_s=180, timeout_run_s=120))
+
+    tests.append(lambda: test_program_no_fail(
+        name="variadic argument arrays survive escaping calls and GC",
+        mlc_runner=mlc_runner, ml_path=tests_root / "variadic_escape_lifetime.ml",
+        must_contain=["[OK] variadic escape lifetime"],
+        timeout_compile_s=120, timeout_run_s=120))
 
     for test_name, test_path, marker in [
         ("async variadic arguments are packed once", language_async_variadic_ml,

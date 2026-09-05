@@ -69,6 +69,7 @@ class Asm:
         # a PUSH opcode from being mistaken for the remembered instruction.
         self._peephole_last_push: tuple[bytes, str, int] | None = None
         self._peephole_last_jump: tuple[int, int, str, int] | None = None  # (start, end, label, disp_pos)
+        self._peephole_prev_jump: tuple[int, int, str, int] | None = None
 
     # -----------------------------------------------------------------
     # peephole helpers
@@ -240,6 +241,25 @@ class Asm:
             last_jump = getattr(self, '_peephole_last_jump', None)
             if last_jump is not None:
                 start, end, target, disp_pos = last_jump
+                prev = self._peephole_prev_jump
+                # Jcc yes; JMP no; yes: -> J!cc no; yes:. Only remove the
+                # unlabelled tail, so existing offsets and RIP fixups stay put.
+                if (prev is not None and end == self.pos and end - start == 5
+                        and prev[1] == start and prev[2] == name and target != name
+                        and self.buf[start] == 0xE9 and len(self.patches) >= 2
+                        and self.patches[-2] == (prev[3], name, 'rel32')
+                        and self.patches[-1] == (disp_pos, target, 'rel32')):
+                    self.buf[prev[0] + 1] ^= 1
+                    self.patches.pop()
+                    self.patches[-1] = (prev[3], target, 'rel32')
+                    self._peephole_trim_tail(5)
+                    if self._trace_enabled and self._trace:
+                        cc = ('o', 'no', 'b', 'ae', 'e', 'ne', 'be', 'a',
+                              's', 'ns', 'p', 'np', 'l', 'ge', 'le', 'g')[self.buf[prev[0] + 1] & 15]
+                        te = self._trace[-1]
+                        if te.start == prev[0] and te.end == prev[1]:
+                            txt, refs = self._format_call('jcc', (cc, target), {})
+                            self._trace[-1] = TraceEntry(te.start, te.end, txt, refs)
                 if target == name and end == self.pos:
                     for i in range(len(self.patches) - 1, -1, -1):
                         p_pos, p_label, _p_kind = self.patches[i]
@@ -248,6 +268,7 @@ class Asm:
                             break
                     self._peephole_trim_tail(end - start)
                 self._peephole_last_jump = None
+            self._peephole_prev_jump = None
         if name in self.labels:
             raise ValueError(f"Label already defined: {name}")
         self._label_defs.append((self.pos, name))
@@ -468,6 +489,11 @@ class Asm:
                 return
 
         start = self.pos
+        prev = self._peephole_last_jump
+        self._peephole_prev_jump = (
+            prev if prev is not None and prev[1] == start and prev[1] - prev[0] == 6
+            and self.buf[prev[0]] == 0x0F and 0x80 <= self.buf[prev[0] + 1] <= 0x8F else None
+        )
         self.emit(b"\xE9")
         p = self.pos
         self.emit32(0)
@@ -1405,6 +1431,11 @@ class Asm:
         """
         if size not in (8, 32, 64):
             raise ValueError("Unsupported operand size for grp1")
+        # A nonnegative signed-32 mask clears the upper half anyway. A 32-bit
+        # AND zero-extends that same result; bit 31 stays clear, so SF as well
+        # as ZF/PF/CF/OF is identical. Never narrow sign-extended negative masks.
+        if size == 64 and subop == 4 and 0 <= imm <= 0x7FFFFFFF:
+            size = 32
         if size == 8:
             opcode = b"\x80"
             imm_bytes = bytes([imm & 0xFF])
@@ -1417,6 +1448,13 @@ class Asm:
                 opcode = b"\x81"
                 imm_bytes = u32(imm)
             w = 1 if size == 64 else 0
+
+        # AL/EAX/RAX have an accumulator opcode without a ModRM byte. Keep
+        # sign-extended imm8 for wider operands when it is still shorter.
+        if rm.id == 0 and (size == 8 or not self._fits_i8(imm)):
+            opcode = bytes([(subop << 3) | (4 if size == 8 else 5)])
+            self.emit(self._rex(w=w) + opcode + imm_bytes)
+            return
 
         rex_r = 0  # reg field is subop (0..7)
         rex_b = 1 if rm.id >= 8 else 0
@@ -1838,6 +1876,18 @@ class Asm:
     # shifts (imm8)
     # ---------------------------------------------------------------------
 
+    def _emit_shift_imm8(self, subop: int, reg: str, imm: int, w: int) -> None:
+        """Use the implicit-one encoding only for an actual imm8 value of one."""
+        r = self._rid_any(reg)
+        count = imm & 0xFF
+        # Keep other counts verbatim, including zero and masked counts: their
+        # defined/undefined flag behavior must not change during compaction.
+        tail = b"\xD1" if count == 1 else b"\xC1"
+        tail += self._modrm(3, subop, r)
+        if count != 1:
+            tail += bytes([count])
+        self.emit(self._rex(w=w, b=1 if r >= 8 else 0) + tail)
+
     def shl_r64_imm8(self, reg: str, imm: int) -> None:
         """Emit `SHL` instruction helper.
 
@@ -1845,9 +1895,7 @@ class Asm:
             reg: Register name (e.g. 'rax', 'r10', 'eax', 'al').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=1, b=rex_b) + b"\xC1" + self._modrm(3, 4, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(4, reg, imm, 1)
 
     def shr_r64_imm8(self, reg: str, imm: int) -> None:
         """Emit `SHR` instruction helper.
@@ -1856,9 +1904,7 @@ class Asm:
             reg: Register name (e.g. 'rax', 'r10', 'eax', 'al').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=1, b=rex_b) + b"\xC1" + self._modrm(3, 5, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(5, reg, imm, 1)
 
     def sar_r64_imm8(self, reg: str, imm: int) -> None:
         """Emit `SAR` instruction helper.
@@ -1867,9 +1913,7 @@ class Asm:
             reg: Register name (e.g. 'rax', 'r10', 'eax', 'al').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=1, b=rex_b) + b"\xC1" + self._modrm(3, 7, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(7, reg, imm, 1)
 
     def shl_r32_imm8(self, reg: str, imm: int) -> None:
         """Emit `SHL` instruction helper.
@@ -1878,9 +1922,7 @@ class Asm:
             reg: Register name (e.g. 'rax', 'r10', 'eax', 'al').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=0, b=rex_b) + b"\xC1" + self._modrm(3, 4, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(4, reg, imm, 0)
 
     def sar_r32_imm8(self, reg: str, imm: int) -> None:
         """Emit `SAR` instruction helper.
@@ -1889,9 +1931,7 @@ class Asm:
             reg: Register name (e.g. 'rax', 'r10', 'eax', 'al').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=0, b=rex_b) + b"\xC1" + self._modrm(3, 7, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(7, reg, imm, 0)
 
     def shr_r32_imm8(self, reg: str, imm: int) -> None:
         """Emit `SHR` instruction helper.
@@ -1900,9 +1940,7 @@ class Asm:
             reg: Register name (e.g. 'eax', 'r10d').
             imm: Immediate integer value.
         """
-        r = self._rid_any(reg)
-        rex_b = 1 if r >= 8 else 0
-        self.emit(self._rex(w=0, b=rex_b) + b"\xC1" + self._modrm(3, 5, r) + bytes([imm & 0xFF]))
+        self._emit_shift_imm8(5, reg, imm, 0)
 
     # ---------------------------------------------------------------------
     # shifts (CL)
@@ -1992,6 +2030,10 @@ class Asm:
         """
         # test r/m64, imm32  => F7 /0 imm32
         r = self._rid_any(reg)
+        if r == 0:
+            # TEST RAX, imm32 has a one-byte opcode and no ModRM byte.
+            self.emit(b"\x48\xA9" + u32(imm))
+            return
         rex_b = 1 if r >= 8 else 0
         self.emit(self._rex(w=1, b=rex_b) + b"\xF7" + self._modrm(3, 0, r) + u32(imm))
 

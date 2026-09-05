@@ -2,7 +2,20 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.5 - 2026-09-05
+
+- Reduced generated x64 code size with accumulator-immediate opcodes,
+  implicit-one shifts, flag-equivalent narrow AND masks, and conservative
+  fallthrough branch-pair folding in both compiler implementations.
+- Added independent opcode/boundary regressions, direct native result/flag
+  comparisons, relocation-chunk/page-boundary checks, and a reproducible
+  alternating A/B size/runtime benchmark. No executable packing is involved.
+- Fixed self-hosted MLO escape analysis losing variadic-array lifetime facts
+  when emitted function bodies were released. A cross-batch regression now
+  checks escaped arrays after their caller returns and garbage collection runs.
+- Refreshed the self-hosted Linux syscall/pthread blob to the same compact
+  encoding and added `scripts/check_linux_runtime_blob.py` to verify its bytes,
+  labels and external relocation offsets against the Python emitter.
 
 ## 1.2.4 - 2026-09-05
 

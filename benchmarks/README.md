@@ -10,6 +10,26 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 # Native primitive benchmarks
 
+## Paired code-size experiments
+
+`compare_code_size.py` compares two already-built native programs, records
+their SHA-256 and file sizes (plus unpadded PE `.text` sizes), performs one
+warmup per image, and alternates A/B and B/A order across repeated runs.
+Nonzero exit codes and timeouts are failures, not timing samples.
+
+```powershell
+python benchmarks/compare_code_size.py --baseline build/before.exe --candidate build/after.exe --runs 7 --output build/size-comparison.json
+```
+
+Append common program arguments after `--`. Use `--wsl` for Linux images on
+Windows; those wall times include WSL startup, while the language optimizer's
+internal millisecond counters measure its individual workloads. Keep compiler
+builds and other CPU-heavy jobs out of the measurement window. This is a
+diagnostic benchmark, not a fixed timing assertion in the regression suite.
+
+The [5 September 2026 experiment](../docs/reports/CODE_SIZE_2026-09-05.md)
+records the initial compact-encoding measurements.
+
 Compile and run `native_primitives.ml` with the compiler revision being
 measured. Redirect each run to a revision-specific text file and compare the
 same machine, power plan, compiler options, and idle-system conditions.
@@ -55,6 +75,8 @@ and escaping variadic tails, and compiler-managed async jobs versus native
 thread creation. It validates equal checksums before reporting time and heap
 deltas. The pairs deliberately isolate one optimizer decision where practical;
 lazy iterators trade throughput for bounded memory, so compare both columns.
+Pass `--long` to the built benchmark for ten times as many arithmetic/call
+iterations; iterator, allocation and threading workload sizes stay unchanged.
 
 ```powershell
 python .\mlc_win64.py .\benchmarks\language_optimizer.ml .\build\language_optimizer.exe -I .

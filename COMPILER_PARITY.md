@@ -24,6 +24,36 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
+## Compact x64 experiment before the 1.2.5 version stamp (5 September 2026)
+
+The compact-encoding experiment intentionally changes output bytes relative to
+1.2.4; it does not change the language or the external ABI. Matching current
+Python and self-hosted builds still agree. The Linux embedded runtime was
+refreshed together with its labels and pthread relocation offsets.
+
+Before the release version stamp, Python-built Stage 1 and self-built Stage 2
+were byte-identical:
+66,048,000 bytes, SHA-256
+`B4820D24D59B267F842C020C5CBD6643B930F7D31662C65FD1060F94B5EADADD`.
+The corresponding same-source image built with the released compiler is
+67,133,952 bytes. This is a code-size comparison, not a compiler speed claim.
+
+The Python and self-hosted MLO builds also match for:
+
+| Target | Bytes | SHA-256 |
+| --- | ---: | --- |
+| MiniDoc, Windows | 15,223,296 | `0263BF3B01345560671828855F26223C6BC23BA7D13EC9CD30E083E47C015E9A` |
+| Language optimizer with long-mode support, Windows | 1,540,608 | `F1A805A58008A451A5594A508A255CED42ABF0D2F8A82AF43D4504DE8A980625` |
+| Language optimizer with long-mode support, Linux | 1,691,952 | `CF974FDC58348407BA73DFAC053A559C0D53E1E9F54AC52C9FDB9F841DB0BF17` |
+
+A newly exposed, pre-existing MLO variadic-array escape bug is fixed as part of
+this work. Its escape proof now survives early function-body release; the
+regression covers escaped data after the creating call returns and GC runs.
+The runtime-blob checker and regression suites protect the new encodings,
+flags, label barriers, relocation/page boundaries and object-output identity.
+See the [measurement report](docs/reports/CODE_SIZE_2026-09-05.md) for scope,
+runtime results and reproduction details.
+
 ## 1.2.4 user-defined operator fixed point
 
 Both frontends now parse and statically resolve the same struct-owned unary and

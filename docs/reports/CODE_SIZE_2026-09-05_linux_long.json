@@ -1,0 +1,396 @@
+{
+  "runs": 7,
+  "warmups_per_image": 1,
+  "order": "alternating AB/BA",
+  "wsl": true,
+  "commands": {
+    "baseline": [
+      "wsl",
+      "--exec",
+      "/mnt/c/Users/nilsk/Desktop/MiniLangCompilerOptimization/MiniLangCompilerML/build/size_long_before_linux",
+      "--long"
+    ],
+    "candidate": [
+      "wsl",
+      "--exec",
+      "/mnt/c/Users/nilsk/Desktop/MiniLangCompilerOptimization/MiniLangCompilerML/build/size_long_after_linux",
+      "--long"
+    ]
+  },
+  "images": {
+    "baseline": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\size_long_before_linux",
+      "file_bytes": 1720624,
+      "sha256": "0c4bef503fd1e3478ee801c48ec39e55ac5c6ccb3a0e053583b5c6b787a37e53"
+    },
+    "candidate": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\size_long_after_linux",
+      "file_bytes": 1691952,
+      "sha256": "cf974fdc58348407ba73dfac053a559c0d53e1e9f54ac52c9fdb9f841db0bf17"
+    }
+  },
+  "samples": [
+    {
+      "image": "baseline",
+      "iteration": 0,
+      "seconds": 9.073644199990667,
+      "metrics": {
+        "typed_arithmetic_ms": 1896,
+        "dynamic_arithmetic_ms": 2062,
+        "auto_inline_ms": 1531,
+        "typed_call_ms": 2910,
+        "eager_iterator_ms": 35,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 74,
+        "escaping_variadic_ms": 105,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 104,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 272
+      },
+      "stdout": "typed_arithmetic_ms=1896 dynamic_arithmetic_ms=2062\nauto_inline_ms=1531 typed_call_ms=2910\neager_iterator_ms=35 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=74 escaping_variadic_ms=105\npooled_async_jobs=4096 elapsed_ms=104\nnative_threads=4096 elapsed_ms=272\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 0,
+      "seconds": 8.670684000011533,
+      "metrics": {
+        "typed_arithmetic_ms": 1800,
+        "dynamic_arithmetic_ms": 1758,
+        "auto_inline_ms": 1386,
+        "typed_call_ms": 2616,
+        "eager_iterator_ms": 33,
+        "lazy_iterator_ms": 28,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 67,
+        "escaping_variadic_ms": 84,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 90,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 248
+      },
+      "stdout": "typed_arithmetic_ms=1800 dynamic_arithmetic_ms=1758\nauto_inline_ms=1386 typed_call_ms=2616\neager_iterator_ms=33 lazy_iterator_ms=28\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=67 escaping_variadic_ms=84\npooled_async_jobs=4096 elapsed_ms=90\nnative_threads=4096 elapsed_ms=248\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 1,
+      "seconds": 8.75409269996453,
+      "metrics": {
+        "typed_arithmetic_ms": 1739,
+        "dynamic_arithmetic_ms": 1846,
+        "auto_inline_ms": 1535,
+        "typed_call_ms": 2872,
+        "eager_iterator_ms": 35,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 74,
+        "escaping_variadic_ms": 92,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 96,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 262
+      },
+      "stdout": "typed_arithmetic_ms=1739 dynamic_arithmetic_ms=1846\nauto_inline_ms=1535 typed_call_ms=2872\neager_iterator_ms=35 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=74 escaping_variadic_ms=92\npooled_async_jobs=4096 elapsed_ms=96\nnative_threads=4096 elapsed_ms=262\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 1,
+      "seconds": 8.81534890003968,
+      "metrics": {
+        "typed_arithmetic_ms": 1815,
+        "dynamic_arithmetic_ms": 1830,
+        "auto_inline_ms": 1529,
+        "typed_call_ms": 2909,
+        "eager_iterator_ms": 37,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 73,
+        "escaping_variadic_ms": 98,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 96,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 263
+      },
+      "stdout": "typed_arithmetic_ms=1815 dynamic_arithmetic_ms=1830\nauto_inline_ms=1529 typed_call_ms=2909\neager_iterator_ms=37 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=73 escaping_variadic_ms=98\npooled_async_jobs=4096 elapsed_ms=96\nnative_threads=4096 elapsed_ms=263\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 2,
+      "seconds": 8.809414600022137,
+      "metrics": {
+        "typed_arithmetic_ms": 1845,
+        "dynamic_arithmetic_ms": 1871,
+        "auto_inline_ms": 1522,
+        "typed_call_ms": 2882,
+        "eager_iterator_ms": 33,
+        "lazy_iterator_ms": 28,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 76,
+        "escaping_variadic_ms": 94,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 96,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 256
+      },
+      "stdout": "typed_arithmetic_ms=1845 dynamic_arithmetic_ms=1871\nauto_inline_ms=1522 typed_call_ms=2882\neager_iterator_ms=33 lazy_iterator_ms=28\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=76 escaping_variadic_ms=94\npooled_async_jobs=4096 elapsed_ms=96\nnative_threads=4096 elapsed_ms=256\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 2,
+      "seconds": 8.835631099995226,
+      "metrics": {
+        "typed_arithmetic_ms": 1868,
+        "dynamic_arithmetic_ms": 1873,
+        "auto_inline_ms": 1490,
+        "typed_call_ms": 2898,
+        "eager_iterator_ms": 34,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 79,
+        "escaping_variadic_ms": 97,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 94,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 260
+      },
+      "stdout": "typed_arithmetic_ms=1868 dynamic_arithmetic_ms=1873\nauto_inline_ms=1490 typed_call_ms=2898\neager_iterator_ms=34 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=79 escaping_variadic_ms=97\npooled_async_jobs=4096 elapsed_ms=94\nnative_threads=4096 elapsed_ms=260\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 3,
+      "seconds": 8.8222192999674,
+      "metrics": {
+        "typed_arithmetic_ms": 1798,
+        "dynamic_arithmetic_ms": 1819,
+        "auto_inline_ms": 1461,
+        "typed_call_ms": 2793,
+        "eager_iterator_ms": 31,
+        "lazy_iterator_ms": 37,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 74,
+        "escaping_variadic_ms": 89,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 95,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 247
+      },
+      "stdout": "typed_arithmetic_ms=1798 dynamic_arithmetic_ms=1819\nauto_inline_ms=1461 typed_call_ms=2793\neager_iterator_ms=31 lazy_iterator_ms=37\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=74 escaping_variadic_ms=89\npooled_async_jobs=4096 elapsed_ms=95\nnative_threads=4096 elapsed_ms=247\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 3,
+      "seconds": 8.931290799984708,
+      "metrics": {
+        "typed_arithmetic_ms": 1770,
+        "dynamic_arithmetic_ms": 1720,
+        "auto_inline_ms": 1413,
+        "typed_call_ms": 2897,
+        "eager_iterator_ms": 33,
+        "lazy_iterator_ms": 28,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 73,
+        "escaping_variadic_ms": 111,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 98,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 272
+      },
+      "stdout": "typed_arithmetic_ms=1770 dynamic_arithmetic_ms=1720\nauto_inline_ms=1413 typed_call_ms=2897\neager_iterator_ms=33 lazy_iterator_ms=28\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=73 escaping_variadic_ms=111\npooled_async_jobs=4096 elapsed_ms=98\nnative_threads=4096 elapsed_ms=272\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 4,
+      "seconds": 8.849437900003977,
+      "metrics": {
+        "typed_arithmetic_ms": 1836,
+        "dynamic_arithmetic_ms": 1862,
+        "auto_inline_ms": 1497,
+        "typed_call_ms": 2905,
+        "eager_iterator_ms": 34,
+        "lazy_iterator_ms": 32,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 76,
+        "escaping_variadic_ms": 94,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 98,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 263
+      },
+      "stdout": "typed_arithmetic_ms=1836 dynamic_arithmetic_ms=1862\nauto_inline_ms=1497 typed_call_ms=2905\neager_iterator_ms=34 lazy_iterator_ms=32\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=76 escaping_variadic_ms=94\npooled_async_jobs=4096 elapsed_ms=98\nnative_threads=4096 elapsed_ms=263\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 4,
+      "seconds": 8.873131899978034,
+      "metrics": {
+        "typed_arithmetic_ms": 1874,
+        "dynamic_arithmetic_ms": 1906,
+        "auto_inline_ms": 1537,
+        "typed_call_ms": 2844,
+        "eager_iterator_ms": 34,
+        "lazy_iterator_ms": 29,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 73,
+        "escaping_variadic_ms": 95,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 93,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 260
+      },
+      "stdout": "typed_arithmetic_ms=1874 dynamic_arithmetic_ms=1906\nauto_inline_ms=1537 typed_call_ms=2844\neager_iterator_ms=34 lazy_iterator_ms=29\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=73 escaping_variadic_ms=95\npooled_async_jobs=4096 elapsed_ms=93\nnative_threads=4096 elapsed_ms=260\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 5,
+      "seconds": 8.963797600008547,
+      "metrics": {
+        "typed_arithmetic_ms": 1871,
+        "dynamic_arithmetic_ms": 1930,
+        "auto_inline_ms": 1524,
+        "typed_call_ms": 2904,
+        "eager_iterator_ms": 33,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 74,
+        "escaping_variadic_ms": 98,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 101,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 275
+      },
+      "stdout": "typed_arithmetic_ms=1871 dynamic_arithmetic_ms=1930\nauto_inline_ms=1524 typed_call_ms=2904\neager_iterator_ms=33 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=74 escaping_variadic_ms=98\npooled_async_jobs=4096 elapsed_ms=101\nnative_threads=4096 elapsed_ms=275\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 5,
+      "seconds": 8.922260800027288,
+      "metrics": {
+        "typed_arithmetic_ms": 1886,
+        "dynamic_arithmetic_ms": 1904,
+        "auto_inline_ms": 1459,
+        "typed_call_ms": 2808,
+        "eager_iterator_ms": 32,
+        "lazy_iterator_ms": 31,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 70,
+        "escaping_variadic_ms": 90,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 96,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 258
+      },
+      "stdout": "typed_arithmetic_ms=1886 dynamic_arithmetic_ms=1904\nauto_inline_ms=1459 typed_call_ms=2808\neager_iterator_ms=32 lazy_iterator_ms=31\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=70 escaping_variadic_ms=90\npooled_async_jobs=4096 elapsed_ms=96\nnative_threads=4096 elapsed_ms=258\n",
+      "stderr": ""
+    },
+    {
+      "image": "baseline",
+      "iteration": 6,
+      "seconds": 8.938587600016035,
+      "metrics": {
+        "typed_arithmetic_ms": 1823,
+        "dynamic_arithmetic_ms": 1783,
+        "auto_inline_ms": 1398,
+        "typed_call_ms": 2683,
+        "eager_iterator_ms": 31,
+        "lazy_iterator_ms": 28,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 69,
+        "escaping_variadic_ms": 87,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 89,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 247
+      },
+      "stdout": "typed_arithmetic_ms=1823 dynamic_arithmetic_ms=1783\nauto_inline_ms=1398 typed_call_ms=2683\neager_iterator_ms=31 lazy_iterator_ms=28\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=69 escaping_variadic_ms=87\npooled_async_jobs=4096 elapsed_ms=89\nnative_threads=4096 elapsed_ms=247\n",
+      "stderr": ""
+    },
+    {
+      "image": "candidate",
+      "iteration": 6,
+      "seconds": 8.905051599955186,
+      "metrics": {
+        "typed_arithmetic_ms": 1798,
+        "dynamic_arithmetic_ms": 1887,
+        "auto_inline_ms": 1443,
+        "typed_call_ms": 2776,
+        "eager_iterator_ms": 31,
+        "lazy_iterator_ms": 30,
+        "eager_iterator_heap_bytes": 45620000,
+        "lazy_iterator_heap_bytes": 0,
+        "stack_variadic_ms": 76,
+        "escaping_variadic_ms": 98,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 94,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 269
+      },
+      "stdout": "typed_arithmetic_ms=1798 dynamic_arithmetic_ms=1887\nauto_inline_ms=1443 typed_call_ms=2776\neager_iterator_ms=31 lazy_iterator_ms=30\neager_iterator_heap_bytes=45620000 lazy_iterator_heap_bytes=0\nstack_variadic_ms=76 escaping_variadic_ms=98\npooled_async_jobs=4096 elapsed_ms=94\nnative_threads=4096 elapsed_ms=269\n",
+      "stderr": ""
+    }
+  ],
+  "medians": {
+    "baseline": {
+      "seconds": 8.922260800027288,
+      "metrics": {
+        "auto_inline_ms": 1497,
+        "dynamic_arithmetic_ms": 1862,
+        "eager_iterator_heap_bytes": 45620000,
+        "eager_iterator_ms": 33,
+        "escaping_variadic_ms": 94,
+        "lazy_iterator_heap_bytes": 0,
+        "lazy_iterator_ms": 30,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 263,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 96,
+        "stack_variadic_ms": 73,
+        "typed_arithmetic_ms": 1836,
+        "typed_call_ms": 2897
+      }
+    },
+    "candidate": {
+      "seconds": 8.835631099995226,
+      "metrics": {
+        "auto_inline_ms": 1490,
+        "dynamic_arithmetic_ms": 1873,
+        "eager_iterator_heap_bytes": 45620000,
+        "eager_iterator_ms": 33,
+        "escaping_variadic_ms": 95,
+        "lazy_iterator_heap_bytes": 0,
+        "lazy_iterator_ms": 30,
+        "native_threads": 4096,
+        "native_threads.elapsed_ms": 260,
+        "pooled_async_jobs": 4096,
+        "pooled_async_jobs.elapsed_ms": 94,
+        "stack_variadic_ms": 74,
+        "typed_arithmetic_ms": 1800,
+        "typed_call_ms": 2844
+      }
+    }
+  }
+}

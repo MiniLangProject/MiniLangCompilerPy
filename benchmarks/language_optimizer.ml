@@ -82,6 +82,12 @@ function main(args)
   asyncWaves = 64
   asyncWidth = 64
 
+  // Longer arithmetic samples make instruction-layout comparisons less
+  // sensitive to coarse Windows ticks and Linux scheduling/startup noise.
+  if len(args) > 0 and args[0] == "--long" then
+    arithmeticIterations = arithmeticIterations * 10
+  end if
+
   // Warm the generated functions before collecting millisecond timings.
   warmup = typedArithmetic(2) + dynamicArithmetic(2) + automaticInline(1) + typedOutOfLine(1)
   if warmup <= 0 then return 1 end if
