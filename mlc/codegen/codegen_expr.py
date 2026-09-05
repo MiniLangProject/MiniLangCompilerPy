@@ -1897,6 +1897,9 @@ class CodegenExpr:
             a.mov_r64_r64("r11", "rax")
 
             # ensure NUL at [base+8+len]
+            # fn_copy_bytes may clobber volatile r9 (notably in ELF builds).
+            # The string header is authoritative after allocation/copy.
+            a.mov_r32_membase_disp("r9d", "r11", 4)
             a.mov_r64_r64("rax", "r11")
             a.add_r64_r64("rax", "r9")
             a.add_rax_imm8(8)

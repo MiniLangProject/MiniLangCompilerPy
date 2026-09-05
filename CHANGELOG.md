@@ -2,6 +2,14 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.6 - 2026-09-05
+
+- Fixed the Python emitter's native C-string return conversion after the copy
+  helper clobbers its volatile length register, preventing GTK text-return crashes.
+- Added matching Unicode, empty and null C-string return regressions in both
+  compiler repositories. The self-hosted conversion already preserved the length.
+- Advanced both compiler versions together and documented MiniGui integration.
+
 ## 1.2.5 - 2026-09-05
 
 - Reduced generated x64 code size with accumulator-immediate opcodes,

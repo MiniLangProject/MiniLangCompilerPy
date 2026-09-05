@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 5 September 2026 against the matching 1.2.5 revisions of:
+Verified through 5 September 2026 against the matching 1.2.6 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -8,6 +8,12 @@ Verified through 5 September 2026 against the matching 1.2.5 revisions of:
 ## Compatibility result
 
 There are two compatibility claims:
+
+Scope note for 1.2.6: native `cstr` return conversion is behaviorally tested in
+both compilers, but its emitter sequences differ (helper calls in Python versus
+an inline scan/copy in MiniLang). Programs using this path are an exception to
+the byte-identity claim below. MiniGui Windows CLI/generator parity is tested;
+Linux FFI correctness does not imply byte-identical Linux GUI executables.
 
 1. **Target-output parity:** for the same sources, include-root order and
    compiler options, the Python compiler and the normal self-hosted path emit
@@ -23,6 +29,16 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.6 patch verification
+
+The Python native C-string return emitter now reloads its length after copying.
+The self-hosted emitter already preserves this length. Both implementations
+compile and run the Linux FFI regression covering Unicode, empty and null string
+returns. The Windows and Linux self-hosted compilers are rebuilt for 1.2.6.
+MiniGui's generator parity, control interaction and cross-platform startup tests
+exercise the patched integration. The 1.2.5 full-suite and fixed-point figures
+below are historical; they are not measurements of the 1.2.6 images.
 
 ## 1.2.5 release verification
 

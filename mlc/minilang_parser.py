@@ -2918,7 +2918,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.2.5",
+    "MINILANG_VERSION": "1.2.6",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 
