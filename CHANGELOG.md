@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.7 - 2026-09-09
+
 - Added cross-platform ECDSA P-256/SHA-256 signature verification through
   Windows CNG and OpenSSL 3, with fixed-width raw public keys/signatures and
   Windows/Linux regression coverage.

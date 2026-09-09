@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 5 September 2026 against the matching 1.2.6 revisions of:
+Verified through 9 September 2026 against the matching 1.2.7 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -9,7 +9,7 @@ Verified through 5 September 2026 against the matching 1.2.6 revisions of:
 
 There are two compatibility claims:
 
-Scope note for 1.2.6: native `cstr` return conversion is behaviorally tested in
+Scope note for 1.2.7: native `cstr` return conversion is behaviorally tested in
 both compilers, but its emitter sequences differ (helper calls in Python versus
 an inline scan/copy in MiniLang). Programs using this path are an exception to
 the byte-identity claim below. MiniGui Windows CLI/generator parity is tested;
@@ -29,6 +29,16 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 1.2.7 patch verification
+
+Both compilers expose the same ECDSA P-256/SHA-256 verification API backed by
+Windows CNG and OpenSSL 3. The positive and mutated-message regressions pass on
+Windows and Linux. For the ECDSA fixture, the Python compiler, self-hosted
+monolithic pipeline and self-hosted object pipeline emit byte-identical PE and
+ELF images. The complete Python suite passes 145/145 tests and the self-hosted
+ported suite passes 136/136 tests. Rebuilding the Windows self-hosted compiler
+from the matching source reaches the same fixed-point SHA-256.
 
 ## 1.2.6 patch verification
 
