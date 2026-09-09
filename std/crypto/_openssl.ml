@@ -22,6 +22,9 @@ const EVP_CTRL_GCM_SET_TAG = 0x11
 /// Track the evp pkey x25519 value used by this standard-library module.
 /// @internal
 const EVP_PKEY_X25519 = 1034
+/// OpenSSL numeric identifier for the NIST P-256 curve.
+/// @internal
+const NID_X9_62_PRIME256V1 = 415
 
 /// Provide the sha256 operation for this standard-library module.
 /// @internal
@@ -103,6 +106,46 @@ extern function _deriveSetPeer(context as ptr, peer as ptr) from "libcrypto.so.3
 /// Provide the derive operation for this standard-library module.
 /// @internal
 extern function _derive(context as ptr, output as ptr, outputLength as bytes) from "libcrypto.so.3" symbol "EVP_PKEY_derive" returns i32
+
+/// Create an EC key for a named curve.
+/// @internal
+extern function _ecKeyNewByCurveName(nid as int) from "libcrypto.so.3" symbol "EC_KEY_new_by_curve_name" returns ptr
+/// Release an EC key.
+/// @internal
+extern function _ecKeyFree(key as ptr) from "libcrypto.so.3" symbol "EC_KEY_free" returns void
+/// Return the immutable group associated with an EC key.
+/// @internal
+extern function _ecKeyGetGroup(key as ptr) from "libcrypto.so.3" symbol "EC_KEY_get0_group" returns ptr
+/// Set an EC public point on a key.
+/// @internal
+extern function _ecKeySetPublicKey(key as ptr, point as ptr) from "libcrypto.so.3" symbol "EC_KEY_set_public_key" returns i32
+/// Allocate a point in an EC group.
+/// @internal
+extern function _ecPointNew(group as ptr) from "libcrypto.so.3" symbol "EC_POINT_new" returns ptr
+/// Release an EC point.
+/// @internal
+extern function _ecPointFree(point as ptr) from "libcrypto.so.3" symbol "EC_POINT_free" returns void
+/// Decode an SEC1 point octet string.
+/// @internal
+extern function _ecPointOct2Point(group as ptr, point as ptr, input as ptr, inputLength as u64, context as ptr) from "libcrypto.so.3" symbol "EC_POINT_oct2point" returns i32
+/// Allocate an ECDSA signature value.
+/// @internal
+extern function _ecdsaSigNew() from "libcrypto.so.3" symbol "ECDSA_SIG_new" returns ptr
+/// Release an ECDSA signature value.
+/// @internal
+extern function _ecdsaSigFree(signature as ptr) from "libcrypto.so.3" symbol "ECDSA_SIG_free" returns void
+/// Transfer r and s into an ECDSA signature value.
+/// @internal
+extern function _ecdsaSigSet0(signature as ptr, r as ptr, s as ptr) from "libcrypto.so.3" symbol "ECDSA_SIG_set0" returns i32
+/// Parse a big-endian unsigned integer.
+/// @internal
+extern function _bnBin2Bn(input as ptr, inputLength as int, result as ptr) from "libcrypto.so.3" symbol "BN_bin2bn" returns ptr
+/// Release a big number that has not been transferred to another object.
+/// @internal
+extern function _bnFree(value as ptr) from "libcrypto.so.3" symbol "BN_free" returns void
+/// Verify an ECDSA signature over a caller-supplied digest.
+/// @internal
+extern function _ecdsaDoVerify(digest as ptr, digestLength as int, signature as ptr, key as ptr) from "libcrypto.so.3" symbol "ECDSA_do_verify" returns i32
 
 /// Provide the put u64 operation for this standard-library module.
 /// @internal
@@ -281,5 +324,50 @@ function x25519(privateKey, publicKey, output)
   if privateHandle != 0 then _keyFree(privateHandle) end if
   _zero(outputLength)
   if not ok then _zero(output) end if
+  return ok
+end function
+
+/// Verify a raw IEEE-P1363 ECDSA-P256 signature over a SHA-256 digest.
+/// @internal
+function ecdsaP256Verify(publicKey, digest, signature)
+  key = _ecKeyNewByCurveName(NID_X9_62_PRIME256V1)
+  group = 0
+  point = 0
+  nativeSignature = 0
+  r = 0
+  s = 0
+  transferred = false
+  ok = key != 0
+
+  encodedPoint = bytes(65, 0)
+  encodedPoint[0] = 4
+  copyBytes(encodedPoint, 1, publicKey, 0, 64)
+  if ok then
+    group = _ecKeyGetGroup(key)
+    point = _ecPointNew(group)
+    ok = group != 0 and point != 0
+  end if
+  if ok then ok = _ecPointOct2Point(group, point, nativeBytesPtr(encodedPoint), len(encodedPoint), 0) == 1 end if
+  if ok then ok = _ecKeySetPublicKey(key, point) == 1 end if
+  if ok then
+    nativeSignature = _ecdsaSigNew()
+    r = _bnBin2Bn(nativeBytesPtr(signature), 32, 0)
+    s = _bnBin2Bn(nativeBytesPtr(signature) + 32, 32, 0)
+    ok = nativeSignature != 0 and r != 0 and s != 0
+  end if
+  if ok then
+    transferred = _ecdsaSigSet0(nativeSignature, r, s) == 1
+    ok = transferred
+  end if
+  if ok then ok = _ecdsaDoVerify(nativeBytesPtr(digest), len(digest), nativeSignature, key) == 1 end if
+
+  if not transferred then
+    if r != 0 then _bnFree(r) end if
+    if s != 0 then _bnFree(s) end if
+  end if
+  if nativeSignature != 0 then _ecdsaSigFree(nativeSignature) end if
+  if point != 0 then _ecPointFree(point) end if
+  if key != 0 then _ecKeyFree(key) end if
+  _zero(encodedPoint)
   return ok
 end function

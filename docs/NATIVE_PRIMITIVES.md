@@ -44,7 +44,10 @@ HKDF-SHA-256, HKDF-SHA-384, PBKDF2-HMAC-SHA-256,
 PBKDF2-HMAC-SHA-384, X25519, secure random bytes,
 `constantTimeEquals`, and best-effort `secureZero`.
 `std.crypto.aes_gcm` provides AES-256-GCM `seal`/`open` and
-`encrypt`/`decrypt`.
+`encrypt`/`decrypt`. `std.crypto.ecdsa_p256.verify(publicKey, message,
+signature)` verifies ECDSA P-256/SHA-256 signatures. Public keys use the
+64-byte big-endian `X || Y` representation and signatures use the fixed-width
+64-byte IEEE-P1363 `r || s` representation.
 
 Cryptographic operations are delegated to Windows CNG (`bcrypt.dll`) or Linux
 OpenSSL 3 (`libcrypto.so.3`) rather than application-level MiniLang loops. The
@@ -53,6 +56,12 @@ exactly 32-byte keys, nonces from 12 through 16 bytes, and tags from 12 through
 16 bytes. Decryption returns an error and wipes its temporary output when native
 authentication fails, so unauthenticated plaintext is never returned.
 Ciphertext, tag, nonce, AAD, or key changes therefore fail authentication.
+
+ECDSA verification hashes the message with SHA-256 in the public wrapper and
+delegates curve operations to CNG or OpenSSL. It returns `false` for malformed
+arguments, invalid public points, backend failures, and signature mismatch.
+Signing and key generation intentionally remain build-time concerns rather
+than executable runtime APIs.
 
 X25519 uses CNG's `curve25519` provider on Windows and EVP raw X25519 keys on
 Linux. The Windows bridge converts CNG's raw-secret byte order to RFC 7748
@@ -103,5 +112,5 @@ detected features; passing `-1` restores them. It exists for deterministic
 fallback tests and benchmarks, not for application feature spoofing.
 
 The focused suites are `tests/checksum_runtime.ml`,
-`tests/crypto_cng.ml`, and `tests/simd_search.ml`. Reproducible diagnostic
+`tests/crypto_cng.ml`, `tests/ecdsa_p256.ml`, and `tests/simd_search.ml`. Reproducible diagnostic
 benchmarks and comparison guidance are in `benchmarks/`.

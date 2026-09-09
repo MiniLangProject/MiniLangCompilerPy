@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2617 |
+| Blank lines | 2633 |
 | Clone groups | 164 |
-| Cognitive complexity | 2983 (maximum per function: 116) |
-| Comment lines | 3999 |
-| Cyclomatic complexity | 3393 (average: 3.58, maximum: 32) |
-| Documentation coverage | 100% (1815 of 1815 documentation items) |
-| Duplicated lines | 1028 (10.28%) |
-| Files | 47 |
-| Functions | 949 |
-| Maintainability index | 8.2 / 100 |
-| Physical lines | 16609 |
-| Source lines | 9996 |
-| Statements | 7085 |
+| Cognitive complexity | 3007 (maximum per function: 116) |
+| Comment lines | 4060 |
+| Cyclomatic complexity | 3418 (average: 3.59, maximum: 32) |
+| Documentation coverage | 100% (1820 of 1820 documentation items) |
+| Duplicated lines | 1028 (10.19%) |
+| Files | 48 |
+| Functions | 952 |
+| Maintainability index | 8.11 / 100 |
+| Physical lines | 16782 |
+| Source lines | 10092 |
+| Statements | 7163 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 714 | 714 | 100% |
-| Constants | 121 | 121 | 100% |
+| API declarations | 715 | 715 | 100% |
+| Constants | 122 | 122 | 100% |
 | Enum variants | 22 | 22 | 100% |
 | Fields | 186 | 186 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1815 | 1815 | 100% |
-| Parameters | 771 | 771 | 100% |
+| Overall | 1820 | 1820 | 100% |
+| Parameters | 774 | 774 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3018 | 40757 | 27690 | 3074 | 68447 | 793020.2 | 256.9 | 203725784.78 | 264.34 |
+| 56 | 3065 | 41262 | 28090 | 3121 | 69352 | 805023.63 | 256.61 | 206579833.34 | 268.34 |
 
 ## Files
 
@@ -61,9 +61,10 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/core.ml`](File-std-core-ml-750389783.md) | 82 | 16 | 28 / 1.75 / 4 | 12 / 3 | 29 (35.37%) | 1907.85 | 31.52 |
 | [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 17 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 320 | 55.21 |
 | [`std/crypto.ml`](File-std-crypto-ml-1263151193.md) | 98 | 16 | 59 / 3.69 / 10 | 43 / 9 | 0 (0%) | 6101.03 | 22.12 |
-| [`std/crypto/_cng.ml`](File-std-crypto-cng-ml-1099901917.md) | 302 | 15 | 72 / 4.8 / 13 | 60 / 14 | 46 (15.23%) | 20707.21 | 6 |
-| [`std/crypto/_openssl.ml`](File-std-crypto-openssl-ml-882852629.md) | 174 | 11 | 64 / 5.82 / 21 | 69 / 32 | 0 (0%) | 14986.94 | 13.28 |
+| [`std/crypto/_cng.ml`](File-std-crypto-cng-ml-1099901917.md) | 330 | 16 | 77 / 4.81 / 13 | 64 / 14 | 46 (13.94%) | 22841.88 | 4.18 |
+| [`std/crypto/_openssl.ml`](File-std-crypto-openssl-ml-882852629.md) | 228 | 12 | 77 / 6.42 / 21 | 83 / 32 | 0 (0%) | 19690.73 | 8.14 |
 | [`std/crypto/aes_gcm.ml`](File-std-crypto-aes-gcm-ml-264581731.md) | 48 | 6 | 26 / 4.33 / 10 | 20 / 9 | 0 (0%) | 2739.36 | 35.76 |
+| [`std/crypto/ecdsa_p256.ml`](File-std-crypto-ecdsa-p256-ml-1815373426.md) | 14 | 1 | 7 / 7 / 7 | 6 / 6 | 0 (0%) | 660.68 | 54.31 |
 | [`std/ds/concurrent_hashmap.ml`](File-std-ds-concurrent-hashmap-ml-1798836270.md) | 307 | 25 | 90 / 3.6 / 11 | 77 / 17 | 88 (28.66%) | 13050.58 | 4.82 |
 | [`std/ds/concurrent_list.ml`](File-std-ds-concurrent-list-ml-291130726.md) | 242 | 25 | 82 / 3.28 / 7 | 57 / 6 | 45 (18.6%) | 9342.33 | 9.17 |
 | [`std/ds/hashmap.ml`](File-std-ds-hashmap-ml-1269372918.md) | 235 | 21 | 66 / 3.14 / 12 | 60 / 22 | 29 (12.34%) | 8345.82 | 11.94 |
@@ -307,6 +308,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.crypto.aes_gcm.open`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-open-function-open-key-nonce-sealed-aad-taglength-std-crypto-aes-gcm-ml-1220352403) | `std/crypto/aes_gcm.ml:77` | 10 | 6 | 5 | 4 | 1 | 468.05 | 58.82 |
 | [`std.crypto.aes_gcm.seal`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-seal-function-seal-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-1614549846) | `std/crypto/aes_gcm.ml:59` | 11 | 8 | 5 | 4 | 1 | 531.36 | 57.53 |
 | [`std.crypto.constantTimeEquals`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-constanttimeequals-function-constanttimeequals-a-b-std-crypto-ml-1925949949) | `std/crypto.ml:148` | 4 | 3 | 3 | 2 | 1 | 143.06 | 71.37 |
+| [`std.crypto.ecdsa_p256.verify`](File-std-crypto-ecdsa-p256-ml-1815373426.md#function-function-std-crypto-ecdsa-p256-verify-function-verify-publickey-message-signature-std-crypto-ecdsa-p256-ml-1397114268) | `std/crypto/ecdsa_p256.ml:37` | 10 | 12 | 7 | 6 | 1 | 495.6 | 58.37 |
 | [`std.crypto.hkdfSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha256-function-hkdfsha256-inputkeymaterial-salt-info-length-std-crypto-ml-1740727018) | `std/crypto.ml:94` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
 | [`std.crypto.hkdfSha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha384-function-hkdfsha384-inputkeymaterial-salt-info-length-std-crypto-ml-1751700406) | `std/crypto.ml:103` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
 | [`std.crypto.hmacSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hmacsha256-function-hmacsha256-key-input-std-crypto-ml-689688099) | `std/crypto.ml:56` | 6 | 6 | 4 | 3 | 1 | 302.86 | 65.11 |
@@ -1790,7 +1792,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     buffer [ offset + 3 ] = ( value >> 24 ) & 0xFF
     end function
 
-- [`std/crypto/_cng.ml:102`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:108`](File-std-crypto-cng-ml-1099901917.md)
 - [`std/net.ml:386`](File-std-net-ml-1989130045.md)
 
 </details>
@@ -1805,8 +1807,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     if not ok then _zero ( output ) end if
     return ok
 
-- [`std/crypto/_cng.ml:151`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/crypto/_cng.ml:177`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:157`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:183`](File-std-crypto-cng-ml-1099901917.md)
 
 </details>
 
@@ -1820,8 +1822,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     return ok
     end function
 
-- [`std/crypto/_cng.ml:152`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/crypto/_cng.ml:178`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:158`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:184`](File-std-crypto-cng-ml-1099901917.md)
 
 </details>
 
@@ -1835,8 +1837,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     ok = status == 0 and privateHandle != 0
     end if
 
-- [`std/crypto/_cng.ml:346`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/crypto/_cng.ml:382`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:352`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:388`](File-std-crypto-cng-ml-1099901917.md)
 
 </details>
 
@@ -1850,8 +1852,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     end if
     if ok then
 
-- [`std/crypto/_cng.ml:347`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/crypto/_cng.ml:383`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:353`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:389`](File-std-crypto-cng-ml-1099901917.md)
 
 </details>
 
@@ -1865,8 +1867,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     return ok
     end function
 
-- [`std/crypto/_cng.ml:361`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/crypto/_cng.ml:422`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:367`](File-std-crypto-cng-ml-1099901917.md)
+- [`std/crypto/_cng.ml:428`](File-std-crypto-cng-ml-1099901917.md)
 
 </details>
 

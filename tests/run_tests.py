@@ -743,6 +743,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
+        (tests_root / "ecdsa_p256.ml", ["[OK] ECDSA-P256"], []),
         (tests_root / "shared_value.ml", ["[OK] portable native shared-value snapshots"], []),
         (tests_root / "platform_services.ml", ["=== PLATFORM SERVICES DONE ==="], []),
         (tests_root / "thread_features.ml",
@@ -4143,6 +4144,7 @@ def main() -> int:
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
     simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
     crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
+    ecdsa_p256_ml = find_file_by_name(tests_root, "ecdsa_p256.ml")
     platform_services_ml = find_file_by_name(tests_root, "platform_services.ml")
     object_entry_inline_ml = find_file_by_name(tests_root, "object_entry_inline.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
@@ -4326,6 +4328,7 @@ def main() -> int:
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
         ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
+        ("ecdsa_p256.ml (cross-platform signature verification)", ecdsa_p256_ml, "[OK] ECDSA-P256"),
         ("platform_services.ml (portable OS and durable I/O)", platform_services_ml, "=== PLATFORM SERVICES DONE ==="),
         ("object_entry_inline.ml (entry initializer inline)", object_entry_inline_ml, "[OK] object entry inline"),
     ]:

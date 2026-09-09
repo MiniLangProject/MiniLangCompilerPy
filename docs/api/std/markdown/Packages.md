@@ -20,6 +20,7 @@
 - [std.crypto._cng](Package-std-crypto-cng-1689638184.md)
 - [std.crypto._openssl](Package-std-crypto-openssl-283241284.md)
 - [std.crypto.aes_gcm](Package-std-crypto-aes-gcm-1236376730.md)
+- [std.crypto.ecdsa_p256](Package-std-crypto-ecdsa-p256-1946688473.md)
 - [std.ds.concurrent_hashmap](Package-std-ds-concurrent-hashmap-1876233881.md)
 - [std.ds.concurrent_list](Package-std-ds-concurrent-list-265784845.md)
 - [std.ds.hashmap](Package-std-ds-hashmap-123847485.md)

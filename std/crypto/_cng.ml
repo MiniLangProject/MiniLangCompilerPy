@@ -72,6 +72,9 @@ extern function BCryptDestroySecret(secret as ptr) from "bcrypt.dll" returns i32
 /// Provide the bcrypt derive key pbkdf2 operation for this standard-library module.
 /// @internal
 extern function BCryptDeriveKeyPBKDF2(provider as ptr, password as ptr, passwordLength as u32, salt as ptr, saltLength as u32, iterations as u64, output as ptr, outputLength as u32, flags as u32) from "bcrypt.dll" returns i32
+/// Verify an asymmetric signature over a caller-supplied digest.
+/// @internal
+extern function BCryptVerifySignature(key as ptr, paddingInfo as ptr, hash as ptr, hashLength as u32, signature as ptr, signatureLength as u32, flags as u32) from "bcrypt.dll" returns i32
 
 /// Track the bcrypt alg handle hmac flag value used by this standard-library module.
 /// @internal
@@ -88,6 +91,9 @@ const BCRYPT_ECDH_PUBLIC_GENERIC_MAGIC = 0x504B4345
 /// Track the bcrypt ecdh private generic magic value used by this standard-library module.
 /// @internal
 const BCRYPT_ECDH_PRIVATE_GENERIC_MAGIC = 0x564B4345
+/// Magic used by a CNG P-256 ECDSA public-key blob.
+/// @internal
+const BCRYPT_ECDSA_PUBLIC_P256_MAGIC = 0x31534345
 
 /// Encode a low 64-bit native address into a C structure.
 /// @internal
@@ -423,5 +429,38 @@ function x25519(privateKey, publicKey, output)
   _zero(privateBlob)
   _zero(publicBlob)
   if not ok then _zero(output) end if
+  return ok
+end function
+
+/// Verify a raw IEEE-P1363 ECDSA-P256 signature over a SHA-256 digest.
+/// Public keys are the 64-byte big-endian X||Y representation and signatures
+/// are the 64-byte big-endian r||s representation.
+/// @internal
+function ecdsaP256Verify(publicKey, digest, signature)
+  providerBytes = bytes(8, 0)
+  keyHandleBytes = bytes(8, 0)
+  publicBlob = bytes(72, 0)
+  _putU32(publicBlob, 0, BCRYPT_ECDSA_PUBLIC_P256_MAGIC)
+  _putU32(publicBlob, 4, 32)
+  copyBytes(publicBlob, 8, publicKey, 0, 64)
+
+  status = BCryptOpenAlgorithmProvider(providerBytes, "ECDSA_P256", 0, 0)
+  provider = _getPtr(providerBytes)
+  keyHandle = 0
+  ok = status == 0 and provider != 0
+  if ok then
+    status = BCryptImportKeyPair(provider, 0, "ECCPUBLICBLOB", keyHandleBytes, nativeBytesPtr(publicBlob), len(publicBlob), 0)
+    keyHandle = _getPtr(keyHandleBytes)
+    ok = status == 0 and keyHandle != 0
+  end if
+  if ok then
+    ok = BCryptVerifySignature(keyHandle, 0, nativeBytesPtr(digest), len(digest), nativeBytesPtr(signature), len(signature), 0) == 0
+  end if
+
+  if keyHandle != 0 then BCryptDestroyKey(keyHandle) end if
+  if provider != 0 then BCryptCloseAlgorithmProvider(provider, 0) end if
+  _zero(providerBytes)
+  _zero(keyHandleBytes)
+  _zero(publicBlob)
   return ok
 end function

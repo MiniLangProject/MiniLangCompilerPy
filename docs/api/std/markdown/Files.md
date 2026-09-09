@@ -19,9 +19,10 @@
 | [std/core.ml](File-std-core-ml-750389783.md) | `std.core` | yes | 16 |
 | [std/cpu.ml](File-std-cpu-ml-1561418518.md) | `std.cpu` | no | 10 |
 | [std/crypto.ml](File-std-crypto-ml-1263151193.md) | `std.crypto` | no | 17 |
-| [std/crypto/_cng.ml](File-std-crypto-cng-ml-1099901917.md) | `std.crypto._cng` | no | 37 |
-| [std/crypto/_openssl.ml](File-std-crypto-openssl-ml-882852629.md) | `std.crypto._openssl` | no | 41 |
+| [std/crypto/_cng.ml](File-std-crypto-cng-ml-1099901917.md) | `std.crypto._cng` | no | 40 |
+| [std/crypto/_openssl.ml](File-std-crypto-openssl-ml-882852629.md) | `std.crypto._openssl` | no | 56 |
 | [std/crypto/aes_gcm.ml](File-std-crypto-aes-gcm-ml-264581731.md) | `std.crypto.aes_gcm` | no | 10 |
+| [std/crypto/ecdsa_p256.ml](File-std-crypto-ecdsa-p256-ml-1815373426.md) | `std.crypto.ecdsa_p256` | no | 2 |
 | [std/ds/concurrent_hashmap.ml](File-std-ds-concurrent-hashmap-ml-1798836270.md) | `std.ds.concurrent_hashmap` | no | 37 |
 | [std/ds/concurrent_list.ml](File-std-ds-concurrent-list-ml-291130726.md) | `std.ds.concurrent_list` | no | 32 |
 | [std/ds/hashmap.ml](File-std-ds-hashmap-ml-1269372918.md) | `std.ds.hashmap` | no | 30 |

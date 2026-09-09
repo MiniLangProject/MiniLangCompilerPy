@@ -2,6 +2,12 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Added cross-platform ECDSA P-256/SHA-256 signature verification through
+  Windows CNG and OpenSSL 3, with fixed-width raw public keys/signatures and
+  Windows/Linux regression coverage.
+
 ## 1.2.6 - 2026-09-05
 
 - Fixed the Python emitter's native C-string return conversion after the copy

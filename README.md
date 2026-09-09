@@ -3146,17 +3146,18 @@ GC flags:
 
 The standard library includes reusable CRC-32C/CRC-32, platform-native
 cryptography, and CPU-dispatched byte/string search. Public wrappers live in
-`std.checksum.*`, `std.crypto`, `std.crypto.aes_gcm`, and `std.cpu`;
+`std.checksum.*`, `std.crypto`, `std.crypto.aes_gcm`,
+`std.crypto.ecdsa_p256`, and `std.cpu`;
 checksum helpers and their lookup tables are emitted only when referenced,
 while search accelerates the existing first-class string/bytes builtins.
 
 CRC-32C uses SSE4.2 when available and a bit-identical software fallback.
 Search uses AVX2, SSE2, or scalar candidate scans while preserving byte-indexed
 string semantics. Cryptography is backed by Windows CNG or Linux OpenSSL 3 and includes
-AES-256-GCM, SHA-256/384, HMAC, HKDF, X25519, system CSPRNG,
+AES-256-GCM, ECDSA P-256/SHA-256 verification, SHA-256/384, HMAC, HKDF, X25519, system CSPRNG,
 constant-time byte comparison, and best-effort secure erasure.
 
 See [the native primitives guide](docs/NATIVE_PRIMITIVES.md) for API details,
 polynomials, dispatch controls, and security assumptions. Focused tests live in
-`tests/checksum_runtime.ml`, `tests/crypto_cng.ml`, and
+`tests/checksum_runtime.ml`, `tests/crypto_cng.ml`, `tests/ecdsa_p256.ml`, and
 `tests/simd_search.ml`; reproducible measurements live in `benchmarks/`.
