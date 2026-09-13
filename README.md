@@ -9,6 +9,8 @@ Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
 Release 1.0.0 and later are source-only: generated `.exe` files are not
 tracked in Git and are not attached to GitHub releases.
+[Matching native 1.2.8 Windows and Linux packages](https://github.com/MiniLangProject/MiniLangCompilerML/releases/tag/v1.2.8)
+are published by the self-hosted compiler repository with SHA-256 sidecars.
 
 MiniLang (`.ml`) is a small, dynamically typed language that compiles with
 `mlc_win64.py` to native Windows x64 (PE32+) or Linux x64 (ELF64) images.

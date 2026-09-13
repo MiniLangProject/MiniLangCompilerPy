@@ -47,6 +47,20 @@ The complete self-hosted outer suite, including both new positive regressions
 and the three expected compile failures, passes in 231.947 seconds; its embedded
 MiniLang test harness passes 136/136.
 
+Published 1.2.8 self-hosted artifacts were verified after upload:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Windows compiler (`mlc.exe`) | 65,274,880 | `60DB15723F1D33AFCCBAF81657E91569811C38CF54A320117857C29027700E0B` |
+| Linux compiler (`mlc`) | 65,244,848 | `8BF4FDDDB7D68F2B5B3613D0FA715AA69A1B7FC68E7EC392F67B319141893DB8` |
+| Windows x64 ZIP | 9,666,181 | `0CA1D2C37AB0D35FE123666C9A226DB3F43B4772FA913E9BDD01B84F08046E09` |
+| Linux x64 tar.gz | 9,635,572 | `A30F590339D977A3B1ECDDCD1BFAA17DDF326F707689541AC268ED4CAF077B66` |
+
+Both archive digests match their published `.sha256` sidecars. The package
+manifests identify self-hosted source revision
+`6ac0bd31a8055ba21495a01ebd1a7d1a305dd2eb` and record the executable digest
+shown above.
+
 ## 1.2.7 patch verification
 
 Both compilers expose the same ECDSA P-256/SHA-256 verification API backed by
