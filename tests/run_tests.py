@@ -348,7 +348,7 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.7"
+    expected = "MiniLang Compiler 1.2.8"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4186,7 +4186,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.7", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.8", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4223,6 +4223,26 @@ def main() -> int:
         name="declaration comments remain compile-time-only",
         mlc_runner=mlc_runner, ml_path=tests_root / "declaration_comments.ml",
         must_contain=["[OK] declaration comments"]))
+    tests.append(lambda: test_program_no_fail(
+        name="safe indexing, integer conversion, div and struct defaults",
+        mlc_runner=mlc_runner, ml_path=tests_root / "safe_indexing_and_integer_conversions.ml",
+        must_contain=["SAFE INDEXING AND INTEGER CONVERSIONS [OK]"]))
+    tests.append(lambda: test_program_no_fail(
+        name="long string concat chains compile iteratively",
+        mlc_runner=mlc_runner, ml_path=tests_root / "long_string_concat.ml",
+        must_contain=["LONG STRING CONCAT [OK]"]))
+    tests.append(lambda: test_compile_expected_fail(
+        name="static index type diagnostics",
+        mlc_runner=mlc_runner, entry_ml=tests_root / "static_index_type_invalid.ml",
+        must_contain_err="Index must be an int; statically known type is 'float'"))
+    tests.append(lambda: test_compile_expected_fail(
+        name="static index bounds diagnostics",
+        mlc_runner=mlc_runner, entry_ml=tests_root / "static_index_bounds_invalid.ml",
+        must_contain_err="Index 3 is out of bounds for statically known length 3"))
+    tests.append(lambda: test_compile_expected_fail(
+        name="static struct member diagnostics",
+        mlc_runner=mlc_runner, entry_ml=tests_root / "static_struct_member_invalid.ml",
+        must_contain_err="Struct 'Player' has no member 'missing'"))
 
     if language_extensions_ml is not None:
         tests.append(lambda: test_program_no_fail(

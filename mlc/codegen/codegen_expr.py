@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import copy
 import re
 import struct
 from typing import Any, List, Optional
@@ -409,6 +410,13 @@ class CodegenExpr:
                         return wrap_i61(int(r))
                     return float(r)
                 return self._OPT_NO
+            if op == 'div':
+                if (isinstance(lv, int) and isinstance(rv, int)
+                        and not isinstance(lv, bool) and not isinstance(rv, bool)):
+                    if rv == 0:
+                        return self._OPT_NO
+                    return wrap_i61(lv // rv)
+                return self._OPT_NO
             if op == '%':
                 if isinstance(lv, int) and isinstance(rv, int) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     if rv == 0:
@@ -690,6 +698,8 @@ class CodegenExpr:
                 return 'int'
             if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
                 return 'int'
+            if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                return 'int'
             if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
                 return 'number'
             if (op in ('/', '%') and lb in ('int', 'float', 'number')
@@ -711,7 +721,7 @@ class CodegenExpr:
                 return 'int'
             if base == 'string' and index_base == 'int':
                 return 'string'
-        if bool(getattr(self, 'operator_overloads_present', False)) and isinstance(e, getattr(ml, 'Call', ())):
+        if isinstance(e, getattr(ml, 'Call', ())):
             callee = getattr(e, 'callee', None)
             try:
                 fn_qname = self._native_callback_resolve_user_fn(callee)
@@ -792,6 +802,29 @@ class CodegenExpr:
             # when their eventual slot is statically in range.
             plan['bounds_proven'] = 0 <= const_index < exact_len
         return plan
+
+    def _validate_statically_known_index(self, e: Any) -> None:
+        """Reject index mistakes proven by local type/length facts.
+
+        Unknown or flow-dependent values deliberately retain the existing
+        catchable runtime checks; this diagnostic only fires when compilation
+        can establish that execution would fail.
+        """
+        target = getattr(e, 'target', None)
+        index = getattr(e, 'index', None)
+        target_fact = self._opt_expr_known_type(target)
+        target_kind = self._opt_value_type_base(target_fact)
+        if target_kind not in ('array', 'bytes', 'bytes?', 'string'):
+            return
+        index_kind = self._opt_value_type_base(self._opt_expr_known_type(index))
+        if index_kind is not None and index_kind != 'int':
+            raise self.error(f"Index must be an int; statically known type is '{index_kind}'", index)
+        exact_len = self._opt_value_type_exact_length(target_fact)
+        const_index = self._opt_try_const_int(index)
+        if isinstance(exact_len, int) and isinstance(const_index, int):
+            if const_index < -exact_len or const_index >= exact_len:
+                raise self.error(
+                    f"Index {const_index} is out of bounds for statically known length {exact_len}", index)
 
     def _opt_emit_known_index(self, e: Any, plan: dict[str, Any]) -> None:
         """Emit an index read with statically selected container layout."""
@@ -1523,6 +1556,40 @@ class CodegenExpr:
             a.mov_rax_rip_qword('gc_tmp3')
         finally:
             self.free_expr_temps((len(parts) + 1) * 8)
+
+    def _try_emit_left_string_concat_chain(self, expr: Any) -> bool:
+        """Lower a left-associated string concat without recursive tree walk.
+
+        Once the left-most operand is statically a string, every following
+        ``+`` in the left spine is necessarily string concatenation. Emitting
+        that spine iteratively preserves left-to-right behavior while avoiding
+        deep compiler recursion and repeated dynamic add dispatch blocks.
+        """
+        ml = self.ml
+        if not isinstance(expr, getattr(ml, 'Bin', ())) or getattr(expr, 'op', None) != '+':
+            return False
+        rights: List[Any] = []
+        current = expr
+        while isinstance(current, getattr(ml, 'Bin', ())) and getattr(current, 'op', None) == '+':
+            rights.append(getattr(current, 'right', None))
+            current = getattr(current, 'left', None)
+        if len(rights) < 2 or self._opt_value_type_base(self._opt_expr_known_type(current)) != 'string':
+            return False
+
+        a = self.asm
+        accumulator = self.alloc_expr_temps(8)
+        self.emit_expr(current)
+        a.mov_rsp_disp32_rax(accumulator)
+        for right in reversed(rights):
+            self.emit_expr(right)
+            a.mov_r64_r64('rdx', 'rax')
+            a.mov_r64_membase_disp('rcx', 'rsp', accumulator)
+            a.call('fn_add_string')
+            self._emit_auto_errprop()
+            a.mov_rsp_disp32_rax(accumulator)
+        a.mov_rax_rsp_disp32(accumulator)
+        self.free_expr_temps(8)
+        return True
 
 
     def _emit_auto_errprop(self) -> None:
@@ -3297,6 +3364,10 @@ class CodegenExpr:
                     field_index = fields_fast.index(field_fast)
                     a.mov_r64_membase_disp('rax', 'rax', 8 + field_index * 8)
                     return
+                methods_fast = ((getattr(self, 'struct_methods', {}) or {}).get(struct_qname, {}) or {})
+                if isinstance(fields_fast, list) and field_fast not in methods_fast:
+                    raise self.error(
+                        f"Struct '{struct_qname}' has no member '{field_fast}'", e)
 
             self.emit_expr(tgt)
 
@@ -3574,6 +3645,8 @@ class CodegenExpr:
 
         if isinstance(e, ml.Bin):
             if self._emit_operator_overload(str(e.op), [e.left, e.right], e):
+                return
+            if self._try_emit_left_string_concat_chain(e):
                 return
             # logical short-circuit
             if e.op in ('and', 'or'):
@@ -3911,6 +3984,48 @@ class CodegenExpr:
                 self.emit_normalize_xmm0_to_value()
                 a.jmp(l_done)
 
+                a.mark(l_fail)
+                a.mov_rax_imm64(enc_void())
+                a.mark(l_done)
+                return
+
+            # 'div' is explicit floor division for integer operands. It never
+            # silently turns an integer expression into a floating-point index.
+            if e.op == 'div':
+                lid = self.new_label_id()
+                l_fail = f"intdiv_fail_{lid}"
+                l_retag = f"intdiv_retag_{lid}"
+                l_done = f"intdiv_done_{lid}"
+
+                a.mov_rax_r10()
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_INT)
+                a.jcc('ne', l_fail)
+                a.mov_rax_r11()
+                a.and_rax_imm8(7)
+                a.cmp_rax_imm8(TAG_INT)
+                a.jcc('ne', l_fail)
+
+                a.mov_rax_r10()
+                a.sar_rax_imm8(3)
+                a.sar_r64_imm8('r11', 3)
+                a.test_r64_r64('r11', 'r11')
+                a.jcc('e', l_fail)
+                a.cqo()
+                a.idiv_r64('r11')
+                # IDIV truncates toward zero; adjust a non-exact quotient when
+                # operand signs differ to obtain mathematical floor division.
+                a.test_r64_r64('rdx', 'rdx')
+                a.jcc('e', l_retag)
+                a.mov_r64_r64('rcx', 'rdx')
+                a.xor_r64_r64('rcx', 'r11')
+                a.test_r64_r64('rcx', 'rcx')
+                a.jcc('ge', l_retag)
+                a.dec_r64('rax')
+                a.mark(l_retag)
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+                a.jmp(l_done)
                 a.mark(l_fail)
                 a.mov_rax_imm64(enc_void())
                 a.mark(l_done)
@@ -4603,6 +4718,7 @@ class CodegenExpr:
             return
 
         if isinstance(e, ml.Index):
+            self._validate_statically_known_index(e)
             fast_index = self._opt_known_index_plan(e)
             if isinstance(fast_index, dict):
                 self._opt_emit_known_index(e, fast_index)
@@ -5368,6 +5484,10 @@ class CodegenExpr:
                             if values[index] is not None:
                                 raise self.error(f"Field argument '{name}' was supplied more than once", e)
                             values[index] = value
+                    defaults = list((getattr(self, 'struct_field_defaults', {}) or {}).get(callee_name, []) or [])
+                    for i, value in enumerate(values):
+                        if value is None and i < len(defaults) and defaults[i] is not None:
+                            values[i] = copy.deepcopy(defaults[i])
                     missing = [fields[i] for i, value in enumerate(values) if value is None]
                     if missing:
                         raise self.error(f"Missing field argument '{missing[0]}' for struct {callee_name}", e)
@@ -7084,8 +7204,17 @@ class CodegenExpr:
                         raise self.error(f"Struct {sname} expects 2 args, got {len(e.args)}", e)
                     n = 5
                 else:
-                    if len(e.args) != n:
-                        raise self.error(f"Struct {sname} expects {n} args, got {len(e.args)}", e)
+                    if len(e.args) > n:
+                        raise self.error(f"Struct {sname} expects at most {n} args, got {len(e.args)}", e)
+                    completed = list(e.args)
+                    defaults = list((getattr(self, 'struct_field_defaults', {}) or {}).get(sname, []) or [])
+                    while len(completed) < n:
+                        index = len(completed)
+                        default = defaults[index] if index < len(defaults) else None
+                        if default is None:
+                            raise self.error(f"Missing field argument '{fields[index]}' for struct {sname}", e)
+                        completed.append(copy.deepcopy(default))
+                    e.args = completed
 
                 size = 8 + n * 8
                 a.mov_rcx_imm32(size)

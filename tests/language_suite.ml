@@ -191,15 +191,15 @@ assertEq(copyVoidDst[0], 42, "copyArray copies populated cell")
 assertTrue(copyVoidDst[1] is void, "copyArray copies void cell")
 
 // strict index assignment errors (catchable via try)
-function _t_seti_oob()
+function _t_seti_oob(index)
   x = [1, 2, 3]
-  x[99] = 7
+  x[index] = 7
   return 0
 end function
 
-function _t_seti_bad_index()
+function _t_seti_bad_index(index)
   x = [1, 2, 3]
-  x["x"] = 7
+  x[index] = 7
   return 0
 end function
 
@@ -209,11 +209,11 @@ function _t_seti_bad_target()
   return 0
 end function
 
-e1 = try(_t_seti_oob())
+e1 = try(_t_seti_oob(99))
 assertEq(typeof(e1), "error", "array index write OOB -> error")
 assertEq(e1.code, 1300, "array index write OOB code")
 
-e2 = try(_t_seti_bad_index())
+e2 = try(_t_seti_bad_index("x"))
 assertEq(typeof(e2), "error", "array index write bad index -> error")
 assertEq(e2.code, 1301, "array index write bad index code")
 

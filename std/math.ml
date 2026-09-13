@@ -146,6 +146,66 @@ function round(x)
   return std.math.ceil(x - 0.5)
 end function
 
+/// Converts a numeric value to int only when it has no fractional part.
+/// Returns a catchable type/range error instead of silently truncating data.
+/// @param x Numeric value to convert.
+function toIntExact(x)
+  if typeof(x) == "int" then
+    return x
+  end if
+  if typeof(x) != "float" then
+    return error(1308, "toIntExact expects a number; got " + typeof(x))
+  end if
+  converted = std.math.trunc(x)
+  if typeof(converted) != "int" then
+    return error(1308, "toIntExact result is outside the int range")
+  end if
+  if converted != x then
+    return error(1308, "toIntExact would discard a fractional part")
+  end if
+  return converted
+end function
+
+/// Floors a numeric value and requires an int result.
+/// @param x Numeric value to convert.
+function floorInt(x)
+  converted = std.math.floor(x)
+  if typeof(converted) != "int" then
+    return error(1308, "floorInt result is outside the int range")
+  end if
+  return converted
+end function
+
+/// Ceils a numeric value and requires an int result.
+/// @param x Numeric value to convert.
+function ceilInt(x)
+  converted = std.math.ceil(x)
+  if typeof(converted) != "int" then
+    return error(1308, "ceilInt result is outside the int range")
+  end if
+  return converted
+end function
+
+/// Truncates a numeric value toward zero and requires an int result.
+/// @param x Numeric value to convert.
+function truncInt(x)
+  converted = std.math.trunc(x)
+  if typeof(converted) != "int" then
+    return error(1308, "truncInt result is outside the int range")
+  end if
+  return converted
+end function
+
+/// Rounds a numeric value and requires an int result.
+/// @param x Numeric value to convert.
+function roundInt(x)
+  converted = std.math.round(x)
+  if typeof(converted) != "int" then
+    return error(1308, "roundInt result is outside the int range")
+  end if
+  return converted
+end function
+
 /// Mathematical constant pi.
 function pi()
   return 3.141592653589793

@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2633 |
+| Blank lines | 2643 |
 | Clone groups | 164 |
-| Cognitive complexity | 3007 (maximum per function: 116) |
-| Comment lines | 4060 |
-| Cyclomatic complexity | 3418 (average: 3.59, maximum: 32) |
-| Documentation coverage | 100% (1820 of 1820 documentation items) |
-| Duplicated lines | 1028 (10.19%) |
+| Cognitive complexity | 3026 (maximum per function: 116) |
+| Comment lines | 4091 |
+| Cyclomatic complexity | 3447 (average: 3.58, maximum: 32) |
+| Documentation coverage | 100% (1844 of 1844 documentation items) |
+| Duplicated lines | 1028 (10.09%) |
 | Files | 48 |
-| Functions | 952 |
-| Maintainability index | 8.11 / 100 |
-| Physical lines | 16782 |
-| Source lines | 10092 |
-| Statements | 7163 |
+| Functions | 962 |
+| Maintainability index | 7.94 / 100 |
+| Physical lines | 16917 |
+| Source lines | 10186 |
+| Statements | 7219 |
 
 ## Documentation coverage
 
@@ -28,26 +28,26 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 715 | 715 | 100% |
+| API declarations | 724 | 724 | 100% |
 | Constants | 122 | 122 | 100% |
 | Enum variants | 22 | 22 | 100% |
 | Fields | 186 | 186 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1820 | 1820 | 100% |
-| Parameters | 774 | 774 | 100% |
+| Overall | 1844 | 1844 | 100% |
+| Parameters | 789 | 789 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3065 | 41262 | 28090 | 3121 | 69352 | 805023.63 | 256.61 | 206579833.34 | 268.34 |
+| 56 | 3090 | 41574 | 28291 | 3146 | 69865 | 811782.6 | 256.36 | 208107431.47 | 270.59 |
 
 ## Files
 
 | File | SLOC | Functions | Cyclomatic total / avg / max | Cognitive total / max | Duplication | Halstead volume | MI |
 | --- | ---: | ---: | --- | --- | --- | ---: | ---: |
 | [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 238 | 23 | 103 / 4.48 / 10 | 94 / 13 | 9 (3.78%) | 15510.53 | 4.96 |
-| [`std/array.ml`](File-std-array-ml-1258125823.md) | 260 | 18 | 79 / 4.39 / 11 | 67 / 10 | 27 (10.38%) | 7293.05 | 9.65 |
+| [`std/array.ml`](File-std-array-ml-1258125823.md) | 310 | 23 | 95 / 4.13 / 11 | 78 / 10 | 27 (8.71%) | 9574.93 | 5 |
 | [`std/assert.ml`](File-std-assert-ml-1772521196.md) | 92 | 8 | 17 / 2.13 / 3 | 9 / 2 | 0 (0%) | 1751.75 | 32.16 |
 | [`std/bytes.ml`](File-std-bytes-ml-1351945333.md) | 501 | 38 | 153 / 4.03 / 13 | 124 / 16 | 215 (42.91%) | 16996.47 | 0 |
 | [`std/checksum/crc32.ml`](File-std-checksum-crc32-ml-1964480723.md) | 23 | 5 | 12 / 2.4 / 3 | 7 / 2 | 0 (0%) | 974.56 | 47.75 |
@@ -77,7 +77,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 88 | 6 | 35 / 5.83 / 11 | 37 / 18 | 21 (23.86%) | 3174.13 | 28.36 |
 | [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 514 | 23 | 122 / 5.3 / 13 | 118 / 18 | 32 (6.23%) | 23239.31 | 0 |
 | [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 304 | 37 | 145 / 3.92 / 11 | 116 / 13 | 9 (2.96%) | 22678.51 | 0 |
-| [`std/math.ml`](File-std-math-ml-790065500.md) | 419 | 45 | 112 / 2.49 / 9 | 75 / 10 | 29 (6.92%) | 16696.31 | 0 |
+| [`std/math.ml`](File-std-math-ml-790065500.md) | 463 | 50 | 125 / 2.5 / 9 | 83 / 10 | 29 (6.26%) | 18689.33 | 0 |
 | [`std/net.ml`](File-std-net-ml-1989130045.md) | 428 | 35 | 117 / 3.34 / 9 | 84 / 8 | 12 (2.8%) | 23299.98 | 0 |
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 80 | 9 | 49 / 5.44 / 13 | 47 / 12 | 0 (0%) | 4532.65 | 26.29 |
 | [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
@@ -99,24 +99,28 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Function | Location | LOC | Statements | Cyclomatic | Cognitive | Max nesting | Halstead volume | MI |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [`std.array.all`](File-std-array-ml-1258125823.md#function-function-std-array-all-function-all-a-pred-std-array-ml-1158565640) | `std/array.ml:264` | 15 | 9 | 5 | 5 | 2 | 325.48 | 56.08 |
-| [`std.array.any`](File-std-array-ml-1258125823.md#function-function-std-array-any-function-any-a-pred-std-array-ml-130273110) | `std/array.ml:244` | 15 | 9 | 5 | 5 | 2 | 317.29 | 56.16 |
-| [`std.array.append`](File-std-array-ml-1258125823.md#function-function-std-array-append-function-append-a-value-std-array-ml-1844937612) | `std/array.ml:341` | 14 | 9 | 4 | 4 | 2 | 340.06 | 56.73 |
-| [`std.array.concat`](File-std-array-ml-1258125823.md#function-function-std-array-concat-function-concat-a-b-std-array-ml-2041570823) | `std/array.ml:360` | 18 | 12 | 5 | 4 | 1 | 471.22 | 53.23 |
-| [`std.array.contains`](File-std-array-ml-1258125823.md#function-function-std-array-contains-function-contains-a-value-std-array-ml-1539166352) | `std/array.ml:155` | 6 | 3 | 2 | 1 | 1 | 158.12 | 67.36 |
-| [`std.array.copy`](File-std-array-ml-1258125823.md#function-function-std-array-copy-function-copy-a-std-array-ml-1680176529) | `std/array.ml:37` | 14 | 9 | 4 | 3 | 1 | 291.43 | 57.2 |
-| [`std.array.filter`](File-std-array-ml-1258125823.md#function-function-std-array-filter-function-filter-a-pred-std-array-ml-27472074) | `std/array.ml:190` | 28 | 19 | 8 | 8 | 2 | 646.24 | 47.68 |
-| [`std.array.first`](File-std-array-ml-1258125823.md#function-function-std-array-first-function-first-a-std-array-ml-2054141141) | `std/array.ml:315` | 9 | 5 | 3 | 2 | 1 | 138.97 | 63.78 |
-| [`std.array.indexOf`](File-std-array-ml-1258125823.md#function-function-std-array-indexof-function-indexof-a-value-start-std-array-ml-148871920) | `std/array.ml:104` | 22 | 14 | 7 | 7 | 2 | 440.92 | 51.26 |
-| [`std.array.isArray`](File-std-array-ml-1258125823.md#function-function-std-array-isarray-function-isarray-x-std-array-ml-605013932) | `std/array.ml:31` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.array.isEmpty`](File-std-array-ml-1258125823.md#function-function-std-array-isempty-function-isempty-a-std-array-ml-946252559) | `std/array.ml:306` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
-| [`std.array.joinStrings`](File-std-array-ml-1258125823.md#function-function-std-array-joinstrings-function-joinstrings-a-sep-std-array-ml-426039153) | `std/array.ml:284` | 9 | 5 | 3 | 2 | 1 | 152 | 63.5 |
-| [`std.array.last`](File-std-array-ml-1258125823.md#function-function-std-array-last-function-last-a-std-array-ml-1230645617) | `std/array.ml:327` | 10 | 6 | 3 | 2 | 1 | 171.3 | 62.14 |
-| [`std.array.lastIndexOf`](File-std-array-ml-1258125823.md#function-function-std-array-lastindexof-function-lastindexof-a-value-std-array-ml-787503178) | `std/array.ml:132` | 17 | 11 | 5 | 5 | 2 | 318.58 | 54.96 |
-| [`std.array.length`](File-std-array-ml-1258125823.md#function-function-std-array-length-function-length-a-std-array-ml-1052681365) | `std/array.ml:297` | 6 | 3 | 2 | 1 | 1 | 85.11 | 69.24 |
-| [`std.array.map`](File-std-array-ml-1258125823.md#function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657) | `std/array.ml:167` | 17 | 11 | 5 | 4 | 1 | 378.92 | 54.43 |
-| [`std.array.reduce`](File-std-array-ml-1258125823.md#function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997) | `std/array.ml:226` | 13 | 8 | 4 | 3 | 1 | 304.31 | 57.77 |
-| [`std.array.slice`](File-std-array-ml-1258125823.md#function-function-std-array-slice-function-slice-a-offset-length-std-array-ml-1271445914) | `std/array.ml:58` | 36 | 24 | 11 | 10 | 1 | 707.16 | 44.62 |
+| [`std.array.all`](File-std-array-ml-1258125823.md#function-function-std-array-all-function-all-a-pred-std-array-ml-1158565640) | `std/array.ml:339` | 15 | 9 | 5 | 5 | 2 | 325.48 | 56.08 |
+| [`std.array.any`](File-std-array-ml-1258125823.md#function-function-std-array-any-function-any-a-pred-std-array-ml-130273110) | `std/array.ml:319` | 15 | 9 | 5 | 5 | 2 | 317.29 | 56.16 |
+| [`std.array.append`](File-std-array-ml-1258125823.md#function-function-std-array-append-function-append-a-value-std-array-ml-1844937612) | `std/array.ml:416` | 14 | 9 | 4 | 4 | 2 | 340.06 | 56.73 |
+| [`std.array.concat`](File-std-array-ml-1258125823.md#function-function-std-array-concat-function-concat-a-b-std-array-ml-2041570823) | `std/array.ml:435` | 18 | 12 | 5 | 4 | 1 | 471.22 | 53.23 |
+| [`std.array.contains`](File-std-array-ml-1258125823.md#function-function-std-array-contains-function-contains-a-value-std-array-ml-1539166352) | `std/array.ml:230` | 6 | 3 | 2 | 1 | 1 | 158.12 | 67.36 |
+| [`std.array.copy`](File-std-array-ml-1258125823.md#function-function-std-array-copy-function-copy-a-std-array-ml-1680176529) | `std/array.ml:112` | 14 | 9 | 4 | 3 | 1 | 291.43 | 57.2 |
+| [`std.array.filter`](File-std-array-ml-1258125823.md#function-function-std-array-filter-function-filter-a-pred-std-array-ml-27472074) | `std/array.ml:265` | 28 | 19 | 8 | 8 | 2 | 646.24 | 47.68 |
+| [`std.array.first`](File-std-array-ml-1258125823.md#function-function-std-array-first-function-first-a-std-array-ml-2054141141) | `std/array.ml:390` | 9 | 5 | 3 | 2 | 1 | 138.97 | 63.78 |
+| [`std.array.getOption`](File-std-array-ml-1258125823.md#function-function-std-array-getoption-function-getoption-a-index-std-array-ml-1404034711) | `std/array.ml:71` | 7 | 4 | 2 | 1 | 1 | 222.91 | 64.85 |
+| [`std.array.getOr`](File-std-array-ml-1258125823.md#function-function-std-array-getor-function-getor-a-index-fallback-std-array-ml-109661577) | `std/array.ml:59` | 7 | 4 | 2 | 1 | 1 | 165 | 65.77 |
+| [`std.array.getOrError`](File-std-array-ml-1258125823.md#function-function-std-array-getorerror-function-getorerror-a-index-std-array-ml-608041017) | `std/array.ml:96` | 13 | 8 | 4 | 3 | 1 | 451.38 | 56.58 |
+| [`std.array.indexOf`](File-std-array-ml-1258125823.md#function-function-std-array-indexof-function-indexof-a-value-start-std-array-ml-148871920) | `std/array.ml:179` | 22 | 14 | 7 | 7 | 2 | 440.92 | 51.26 |
+| [`std.array.isArray`](File-std-array-ml-1258125823.md#function-function-std-array-isarray-function-isarray-x-std-array-ml-605013932) | `std/array.ml:32` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.array.isEmpty`](File-std-array-ml-1258125823.md#function-function-std-array-isempty-function-isempty-a-std-array-ml-946252559) | `std/array.ml:381` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
+| [`std.array.joinStrings`](File-std-array-ml-1258125823.md#function-function-std-array-joinstrings-function-joinstrings-a-sep-std-array-ml-426039153) | `std/array.ml:359` | 9 | 5 | 3 | 2 | 1 | 152 | 63.5 |
+| [`std.array.last`](File-std-array-ml-1258125823.md#function-function-std-array-last-function-last-a-std-array-ml-1230645617) | `std/array.ml:402` | 10 | 6 | 3 | 2 | 1 | 171.3 | 62.14 |
+| [`std.array.lastIndexOf`](File-std-array-ml-1258125823.md#function-function-std-array-lastindexof-function-lastindexof-a-value-std-array-ml-787503178) | `std/array.ml:207` | 17 | 11 | 5 | 5 | 2 | 318.58 | 54.96 |
+| [`std.array.length`](File-std-array-ml-1258125823.md#function-function-std-array-length-function-length-a-std-array-ml-1052681365) | `std/array.ml:372` | 6 | 3 | 2 | 1 | 1 | 85.11 | 69.24 |
+| [`std.array.map`](File-std-array-ml-1258125823.md#function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657) | `std/array.ml:242` | 17 | 11 | 5 | 4 | 1 | 378.92 | 54.43 |
+| [`std.array.reduce`](File-std-array-ml-1258125823.md#function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997) | `std/array.ml:301` | 13 | 8 | 4 | 3 | 1 | 304.31 | 57.77 |
+| [`std.array.setIfPresent`](File-std-array-ml-1258125823.md#function-function-std-array-setifpresent-function-setifpresent-a-index-value-std-array-ml-566540004) | `std/array.ml:84` | 8 | 5 | 2 | 1 | 1 | 183.4 | 64.18 |
+| [`std.array.slice`](File-std-array-ml-1258125823.md#function-function-std-array-slice-function-slice-a-offset-length-std-array-ml-1271445914) | `std/array.ml:133` | 36 | 24 | 11 | 10 | 1 | 707.16 | 44.62 |
 | [`std.assert.assertApprox`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertapprox-function-assertapprox-actual-expected-eps-label-std-assert-ml-916027518) | `std/assert.ml:130` | 18 | 14 | 3 | 2 | 1 | 293.25 | 54.94 |
 | [`std.assert.assertEq`](File-std-assert-ml-1772521196.md#function-function-std-assert-asserteq-function-asserteq-actual-expected-label-std-assert-ml-808850792) | `std/assert.ml:59` | 12 | 9 | 2 | 1 | 1 | 166.91 | 60.63 |
 | [`std.assert.assertFalse`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertfalse-function-assertfalse-cond-label-std-assert-ml-1917626464) | `std/assert.ml:44` | 9 | 6 | 2 | 1 | 1 | 123.19 | 64.28 |
@@ -484,49 +488,54 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:512` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
 | [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:393` | 20 | 25 | 11 | 13 | 2 | 1283.43 | 48.37 |
 | [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:32` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
-| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:592` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:585` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:364` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
-| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:389` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
+| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:652` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:645` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:424` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
+| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:449` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
 | [`std.math.ceil`](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `std/math.ml:113` | 10 | 6 | 3 | 2 | 1 | 181.52 | 61.97 |
+| [`std.math.ceilInt`](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `std/math.ml:181` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
 | [`std.math.clamp`](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `std/math.ml:61` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
-| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:322` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
-| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:607` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:161` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:421` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:449` | 12 | 10 | 1 | 0 | 0 | 559.62 | 57.08 |
-| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:471` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:382` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
+| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:667` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:221` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:481` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:509` | 12 | 10 | 1 | 0 | 0 | 559.62 | 57.08 |
+| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:531` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
 | [`std.math.floor`](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `std/math.ml:93` | 13 | 8 | 4 | 3 | 1 | 220.89 | 58.75 |
-| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:623` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:240` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
-| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:416` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
-| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:575` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
-| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:437` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
+| [`std.math.floorInt`](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `std/math.ml:171` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:683` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:300` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
+| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:476` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
+| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:635` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
+| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:497` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
 | [`std.math.isNumber`](File-std-math-ml-790065500.md#function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864) | `std/math.ml:25` | 4 | 2 | 1 | 0 | 0 | 79.95 | 73.41 |
-| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:259` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
-| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:631` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
-| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:484` | 24 | 19 | 4 | 3 | 1 | 723.27 | 49.33 |
-| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:431` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:519` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
-| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:426` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:532` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
-| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:538` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:319` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
+| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:691` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
+| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:544` | 24 | 19 | 4 | 3 | 1 | 723.27 | 49.33 |
+| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:491` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:579` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:486` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:592` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:598` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
 | [`std.math.max`](File-std-math-ml-790065500.md#function-function-std-math-max-function-max-a-b-std-math-ml-1771960409) | `std/math.ml:84` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
 | [`std.math.min`](File-std-math-ml-790065500.md#function-function-std-math-min-function-min-a-b-std-math-ml-1964626413) | `std/math.ml:74` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:150` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:545` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
-| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:200` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
-| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:167` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:210` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:605` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
+| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:260` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
+| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:227` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
 | [`std.math.round`](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `std/math.ml:139` | 9 | 5 | 3 | 2 | 1 | 214.05 | 62.46 |
+| [`std.math.roundInt`](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `std/math.ml:201` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
 | [`std.math.sign`](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `std/math.ml:44` | 12 | 7 | 4 | 3 | 1 | 178.41 | 60.16 |
-| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:293` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
-| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:599` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:639` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
-| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:173` | 20 | 14 | 5 | 5 | 2 | 405 | 52.69 |
-| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:350` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
-| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:615` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
-| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:155` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
+| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:353` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
+| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:659` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:699` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
+| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:233` | 20 | 14 | 5 | 5 | 2 | 405 | 52.69 |
+| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:410` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
+| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:675` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
+| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:215` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
+| [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:152` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
 | [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:126` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
+| [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:191` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
 | [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:264` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
 | [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:742` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
 | [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:239` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
@@ -841,7 +850,55 @@ Found 164 clone group(s). At most 164 groups are shown.
 </details>
 
 <details>
-<summary>Clone 5 — 2 occurrences</summary>
+<summary>Clone 5 — 3 occurrences</summary>
+
+    return
+    end if
+    if typeof ( offset ) != "int" then
+    return
+    end if
+    if typeof ( length ) != "int" then
+
+- [`std/array.ml:135`](File-std-array-ml-1258125823.md)
+- [`std/bytes.ml:80`](File-std-bytes-ml-1351945333.md)
+- [`std/string_builder.ml:121`](File-std-string-builder-ml-412876577.md)
+
+</details>
+
+<details>
+<summary>Clone 6 — 3 occurrences</summary>
+
+    end if
+    if typeof ( offset ) != "int" then
+    return
+    end if
+    if typeof ( length ) != "int" then
+    return
+
+- [`std/array.ml:136`](File-std-array-ml-1258125823.md)
+- [`std/bytes.ml:81`](File-std-bytes-ml-1351945333.md)
+- [`std/string_builder.ml:122`](File-std-string-builder-ml-412876577.md)
+
+</details>
+
+<details>
+<summary>Clone 7 — 3 occurrences</summary>
+
+    if typeof ( offset ) != "int" then
+    return
+    end if
+    if typeof ( length ) != "int" then
+    return
+    end if
+
+- [`std/array.ml:137`](File-std-array-ml-1258125823.md)
+- [`std/bytes.ml:82`](File-std-bytes-ml-1351945333.md)
+- [`std/string_builder.ml:123`](File-std-string-builder-ml-412876577.md)
+
+</details>
+
+<details>
+<summary>Clone 8 — 2 occurrences</summary>
 
     i0 = start
     if i0 < 0 then
@@ -850,13 +907,13 @@ Found 164 clone group(s). At most 164 groups are shown.
     if i0 > n then
     i0 = n
 
-- [`std/array.ml:113`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:188`](File-std-array-ml-1258125823.md)
 - [`std/bytes.ml:260`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 6 — 4 occurrences</summary>
+<summary>Clone 9 — 4 occurrences</summary>
 
     if i0 < 0 then
     i0 = 0
@@ -865,7 +922,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     i0 = n
     end if
 
-- [`std/array.ml:114`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:189`](File-std-array-ml-1258125823.md)
 - [`std/bytes.ml:261`](File-std-bytes-ml-1351945333.md)
 - [`std/string.ml:139`](File-std-string-ml-1276545685.md)
 - [`std/string.ml:92`](File-std-string-ml-1276545685.md)
@@ -873,7 +930,7 @@ Found 164 clone group(s). At most 164 groups are shown.
 </details>
 
 <details>
-<summary>Clone 7 — 2 occurrences</summary>
+<summary>Clone 10 — 2 occurrences</summary>
 
     if typeof ( a ) != "array" then
     return false
@@ -882,56 +939,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     return false
     end if
 
-- [`std/array.ml:245`](File-std-array-ml-1258125823.md)
-- [`std/array.ml:265`](File-std-array-ml-1258125823.md)
-
-</details>
-
-<details>
-<summary>Clone 8 — 3 occurrences</summary>
-
-    return
-    end if
-    if typeof ( offset ) != "int" then
-    return
-    end if
-    if typeof ( length ) != "int" then
-
-- [`std/array.ml:60`](File-std-array-ml-1258125823.md)
-- [`std/bytes.ml:80`](File-std-bytes-ml-1351945333.md)
-- [`std/string_builder.ml:121`](File-std-string-builder-ml-412876577.md)
-
-</details>
-
-<details>
-<summary>Clone 9 — 3 occurrences</summary>
-
-    end if
-    if typeof ( offset ) != "int" then
-    return
-    end if
-    if typeof ( length ) != "int" then
-    return
-
-- [`std/array.ml:61`](File-std-array-ml-1258125823.md)
-- [`std/bytes.ml:81`](File-std-bytes-ml-1351945333.md)
-- [`std/string_builder.ml:122`](File-std-string-builder-ml-412876577.md)
-
-</details>
-
-<details>
-<summary>Clone 10 — 3 occurrences</summary>
-
-    if typeof ( offset ) != "int" then
-    return
-    end if
-    if typeof ( length ) != "int" then
-    return
-    end if
-
-- [`std/array.ml:62`](File-std-array-ml-1258125823.md)
-- [`std/bytes.ml:82`](File-std-bytes-ml-1351945333.md)
-- [`std/string_builder.ml:123`](File-std-string-builder-ml-412876577.md)
+- [`std/array.ml:320`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:340`](File-std-array-ml-1258125823.md)
 
 </details>
 

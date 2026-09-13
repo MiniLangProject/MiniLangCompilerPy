@@ -558,8 +558,8 @@ function emit_formatted_code(bb, code)
       tok = slice(code2, st, i - st)
       w = decode(tok)
 
-      // and/or/not als Operator-Wörter behandeln
-      if w == "and" or w == "or" or w == "not" then
+      // Treat word-based operators like symbolic binary/unary operators.
+      if w == "and" or w == "or" or w == "not" or w == "div" then
         if prevCat != 0 and prevCat != 6 and prevCat != 5 then
           bb = bb_pushByte(bb, 32)
         end if

@@ -19,6 +19,7 @@ limitations under the License.
 package std.array
 
 import std.string as s
+import std.result as result
 
 // ------------------------------------------------------------
 // std.array
@@ -30,6 +31,80 @@ import std.string as s
 /// @param x Value supplied for `x`.
 function isArray(x)
   return typeof(x) == "array"
+end function
+
+/// Converts a possibly negative array index to an absolute index.
+/// Returns -1 when the target or index is invalid or outside the array.
+/// @internal
+function _normalizedIndex(a, index)
+  if typeof(a) != "array" or typeof(index) != "int" then
+    return -1
+  end if
+  n = len(a)
+  actual = index
+  if actual < 0 then
+    actual = actual + n
+  end if
+  if actual < 0 or actual >= n then
+    return -1
+  end if
+  return actual
+end function
+
+/// Returns an element, or fallback when the index is invalid or out of bounds.
+/// Negative indices address elements relative to the end of the array.
+/// @param a Array to read.
+/// @param index Integer index to read.
+/// @param fallback Value returned when no element exists at index.
+function getOr(a, index, fallback)
+  actual = std.array._normalizedIndex(a, index)
+  if actual < 0 then
+    return fallback
+  end if
+  return a[actual]
+end function
+
+/// Returns an Option containing the indexed value, including a stored void.
+/// An empty Option denotes an invalid target/index or an out-of-bounds index.
+/// @param a Array to read.
+/// @param index Integer index to read.
+function getOption(a, index)
+  actual = std.array._normalizedIndex(a, index)
+  if actual < 0 then
+    return result.Option.None()
+  end if
+  return result.Option.Some(a[actual])
+end function
+
+/// Writes an element only when the target and index are valid.
+/// Returns true after a write and false otherwise.
+/// @param a Array to update.
+/// @param index Integer index to update.
+/// @param value Value to store; void is a valid array element.
+function setIfPresent(a, index, value)
+  actual = std.array._normalizedIndex(a, index)
+  if actual < 0 then
+    return false
+  end if
+  a[actual] = value
+  return true
+end function
+
+/// Returns an element or a detailed catchable bounds/type error.
+/// @param a Array to read.
+/// @param index Integer index to read.
+function getOrError(a, index)
+  if typeof(a) != "array" then
+    return error(1300, "array.getOrError target must be an array")
+  end if
+  if typeof(index) != "int" then
+    return error(1301, "array.getOrError index must be an int; got " + typeof(index))
+  end if
+  actual = std.array._normalizedIndex(a, index)
+  if actual < 0 then
+    return error(1302, "array index " + index + " out of bounds for length " + len(a))
+  end if
+  return a[actual]
 end function
 
 /// Creates a shallow copy of an array.

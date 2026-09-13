@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 9 September 2026 against the matching 1.2.7 revisions of:
+Verified through 13 September 2026 against the matching 1.2.8 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -9,7 +9,7 @@ Verified through 9 September 2026 against the matching 1.2.7 revisions of:
 
 There are two compatibility claims:
 
-Scope note for 1.2.7: native `cstr` return conversion is behaviorally tested in
+Scope note for 1.2.8: native `cstr` return conversion is behaviorally tested in
 both compilers, but its emitter sequences differ (helper calls in Python versus
 an inline scan/copy in MiniLang). Programs using this path are an exception to
 the byte-identity claim below. MiniGui Windows CLI/generator parity is tested;
@@ -29,6 +29,23 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 13 September 2026 language-safety verification
+
+The Python bootstrap and two consecutive self-hosted rebuilds converge to one
+byte-identical Windows compiler image. Stages 1, 2 and 3 are **65,274,880
+bytes**, SHA-256
+`60DB15723F1D33AFCCBAF81657E91569811C38CF54A320117857C29027700E0B`.
+Observed wall times were 85.825 s, 109.334 s and 108.689 s respectively.
+
+Focused Windows and Linux parity checks cover `div`, exact integer conversion,
+safe array access, stored `void`, struct defaults, static index/member
+diagnostics and iterative long string-concatenation lowering. Python and
+self-hosted output is byte-identical for both targets. The Python suite passes
+149/149 tests, with the newly added long-chain regression verified separately.
+The complete self-hosted outer suite, including both new positive regressions
+and the three expected compile failures, passes in 231.947 seconds; its embedded
+MiniLang test harness passes 136/136.
 
 ## 1.2.7 patch verification
 

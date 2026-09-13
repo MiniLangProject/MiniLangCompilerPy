@@ -134,6 +134,7 @@ class CodegenCore:
         self.struct_fields: Dict[str, List[str]] = {}
         # Parallel gradual-type metadata for source-declared struct fields.
         self.struct_field_types: Dict[str, List[tuple[Optional[str], bool]]] = {}
+        self.struct_field_defaults: Dict[str, List[Any]] = {}
         self.struct_id: Dict[str, int] = {}
         # struct_qname -> {method_name -> function_qname}
         self.struct_methods: Dict[str, Dict[str, str]] = {}

@@ -4,6 +4,20 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.8 - 2026-09-13
+
+- Added explicit integer floor division with the `div` keyword and exact or
+  deliberately rounded integer conversions in `std.math`.
+- Normal arrays now accept `void` as an element (including clearing an occupied
+  slot), while byte buffers remain strict. Added safe `std.array` accessors with
+  Option, fallback, conditional-write, and detailed-error forms.
+- Added compile-time diagnostics for provably non-integer indices, constant
+  out-of-bounds access, and missing members on statically known struct values.
+- Added struct field defaults for positional and named constructor calls.
+- Lowered statically string-starting left concatenation chains iteratively,
+  avoiding expression-temp exhaustion and repeated dynamic add dispatch.
+- Added cross-compiler positive, negative, GC, and runtime regression coverage.
+
 ## 1.2.7 - 2026-09-09
 
 - Added cross-platform ECDSA P-256/SHA-256 signature verification through

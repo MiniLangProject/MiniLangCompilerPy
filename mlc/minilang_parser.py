@@ -97,7 +97,7 @@ KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "fals
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
             "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
             "out", "static", "inline", "synchronized", "void", "is", "defer", "interface", "implements",
-            "iterator", "yield", "async", "await", "operator",}
+            "iterator", "yield", "async", "await", "operator", "div",}
 
 TOKEN_SPEC = [("COMMENTBLOCK", r"/\*[\s\S]*?\*/"), ("COMMENTDOC", r"///.*"), ("COMMENTLINE", r"//.*"),
               ("NUMBER", r"0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+\.\d+|\d+"), ("STRING", r'"([^"\\]|\\.)*"'),
@@ -534,6 +534,7 @@ class StructDef(Stmt):
     field_types: List[Optional[str]] = field(default_factory=list)
     field_optional: List[bool] = field(default_factory=list)
     interfaces: List[str] = field(default_factory=list)
+    field_defaults: List[Optional[Expr]] = field(default_factory=list)
 
 
 @dataclass
@@ -574,7 +575,7 @@ class ExternFunctionDef(Stmt):
 # ============================================================
 
 PRECEDENCE = {"??": 0, "or": 1, "and": 2, "|": 3, "^": 4, "&": 5, "==": 6, "!=": 6, "is": 6, ">": 7, "<": 7, ">=": 7, "<=": 7, "<<": 8,
-              ">>": 8, "+": 9, "-": 9, "*": 10, "/": 10, "%": 10, }
+              ">>": 8, "+": 9, "-": 9, "*": 10, "/": 10, "%": 10, "div": 10, }
 
 # Source operators are represented as reserved static struct methods after
 # parsing.  The names are ordinary identifiers so every later compiler stage
@@ -1558,6 +1559,7 @@ class Parser:
             fields: List[str] = []
             field_types: List[Optional[str]] = []
             field_optional: List[bool] = []
+            field_defaults: List[Optional[Expr]] = []
             methods: List[FunctionDef] = []
 
             while not self.is_end_of("struct"):
@@ -1689,8 +1691,13 @@ class Parser:
                 if self.peek().kind == "KW" and self.peek().value == "as":
                     self.advance()
                     fty, fopt = self.parse_type_ref()
+                fdefault: Optional[Expr] = None
+                if self.peek().kind == "OP" and self.peek().value == "=":
+                    self.advance()
+                    fdefault = self.parse_expr()
                 field_types.append(fty)
                 field_optional.append(fopt)
+                field_defaults.append(fdefault)
                 while self.match("COMMA"):
                     # If we see a newline after a comma, continue the field list only if the
                     # next non-newline token is an identifier; otherwise treat it as a trailing comma.
@@ -1707,12 +1714,19 @@ class Parser:
                     if self.peek().kind == "KW" and self.peek().value == "as":
                         self.advance()
                         fty, fopt = self.parse_type_ref()
+                    fdefault = None
+                    if self.peek().kind == "OP" and self.peek().value == "=":
+                        self.advance()
+                        fdefault = self.parse_expr()
                     field_types.append(fty)
                     field_optional.append(fopt)
+                    field_defaults.append(fdefault)
                 self.expect_block_nl()
 
             self.expect_end_of("struct")
-            return self._attach_pos(StructDef(name, fields, methods, field_types, field_optional, interfaces), start_pos)
+            return self._attach_pos(StructDef(
+                name, fields, methods, field_types, field_optional, interfaces,
+                field_defaults=field_defaults), start_pos)
 
         # enum
         if t.kind == "KW" and t.value == "enum":
@@ -2052,7 +2066,7 @@ class Parser:
 
             if tok.kind == "OP":
                 op = tok.value
-            elif tok.kind == "KW" and tok.value in ("and", "or", "is"):
+            elif tok.kind == "KW" and tok.value in ("and", "or", "is", "div"):
                 op = tok.value
 
             if op is None or op not in PRECEDENCE:
@@ -2918,7 +2932,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.2.7",
+    "MINILANG_VERSION": "1.2.8",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

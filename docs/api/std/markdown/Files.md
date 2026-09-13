@@ -5,7 +5,7 @@
 | File | Package | Reachable | Symbols |
 | --- | --- | --- | ---: |
 | [std/_linux_fs.ml](File-std-linux-fs-ml-2121665983.md) | `std._linux_fs` | no | 53 |
-| [std/array.ml](File-std-array-ml-1258125823.md) | `std.array` | no | 18 |
+| [std/array.ml](File-std-array-ml-1258125823.md) | `std.array` | no | 23 |
 | [std/assert.ml](File-std-assert-ml-1772521196.md) | `std.assert` | no | 8 |
 | [std/bytes.ml](File-std-bytes-ml-1351945333.md) | `std.bytes` | no | 39 |
 | [std/checksum/crc32.ml](File-std-checksum-crc32-ml-1964480723.md) | `std.checksum.crc32` | no | 5 |
@@ -35,7 +35,7 @@
 | [std/fmt.ml](File-std-fmt-ml-2123112301.md) | `std.fmt` | no | 6 |
 | [std/fs.ml](File-std-fs-ml-1285967051.md) | `std.fs` | no | 75 |
 | [std/io/file.ml](File-std-io-file-ml-2074692665.md) | `std.io.file` | no | 79 |
-| [std/math.ml](File-std-math-ml-790065500.md) | `std.math` | no | 45 |
+| [std/math.ml](File-std-math-ml-790065500.md) | `std.math` | no | 50 |
 | [std/net.ml](File-std-net-ml-1989130045.md) | `std.net` | no | 75 |
 | [std/path.ml](File-std-path-ml-701536411.md) | `std.path` | no | 10 |
 | [std/platform.ml](File-std-platform-ml-201801091.md) | `std.platform` | no | 8 |

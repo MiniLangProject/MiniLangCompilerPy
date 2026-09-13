@@ -16,7 +16,7 @@ end interface
  * Block comments remain opaque to the token formatter.
  */
 struct Person implements Named
-value
+value as string="unknown"
 function name() returns string
 return this.value
 end function
@@ -117,6 +117,7 @@ counter=Counter(2)
 counter+=Counter(3)
 flags=+1
 flags<<=2
+bucket=8 div 3
 if person.name()!="MiniLang" or fallback!="fallback" then return 1 end if
 if transform(3)!=5 or increment(4)!=5 then return 2 end if
 if len(eager)!=3 or eager[2]!=2 or pull()!=10 or pull()!=11 then return 3 end if
@@ -124,7 +125,7 @@ if await job!=12 or synchronizedValue(8)!=8 then return 4 end if
 if guardedClassify(2,guard)!="small" or deferredValue()!=7 then return 5 end if
 if loopValue()!=4 or branchValue(1)!="one" then return 6 end if
 if url!="http://example.test/*not-a-comment*/" then return 7 end if
-if counter.value!=5 or flags!=4 then return 8 end if
+if counter.value!=5 or flags!=4 or bucket!=2 then return 8 end if
 guard.close()
 print "[OK] formatter modern syntax"
 return 0

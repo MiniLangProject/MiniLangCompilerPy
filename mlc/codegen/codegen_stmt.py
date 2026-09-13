@@ -21,7 +21,7 @@ from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc
 # Constexpr / consteval helpers (Step 3)
 # ============================================================
 
-_CE_BINOPS = {'or', 'and', '|', '^', '&', '==', '!=', '>', '<', '>=', '<=', '<<', '>>', '+', '-', '*', '/', '%', }
+_CE_BINOPS = {'or', 'and', '|', '^', '&', '==', '!=', '>', '<', '>=', '<=', '<<', '>>', '+', '-', '*', '/', '%', 'div', }
 
 _CE_UNOPS = {'-', '~', 'not'}
 
@@ -177,7 +177,7 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
                 return a <= b
 
         # arithmetic / bitwise
-        if op in ('+', '-', '*', '/', '%', '|', '^', '&', '<<', '>>'):
+        if op in ('+', '-', '*', '/', '%', 'div', '|', '^', '&', '<<', '>>'):
             if op == '+':
                 if (isinstance(a, (int, float)) and not isinstance(a, bool)
                         and isinstance(b, (int, float)) and not isinstance(b, bool)):
@@ -221,6 +221,12 @@ def _eval_constexpr(ml: Any, expr: Any, env: Dict[str, Any]) -> Any:
                         raise _ConstEvalError('mod by zero')
                     return wrap_i61(a % b)
                 raise _ConstEvalError('% expects ints')
+            if op == 'div':
+                if isinstance(a, int) and not isinstance(a, bool) and isinstance(b, int) and not isinstance(b, bool):
+                    if b == 0:
+                        raise _ConstEvalError('integer division by zero')
+                    return wrap_i61(a // b)
+                raise _ConstEvalError('div expects ints')
             if op in ('|', '^', '&'):
                 if isinstance(a, int) and not isinstance(a, bool) and isinstance(b, int) and not isinstance(b, bool):
                     if op == '|':
@@ -1089,6 +1095,8 @@ class CodegenStmt:
                     return 'int'
                 if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
                     return 'int'
+                if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                    return 'int'
                 if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
                     return 'number'
                 if (op in ('/', '%') and lb in ('int', 'float', 'number')
@@ -1382,7 +1390,6 @@ class CodegenStmt:
         base_slot = plan.get('base_slot')
         bounds_proven = bool(plan.get('bounds_proven', False))
         lid = self.new_label_id()
-        l_rhs_void = f'seti_fast_rhs_void_{lid}'
         l_oob = f'seti_fast_oob_{lid}'
         l_bad_target = f'seti_fast_bad_target_{lid}'
         l_bad_byte = f'seti_fast_bad_byte_{lid}'
@@ -1407,8 +1414,6 @@ class CodegenStmt:
         a.mov_rax_rsp_disp32(idx_slot)
         self.free_expr_temps(8 + (8 if isinstance(own_base, int) else 0))
 
-        a.cmp_r64_imm('r10', enc_void())
-        a.jcc('e', l_rhs_void)
         a.mov_r64_r64('rcx', 'rax')
         a.sar_r64_imm8('rcx', 3)
 
@@ -1462,12 +1467,6 @@ class CodegenStmt:
             a.lea_r64_mem_bis('r8', 'r11', 'rcx', 1, 8)
             a.mov_membase_disp_r8('r8', 0, 'al')
             a.jmp(l_done)
-
-        a.mark(l_rhs_void)
-        self.emit_dbg_line(stmt)
-        self._emit_make_error_const(ERR_VOID_OP, 'Cannot assign void via index')
-        self._emit_auto_errprop()
-        a.jmp(l_done)
 
         if not bounds_proven:
             a.mark(l_oob)
@@ -3946,6 +3945,7 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.SetIndex):
+            self._validate_statically_known_index(s)
             fast_store = self._opt_known_index_plan(s)
             if isinstance(fast_store, dict) and fast_store.get('kind') in ('array', 'bytes', 'bytes_checked'):
                 self._opt_emit_known_setindex(s, fast_store)
@@ -3955,7 +3955,6 @@ class CodegenStmt:
             # Runtime errors on invalid target/index/rhs (catchable via try()).
 
             lid = self.new_label_id()
-            l_rhs_void = f"seti_rhs_void_{lid}"
             l_bad_target = f"seti_bad_target_{lid}"
             l_bad_index = f"seti_bad_index_{lid}"
             l_oob = f"seti_oob_{lid}"
@@ -3982,10 +3981,6 @@ class CodegenStmt:
 
             # free temps (clears stack roots to void)
             self.free_expr_temps(16)
-
-            # rhs must not be VOID
-            a.cmp_r64_imm("r10", enc_void())
-            a.jcc('e', l_rhs_void)
 
             # target must be TAG_PTR and non-null
             a.mov_r64_r64("r8", "r11")
@@ -4081,16 +4076,6 @@ class CodegenStmt:
             a.jmp(l_done)
 
             # ---- error paths ----
-            a.mark(l_rhs_void)
-            if hasattr(self, 'emit_dbg_line'):
-                try:
-                    self.emit_dbg_line(s)
-                except Exception:
-                    pass
-            self._emit_make_error_const(ERR_VOID_OP, "Cannot assign void via index")
-            self._emit_auto_errprop()
-            a.jmp(l_done)
-
             a.mark(l_bad_target)
             if hasattr(self, 'emit_dbg_line'):
                 try:
@@ -4730,6 +4715,7 @@ class CodegenStmt:
                             raise self.error(f"duplicate field {f} in struct {qname}", st)
                         seen.add(f)
                     self.struct_fields[qname] = fields
+                    self.struct_field_defaults[qname] = list(getattr(st, 'field_defaults', []) or [])
                     source_types = list(getattr(st, "field_types", []) or [])
                     source_optional = list(getattr(st, "field_optional", []) or [])
                     self.struct_field_types[qname] = [

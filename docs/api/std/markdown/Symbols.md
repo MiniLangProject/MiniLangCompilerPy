@@ -12,6 +12,9 @@
 | [std.array.copy](File-std-array-ml-1258125823.md#function-function-std-array-copy-function-copy-a-std-array-ml-1680176529) | `function` | `function copy(a)` |
 | [std.array.filter](File-std-array-ml-1258125823.md#function-function-std-array-filter-function-filter-a-pred-std-array-ml-27472074) | `function` | `function filter(a, pred)` |
 | [std.array.first](File-std-array-ml-1258125823.md#function-function-std-array-first-function-first-a-std-array-ml-2054141141) | `function` | `function first(a)` |
+| [std.array.getOption](File-std-array-ml-1258125823.md#function-function-std-array-getoption-function-getoption-a-index-std-array-ml-1404034711) | `function` | `function getOption(a, index)` |
+| [std.array.getOr](File-std-array-ml-1258125823.md#function-function-std-array-getor-function-getor-a-index-fallback-std-array-ml-109661577) | `function` | `function getOr(a, index, fallback)` |
+| [std.array.getOrError](File-std-array-ml-1258125823.md#function-function-std-array-getorerror-function-getorerror-a-index-std-array-ml-608041017) | `function` | `function getOrError(a, index)` |
 | [std.array.indexOf](File-std-array-ml-1258125823.md#function-function-std-array-indexof-function-indexof-a-value-start-std-array-ml-148871920) | `function` | `function indexOf(a, value, start)` |
 | [std.array.isArray](File-std-array-ml-1258125823.md#function-function-std-array-isarray-function-isarray-x-std-array-ml-605013932) | `function` | `function isArray(x)` |
 | [std.array.isEmpty](File-std-array-ml-1258125823.md#function-function-std-array-isempty-function-isempty-a-std-array-ml-946252559) | `function` | `function isEmpty(a)` |
@@ -21,6 +24,7 @@
 | [std.array.length](File-std-array-ml-1258125823.md#function-function-std-array-length-function-length-a-std-array-ml-1052681365) | `function` | `function length(a)` |
 | [std.array.map](File-std-array-ml-1258125823.md#function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657) | `function` | `function map(a, fn)` |
 | [std.array.reduce](File-std-array-ml-1258125823.md#function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997) | `function` | `function reduce(arr, f, init)` |
+| [std.array.setIfPresent](File-std-array-ml-1258125823.md#function-function-std-array-setifpresent-function-setifpresent-a-index-value-std-array-ml-566540004) | `function` | `function setIfPresent(a, index, value)` |
 | [std.array.slice](File-std-array-ml-1258125823.md#function-function-std-array-slice-function-slice-a-offset-length-std-array-ml-1271445914) | `function` | `function slice(a, offset, length)` |
 | [std.assert.assertApprox](File-std-assert-ml-1772521196.md#function-function-std-assert-assertapprox-function-assertapprox-actual-expected-eps-label-std-assert-ml-916027518) | `function` | `function assertApprox(actual, expected, eps, label)` |
 | [std.assert.assertEq](File-std-assert-ml-1772521196.md#function-function-std-assert-asserteq-function-asserteq-actual-expected-label-std-assert-ml-808850792) | `function` | `function assertEq(actual, expected, label)` |
@@ -601,6 +605,7 @@
 | [std.math.atan](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `function` | `function atan(x)` |
 | [std.math.atan2](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `function` | `function atan2(y, x)` |
 | [std.math.ceil](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `function` | `function ceil(x)` |
+| [std.math.ceilInt](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `function` | `function ceilInt(x)` |
 | [std.math.clamp](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `function` | `function clamp(x, lo, hi)` |
 | [std.math.cos](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `function` | `function cos(x)` |
 | [std.math.cosh](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `function` | `function cosh(x)` |
@@ -609,6 +614,7 @@
 | [std.math.exp](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `function` | `function exp(x)` |
 | [std.math.expm1](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `function` | `function expm1(x)` |
 | [std.math.floor](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `function` | `function floor(x)` |
+| [std.math.floorInt](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `function` | `function floorInt(x)` |
 | [std.math.fract](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `function` | `function fract(x)` |
 | [std.math.gcd](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `function` | `function gcd(a, b)` |
 | [std.math.hypot](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `function` | `function hypot(x, y)` |
@@ -630,6 +636,7 @@
 | [std.math.powi](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `function` | `function powi(base, exp)` |
 | [std.math.radToDeg](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `function` | `function radToDeg(rad)` |
 | [std.math.round](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `function` | `function round(x)` |
+| [std.math.roundInt](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `function` | `function roundInt(x)` |
 | [std.math.sign](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `function` | `function sign(x)` |
 | [std.math.sin](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `function` | `function sin(x)` |
 | [std.math.sinh](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `function` | `function sinh(x)` |
@@ -638,7 +645,9 @@
 | [std.math.tan](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `function` | `function tan(x)` |
 | [std.math.tanh](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `function` | `function tanh(x)` |
 | [std.math.tau](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `function` | `function tau()` |
+| [std.math.toIntExact](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `function` | `function toIntExact(x)` |
 | [std.math.trunc](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `function` | `function trunc(x)` |
+| [std.math.truncInt](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `function` | `function truncInt(x)` |
 | [std.net._wsaReady](File-std-net-ml-1989130045.md#global-global-std-net-wsaready-wsaready-std-net-ml-508432610) | `global` | `_wsaReady` |
 | [std.net.AF_INET](File-std-net-ml-1989130045.md#constant-constant-std-net-af-inet-const-af-inet-2-std-net-ml-2055161241) | `constant` | `const AF_INET = 2` |
 | [std.net.cleanup](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `function` | `synchronized function cleanup()` |
