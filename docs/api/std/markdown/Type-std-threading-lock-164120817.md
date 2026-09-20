@@ -12,7 +12,7 @@ struct Lock
 Re-entrant native mutex. Every successful acquire must be released.
 
 
-Source: `std/threading.ml:66`
+Source: `std/threading.ml:70`
 
 ## Members
 
@@ -26,7 +26,7 @@ function Acquire()
 PascalCase aliases match the native Thread API.
 
 
-Source: `std/threading.ml:124`
+Source: `std/threading.ml:128`
 
 <a id="method-method-std-threading-lock-acquire-function-acquire-std-threading-ml-1409763972"></a>
 ### acquire
@@ -38,7 +38,7 @@ function acquire()
 Block until the current thread owns the mutex.
 
 
-Source: `std/threading.ml:82`
+Source: `std/threading.ml:86`
 
 <a id="method-method-std-threading-lock-acquirefor-function-acquirefor-milliseconds-std-threading-ml-706820674"></a>
 ### AcquireFor
@@ -54,7 +54,7 @@ Provide acquire for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:127`
+Source: `std/threading.ml:131`
 
 <a id="method-method-std-threading-lock-acquirefor-function-acquirefor-milliseconds-std-threading-ml-1593851138"></a>
 ### acquireFor
@@ -70,7 +70,7 @@ Wait at most the requested number of milliseconds for ownership.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:89`
+Source: `std/threading.ml:93`
 
 <a id="method-method-std-threading-lock-close-function-close-std-threading-ml-259621520"></a>
 ### close
@@ -82,7 +82,7 @@ function close()
 Close the mutex handle after all users have stopped accessing it.
 
 
-Source: `std/threading.ml:113`
+Source: `std/threading.ml:117`
 
 <a id="field-field-std-threading-lock-closed-closed-std-threading-ml-457087762"></a>
 ### closed
@@ -94,7 +94,7 @@ closed
 Closed associated with `Lock`.
 
 
-Source: `std/threading.ml:70`
+Source: `std/threading.ml:74`
 
 <a id="field-field-std-threading-lock-handle-handle-std-threading-ml-2071608898"></a>
 ### handle
@@ -106,7 +106,7 @@ handle
 Handle associated with `Lock`.
 
 
-Source: `std/threading.ml:68`
+Source: `std/threading.ml:72`
 
 <a id="method-method-std-threading-lock-isclosed-function-isclosed-std-threading-ml-758314184"></a>
 ### IsClosed
@@ -118,7 +118,7 @@ function IsClosed()
 Exposes the Windows lock closed state through a PascalCase alias.
 
 
-Source: `std/threading.ml:133`
+Source: `std/threading.ml:137`
 
 <a id="method-method-std-threading-lock-isclosed-function-isclosed-std-threading-ml-1648794824"></a>
 ### isClosed
@@ -130,7 +130,7 @@ function isClosed()
 Reports whether this Windows lock handle has been closed.
 
 
-Source: `std/threading.ml:108`
+Source: `std/threading.ml:112`
 
 <a id="static_method-static-method-std-threading-lock-new-static-function-new-std-threading-ml-2018063371"></a>
 ### new
@@ -142,7 +142,7 @@ static function new()
 Create an initially unowned native mutex.
 
 
-Source: `std/threading.ml:73`
+Source: `std/threading.ml:77`
 
 <a id="method-method-std-threading-lock-release-function-release-std-threading-ml-521757954"></a>
 ### Release
@@ -154,7 +154,7 @@ function Release()
 Releases or resets release.
 
 
-Source: `std/threading.ml:131`
+Source: `std/threading.ml:135`
 
 <a id="method-method-std-threading-lock-release-function-release-std-threading-ml-1801433858"></a>
 ### release
@@ -166,7 +166,7 @@ function release()
 Release one acquisition held by the current thread.
 
 
-Source: `std/threading.ml:102`
+Source: `std/threading.ml:106`
 
 <a id="method-method-std-threading-lock-tryacquire-function-tryacquire-std-threading-ml-103662424"></a>
 ### TryAcquire
@@ -178,7 +178,7 @@ function TryAcquire()
 Provide try acquire behavior for this standard-library module.
 
 
-Source: `std/threading.ml:129`
+Source: `std/threading.ml:133`
 
 <a id="method-method-std-threading-lock-tryacquire-function-tryacquire-std-threading-ml-1996881112"></a>
 ### tryAcquire
@@ -190,4 +190,4 @@ function tryAcquire()
 Attempt immediate acquisition without blocking.
 
 
-Source: `std/threading.ml:97`
+Source: `std/threading.ml:101`

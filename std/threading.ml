@@ -12,6 +12,10 @@
 
 package std.threading
 
+#if TARGET_OS == "linux"
+import std.time as time
+#endif
+
 /// Native timeout/count parameters are signed 32-bit values on at least one supported target. Keeping the shared API inside this range avoids truncation and platform-dependent interpretations of the high bit.
 const MAX_PORTABLE_TIMEOUT_MS = 2147483647
 /// Track the max native semaphore count value used by this standard-library module.
@@ -403,14 +407,12 @@ end function
 /// Provide the acquire for operation for this standard-library module.
 /// @internal
 function _acquireFor(mutex, milliseconds)
-  elapsed = 0
-  while elapsed <= milliseconds
+  deadline = time.ticks() + milliseconds
+  while true
     if _mutexTryLock(nativeBytesPtr(mutex)) == 0 then return true end if
-    if elapsed == milliseconds then return false end if
+    if time.ticks() >= deadline then return false end if
     _sleepMicros(1000)
-    elapsed = elapsed + 1
   end while
-  return false
 end function
 
 /// POSIX recursive mutex with the same public contract as the Win32 Lock.
@@ -516,16 +518,14 @@ struct Semaphore
   /// @param milliseconds Maximum duration in milliseconds.
   function acquireFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
-    elapsed = 0
-    while elapsed <= milliseconds
+    deadline = time.ticks() + milliseconds
+    while true
       if _semTryWait(nativeBytesPtr(this.handle)) == 0 then
         return true
       end if
-      if elapsed == milliseconds then return false end if
+      if time.ticks() >= deadline then return false end if
       _sleepMicros(1000)
-      elapsed = elapsed + 1
     end while
-    return false
   end function
 
   /// Provide try acquire behavior for this standard-library module.
@@ -635,18 +635,16 @@ struct Event
   /// @param milliseconds Maximum duration in milliseconds.
   function waitFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
-    elapsed = 0
-    while elapsed <= milliseconds
+    deadline = time.ticks() + milliseconds
+    while true
       _mutexLock(nativeBytesPtr(this.mutex))
       ready = this.signaled
       if ready and not this.manualReset then this.signaled = false end if
       _mutexUnlock(nativeBytesPtr(this.mutex))
       if ready then return true end if
-      if elapsed == milliseconds then return false end if
+      if time.ticks() >= deadline then return false end if
       _sleepMicros(1000)
-      elapsed = elapsed + 1
     end while
-    return false
   end function
 
   /// Provide try wait behavior for this standard-library module.

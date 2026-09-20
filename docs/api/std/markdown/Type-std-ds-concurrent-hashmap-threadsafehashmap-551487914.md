@@ -38,7 +38,7 @@ function clear()
 Replace all bucket arrays while retaining the current capacity.
 
 
-Source: `std/ds/concurrent_hashmap.ml:308`
+Source: `std/ds/concurrent_hashmap.ml:333`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-close-function-close-std-ds-concurrent-hashmap-ml-869858615"></a>
 ### close
@@ -50,7 +50,7 @@ function close()
 Drop all managed references and release the native lock.
 
 
-Source: `std/ds/concurrent_hashmap.ml:386`
+Source: `std/ds/concurrent_hashmap.ml:412`
 
 <a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-closed-closed-std-ds-concurrent-hashmap-ml-1144171657"></a>
 ### closed
@@ -62,7 +62,7 @@ closed
 Closed associated with `ThreadSafeHashMap`.
 
 
-Source: `std/ds/concurrent_hashmap.ml:105`
+Source: `std/ds/concurrent_hashmap.ml:107`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-count-function-count-std-ds-concurrent-hashmap-ml-2095071105"></a>
 ### count
@@ -74,7 +74,7 @@ function count()
 Return a synchronized snapshot of the live entry count.
 
 
-Source: `std/ds/concurrent_hashmap.ml:147`
+Source: `std/ds/concurrent_hashmap.ml:150`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-delete-function-delete-key-std-ds-concurrent-hashmap-ml-886823762"></a>
 ### delete
@@ -90,7 +90,7 @@ Alias for remove().
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:303`
+Source: `std/ds/concurrent_hashmap.ml:328`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-entriesarray-function-entriesarray-std-ds-concurrent-hashmap-ml-1527597983"></a>
 ### entriesArray
@@ -102,7 +102,7 @@ function entriesArray()
 Copy live pairs into detached Entry snapshots.
 
 
-Source: `std/ds/concurrent_hashmap.ml:365`
+Source: `std/ds/concurrent_hashmap.ml:391`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-get-function-get-key-std-ds-concurrent-hashmap-ml-113965598"></a>
 ### get
@@ -118,7 +118,7 @@ Return a key's value, or void when absent or unavailable.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:211`
+Source: `std/ds/concurrent_hashmap.ml:228`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-getor-function-getor-key-fallback-std-ds-concurrent-hashmap-ml-1939592210"></a>
 ### getOr
@@ -135,7 +135,7 @@ Return a key's value or the caller-supplied fallback.
 | `fallback` | `dynamic` | — | Value supplied for `fallback`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:230`
+Source: `std/ds/concurrent_hashmap.ml:247`
 
 <a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-guard-guard-std-ds-concurrent-hashmap-ml-1695504469"></a>
 ### guard
@@ -163,7 +163,7 @@ Test whether a supported key is present.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:199`
+Source: `std/ds/concurrent_hashmap.ml:216`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-increment-function-increment-key-delta-std-ds-concurrent-hashmap-ml-1786891598"></a>
 ### increment
@@ -180,7 +180,7 @@ Atomically add delta to an integer value, inserting delta when absent.
 | `delta` | `dynamic` | — | Value supplied for `delta`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:249`
+Source: `std/ds/concurrent_hashmap.ml:266`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-isclosed-function-isclosed-std-ds-concurrent-hashmap-ml-1082109163"></a>
 ### isClosed
@@ -192,7 +192,7 @@ function isClosed()
 Report whether storage and its native lock have been released.
 
 
-Source: `std/ds/concurrent_hashmap.ml:166`
+Source: `std/ds/concurrent_hashmap.ml:169`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-isempty-function-isempty-std-ds-concurrent-hashmap-ml-1917850989"></a>
 ### isEmpty
@@ -204,7 +204,7 @@ function isEmpty()
 Report whether the map contains no live entries.
 
 
-Source: `std/ds/concurrent_hashmap.ml:161`
+Source: `std/ds/concurrent_hashmap.ml:164`
 
 <a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-keys-keys-std-ds-concurrent-hashmap-ml-1696116269"></a>
 ### keys
@@ -216,7 +216,7 @@ keys
 Keys associated with `ThreadSafeHashMap`.
 
 
-Source: `std/ds/concurrent_hashmap.ml:99`
+Source: `std/ds/concurrent_hashmap.ml:101`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-keysarray-function-keysarray-std-ds-concurrent-hashmap-ml-664401893"></a>
 ### keysArray
@@ -228,7 +228,7 @@ function keysArray()
 Copy a consistent snapshot of all live keys.
 
 
-Source: `std/ds/concurrent_hashmap.ml:323`
+Source: `std/ds/concurrent_hashmap.ml:349`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-len-function-len-std-ds-concurrent-hashmap-ml-1950357417"></a>
 ### len
@@ -240,7 +240,7 @@ function len()
 Alias for count().
 
 
-Source: `std/ds/concurrent_hashmap.ml:156`
+Source: `std/ds/concurrent_hashmap.ml:159`
 
 <a id="static_method-static-method-std-ds-concurrent-hashmap-threadsafehashmap-new-static-function-new-std-ds-concurrent-hashmap-ml-2047700696"></a>
 ### new
@@ -252,7 +252,7 @@ static function new()
 Create a map with the default bucket count.
 
 
-Source: `std/ds/concurrent_hashmap.ml:108`
+Source: `std/ds/concurrent_hashmap.ml:110`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-remove-function-remove-key-std-ds-concurrent-hashmap-ml-1236541502"></a>
 ### remove
@@ -268,7 +268,7 @@ Remove a live key and leave a tombstone for the probe chain.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:282`
+Source: `std/ds/concurrent_hashmap.ml:306`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-set-function-set-key-value-std-ds-concurrent-hashmap-ml-2134634419"></a>
 ### set
@@ -285,7 +285,7 @@ Insert or replace one key/value pair atomically.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:173`
+Source: `std/ds/concurrent_hashmap.ml:176`
 
 <a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-size-size-std-ds-concurrent-hashmap-ml-1543510903"></a>
 ### size
@@ -309,7 +309,19 @@ states
 States associated with `ThreadSafeHashMap`.
 
 
-Source: `std/ds/concurrent_hashmap.ml:103`
+Source: `std/ds/concurrent_hashmap.ml:105`
+
+<a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-tombstones-tombstones-std-ds-concurrent-hashmap-ml-1077375741"></a>
+### tombstones
+
+```ml
+tombstones
+```
+
+Deleted buckets retained until the next guarded rebuild.
+
+
+Source: `std/ds/concurrent_hashmap.ml:99`
 
 <a id="field-field-std-ds-concurrent-hashmap-threadsafehashmap-values-values-std-ds-concurrent-hashmap-ml-59180809"></a>
 ### values
@@ -321,7 +333,7 @@ values
 Values associated with `ThreadSafeHashMap`.
 
 
-Source: `std/ds/concurrent_hashmap.ml:101`
+Source: `std/ds/concurrent_hashmap.ml:103`
 
 <a id="method-method-std-ds-concurrent-hashmap-threadsafehashmap-valuesarray-function-valuesarray-std-ds-concurrent-hashmap-ml-1895275761"></a>
 ### valuesArray
@@ -333,7 +345,7 @@ function valuesArray()
 Copy a consistent snapshot of all live values.
 
 
-Source: `std/ds/concurrent_hashmap.ml:344`
+Source: `std/ds/concurrent_hashmap.ml:370`
 
 <a id="static_method-static-method-std-ds-concurrent-hashmap-threadsafehashmap-withcapacity-static-function-withcapacity-minimumbuckets-std-ds-concurrent-hashmap-ml-1092752747"></a>
 ### withCapacity
@@ -349,4 +361,4 @@ Create a map with at least the requested power-of-two capacity.
 | `minimumBuckets` | `dynamic` | — | Value supplied for `minimumBuckets`. |
 
 
-Source: `std/ds/concurrent_hashmap.ml:114`
+Source: `std/ds/concurrent_hashmap.ml:116`

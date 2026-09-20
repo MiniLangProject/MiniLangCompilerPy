@@ -539,8 +539,7 @@ end function
 
 /// Keep the original byte array rooted while native writes use its interior.
 /// @internal
-function _writeAllHandle(h, data, operation)
-  position = 0
+function _writeAllHandleFrom(h, data, position, operation)
   writtenRaw = bytes(std.fs.DWORD_SIZE, 0)
   while position < len(data)
     remaining = len(data) - position
@@ -553,6 +552,12 @@ function _writeAllHandle(h, data, operation)
     position = position + written
   end while
   return true
+end function
+
+/// Write a complete byte buffer from its beginning.
+/// @internal
+function _writeAllHandle(h, data, operation)
+  return _writeAllHandleFrom(h, data, 0, operation)
 end function
 
 /// Write all bytes to a file (overwrites if it exists).
@@ -662,13 +667,31 @@ function writeAllText(path, text)
   end if
 
   n = len(text)
+  if n > 0x7FFFFFFF then
+    result = _writeAllHandle(h, bytes(text), "writeAllText")
+    CloseHandle(h)
+    return result
+  end if
   bw4 = bytes(std.fs.DWORD_SIZE)
   ok = WriteFileCStr(h, text, n, bw4, 0)
-  CloseHandle(h)
-
   if ok == false then
+    CloseHandle(h)
     return _fsErr("writeAllText: WriteFile failed")
   end if
+
+  written = _u32le4(bw4)
+  if written > n then
+    CloseHandle(h)
+    return _fsErr("writeAllText: invalid write count")
+  end if
+  if written < n then
+    // Keep the fast C-string path for ordinary writes, but finish a short
+    // native write from the exact byte offset rather than silently truncating.
+    result = _writeAllHandleFrom(h, bytes(text), written, "writeAllText")
+    CloseHandle(h)
+    return result
+  end if
+  CloseHandle(h)
 
   return true
 end function

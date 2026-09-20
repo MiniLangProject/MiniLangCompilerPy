@@ -12,7 +12,7 @@ struct Semaphore
 Counting semaphore with a fixed maximum permit count.
 
 
-Source: `std/threading.ml:137`
+Source: `std/threading.ml:141`
 
 ## Members
 
@@ -26,7 +26,7 @@ function Acquire()
 PascalCase aliases mirror the native Thread API.
 
 
-Source: `std/threading.ml:213`
+Source: `std/threading.ml:217`
 
 <a id="method-method-std-threading-semaphore-acquire-function-acquire-std-threading-ml-1510023359"></a>
 ### acquire
@@ -38,7 +38,7 @@ function acquire()
 Block until one permit can be consumed.
 
 
-Source: `std/threading.ml:163`
+Source: `std/threading.ml:167`
 
 <a id="method-method-std-threading-semaphore-acquirefor-function-acquirefor-milliseconds-std-threading-ml-92650353"></a>
 ### AcquireFor
@@ -54,7 +54,7 @@ Provide acquire for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:216`
+Source: `std/threading.ml:220`
 
 <a id="method-method-std-threading-semaphore-acquirefor-function-acquirefor-milliseconds-std-threading-ml-1568461297"></a>
 ### acquireFor
@@ -70,7 +70,7 @@ Consume one permit within the requested timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:170`
+Source: `std/threading.ml:174`
 
 <a id="method-method-std-threading-semaphore-close-function-close-std-threading-ml-2091815591"></a>
 ### close
@@ -82,7 +82,7 @@ function close()
 Close the handle after no thread can wait on it again.
 
 
-Source: `std/threading.ml:202`
+Source: `std/threading.ml:206`
 
 <a id="field-field-std-threading-semaphore-closed-closed-std-threading-ml-781506857"></a>
 ### closed
@@ -94,7 +94,7 @@ closed
 Closed associated with `Semaphore`.
 
 
-Source: `std/threading.ml:143`
+Source: `std/threading.ml:147`
 
 <a id="field-field-std-threading-semaphore-handle-handle-std-threading-ml-1657773001"></a>
 ### handle
@@ -106,7 +106,7 @@ handle
 Handle associated with `Semaphore`.
 
 
-Source: `std/threading.ml:139`
+Source: `std/threading.ml:143`
 
 <a id="method-method-std-threading-semaphore-isclosed-function-isclosed-std-threading-ml-1130993587"></a>
 ### IsClosed
@@ -118,7 +118,7 @@ function IsClosed()
 Exposes the Windows semaphore closed state through a PascalCase alias.
 
 
-Source: `std/threading.ml:225`
+Source: `std/threading.ml:229`
 
 <a id="method-method-std-threading-semaphore-isclosed-function-isclosed-std-threading-ml-331623347"></a>
 ### isClosed
@@ -130,7 +130,7 @@ function isClosed()
 Reports whether this Windows semaphore handle has been closed.
 
 
-Source: `std/threading.ml:197`
+Source: `std/threading.ml:201`
 
 <a id="field-field-std-threading-semaphore-maximumcount-maximumcount-std-threading-ml-1417661039"></a>
 ### maximumCount
@@ -142,7 +142,7 @@ maximumCount
 Maximum count associated with `Semaphore`.
 
 
-Source: `std/threading.ml:141`
+Source: `std/threading.ml:145`
 
 <a id="static_method-static-method-std-threading-semaphore-new-static-function-new-initialcount-maximumcount-std-threading-ml-1769797430"></a>
 ### new
@@ -159,7 +159,7 @@ Create a semaphore with validated initial and maximum permit counts.
 | `maximumCount` | `dynamic` | — | Value supplied for `maximumCount`. |
 
 
-Source: `std/threading.ml:148`
+Source: `std/threading.ml:152`
 
 <a id="method-method-std-threading-semaphore-release-function-release-std-threading-ml-291476961"></a>
 ### Release
@@ -171,7 +171,7 @@ function Release()
 Releases or resets release.
 
 
-Source: `std/threading.ml:220`
+Source: `std/threading.ml:224`
 
 <a id="method-method-std-threading-semaphore-release-function-release-std-threading-ml-302421665"></a>
 ### release
@@ -183,7 +183,7 @@ function release()
 Return one permit to the semaphore.
 
 
-Source: `std/threading.ml:183`
+Source: `std/threading.ml:187`
 
 <a id="method-method-std-threading-semaphore-releasemany-function-releasemany-count-std-threading-ml-1835952538"></a>
 ### ReleaseMany
@@ -199,7 +199,7 @@ Releases or resets release many.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/threading.ml:223`
+Source: `std/threading.ml:227`
 
 <a id="method-method-std-threading-semaphore-releasemany-function-releasemany-count-std-threading-ml-1703356314"></a>
 ### releaseMany
@@ -215,7 +215,7 @@ Return multiple permits in one native operation.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/threading.ml:189`
+Source: `std/threading.ml:193`
 
 <a id="method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-599040883"></a>
 ### TryAcquire
@@ -227,7 +227,7 @@ function TryAcquire()
 Provide try acquire behavior for this standard-library module.
 
 
-Source: `std/threading.ml:218`
+Source: `std/threading.ml:222`
 
 <a id="method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-2104513587"></a>
 ### tryAcquire
@@ -239,4 +239,4 @@ function tryAcquire()
 Attempt to consume one permit without blocking.
 
 
-Source: `std/threading.ml:178`
+Source: `std/threading.ml:182`

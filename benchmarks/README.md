@@ -40,6 +40,22 @@ provider, deliberately excluding network and encryption costs. The paired
 Windows and Linux results, including measurement caveats, are in
 [the standard-library I/O report](../docs/reports/STDLIB_IO_OPTIMIZATION_2026-09-20.md).
 
+`stdlib_collections_copy.ml` pairs the previous stable insertion-sort loop
+with the current stable sort on reversed integers. It also times hash-map
+churn, a 50-ms channel timeout, and a 32-MiB file copy. On Linux it runs the
+previous read-all/write-all copy as a local baseline before the new copy.
+Run the Linux image once from a native filesystem (for example WSL `/tmp`)
+and separately from DrvFS if that path matters to you; filesystem results
+are not interchangeable. The fixture removes its own per-process files.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\stdlib_collections_copy.ml .\build\stdlib_collections_copy.exe -I .
+.\build\stdlib_collections_copy.exe
+```
+
+See the [standard-library audit optimization report](../docs/reports/STDLIB_AUDIT_OPTIMIZATION_2026-09-20.md)
+for the first paired measurements and compiler parity checks.
+
 ## Paired code-size experiments
 
 `compare_code_size.py` compares two already-built native programs, records

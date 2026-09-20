@@ -12,7 +12,7 @@ struct Event
 Win32 manual- or auto-reset event for one-to-many notifications.
 
 
-Source: `std/threading.ml:229`
+Source: `std/threading.ml:233`
 
 ## Members
 
@@ -26,7 +26,7 @@ function close()
 Close the event after no thread can wait on it again.
 
 
-Source: `std/threading.ml:289`
+Source: `std/threading.ml:293`
 
 <a id="field-field-std-threading-event-closed-closed-std-threading-ml-1682840367"></a>
 ### closed
@@ -38,7 +38,7 @@ closed
 Closed associated with `Event`.
 
 
-Source: `std/threading.ml:235`
+Source: `std/threading.ml:239`
 
 <a id="field-field-std-threading-event-handle-handle-std-threading-ml-349719439"></a>
 ### handle
@@ -50,7 +50,7 @@ handle
 Handle associated with `Event`.
 
 
-Source: `std/threading.ml:231`
+Source: `std/threading.ml:235`
 
 <a id="method-method-std-threading-event-isclosed-function-isclosed-std-threading-ml-2083169725"></a>
 ### IsClosed
@@ -62,7 +62,7 @@ function IsClosed()
 Exposes the Windows event closed state through a PascalCase alias.
 
 
-Source: `std/threading.ml:311`
+Source: `std/threading.ml:315`
 
 <a id="method-method-std-threading-event-isclosed-function-isclosed-std-threading-ml-424965693"></a>
 ### isClosed
@@ -74,7 +74,7 @@ function isClosed()
 Reports whether this Windows event handle has been closed.
 
 
-Source: `std/threading.ml:284`
+Source: `std/threading.ml:288`
 
 <a id="field-field-std-threading-event-manualreset-manualreset-std-threading-ml-236428395"></a>
 ### manualReset
@@ -86,7 +86,7 @@ manualReset
 Manual reset associated with `Event`.
 
 
-Source: `std/threading.ml:233`
+Source: `std/threading.ml:237`
 
 <a id="static_method-static-method-std-threading-event-new-static-function-new-manualreset-initialstate-std-threading-ml-955984394"></a>
 ### new
@@ -103,7 +103,7 @@ Create an event with explicit reset mode and initial signal state.
 | `initialState` | `dynamic` | — | Value supplied for `initialState`. |
 
 
-Source: `std/threading.ml:240`
+Source: `std/threading.ml:244`
 
 <a id="method-method-std-threading-event-reset-function-reset-std-threading-ml-851676123"></a>
 ### Reset
@@ -115,7 +115,7 @@ function Reset()
 Releases or resets reset.
 
 
-Source: `std/threading.ml:309`
+Source: `std/threading.ml:313`
 
 <a id="method-method-std-threading-event-reset-function-reset-std-threading-ml-899439323"></a>
 ### reset
@@ -127,7 +127,7 @@ function reset()
 Return a manual-reset event to the nonsignaled state.
 
 
-Source: `std/threading.ml:278`
+Source: `std/threading.ml:282`
 
 <a id="method-method-std-threading-event-set-function-set-std-threading-ml-1006217145"></a>
 ### Set
@@ -139,7 +139,7 @@ function Set()
 Updates set.
 
 
-Source: `std/threading.ml:307`
+Source: `std/threading.ml:311`
 
 <a id="method-method-std-threading-event-set-function-set-std-threading-ml-175502265"></a>
 ### set
@@ -151,7 +151,7 @@ function set()
 Signal the event and release the applicable waiters.
 
 
-Source: `std/threading.ml:272`
+Source: `std/threading.ml:276`
 
 <a id="method-method-std-threading-event-trywait-function-trywait-std-threading-ml-1736278617"></a>
 ### TryWait
@@ -163,7 +163,7 @@ function TryWait()
 Provide try wait behavior for this standard-library module.
 
 
-Source: `std/threading.ml:305`
+Source: `std/threading.ml:309`
 
 <a id="method-method-std-threading-event-trywait-function-trywait-std-threading-ml-1669113241"></a>
 ### tryWait
@@ -175,7 +175,7 @@ function tryWait()
 Test the signal state without blocking.
 
 
-Source: `std/threading.ml:267`
+Source: `std/threading.ml:271`
 
 <a id="method-method-std-threading-event-wait-function-wait-std-threading-ml-2053849165"></a>
 ### Wait
@@ -187,7 +187,7 @@ function Wait()
 PascalCase aliases mirror the native Thread API.
 
 
-Source: `std/threading.ml:300`
+Source: `std/threading.ml:304`
 
 <a id="method-method-std-threading-event-wait-function-wait-std-threading-ml-2104680781"></a>
 ### wait
@@ -199,7 +199,7 @@ function wait()
 Wait indefinitely until the event is signaled.
 
 
-Source: `std/threading.ml:252`
+Source: `std/threading.ml:256`
 
 <a id="method-method-std-threading-event-waitfor-function-waitfor-milliseconds-std-threading-ml-1651884527"></a>
 ### WaitFor
@@ -215,7 +215,7 @@ Exposes the Windows event timed wait through a PascalCase alias.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:303`
+Source: `std/threading.ml:307`
 
 <a id="method-method-std-threading-event-waitfor-function-waitfor-milliseconds-std-threading-ml-1897816367"></a>
 ### waitFor
@@ -231,4 +231,4 @@ Wait until signaled or until the timeout expires.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/threading.ml:259`
+Source: `std/threading.ml:263`

@@ -2,6 +2,7 @@ import std.concurrent.channel as channels
 import std.concurrent.task as tasks
 import std.concurrent.thread_pool as threadPool
 import std.threading as threading
+import std.time as time
 
 function square(value)
   return value * value
@@ -108,6 +109,20 @@ function main(args)
   disposedReceive = edgeChannel.ReceiveFor(0)
   if edgeChannel.Send(5) or edgeChannel.close() or edgeChannel.Count() != 0 or disposedReceive.received then return 35 end if
 
+  timedChannel = channels.Channel.new(1)
+  started = time.ticks()
+  emptyResult = timedChannel.ReceiveFor(50)
+  elapsed = time.ticks() - started
+  if emptyResult.received or elapsed < 40 or elapsed > 500 then return 36 end if
+  if not timedChannel.Send(1) then return 37 end if
+  started = time.ticks()
+  sent = timedChannel.SendFor(2, 50)
+  elapsed = time.ticks() - started
+  if sent or elapsed < 40 or elapsed > 500 then return 38 end if
+  if not timedChannel.close() then return 39 end if
+  finalResult = timedChannel.ReceiveFor(0)
+  if not finalResult.received or not timedChannel.Dispose() then return 39 end if
+
   if not channelPool.Shutdown() or not channelPool.AwaitTerminationFor(10000) then return 18 end if
   if not channelPool.Dispose() then return 19 end if
 
@@ -116,6 +131,10 @@ function main(args)
   blocker = tasks.run(cancelPool, waitOnEvent, gate)
   queued = tasks.runCancellable(cancelPool, cancellableLoop, 0)
   if tasks.whenAnyFor([blocker], 0) != -1 then return 28 end if
+  started = time.ticks()
+  if tasks.whenAnyFor([blocker], 50) != -1 then return 41 end if
+  elapsed = time.ticks() - started
+  if elapsed < 40 or elapsed > 500 then return 42 end if
   if not queued.Cancel() or not queued.WaitFor(10000) or queued.status() != "Cancelled" then return 29 end if
   if typeof(queued.result()) != "void" or not queued.Dispose() then return 30 end if
   if not gate.Set() or not blocker.WaitFor(10000) or blocker.result() != 77 then return 31 end if

@@ -24,6 +24,16 @@ function main(args)
   if typeof(request) == "error" or request != bytes("ping") then tls.close(stream); net.close(socket); net.close(listener); return failResult("receive", request) end if
   sent = tls.sendAll(stream, bytes("pong"))
   if sent != 4 then tls.close(stream); net.close(socket); net.close(listener); return failResult("send", sent) end if
+  receivedBulk = 0
+  while receivedBulk < 131072
+    chunk = tls.receive(stream, 4096)
+    if typeof(chunk) != "bytes" or len(chunk) == 0 then tls.close(stream); net.close(socket); net.close(listener); return failResult("bulk receive", chunk) end if
+    for index = 0 to len(chunk) - 1
+      if chunk[index] != 0x5A then tls.close(stream); net.close(socket); net.close(listener); return failResult("bulk content", chunk) end if
+    end for
+    receivedBulk = receivedBulk + len(chunk)
+  end while
+  if receivedBulk != 131072 or tls.sendAll(stream, bytes("bulk-ok")) != 7 then tls.close(stream); net.close(socket); net.close(listener); return failResult("bulk acknowledgement", receivedBulk) end if
   tls.shutdown(stream)
   tls.close(stream)
   net.close(socket)

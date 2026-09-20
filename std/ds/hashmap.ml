@@ -150,6 +150,8 @@ struct HashMap
   cap
   /// Current logical size of `HashMap`.
   size
+  /// Deleted slots retained for probing until a same-size rebuild.
+  tombstones
   /// Keys associated with `HashMap`.
   keys
   /// Values associated with `HashMap`.
@@ -169,7 +171,7 @@ c = _nextPow2(minCap)
 k = _allocArray(c, 0)
 v = _allocArray(c, 0)
 s = _allocArray(c, 0)
-return HashMap(c, 0, k, v, s)
+return HashMap(c, 0, 0, k, v, s)
 end function
 
 /// Returns number of entries.
@@ -189,6 +191,7 @@ function clear()
   this.values = _allocArray(this.cap, 0)
   this.states = _allocArray(this.cap, 0)
   this.size = 0
+  this.tombstones = 0
 end function
 
 /// Checks whether inserting one element would exceed load factor.
@@ -221,6 +224,7 @@ function _rehash(newCap)
   this.keys = nk
   this.values = nv
   this.states = ns
+  this.tombstones = 0
 end function
 
 /// Inserts or updates a key/value pair.
@@ -232,16 +236,27 @@ function set(key, value)
     return false
   end if
 
-  if this._maybeGrow() then
-    this._rehash(this.cap << 1)
-  end if
-
   idx = _findSlot(this.keys, this.states, this.cap, key, true)
   if idx < 0 then
     return false
   end if
+  if this.states[idx] == 1 then
+    this.values[idx] = value
+    return true
+  end if
+
+  // Updates never increase load; rebuild tombstone-heavy tables without growing.
+  if this._maybeGrow() then
+    this._rehash(this.cap << 1)
+    idx = _findSlot(this.keys, this.states, this.cap, key, true)
+  else if this.tombstones * 2 >= this.cap then
+    this._rehash(this.cap)
+    idx = _findSlot(this.keys, this.states, this.cap, key, true)
+  end if
+  if idx < 0 then return false end if
 
   if this.states[idx] != 1 then
+    if this.states[idx] == 2 then this.tombstones = this.tombstones - 1 end if
     this.size = this.size + 1
     this.keys[idx] = key
     this.states[idx] = 1
@@ -302,6 +317,7 @@ function remove(key)
   this.keys[idx] = 0
   this.values[idx] = 0
   this.size = this.size - 1
+  this.tombstones = this.tombstones + 1
   return true
 end function
 

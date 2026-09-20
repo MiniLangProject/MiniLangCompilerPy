@@ -352,7 +352,11 @@ function receiveBytes(state, maximumBytes)
   output = bytes(maximumBytes, 0)
   count = bytes(8, 0)
   result = _sessionRead(state.session, nativeBytesPtr(output), maximumBytes, count)
-  if result == 1 then return slice(output, 0, _getU64(count)) end if
+  if result == 1 then
+    received = _getU64(count)
+    if received == maximumBytes then return output end if
+    return slice(output, 0, received)
+  end if
   sslError = _sessionError(state.session, result)
   // The internal provider is also used by event-loop adapters. A nonblocking
   // socket with no complete TLS record is not a transport failure.

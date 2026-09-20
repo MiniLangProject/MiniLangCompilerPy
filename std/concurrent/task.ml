@@ -9,6 +9,7 @@ package std.concurrent.task
 
 import std.concurrent.cancellation as cancellation
 import std.concurrent.thread_pool as threadPool
+import std.time as time
 
 /// Track the task error value used by this standard-library module.
 const TASK_ERROR = 1651
@@ -156,8 +157,9 @@ end function
 function whenAnyFor(futures, milliseconds)
   if typeof(futures) != "array" or len(futures) == 0 then return error(TASK_ERROR, "whenAny expects a non-empty array") end if
   if typeof(milliseconds) != "int" then return error(TASK_ERROR, "whenAny timeout must be an integer") end if
-  elapsed = 0
-  while milliseconds < 0 or elapsed <= milliseconds
+  deadline = 0
+  if milliseconds >= 0 then deadline = time.ticks() + milliseconds end if
+  while true
     i = 0
     while i < len(futures)
       future = futures[i]
@@ -165,11 +167,9 @@ function whenAnyFor(futures, milliseconds)
       if future.isDone() then return i end if
       i = i + 1
     end while
-    if elapsed == milliseconds then return -1 end if
+    if milliseconds >= 0 and time.ticks() >= deadline then return -1 end if
     threadSleep(1)
-    elapsed = elapsed + 1
   end while
-  return -1
 end function
 
 /// Provide the when any operation for this standard-library module.

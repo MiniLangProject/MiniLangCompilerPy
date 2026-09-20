@@ -148,6 +148,24 @@ function main(args)
   if len(mapProbe.keysArray()) != 4 or len(mapProbe.valuesArray()) != 4 or len(mapProbe.entriesArray()) != 4 then return 27 end if
   if not mapProbe.clear() or not mapProbe.isEmpty() or not mapProbe.close() then return 28 end if
 
+  growthMap = concurrentMap.ThreadSafeHashMap.withCapacity(16)
+  i = 0
+  while i < 11
+    if not growthMap.set(i, i) then return 53 end if
+    i = i + 1
+  end while
+  if growthMap.bucketCount != 16 or not growthMap.set(5, 99) then return 54 end if
+  if growthMap.bucketCount != 16 or growthMap.get(5) != 99 then return 55 end if
+  churnMap = concurrentMap.ThreadSafeHashMap.withCapacity(16)
+  i = 0
+  while i < 256
+    if not churnMap.set(i, i) or not churnMap.delete(i) then return 56 end if
+    i = i + 1
+  end while
+  if churnMap.count() != 0 or churnMap.tombstones * 2 > churnMap.bucketCount then return 57 end if
+  if churnMap.increment("final", 7) != 7 or churnMap.get("final") != 7 then return 58 end if
+  if not growthMap.close() or not churnMap.close() then return 59 end if
+
   // Two real workers concurrently mutate managed containers in the global heap.
   a = Thread(concurrentWorker)
   b = Thread(concurrentWorker)

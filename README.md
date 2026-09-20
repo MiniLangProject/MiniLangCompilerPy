@@ -1775,7 +1775,9 @@ multi-producer/multi-consumer FIFO with backpressure. `Send`/`Receive` wait,
 block. A receive returns `ChannelReceive(received, value)`, so a valid `void`
 message remains distinguishable from a closed and drained channel. `close()`
 seals the writer side; queued values remain readable. Call `Dispose` only after
-blocked users have returned and the channel has drained.
+blocked users have returned and the channel has drained. Timed channel and
+`whenAnyFor` waits use monotonic elapsed time; a deadline is not a guarantee
+of exact wake-up time under OS scheduling.
 
 ```ml
 import std.concurrent.channel as channels
@@ -2166,8 +2168,8 @@ Linux images that use only libc-backed modules need no dependency beyond the
 normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
 requires the OpenSSL 3 runtime package.
 
-The current library contains 47 source modules, byte-for-byte identical in both
-compiler repositories:
+The current library contains 48 source modules with matching source content
+in both compiler repositories (two provider files differ only in line endings):
 
 - **Core:** `std.core`, `std.assert`, `std.test`, `std.array`, `std.sort`,
   `std.math`, `std.random`, `std.fmt`
@@ -2188,6 +2190,11 @@ compiler repositories:
 - **Compatibility helpers:** `std.result` provides `Option` and `Result`;
   `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec;
   `std._linux_fs` is the internal POSIX filesystem backend.
+
+`std.sort.sortBy` is stable with O(n log n) comparisons and O(n) temporary
+storage; `sortFastBy` is an unstable in-place quicksort with a bounded work
+stack. Ordinary and thread-safe hash maps update existing keys without
+growing and periodically rebuild deleted-slot-heavy tables.
 
 `std.io.file` is the durable random-access API intended for databases and
 servers: it provides positional reads/writes, truncation, flush, whole-file
@@ -2585,7 +2592,9 @@ File I/O is provided by the **standard library** module `std.fs`, with convenien
 
 `std.fs.appendAllBytes` and `appendAllText` append through native file
 handles without re-reading the existing file. Whole-file reads fill their
-result buffer directly. For bounded positional I/O with reusable buffers,
+result buffer directly. Linux `copyFile` uses in-kernel copying when suitable
+and otherwise a bounded 1-MiB transfer buffer; Windows uses the native copy
+operation. For bounded positional I/O with reusable buffers,
 including nonzero buffer offsets, use `std.io.file`; for reusable TCP and UDP
 receive buffers, use `std.net.tcpRecvInto` and `udpRecvFromInto`.
 

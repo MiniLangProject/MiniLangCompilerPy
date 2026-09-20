@@ -8,6 +8,7 @@
 package std.concurrent.channel
 
 import std.threading as threading
+import std.time as time
 
 /// Track the channel error value used by this standard-library module.
 const CHANNEL_ERROR = 1652
@@ -163,14 +164,13 @@ struct Channel
   function sendFor(value, milliseconds)
     if this.disposed then return false end if
     if typeof(milliseconds) != "int" or milliseconds < -1 then return false end if
-    elapsed = 0
-    while milliseconds < 0 or elapsed <= milliseconds
+    deadline = 0
+    if milliseconds >= 0 then deadline = time.ticks() + milliseconds end if
+    while true
       if this.queue.tryPut(value) then return true end if
-      if this.queue.isSealed() or elapsed == milliseconds then return false end if
+      if this.queue.isSealed() or (milliseconds >= 0 and time.ticks() >= deadline) then return false end if
       threadSleep(CHANNEL_POLL_MILLISECONDS)
-      elapsed = elapsed + CHANNEL_POLL_MILLISECONDS
     end while
-    return false
   end function
 
   /// Provide send behavior for this standard-library module.
@@ -185,15 +185,14 @@ struct Channel
   function receiveFor(milliseconds)
     if this.disposed then return ChannelReceive(false, void) end if
     if typeof(milliseconds) != "int" or milliseconds < -1 then return ChannelReceive(false, void) end if
-    elapsed = 0
-    while milliseconds < 0 or elapsed <= milliseconds
+    deadline = 0
+    if milliseconds >= 0 then deadline = time.ticks() + milliseconds end if
+    while true
       result = this.queue.tryTake()
       if result.received then return result end if
-      if this.queue.isSealed() or elapsed == milliseconds then return result end if
+      if this.queue.isSealed() or (milliseconds >= 0 and time.ticks() >= deadline) then return result end if
       threadSleep(CHANNEL_POLL_MILLISECONDS)
-      elapsed = elapsed + CHANNEL_POLL_MILLISECONDS
     end while
-    return ChannelReceive(false, void)
   end function
 
   /// Receives the next channel value, waiting when necessary.

@@ -95,6 +95,8 @@ struct ThreadSafeHashMap
   bucketCount
   /// Current logical size of `ThreadSafeHashMap`.
   size
+  /// Deleted buckets retained until the next guarded rebuild.
+  tombstones
   /// Keys associated with `ThreadSafeHashMap`.
   keys
   /// Values associated with `ThreadSafeHashMap`.
@@ -117,7 +119,7 @@ struct ThreadSafeHashMap
     end if
     guard = threading.Lock.new()
     bucketCount = _nextBuckets(minimumBuckets)
-    return ThreadSafeHashMap(guard, bucketCount, 0, _newArray(bucketCount), _newArray(bucketCount), _newArray(bucketCount), false)
+    return ThreadSafeHashMap(guard, bucketCount, 0, 0, _newArray(bucketCount), _newArray(bucketCount), _newArray(bucketCount), false)
   end function
 
   /// Rebuild live entries into a larger table; guard must already be held.
@@ -141,6 +143,7 @@ struct ThreadSafeHashMap
     this.keys = newKeys
     this.values = newValues
     this.states = newStates
+    this.tombstones = 0
   end function
 
   /// Return a synchronized snapshot of the live entry count.
@@ -176,15 +179,29 @@ struct ThreadSafeHashMap
       this.guard.release()
       return false
     end if
-    if (this.size + 1) * 10 >= this.bucketCount * 7 then
-      this._rehashLocked(this.bucketCount << 1)
-    end if
     index = _findSlot(this.keys, this.states, this.bucketCount, key, true)
     if index < 0 then
       this.guard.release()
       return false
     end if
+    if this.states[index] == 1 then
+      this.values[index] = value
+      this.guard.release()
+      return true
+    end if
+    if (this.size + 1) * 10 >= this.bucketCount * 7 then
+      this._rehashLocked(this.bucketCount << 1)
+      index = _findSlot(this.keys, this.states, this.bucketCount, key, true)
+    else if this.tombstones * 2 >= this.bucketCount then
+      this._rehashLocked(this.bucketCount)
+      index = _findSlot(this.keys, this.states, this.bucketCount, key, true)
+    end if
+    if index < 0 then
+      this.guard.release()
+      return false
+    end if
     if this.states[index] != 1 then
+      if this.states[index] == 2 then this.tombstones = this.tombstones - 1 end if
       this.keys[index] = key
       this.states[index] = 1
       this.size = this.size + 1
@@ -257,8 +274,15 @@ struct ThreadSafeHashMap
     if index < 0 then
       if (this.size + 1) * 10 >= this.bucketCount * 7 then
         this._rehashLocked(this.bucketCount << 1)
+      else if this.tombstones * 2 >= this.bucketCount then
+        this._rehashLocked(this.bucketCount)
       end if
       index = _findSlot(this.keys, this.states, this.bucketCount, key, true)
+      if index < 0 then
+        this.guard.release()
+        return
+      end if
+      if this.states[index] == 2 then this.tombstones = this.tombstones - 1 end if
       this.keys[index] = key
       this.values[index] = delta
       this.states[index] = 1
@@ -294,6 +318,7 @@ struct ThreadSafeHashMap
     this.keys[index] = 0
     this.values[index] = 0
     this.size = this.size - 1
+    this.tombstones = this.tombstones + 1
     this.guard.release()
     return true
   end function
@@ -315,6 +340,7 @@ struct ThreadSafeHashMap
     this.values = _newArray(this.bucketCount)
     this.states = _newArray(this.bucketCount)
     this.size = 0
+    this.tombstones = 0
     this.guard.release()
     return true
   end function
@@ -390,6 +416,7 @@ struct ThreadSafeHashMap
     this.states = []
     this.bucketCount = 0
     this.size = 0
+    this.tombstones = 0
     this.closed = true
     this.guard.release()
     this.guard.close()

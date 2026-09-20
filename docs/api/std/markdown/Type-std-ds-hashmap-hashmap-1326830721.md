@@ -38,7 +38,7 @@ function clear()
 Removes all entries (keeps capacity).
 
 
-Source: `std/ds/hashmap.ml:186`
+Source: `std/ds/hashmap.ml:188`
 
 <a id="method-method-std-ds-hashmap-hashmap-count-function-count-std-ds-hashmap-ml-806853896"></a>
 ### count
@@ -50,7 +50,7 @@ function count()
 Returns number of entries.
 
 
-Source: `std/ds/hashmap.ml:176`
+Source: `std/ds/hashmap.ml:178`
 
 <a id="method-method-std-ds-hashmap-hashmap-delete-function-delete-key-std-ds-hashmap-ml-1951284107"></a>
 ### delete
@@ -66,7 +66,7 @@ Alias for remove(key) to match common naming in the stdlib/tests.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/hashmap.ml:310`
+Source: `std/ds/hashmap.ml:326`
 
 <a id="method-method-std-ds-hashmap-hashmap-entriesarray-function-entriesarray-std-ds-hashmap-ml-1475560178"></a>
 ### entriesArray
@@ -78,7 +78,7 @@ function entriesArray()
 Returns all entries (order unspecified).
 
 
-Source: `std/ds/hashmap.ml:341`
+Source: `std/ds/hashmap.ml:357`
 
 <a id="method-method-std-ds-hashmap-hashmap-get-function-get-key-std-ds-hashmap-ml-1962985435"></a>
 ### get
@@ -94,7 +94,7 @@ Gets value by key.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/hashmap.ml:266`
+Source: `std/ds/hashmap.ml:281`
 
 <a id="method-method-std-ds-hashmap-hashmap-getor-function-getor-key-fallback-std-ds-hashmap-ml-923925195"></a>
 ### getOr
@@ -111,7 +111,7 @@ Gets value by key or returns fallback.
 | `fallback` | `dynamic` | — | Value supplied for `fallback`. |
 
 
-Source: `std/ds/hashmap.ml:281`
+Source: `std/ds/hashmap.ml:296`
 
 <a id="method-method-std-ds-hashmap-hashmap-has-function-has-key-std-ds-hashmap-ml-1870741851"></a>
 ### has
@@ -127,7 +127,7 @@ Checks if a key exists.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/hashmap.ml:255`
+Source: `std/ds/hashmap.ml:270`
 
 <a id="method-method-std-ds-hashmap-hashmap-isempty-function-isempty-std-ds-hashmap-ml-364699036"></a>
 ### isEmpty
@@ -139,7 +139,7 @@ function isEmpty()
 Checks whether map is empty.
 
 
-Source: `std/ds/hashmap.ml:181`
+Source: `std/ds/hashmap.ml:183`
 
 <a id="field-field-std-ds-hashmap-hashmap-keys-keys-std-ds-hashmap-ml-1682839336"></a>
 ### keys
@@ -151,7 +151,7 @@ keys
 Keys associated with `HashMap`.
 
 
-Source: `std/ds/hashmap.ml:154`
+Source: `std/ds/hashmap.ml:156`
 
 <a id="method-method-std-ds-hashmap-hashmap-keysarray-function-keysarray-std-ds-hashmap-ml-1663031904"></a>
 ### keysArray
@@ -163,7 +163,7 @@ function keysArray()
 Returns all keys (order unspecified).
 
 
-Source: `std/ds/hashmap.ml:315`
+Source: `std/ds/hashmap.ml:331`
 
 <a id="static_method-static-method-std-ds-hashmap-hashmap-new-static-function-new-std-ds-hashmap-ml-111281271"></a>
 ### new
@@ -175,7 +175,7 @@ static function new()
 Creates a new empty hash map.
 
 
-Source: `std/ds/hashmap.ml:161`
+Source: `std/ds/hashmap.ml:163`
 
 <a id="method-method-std-ds-hashmap-hashmap-remove-function-remove-key-std-ds-hashmap-ml-1942441951"></a>
 ### remove
@@ -191,7 +191,7 @@ Removes a key from the map.
 | `key` | `dynamic` | — | Value supplied for `key`. |
 
 
-Source: `std/ds/hashmap.ml:291`
+Source: `std/ds/hashmap.ml:306`
 
 <a id="method-method-std-ds-hashmap-hashmap-set-function-set-key-value-std-ds-hashmap-ml-1174901958"></a>
 ### set
@@ -208,7 +208,7 @@ Inserts or updates a key/value pair.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/hashmap.ml:229`
+Source: `std/ds/hashmap.ml:233`
 
 <a id="field-field-std-ds-hashmap-hashmap-size-size-std-ds-hashmap-ml-858599162"></a>
 ### size
@@ -232,7 +232,19 @@ states
 States associated with `HashMap`.
 
 
-Source: `std/ds/hashmap.ml:158`
+Source: `std/ds/hashmap.ml:160`
+
+<a id="field-field-std-ds-hashmap-hashmap-tombstones-tombstones-std-ds-hashmap-ml-418260944"></a>
+### tombstones
+
+```ml
+tombstones
+```
+
+Deleted slots retained for probing until a same-size rebuild.
+
+
+Source: `std/ds/hashmap.ml:154`
 
 <a id="field-field-std-ds-hashmap-hashmap-values-values-std-ds-hashmap-ml-1537395444"></a>
 ### values
@@ -244,7 +256,7 @@ values
 Values associated with `HashMap`.
 
 
-Source: `std/ds/hashmap.ml:156`
+Source: `std/ds/hashmap.ml:158`
 
 <a id="method-method-std-ds-hashmap-hashmap-valuesarray-function-valuesarray-std-ds-hashmap-ml-1708150460"></a>
 ### valuesArray
@@ -256,7 +268,7 @@ function valuesArray()
 Returns all values (order unspecified).
 
 
-Source: `std/ds/hashmap.ml:328`
+Source: `std/ds/hashmap.ml:344`
 
 <a id="static_method-static-method-std-ds-hashmap-hashmap-withcapacity-static-function-withcapacity-mincap-std-ds-hashmap-ml-1784250823"></a>
 ### withCapacity
@@ -272,4 +284,4 @@ Creates a hash map with at least `minCap` capacity.
 | `minCap` | `dynamic` | — | Value supplied for `minCap`. |
 
 
-Source: `std/ds/hashmap.ml:167`
+Source: `std/ds/hashmap.ml:169`

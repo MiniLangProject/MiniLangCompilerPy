@@ -1273,6 +1273,11 @@ end function
 function popPlaintext(context, count)
   available = len(context.decryptedInput)
   if available < count then return void end if
+  if count == available then
+    output = context.decryptedInput
+    context.decryptedInput = bytes(0)
+    return output
+  end if
   output = copyRange(context.decryptedInput, 0, count, "popPlaintext")
   remaining = available - count
   nextBuffer = bytes(0)
@@ -1293,7 +1298,7 @@ end function
 
 /// Returns encrypted bytes that Schannel did not consume from the current record.
 /// @internal
-function decryptExtra(inputBytes, buffers)
+function decryptExtra(inputBytes, inputLength, buffers)
   extraLength = 0
   extraPointer = 0
   index = 0
@@ -1307,14 +1312,14 @@ function decryptExtra(inputBytes, buffers)
   end while
   if extraLength <= 0 then return bytes(0) end if
   basePointer = nativeBytesPtr(inputBytes)
-  offset = len(inputBytes) - extraLength
-  if extraPointer >= basePointer and extraPointer <= basePointer + len(inputBytes) - extraLength then offset = extraPointer - basePointer end if
+  offset = inputLength - extraLength
+  if extraPointer >= basePointer and extraPointer <= basePointer + inputLength - extraLength then offset = extraPointer - basePointer end if
   return copyRange(inputBytes, offset, extraLength, "decryptExtra")
 end function
 
 /// Copies every plaintext SECBUFFER_DATA segment produced by Schannel.
 /// @internal
-function decryptedData(inputBytes, buffers)
+function decryptedData(inputBytes, inputLength, buffers)
   basePointer = nativeBytesPtr(inputBytes)
   index = 0
   while index <= 3
@@ -1323,7 +1328,7 @@ function decryptedData(inputBytes, buffers)
       if dataLength == 0 then return bytes(0) end if
       pointerResult = try(secBufferPointer(buffers, index))
       if typeof(pointerResult) == "error" then return pointerResult end if
-      if pointerResult < basePointer or pointerResult > basePointer + len(inputBytes) - dataLength then return fail("decryptedData", "Schannel returned plaintext outside input buffer") end if
+      if pointerResult < basePointer or pointerResult > basePointer + inputLength - dataLength then return fail("decryptedData", "Schannel returned plaintext outside input buffer") end if
       return copyRange(inputBytes, pointerResult - basePointer, dataLength, "decryptedData")
     end if
     index = index + 1
@@ -1333,8 +1338,8 @@ end function
 
 /// Lets Schannel process a TLS 1.3 post-handshake ticket or KeyUpdate message. Schannel reports these through SEC_I_RENEGOTIATE even though TLS 1.3 has no legacy renegotiation. A single SSPI continuation updates traffic keys and may emit an acknowledgement; any attempt to start a multi-flight renegotiation is rejected because std.tls does not request post-handshake client authentication.
 /// @internal
-function processPostHandshake(context, socketHandle, inputBytes, buffers)
-  pending = try(decryptExtra(inputBytes, buffers))
+function processPostHandshake(context, socketHandle, inputBytes, inputLength, buffers)
+  pending = try(decryptExtra(inputBytes, inputLength, buffers))
   if typeof(pending) == "error" then return pending end if
   if len(pending) == 0 then return fail("processPostHandshake", "Schannel returned no post-handshake token") end if
   input = inputTokenDesc(pending)
@@ -1372,37 +1377,49 @@ function decryptNext(context, socketHandle)
       context.encryptedInput = received
     end if
     inputBytes = context.encryptedInput
-    buffers = createSecBufferArray(4)
-    writeSecBuffer(buffers, 0, SECBUFFER_DATA, nativeBytesPtr(inputBytes), len(inputBytes))
-    writeSecBuffer(buffers, 1, SECBUFFER_EMPTY, 0, 0)
-    writeSecBuffer(buffers, 2, SECBUFFER_EMPTY, 0, 0)
-    writeSecBuffer(buffers, 3, SECBUFFER_EMPTY, 0, 0)
-    desc = createSecBufferDescForArray(buffers, 4)
-    quality = bytes(4, 0)
-    status = DecryptMessage(context.handle, desc, 0, quality)
-    if status == SEC_E_INCOMPLETE_MESSAGE then
-      received = try(network.tcpRecv(socketHandle, TLS_NETWORK_RECEIVE_BYTES))
+    inputLength = len(inputBytes)
+    status = SEC_E_OK
+    buffers = bytes(0)
+    // Grow geometrically and read into the unused tail. Fragmented records
+    // no longer copy the entire accumulated ciphertext on every recv().
+    while true
+      buffers = createSecBufferArray(4)
+      writeSecBuffer(buffers, 0, SECBUFFER_DATA, nativeBytesPtr(inputBytes), inputLength)
+      writeSecBuffer(buffers, 1, SECBUFFER_EMPTY, 0, 0)
+      writeSecBuffer(buffers, 2, SECBUFFER_EMPTY, 0, 0)
+      writeSecBuffer(buffers, 3, SECBUFFER_EMPTY, 0, 0)
+      desc = createSecBufferDescForArray(buffers, 4)
+      quality = bytes(4, 0)
+      status = DecryptMessage(context.handle, desc, 0, quality)
+      if status != SEC_E_INCOMPLETE_MESSAGE then break end if
+      if inputLength == len(inputBytes) then
+        capacity = len(inputBytes) * 2
+        if capacity < 4096 then capacity = 4096 end if
+        if capacity > TLS_NETWORK_RECEIVE_BYTES then capacity = TLS_NETWORK_RECEIVE_BYTES end if
+        if capacity <= inputLength then return fail("decryptNext", "TLS record exceeds receive buffer") end if
+        grown = bytes(capacity, 0)
+        copyBytes(grown, 0, inputBytes, 0, inputLength)
+        inputBytes = grown
+      end if
+      received = try(network.tcpRecvInto(socketHandle, inputBytes, inputLength, len(inputBytes) - inputLength))
       if typeof(received) == "error" then return received end if
-      if typeof(received) != "bytes" then return fail("decryptNext", "network receive returned no TLS bytes") end if
-      if len(received) == 0 then return fail("decryptNext", "connection closed with incomplete TLS record") end if
-      context.encryptedInput = try(appendBytes(context.encryptedInput, received))
-      if typeof(context.encryptedInput) == "error" then return context.encryptedInput end if
-      continue
-    end if
+      if received == 0 then return fail("decryptNext", "connection closed with incomplete TLS record") end if
+      inputLength = inputLength + received
+    end while
     if status == SEC_I_CONTEXT_EXPIRED then
       context.closed = true
       context.encryptedInput = bytes(0)
       return bytes(0)
     end if
     if status == SEC_I_RENEGOTIATE then
-      continued = try(processPostHandshake(context, socketHandle, inputBytes, buffers))
+      continued = try(processPostHandshake(context, socketHandle, inputBytes, inputLength, buffers))
       if typeof(continued) == "error" then return continued end if
       continue
     end if
     if status != SEC_E_OK then return statusFailure("decryptNext", status) end if
-    plain = try(decryptedData(inputBytes, buffers))
+    plain = try(decryptedData(inputBytes, inputLength, buffers))
     if typeof(plain) == "error" then return plain end if
-    extra = try(decryptExtra(inputBytes, buffers))
+    extra = try(decryptExtra(inputBytes, inputLength, buffers))
     if typeof(extra) == "error" then return extra end if
     context.encryptedInput = extra
     return plain
@@ -1430,9 +1447,9 @@ function decryptBuffered(context)
   end if
   if status == SEC_I_RENEGOTIATE then return fail("decryptBuffered", "TLS post-handshake processing requires the socket-aware receive path") end if
   if status != SEC_E_OK then return statusFailure("decryptBuffered", status) end if
-  plain = try(decryptedData(inputBytes, buffers))
+  plain = try(decryptedData(inputBytes, len(inputBytes), buffers))
   if typeof(plain) == "error" then return plain end if
-  extra = try(decryptExtra(inputBytes, buffers))
+  extra = try(decryptExtra(inputBytes, len(inputBytes), buffers))
   if typeof(extra) == "error" then return extra end if
   context.encryptedInput = extra
   return plain
@@ -1514,32 +1531,48 @@ end function
 
 /// Builds one Schannel stream record and applies negotiated AEAD protection.
 /// @internal
-function encryptChunk(context, plain)
-  if typeof(plain) != "bytes" then return error(INVALID_ARGUMENT, "platform.tls_schannel.encryptChunk: plain must be bytes") end if
-  header = bytes(context.streamHeaderBytes, 0)
-  data = bytes(len(plain), 0)
-  if len(plain) > 0 then copyBytes(data, 0, plain, 0, len(plain)) end if
-  trailer = bytes(context.streamTrailerBytes, 0)
+function encryptChunkRange(context, plain, offset, count)
+  if typeof(plain) != "bytes" or offset < 0 or count < 0 or offset > len(plain) - count then return error(INVALID_ARGUMENT, "platform.tls_schannel.encryptChunkRange: invalid plaintext range") end if
+  headerCapacity = context.streamHeaderBytes
+  trailerCapacity = context.streamTrailerBytes
+  record = bytes(headerCapacity + count + trailerCapacity, 0)
+  if count > 0 then copyBytes(record, headerCapacity, plain, offset, count) end if
+  // Schannel may encrypt three adjacent SecBuffers in one owned allocation.
+  // The usual exact-size result can be sent without another plaintext copy.
+  recordPointer = nativeBytesPtr(record)
   buffers = createSecBufferArray(4)
-  writeSecBuffer(buffers, 0, SECBUFFER_STREAM_HEADER, nativeBytesPtr(header), len(header))
-  writeSecBuffer(buffers, 1, SECBUFFER_DATA, nativeBytesPtr(data), len(data))
-  writeSecBuffer(buffers, 2, SECBUFFER_STREAM_TRAILER, nativeBytesPtr(trailer), len(trailer))
+  writeSecBuffer(buffers, 0, SECBUFFER_STREAM_HEADER, recordPointer, headerCapacity)
+  writeSecBuffer(buffers, 1, SECBUFFER_DATA, recordPointer + headerCapacity, count)
+  writeSecBuffer(buffers, 2, SECBUFFER_STREAM_TRAILER, recordPointer + headerCapacity + count, trailerCapacity)
   writeSecBuffer(buffers, 3, SECBUFFER_EMPTY, 0, 0)
   desc = createSecBufferDescForArray(buffers, 4)
   status = EncryptMessage(context.handle, 0, desc, 0)
-  if status != SEC_E_OK then return statusFailure("encryptChunk", status) end if
+  if status != SEC_E_OK then
+    fillBytes(record, 0, len(record), 0)
+    return statusFailure("encryptChunk", status)
+  end if
   headerLength = secBufferLength(buffers, 0)
   dataLength = secBufferLength(buffers, 1)
   trailerLength = secBufferLength(buffers, 2)
+  if headerLength > headerCapacity or dataLength > count or trailerLength > trailerCapacity then
+    fillBytes(record, 0, len(record), 0)
+    return fail("encryptChunk", "Schannel returned an oversized record segment")
+  end if
+  if headerLength == headerCapacity and dataLength == count and trailerLength == trailerCapacity then return record end if
   output = bytes(headerLength + dataLength + trailerLength, 0)
   cursor = 0
-  if headerLength > 0 then copyBytes(output, cursor, header, 0, headerLength); cursor = cursor + headerLength end if
-  if dataLength > 0 then copyBytes(output, cursor, data, 0, dataLength); cursor = cursor + dataLength end if
-  if trailerLength > 0 then copyBytes(output, cursor, trailer, 0, trailerLength) end if
-  fillBytes(header, 0, len(header), 0)
-  fillBytes(data, 0, len(data), 0)
-  fillBytes(trailer, 0, len(trailer), 0)
+  if headerLength > 0 then copyBytes(output, cursor, record, 0, headerLength); cursor = cursor + headerLength end if
+  if dataLength > 0 then copyBytes(output, cursor, record, headerCapacity, dataLength); cursor = cursor + dataLength end if
+  if trailerLength > 0 then copyBytes(output, cursor, record, headerCapacity + count, trailerLength) end if
+  fillBytes(record, 0, len(record), 0)
   return output
+end function
+
+/// Encrypt one complete caller-owned plaintext buffer.
+/// @internal
+function encryptChunk(context, plain)
+  if typeof(plain) != "bytes" then return error(INVALID_ARGUMENT, "platform.tls_schannel.encryptChunk: plain must be bytes") end if
+  return encryptChunkRange(context, plain, 0, len(plain))
 end function
 
 /// Encrypts and writes all plaintext using bounded TLS records.
@@ -1553,8 +1586,7 @@ function sendAll(context, socketHandle, data)
     remaining = len(data) - sentPlain
     chunkSize = fragmentLimit(context, remaining)
     if chunkSize > remaining then chunkSize = remaining end if
-    chunk = copyRange(data, sentPlain, chunkSize, "sendAll")
-    encrypted = try(encryptChunk(context, chunk))
+    encrypted = try(encryptChunkRange(context, data, sentPlain, chunkSize))
     if typeof(encrypted) == "error" then return encrypted end if
     written = try(network.tcpSendAll(socketHandle, encrypted))
     fillBytes(encrypted, 0, len(encrypted), 0)

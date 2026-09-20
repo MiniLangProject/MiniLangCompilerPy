@@ -28,6 +28,12 @@ function main(args)
   if sent != 4 then tls.close(stream); net.close(socket); return failResult("send", sent) end if
   response = tls.receive(stream, 64)
   if typeof(response) == "error" or response != bytes("pong") then tls.close(stream); net.close(socket); return failResult("receive", response) end if
+  // Cross multiple native TLS records to exercise the contiguous encrypt
+  // buffer and incomplete-record receive path.
+  bulk = bytes(131072, 0x5A)
+  if tls.sendAll(stream, bulk) != len(bulk) then tls.close(stream); net.close(socket); return failResult("bulk send", void) end if
+  acknowledgement = tls.receive(stream, 64)
+  if typeof(acknowledgement) == "error" or acknowledgement != bytes("bulk-ok") then tls.close(stream); net.close(socket); return failResult("bulk acknowledgement", acknowledgement) end if
   tls.shutdown(stream)
   tls.close(stream)
   net.close(socket)

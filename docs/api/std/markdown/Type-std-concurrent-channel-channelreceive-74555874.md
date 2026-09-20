@@ -12,7 +12,7 @@ struct ChannelReceive
 A receive result distinguishes a closed/drained channel from a valid void.
 
 
-Source: `std/concurrent/channel.ml:18`
+Source: `std/concurrent/channel.ml:19`
 
 ## Members
 
@@ -26,7 +26,7 @@ received
 Received associated with `ChannelReceive`.
 
 
-Source: `std/concurrent/channel.ml:20`
+Source: `std/concurrent/channel.ml:21`
 
 <a id="field-field-std-concurrent-channel-channelreceive-value-value-std-concurrent-channel-ml-1164472880"></a>
 ### value
@@ -38,4 +38,4 @@ value
 Value associated with `ChannelReceive`.
 
 
-Source: `std/concurrent/channel.ml:22`
+Source: `std/concurrent/channel.ml:23`

@@ -23,6 +23,12 @@ const READ_CHUNK_SIZE = 1048576
 /// These layout constants follow the Linux x86-64 glibc ABI. Revisit them when adding another CPU architecture or libc implementation.
 /// @internal
 const STAT_SIZE = 144
+/// Linux x86-64 statfs storage, with room for libc's 120-byte structure.
+/// @internal
+const STATFS_SIZE = 128
+/// WSL DrvFS is slower with copy_file_range than with buffered I/O.
+/// @internal
+const WSL_DRVFS_MAGIC = 0x01021997
 /// Track the stat mode offset value used by this standard-library module.
 /// @internal
 const STAT_MODE_OFFSET = 24
@@ -45,6 +51,9 @@ const O_WRONLY = 1
 /// Track the o creat value used by this standard-library module.
 /// @internal
 const O_CREAT = 64
+/// Refuse to replace an existing destination even if another thread creates it.
+/// @internal
+const O_EXCL = 128
 /// Track the o trunc value used by this standard-library module.
 /// @internal
 const O_TRUNC = 512
@@ -94,6 +103,18 @@ extern function _lseek(fd as int, offset as i64, whence as int) from "libc.so.6"
 /// Provide the stat operation for this standard-library module.
 /// @internal
 extern function _stat(path as cstr, output as bytes) from "libc.so.6" symbol "stat" returns i32
+/// Read metadata from the already-open descriptor to avoid pathname races.
+/// @internal
+extern function _fstat(fd as int, output as bytes) from "libc.so.6" symbol "fstat" returns i32
+/// Identify filesystems where an in-kernel copy should be avoided.
+/// @internal
+extern function _fstatfs(fd as int, output as bytes) from "libc.so.6" symbol "fstatfs" returns i32
+/// Truncate only after verifying source and destination are different files.
+/// @internal
+extern function _ftruncate(fd as int, length as i64) from "libc.so.6" symbol "ftruncate" returns i32
+/// Let the kernel copy regular-file pages without a managed user-space buffer.
+/// @internal
+extern function _copyFileRange(source as int, sourceOffset as ptr, destination as int, destinationOffset as ptr, count as u64, flags as u32) from "libc.so.6" symbol "copy_file_range" returns i64
 /// Provide the unlink operation for this standard-library module.
 /// @internal
 extern function _unlink(path as cstr) from "libc.so.6" symbol "unlink" returns i32
@@ -333,9 +354,75 @@ function copyFile(sourcePath, destinationPath, overwrite)
   if not exists(sourcePath) then return _err("copyFile: source not found") end if
   if typeof(overwrite) != "bool" then overwrite = false end if
   if exists(destinationPath) and not overwrite then return _err("copyFile: destination exists") end if
-  data = readAllBytes(sourcePath)
-  if typeof(data) == "error" then return data end if
-  return writeAllBytes(destinationPath, data)
+  source = _open(sourcePath, O_RDONLY, 0)
+  if source < 0 then return _err("copyFile: source open failed") end if
+  flags = O_WRONLY | O_CREAT
+  if not overwrite then flags = flags | O_EXCL end if
+  destination = _open(destinationPath, flags, DEFAULT_FILE_MODE)
+  if destination < 0 then
+    _close(source)
+    return _err("copyFile: destination open failed")
+  end if
+  // Opening without O_TRUNC lets us reject the same inode (including hard
+  // links) before any source bytes can be lost.
+  sourceStat = bytes(STAT_SIZE, 0)
+  destinationStat = bytes(STAT_SIZE, 0)
+  if _fstat(source, sourceStat) != 0 or _fstat(destination, destinationStat) != 0 then
+    _close(destination)
+    _close(source)
+    return _err("copyFile: stat failed")
+  end if
+  if _i64le(sourceStat, 0) == _i64le(destinationStat, 0) and _i64le(sourceStat, 8) == _i64le(destinationStat, 8) then
+    _close(destination)
+    _close(source)
+    return _err("copyFile: source and destination are the same file")
+  end if
+  if overwrite and _ftruncate(destination, 0) != 0 then
+    _close(destination)
+    _close(source)
+    return _err("copyFile: truncate failed")
+  end if
+  // Prefer in-kernel copying on supported filesystems. An unsupported
+  // combination returns -1 and resumes from the descriptors' current offsets.
+  kernelCopySupported = true
+  filesystem = bytes(STATFS_SIZE, 0)
+  if _fstatfs(source, filesystem) == 0 and _i64le(filesystem, 0) == WSL_DRVFS_MAGIC then kernelCopySupported = false end if
+  if _fstatfs(destination, filesystem) == 0 and _i64le(filesystem, 0) == WSL_DRVFS_MAGIC then kernelCopySupported = false end if
+  if kernelCopySupported then
+    while true
+      copied = _copyFileRange(source, 0, destination, 0, READ_CHUNK_SIZE, 0)
+      if copied == 0 then break end if
+      if copied < 0 then kernelCopySupported = false; break end if
+    end while
+  end if
+  if not kernelCopySupported then
+    // Reuse one bounded buffer regardless of source size if the kernel path
+    // is unavailable (for example across mounts or on older filesystems).
+    buffer = bytes(READ_CHUNK_SIZE, 0)
+    while true
+      count = _readPointer(source, nativeBytesPtr(buffer), READ_CHUNK_SIZE)
+      if count < 0 then
+        _close(destination)
+        _close(source)
+        return _err("copyFile: read failed")
+      end if
+      if count == 0 then break end if
+      position = 0
+      while position < count
+        written = _writePointer(destination, nativeBytesPtr(buffer) + position, count - position)
+        if written <= 0 or written > count - position then
+          _close(destination)
+          _close(source)
+          return _err("copyFile: write failed")
+        end if
+        position = position + written
+      end while
+    end while
+  end if
+  destinationClosed = _close(destination) == 0
+  sourceClosed = _close(source) == 0
+  if not destinationClosed or not sourceClosed then return _err("copyFile: close failed") end if
+  return true
 end function
 
 /// Provide the move file operation for this standard-library module.

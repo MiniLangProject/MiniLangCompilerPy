@@ -178,6 +178,11 @@ struct StringBuilder
     if this.lenBytes <= 0 then
       return ""
     end if
+    // A completely filled buffer already has the exact byte length decode()
+    // needs; skip the intermediate slice in this common boundary case.
+    if this.lenBytes == len(this.buf) then
+      return decode(this.buf)
+    end if
     return decode(slice(this.buf, 0, this.lenBytes))
   end function
 end struct

@@ -57,6 +57,12 @@ then call `syncDirectory` on the containing directory. `readAllBytes` and
 `readAllText` require an explicit maximum size to prevent accidental unbounded
 allocations.
 
+The convenience `std.fs.copyFile` uses Win32 `CopyFileW` on Windows. On
+Linux it uses `copy_file_range` when the filesystem supports a fast kernel
+copy, with a 1-MiB reusable buffer fallback (selected directly for WSL
+DrvFS). It rejects a source and destination that resolve to the same inode
+before truncating, including hard links and symlinks.
+
 ## Networking and TLS
 
 `std.net` now exposes reusable-address, keepalive, TCP no-delay and send/receive
@@ -113,7 +119,9 @@ finally `std.net.close(socket)`. `sendAll` handles partial provider writes,
 passes the original byte buffer to the provider on the first attempt, and
 copies only the unsent tail after a partial write. Providers must treat the
 input buffer as read-only. `receive` returns empty bytes after a clean peer
-shutdown.
+shutdown. The native Schannel provider grows incomplete-record buffers
+geometrically and encrypts each outgoing record in one contiguous buffer;
+the Linux OpenSSL provider avoids copying exact-size receive results.
 
 ## Identifiers and password derivation
 

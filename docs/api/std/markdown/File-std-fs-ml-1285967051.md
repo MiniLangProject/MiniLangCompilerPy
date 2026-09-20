@@ -30,7 +30,7 @@ Append bytes without reading or rewriting the existing file.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/fs.ml:836`
+Source: `std/fs.ml:859`
 
 <a id="function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032"></a>
 ### appendAllText
@@ -47,7 +47,7 @@ Append UTF-8 text without reading or rewriting the existing file.
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/fs.ml:851`
+Source: `std/fs.ml:874`
 
 <a id="function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000"></a>
 ### copyFile
@@ -65,7 +65,7 @@ Copy a file.
 | `overwrite` | `dynamic` | — | Value supplied for `overwrite`. |
 
 
-Source: `std/fs.ml:764`
+Source: `std/fs.ml:787`
 
 - [std.fs.Creation](Type-std-fs-creation-832674482.md) — enum
 <a id="function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521"></a>
@@ -163,7 +163,7 @@ Get the size of a file in bytes.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:813`
+Source: `std/fs.ml:836`
 
 <a id="constant-constant-std-fs-find-data-size-const-find-data-size-592-std-fs-ml-870133523"></a>
 ### FIND_DATA_SIZE
@@ -318,7 +318,7 @@ Move/rename a file.
 | `overwrite` | `dynamic` | — | Value supplied for `overwrite`. |
 
 
-Source: `std/fs.ml:787`
+Source: `std/fs.ml:810`
 
 <a id="function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245"></a>
 ### readAllBytes
@@ -334,7 +334,7 @@ Read all bytes from a file.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:578`
+Source: `std/fs.ml:583`
 
 <a id="function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293"></a>
 ### readAllLines
@@ -350,7 +350,7 @@ Read a file as lines (split by '\n', trims a trailing '\r').
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:861`
+Source: `std/fs.ml:884`
 
 <a id="function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005"></a>
 ### readAllText
@@ -366,7 +366,7 @@ Read all text from a file (assumes UTF-8).
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:678`
+Source: `std/fs.ml:701`
 
 - [std.fs.Share](Type-std-fs-share-399483706.md) — enum
 <a id="constant-constant-std-fs-write-retry-count-const-write-retry-count-30-std-fs-ml-1411592692"></a>
@@ -408,7 +408,7 @@ Write all bytes to a file (overwrites if it exists).
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/fs.ml:561`
+Source: `std/fs.ml:566`
 
 <a id="function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952"></a>
 ### writeAllText
@@ -425,4 +425,4 @@ Write all text to a file (overwrites if it exists).
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/fs.ml:654`
+Source: `std/fs.ml:659`

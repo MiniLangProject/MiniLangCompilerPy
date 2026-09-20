@@ -11,6 +11,7 @@ Reachable from entry: **no**
 ## Imports
 
 - `std/threading.ml` as `threading` → [std/threading.ml](File-std-threading-ml-508437988.md)
+- `std/time.ml` as `time` → [std/time.ml](File-std-time-ml-975894601.md)
 
 ## Declarations
 
@@ -26,7 +27,7 @@ const CHANNEL_ERROR = 1652
 Track the channel error value used by this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:13`
+Source: `std/concurrent/channel.ml:14`
 
 <a id="constant-constant-std-concurrent-channel-channel-poll-milliseconds-const-channel-poll-milliseconds-1-std-concurrent-channel-ml-827773867"></a>
 ### CHANNEL_POLL_MILLISECONDS
@@ -38,6 +39,6 @@ const CHANNEL_POLL_MILLISECONDS = 1
 Track the channel poll milliseconds value used by this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:15`
+Source: `std/concurrent/channel.ml:16`
 
 - [std.concurrent.channel.ChannelReceive](Type-std-concurrent-channel-channelreceive-74555874.md) — struct

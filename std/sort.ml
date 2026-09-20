@@ -22,7 +22,7 @@ package std.sort
 // std.sort
 // -----------------------------------------------------------------------------
 // Provides:
-// - sort(arr)                : stable in-place sort (insertion sort), ascending
+// - sort(arr)                : stable in-place sort, ascending
 // - sortBy(arr, lessFn)      : stable in-place sort with custom comparator
 // - sortFast(arr)            : faster in-place sort (not guaranteed stable)
 // - sortFastBy(arr, lessFn)  : faster in-place sort with custom comparator
@@ -40,7 +40,7 @@ function sort(arr)
   return sortBy(arr, __defaultLess)
 end function
 
-/// Stable in-place sort with a custom comparator (insertion sort).
+/// Stable in-place sort with a custom comparator and O(n log n) comparisons.
 /// @param arr Value supplied for `arr`.
 /// @param lessFn Value supplied for `lessFn`.
 function sortBy(arr, lessFn)
@@ -58,21 +58,60 @@ function sortBy(arr, lessFn)
     lessFn = __defaultLess
   end if
 
-  // Insertion sort (stable, in-place, non-recursive)
-  i = 1
-  while i < n
-    key = arr[i]
-    j = i - 1
+  if n <= 32 then
+    __insertionSortRange(arr, 0, n - 1, lessFn)
+    return arr
+  end if
 
-    while j >= 0 and __less(key, arr[j], lessFn)
-      arr[j + 1] = arr[j]
-      j = j - 1
+  // Alternate source and destination buffers to avoid copying after each pass.
+  temporary = array(n)
+  source = arr
+  destination = temporary
+  sourceIsOriginal = true
+  width = 1
+  while width < n
+    base = 0
+    while base < n
+      middle = base + width
+      if middle > n then middle = n end if
+      finish = middle + width
+      if finish > n then finish = n end if
+      left = base
+      right = middle
+      output = base
+      while left < middle and right < finish
+        // Taking the left element on equality preserves original order.
+        if __less(source[right], source[left], lessFn) then
+          destination[output] = source[right]
+          right = right + 1
+        else
+          destination[output] = source[left]
+          left = left + 1
+        end if
+        output = output + 1
+      end while
+      while left < middle
+        destination[output] = source[left]
+        left = left + 1
+        output = output + 1
+      end while
+      while right < finish
+        destination[output] = source[right]
+        right = right + 1
+        output = output + 1
+      end while
+      base = finish
     end while
-
-    arr[j + 1] = key
-    i = i + 1
+    source = destination
+    sourceIsOriginal = not sourceIsOriginal
+    if sourceIsOriginal then destination = temporary else destination = arr end if
+    width = width * 2
   end while
-
+  if not sourceIsOriginal then
+    for index = 0 to n - 1
+      arr[index] = source[index]
+    end for
+  end if
   return arr
 end function
 
@@ -103,8 +142,13 @@ function sortFastBy(arr, lessFn)
   // Use insertion sort for very small segments for speed.
   SMALL = 16
 
-  loStack = __allocArray(n, 0)
-  hiStack = __allocArray(n, 0)
+  // Smaller partitions are processed first, so at most logarithmically many
+  // larger partitions remain pending. Cap storage at 64 without increasing
+  // the allocation for tiny arrays.
+  stackCapacity = n
+  if stackCapacity > 64 then stackCapacity = 64 end if
+  loStack = __allocArray(stackCapacity, 0)
+  hiStack = __allocArray(stackCapacity, 0)
 
   sp = 0
   loStack[sp] = 0
@@ -231,7 +275,7 @@ end function
 /// @internal
 function __partition(arr, lo, hi, lessFn)
   // Middle pivot
-  pivot = arr[(lo + hi) / 2]
+  pivot = arr[lo + ((hi - lo) >> 1)]
   i = lo
   j = hi
 

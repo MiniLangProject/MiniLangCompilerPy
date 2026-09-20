@@ -36,6 +36,10 @@ import std.ds.list as list
 import std.net as net
 import std.uuid as uuid
 
+#if TARGET_OS == "linux"
+extern function _testHardLink(source as cstr, destination as cstr) from "libc.so.6" symbol "link" returns i32
+#endif
+
 synchronized _netInitReady = 0
 synchronized _netInitGo = false
 synchronized _netInitFailures = 0
@@ -93,6 +97,10 @@ end function
 function isSmall(x)
   // Avoid modulo here to stay compatible with older frontends.
   return x < 3
+end function
+
+function _sortPairLess(left, right)
+  return left[0] < right[0]
 end function
 
 function add(
@@ -230,6 +238,9 @@ function test_string_builder()
   bld3 = sb.StringBuilder.new()
   bld3.appendSlice("abcdef", 1, 3)
   chk(a.assertEq(bld3.toString(), "bcd", "stringBuilder: appendSlice"))
+  filledBuilder = sb.StringBuilder.withCapacity(16)
+  filledBuilder.appendString("1234567890abcdef")
+  chk(a.assertEq(filledBuilder.toString(), "1234567890abcdef", "stringBuilder: exact-capacity conversion"))
 end function
 
 function test_array_sort_random()
@@ -260,6 +271,22 @@ function test_array_sort_random()
   fast = sort.sortFast([9, 7, 8, 6])
   chk(a.assertEq(fast[0], 6, "sortFast: first"))
   chk(a.assertEq(fast[3], 9, "sortFast: last"))
+  larger = array(40, 0)
+  for i = 0 to 39 larger[i] = 39 - i end for
+  fastLarger = sort.sortFast(larger)
+  sortedLarger = true
+  for i = 0 to 39
+    if fastLarger[i] != i or larger[i] != i then sortedLarger = false end if
+  end for
+  chk(a.assertTrue(sortedLarger, "sortFast: partition handles integer pivot"))
+  pairs = array(50)
+  for i = 0 to 49 pairs[i] = [i % 5, i] end for
+  sort.sortBy(pairs, _sortPairLess)
+  stable = true
+  for i = 0 to 49
+    if pairs[i][0] != i div 10 or pairs[i][1] != (i % 10) * 5 + (i div 10) then stable = false end if
+  end for
+  chk(a.assertTrue(stable, "sortBy: stable merge for larger arrays"))
 
   rng1 = rand.seeded(123)
   rng2 = rand.seeded(123)
@@ -382,11 +409,14 @@ function test_fs_io()
   if typeof(suffix) == "error" then suffix = "fallback-" + t.ticks() end if
   prefix = "ml_stdlib_io_" + suffix
   p_txt = prefix + ".txt"
+  p_utf8 = prefix + "_utf8.txt"
   p_bin = prefix + ".bin"
   p_copy = prefix + "_copy.bin"
   p_move = prefix + "_move.bin"
   p_append = prefix + "_append.bin"
   p_large = prefix + "_large.bin"
+  p_large_copy = prefix + "_large_copy.bin"
+  p_hardlink = prefix + "_hardlink.bin"
 
   // text roundtrip
   w = try(fs.writeAllText(p_txt, "hello\nworld\n"))
@@ -395,6 +425,8 @@ function test_fs_io()
   rtxt = try(fs.readAllText(p_txt))
   chk(_assertNotError(rtxt, "fs: readAllText ok"))
   chk(a.assertTrue(s.startsWith(rtxt, "hello"), "fs: readAllText content"))
+  chk(a.assertTrue(fs.writeAllText(p_utf8, "Grüße") == true, "fs: UTF-8 text write"))
+  chk(a.assertEq(fs.readAllText(p_utf8), "Grüße", "fs: UTF-8 text roundtrip"))
 
   names = try(fs.listDir("."))
   chk(_assertNotError(names, "fs: listDir ok"))
@@ -440,6 +472,21 @@ function test_fs_io()
   cp = try(fs.copyFile(p_bin, p_copy, true))
   chk(_assertNotError(cp, "fs: copyFile ok"))
   chk(a.assertTrue(fs.exists(p_copy), "fs: copy exists"))
+  chk(a.assertTrue(fs.copyFile(p_large, p_large_copy, true) == true, "fs: large copy across chunk boundary"))
+  chk(a.assertTrue(fs.readAllBytes(p_large_copy) == large, "fs: large copy preserves bytes"))
+  rejectedCopy = try(fs.copyFile(p_large, p_large_copy, false))
+  chk(a.assertTrue(typeof(rejectedCopy) == "error", "fs: copy refuses existing destination"))
+#if TARGET_OS == "linux"
+  sameFileCopy = try(fs.copyFile(p_large, p_large, true))
+  chk(a.assertTrue(typeof(sameFileCopy) == "error", "fs: copy refuses same inode"))
+  chk(a.assertTrue(fs.readAllBytes(p_large) == large, "fs: refused copy preserves source"))
+  if _testHardLink(p_large, p_hardlink) == 0 then
+    linkedCopy = try(fs.copyFile(p_large, p_hardlink, true))
+    chk(a.assertTrue(typeof(linkedCopy) == "error", "fs: copy refuses hard-linked inode"))
+    chk(a.assertTrue(fs.readAllBytes(p_large) == large, "fs: hard-link refusal preserves source"))
+    chk(a.assertTrue(fs.delete(p_hardlink), "fs: delete hard link"))
+  end if
+#endif
 
   mv = try(fs.moveFile(p_copy, p_move, true))
   chk(_assertNotError(mv, "fs: moveFile ok"))
@@ -455,10 +502,12 @@ function test_fs_io()
 
   // cleanup (delete treats already-missing as success)
   chk(a.assertTrue(fs.delete(p_txt), "fs: delete txt"))
+  chk(a.assertTrue(fs.delete(p_utf8), "fs: delete UTF-8 txt"))
   chk(a.assertTrue(fs.delete(p_bin), "fs: delete bin"))
   chk(a.assertTrue(fs.delete(p_move), "fs: delete moved"))
   chk(a.assertTrue(fs.delete(p_append), "fs: delete appended"))
   chk(a.assertTrue(fs.delete(p_large), "fs: delete large"))
+  chk(a.assertTrue(fs.delete(p_large_copy), "fs: delete large copy"))
   chk(a.assertFalse(fs.exists(p_txt), "fs: exists false"))
 end function
 
@@ -547,6 +596,24 @@ function test_base64_ds()
   chk(a.assertEq(mp.get("alpha"), 123, "hashmap: string get"))
   chk(a.assertTrue(mp.delete("alpha"), "hashmap: string delete"))
   chk(a.assertFalse(mp.has("alpha"), "hashmap: string has after delete"))
+  growthProbe = hm.HashMap.withCapacity(16)
+  for i = 0 to 10
+    chk(a.assertTrue(growthProbe.set(i, i), "hashmap: fill below growth threshold"))
+  end for
+  chk(a.assertEq(growthProbe.cap, 16, "hashmap: initial bucket count"))
+  chk(a.assertTrue(growthProbe.set(5, 99), "hashmap: update existing key"))
+  chk(a.assertEq(growthProbe.cap, 16, "hashmap: update must not grow"))
+  chk(a.assertEq(growthProbe.get(5), 99, "hashmap: updated value"))
+  churnProbe = hm.HashMap.withCapacity(16)
+  churnSucceeded = true
+  for i = 0 to 255
+    if not churnProbe.set(i, i) or not churnProbe.remove(i) then churnSucceeded = false end if
+  end for
+  chk(a.assertTrue(churnSucceeded, "hashmap: churn insert/remove"))
+  chk(a.assertEq(churnProbe.count(), 0, "hashmap: churn leaves no entries"))
+  chk(a.assertTrue(churnProbe.tombstones * 2 < churnProbe.cap, "hashmap: tombstones periodically rebuilt"))
+  chk(a.assertTrue(churnProbe.set("final", 7), "hashmap: insert after churn"))
+  chk(a.assertEq(churnProbe.get("final"), 7, "hashmap: lookup after churn"))
 
   hs = hset.HashSet.new()
   chk(a.assertTrue(hs.add(10), "set: add"))

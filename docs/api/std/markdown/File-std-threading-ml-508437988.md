@@ -21,7 +21,7 @@ const INFINITE = 4294967295
 Track the infinite value used by this standard-library module.
 
 
-Source: `std/threading.ml:29`
+Source: `std/threading.ml:33`
 
 - [std.threading.Lock](Type-std-threading-lock-164120817.md) — struct
 <a id="constant-constant-std-threading-max-native-semaphore-count-const-max-native-semaphore-count-2147483647-std-threading-ml-1785319903"></a>
@@ -34,7 +34,7 @@ const MAX_NATIVE_SEMAPHORE_COUNT = 2147483647
 Track the max native semaphore count value used by this standard-library module.
 
 
-Source: `std/threading.ml:18`
+Source: `std/threading.ml:22`
 
 <a id="constant-constant-std-threading-max-portable-timeout-ms-const-max-portable-timeout-ms-2147483647-std-threading-ml-371616799"></a>
 ### MAX_PORTABLE_TIMEOUT_MS
@@ -46,7 +46,7 @@ const MAX_PORTABLE_TIMEOUT_MS = 2147483647
 Native timeout/count parameters are signed 32-bit values on at least one supported target. Keeping the shared API inside this range avoids truncation and platform-dependent interpretations of the high bit.
 
 
-Source: `std/threading.ml:16`
+Source: `std/threading.ml:20`
 
 - [std.threading.Semaphore](Type-std-threading-semaphore-750847000.md) — struct
 <a id="constant-constant-std-threading-wait-abandoned-const-wait-abandoned-128-std-threading-ml-991282822"></a>
@@ -59,7 +59,7 @@ const WAIT_ABANDONED = 128
 Track the wait abandoned value used by this standard-library module.
 
 
-Source: `std/threading.ml:25`
+Source: `std/threading.ml:29`
 
 <a id="constant-constant-std-threading-wait-object-0-const-wait-object-0-0-std-threading-ml-2017049799"></a>
 ### WAIT_OBJECT_0
@@ -71,7 +71,7 @@ const WAIT_OBJECT_0 = 0
 Native Win32 synchronization primitives. All MiniLang objects live in the process-wide managed heap; these handles serialize access between the OS threads and their private stacks. Close only after users/waiters have stopped.
 
 
-Source: `std/threading.ml:23`
+Source: `std/threading.ml:27`
 
 <a id="constant-constant-std-threading-wait-timeout-const-wait-timeout-258-std-threading-ml-955567050"></a>
 ### WAIT_TIMEOUT
@@ -83,4 +83,4 @@ const WAIT_TIMEOUT = 258
 Track the wait timeout value used by this standard-library module.
 
 
-Source: `std/threading.ml:27`
+Source: `std/threading.ml:31`

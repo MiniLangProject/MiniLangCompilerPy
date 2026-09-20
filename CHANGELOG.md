@@ -4,6 +4,16 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Replaced the quadratic stable standard-library sort with a stable merge
+  sort, corrected the integer pivot in fast sort, and bounded its work stack.
+- Based channel/task and Linux synchronization timeouts on monotonic elapsed
+  time; avoided unnecessary hash-map growth and compacted tombstone-heavy
+  tables.
+- Reduced TLS record and exact-capacity StringBuilder copies, added
+  bounded/kernel-assisted Linux file copying,
+  and completed short Windows text writes. Added cross-target regression and
+  benchmark coverage.
+
 ## 1.2.8 - 2026-09-13
 
 - Added explicit integer floor division with the `div` keyword and exact or
