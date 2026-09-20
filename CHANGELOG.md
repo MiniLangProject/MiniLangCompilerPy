@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Added portable one-shot LZ4 and byte-run compression with a bounded,
+  checksummed container, cross-compiler/OS tests, upstream liblz4
+  interoperability checks, and repeatable crypto/compression benchmarks.
+- Switched Windows SHA-256/384 and HMAC one-shot calls to CNG algorithm
+  pseudo-handles, avoiding a provider open/close per digest.
 - Replaced the quadratic stable standard-library sort with a stable merge
   sort, corrected the integer pivot in fast sort, and bounded its work stack.
 - Based channel/task and Linux synchronization timeouts on monotonic elapsed

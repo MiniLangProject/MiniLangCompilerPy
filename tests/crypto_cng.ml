@@ -29,6 +29,17 @@ function changedCopy(value, offset)
   return output
 end function
 
+function concurrentHashWorker(seed)
+  input = bytes(1024, seed)
+  key = bytes(32, seed)
+  expectedHash = crypto.sha256(input)
+  expectedMac = crypto.hmacSha256(key, input)
+  for i = 0 to 999
+    if crypto.sha256(input) != expectedHash then return error(243, "concurrent SHA-256 mismatch") end if
+    if crypto.hmacSha256(key, input) != expectedMac then return error(243, "concurrent HMAC mismatch") end if
+  end for
+end function
+
 function main(args)
   t.assertEq(crypto.sha256(bytes(0)), h("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"), "SHA-256 empty")
   t.assertEq(crypto.sha256(bytes("abc")), h("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"), "SHA-256 abc")
@@ -93,6 +104,16 @@ function main(args)
   random = crypto.secureRandom(64)
   t.assertEq(len(random), 64, "secure random length")
   t.assertFalse(crypto.constantTimeEquals(random, bytes(64, 0)), "secure random nonzero")
+
+  workers = array(8)
+  for i = 0 to 7
+    workers[i] = Thread(concurrentHashWorker)
+    if not workers[i].Start(i + 1) then return 1 end if
+  end for
+  for i = 0 to 7
+    if not workers[i].Join(10000) or workers[i].Status() != "Completed" then return 1 end if
+  end for
+  t.assertTrue(true, "concurrent SHA-256 and HMAC")
 
   print "[OK] platform crypto"
 end function

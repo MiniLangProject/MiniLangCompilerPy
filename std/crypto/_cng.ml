@@ -139,25 +139,27 @@ end function
 /// Run SHA-2 or HMAC-SHA-2 through the BCrypt one-shot hash API.
 /// @internal
 function hash(algorithm, key, input, output)
-  providerBytes = bytes(8, 0)
-  flags = 0
+  // Windows 10+ exposes immutable SHA-2 algorithm pseudo-handles. BCryptHash
+  // accepts them directly, avoiding provider discovery/open/close on every
+  // one-shot hash; the HMAC handles are distinct from plain SHA handles.
+  provider = 0
+  if algorithm == "SHA256" then
+    if typeof(key) == "bytes" then provider = 0xB1 else provider = 0x41 end if
+  else if algorithm == "SHA384" then
+    if typeof(key) == "bytes" then provider = 0xC1 else provider = 0x51 end if
+  end if
+  if provider == 0 then
+    _zero(output)
+    return false
+  end if
   secretPtr = 0
   secretLength = 0
   if typeof(key) == "bytes" then
-    flags = BCRYPT_ALG_HANDLE_HMAC_FLAG
     secretPtr = nativeBytesPtr(key)
     secretLength = len(key)
   end if
-
-  status = BCryptOpenAlgorithmProvider(providerBytes, algorithm, 0, flags)
-  provider = _getPtr(providerBytes)
-  ok = status == 0 and provider != 0
-  if ok then
-    status = BCryptHash(provider, secretPtr, secretLength, nativeBytesPtr(input), len(input), nativeBytesPtr(output), len(output))
-    ok = status == 0
-  end if
-  if provider != 0 then BCryptCloseAlgorithmProvider(provider, 0) end if
-  _zero(providerBytes)
+  status = BCryptHash(provider, secretPtr, secretLength, nativeBytesPtr(input), len(input), nativeBytesPtr(output), len(output))
+  ok = status == 0
   if not ok then _zero(output) end if
   return ok
 end function

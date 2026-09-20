@@ -2168,13 +2168,14 @@ Linux images that use only libc-backed modules need no dependency beyond the
 normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
 requires the OpenSSL 3 runtime package.
 
-The current library contains 48 source modules with matching source content
+The current library contains 51 source modules with matching source content
 in both compiler repositories (two provider files differ only in line endings):
 
 - **Core:** `std.core`, `std.assert`, `std.test`, `std.array`, `std.sort`,
   `std.math`, `std.random`, `std.fmt`
 - **Text and bytes:** `std.string`, `std.string_builder`, `std.bytes`,
-  `std.encoding.hex`, `std.encoding.base64`
+  `std.encoding.hex`, `std.encoding.base64`, `std.compress`,
+  `std.compress.lz4`, `std.compress.rle`
 - **System APIs:** `std.platform`, `std.path`, `std.process`, `std.console`,
   `std.time`, `std.fs`, `std.io.file`, `std.net`, `std.uuid` and `std.tls`
 - **Collections:** `std.ds.list`, `std.ds.stack`, `std.ds.queue`,
@@ -3207,3 +3208,29 @@ See [the native primitives guide](docs/NATIVE_PRIMITIVES.md) for API details,
 polynomials, dispatch controls, and security assumptions. Focused tests live in
 `tests/checksum_runtime.ml`, `tests/crypto_cng.ml`, `tests/ecdsa_p256.ml`, and
 `tests/simd_search.ml`; reproducible measurements live in `benchmarks/`.
+
+## Portable compression
+
+`std.compress` offers checked, one-shot byte compression on Windows and Linux
+without an extra runtime library. `fast` uses an LZ4 block and falls back to
+raw bytes when compression would grow the payload. `compact` also tries a
+byte-run codec, useful for sparse or repetitive data, and selects the smallest
+payload. The portable `MLC1` container stores the algorithm, original size
+and CRC-32C checksum.
+
+```ml
+import std.compress as compression
+
+packed = compression.fast(bytes("repeated repeated repeated"))
+original = compression.decompress(packed, 16 * 1024 * 1024)
+```
+
+Always pass an application-specific maximum decoded size for untrusted data.
+CRC-32C detects accidental corruption, **not** malicious modification; use
+authenticated encryption or a MAC when authenticity matters. For interchange
+with other LZ4 implementations, `std.compress.lz4.encode(bytes)` and
+`decode(block, exactSize)` use the standard raw LZ4 block format. Raw blocks
+carry no size or checksum. The `MLC1` container and `std.compress.rle`
+format are MiniLang-specific and are not gzip, ZIP or LZ4 frames. See
+[the platform services guide](docs/PLATFORM_SERVICES.md) and
+[the compression/crypto measurement report](docs/reports/CRYPTO_COMPRESSION_2026-09-20.md).

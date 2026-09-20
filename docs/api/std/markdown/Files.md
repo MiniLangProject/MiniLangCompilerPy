@@ -10,6 +10,9 @@
 | [std/bytes.ml](File-std-bytes-ml-1351945333.md) | `std.bytes` | no | 39 |
 | [std/checksum/crc32.ml](File-std-checksum-crc32-ml-1964480723.md) | `std.checksum.crc32` | no | 5 |
 | [std/checksum/crc32c.ml](File-std-checksum-crc32c-ml-144026660.md) | `std.checksum.crc32c` | no | 5 |
+| [std/compress.ml](File-std-compress-ml-2059288806.md) | `std.compress` | no | 12 |
+| [std/compress/lz4.ml](File-std-compress-lz4-ml-637795625.md) | `std.compress.lz4` | no | 5 |
+| [std/compress/rle.ml](File-std-compress-rle-ml-92459872.md) | `std.compress.rle` | no | 4 |
 | [std/concurrent/cancellation.ml](File-std-concurrent-cancellation-ml-1392694543.md) | `std.concurrent.cancellation` | no | 27 |
 | [std/concurrent/channel.ml](File-std-concurrent-channel-ml-2137315633.md) | `std.concurrent.channel` | no | 45 |
 | [std/concurrent/shared_value.ml](File-std-concurrent-shared-value-ml-2112657235.md) | `std.concurrent.shared_value` | no | 28 |

@@ -8,6 +8,9 @@ file-std-assert-ml-1772521196.html
 file-std-bytes-ml-1351945333.html
 file-std-checksum-crc32-ml-1964480723.html
 file-std-checksum-crc32c-ml-144026660.html
+file-std-compress-lz4-ml-637795625.html
+file-std-compress-ml-2059288806.html
+file-std-compress-rle-ml-92459872.html
 file-std-concurrent-cancellation-ml-1392694543.html
 file-std-concurrent-channel-ml-2137315633.html
 file-std-concurrent-shared-value-ml-2112657235.html
@@ -61,6 +64,9 @@ package-std-assert-1056679750.html
 package-std-bytes-172183927.html
 package-std-checksum-crc32-894971042.html
 package-std-checksum-crc32c-986608595.html
+package-std-compress-1111036712.html
+package-std-compress-lz4-182262044.html
+package-std-compress-rle-2043747507.html
 package-std-concurrent-cancellation-1094868738.html
 package-std-concurrent-channel-2146446040.html
 package-std-concurrent-shared-value-321927234.html

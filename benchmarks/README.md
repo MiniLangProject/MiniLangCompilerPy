@@ -10,6 +10,29 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 # Native primitive benchmarks
 
+## Crypto and compression
+
+`crypto_compression.ml` measures SHA-256/384, HMAC-SHA-256/384, HKDF,
+PBKDF2, X25519, ECDSA-P256 verification, AES-256-GCM, secure random bytes,
+constant-time equality, secure erasure, and fast/compact compression on
+repeated, patterned, and random-like 1-MiB inputs. Compression ratios and
+decoded-byte checks accompany throughput numbers. Pass `--crypto-only` to
+the compiled benchmark when profiling native crypto without compression.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\crypto_compression.ml .\build\crypto_compression.exe -I .
+.\build\crypto_compression.exe
+```
+
+Use `build/mlc_win64.exe` instead of Python in the self-hosted repository.
+For Linux, add `--target linux-x64` and run the resulting ELF on Linux.
+Repeat at least five times on an otherwise idle host; compare medians rather
+than single millisecond-resolution observations. See the
+[crypto/compression report](../docs/reports/CRYPTO_COMPRESSION_2026-09-20.md).
+The optional `tests/compression_interop.py` checks raw LZ4 blocks against
+liblz4 in both directions after compiling `tests/compression_interop.ml`;
+it does not add a library dependency to generated applications.
+
 ## Positional file I/O
 
 `file_io.ml` checks and times cached 4-KiB and 64-KiB positional reads and

@@ -51,7 +51,11 @@ signature)` verifies ECDSA P-256/SHA-256 signatures. Public keys use the
 
 Cryptographic operations are delegated to Windows CNG (`bcrypt.dll`) or Linux
 OpenSSL 3 (`libcrypto.so.3`) rather than application-level MiniLang loops. The
-public API, validation and result layout are identical on both targets. AES-GCM accepts
+public API, validation and result layout are identical on both targets.
+Windows one-shot SHA-256/384 and HMAC use CNG algorithm pseudo-handles, so
+repeated calls do not reopen a provider; PBKDF2 and AES-GCM still create
+their own required native state. Concurrent hash/HMAC calls are regression
+tested on both targets. AES-GCM accepts
 exactly 32-byte keys, nonces from 12 through 16 bytes, and tags from 12 through
 16 bytes. Decryption returns an error and wipes its temporary output when native
 authentication fails, so unauthenticated plaintext is never returned.

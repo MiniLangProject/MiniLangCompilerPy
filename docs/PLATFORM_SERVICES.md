@@ -129,6 +129,26 @@ the Linux OpenSSL provider avoids copying exact-size receive results.
 provides byte/string format, parse and validation helpers. `std.crypto` adds
 PBKDF2-HMAC-SHA-256 and PBKDF2-HMAC-SHA-384 backed by Windows CNG or OpenSSL 3.
 
+## Portable compression
+
+`std.compress.fast(bytes)` tries a standard LZ4 block, retaining raw bytes
+when that is smaller. `std.compress.compact(bytes)` additionally tries
+`std.compress.rle`, a simple byte-run format suited to long equal-byte runs.
+Both return the same `MLC1` container on Windows and Linux: four magic bytes,
+one algorithm byte, three reserved zero bytes, a little-endian 32-bit decoded
+length, a little-endian CRC-32C, then the chosen payload. Algorithm 0 is raw,
+1 is an LZ4 block, and 2 is MiniLang RLE. The container is not an LZ4 frame,
+ZIP archive, or gzip stream.
+
+Call `std.compress.decompress(container, maxOutputBytes)` with an explicit
+application limit. The decoder checks the header, limit, payload bounds,
+exact decoded length, and checksum. CRC-32C detects accidental corruption
+but provides no authenticity; authenticate data separately when it may be
+modified by an attacker. The APIs are one-shot and hold input and output in
+memory; split very large files into application-level chunks. Raw
+`std.compress.lz4.encode/decode` blocks interoperate with liblz4 when the
+caller supplies the exact uncompressed size.
+
 ## Target diagnostics and testing
 
 An unguarded Windows `.dll` import is a compile error for `--target linux-x64`.
