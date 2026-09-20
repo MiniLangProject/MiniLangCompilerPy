@@ -10,17 +10,17 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 | --- | ---: |
 | Blank lines | 2643 |
 | Clone groups | 164 |
-| Cognitive complexity | 3026 (maximum per function: 116) |
-| Comment lines | 4091 |
-| Cyclomatic complexity | 3447 (average: 3.58, maximum: 32) |
+| Cognitive complexity | 3030 (maximum per function: 116) |
+| Comment lines | 4095 |
+| Cyclomatic complexity | 3450 (average: 3.59, maximum: 32) |
 | Documentation coverage | 100% (1844 of 1844 documentation items) |
 | Duplicated lines | 1028 (10.09%) |
 | Files | 48 |
 | Functions | 962 |
 | Maintainability index | 7.94 / 100 |
-| Physical lines | 16917 |
-| Source lines | 10186 |
-| Statements | 7219 |
+| Physical lines | 16923 |
+| Source lines | 10188 |
+| Statements | 7223 |
 
 ## Documentation coverage
 
@@ -40,7 +40,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3090 | 41574 | 28291 | 3146 | 69865 | 811782.6 | 256.36 | 208107431.47 | 270.59 |
+| 56 | 3090 | 41588 | 28302 | 3146 | 69890 | 812073.08 | 256.46 | 208262843.67 | 270.69 |
 
 ## Files
 
@@ -76,7 +76,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/encoding/hex.ml`](File-std-encoding-hex-ml-900742095.md) | 40 | 7 | 11 / 1.57 / 3 | 4 / 2 | 0 (0%) | 965.22 | 42.67 |
 | [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 88 | 6 | 35 / 5.83 / 11 | 37 / 18 | 21 (23.86%) | 3174.13 | 28.36 |
 | [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 514 | 23 | 122 / 5.3 / 13 | 118 / 18 | 32 (6.23%) | 23239.31 | 0 |
-| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 304 | 37 | 145 / 3.92 / 11 | 116 / 13 | 9 (2.96%) | 22678.51 | 0 |
+| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 306 | 37 | 148 / 4 / 12 | 120 / 15 | 9 (2.94%) | 22880.56 | 0 |
 | [`std/math.ml`](File-std-math-ml-790065500.md) | 463 | 50 | 125 / 2.5 / 9 | 83 / 10 | 29 (6.26%) | 18689.33 | 0 |
 | [`std/net.ml`](File-std-net-ml-1989130045.md) | 428 | 35 | 117 / 3.34 / 9 | 84 / 8 | 12 (2.8%) | 23299.98 | 0 |
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 80 | 9 | 49 / 5.44 / 13 | 47 / 12 | 0 (0%) | 4532.65 | 26.29 |
@@ -458,35 +458,35 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:621` | 64 | 43 | 13 | 15 | 2 | 2403.52 | 35.18 |
 | [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:495` | 17 | 12 | 5 | 4 | 1 | 557.19 | 53.26 |
 | [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:597` | 17 | 12 | 5 | 4 | 1 | 553.48 | 53.28 |
-| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:424` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
-| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:639` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
-| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:528` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
+| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:430` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
+| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:645` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
+| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:534` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
 | [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:320` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:547` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
+| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:553` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
 | [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:332` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
 | [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:326` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
 | [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:338` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:590` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
-| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:584` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:578` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:464` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
-| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:600` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:480` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
-| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:657` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:596` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
+| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:590` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:584` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:470` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
+| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:606` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:486` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
+| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:663` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
 | [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:294` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
 | [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:301` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
 | [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:311` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
-| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:572` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:607` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
-| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:627` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
-| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:348` | 16 | 22 | 10 | 9 | 1 | 1123.13 | 51.03 |
-| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:376` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
-| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:560` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
-| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:434` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
-| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:663` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
-| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:450` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
-| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:512` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
-| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:393` | 20 | 25 | 11 | 13 | 2 | 1283.43 | 48.37 |
+| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:578` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:613` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
+| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:633` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
+| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:348` | 17 | 24 | 12 | 11 | 1 | 1208.23 | 49.96 |
+| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:379` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
+| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:566` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
+| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:440` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
+| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:669` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
+| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:456` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
+| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:518` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
+| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:396` | 21 | 27 | 12 | 15 | 2 | 1341.28 | 47.64 |
 | [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:32` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
 | [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:652` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
 | [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:645` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |

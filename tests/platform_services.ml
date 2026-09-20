@@ -76,6 +76,18 @@ function main(args)
   output = bytes(len(payload), 0)
   if not check(file.readExactAt(handle, 0, output, 0, len(output)) == len(output), "file positional read") then failed = true end if
   if not check(output == payload, "file roundtrip") then failed = true end if
+  prefixSource = bytes([9, 8, 7, 6, 5, 4])
+  if not check(file.writeAt(handle, 0, prefixSource, 0, 3) == 3, "file prefix write count") then failed = true end if
+  prefixRead = bytes(8, 0xAA)
+  if not check(file.readAt(handle, 0, prefixRead, 0, 3) == 3 and prefixRead == bytes([9, 8, 7, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA]), "file prefix read preserves tail") then failed = true end if
+  offsetSource = bytes([90, 91, 92, 93])
+  if not check(file.writeAt(handle, 3, offsetSource, 1, 2) == 2, "file offset write") then failed = true end if
+  offsetRead = bytes(8, 0xAA)
+  if not check(file.readAt(handle, 0, offsetRead, 2, 6) == 6 and offsetRead == bytes([0xAA, 0xAA, 9, 8, 7, 91, 92, 6]), "file offset read preserves guards") then failed = true end if
+  shortRead = bytes(5, 0xAA)
+  if not check(file.readAt(handle, 4, shortRead, 2, 3) == 2 and shortRead == bytes([0xAA, 0xAA, 92, 6, 0xAA]), "file short read copies only available bytes") then failed = true end if
+  if not check(file.readAt(handle, 6, shortRead, 0, 3) == 0 and shortRead == bytes([0xAA, 0xAA, 92, 6, 0xAA]), "file EOF preserves destination") then failed = true end if
+  if not check(typeof(try(file.writeAt(handle, 0, offsetSource, 2, 3))) == "error", "file invalid write range") then failed = true end if
   if not check(file.lock(handle, "exclusive", false) == true, "file exclusive lock") then failed = true end if
   contender = file.openReadWrite(sourcePath, false)
   conflict = try(file.lock(contender, "exclusive", false))

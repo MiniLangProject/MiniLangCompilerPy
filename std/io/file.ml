@@ -353,7 +353,10 @@ function readAt(file, fileOffset, destination, destinationOffset, count)
   if typeof(valid) == "error" then return valid end if
   if typeof(fileOffset) != "int" or fileOffset < 0 then return _error(FILE_ERR, "readAt", "file offset is invalid") end if
   if count == 0 then return 0 end if
-  temporary = bytes(count, 0)
+  // Native bytes arguments point at their payload. A prefix read can use the
+  // caller's buffer directly; only a nonzero destination offset needs a copy.
+  temporary = destination
+  if destinationOffset != 0 then temporary = bytes(count, 0) end if
 #if TARGET_OS == "windows"
   if not SetFilePointerEx(file.nativeHandle, fileOffset, 0, FILE_BEGIN) then return _nativeFailure("readAt.seek") end if
   actualRaw = bytes(4, 0)
@@ -363,7 +366,7 @@ function readAt(file, fileOffset, destination, destinationOffset, count)
   actual = _pread(file.nativeHandle, temporary, count, fileOffset)
   if actual < 0 then return _nativeFailure("readAt") end if
 #endif
-  if actual > 0 then copyBytes(destination, destinationOffset, temporary, 0, actual) end if
+  if destinationOffset != 0 and actual > 0 then copyBytes(destination, destinationOffset, temporary, 0, actual) end if
   return actual
 end function
 
@@ -400,14 +403,17 @@ function writeAt(file, fileOffset, source, sourceOffset, count)
   if count == 0 then return 0 end if
   total = 0
   while total < count
-    payload = slice(source, sourceOffset + total, count - total)
+    // Pass the original bytes for the first prefix write. Short-write retries
+    // still need a slice until native FFI supports byte-buffer subranges.
+    payload = source
+    if sourceOffset + total != 0 then payload = slice(source, sourceOffset + total, count - total) end if
 #if TARGET_OS == "windows"
     if not SetFilePointerEx(file.nativeHandle, fileOffset + total, 0, FILE_BEGIN) then return _nativeFailure("writeAt.seek") end if
     actualRaw = bytes(4, 0)
-    if not WriteFile(file.nativeHandle, payload, len(payload), actualRaw, 0) then return _nativeFailure("writeAt.write") end if
+    if not WriteFile(file.nativeHandle, payload, count - total, actualRaw, 0) then return _nativeFailure("writeAt.write") end if
     actual = _u32(actualRaw, 0)
 #else
-    actual = _pwrite(file.nativeHandle, payload, len(payload), fileOffset + total)
+    actual = _pwrite(file.nativeHandle, payload, count - total, fileOffset + total)
     if actual < 0 then return _nativeFailure("writeAt") end if
 #endif
     if actual <= 0 then return _error(FILE_ERR, "writeAt", "write made no progress") end if

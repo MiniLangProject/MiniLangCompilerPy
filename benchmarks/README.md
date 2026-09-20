@@ -10,6 +10,27 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 # Native primitive benchmarks
 
+## Positional file I/O
+
+`file_io.ml` checks and times cached 4-KiB and 64-KiB positional reads and
+writes with reusable buffers. It writes repeatedly to one file location to
+focus on per-call buffer, runtime and system-call overhead, not storage-device
+throughput. It removes its temporary file on success.
+
+```powershell
+python .\mlc_win64.py .\benchmarks\file_io.ml .\build\file_io_bench.exe -I .
+.\build\file_io_bench.exe
+```
+
+For Linux, add `--target linux-x64`, run the ELF on Linux and compare only
+measurements from the same host and filesystem. Alternate baseline and
+candidate builds across multiple runs and compare medians; Windows tick
+readings are millisecond values with coarser effective resolution. These
+numbers are not a promise of end-to-end database throughput.
+
+The initial paired results are in
+[the file-I/O fast-path report](../docs/reports/FILE_IO_BUFFER_FAST_PATH_2026-09-20.md).
+
 ## Paired code-size experiments
 
 `compare_code_size.py` compares two already-built native programs, records

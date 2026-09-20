@@ -39,6 +39,13 @@ write-through semantics. Windows uses `CreateFileW`, `FlushFileBuffers`,
 `LockFileEx` and `MoveFileExW`; Linux uses `open`, `pread`, `pwrite`, `fsync`,
 `flock` and `rename`.
 
+`readAt` writes directly into a caller-provided byte buffer when
+`destinationOffset` is zero; `writeAt` passes the original buffer directly
+when `sourceOffset` is zero. The requested `count` may be smaller than the
+buffer. Nonzero buffer offsets and short-write retries currently require a
+temporary buffer or slice because native FFI does not expose byte-buffer subranges.
+Reuse buffers and prefer zero buffer offsets for hot positional I/O loops.
+
 `lock(file, mode, wait)` takes a whole-file advisory shared or exclusive lock.
 A non-blocking conflict returns error code `264`. Every participant must obey
 the advisory-lock protocol. On Windows, cursor-based operations on one handle
