@@ -506,6 +506,7 @@
 | [std.fs.DELETE_RETRY_SLEEP_MS](File-std-fs-ml-1285967051.md#constant-constant-std-fs-delete-retry-sleep-ms-const-delete-retry-sleep-ms-5-std-fs-ml-1685798622) | `constant` | `const DELETE_RETRY_SLEEP_MS = 5` |
 | [std.fs.DWORD_SIZE](File-std-fs-ml-1285967051.md#constant-constant-std-fs-dword-size-const-dword-size-4-std-fs-ml-1756870543) | `constant` | `const DWORD_SIZE = 4` |
 | [std.fs.exists](File-std-fs-ml-1285967051.md#function-function-std-fs-exists-function-exists-path-std-fs-ml-72849833) | `function` | `function exists(path)` |
+| [std.fs.FILE_APPEND_DATA](File-std-fs-ml-1285967051.md#constant-constant-std-fs-file-append-data-const-file-append-data-4-std-fs-ml-1043921299) | `constant` | `const FILE_APPEND_DATA = 4` |
 | [std.fs.FileAttr](Type-std-fs-fileattr-1509238666.md) | `enum` | `enum FileAttr` |
 | [std.fs.FileAttr.FILE_ATTRIBUTE_ARCHIVE](Type-std-fs-fileattr-1509238666.md#enum_variant-enum-variant-std-fs-fileattr-file-attribute-archive-file-attribute-archive-32-std-fs-ml-2105528849) | `enum_variant` | `FILE_ATTRIBUTE_ARCHIVE = 32` |
 | [std.fs.FileAttr.FILE_ATTRIBUTE_COMPRESSED](Type-std-fs-fileattr-1509238666.md#enum_variant-enum-variant-std-fs-fileattr-file-attribute-compressed-file-attribute-compressed-2048-std-fs-ml-1331980514) | `enum_variant` | `FILE_ATTRIBUTE_COMPRESSED = 2048` |
@@ -684,11 +685,13 @@
 | [std.net.tcpListen](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `function` | `function tcpListen(port, backlog)` |
 | [std.net.tcpListenAddress](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `function` | `function tcpListenAddress(host, port, backlog)` |
 | [std.net.tcpRecv](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `function` | `function tcpRecv(sock, maxBytes)` |
+| [std.net.tcpRecvInto](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `function` | `function tcpRecvInto(sock, destination, destinationOffset, count)` |
 | [std.net.tcpSendAll](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `function` | `function tcpSendAll(sock, data)` |
 | [std.net.tcpShutdown](File-std-net-ml-1989130045.md#function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342) | `function` | `function tcpShutdown(sock, how)` |
 | [std.net.udpBind](File-std-net-ml-1989130045.md#function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451) | `function` | `function udpBind(sock, port)` |
 | [std.net.udpOpen](File-std-net-ml-1989130045.md#function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978) | `function` | `function udpOpen()` |
 | [std.net.udpRecvFrom](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `function` | `function udpRecvFrom(sock, maxBytes)` |
+| [std.net.udpRecvFromInto](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `function` | `function udpRecvFromInto(sock, destination, destinationOffset, count)` |
 | [std.net.udpSendTo](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `function` | `function udpSendTo(sock, host, port, data)` |
 | [std.net.WSA_VERSION_2_2](File-std-net-ml-1989130045.md#constant-constant-std-net-wsa-version-2-2-const-wsa-version-2-2-514-std-net-ml-1910707017) | `constant` | `const WSA_VERSION_2_2 = 514` |
 | [std.path.changeExtension](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `function` | `function changeExtension(path, newExtension)` |

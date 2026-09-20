@@ -83,7 +83,7 @@ Source: `std/tls.ml:60`
 sendBytes
 ```
 
-Send bytes associated with `Provider`.
+Send callback; treat its input bytes as read-only and return the consumed count.
 
 
 Source: `std/tls.ml:58`

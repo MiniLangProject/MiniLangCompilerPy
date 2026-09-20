@@ -1,5 +1,10 @@
 # Positional file-I/O buffer fast path (20 September 2026)
 
+Historical baseline: the later
+[standard-library I/O follow-up](STDLIB_IO_OPTIMIZATION_2026-09-20.md)
+also removes the remaining copies for nonzero buffer offsets and
+short-write retries. The measurements below describe the earlier stage.
+
 `std.io.file.readAt` previously allocated a temporary byte array and copied
 every result. `writeAt` previously sliced the source before every native call.
 Both implementations now pass the caller's bytes directly for zero-offset

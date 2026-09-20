@@ -170,6 +170,11 @@ end enum
 const DWORD_SIZE = 4
 /// Track the io buf size value used by this standard-library module.
 const IO_BUF_SIZE = 4096
+/// Maximum read chunk when filling a caller-owned whole-file buffer.
+/// @internal
+const READ_CHUNK_SIZE = 1048576
+/// Native access right that writes only at the current end of a file.
+const FILE_APPEND_DATA = 0x00000004
 /// Track the delete retry count value used by this standard-library module.
 const DELETE_RETRY_COUNT = 30
 /// Track the delete retry sleep ms value used by this standard-library module.
@@ -201,6 +206,16 @@ bytesRead as bytes,
 overlapped as ptr
 ) from "kernel32.dll" returns bool
 
+/// Read into a checked interior address of a caller-owned byte buffer.
+/// @internal
+extern function ReadFilePointer(
+h as ptr,
+buf as ptr,
+n as int,
+bytesRead as bytes,
+overlapped as ptr
+) from "kernel32.dll" symbol "ReadFile" returns bool
+
 /// Updates write file.
 /// @internal
 extern function WriteFile(
@@ -210,6 +225,16 @@ n as int,
 bytesWritten as bytes,
 overlapped as ptr
 ) from "kernel32.dll" returns bool
+
+/// Write a checked byte-buffer range without materializing a slice.
+/// @internal
+extern function WriteFilePointer(
+h as ptr,
+buf as ptr,
+n as int,
+bytesWritten as bytes,
+overlapped as ptr
+) from "kernel32.dll" symbol "WriteFile" returns bool
 
 /// Updates write file cstr.
 /// @internal
@@ -489,6 +514,47 @@ function _openWriteAlways(path)
   return _fsErr("CreateFileW failed last_error=" + last_error)
 end function
 
+/// Open without truncating, with the OS selecting the end of file per write.
+/// @internal
+function _openAppend(path)
+  last_error = 0
+  i = 0
+  while i < std.fs.WRITE_RETRY_COUNT
+    h = CreateFileW(
+      path,
+      std.fs.FILE_APPEND_DATA,
+      std.fs.Share.FILE_SHARE_READ + std.fs.Share.FILE_SHARE_WRITE + std.fs.Share.FILE_SHARE_DELETE,
+      0,
+      std.fs.Creation.OPEN_ALWAYS,
+      std.fs.FileAttr.FILE_ATTRIBUTE_NORMAL,
+      0,
+    )
+    if h != std.fs.INVALID_HANDLE_VALUE then return h end if
+    last_error = GetLastError()
+    Sleep(std.fs.WRITE_RETRY_SLEEP_MS)
+    i = i + 1
+  end while
+  return _fsErr("append open failed last_error=" + last_error)
+end function
+
+/// Keep the original byte array rooted while native writes use its interior.
+/// @internal
+function _writeAllHandle(h, data, operation)
+  position = 0
+  writtenRaw = bytes(std.fs.DWORD_SIZE, 0)
+  while position < len(data)
+    remaining = len(data) - position
+    if remaining > 0x7FFFFFFF then remaining = 0x7FFFFFFF end if
+    if not WriteFilePointer(h, nativeBytesPtr(data) + position, remaining, writtenRaw, 0) then
+      return _fsErr(operation + ": WriteFile failed")
+    end if
+    written = _u32le4(writtenRaw)
+    if written <= 0 or written > remaining then return _fsErr(operation + ": write made no progress") end if
+    position = position + written
+  end while
+  return true
+end function
+
 /// Write all bytes to a file (overwrites if it exists).
 /// @param path Path to operate on.
 /// @param data Data to process.
@@ -502,16 +568,9 @@ function writeAllBytes(path, data)
     return _fsErr("writeAllBytes: " + h.message)
   end if
 
-  n = len(data)
-  bw4 = bytes(std.fs.DWORD_SIZE)
-  ok = WriteFile(h, data, n, bw4, 0)
+  result = _writeAllHandle(h, data, "writeAllBytes")
   CloseHandle(h)
-
-  if ok == false then
-    return _fsErr("writeAllBytes: WriteFile failed")
-  end if
-
-  return true
+  return result
 end function
 
 /// Read all bytes from a file.
@@ -555,18 +614,18 @@ function readAllBytes(path)
   // --- single big allocation ---
   output = bytes(size)
 
-  // --- streaming read into temp buf + copy into output ---
-  buf = bytes(std.fs.IO_BUF_SIZE)
+  // Read straight into the final array. Its local reference remains rooted
+  // throughout the synchronous native call.
   br4 = bytes(std.fs.DWORD_SIZE)
 
   pos = 0
   while pos < size
     toRead = size - pos
-    if toRead > std.fs.IO_BUF_SIZE then
-      toRead = std.fs.IO_BUF_SIZE
+    if toRead > std.fs.READ_CHUNK_SIZE then
+      toRead = std.fs.READ_CHUNK_SIZE
     end if
 
-    ok = ReadFile(h, buf, toRead, br4, 0)
+    ok = ReadFilePointer(h, nativeBytesPtr(output) + pos, toRead, br4, 0)
     if ok == false then
       CloseHandle(h)
       return _fsErr("readAllBytes: ReadFile failed")
@@ -576,8 +635,6 @@ function readAllBytes(path)
     if n <= 0 then
       break
     end if
-
-    copyBytes(output, pos, buf, 0, n)
 
     pos = pos + n
   end while
@@ -663,18 +720,17 @@ function readAllText(path)
   // --- single big allocation ---
   output = bytes(size)
 
-  // --- streaming read into temp buf + copy into output ---
-  buf = bytes(std.fs.IO_BUF_SIZE)
+  // Read straight into the final array rather than copying each chunk.
   br4 = bytes(std.fs.DWORD_SIZE)
 
   pos = 0
   while pos < size
     toRead = size - pos
-    if toRead > std.fs.IO_BUF_SIZE then
-      toRead = std.fs.IO_BUF_SIZE
+    if toRead > std.fs.READ_CHUNK_SIZE then
+      toRead = std.fs.READ_CHUNK_SIZE
     end if
 
-    ok = ReadFile(h, buf, toRead, br4, 0)
+    ok = ReadFilePointer(h, nativeBytesPtr(output) + pos, toRead, br4, 0)
     if ok == false then
       CloseHandle(h)
       return _fsErr("readAllText: ReadFile failed")
@@ -684,8 +740,6 @@ function readAllText(path)
     if n <= 0 then
       break
     end if
-
-    copyBytes(output, pos, buf, 0, n)
 
     pos = pos + n
   end while
@@ -776,7 +830,7 @@ function fileSize(path)
   return _u64le8(sizeBuf)
 end function
 
-/// Append bytes to a file (simple implementation: read + rewrite).
+/// Append bytes without reading or rewriting the existing file.
 /// @param path Path to operate on.
 /// @param data Data to process.
 function appendAllBytes(path, data)
@@ -784,19 +838,14 @@ function appendAllBytes(path, data)
     return _fsErr("appendAllBytes: invalid args")
   end if
 
-  if exists(path) == false then
-    return writeAllBytes(path, data)
-  end if
-
-  prev = readAllBytes(path)
-  if typeof(prev) == "error" then
-    return prev
-  end if
-
-  return writeAllBytes(path, prev + data)
+  h = _openAppend(path)
+  if typeof(h) == "error" then return h end if
+  result = _writeAllHandle(h, data, "appendAllBytes")
+  CloseHandle(h)
+  return result
 end function
 
-/// Append text to a file (simple implementation: read + rewrite).
+/// Append UTF-8 text without reading or rewriting the existing file.
 /// @param path Path to operate on.
 /// @param text Text to process.
 function appendAllText(path, text)
@@ -804,16 +853,7 @@ function appendAllText(path, text)
     return _fsErr("appendAllText: invalid args")
   end if
 
-  if exists(path) == false then
-    return writeAllText(path, text)
-  end if
-
-  prev = readAllText(path)
-  if typeof(prev) == "error" then
-    return prev
-  end if
-
-  return writeAllText(path, prev + text)
+  return appendAllBytes(path, bytes(text))
 end function
 
 /// Read a file as lines (split by '\n', trims a trailing '\r').

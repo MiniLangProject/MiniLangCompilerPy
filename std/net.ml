@@ -20,6 +20,9 @@ package std.net
 
 /// Track the max portable socket timeout ms value used by this standard-library module.
 const MAX_PORTABLE_SOCKET_TIMEOUT_MS = 2147483647
+/// Largest per-call count accepted by both native socket ABIs.
+/// @internal
+const MAX_SOCKET_IO_COUNT = 0x7FFFFFFF
 
 /// Track the net err value used by this standard-library module.
 const NET_ERR = 200
@@ -142,9 +145,15 @@ extern function acceptNoAddress(s as ptr, addr as ptr, addrlen as ptr) from "ws2
 /// Provide the send operation for this standard-library module.
 /// @internal
 extern function send(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
+/// Send a checked interior byte-buffer range without allocating a slice.
+/// @internal
+extern function _sendPointer(s as ptr, buf as ptr, len as int, flags as int) from "ws2_32.dll" symbol "send" returns int
 /// Provide the recv operation for this standard-library module.
 /// @internal
 extern function recv(s as ptr, buf as bytes, len as int, flags as int) from "ws2_32.dll" returns int
+/// Receive into a checked interior byte-buffer range.
+/// @internal
+extern function _recvPointer(s as ptr, buf as ptr, len as int, flags as int) from "ws2_32.dll" symbol "recv" returns int
 
 /// Provide the sendto operation for this standard-library module.
 /// @internal
@@ -152,6 +161,9 @@ extern function sendto(s as ptr, buf as bytes, len as int, flags as int, addr as
 /// Provide the recvfrom operation for this standard-library module.
 /// @internal
 extern function recvfrom(s as ptr, buf as bytes, len as int, flags as int, addr as bytes, addrlen as bytes) from "ws2_32.dll" returns int
+/// Receive a datagram into a checked interior byte-buffer range.
+/// @internal
+extern function _recvfromPointer(s as ptr, buf as ptr, len as int, flags as int, addr as bytes, addrlen as bytes) from "ws2_32.dll" symbol "recvfrom" returns int
 
 /// Provide the shutdown operation for this standard-library module.
 /// @internal
@@ -192,15 +204,24 @@ extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "lib
 /// Provide the send operation for this standard-library module.
 /// @internal
 extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+/// Send a checked interior byte-buffer range without allocating a slice.
+/// @internal
+extern function _sendPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.6" symbol "send" returns i64
 /// Provide the recv operation for this standard-library module.
 /// @internal
 extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+/// Receive into a checked interior byte-buffer range.
+/// @internal
+extern function _recvPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.6" symbol "recv" returns i64
 /// Provide the sendto operation for this standard-library module.
 /// @internal
 extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
 /// Provide the recvfrom operation for this standard-library module.
 /// @internal
 extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i64
+/// Receive a datagram into a checked interior byte-buffer range.
+/// @internal
+extern function _recvfromPointer(s as int, buf as ptr, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" symbol "recvfrom" returns i64
 /// Provide the shutdown operation for this standard-library module.
 /// @internal
 extern function shutdown(s as int, how as int) from "libc.so.6" returns i32
@@ -681,16 +702,44 @@ function tcpSendAll(sock, data)
     return 0
   end if
 
-  // send() takes a pointer to the bytes buffer. We rely on the runtime to pass the internal pointer.
+  // The source remains rooted while send() reads its checked interior range.
   while total < n
-    sent = send(sock, slice(data, total, n - total), n - total, 0)
+    remaining = n - total
+    if remaining > MAX_SOCKET_IO_COUNT then remaining = MAX_SOCKET_IO_COUNT end if
+    sent = _sendPointer(sock, nativeBytesPtr(data) + total, remaining, 0)
     if sent == SOCKET_ERROR then
       return _netErr("tcpSendAll: send failed (" + lastError() + ")")
     end if
+    if sent <= 0 or sent > remaining then return _netErr("tcpSendAll: send made no progress") end if
     total = total + sent
   end while
 
   return total
+end function
+
+/// Receive into a caller-owned byte buffer without allocating or copying.
+/// @param sock Connected TCP socket.
+/// @param destination Byte buffer to fill.
+/// @param destinationOffset First destination byte to overwrite.
+/// @param count Maximum bytes to receive; zero returns immediately.
+function tcpRecvInto(sock, destination, destinationOffset, count)
+  if not _isSockHandle(sock) then return _netErr("tcpRecvInto: invalid socket handle") end if
+  valid = _validReceiveRange(destination, destinationOffset, count, "tcpRecvInto")
+  if typeof(valid) == "error" then return valid end if
+  if count == 0 then return 0 end if
+  got = _recvPointer(sock, nativeBytesPtr(destination) + destinationOffset, count, 0)
+  if got == SOCKET_ERROR then return _netErr("tcpRecvInto: recv failed (" + lastError() + ")") end if
+  return got
+end function
+
+/// Validate a native receive range before taking an interior pointer.
+/// @internal
+function _validReceiveRange(buffer, offset, count, operation)
+  if typeof(buffer) != "bytes" then return _netErr(operation + ": destination must be bytes") end if
+  if typeof(offset) != "int" or typeof(count) != "int" or offset < 0 or count < 0 or offset > len(buffer) or count > len(buffer) - offset or count > MAX_SOCKET_IO_COUNT then
+    return _netErr(operation + ": destination range is invalid")
+  end if
+  return true
 end function
 
 /// Receives up to maxBytes from a TCP socket.
@@ -707,6 +756,7 @@ function tcpRecv(sock, maxBytes)
     return bytes(0)
   end if
 
+  if maxBytes > MAX_SOCKET_IO_COUNT then return _netErr("tcpRecv: maxBytes is too large") end if
   buf = bytes(maxBytes)
   got = recv(sock, buf, maxBytes, 0)
 
@@ -719,6 +769,7 @@ function tcpRecv(sock, maxBytes)
     return _netErr("tcpRecv: recv failed (" + lastError() + ")")
   end if
 
+  if got == maxBytes then return buf end if
   return slice(buf, 0, got)
 end function
 
@@ -823,6 +874,25 @@ function udpSendTo(sock, host, port, data)
   return sent
 end function
 
+/// Receive a UDP datagram into a caller-owned byte buffer.
+/// Returns [receivedCount, peerIp, peerPort].
+/// @param sock Bound UDP socket.
+/// @param destination Byte buffer to fill.
+/// @param destinationOffset First destination byte to overwrite.
+/// @param count Maximum datagram bytes to receive.
+function udpRecvFromInto(sock, destination, destinationOffset, count)
+  if not _isSockHandle(sock) then return _netErr("udpRecvFromInto: invalid socket handle") end if
+  valid = _validReceiveRange(destination, destinationOffset, count, "udpRecvFromInto")
+  if typeof(valid) == "error" then return valid end if
+  if count == 0 then return [0, "", 0] end if
+  addr = bytes(SOCKADDR_IN_SIZE, 0)
+  addrLen = bytes(4, 0)
+  addrLen[0] = SOCKADDR_IN_SIZE
+  got = _recvfromPointer(sock, nativeBytesPtr(destination) + destinationOffset, count, 0, addr, addrLen)
+  if got == SOCKET_ERROR then return _netErr("udpRecvFromInto: recvfrom failed (" + lastError() + ")") end if
+  return [got, _ipv4ToStringFromSockaddr(addr), _portFromSockaddr(addr)]
+end function
+
 /// Receives a UDP datagram.
 /// @param sock Value supplied for `sock`.
 /// @param maxBytes Value supplied for `maxBytes`.
@@ -837,19 +907,14 @@ function udpRecvFrom(sock, maxBytes)
     return [bytes(0), "", 0]
   end if
 
+  if maxBytes > MAX_SOCKET_IO_COUNT then return _netErr("udpRecvFrom: maxBytes is too large") end if
   buf = bytes(maxBytes)
-
   addr = bytes(SOCKADDR_IN_SIZE, 0)
   addrLen = bytes(4, 0)
   addrLen[0] = SOCKADDR_IN_SIZE
-
   got = recvfrom(sock, buf, maxBytes, 0, addr, addrLen)
-  if got == SOCKET_ERROR then
-    return _netErr("udpRecvFrom: recvfrom failed (" + lastError() + ")")
-  end if
-
-  ipStr = _ipv4ToStringFromSockaddr(addr)
-  port = _portFromSockaddr(addr)
-
-  return [slice(buf, 0, got), ipStr, port]
+  if got == SOCKET_ERROR then return _netErr("udpRecvFrom: recvfrom failed (" + lastError() + ")") end if
+  payload = buf
+  if got != maxBytes then payload = slice(buf, 0, got) end if
+  return [payload, _ipv4ToStringFromSockaddr(addr), _portFromSockaddr(addr)]
 end function

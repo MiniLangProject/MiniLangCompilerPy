@@ -17,6 +17,9 @@ const FS_ERR = 1
 /// Track the io buf size value used by this standard-library module.
 /// @internal
 const IO_BUF_SIZE = 4096
+/// Maximum read chunk when filling an already allocated whole-file buffer.
+/// @internal
+const READ_CHUNK_SIZE = 1048576
 /// These layout constants follow the Linux x86-64 glibc ABI. Revisit them when adding another CPU architecture or libc implementation.
 /// @internal
 const STAT_SIZE = 144
@@ -45,6 +48,9 @@ const O_CREAT = 64
 /// Track the o trunc value used by this standard-library module.
 /// @internal
 const O_TRUNC = 512
+/// Ask the kernel to position each write at the current end of file.
+/// @internal
+const O_APPEND = 1024
 /// Track the seek set value used by this standard-library module.
 /// @internal
 const SEEK_SET = 0
@@ -67,9 +73,15 @@ extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" 
 /// Returns read.
 /// @internal
 extern function _read(fd as int, output as bytes, count as u64) from "libc.so.6" symbol "read" returns i64
+/// Read directly into a checked interior address of a byte buffer.
+/// @internal
+extern function _readPointer(fd as int, output as ptr, count as u64) from "libc.so.6" symbol "read" returns i64
 /// Updates write bytes.
 /// @internal
 extern function _writeBytes(fd as int, input as bytes, count as u64) from "libc.so.6" symbol "write" returns i64
+/// Write a byte-buffer range without allocating a slice.
+/// @internal
+extern function _writePointer(fd as int, input as ptr, count as u64) from "libc.so.6" symbol "write" returns i64
 /// Updates write text.
 /// @internal
 extern function _writeText(fd as int, input as cstr, count as u64) from "libc.so.6" symbol "write" returns i64
@@ -239,24 +251,28 @@ function _openWrite(path)
   return fd
 end function
 
+/// Write every byte from a rooted source buffer, retrying short writes.
+/// @internal
+function _writeAllToFd(fd, data, operation)
+  position = 0
+  while position < len(data)
+    remaining = len(data) - position
+    written = _writePointer(fd, nativeBytesPtr(data) + position, remaining)
+    if written <= 0 or written > remaining then return _err(operation + ": write failed") end if
+    position = position + written
+  end while
+  return true
+end function
+
 /// Updates write all bytes.
 /// @internal
 function writeAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then return _err("writeAllBytes: invalid args") end if
   fd = _openWrite(path)
   if typeof(fd) == "error" then return fd end if
-  position = 0
-  while position < len(data)
-    chunk = slice(data, position, len(data) - position)
-    written = _writeBytes(fd, chunk, len(chunk))
-    if written <= 0 then
-      _close(fd)
-      return _err("writeAllBytes: write failed")
-    end if
-    position = position + written
-  end while
+  result = _writeAllToFd(fd, data, "writeAllBytes")
   _close(fd)
-  return true
+  return result
 end function
 
 /// Updates write all text.
@@ -281,18 +297,17 @@ function readAllBytes(path)
   end if
   _lseek(fd, 0, SEEK_SET)
   output = bytes(size, 0)
-  buffer = bytes(IO_BUF_SIZE, 0)
   position = 0
   while position < size
     wanted = size - position
-    if wanted > IO_BUF_SIZE then wanted = IO_BUF_SIZE end if
-    got = _read(fd, buffer, wanted)
+    if wanted > READ_CHUNK_SIZE then wanted = READ_CHUNK_SIZE end if
+    // The result array remains rooted while read() writes into its interior.
+    got = _readPointer(fd, nativeBytesPtr(output) + position, wanted)
     if got < 0 then
       _close(fd)
       return _err("readAllBytes: read failed")
     end if
     if got == 0 then break end if
-    copyBytes(output, position, buffer, 0, got)
     position = position + got
   end while
   _close(fd)
@@ -349,20 +364,18 @@ end function
 /// @internal
 function appendAllBytes(path, data)
   if typeof(path) != "string" or typeof(data) != "bytes" then return _err("appendAllBytes: invalid args") end if
-  if not exists(path) then return writeAllBytes(path, data) end if
-  previous = readAllBytes(path)
-  if typeof(previous) == "error" then return previous end if
-  return writeAllBytes(path, previous + data)
+  fd = _open(path, O_WRONLY | O_CREAT | O_APPEND, DEFAULT_FILE_MODE)
+  if fd < 0 then return _err("appendAllBytes: open failed") end if
+  result = _writeAllToFd(fd, data, "appendAllBytes")
+  _close(fd)
+  return result
 end function
 
 /// Updates append all text.
 /// @internal
 function appendAllText(path, text)
   if typeof(path) != "string" or typeof(text) != "string" then return _err("appendAllText: invalid args") end if
-  if not exists(path) then return writeAllText(path, text) end if
-  previous = readAllText(path)
-  if typeof(previous) == "error" then return previous end if
-  return writeAllText(path, previous + text)
+  return appendAllBytes(path, bytes(text))
 end function
 
 /// Returns read all lines.

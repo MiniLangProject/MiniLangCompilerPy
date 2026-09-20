@@ -54,7 +54,7 @@ struct Provider
   openClient
   /// Open server associated with `Provider`.
   openServer
-  /// Send bytes associated with `Provider`.
+  /// Send callback; treat its input bytes as read-only and return the consumed count.
   sendBytes
   /// Receive bytes associated with `Provider`.
   receiveBytes
@@ -199,7 +199,9 @@ function isStream(value)
   return value is Stream
 end function
 
-/// Provide the send all operation for this standard-library module.
+/// Send all bytes through the provider, retrying a partially consumed tail.
+/// The provider receives the caller's original buffer on the first attempt
+/// and must not mutate it.
 /// @param stream Value supplied for `stream`.
 /// @param data Data to process.
 function sendAll(stream, data)
@@ -207,7 +209,11 @@ function sendAll(stream, data)
   if typeof(data) != "bytes" then return _error("TLS payload must be bytes") end if
   total = 0
   while total < len(data)
-    written = try(stream.provider.sendBytes(stream.state, slice(data, total, len(data) - total)))
+    // Most providers accept everything in one call; avoid copying that first
+    // payload and slice only after an actual short send.
+    payload = data
+    if total != 0 then payload = slice(data, total, len(data) - total) end if
+    written = try(stream.provider.sendBytes(stream.state, payload))
     if typeof(written) == "error" then return written end if
     if typeof(written) != "int" or written <= 0 or written > len(data) - total then
       return _error("TLS provider returned an invalid send count")

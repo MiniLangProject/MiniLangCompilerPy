@@ -2583,6 +2583,12 @@ File I/O is provided by the **standard library** module `std.fs`, with convenien
 - `writeAllBytes`, `readAllBytes`
 - `exists`, `delete`, `fileSize`, `copyFile`, `moveFile`
 
+`std.fs.appendAllBytes` and `appendAllText` append through native file
+handles without re-reading the existing file. Whole-file reads fill their
+result buffer directly. For bounded positional I/O with reusable buffers,
+including nonzero buffer offsets, use `std.io.file`; for reusable TCP and UDP
+receive buffers, use `std.net.tcpRecvInto` and `udpRecvFromInto`.
+
 Most functions that can fail return either their normal value or `error(...)`.
 A few APIs return plain `bool` (e.g. `exists`, `delete`).
 

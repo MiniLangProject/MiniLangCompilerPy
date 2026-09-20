@@ -80,7 +80,7 @@ Releases or resets close.
 | `stream` | `dynamic` | — | Value supplied for `stream`. |
 
 
-Source: `std/tls.ml:241`
+Source: `std/tls.ml:247`
 
 <a id="function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555"></a>
 ### connect
@@ -212,7 +212,7 @@ Provide the receive operation for this standard-library module.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/tls.ml:223`
+Source: `std/tls.ml:229`
 
 <a id="function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506"></a>
 ### sendAll
@@ -221,7 +221,7 @@ Source: `std/tls.ml:223`
 function sendAll(stream, data)
 ```
 
-Provide the send all operation for this standard-library module.
+Send all bytes through the provider, retrying a partially consumed tail. The provider receives the caller's original buffer on the first attempt and must not mutate it.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -229,7 +229,7 @@ Provide the send all operation for this standard-library module.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/tls.ml:205`
+Source: `std/tls.ml:207`
 
 <a id="function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559"></a>
 ### serverOptions
@@ -263,7 +263,7 @@ Provide the shutdown operation for this standard-library module.
 | `stream` | `dynamic` | — | Value supplied for `stream`. |
 
 
-Source: `std/tls.ml:234`
+Source: `std/tls.ml:240`
 
 - [std.tls.Stream](Type-std-tls-stream-775546137.md) — struct
 <a id="constant-constant-std-tls-tls-err-const-tls-err-267-std-tls-ml-486488596"></a>

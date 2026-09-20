@@ -39,12 +39,12 @@ write-through semantics. Windows uses `CreateFileW`, `FlushFileBuffers`,
 `LockFileEx` and `MoveFileExW`; Linux uses `open`, `pread`, `pwrite`, `fsync`,
 `flock` and `rename`.
 
-`readAt` writes directly into a caller-provided byte buffer when
-`destinationOffset` is zero; `writeAt` passes the original buffer directly
-when `sourceOffset` is zero. The requested `count` may be smaller than the
-buffer. Nonzero buffer offsets and short-write retries currently require a
-temporary buffer or slice because native FFI does not expose byte-buffer subranges.
-Reuse buffers and prefer zero buffer offsets for hot positional I/O loops.
+`readAt` and `writeAt` pass validated ranges of caller-owned byte buffers
+directly to the native file APIs, including nonzero buffer offsets and
+short-write retries. The requested `count` may be smaller than the buffer;
+`readAt` leaves bytes outside the bytes actually read unchanged. Reuse buffers
+for hot positional I/O loops. The native call is synchronous; callers must not
+mutate a buffer concurrently while a read or write is in progress.
 
 `lock(file, mode, wait)` takes a whole-file advisory shared or exclusive lock.
 A non-blocking conflict returns error code `264`. Every participant must obey
@@ -74,6 +74,15 @@ Native socket timeouts are portable for integer millisecond values in
 `0..2147483647`; negative, oversized and non-integer values return a managed
 network error rather than being truncated by the platform ABI.
 
+`tcpSendAll` sends directly from the source byte buffer even after a partial
+send. For allocation-free receives into an existing buffer, use
+`tcpRecvInto(socket, destination, offset, count)`, which returns the received
+byte count (zero on orderly TCP shutdown), or
+`udpRecvFromInto(socket, destination, offset, count)`, which returns
+`[receivedCount, peerIp, peerPort]`. Both validate the destination range and
+leave bytes outside the received range unchanged. The older `tcpRecv` and
+`udpRecvFrom` APIs remain available and return newly allocated payloads.
+
 `std.tls` includes a native provider selected at compile time: Windows uses
 Schannel and the system certificate stores; Linux uses OpenSSL 3
 (`libssl.so.3` and `libcrypto.so.3`). `nativeProviderName()` reports the active
@@ -100,8 +109,11 @@ validation.
 
 TLS streams own their native security context, but never own the TCP socket.
 Call `shutdown(stream)` to send `close_notify`, then `close(stream)`, and
-finally `std.net.close(socket)`. `sendAll` handles partial provider writes and
-`receive` returns empty bytes after a clean peer shutdown.
+finally `std.net.close(socket)`. `sendAll` handles partial provider writes,
+passes the original byte buffer to the provider on the first attempt, and
+copies only the unsent tail after a partial write. Providers must treat the
+input buffer as read-only. `receive` returns empty bytes after a clean peer
+shutdown.
 
 ## Identifiers and password derivation
 

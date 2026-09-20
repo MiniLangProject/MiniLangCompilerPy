@@ -385,6 +385,8 @@ function test_fs_io()
   p_bin = prefix + ".bin"
   p_copy = prefix + "_copy.bin"
   p_move = prefix + "_move.bin"
+  p_append = prefix + "_append.bin"
+  p_large = prefix + "_large.bin"
 
   // text roundtrip
   w = try(fs.writeAllText(p_txt, "hello\nworld\n"))
@@ -411,6 +413,19 @@ function test_fs_io()
   rb = try(fs.readAllBytes(p_bin))
   chk(_assertNotError(rb, "fs: readAllBytes ok"))
   chk(a.assertEq(hex(rb), "0011aaff", "fs: bytes roundtrip"))
+  chk(a.assertTrue(fs.appendAllBytes(p_bin, bytes([0, 255])) == true, "fs: appendAllBytes existing"))
+  chk(a.assertEq(hex(fs.readAllBytes(p_bin)), "0011aaff00ff", "fs: appendAllBytes content"))
+  chk(a.assertTrue(fs.appendAllBytes(p_append, bytes([4, 5])) == true, "fs: appendAllBytes creates file"))
+  chk(a.assertTrue(fs.appendAllText(p_append, "A") == true, "fs: appendAllText to binary file"))
+  chk(a.assertTrue(fs.readAllBytes(p_append) == bytes([4, 5, 65]), "fs: append preserves bytes"))
+
+  // Cross the 1-MiB direct-read chunk boundary on both native backends.
+  large = bytes(1048593, 65)
+  large[1048592] = 66
+  chk(a.assertTrue(fs.writeAllBytes(p_large, large) == true, "fs: large write"))
+  chk(a.assertTrue(fs.readAllBytes(p_large) == large, "fs: large direct read"))
+  largeText = fs.readAllText(p_large)
+  chk(a.assertTrue(typeof(largeText) == "string" and len(largeText) == 1048593 and s.endsWith(largeText, "B"), "fs: large text read"))
 
   names2 = try(fs.listDir("."))
   chk(_assertNotError(names2, "fs: listDir after bin"))
@@ -419,7 +434,7 @@ function test_fs_io()
   // file size
   sz = try(fs.fileSize(p_bin))
   chk(_assertNotError(sz, "fs: fileSize ok"))
-  chk(a.assertEq(sz, 4, "fs: fileSize value"))
+  chk(a.assertEq(sz, 6, "fs: fileSize value"))
 
   // copy/move
   cp = try(fs.copyFile(p_bin, p_copy, true))
@@ -442,6 +457,8 @@ function test_fs_io()
   chk(a.assertTrue(fs.delete(p_txt), "fs: delete txt"))
   chk(a.assertTrue(fs.delete(p_bin), "fs: delete bin"))
   chk(a.assertTrue(fs.delete(p_move), "fs: delete moved"))
+  chk(a.assertTrue(fs.delete(p_append), "fs: delete appended"))
+  chk(a.assertTrue(fs.delete(p_large), "fs: delete large"))
   chk(a.assertFalse(fs.exists(p_txt), "fs: exists false"))
 end function
 
@@ -679,6 +696,15 @@ function test_net_tcp_udp()
     chk(a.assertEq(decode(rr2), "pong", "net: tcp reply"))
   end if
 
+  receiveBuffer = bytes(8, 0xAA)
+  chk(a.assertTrue(typeof(try(net.tcpRecvInto(acc, receiveBuffer, 7, 2))) == "error", "net: tcpRecvInto rejects invalid range"))
+  chk(a.assertTrue(net.tcpSendAll(cli, bytes("view")) == 4, "net: tcp send for receive buffer"))
+  chk(a.assertTrue(net.tcpRecvInto(acc, receiveBuffer, 0, 0) == 0, "net: tcpRecvInto zero count"))
+  intoCount = try(net.tcpRecvInto(acc, receiveBuffer, 2, 4))
+  chk(a.assertTrue(intoCount == 4 and receiveBuffer == bytes([0xAA, 0xAA, 118, 105, 101, 119, 0xAA, 0xAA]), "net: tcpRecvInto preserves guards"))
+  chk(a.assertTrue(net.tcpSendAll(cli, bytes("full")) == 4, "net: tcp send exact receive length"))
+  chk(a.assertTrue(net.tcpRecv(acc, 4) == bytes("full"), "net: tcpRecv full buffer"))
+
   net.tcpShutdown(cli, 2)
   net.tcpShutdown(acc, 2)
   net.close(cli)
@@ -758,6 +784,19 @@ function test_net_tcp_udp()
     chk(a.assertEq(decode(gr[0]), "hi", "net: udp payload"))
     chk(a.assertEq(gr[1], "127.0.0.1", "net: udp peerIp"))
   end if
+
+  udpBuffer = bytes(6, 0xCC)
+  chk(a.assertTrue(typeof(try(net.udpRecvFromInto(u2, udpBuffer, 5, 2))) == "error", "net: udpRecvFromInto rejects invalid range"))
+  chk(a.assertTrue(net.udpSendTo(u1, "127.0.0.1", up, "uv") == 2, "net: udp send for receive buffer"))
+  datagram = try(net.udpRecvFromInto(u2, udpBuffer, 2, 2))
+  if typeof(datagram) != "error" then
+    chk(a.assertTrue(datagram[0] == 2 and datagram[1] == "127.0.0.1" and udpBuffer == bytes([0xCC, 0xCC, 117, 118, 0xCC, 0xCC]), "net: udpRecvFromInto preserves guards"))
+  else
+    chk(a.assertTrue(false, "net: udpRecvFromInto returned error"))
+  end if
+  chk(a.assertTrue(net.udpSendTo(u1, "127.0.0.1", up, "xy") == 2, "net: udp send exact receive length"))
+  exactDatagram = try(net.udpRecvFrom(u2, 2))
+  chk(a.assertTrue(typeof(exactDatagram) == "array" and exactDatagram[0] == bytes("xy"), "net: udpRecvFrom full buffer"))
 
   net.close(u1)
   net.close(u2)

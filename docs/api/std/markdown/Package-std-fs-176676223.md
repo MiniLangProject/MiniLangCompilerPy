@@ -18,6 +18,7 @@
 - [`std.fs.DELETE_RETRY_SLEEP_MS`](File-std-fs-ml-1285967051.md#constant-constant-std-fs-delete-retry-sleep-ms-const-delete-retry-sleep-ms-5-std-fs-ml-1685798622) — constant
 - [`std.fs.DWORD_SIZE`](File-std-fs-ml-1285967051.md#constant-constant-std-fs-dword-size-const-dword-size-4-std-fs-ml-1756870543) — constant
 - [`std.fs.exists`](File-std-fs-ml-1285967051.md#function-function-std-fs-exists-function-exists-path-std-fs-ml-72849833) — function
+- [`std.fs.FILE_APPEND_DATA`](File-std-fs-ml-1285967051.md#constant-constant-std-fs-file-append-data-const-file-append-data-4-std-fs-ml-1043921299) — constant
 - [`std.fs.FileAttr`](Type-std-fs-fileattr-1509238666.md) — enum
 - [`std.fs.fileSize`](File-std-fs-ml-1285967051.md#function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189) — function
 - [`std.fs.FIND_DATA_SIZE`](File-std-fs-ml-1285967051.md#constant-constant-std-fs-find-data-size-const-find-data-size-592-std-fs-ml-870133523) — constant

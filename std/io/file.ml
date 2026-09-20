@@ -125,9 +125,15 @@ extern function CreateFileW(path as wstr, access as u32, share as u32, security 
 /// Returns read file.
 /// @internal
 extern function ReadFile(handle as ptr, output as bytes, count as u32, actual as bytes, overlapped as ptr) from "kernel32.dll" returns bool
+/// Read into a validated interior byte-buffer address.
+/// @internal
+extern function ReadFilePointer(handle as ptr, output as ptr, count as u32, actual as bytes, overlapped as ptr) from "kernel32.dll" symbol "ReadFile" returns bool
 /// Updates write file.
 /// @internal
 extern function WriteFile(handle as ptr, input as bytes, count as u32, actual as bytes, overlapped as ptr) from "kernel32.dll" returns bool
+/// Write from a validated interior byte-buffer address.
+/// @internal
+extern function WriteFilePointer(handle as ptr, input as ptr, count as u32, actual as bytes, overlapped as ptr) from "kernel32.dll" symbol "WriteFile" returns bool
 /// Updates set file pointer ex.
 /// @internal
 extern function SetFilePointerEx(handle as ptr, distance as i64, newPosition as ptr, method as u32) from "kernel32.dll" returns bool
@@ -205,9 +211,15 @@ extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" 
 /// Provide the pread operation for this standard-library module.
 /// @internal
 extern function _pread(handle as int, output as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pread" returns i64
+/// Read into a validated interior byte-buffer address.
+/// @internal
+extern function _preadPointer(handle as int, output as ptr, count as u64, offset as i64) from "libc.so.6" symbol "pread" returns i64
 /// Provide the pwrite operation for this standard-library module.
 /// @internal
 extern function _pwrite(handle as int, input as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pwrite" returns i64
+/// Write from a validated interior byte-buffer address.
+/// @internal
+extern function _pwritePointer(handle as int, input as ptr, count as u64, offset as i64) from "libc.so.6" symbol "pwrite" returns i64
 /// Provide the fstat operation for this standard-library module.
 /// @internal
 extern function _fstat(handle as int, output as bytes) from "libc.so.6" symbol "fstat" returns i32
@@ -353,20 +365,17 @@ function readAt(file, fileOffset, destination, destinationOffset, count)
   if typeof(valid) == "error" then return valid end if
   if typeof(fileOffset) != "int" or fileOffset < 0 then return _error(FILE_ERR, "readAt", "file offset is invalid") end if
   if count == 0 then return 0 end if
-  // Native bytes arguments point at their payload. A prefix read can use the
-  // caller's buffer directly; only a nonzero destination offset needs a copy.
-  temporary = destination
-  if destinationOffset != 0 then temporary = bytes(count, 0) end if
+  // _validSlice checked this interior pointer, and destination stays rooted
+  // for the duration of the synchronous native call.
 #if TARGET_OS == "windows"
   if not SetFilePointerEx(file.nativeHandle, fileOffset, 0, FILE_BEGIN) then return _nativeFailure("readAt.seek") end if
   actualRaw = bytes(4, 0)
-  if not ReadFile(file.nativeHandle, temporary, count, actualRaw, 0) then return _nativeFailure("readAt.read") end if
+  if not ReadFilePointer(file.nativeHandle, nativeBytesPtr(destination) + destinationOffset, count, actualRaw, 0) then return _nativeFailure("readAt.read") end if
   actual = _u32(actualRaw, 0)
 #else
-  actual = _pread(file.nativeHandle, temporary, count, fileOffset)
+  actual = _preadPointer(file.nativeHandle, nativeBytesPtr(destination) + destinationOffset, count, fileOffset)
   if actual < 0 then return _nativeFailure("readAt") end if
 #endif
-  if destinationOffset != 0 and actual > 0 then copyBytes(destination, destinationOffset, temporary, 0, actual) end if
   return actual
 end function
 
@@ -403,17 +412,14 @@ function writeAt(file, fileOffset, source, sourceOffset, count)
   if count == 0 then return 0 end if
   total = 0
   while total < count
-    // Pass the original bytes for the first prefix write. Short-write retries
-    // still need a slice until native FFI supports byte-buffer subranges.
-    payload = source
-    if sourceOffset + total != 0 then payload = slice(source, sourceOffset + total, count - total) end if
+    // Keep source rooted while native code reads its validated subrange.
 #if TARGET_OS == "windows"
     if not SetFilePointerEx(file.nativeHandle, fileOffset + total, 0, FILE_BEGIN) then return _nativeFailure("writeAt.seek") end if
     actualRaw = bytes(4, 0)
-    if not WriteFile(file.nativeHandle, payload, count - total, actualRaw, 0) then return _nativeFailure("writeAt.write") end if
+    if not WriteFilePointer(file.nativeHandle, nativeBytesPtr(source) + sourceOffset + total, count - total, actualRaw, 0) then return _nativeFailure("writeAt.write") end if
     actual = _u32(actualRaw, 0)
 #else
-    actual = _pwrite(file.nativeHandle, payload, count - total, fileOffset + total)
+    actual = _pwritePointer(file.nativeHandle, nativeBytesPtr(source) + sourceOffset + total, count - total, fileOffset + total)
     if actual < 0 then return _nativeFailure("writeAt") end if
 #endif
     if actual <= 0 then return _error(FILE_ERR, "writeAt", "write made no progress") end if

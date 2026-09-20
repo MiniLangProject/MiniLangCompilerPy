@@ -22,7 +22,7 @@ Reachable from entry: **no**
 function appendAllBytes(path, data)
 ```
 
-Append bytes to a file (simple implementation: read + rewrite).
+Append bytes without reading or rewriting the existing file.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -30,7 +30,7 @@ Append bytes to a file (simple implementation: read + rewrite).
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/fs.ml:782`
+Source: `std/fs.ml:836`
 
 <a id="function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032"></a>
 ### appendAllText
@@ -39,7 +39,7 @@ Source: `std/fs.ml:782`
 function appendAllText(path, text)
 ```
 
-Append text to a file (simple implementation: read + rewrite).
+Append UTF-8 text without reading or rewriting the existing file.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -47,7 +47,7 @@ Append text to a file (simple implementation: read + rewrite).
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/fs.ml:802`
+Source: `std/fs.ml:851`
 
 <a id="function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000"></a>
 ### copyFile
@@ -65,7 +65,7 @@ Copy a file.
 | `overwrite` | `dynamic` | — | Value supplied for `overwrite`. |
 
 
-Source: `std/fs.ml:710`
+Source: `std/fs.ml:764`
 
 - [std.fs.Creation](Type-std-fs-creation-832674482.md) — enum
 <a id="function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521"></a>
@@ -82,7 +82,7 @@ Delete a file (treats "already missing" as success).
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:440`
+Source: `std/fs.ml:465`
 
 <a id="constant-constant-std-fs-delete-retry-count-const-delete-retry-count-30-std-fs-ml-1202020222"></a>
 ### DELETE_RETRY_COUNT
@@ -94,7 +94,7 @@ const DELETE_RETRY_COUNT = 30
 Track the delete retry count value used by this standard-library module.
 
 
-Source: `std/fs.ml:174`
+Source: `std/fs.ml:179`
 
 <a id="constant-constant-std-fs-delete-retry-sleep-ms-const-delete-retry-sleep-ms-5-std-fs-ml-1685798622"></a>
 ### DELETE_RETRY_SLEEP_MS
@@ -106,7 +106,7 @@ const DELETE_RETRY_SLEEP_MS = 5
 Track the delete retry sleep ms value used by this standard-library module.
 
 
-Source: `std/fs.ml:176`
+Source: `std/fs.ml:181`
 
 <a id="constant-constant-std-fs-dword-size-const-dword-size-4-std-fs-ml-1756870543"></a>
 ### DWORD_SIZE
@@ -134,7 +134,19 @@ Check whether a file or directory exists.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:281`
+Source: `std/fs.ml:306`
+
+<a id="constant-constant-std-fs-file-append-data-const-file-append-data-4-std-fs-ml-1043921299"></a>
+### FILE_APPEND_DATA
+
+```ml
+const FILE_APPEND_DATA = 4
+```
+
+Native access right that writes only at the current end of a file.
+
+
+Source: `std/fs.ml:177`
 
 - [std.fs.FileAttr](Type-std-fs-fileattr-1509238666.md) — enum
 <a id="function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189"></a>
@@ -151,7 +163,7 @@ Get the size of a file in bytes.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:759`
+Source: `std/fs.ml:813`
 
 <a id="constant-constant-std-fs-find-data-size-const-find-data-size-592-std-fs-ml-870133523"></a>
 ### FIND_DATA_SIZE
@@ -163,7 +175,7 @@ const FIND_DATA_SIZE = 592
 Directory enumeration (FindFirstFileW/FindNextFileW).
 
 
-Source: `std/fs.ml:244`
+Source: `std/fs.ml:269`
 
 <a id="constant-constant-std-fs-find-name-len-const-find-name-len-520-std-fs-ml-689299188"></a>
 ### FIND_NAME_LEN
@@ -175,7 +187,7 @@ const FIND_NAME_LEN = 520
 Track the find name len value used by this standard-library module.
 
 
-Source: `std/fs.ml:248`
+Source: `std/fs.ml:273`
 
 <a id="constant-constant-std-fs-find-name-off-const-find-name-off-44-std-fs-ml-172511087"></a>
 ### FIND_NAME_OFF
@@ -187,7 +199,7 @@ const FIND_NAME_OFF = 44
 Track the find name off value used by this standard-library module.
 
 
-Source: `std/fs.ml:246`
+Source: `std/fs.ml:271`
 
 <a id="constant-constant-std-fs-invalid-file-attributes-const-invalid-file-attributes-4294967295-std-fs-ml-1562365268"></a>
 ### INVALID_FILE_ATTRIBUTES
@@ -239,7 +251,7 @@ Check whether a path is a directory.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:291`
+Source: `std/fs.ml:316`
 
 <a id="function-function-std-fs-isfile-function-isfile-path-std-fs-ml-137584197"></a>
 ### isFile
@@ -255,7 +267,7 @@ Check whether a path is a regular file.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:304`
+Source: `std/fs.ml:329`
 
 <a id="function-function-std-fs-joinpath-function-joinpath-base-name-std-fs-ml-1871291558"></a>
 ### joinPath
@@ -272,7 +284,7 @@ Join two path components using the Windows separator.
 | `name` | `dynamic` | — | Name of the requested item. |
 
 
-Source: `std/fs.ml:314`
+Source: `std/fs.ml:339`
 
 <a id="function-function-std-fs-listdir-function-listdir-path-std-fs-ml-1461247751"></a>
 ### listDir
@@ -288,7 +300,7 @@ List directory entries (names only, without '.' and '..').
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:393`
+Source: `std/fs.ml:418`
 
 <a id="function-function-std-fs-movefile-function-movefile-sourcepath-destpath-overwrite-std-fs-ml-190963024"></a>
 ### moveFile
@@ -306,7 +318,7 @@ Move/rename a file.
 | `overwrite` | `dynamic` | — | Value supplied for `overwrite`. |
 
 
-Source: `std/fs.ml:733`
+Source: `std/fs.ml:787`
 
 <a id="function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245"></a>
 ### readAllBytes
@@ -322,7 +334,7 @@ Read all bytes from a file.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:519`
+Source: `std/fs.ml:578`
 
 <a id="function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293"></a>
 ### readAllLines
@@ -338,7 +350,7 @@ Read a file as lines (split by '\n', trims a trailing '\r').
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:821`
+Source: `std/fs.ml:861`
 
 <a id="function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005"></a>
 ### readAllText
@@ -354,7 +366,7 @@ Read all text from a file (assumes UTF-8).
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/fs.ml:621`
+Source: `std/fs.ml:678`
 
 - [std.fs.Share](Type-std-fs-share-399483706.md) — enum
 <a id="constant-constant-std-fs-write-retry-count-const-write-retry-count-30-std-fs-ml-1411592692"></a>
@@ -367,7 +379,7 @@ const WRITE_RETRY_COUNT = 30
 Track the write retry count value used by this standard-library module.
 
 
-Source: `std/fs.ml:178`
+Source: `std/fs.ml:183`
 
 <a id="constant-constant-std-fs-write-retry-sleep-ms-const-write-retry-sleep-ms-10-std-fs-ml-2115205390"></a>
 ### WRITE_RETRY_SLEEP_MS
@@ -379,7 +391,7 @@ const WRITE_RETRY_SLEEP_MS = 10
 Track the write retry sleep ms value used by this standard-library module.
 
 
-Source: `std/fs.ml:180`
+Source: `std/fs.ml:185`
 
 <a id="function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299"></a>
 ### writeAllBytes
@@ -396,7 +408,7 @@ Write all bytes to a file (overwrites if it exists).
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/fs.ml:495`
+Source: `std/fs.ml:561`
 
 <a id="function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952"></a>
 ### writeAllText
@@ -413,4 +425,4 @@ Write all text to a file (overwrites if it exists).
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/fs.ml:597`
+Source: `std/fs.ml:654`

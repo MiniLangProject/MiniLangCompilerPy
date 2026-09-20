@@ -32,7 +32,7 @@ Updates append.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/io/file.ml:430`
+Source: `std/io/file.ml:436`
 
 <a id="function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359"></a>
 ### atomicMove
@@ -50,7 +50,7 @@ Rename within one filesystem. With replaceExisting this is the primitive for pub
 | `replaceExisting` | `dynamic` | — | Value supplied for `replaceExisting`. |
 
 
-Source: `std/io/file.ml:645`
+Source: `std/io/file.ml:651`
 
 <a id="function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369"></a>
 ### close
@@ -66,7 +66,7 @@ Releases or resets close.
 | `file` | `dynamic` | — | Value supplied for `file`. |
 
 
-Source: `std/io/file.ml:534`
+Source: `std/io/file.ml:540`
 
 <a id="constant-constant-std-io-file-closed-handle-const-closed-handle-265-std-io-file-ml-18143127"></a>
 ### CLOSED_HANDLE
@@ -94,7 +94,7 @@ Creates create.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:320`
+Source: `std/io/file.ml:332`
 
 <a id="constant-constant-std-io-file-create-always-const-create-always-2-std-io-file-ml-1337061932"></a>
 ### CREATE_ALWAYS
@@ -134,7 +134,7 @@ Creates create directory.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:553`
+Source: `std/io/file.ml:559`
 
 <a id="function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618"></a>
 ### createDurable
@@ -150,7 +150,7 @@ Creates create durable.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:332`
+Source: `std/io/file.ml:344`
 
 <a id="function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312"></a>
 ### createNew
@@ -166,7 +166,7 @@ Creates create new.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:326`
+Source: `std/io/file.ml:338`
 
 <a id="function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504"></a>
 ### createNewDurable
@@ -182,7 +182,7 @@ Creates create new durable.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:338`
+Source: `std/io/file.ml:350`
 
 <a id="function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508"></a>
 ### deletePath
@@ -198,7 +198,7 @@ Releases or resets delete path.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:596`
+Source: `std/io/file.ml:602`
 
 <a id="function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194"></a>
 ### directoryExists
@@ -214,7 +214,7 @@ Provide the directory exists operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:590`
+Source: `std/io/file.ml:596`
 
 <a id="constant-constant-std-io-file-error-lock-violation-const-error-lock-violation-33-std-io-file-ml-606465282"></a>
 ### ERROR_LOCK_VIOLATION
@@ -314,7 +314,7 @@ Provide the file exists operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:584`
+Source: `std/io/file.ml:590`
 
 - [std.io.file.FileHandle](Type-std-io-file-filehandle-736043342.md) — struct
 <a id="function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725"></a>
@@ -331,7 +331,7 @@ Provide the flush operation for this standard-library module.
 | `file` | `dynamic` | — | Value supplied for `file`. |
 
 
-Source: `std/io/file.ml:470`
+Source: `std/io/file.ml:476`
 
 <a id="constant-constant-std-io-file-generic-read-const-generic-read-2147483648-std-io-file-ml-519446067"></a>
 ### GENERIC_READ
@@ -372,7 +372,7 @@ Provide the join path operation for this standard-library module.
 | `right` | `dynamic` | — | Right input value. |
 
 
-Source: `std/io/file.ml:606`
+Source: `std/io/file.ml:612`
 
 <a id="function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107"></a>
 ### lock
@@ -390,7 +390,7 @@ Acquire a whole-file advisory lock. mode is "shared" or "exclusive".
 | `wait` | `dynamic` | — | Value supplied for `wait`. |
 
 
-Source: `std/io/file.ml:486`
+Source: `std/io/file.ml:492`
 
 <a id="constant-constant-std-io-file-lock-conflict-const-lock-conflict-264-std-io-file-ml-802934574"></a>
 ### LOCK_CONFLICT
@@ -480,7 +480,7 @@ Provide the move path operation for this standard-library module.
 | `replaceExisting` | `dynamic` | — | Value supplied for `replaceExisting`. |
 
 
-Source: `std/io/file.ml:663`
+Source: `std/io/file.ml:669`
 
 <a id="constant-constant-std-io-file-open-always-const-open-always-4-std-io-file-ml-533905138"></a>
 ### OPEN_ALWAYS
@@ -520,7 +520,7 @@ Provide the open read operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:294`
+Source: `std/io/file.ml:306`
 
 <a id="function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317"></a>
 ### openReadWrite
@@ -537,7 +537,7 @@ Provide the open read write operation for this standard-library module.
 | `createIfMissing` | `dynamic` | — | Value supplied for `createIfMissing`. |
 
 
-Source: `std/io/file.ml:301`
+Source: `std/io/file.ml:313`
 
 <a id="function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099"></a>
 ### openReadWriteDurable
@@ -554,7 +554,7 @@ Provide the open read write durable operation for this standard-library module.
 | `createIfMissing` | `dynamic` | — | Value supplied for `createIfMissing`. |
 
 
-Source: `std/io/file.ml:311`
+Source: `std/io/file.ml:323`
 
 <a id="function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076"></a>
 ### pathExists
@@ -570,7 +570,7 @@ Provide the path exists operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:578`
+Source: `std/io/file.ml:584`
 
 <a id="function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637"></a>
 ### readAllBytes
@@ -587,7 +587,7 @@ Returns read all bytes.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/io/file.ml:613`
+Source: `std/io/file.ml:619`
 
 <a id="function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345"></a>
 ### readAllText
@@ -604,7 +604,7 @@ Returns read all text.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/io/file.ml:633`
+Source: `std/io/file.ml:639`
 
 <a id="function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612"></a>
 ### readAt
@@ -624,7 +624,7 @@ Returns read at.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/io/file.ml:348`
+Source: `std/io/file.ml:360`
 
 <a id="function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664"></a>
 ### readExactAt
@@ -644,7 +644,7 @@ Returns read exact at.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/io/file.ml:379`
+Source: `std/io/file.ml:388`
 
 <a id="function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106"></a>
 ### removeDirectory
@@ -660,7 +660,7 @@ Releases or resets remove directory.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:566`
+Source: `std/io/file.ml:572`
 
 <a id="function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929"></a>
 ### size
@@ -676,7 +676,7 @@ Provide the size operation for this standard-library module.
 | `file` | `dynamic` | — | Value supplied for `file`. |
 
 
-Source: `std/io/file.ml:440`
+Source: `std/io/file.ml:446`
 
 <a id="function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320"></a>
 ### syncDirectory
@@ -692,7 +692,7 @@ Persist directory-entry updates after an atomic rename on POSIX. Windows MoveFil
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/io/file.ml:669`
+Source: `std/io/file.ml:675`
 
 <a id="function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930"></a>
 ### truncate
@@ -709,7 +709,7 @@ Provide the truncate operation for this standard-library module.
 | `newSize` | `dynamic` | — | Value supplied for `newSize`. |
 
 
-Source: `std/io/file.ml:456`
+Source: `std/io/file.ml:462`
 
 <a id="function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305"></a>
 ### unlock
@@ -725,7 +725,7 @@ Provide the unlock operation for this standard-library module.
 | `file` | `dynamic` | — | Value supplied for `file`. |
 
 
-Source: `std/io/file.ml:518`
+Source: `std/io/file.ml:524`
 
 <a id="function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880"></a>
 ### writeAt
@@ -745,4 +745,4 @@ Updates write at.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/io/file.ml:396`
+Source: `std/io/file.ml:405`

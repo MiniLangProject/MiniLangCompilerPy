@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2643 |
+| Blank lines | 2654 |
 | Clone groups | 164 |
-| Cognitive complexity | 3030 (maximum per function: 116) |
-| Comment lines | 4095 |
-| Cyclomatic complexity | 3450 (average: 3.59, maximum: 32) |
-| Documentation coverage | 100% (1844 of 1844 documentation items) |
-| Duplicated lines | 1028 (10.09%) |
+| Cognitive complexity | 3057 (maximum per function: 116) |
+| Comment lines | 4146 |
+| Cyclomatic complexity | 3477 (average: 3.59, maximum: 32) |
+| Documentation coverage | 100% (1855 of 1855 documentation items) |
+| Duplicated lines | 1028 (10.02%) |
 | Files | 48 |
-| Functions | 962 |
-| Maintainability index | 7.94 / 100 |
-| Physical lines | 16923 |
-| Source lines | 10188 |
-| Statements | 7223 |
+| Functions | 968 |
+| Maintainability index | 7.89 / 100 |
+| Physical lines | 17053 |
+| Source lines | 10256 |
+| Statements | 7264 |
 
 ## Documentation coverage
 
@@ -28,25 +28,25 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 724 | 724 | 100% |
-| Constants | 122 | 122 | 100% |
+| API declarations | 726 | 726 | 100% |
+| Constants | 123 | 123 | 100% |
 | Enum variants | 22 | 22 | 100% |
 | Fields | 186 | 186 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1844 | 1844 | 100% |
-| Parameters | 789 | 789 | 100% |
+| Overall | 1855 | 1855 | 100% |
+| Parameters | 797 | 797 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3090 | 41588 | 28302 | 3146 | 69890 | 812073.08 | 256.46 | 208262843.67 | 270.69 |
+| 56 | 3126 | 41990 | 28607 | 3182 | 70597 | 821446.79 | 256.24 | 210484834.92 | 273.82 |
 
 ## Files
 
 | File | SLOC | Functions | Cyclomatic total / avg / max | Cognitive total / max | Duplication | Halstead volume | MI |
 | --- | ---: | ---: | --- | --- | --- | ---: | ---: |
-| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 238 | 23 | 103 / 4.48 / 10 | 94 / 13 | 9 (3.78%) | 15510.53 | 4.96 |
+| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 239 | 24 | 102 / 4.25 / 10 | 92 / 13 | 9 (3.77%) | 15813.78 | 5 |
 | [`std/array.ml`](File-std-array-ml-1258125823.md) | 310 | 23 | 95 / 4.13 / 11 | 78 / 10 | 27 (8.71%) | 9574.93 | 5 |
 | [`std/assert.ml`](File-std-assert-ml-1772521196.md) | 92 | 8 | 17 / 2.13 / 3 | 9 / 2 | 0 (0%) | 1751.75 | 32.16 |
 | [`std/bytes.ml`](File-std-bytes-ml-1351945333.md) | 501 | 38 | 153 / 4.03 / 13 | 124 / 16 | 215 (42.91%) | 16996.47 | 0 |
@@ -75,10 +75,10 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/encoding/base64.ml`](File-std-encoding-base64-ml-1044483879.md) | 195 | 7 | 53 / 7.57 / 26 | 67 / 43 | 9 (4.62%) | 7756.64 | 15.68 |
 | [`std/encoding/hex.ml`](File-std-encoding-hex-ml-900742095.md) | 40 | 7 | 11 / 1.57 / 3 | 4 / 2 | 0 (0%) | 965.22 | 42.67 |
 | [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 88 | 6 | 35 / 5.83 / 11 | 37 / 18 | 21 (23.86%) | 3174.13 | 28.36 |
-| [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 514 | 23 | 122 / 5.3 / 13 | 118 / 18 | 32 (6.23%) | 23239.31 | 0 |
-| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 306 | 37 | 148 / 4 / 12 | 120 / 15 | 9 (2.94%) | 22880.56 | 0 |
+| [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 546 | 25 | 127 / 5.08 / 13 | 125 / 18 | 32 (5.86%) | 25048.96 | 0 |
+| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 303 | 37 | 144 / 3.89 / 11 | 115 / 13 | 9 (2.97%) | 22951.06 | 0 |
 | [`std/math.ml`](File-std-math-ml-790065500.md) | 463 | 50 | 125 / 2.5 / 9 | 83 / 10 | 29 (6.26%) | 18689.33 | 0 |
-| [`std/net.ml`](File-std-net-ml-1989130045.md) | 428 | 35 | 117 / 3.34 / 9 | 84 / 8 | 12 (2.8%) | 23299.98 | 0 |
+| [`std/net.ml`](File-std-net-ml-1989130045.md) | 464 | 38 | 143 / 3.76 / 10 | 109 / 12 | 12 (2.59%) | 27648.49 | 0 |
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 80 | 9 | 49 / 5.44 / 13 | 47 / 12 | 0 (0%) | 4532.65 | 26.29 |
 | [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
 | [`std/process.ml`](File-std-process-ml-507069519.md) | 42 | 6 | 19 / 3.17 / 7 | 13 / 6 | 0 (0%) | 2210.57 | 38.62 |
@@ -90,7 +90,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/test.ml`](File-std-test-ml-828131286.md) | 529 | 45 | 221 / 4.91 / 32 | 352 / 116 | 12 (2.27%) | 36322.78 | 0 |
 | [`std/threading.ml`](File-std-threading-ml-508437988.md) | 176 | 41 | 80 / 1.95 / 8 | 39 / 7 | 39 (22.16%) | 7850.03 | 12.98 |
 | [`std/time.ml`](File-std-time-ml-975894601.md) | 619 | 53 | 203 / 3.83 / 17 | 159 / 19 | 0 (0%) | 32686.86 | 0 |
-| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 134 | 18 | 69 / 3.83 / 14 | 54 / 13 | 0 (0%) | 7572.72 | 17.16 |
+| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 136 | 18 | 70 / 3.89 / 14 | 56 / 13 | 0 (0%) | 7676.15 | 16.84 |
 | [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 221 | 15 | 85 / 5.67 / 18 | 76 / 19 | 0 (0%) | 18823.06 | 7.5 |
 | [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1135 | 80 | 439 / 5.49 / 24 | 480 / 39 | 88 (7.75%) | 103976.25 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
@@ -442,51 +442,51 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.fmt.padRight`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-padright-function-padright-s-width-ch-std-fmt-ml-842685836) | `std/fmt.ml:51` | 10 | 6 | 6 | 5 | 1 | 324.33 | 59.8 |
 | [`std.fmt.quote`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-quote-function-quote-s-std-fmt-ml-1511859179) | `std/fmt.ml:84` | 39 | 27 | 11 | 18 | 3 | 1099.18 | 42.52 |
 | [`std.fmt.repeat`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-repeat-function-repeat-ch-count-std-fmt-ml-28025468) | `std/fmt.ml:28` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.fs.appendAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendallbytes-function-appendallbytes-path-data-std-fs-ml-372563649) | `std/fs.ml:782` | 13 | 8 | 5 | 4 | 1 | 356.62 | 57.16 |
-| [`std.fs.appendAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032) | `std/fs.ml:802` | 13 | 8 | 5 | 4 | 1 | 352.53 | 57.19 |
-| [`std.fs.copyFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000) | `std/fs.ml:710` | 16 | 10 | 6 | 5 | 1 | 418.24 | 54.57 |
-| [`std.fs.delete`](File-std-fs-ml-1285967051.md#function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521) | `std/fs.ml:440` | 21 | 14 | 6 | 7 | 2 | 426.06 | 51.94 |
-| [`std.fs.exists`](File-std-fs-ml-1285967051.md#function-function-std-fs-exists-function-exists-path-std-fs-ml-72849833) | `std/fs.ml:281` | 7 | 4 | 2 | 1 | 1 | 118.94 | 66.76 |
-| [`std.fs.fileSize`](File-std-fs-ml-1285967051.md#function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189) | `std/fs.ml:759` | 16 | 11 | 4 | 3 | 1 | 620.12 | 53.64 |
-| [`std.fs.isDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-isdir-function-isdir-path-std-fs-ml-1982632259) | `std/fs.ml:291` | 10 | 6 | 3 | 2 | 1 | 241.48 | 61.1 |
-| [`std.fs.isFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-isfile-function-isfile-path-std-fs-ml-137584197) | `std/fs.ml:304` | 6 | 3 | 2 | 1 | 1 | 96.21 | 68.87 |
-| [`std.fs.joinPath`](File-std-fs-ml-1285967051.md#function-function-std-fs-joinpath-function-joinpath-base-name-std-fs-ml-1871291558) | `std/fs.ml:314` | 12 | 7 | 6 | 5 | 1 | 303.08 | 58.28 |
-| [`std.fs.listDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-listdir-function-listdir-path-std-fs-ml-1461247751) | `std/fs.ml:393` | 39 | 27 | 12 | 18 | 4 | 1298.01 | 41.88 |
-| [`std.fs.moveFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-movefile-function-movefile-sourcepath-destpath-overwrite-std-fs-ml-190963024) | `std/fs.ml:733` | 21 | 13 | 9 | 9 | 2 | 535.05 | 50.84 |
-| [`std.fs.readAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245) | `std/fs.ml:519` | 56 | 37 | 11 | 13 | 2 | 2155.78 | 37.04 |
-| [`std.fs.readAllLines`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293) | `std/fs.ml:821` | 19 | 13 | 6 | 6 | 2 | 587.77 | 51.91 |
-| [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:621` | 64 | 43 | 13 | 15 | 2 | 2403.52 | 35.18 |
-| [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:495` | 17 | 12 | 5 | 4 | 1 | 557.19 | 53.26 |
-| [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:597` | 17 | 12 | 5 | 4 | 1 | 553.48 | 53.28 |
-| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:430` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
-| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:645` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
-| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:534` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
-| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:320` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:553` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
-| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:332` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:326` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:338` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:596` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
-| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:590` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:584` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:470` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
-| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:606` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:486` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
-| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:663` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:294` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:301` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
-| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:311` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
-| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:578` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:613` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
-| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:633` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
-| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:348` | 17 | 24 | 12 | 11 | 1 | 1208.23 | 49.96 |
-| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:379` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
-| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:566` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
-| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:440` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
-| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:669` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
-| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:456` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
-| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:518` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
-| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:396` | 21 | 27 | 12 | 15 | 2 | 1341.28 | 47.64 |
+| [`std.fs.appendAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendallbytes-function-appendallbytes-path-data-std-fs-ml-372563649) | `std/fs.ml:836` | 10 | 8 | 4 | 3 | 1 | 309.07 | 60.21 |
+| [`std.fs.appendAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032) | `std/fs.ml:851` | 6 | 3 | 3 | 2 | 1 | 174.17 | 66.93 |
+| [`std.fs.copyFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000) | `std/fs.ml:764` | 16 | 10 | 6 | 5 | 1 | 418.24 | 54.57 |
+| [`std.fs.delete`](File-std-fs-ml-1285967051.md#function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521) | `std/fs.ml:465` | 21 | 14 | 6 | 7 | 2 | 426.06 | 51.94 |
+| [`std.fs.exists`](File-std-fs-ml-1285967051.md#function-function-std-fs-exists-function-exists-path-std-fs-ml-72849833) | `std/fs.ml:306` | 7 | 4 | 2 | 1 | 1 | 118.94 | 66.76 |
+| [`std.fs.fileSize`](File-std-fs-ml-1285967051.md#function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189) | `std/fs.ml:813` | 16 | 11 | 4 | 3 | 1 | 620.12 | 53.64 |
+| [`std.fs.isDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-isdir-function-isdir-path-std-fs-ml-1982632259) | `std/fs.ml:316` | 10 | 6 | 3 | 2 | 1 | 241.48 | 61.1 |
+| [`std.fs.isFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-isfile-function-isfile-path-std-fs-ml-137584197) | `std/fs.ml:329` | 6 | 3 | 2 | 1 | 1 | 96.21 | 68.87 |
+| [`std.fs.joinPath`](File-std-fs-ml-1285967051.md#function-function-std-fs-joinpath-function-joinpath-base-name-std-fs-ml-1871291558) | `std/fs.ml:339` | 12 | 7 | 6 | 5 | 1 | 303.08 | 58.28 |
+| [`std.fs.listDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-listdir-function-listdir-path-std-fs-ml-1461247751) | `std/fs.ml:418` | 39 | 27 | 12 | 18 | 4 | 1298.01 | 41.88 |
+| [`std.fs.moveFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-movefile-function-movefile-sourcepath-destpath-overwrite-std-fs-ml-190963024) | `std/fs.ml:787` | 21 | 13 | 9 | 9 | 2 | 535.05 | 50.84 |
+| [`std.fs.readAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245) | `std/fs.ml:578` | 54 | 35 | 11 | 13 | 2 | 2042.42 | 37.55 |
+| [`std.fs.readAllLines`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293) | `std/fs.ml:861` | 19 | 13 | 6 | 6 | 2 | 587.77 | 51.91 |
+| [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:678` | 62 | 41 | 13 | 15 | 2 | 2288.45 | 35.63 |
+| [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:561` | 12 | 8 | 4 | 3 | 1 | 356.7 | 58.05 |
+| [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:654` | 17 | 12 | 5 | 4 | 1 | 553.48 | 53.28 |
+| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:436` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
+| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:651` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
+| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:540` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
+| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:332` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:559` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
+| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:344` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:338` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:350` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:602` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
+| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:596` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:590` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:476` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
+| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:612` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:492` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
+| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:669` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:306` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:313` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
+| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:323` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
+| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:584` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:619` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
+| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:639` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
+| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:360` | 14 | 19 | 9 | 8 | 1 | 993.8 | 52.8 |
+| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:388` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
+| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:572` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
+| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:446` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
+| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:675` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
+| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:462` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
+| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:524` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
+| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:405` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
 | [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:32` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
 | [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:652` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
 | [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:645` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
@@ -536,27 +536,29 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:152` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
 | [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:126` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
 | [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:191` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:264` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
-| [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:742` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
-| [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:239` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
-| [`std.net.lastError`](File-std-net-ml-1989130045.md#function-function-std-net-lasterror-function-lasterror-std-net-ml-1066354328) | `std/net.ml:284` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
-| [`std.net.setKeepAlive`](File-std-net-ml-1989130045.md#function-function-std-net-setkeepalive-function-setkeepalive-sock-enabled-std-net-ml-1531381615) | `std/net.ml:474` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.net.setNoDelay`](File-std-net-ml-1989130045.md#function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439) | `std/net.ml:481` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.net.setReceiveTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622) | `std/net.ml:504` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.net.setReuseAddress`](File-std-net-ml-1989130045.md#function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191) | `std/net.ml:429` | 7 | 5 | 3 | 3 | 2 | 248.8 | 64.39 |
-| [`std.net.setSendTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534) | `std/net.ml:511` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.net.tcpAccept`](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `std/net.ml:621` | 10 | 6 | 3 | 2 | 1 | 233.83 | 61.2 |
-| [`std.net.tcpAcceptPeer`](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `std/net.ml:637` | 18 | 14 | 3 | 2 | 1 | 572.02 | 52.91 |
-| [`std.net.tcpConnect`](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `std/net.ml:522` | 24 | 17 | 6 | 5 | 1 | 735.91 | 49.01 |
-| [`std.net.tcpListen`](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `std/net.ml:554` | 31 | 25 | 8 | 7 | 1 | 1038.47 | 45.27 |
-| [`std.net.tcpListenAddress`](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `std/net.ml:595` | 23 | 26 | 9 | 8 | 1 | 1156.73 | 47.64 |
-| [`std.net.tcpRecv`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `std/net.ml:699` | 20 | 13 | 6 | 5 | 1 | 539.75 | 51.68 |
-| [`std.net.tcpSendAll`](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `std/net.ml:664` | 24 | 16 | 7 | 7 | 2 | 661.24 | 49.2 |
-| [`std.net.tcpShutdown`](File-std-net-ml-1989130045.md#function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342) | `std/net.ml:728` | 10 | 6 | 3 | 2 | 1 | 203.56 | 61.62 |
-| [`std.net.udpBind`](File-std-net-ml-1989130045.md#function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451) | `std/net.ml:771` | 16 | 12 | 5 | 4 | 1 | 492.41 | 54.21 |
-| [`std.net.udpOpen`](File-std-net-ml-1989130045.md#function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978) | `std/net.ml:755` | 10 | 6 | 3 | 2 | 1 | 232.19 | 61.22 |
-| [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:829` | 22 | 16 | 5 | 4 | 1 | 791.62 | 49.75 |
-| [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:796` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
+| [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:285` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
+| [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:793` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
+| [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:260` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
+| [`std.net.lastError`](File-std-net-ml-1989130045.md#function-function-std-net-lasterror-function-lasterror-std-net-ml-1066354328) | `std/net.ml:305` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
+| [`std.net.setKeepAlive`](File-std-net-ml-1989130045.md#function-function-std-net-setkeepalive-function-setkeepalive-sock-enabled-std-net-ml-1531381615) | `std/net.ml:495` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.net.setNoDelay`](File-std-net-ml-1989130045.md#function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439) | `std/net.ml:502` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.net.setReceiveTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622) | `std/net.ml:525` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.net.setReuseAddress`](File-std-net-ml-1989130045.md#function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191) | `std/net.ml:450` | 7 | 5 | 3 | 3 | 2 | 248.8 | 64.39 |
+| [`std.net.setSendTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534) | `std/net.ml:532` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.net.tcpAccept`](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `std/net.ml:642` | 10 | 6 | 3 | 2 | 1 | 233.83 | 61.2 |
+| [`std.net.tcpAcceptPeer`](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `std/net.ml:658` | 18 | 14 | 3 | 2 | 1 | 572.02 | 52.91 |
+| [`std.net.tcpConnect`](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `std/net.ml:543` | 24 | 17 | 6 | 5 | 1 | 735.91 | 49.01 |
+| [`std.net.tcpListen`](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `std/net.ml:575` | 31 | 25 | 8 | 7 | 1 | 1038.47 | 45.27 |
+| [`std.net.tcpListenAddress`](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `std/net.ml:616` | 23 | 26 | 9 | 8 | 1 | 1156.73 | 47.64 |
+| [`std.net.tcpRecv`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `std/net.ml:748` | 22 | 17 | 8 | 7 | 1 | 661.75 | 49.89 |
+| [`std.net.tcpRecvInto`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `std/net.ml:725` | 9 | 11 | 5 | 4 | 1 | 489.31 | 59.68 |
+| [`std.net.tcpSendAll`](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `std/net.ml:685` | 27 | 21 | 10 | 12 | 2 | 824.37 | 47.01 |
+| [`std.net.tcpShutdown`](File-std-net-ml-1989130045.md#function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342) | `std/net.ml:779` | 10 | 6 | 3 | 2 | 1 | 203.56 | 61.62 |
+| [`std.net.udpBind`](File-std-net-ml-1989130045.md#function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451) | `std/net.ml:822` | 16 | 12 | 5 | 4 | 1 | 492.41 | 54.21 |
+| [`std.net.udpOpen`](File-std-net-ml-1989130045.md#function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978) | `std/net.ml:806` | 10 | 6 | 3 | 2 | 1 | 232.19 | 61.22 |
+| [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:899` | 21 | 19 | 7 | 6 | 1 | 905.86 | 49.51 |
+| [`std.net.udpRecvFromInto`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `std/net.ml:883` | 12 | 14 | 5 | 4 | 1 | 765.1 | 55.59 |
+| [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:847` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
 | [`std.path.changeExtension`](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `std/path.ml:121` | 9 | 11 | 6 | 5 | 1 | 543.7 | 59.22 |
 | [`std.path.directoryName`](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `std/path.ml:89` | 14 | 13 | 6 | 8 | 3 | 479.22 | 55.42 |
 | [`std.path.extension`](File-std-path-ml-701536411.md#function-function-std-path-extension-function-extension-path-std-path-ml-598017679) | `std/path.ml:106` | 11 | 10 | 5 | 5 | 2 | 430 | 58.17 |
@@ -759,7 +761,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:192` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
 | [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:173` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
 | [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:87` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:241` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
+| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:247` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
 | [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:185` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
 | [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:160` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
 | [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:198` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
@@ -767,10 +769,10 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:152` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
 | [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:94` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
 | [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:137` | 8 | 7 | 5 | 5 | 2 | 491.14 | 60.78 |
-| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:223` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
-| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:205` | 14 | 13 | 9 | 10 | 2 | 699.99 | 53.87 |
+| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:229` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
+| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:207` | 16 | 16 | 10 | 12 | 2 | 775.24 | 52.16 |
 | [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:101` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:234` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
+| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:240` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
 | [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:107` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
 | [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:120` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
 | [`std.uuid.format`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-format-function-format-raw-std-uuid-ml-2051708080) | `std/uuid.ml:27` | 5 | 4 | 3 | 2 | 1 | 500 | 65.45 |
@@ -795,7 +797,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     value = ( value << 8 ) | buffer [ offset + i ]
     i = i - 1
 
-- [`std/_linux_fs.ml:122`](File-std-linux-fs-ml-2121665983.md)
+- [`std/_linux_fs.ml:134`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:106`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:59`](File-std-io-file-ml-2074692665.md)
 
@@ -811,7 +813,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     i = i - 1
     end while
 
-- [`std/_linux_fs.ml:123`](File-std-linux-fs-ml-2121665983.md)
+- [`std/_linux_fs.ml:135`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:107`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:60`](File-std-io-file-ml-2074692665.md)
 
@@ -827,7 +829,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     end while
     return value
 
-- [`std/_linux_fs.ml:124`](File-std-linux-fs-ml-2121665983.md)
+- [`std/_linux_fs.ml:136`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:108`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:61`](File-std-io-file-ml-2074692665.md)
 
@@ -843,7 +845,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     return value
     end function
 
-- [`std/_linux_fs.ml:125`](File-std-linux-fs-ml-2121665983.md)
+- [`std/_linux_fs.ml:137`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:109`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:62`](File-std-io-file-ml-2074692665.md)
 
@@ -1577,7 +1579,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     end function
 
 - [`std/concurrent/shared_value.ml:94`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/net.ml:396`](File-std-net-ml-1989130045.md)
+- [`std/net.ml:417`](File-std-net-ml-1989130045.md)
 
 </details>
 
@@ -1802,7 +1804,7 @@ Found 164 clone group(s). At most 164 groups are shown.
     end function
 
 - [`std/crypto/_cng.ml:108`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/net.ml:386`](File-std-net-ml-1989130045.md)
+- [`std/net.ml:407`](File-std-net-ml-1989130045.md)
 
 </details>
 
@@ -2648,8 +2650,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     0 ,
     std . fs . Creation . OPEN_EXISTING ,
 
-- [`std/fs.ml:524`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:626`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:583`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:683`](File-std-fs-ml-1285967051.md)
 
 </details>
 
@@ -2663,8 +2665,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     std . fs . Creation . OPEN_EXISTING ,
     std . fs . FileAttr . FILE_ATTRIBUTE_NORMAL ,
 
-- [`std/fs.ml:525`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:627`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:584`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:684`](File-std-fs-ml-1285967051.md)
 
 </details>
 
@@ -2678,8 +2680,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     std . fs . FileAttr . FILE_ATTRIBUTE_NORMAL ,
     0
 
-- [`std/fs.ml:526`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:628`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:585`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:685`](File-std-fs-ml-1285967051.md)
 
 </details>
 
@@ -2693,8 +2695,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     0
     )
 
-- [`std/fs.ml:527`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:629`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:586`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:686`](File-std-fs-ml-1285967051.md)
 
 </details>
 
@@ -2708,8 +2710,8 @@ Found 164 clone group(s). At most 164 groups are shown.
     )
     if h == std . fs . INVALID_HANDLE_VALUE then
 
-- [`std/fs.ml:528`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:630`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:587`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:687`](File-std-fs-ml-1285967051.md)
 
 </details>
 
@@ -2719,12 +2721,12 @@ Found 164 clone group(s). At most 164 groups are shown.
     pos = 0
     while pos < size
     toRead = size - pos
-    if toRead > std . fs . IO_BUF_SIZE then
-    toRead = std . fs . IO_BUF_SIZE
+    if toRead > std . fs . READ_CHUNK_SIZE then
+    toRead = std . fs . READ_CHUNK_SIZE
     end if
 
-- [`std/fs.ml:562`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:670`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:621`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:726`](File-std-fs-ml-1285967051.md)
 
 </details>
 

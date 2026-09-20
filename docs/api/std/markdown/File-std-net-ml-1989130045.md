@@ -20,7 +20,7 @@ _wsaReady
 init() and cleanup() serialize this process-wide Winsock ownership flag on the same recursive monitor. Ordinary socket operations may call init() concurrently, but applications must not call cleanup() while sockets remain in use.
 
 
-Source: `std/net.ml:229`
+Source: `std/net.ml:250`
 
 <a id="constant-constant-std-net-af-inet-const-af-inet-2-std-net-ml-2055161241"></a>
 ### AF_INET
@@ -32,7 +32,7 @@ const AF_INET = 2
 Portable socket constants plus the few target-specific option values.
 
 
-Source: `std/net.ml:47`
+Source: `std/net.ml:50`
 
 <a id="function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416"></a>
 ### cleanup
@@ -44,7 +44,7 @@ synchronized function cleanup()
 Cleans up the platform socket layer.
 
 
-Source: `std/net.ml:264`
+Source: `std/net.ml:285`
 
 <a id="function-function-std-net-close-function-close-sock-std-net-ml-2027943708"></a>
 ### close
@@ -60,7 +60,7 @@ Closes a socket handle.
 | `sock` | `dynamic` | — | Value supplied for `sock`. |
 
 
-Source: `std/net.ml:742`
+Source: `std/net.ml:793`
 
 <a id="function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128"></a>
 ### init
@@ -72,7 +72,7 @@ synchronized function init()
 Initializes the platform socket layer. Safe to call multiple times.
 
 
-Source: `std/net.ml:239`
+Source: `std/net.ml:260`
 
 <a id="constant-constant-std-net-invalid-socket-const-invalid-socket-1-std-net-ml-28841423"></a>
 ### INVALID_SOCKET
@@ -84,7 +84,7 @@ const INVALID_SOCKET = -1
 Track the invalid socket value used by this standard-library module.
 
 
-Source: `std/net.ml:59`
+Source: `std/net.ml:62`
 
 <a id="constant-constant-std-net-ipproto-tcp-const-ipproto-tcp-6-std-net-ml-187059453"></a>
 ### IPPROTO_TCP
@@ -96,7 +96,7 @@ const IPPROTO_TCP = 6
 Track the ipproto tcp value used by this standard-library module.
 
 
-Source: `std/net.ml:54`
+Source: `std/net.ml:57`
 
 <a id="constant-constant-std-net-ipproto-udp-const-ipproto-udp-17-std-net-ml-364496229"></a>
 ### IPPROTO_UDP
@@ -108,7 +108,7 @@ const IPPROTO_UDP = 17
 Track the ipproto udp value used by this standard-library module.
 
 
-Source: `std/net.ml:56`
+Source: `std/net.ml:59`
 
 <a id="function-function-std-net-lasterror-function-lasterror-std-net-ml-1066354328"></a>
 ### lastError
@@ -120,7 +120,7 @@ function lastError()
 Returns the last platform socket error code.
 
 
-Source: `std/net.ml:284`
+Source: `std/net.ml:305`
 
 <a id="constant-constant-std-net-max-portable-socket-timeout-ms-const-max-portable-socket-timeout-ms-2147483647-std-net-ml-1169126477"></a>
 ### MAX_PORTABLE_SOCKET_TIMEOUT_MS
@@ -144,7 +144,7 @@ const NET_ERR = 200
 Track the net err value used by this standard-library module.
 
 
-Source: `std/net.ml:25`
+Source: `std/net.ml:28`
 
 <a id="constant-constant-std-net-sd-both-const-sd-both-2-std-net-ml-1523704177"></a>
 ### SD_BOTH
@@ -156,7 +156,7 @@ const SD_BOTH = 2
 Track the sd both value used by this standard-library module.
 
 
-Source: `std/net.ml:96`
+Source: `std/net.ml:99`
 
 <a id="constant-constant-std-net-sd-receive-const-sd-receive-0-std-net-ml-89766859"></a>
 ### SD_RECEIVE
@@ -168,7 +168,7 @@ const SD_RECEIVE = 0
 Track the sd receive value used by this standard-library module.
 
 
-Source: `std/net.ml:92`
+Source: `std/net.ml:95`
 
 <a id="constant-constant-std-net-sd-send-const-sd-send-1-std-net-ml-702702094"></a>
 ### SD_SEND
@@ -180,7 +180,7 @@ const SD_SEND = 1
 Track the sd send value used by this standard-library module.
 
 
-Source: `std/net.ml:94`
+Source: `std/net.ml:97`
 
 <a id="function-function-std-net-setkeepalive-function-setkeepalive-sock-enabled-std-net-ml-1531381615"></a>
 ### setKeepAlive
@@ -197,7 +197,7 @@ Enable or disable TCP keepalive probes.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:474`
+Source: `std/net.ml:495`
 
 <a id="function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439"></a>
 ### setNoDelay
@@ -214,7 +214,7 @@ Disable or enable Nagle's algorithm for latency-sensitive protocols.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:481`
+Source: `std/net.ml:502`
 
 <a id="function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622"></a>
 ### setReceiveTimeout
@@ -231,7 +231,7 @@ Configure the maximum blocking receive duration. Zero restores no timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/net.ml:504`
+Source: `std/net.ml:525`
 
 <a id="function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191"></a>
 ### setReuseAddress
@@ -248,7 +248,7 @@ Enable or disable address reuse on an existing socket.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:429`
+Source: `std/net.ml:450`
 
 <a id="function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534"></a>
 ### setSendTimeout
@@ -265,7 +265,7 @@ Configure the maximum blocking send duration. Zero restores no timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/net.ml:511`
+Source: `std/net.ml:532`
 
 <a id="constant-constant-std-net-so-exclusiveaddruse-const-so-exclusiveaddruse-5-std-net-ml-281044779"></a>
 ### SO_EXCLUSIVEADDRUSE
@@ -277,7 +277,7 @@ const SO_EXCLUSIVEADDRUSE = -5
 Track the so exclusiveaddruse value used by this standard-library module.
 
 
-Source: `std/net.ml:69`
+Source: `std/net.ml:72`
 
 <a id="constant-constant-std-net-so-keepalive-const-so-keepalive-8-std-net-ml-577828755"></a>
 ### SO_KEEPALIVE
@@ -289,7 +289,7 @@ const SO_KEEPALIVE = 8
 Track the so keepalive value used by this standard-library module.
 
 
-Source: `std/net.ml:71`
+Source: `std/net.ml:74`
 
 <a id="constant-constant-std-net-so-rcvtimeo-const-so-rcvtimeo-4102-std-net-ml-526906682"></a>
 ### SO_RCVTIMEO
@@ -301,7 +301,7 @@ const SO_RCVTIMEO = 4102
 Track the so rcvtimeo value used by this standard-library module.
 
 
-Source: `std/net.ml:75`
+Source: `std/net.ml:78`
 
 <a id="constant-constant-std-net-so-reuseaddr-const-so-reuseaddr-4-std-net-ml-1192398905"></a>
 ### SO_REUSEADDR
@@ -313,7 +313,7 @@ const SO_REUSEADDR = 4
 Track the so reuseaddr value used by this standard-library module.
 
 
-Source: `std/net.ml:67`
+Source: `std/net.ml:70`
 
 <a id="constant-constant-std-net-so-sndtimeo-const-so-sndtimeo-4101-std-net-ml-1610942305"></a>
 ### SO_SNDTIMEO
@@ -325,7 +325,7 @@ const SO_SNDTIMEO = 4101
 Track the so sndtimeo value used by this standard-library module.
 
 
-Source: `std/net.ml:73`
+Source: `std/net.ml:76`
 
 <a id="constant-constant-std-net-sock-dgram-const-sock-dgram-2-std-net-ml-1372393675"></a>
 ### SOCK_DGRAM
@@ -337,7 +337,7 @@ const SOCK_DGRAM = 2
 Track the sock dgram value used by this standard-library module.
 
 
-Source: `std/net.ml:51`
+Source: `std/net.ml:54`
 
 <a id="constant-constant-std-net-sock-stream-const-sock-stream-1-std-net-ml-2014460758"></a>
 ### SOCK_STREAM
@@ -349,7 +349,7 @@ const SOCK_STREAM = 1
 Track the sock stream value used by this standard-library module.
 
 
-Source: `std/net.ml:49`
+Source: `std/net.ml:52`
 
 <a id="constant-constant-std-net-sockaddr-in-size-const-sockaddr-in-size-16-std-net-ml-1793932012"></a>
 ### SOCKADDR_IN_SIZE
@@ -361,7 +361,7 @@ const SOCKADDR_IN_SIZE = 16
 Sockaddr_in size.
 
 
-Source: `std/net.ml:102`
+Source: `std/net.ml:105`
 
 <a id="constant-constant-std-net-socket-error-const-socket-error-1-std-net-ml-2016210077"></a>
 ### SOCKET_ERROR
@@ -373,7 +373,7 @@ const SOCKET_ERROR = -1
 Track the socket error value used by this standard-library module.
 
 
-Source: `std/net.ml:61`
+Source: `std/net.ml:64`
 
 <a id="constant-constant-std-net-sol-socket-const-sol-socket-65535-std-net-ml-1028364697"></a>
 ### SOL_SOCKET
@@ -385,7 +385,7 @@ const SOL_SOCKET = 65535
 Track the sol socket value used by this standard-library module.
 
 
-Source: `std/net.ml:65`
+Source: `std/net.ml:68`
 
 <a id="constant-constant-std-net-tcp-nodelay-const-tcp-nodelay-1-std-net-ml-981076394"></a>
 ### TCP_NODELAY
@@ -397,7 +397,7 @@ const TCP_NODELAY = 1
 Track the tcp nodelay value used by this standard-library module.
 
 
-Source: `std/net.ml:89`
+Source: `std/net.ml:92`
 
 <a id="function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728"></a>
 ### tcpAccept
@@ -413,7 +413,7 @@ Accepts a client connection on a listening socket.
 | `serverSocket` | `dynamic` | — | Value supplied for `serverSocket`. |
 
 
-Source: `std/net.ml:621`
+Source: `std/net.ml:642`
 
 <a id="function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640"></a>
 ### tcpAcceptPeer
@@ -429,7 +429,7 @@ Accepts a client connection and returns peer info.
 | `serverSocket` | `dynamic` | — | Value supplied for `serverSocket`. |
 
 
-Source: `std/net.ml:637`
+Source: `std/net.ml:658`
 
 <a id="function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633"></a>
 ### tcpConnect
@@ -446,7 +446,7 @@ Creates a TCP connection to an IPv4 address (dotted) or "localhost".
 | `port` | `dynamic` | — | Value supplied for `port`. |
 
 
-Source: `std/net.ml:522`
+Source: `std/net.ml:543`
 
 <a id="function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236"></a>
 ### tcpListen
@@ -463,7 +463,7 @@ Creates a TCP listening socket on 0.0.0.0:port.
 | `backlog` | `dynamic` | — | Value supplied for `backlog`. |
 
 
-Source: `std/net.ml:554`
+Source: `std/net.ml:575`
 
 <a id="function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138"></a>
 ### tcpListenAddress
@@ -481,7 +481,7 @@ Create an IPv4 listener bound to an explicit dotted address.
 | `backlog` | `dynamic` | — | Value supplied for `backlog`. |
 
 
-Source: `std/net.ml:595`
+Source: `std/net.ml:616`
 
 <a id="function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791"></a>
 ### tcpRecv
@@ -498,7 +498,26 @@ Receives up to maxBytes from a TCP socket.
 | `maxBytes` | `dynamic` | — | Value supplied for `maxBytes`. |
 
 
-Source: `std/net.ml:699`
+Source: `std/net.ml:748`
+
+<a id="function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470"></a>
+### tcpRecvInto
+
+```ml
+function tcpRecvInto(sock, destination, destinationOffset, count)
+```
+
+Receive into a caller-owned byte buffer without allocating or copying.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `sock` | `dynamic` | — | Connected TCP socket. |
+| `destination` | `dynamic` | — | Byte buffer to fill. |
+| `destinationOffset` | `dynamic` | — | First destination byte to overwrite. |
+| `count` | `dynamic` | — | Maximum bytes to receive; zero returns immediately. |
+
+
+Source: `std/net.ml:725`
 
 <a id="function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120"></a>
 ### tcpSendAll
@@ -515,7 +534,7 @@ Sends all bytes on a TCP socket (loops until everything is sent).
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/net.ml:664`
+Source: `std/net.ml:685`
 
 <a id="function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342"></a>
 ### tcpShutdown
@@ -532,7 +551,7 @@ Shuts down a TCP socket (best-effort).
 | `how` | `dynamic` | — | Value supplied for `how`. |
 
 
-Source: `std/net.ml:728`
+Source: `std/net.ml:779`
 
 <a id="function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451"></a>
 ### udpBind
@@ -549,7 +568,7 @@ Binds a UDP socket to 0.0.0.0:port.
 | `port` | `dynamic` | — | Value supplied for `port`. |
 
 
-Source: `std/net.ml:771`
+Source: `std/net.ml:822`
 
 <a id="function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978"></a>
 ### udpOpen
@@ -561,7 +580,7 @@ function udpOpen()
 Opens a UDP socket.
 
 
-Source: `std/net.ml:755`
+Source: `std/net.ml:806`
 
 <a id="function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939"></a>
 ### udpRecvFrom
@@ -578,7 +597,26 @@ Receives a UDP datagram.
 | `maxBytes` | `dynamic` | — | Value supplied for `maxBytes`. |
 
 
-Source: `std/net.ml:829`
+Source: `std/net.ml:899`
+
+<a id="function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466"></a>
+### udpRecvFromInto
+
+```ml
+function udpRecvFromInto(sock, destination, destinationOffset, count)
+```
+
+Receive a UDP datagram into a caller-owned byte buffer. Returns [receivedCount, peerIp, peerPort].
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `sock` | `dynamic` | — | Bound UDP socket. |
+| `destination` | `dynamic` | — | Byte buffer to fill. |
+| `destinationOffset` | `dynamic` | — | First destination byte to overwrite. |
+| `count` | `dynamic` | — | Maximum datagram bytes to receive. |
+
+
+Source: `std/net.ml:883`
 
 <a id="function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505"></a>
 ### udpSendTo
@@ -597,7 +635,7 @@ Sends a UDP datagram to an IPv4 host.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/net.ml:796`
+Source: `std/net.ml:847`
 
 <a id="constant-constant-std-net-wsa-version-2-2-const-wsa-version-2-2-514-std-net-ml-1910707017"></a>
 ### WSA_VERSION_2_2
@@ -609,4 +647,4 @@ const WSA_VERSION_2_2 = 514
 MAKEWORD(2,2).
 
 
-Source: `std/net.ml:99`
+Source: `std/net.ml:102`

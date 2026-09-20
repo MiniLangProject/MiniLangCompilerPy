@@ -31,6 +31,15 @@ numbers are not a promise of end-to-end database throughput.
 The initial paired results are in
 [the file-I/O fast-path report](../docs/reports/FILE_IO_BUFFER_FAST_PATH_2026-09-20.md).
 
+`file_io_offsets.ml` repeats the same cached positional operations with
+nonzero source and destination offsets, checks untouched guard bytes, and
+isolates the newer interior-buffer fast path. `stdlib_io_paths.ml` measures
+256 successive 4-KiB appends followed by 500 whole-file reads;
+`stdlib_tls_send.ml` measures the `std.tls.sendAll` wrapper with a synthetic
+provider, deliberately excluding network and encryption costs. The paired
+Windows and Linux results, including measurement caveats, are in
+[the standard-library I/O report](../docs/reports/STDLIB_IO_OPTIMIZATION_2026-09-20.md).
+
 ## Paired code-size experiments
 
 `compare_code_size.py` compares two already-built native programs, records
