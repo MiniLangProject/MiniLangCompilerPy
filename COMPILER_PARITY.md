@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 13 September 2026 against the matching 1.2.8 revisions of:
+Verified through 20 September 2026 against the matching 1.2.9 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -9,7 +9,7 @@ Verified through 13 September 2026 against the matching 1.2.8 revisions of:
 
 There are two compatibility claims:
 
-Scope note for 1.2.8: native `cstr` return conversion is behaviorally tested in
+Scope note retained from 1.2.8: native `cstr` return conversion is behaviorally tested in
 both compilers, but its emitter sequences differ (helper calls in Python versus
 an inline scan/copy in MiniLang). Programs using this path are an exception to
 the byte-identity claim below. MiniGui Windows CLI/generator parity is tested;
@@ -29,6 +29,24 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 20 September 2026 standard-library verification
+
+Both compiler repositories contain the same 51 standard-library modules.
+Focused Windows PE and Linux ELF executables for the compression/crypto
+regressions are byte-identical between Python and self-hosted builds. The
+`MLC1` compressed wire format also matches across compiler and host OS.
+Raw LZ4 blocks passed upstream liblz4 interoperability tests. See the
+[measurement report](docs/reports/CRYPTO_COMPRESSION_2026-09-20.md) for
+correctness cases, throughput and methodology.
+
+For release 1.2.9, the Python bootstrap and self-hosted rebuild produced one
+byte-identical 65,331,200-byte Windows compiler image (SHA-256
+`C1D0FD2895B5C853BA461C6BE3A67C6C2A21647D22C23DBBB22897B80A6D685E`).
+The corresponding Linux images are byte-identical at 65,335,104 bytes (SHA-256
+`84B474193973EC0FED41CB5711F1BDA05FEFA5C8849E3B5DC599F54E81C9C75B`).
+The Python suite passes 151/151; the complete self-hosted outer suite passes
+in 217.658 seconds.
 
 ## 13 September 2026 language-safety verification
 

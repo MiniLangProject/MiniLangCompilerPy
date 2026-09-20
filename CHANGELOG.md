@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.9 - 2026-09-20
+
 - Added portable one-shot LZ4 and byte-run compression with a bounded,
   checksummed container, cross-compiler/OS tests, upstream liblz4
   interoperability checks, and repeatable crypto/compression benchmarks.
