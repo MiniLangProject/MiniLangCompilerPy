@@ -54,6 +54,7 @@ file-std-tls-ml-2076630303.html
 file-std-tls-openssl-ml-961424543.html
 file-std-tls-schannel-ml-805501109.html
 file-std-uuid-ml-1903850359.html
+file-std-video-ml-900169693.html
 files.html
 graph-calls.html
 graph-imports.html
@@ -110,6 +111,7 @@ package-std-tls-1723050133.html
 package-std-tls-openssl-642560948.html
 package-std-tls-schannel-1489719394.html
 package-std-uuid-358467167.html
+package-std-video-1470394703.html
 packages.html
 search-index.json
 symbols.html
@@ -159,3 +161,8 @@ type-std-tls-clientoptions-1357397796.html
 type-std-tls-provider-1415630088.html
 type-std-tls-serveroptions-1817688456.html
 type-std-tls-stream-775546137.html
+type-std-video-event-1402863457.html
+type-std-video-eventkind-276077919.html
+type-std-video-player-1368988610.html
+type-std-video-playeroptions-261096172.html
+type-std-video-state-64793316.html

@@ -30,6 +30,28 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
+## 25 September 2026 native-video verification
+
+Both compiler repositories now contain the same 52-module standard library and
+the same version-1 native video bridge sources. The Windows bridge builds with
+MSVC /W4 and uses Media Foundation; the Linux bridge builds with GCC
+`-Wall -Wextra -Werror` and dynamically loads GStreamer 1.x.
+
+The dedicated two-second playback regression validates option and URI policy,
+metadata, stream discovery, pause, seek, resume, end-of-stream, state and
+idempotent cleanup. It passed through both compilers on both targets, including
+the self-hosted object pipeline. For the same source and output path, all
+compiler paths produce byte-identical output:
+
+| Target | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Windows x64 PE | 1,239,552 | `468BE58B8470AE3CBA758EA95526243948B1C9FF4097C34F46C037A83E9B5540` |
+| Linux x64 ELF | 1,308,272 | `163EE4AD5CAC23F9F90D3795C90324CFC9E430103745EE7B47ED2BCDF0A24194` |
+
+The general Python suite remains 151/151, and the complete self-hosted suite
+passes in 225.771 seconds. Strict MiniDoc regeneration reports 52 files, 1,858
+symbols and zero warnings in each repository.
+
 ## 20 September 2026 standard-library verification
 
 Both compiler repositories contain the same 51 standard-library modules.

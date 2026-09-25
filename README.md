@@ -57,6 +57,8 @@ assistance of generative AI.
 - [12. Modules, namespace & import](#12-modules-namespace--import)
 - [13. Standard Library & Builtins](#13-standard-library--builtins)
   - [13.1 Stdlib modules (std.*)](#131-stdlib-modules-std)
+  - [Native audio and video playback](#native-audio-and-video-playback)
+  - [Unit testing with std.test and mltest](#unit-testing-with-stdtest-and-mltest)
   - [13.2 Builtins: basics](#132-builtins-basics)
   - [13.3 Bytes / Encoding / File I/O](#133-bytes--encoding--file-io)
   - [13.4 Heap / GC debug](#134-heap--gc-debug)
@@ -2168,7 +2170,7 @@ Linux images that use only libc-backed modules need no dependency beyond the
 normal x64 glibc runtime; importing `std.crypto` or `std.tls` additionally
 requires the OpenSSL 3 runtime package.
 
-The current library contains 51 source modules with matching source content
+The current library contains 52 source modules with matching source content
 in both compiler repositories (two provider files differ only in line endings):
 
 - **Core:** `std.core`, `std.assert`, `std.test`, `std.array`, `std.sort`,
@@ -2177,7 +2179,8 @@ in both compiler repositories (two provider files differ only in line endings):
   `std.encoding.hex`, `std.encoding.base64`, `std.compress`,
   `std.compress.lz4`, `std.compress.rle`
 - **System APIs:** `std.platform`, `std.path`, `std.process`, `std.console`,
-  `std.time`, `std.fs`, `std.io.file`, `std.net`, `std.uuid` and `std.tls`
+  `std.time`, `std.fs`, `std.io.file`, `std.net`, `std.uuid`, `std.tls`
+  and `std.video`
 - **Collections:** `std.ds.list`, `std.ds.stack`, `std.ds.queue`,
   `std.ds.hashmap`, `std.ds.set`
 - **Concurrency:** `std.threading`, `std.concurrent.thread_pool`,
@@ -2224,6 +2227,46 @@ if typeof(w) == "error" then
   print "write failed: " + w.message
 end if
 ```
+
+### Native audio and video playback
+
+`std.video` provides one portable player API backed by Media Foundation on
+Windows and GStreamer 1.x on Linux. Decoding, clocks and audio output remain in
+the native media stack. Backend threads never call into managed MiniLang code;
+`Player.pollEvent()` drains a bounded native queue on the application thread.
+
+```ml
+import std.video as video
+
+options = video.PlayerOptions.defaults()
+options.volume = 0.8
+player = video.Player.open("intro.mp4", options)
+defer player.close()
+
+// For visible output, attach a GUI-owned native child handle before play().
+// player.attach(nativeWindowHandle)
+player.play()
+
+event = player.pollEvent()
+if event is not void and event.kind == video.EventKind.Error then
+  print event.message
+end if
+```
+
+The player supports play, pause, stop, millisecond seek, loop, mute, volume,
+playback rate, duration/position queries, stream discovery and decoded video
+dimensions. Opening does not begin playback. Headless playback remains clocked
+for audio, metadata probes and automated tests. Network URIs are disabled by
+default and require `PlayerOptions.allowNetwork = true`.
+
+Deploy `minilang_video.dll` beside a Windows executable or
+`libminilang_video.so` beside a Linux executable. Windows 10/11 supplies the
+Media Foundation runtime; Linux needs GStreamer 1.x plus the plugins for the
+formats the application accepts. Open, control and close calls for one player
+must stay serialized on the same application thread, and `close()` should be
+called deterministically.
+Build, deployment, UI-handle and integration-test details are in the
+[native video bridge guide](native/video/README.md).
 
 ### Unit testing with `std.test` and `mltest`
 

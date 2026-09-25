@@ -1084,3 +1084,62 @@
 | [std.uuid.UUID_ERR](File-std-uuid-ml-1903850359.md#constant-constant-std-uuid-uuid-err-const-uuid-err-266-std-uuid-ml-685764339) | `constant` | `const UUID_ERR = 266` |
 | [std.uuid.v4](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4-function-v4-std-uuid-ml-1680180020) | `function` | `function v4()` |
 | [std.uuid.v4Bytes](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4bytes-function-v4bytes-std-uuid-ml-166922686) | `function` | `function v4Bytes()` |
+| [std.video.backend](File-std-video-ml-900169693.md#function-function-std-video-backend-function-backend-std-video-ml-1365649424) | `function` | `function backend()` |
+| [std.video.Event](Type-std-video-event-1402863457.md) | `struct` | `struct Event` |
+| [std.video.Event.code](Type-std-video-event-1402863457.md#field-field-std-video-event-code-code-std-video-ml-1693865033) | `field` | `code` |
+| [std.video.Event.kind](Type-std-video-event-1402863457.md#field-field-std-video-event-kind-kind-std-video-ml-130534463) | `field` | `kind` |
+| [std.video.Event.message](Type-std-video-event-1402863457.md#field-field-std-video-event-message-message-std-video-ml-1753117663) | `field` | `message` |
+| [std.video.Event.state](Type-std-video-event-1402863457.md#field-field-std-video-event-state-state-std-video-ml-1602272439) | `field` | `state` |
+| [std.video.EventKind](Type-std-video-eventkind-276077919.md) | `enum` | `enum EventKind` |
+| [std.video.EventKind.Buffering](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-buffering-buffering-5-std-video-ml-1147828666) | `enum_variant` | `Buffering = 5` |
+| [std.video.EventKind.Ended](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-ended-ended-6-std-video-ml-1014243649) | `enum_variant` | `Ended = 6` |
+| [std.video.EventKind.Error](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-error-error-8-std-video-ml-230242111) | `enum_variant` | `Error = 8` |
+| [std.video.EventKind.FormatChanged](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-formatchanged-formatchanged-7-std-video-ml-1232537628) | `enum_variant` | `FormatChanged = 7` |
+| [std.video.EventKind.Paused](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-paused-paused-3-std-video-ml-1499195312) | `enum_variant` | `Paused = 3` |
+| [std.video.EventKind.Playing](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-playing-playing-2-std-video-ml-355143241) | `enum_variant` | `Playing = 2` |
+| [std.video.EventKind.Ready](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-ready-ready-1-std-video-ml-115871466) | `enum_variant` | `Ready = 1` |
+| [std.video.EventKind.Stopped](Type-std-video-eventkind-276077919.md#enum_variant-enum-variant-std-video-eventkind-stopped-stopped-4-std-video-ml-1963515963) | `enum_variant` | `Stopped = 4` |
+| [std.video.isAvailable](File-std-video-ml-900169693.md#function-function-std-video-isavailable-function-isavailable-std-video-ml-1080881046) | `function` | `function isAvailable()` |
+| [std.video.MAX_VIDEO_MILLISECONDS](File-std-video-ml-900169693.md#constant-constant-std-video-max-video-milliseconds-const-max-video-milliseconds-9223372036854-std-video-ml-2017745157) | `constant` | `const MAX_VIDEO_MILLISECONDS = 9223372036854` |
+| [std.video.Player](Type-std-video-player-1368988610.md) | `struct` | `struct Player` |
+| [std.video.Player.attach](Type-std-video-player-1368988610.md#method-method-std-video-player-attach-function-attach-windowhandle-std-video-ml-1608197656) | `method` | `function attach(windowHandle)` |
+| [std.video.Player.backend](Type-std-video-player-1368988610.md#method-method-std-video-player-backend-function-backend-std-video-ml-1693740782) | `method` | `function backend()` |
+| [std.video.Player.close](Type-std-video-player-1368988610.md#method-method-std-video-player-close-function-close-std-video-ml-1703187686) | `method` | `function close()` |
+| [std.video.Player.duration](Type-std-video-player-1368988610.md#method-method-std-video-player-duration-function-duration-std-video-ml-2040872134) | `method` | `function duration()` |
+| [std.video.Player.hasAudio](Type-std-video-player-1368988610.md#method-method-std-video-player-hasaudio-function-hasaudio-std-video-ml-1292757598) | `method` | `function hasAudio()` |
+| [std.video.Player.hasVideo](Type-std-video-player-1368988610.md#method-method-std-video-player-hasvideo-function-hasvideo-std-video-ml-583470366) | `method` | `function hasVideo()` |
+| [std.video.Player.open](Type-std-video-player-1368988610.md#static_method-static-method-std-video-player-open-static-function-open-source-options-void-std-video-ml-1315792215) | `static_method` | `static function open(source, options = void)` |
+| [std.video.Player.options](Type-std-video-player-1368988610.md#field-field-std-video-player-options-options-std-video-ml-1898541966) | `field` | `options` |
+| [std.video.Player.pause](Type-std-video-player-1368988610.md#method-method-std-video-player-pause-function-pause-std-video-ml-893559170) | `method` | `function pause()` |
+| [std.video.Player.play](Type-std-video-player-1368988610.md#method-method-std-video-player-play-function-play-std-video-ml-899937614) | `method` | `function play()` |
+| [std.video.Player.pollEvent](Type-std-video-player-1368988610.md#method-method-std-video-player-pollevent-function-pollevent-std-video-ml-100661544) | `method` | `function pollEvent()` |
+| [std.video.Player.position](Type-std-video-player-1368988610.md#method-method-std-video-player-position-function-position-std-video-ml-1200193178) | `method` | `function position()` |
+| [std.video.Player.seek](Type-std-video-player-1368988610.md#method-method-std-video-player-seek-function-seek-milliseconds-std-video-ml-2146787904) | `method` | `function seek(milliseconds)` |
+| [std.video.Player.setLoop](Type-std-video-player-1368988610.md#method-method-std-video-player-setloop-function-setloop-enabled-std-video-ml-184318821) | `method` | `function setLoop(enabled)` |
+| [std.video.Player.setMuted](Type-std-video-player-1368988610.md#method-method-std-video-player-setmuted-function-setmuted-muted-std-video-ml-588095491) | `method` | `function setMuted(muted)` |
+| [std.video.Player.setPlaybackRate](Type-std-video-player-1368988610.md#method-method-std-video-player-setplaybackrate-function-setplaybackrate-rate-std-video-ml-2075537326) | `method` | `function setPlaybackRate(rate)` |
+| [std.video.Player.setVolume](Type-std-video-player-1368988610.md#method-method-std-video-player-setvolume-function-setvolume-volume-std-video-ml-531169772) | `method` | `function setVolume(volume)` |
+| [std.video.Player.state](Type-std-video-player-1368988610.md#method-method-std-video-player-state-function-state-std-video-ml-1095459556) | `method` | `function state()` |
+| [std.video.Player.stop](Type-std-video-player-1368988610.md#method-method-std-video-player-stop-function-stop-std-video-ml-2144431098) | `method` | `function stop()` |
+| [std.video.Player.videoHeight](Type-std-video-player-1368988610.md#method-method-std-video-player-videoheight-function-videoheight-std-video-ml-1033994046) | `method` | `function videoHeight()` |
+| [std.video.Player.videoWidth](Type-std-video-player-1368988610.md#method-method-std-video-player-videowidth-function-videowidth-std-video-ml-2002722782) | `method` | `function videoWidth()` |
+| [std.video.PlayerOptions](Type-std-video-playeroptions-261096172.md) | `struct` | `struct PlayerOptions` |
+| [std.video.PlayerOptions.allowNetwork](Type-std-video-playeroptions-261096172.md#field-field-std-video-playeroptions-allownetwork-allownetwork-std-video-ml-1795373070) | `field` | `allowNetwork` |
+| [std.video.PlayerOptions.defaults](Type-std-video-playeroptions-261096172.md#static_method-static-method-std-video-playeroptions-defaults-static-function-defaults-std-video-ml-1265987065) | `static_method` | `static function defaults()` |
+| [std.video.PlayerOptions.loopEnabled](Type-std-video-playeroptions-261096172.md#field-field-std-video-playeroptions-loopenabled-loopenabled-std-video-ml-1313048056) | `field` | `loopEnabled` |
+| [std.video.PlayerOptions.muted](Type-std-video-playeroptions-261096172.md#field-field-std-video-playeroptions-muted-muted-std-video-ml-977345220) | `field` | `muted` |
+| [std.video.PlayerOptions.playbackRate](Type-std-video-playeroptions-261096172.md#field-field-std-video-playeroptions-playbackrate-playbackrate-std-video-ml-1512701646) | `field` | `playbackRate` |
+| [std.video.PlayerOptions.volume](Type-std-video-playeroptions-261096172.md#field-field-std-video-playeroptions-volume-volume-std-video-ml-1450984488) | `field` | `volume` |
+| [std.video.State](Type-std-video-state-64793316.md) | `enum` | `enum State` |
+| [std.video.State.Buffering](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-buffering-buffering-6-std-video-ml-855683384) | `enum_variant` | `Buffering = 6` |
+| [std.video.State.Closed](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-closed-closed-9-std-video-ml-1546264059) | `enum_variant` | `Closed = 9` |
+| [std.video.State.Empty](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-empty-empty-0-std-video-ml-1850080282) | `enum_variant` | `Empty = 0` |
+| [std.video.State.Ended](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-ended-ended-7-std-video-ml-238975989) | `enum_variant` | `Ended = 7` |
+| [std.video.State.Failed](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-failed-failed-8-std-video-ml-1530702380) | `enum_variant` | `Failed = 8` |
+| [std.video.State.Loading](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-loading-loading-1-std-video-ml-1693079911) | `enum_variant` | `Loading = 1` |
+| [std.video.State.Paused](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-paused-paused-4-std-video-ml-1281220014) | `enum_variant` | `Paused = 4` |
+| [std.video.State.Playing](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-playing-playing-3-std-video-ml-199684277) | `enum_variant` | `Playing = 3` |
+| [std.video.State.Ready](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-ready-ready-2-std-video-ml-982667104) | `enum_variant` | `Ready = 2` |
+| [std.video.State.Stopped](Type-std-video-state-64793316.md#enum_variant-enum-variant-std-video-state-stopped-stopped-5-std-video-ml-1586658575) | `enum_variant` | `Stopped = 5` |
+| [std.video.VIDEO_ABI_VERSION](File-std-video-ml-900169693.md#constant-constant-std-video-video-abi-version-const-video-abi-version-1-std-video-ml-322457182) | `constant` | `const VIDEO_ABI_VERSION = 1` |
+| [std.video.VIDEO_ERROR](File-std-video-ml-900169693.md#constant-constant-std-video-video-error-const-video-error-1781-std-video-ml-356035852) | `constant` | `const VIDEO_ERROR = 1781` |

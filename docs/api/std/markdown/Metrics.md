@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2675 |
+| Blank lines | 2786 |
 | Clone groups | 157 |
-| Cognitive complexity | 3339 (maximum per function: 116) |
-| Comment lines | 4264 |
-| Cyclomatic complexity | 3667 (average: 3.73, maximum: 33) |
-| Documentation coverage | 100% (1886 of 1886 documentation items) |
-| Duplicated lines | 1004 (9.32%) |
-| Files | 51 |
-| Functions | 984 |
-| Maintainability index | 8 / 100 |
-| Physical lines | 17711 |
-| Source lines | 10775 |
-| Statements | 7702 |
+| Cognitive complexity | 3435 (maximum per function: 116) |
+| Comment lines | 4386 |
+| Cyclomatic complexity | 3790 (average: 3.75, maximum: 33) |
+| Documentation coverage | 99.08% (1935 of 1953 documentation items) |
+| Duplicated lines | 1004 (9.09%) |
+| Files | 52 |
+| Functions | 1012 |
+| Maintainability index | 7.83 / 100 |
+| Physical lines | 18211 |
+| Source lines | 11042 |
+| Statements | 7916 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 735 | 735 | 100% |
-| Constants | 130 | 130 | 100% |
-| Enum variants | 22 | 22 | 100% |
-| Fields | 188 | 188 | 100% |
+| API declarations | 763 | 763 | 100% |
+| Constants | 133 | 133 | 100% |
+| Enum variants | 22 | 40 | 55% |
+| Fields | 198 | 198 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1886 | 1886 | 100% |
-| Parameters | 810 | 810 | 100% |
+| Overall | 1935 | 1953 | 99.08% |
+| Parameters | 818 | 818 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3245 | 44122 | 30231 | 3301 | 74353 | 869088.97 | 260.85 | 226704470.05 | 289.7 |
+| 56 | 3371 | 45464 | 31121 | 3427 | 76585 | 899317.01 | 258.5 | 232469311.48 | 299.77 |
 
 ## Files
 
@@ -97,6 +97,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 225 | 15 | 86 / 5.73 / 18 | 78 / 19 | 0 (0%) | 18932.6 | 7.17 |
 | [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1160 | 81 | 454 / 5.6 / 24 | 503 / 51 | 66 (5.69%) | 105732.03 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
+| [`std/video.ml`](File-std-video-ml-900169693.md) | 267 | 28 | 123 / 4.39 / 15 | 96 / 14 | 0 (0%) | 17397.14 | 0.83 |
 
 ## Functions
 
@@ -792,6 +793,29 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.uuid.parse`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-parse-function-parse-text-std-uuid-ml-99981495) | `std/uuid.ml:53` | 8 | 9 | 9 | 8 | 1 | 966.32 | 58.19 |
 | [`std.uuid.v4`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4-function-v4-std-uuid-ml-1680180020) | `std/uuid.ml:43` | 7 | 6 | 2 | 1 | 1 | 157.17 | 65.92 |
 | [`std.uuid.v4Bytes`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4bytes-function-v4bytes-std-uuid-ml-166922686) | `std/uuid.ml:34` | 7 | 6 | 2 | 1 | 1 | 275.78 | 64.21 |
+| [`std.video.backend`](File-std-video-ml-900169693.md#function-function-std-video-backend-function-backend-std-video-ml-1365649424) | `std/video.ml:489` | 7 | 6 | 2 | 1 | 1 | 175.69 | 65.58 |
+| [`std.video.isAvailable`](File-std-video-ml-900169693.md#function-function-std-video-isavailable-function-isavailable-std-video-ml-1080881046) | `std/video.ml:498` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.video.Player.attach`](Type-std-video-player-1368988610.md#method-method-std-video-player-attach-function-attach-windowhandle-std-video-ml-1608197656) | `std/video.ml:326` | 6 | 7 | 5 | 4 | 1 | 290.05 | 65.11 |
+| [`std.video.Player.backend`](Type-std-video-player-1368988610.md#method-method-std-video-player-backend-function-backend-std-video-ml-1693740782) | `std/video.ml:319` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.video.Player.close`](Type-std-video-player-1368988610.md#method-method-std-video-player-close-function-close-std-video-ml-1703187686) | `std/video.ml:468` | 8 | 7 | 2 | 1 | 1 | 144 | 64.92 |
+| [`std.video.Player.duration`](Type-std-video-player-1368988610.md#method-method-std-video-player-duration-function-duration-std-video-ml-2040872134) | `std/video.ml:372` | 4 | 3 | 2 | 1 | 1 | 89.86 | 72.92 |
+| [`std.video.Player.hasAudio`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasaudio-function-hasaudio-std-video-ml-1292757598) | `std/video.ml:432` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
+| [`std.video.Player.hasVideo`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasvideo-function-hasvideo-std-video-ml-583470366) | `std/video.ml:438` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
+| [`std.video.Player.open`](Type-std-video-player-1368988610.md#static_method-static-method-std-video-player-open-static-function-open-source-options-void-std-video-ml-1315792215) | `std/video.ml:286` | 29 | 40 | 14 | 14 | 2 | 1968 | 43.15 |
+| [`std.video.Player.pause`](Type-std-video-player-1368988610.md#method-method-std-video-player-pause-function-pause-std-video-ml-893559170) | `std/video.ml:341` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.play`](Type-std-video-player-1368988610.md#method-method-std-video-player-play-function-play-std-video-ml-899937614) | `std/video.ml:334` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.pollEvent`](Type-std-video-player-1368988610.md#method-method-std-video-player-pollevent-function-pollevent-std-video-ml-100661544) | `std/video.ml:456` | 9 | 10 | 4 | 3 | 1 | 515 | 59.66 |
+| [`std.video.Player.position`](Type-std-video-player-1368988610.md#method-method-std-video-player-position-function-position-std-video-ml-1200193178) | `std/video.ml:366` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.Player.seek`](Type-std-video-player-1368988610.md#method-method-std-video-player-seek-function-seek-milliseconds-std-video-ml-2146787904) | `std/video.ml:356` | 8 | 7 | 6 | 5 | 1 | 318.95 | 61.96 |
+| [`std.video.Player.setLoop`](Type-std-video-player-1368988610.md#method-method-std-video-player-setloop-function-setloop-enabled-std-video-ml-184318821) | `std/video.ml:421` | 9 | 11 | 5 | 4 | 1 | 371.56 | 60.52 |
+| [`std.video.Player.setMuted`](Type-std-video-player-1368988610.md#method-method-std-video-player-setmuted-function-setmuted-muted-std-video-ml-588095491) | `std/video.ml:397` | 9 | 11 | 5 | 4 | 1 | 368.02 | 60.55 |
+| [`std.video.Player.setPlaybackRate`](Type-std-video-player-1368988610.md#method-method-std-video-player-setplaybackrate-function-setplaybackrate-rate-std-video-ml-2075537326) | `std/video.ml:409` | 9 | 8 | 8 | 7 | 1 | 439.44 | 59.6 |
+| [`std.video.Player.setVolume`](Type-std-video-player-1368988610.md#method-method-std-video-player-setvolume-function-setvolume-volume-std-video-ml-531169772) | `std/video.ml:385` | 9 | 8 | 8 | 7 | 1 | 432.43 | 59.65 |
+| [`std.video.Player.state`](Type-std-video-player-1368988610.md#method-method-std-video-player-state-function-state-std-video-ml-1095459556) | `std/video.ml:378` | 4 | 3 | 2 | 1 | 1 | 108 | 72.36 |
+| [`std.video.Player.stop`](Type-std-video-player-1368988610.md#method-method-std-video-player-stop-function-stop-std-video-ml-2144431098) | `std/video.ml:348` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.videoHeight`](Type-std-video-player-1368988610.md#method-method-std-video-player-videoheight-function-videoheight-std-video-ml-1033994046) | `std/video.ml:450` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.Player.videoWidth`](Type-std-video-player-1368988610.md#method-method-std-video-player-videowidth-function-videowidth-std-video-ml-2002722782) | `std/video.ml:444` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.PlayerOptions.defaults`](Type-std-video-playeroptions-261096172.md#static_method-static-method-std-video-playeroptions-defaults-static-function-defaults-std-video-ml-1265987065) | `std/video.ml:61` | 3 | 1 | 1 | 0 | 0 | 91.38 | 75.73 |
 
 ## Code duplication
 
