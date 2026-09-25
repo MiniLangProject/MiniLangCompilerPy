@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.10 - 2026-09-25
+
 - Added portable native audio/video playback through `std.video`, backed by
   Media Foundation on Windows and dynamically loaded GStreamer on Linux.
   Includes explicit ownership, safe polled events, opt-in network sources,

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 20 September 2026 against the matching 1.2.9 revisions of:
+Verified through 25 September 2026 against the matching 1.2.10 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -48,9 +48,16 @@ compiler paths produce byte-identical output:
 | Windows x64 PE | 1,239,552 | `468BE58B8470AE3CBA758EA95526243948B1C9FF4097C34F46C037A83E9B5540` |
 | Linux x64 ELF | 1,308,272 | `163EE4AD5CAC23F9F90D3795C90324CFC9E430103745EE7B47ED2BCDF0A24194` |
 
-The general Python suite remains 151/151, and the complete self-hosted suite
-passes in 225.771 seconds. Strict MiniDoc regeneration reports 52 files, 1,858
+The general Python suite remains 151/151, and the complete 1.2.10 self-hosted
+suite passes in 208.127 seconds. Strict MiniDoc regeneration reports 52 files, 1,858
 symbols and zero warnings in each repository.
+
+For release 1.2.10, Python bootstrap and two self-hosted Windows builds produce
+one byte-identical 65,331,200-byte compiler image (SHA-256
+`D1E4312E9ADEA6EB190B68F0210999B06A22D744C43070874CF9BBA018FA05D8`).
+The native Linux build, the Windows-hosted self-hosted compiler and the Python
+compiler also produce one byte-identical 65,335,104-byte Linux image (SHA-256
+`83640A9437C16785647E21EEE254DD5AA4896B54126F28B426FD35FA5930AF28`).
 
 ## 20 September 2026 standard-library verification
 
