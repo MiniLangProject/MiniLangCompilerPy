@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2786 |
-| Clone groups | 157 |
-| Cognitive complexity | 3435 (maximum per function: 116) |
-| Comment lines | 4386 |
-| Cyclomatic complexity | 3790 (average: 3.75, maximum: 33) |
-| Documentation coverage | 99.08% (1935 of 1953 documentation items) |
-| Duplicated lines | 1004 (9.09%) |
-| Files | 52 |
-| Functions | 1012 |
-| Maintainability index | 7.83 / 100 |
-| Physical lines | 18211 |
-| Source lines | 11042 |
-| Statements | 7916 |
+| Blank lines | 2826 |
+| Clone groups | 169 |
+| Cognitive complexity | 3513 (maximum per function: 116) |
+| Comment lines | 4466 |
+| Cyclomatic complexity | 3895 (average: 3.75, maximum: 33) |
+| Documentation coverage | 98.03% (1986 of 2026 documentation items) |
+| Duplicated lines | 1048 (9.28%) |
+| Files | 53 |
+| Functions | 1039 |
+| Maintainability index | 7.76 / 100 |
+| Physical lines | 18581 |
+| Source lines | 11292 |
+| Statements | 8098 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 763 | 763 | 100% |
-| Constants | 133 | 133 | 100% |
-| Enum variants | 22 | 40 | 55% |
-| Fields | 198 | 198 | 100% |
+| API declarations | 792 | 792 | 100% |
+| Constants | 135 | 135 | 100% |
+| Enum variants | 22 | 62 | 35.48% |
+| Fields | 208 | 208 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1935 | 1953 | 99.08% |
-| Parameters | 818 | 818 | 100% |
+| Overall | 1986 | 2026 | 98.03% |
+| Parameters | 828 | 828 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3371 | 45464 | 31121 | 3427 | 76585 | 899317.01 | 258.5 | 232469311.48 | 299.77 |
+| 56 | 3403 | 46517 | 31816 | 3459 | 78333 | 920893.65 | 261.78 | 241074425.17 | 306.96 |
 
 ## Files
 
@@ -49,6 +49,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 306 | 24 | 127 / 5.29 / 33 | 132 / 47 | 9 (2.94%) | 20302.36 | 0 |
 | [`std/array.ml`](File-std-array-ml-1258125823.md) | 310 | 23 | 95 / 4.13 / 11 | 78 / 10 | 27 (8.71%) | 9574.93 | 5 |
 | [`std/assert.ml`](File-std-assert-ml-1772521196.md) | 92 | 8 | 17 / 2.13 / 3 | 9 / 2 | 0 (0%) | 1751.75 | 32.16 |
+| [`std/audio.ml`](File-std-audio-ml-1379868758.md) | 250 | 27 | 105 / 3.89 / 15 | 78 / 14 | 22 (8.8%) | 12906.72 | 4.78 |
 | [`std/bytes.ml`](File-std-bytes-ml-1351945333.md) | 501 | 38 | 153 / 4.03 / 13 | 124 / 16 | 215 (42.91%) | 16996.47 | 0 |
 | [`std/checksum/crc32.ml`](File-std-checksum-crc32-ml-1964480723.md) | 23 | 5 | 12 / 2.4 / 3 | 7 / 2 | 0 (0%) | 974.56 | 47.75 |
 | [`std/checksum/crc32c.ml`](File-std-checksum-crc32c-ml-144026660.md) | 23 | 5 | 12 / 2.4 / 3 | 7 / 2 | 0 (0%) | 974.56 | 47.75 |
@@ -97,7 +98,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 225 | 15 | 86 / 5.73 / 18 | 78 / 19 | 0 (0%) | 18932.6 | 7.17 |
 | [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1160 | 81 | 454 / 5.6 / 24 | 503 / 51 | 66 (5.69%) | 105732.03 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
-| [`std/video.ml`](File-std-video-ml-900169693.md) | 267 | 28 | 123 / 4.39 / 15 | 96 / 14 | 0 (0%) | 17397.14 | 0.83 |
+| [`std/video.ml`](File-std-video-ml-900169693.md) | 267 | 28 | 123 / 4.39 / 15 | 96 / 14 | 22 (8.24%) | 17397.14 | 0.83 |
 
 ## Functions
 
@@ -133,6 +134,29 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.assert.assertNe`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertne-function-assertne-actual-expected-label-std-assert-ml-221639904) | `std/assert.ml:77` | 10 | 7 | 2 | 1 | 1 | 146.95 | 62.74 |
 | [`std.assert.assertNotVoid`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertnotvoid-function-assertnotvoid-x-label-std-assert-ml-1841061316) | `std/assert.ml:154` | 9 | 6 | 2 | 1 | 1 | 144.95 | 63.78 |
 | [`std.assert.assertTrue`](File-std-assert-ml-1772521196.md#function-function-std-assert-asserttrue-function-asserttrue-cond-label-std-assert-ml-1187416750) | `std/assert.ml:30` | 9 | 6 | 2 | 1 | 1 | 116.76 | 64.44 |
+| [`std.audio.backend`](File-std-audio-ml-1379868758.md#function-function-std-audio-backend-function-backend-std-audio-ml-1381422234) | `std/audio.ml:363` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.audio.formatFromSource`](File-std-audio-ml-1379868758.md#function-function-std-audio-formatfromsource-function-formatfromsource-source-std-audio-ml-1827824367) | `std/audio.ml:146` | 15 | 20 | 12 | 11 | 1 | 884.43 | 52.1 |
+| [`std.audio.formatName`](File-std-audio-ml-1379868758.md#function-function-std-audio-formatname-function-formatname-value-std-audio-ml-941796055) | `std/audio.ml:164` | 6 | 7 | 4 | 3 | 1 | 178.41 | 66.72 |
+| [`std.audio.isAvailable`](File-std-audio-ml-1379868758.md#function-function-std-audio-isavailable-function-isavailable-std-audio-ml-629756284) | `std/audio.ml:368` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.audio.isSupportedFormat`](File-std-audio-ml-1379868758.md#function-function-std-audio-issupportedformat-function-issupportedformat-value-std-audio-ml-2003268917) | `std/audio.ml:173` | 3 | 1 | 1 | 0 | 0 | 95.18 | 75.6 |
+| [`std.audio.Player.backend`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-backend-function-backend-std-audio-ml-1800188746) | `std/audio.ml:225` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
+| [`std.audio.Player.close`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-close-function-close-std-audio-ml-1700319502) | `std/audio.ml:353` | 7 | 7 | 3 | 2 | 1 | 224.01 | 64.7 |
+| [`std.audio.Player.duration`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-duration-function-duration-std-audio-ml-452982834) | `std/audio.ml:279` | 4 | 3 | 2 | 1 | 1 | 91.38 | 72.87 |
+| [`std.audio.Player.format`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-format-function-format-std-audio-ml-554587574) | `std/audio.ml:231` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.audio.Player.hasAudio`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-hasaudio-function-hasaudio-std-audio-ml-1580341818) | `std/audio.ml:291` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
+| [`std.audio.Player.open`](Type-std-audio-player-1417198005.md#static_method-static-method-std-audio-player-open-static-function-open-source-options-void-std-audio-ml-11174309) | `std/audio.ml:195` | 25 | 16 | 7 | 6 | 1 | 1038.47 | 47.44 |
+| [`std.audio.Player.pause`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-pause-function-pause-std-audio-ml-217486234) | `std/audio.ml:244` | 6 | 6 | 3 | 2 | 1 | 218.51 | 66.24 |
+| [`std.audio.Player.play`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-play-function-play-std-audio-ml-1904415466) | `std/audio.ml:236` | 6 | 6 | 3 | 2 | 1 | 218.51 | 66.24 |
+| [`std.audio.Player.pollEvent`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-pollevent-function-pollevent-std-audio-ml-1721749456) | `std/audio.ml:340` | 10 | 6 | 3 | 2 | 1 | 282.03 | 60.63 |
+| [`std.audio.Player.position`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-position-function-position-std-audio-ml-90934830) | `std/audio.ml:273` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
+| [`std.audio.Player.seek`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-seek-function-seek-milliseconds-std-audio-ml-148056452) | `std/audio.ml:262` | 9 | 8 | 6 | 5 | 1 | 366.61 | 60.42 |
+| [`std.audio.Player.setLoop`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setloop-function-setloop-enabled-std-audio-ml-294019719) | `std/audio.ml:331` | 7 | 7 | 3 | 2 | 1 | 269.34 | 64.14 |
+| [`std.audio.Player.setMuted`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setmuted-function-setmuted-muted-std-audio-ml-798585953) | `std/audio.ml:310` | 7 | 7 | 3 | 2 | 1 | 265.93 | 64.18 |
+| [`std.audio.Player.setPlaybackRate`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setplaybackrate-function-setplaybackrate-rate-std-audio-ml-692689886) | `std/audio.ml:321` | 7 | 7 | 3 | 2 | 1 | 269.34 | 64.14 |
+| [`std.audio.Player.setVolume`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setvolume-function-setvolume-volume-std-audio-ml-637762712) | `std/audio.ml:300` | 7 | 7 | 3 | 2 | 1 | 265.93 | 64.18 |
+| [`std.audio.Player.state`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-state-function-state-std-audio-ml-287810628) | `std/audio.ml:285` | 4 | 3 | 2 | 1 | 1 | 109.39 | 72.32 |
+| [`std.audio.Player.stop`](Type-std-audio-player-1417198005.md#method-method-std-audio-player-stop-function-stop-std-audio-ml-1105092494) | `std/audio.ml:252` | 6 | 6 | 3 | 2 | 1 | 218.51 | 66.24 |
+| [`std.audio.PlayerOptions.defaults`](Type-std-audio-playeroptions-1251061429.md#static_method-static-method-std-audio-playeroptions-defaults-static-function-defaults-std-audio-ml-294074605) | `std/audio.ml:70` | 3 | 1 | 1 | 0 | 0 | 91.38 | 75.73 |
 | [`std.bytes.alloc`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-alloc-function-alloc-size-std-bytes-ml-1457681591) | `std/bytes.ml:38` | 9 | 5 | 3 | 2 | 1 | 121.11 | 64.19 |
 | [`std.bytes.allocFill`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-allocfill-function-allocfill-size-fill-std-bytes-ml-871437864) | `std/bytes.ml:51` | 12 | 7 | 4 | 3 | 1 | 188.02 | 60 |
 | [`std.bytes.compare`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-compare-function-compare-a-b-std-bytes-ml-1567382625) | `std/bytes.ml:329` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
@@ -821,7 +845,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 A clone group is an exact sequence of 6 normalized, contiguous code lines found more than once. Comments and formatting whitespace are ignored. Duplicated-line totals count overlapping windows only once.
 
-Found 157 clone group(s). At most 157 groups are shown.
+Found 169 clone group(s). At most 169 groups are shown.
 
 <details>
 <summary>Clone 1 — 3 occurrences</summary>
@@ -983,7 +1007,187 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 11 — 4 occurrences</summary>
+<summary>Clone 11 — 2 occurrences</summary>
+
+    enum State
+    Empty = 0
+    Loading = 1
+    Ready = 2
+    Playing = 3
+    Paused = 4
+
+- [`std/audio.ml:31`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:22`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 12 — 2 occurrences</summary>
+
+    Empty = 0
+    Loading = 1
+    Ready = 2
+    Playing = 3
+    Paused = 4
+    Stopped = 5
+
+- [`std/audio.ml:32`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:23`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 13 — 2 occurrences</summary>
+
+    Loading = 1
+    Ready = 2
+    Playing = 3
+    Paused = 4
+    Stopped = 5
+    Buffering = 6
+
+- [`std/audio.ml:33`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:24`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 14 — 2 occurrences</summary>
+
+    Ready = 2
+    Playing = 3
+    Paused = 4
+    Stopped = 5
+    Buffering = 6
+    Ended = 7
+
+- [`std/audio.ml:34`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:25`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 15 — 2 occurrences</summary>
+
+    Playing = 3
+    Paused = 4
+    Stopped = 5
+    Buffering = 6
+    Ended = 7
+    Failed = 8
+
+- [`std/audio.ml:35`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:26`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 16 — 2 occurrences</summary>
+
+    Paused = 4
+    Stopped = 5
+    Buffering = 6
+    Ended = 7
+    Failed = 8
+    Closed = 9
+
+- [`std/audio.ml:36`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:27`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 17 — 2 occurrences</summary>
+
+    Stopped = 5
+    Buffering = 6
+    Ended = 7
+    Failed = 8
+    Closed = 9
+    end enum
+
+- [`std/audio.ml:37`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:28`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 18 — 2 occurrences</summary>
+
+    enum EventKind
+    Ready = 1
+    Playing = 2
+    Paused = 3
+    Stopped = 4
+    Buffering = 5
+
+- [`std/audio.ml:45`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:36`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 19 — 2 occurrences</summary>
+
+    Ready = 1
+    Playing = 2
+    Paused = 3
+    Stopped = 4
+    Buffering = 5
+    Ended = 6
+
+- [`std/audio.ml:46`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:37`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 20 — 2 occurrences</summary>
+
+    Playing = 2
+    Paused = 3
+    Stopped = 4
+    Buffering = 5
+    Ended = 6
+    FormatChanged = 7
+
+- [`std/audio.ml:47`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:38`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 21 — 2 occurrences</summary>
+
+    Paused = 3
+    Stopped = 4
+    Buffering = 5
+    Ended = 6
+    FormatChanged = 7
+    Error = 8
+
+- [`std/audio.ml:48`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:39`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 22 — 2 occurrences</summary>
+
+    Stopped = 4
+    Buffering = 5
+    Ended = 6
+    FormatChanged = 7
+    Error = 8
+    end enum
+
+- [`std/audio.ml:49`](File-std-audio-ml-1379868758.md)
+- [`std/video.ml:40`](File-std-video-ml-900169693.md)
+
+</details>
+
+<details>
+<summary>Clone 23 — 4 occurrences</summary>
 
     if typeof ( a ) != "bytes" then
     return
@@ -1000,7 +1204,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 12 — 2 occurrences</summary>
+<summary>Clone 24 — 2 occurrences</summary>
 
     if typeof ( a ) != "bytes" then
     return false
@@ -1015,7 +1219,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 13 — 3 occurrences</summary>
+<summary>Clone 25 — 3 occurrences</summary>
 
     if typeof ( hay ) != "bytes" then
     return
@@ -1031,7 +1235,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 14 — 2 occurrences</summary>
+<summary>Clone 26 — 2 occurrences</summary>
 
     return
     end if
@@ -1046,7 +1250,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 15 — 2 occurrences</summary>
+<summary>Clone 27 — 2 occurrences</summary>
 
     end if
     if typeof ( needle ) != "bytes" then
@@ -1061,7 +1265,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 16 — 2 occurrences</summary>
+<summary>Clone 28 — 2 occurrences</summary>
 
     if typeof ( needle ) != "bytes" then
     return
@@ -1076,7 +1280,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 17 — 3 occurrences</summary>
+<summary>Clone 29 — 3 occurrences</summary>
 
     if m == 0 then
     return i0
@@ -1092,7 +1296,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 18 — 5 occurrences</summary>
+<summary>Clone 30 — 5 occurrences</summary>
 
     if not _bytes_ok ( b ) then
     return false
@@ -1110,7 +1314,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 19 — 5 occurrences</summary>
+<summary>Clone 31 — 5 occurrences</summary>
 
     return false
     end if
@@ -1128,7 +1332,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 20 — 5 occurrences</summary>
+<summary>Clone 32 — 5 occurrences</summary>
 
     end if
     if not _int_ok ( off ) then
@@ -1146,7 +1350,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 21 — 5 occurrences</summary>
+<summary>Clone 33 — 5 occurrences</summary>
 
     if not _int_ok ( off ) then
     return false
@@ -1164,7 +1368,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 22 — 5 occurrences</summary>
+<summary>Clone 34 — 5 occurrences</summary>
 
     if not _bytes_ok ( b ) then
     return
@@ -1182,7 +1386,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 23 — 5 occurrences</summary>
+<summary>Clone 35 — 5 occurrences</summary>
 
     return
     end if
@@ -1200,7 +1404,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 24 — 2 occurrences</summary>
+<summary>Clone 36 — 2 occurrences</summary>
 
     return false
     end if
@@ -1215,7 +1419,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 25 — 2 occurrences</summary>
+<summary>Clone 37 — 2 occurrences</summary>
 
     end if
     if not _int_ok ( value ) then
@@ -1230,7 +1434,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 26 — 2 occurrences</summary>
+<summary>Clone 38 — 2 occurrences</summary>
 
     if not _int_ok ( value ) then
     return false
@@ -1245,7 +1449,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 27 — 2 occurrences</summary>
+<summary>Clone 39 — 2 occurrences</summary>
 
     return false
     end if
@@ -1260,7 +1464,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 28 — 2 occurrences</summary>
+<summary>Clone 40 — 2 occurrences</summary>
 
     end if
     if value < 0 or value > 0xFFFF then
@@ -1275,7 +1479,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 29 — 2 occurrences</summary>
+<summary>Clone 41 — 2 occurrences</summary>
 
     if value < 0 or value > 0xFFFF then
     return false
@@ -1290,7 +1494,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 30 — 2 occurrences</summary>
+<summary>Clone 42 — 2 occurrences</summary>
 
     return false
     end if
@@ -1305,7 +1509,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 31 — 2 occurrences</summary>
+<summary>Clone 43 — 2 occurrences</summary>
 
     end if
     if not _int_ok ( off ) then
@@ -1320,7 +1524,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 32 — 2 occurrences</summary>
+<summary>Clone 44 — 2 occurrences</summary>
 
     if not _int_ok ( off ) then
     return
@@ -1335,7 +1539,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 33 — 2 occurrences</summary>
+<summary>Clone 45 — 2 occurrences</summary>
 
     return
     end if
@@ -1350,7 +1554,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 34 — 2 occurrences</summary>
+<summary>Clone 46 — 2 occurrences</summary>
 
     return false
     end if
@@ -1365,7 +1569,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 35 — 2 occurrences</summary>
+<summary>Clone 47 — 2 occurrences</summary>
 
     end if
     if not _int_ok ( value ) then
@@ -1380,7 +1584,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 36 — 2 occurrences</summary>
+<summary>Clone 48 — 2 occurrences</summary>
 
     if not _int_ok ( value ) then
     return false
@@ -1395,7 +1599,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 37 — 2 occurrences</summary>
+<summary>Clone 49 — 2 occurrences</summary>
 
     return false
     end if
@@ -1410,7 +1614,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 38 — 2 occurrences</summary>
+<summary>Clone 50 — 2 occurrences</summary>
 
     end if
     if value < 0 or value > 0xFFFFFFFF then
@@ -1425,7 +1629,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 39 — 2 occurrences</summary>
+<summary>Clone 51 — 2 occurrences</summary>
 
     if value < 0 or value > 0xFFFFFFFF then
     return false
@@ -1440,7 +1644,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 40 — 2 occurrences</summary>
+<summary>Clone 52 — 2 occurrences</summary>
 
     return false
     end if
@@ -1455,7 +1659,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 41 — 2 occurrences</summary>
+<summary>Clone 53 — 2 occurrences</summary>
 
     end if
     if not _int_ok ( off ) then
@@ -1470,7 +1674,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 42 — 2 occurrences</summary>
+<summary>Clone 54 — 2 occurrences</summary>
 
     if not _int_ok ( off ) then
     return
@@ -1485,7 +1689,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 43 — 2 occurrences</summary>
+<summary>Clone 55 — 2 occurrences</summary>
 
     return
     end if
@@ -1500,7 +1704,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 44 — 2 occurrences</summary>
+<summary>Clone 56 — 2 occurrences</summary>
 
     end if
     n = len ( b )
@@ -1515,7 +1719,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 45 — 2 occurrences</summary>
+<summary>Clone 57 — 2 occurrences</summary>
 
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
@@ -1530,7 +1734,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 46 — 2 occurrences</summary>
+<summary>Clone 58 — 2 occurrences</summary>
 
     if not _check_range ( off , 4 , n ) then
     return
@@ -1545,7 +1749,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 47 — 2 occurrences</summary>
+<summary>Clone 59 — 2 occurrences</summary>
 
     return
     end if
@@ -1560,7 +1764,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 48 — 2 occurrences</summary>
+<summary>Clone 60 — 2 occurrences</summary>
 
     return
     end if
@@ -1575,7 +1779,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 49 — 2 occurrences</summary>
+<summary>Clone 61 — 2 occurrences</summary>
 
     end if
     if typeof ( b ) != "bytes" then
@@ -1590,7 +1794,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 50 — 2 occurrences</summary>
+<summary>Clone 62 — 2 occurrences</summary>
 
     if typeof ( b ) != "bytes" then
     return
@@ -1605,7 +1809,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 51 — 2 occurrences</summary>
+<summary>Clone 63 — 2 occurrences</summary>
 
     written = written + 1
     if literalLength >= 15 then written = _writeLength ( output , written , literalLength - 15 ) end if
@@ -1620,7 +1824,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 52 — 2 occurrences</summary>
+<summary>Clone 64 — 2 occurrences</summary>
 
     i = 0
     while i < 8
@@ -1635,7 +1839,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 53 — 2 occurrences</summary>
+<summary>Clone 65 — 2 occurrences</summary>
 
     this . callback = void
     this . data = void
@@ -1650,7 +1854,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 54 — 2 occurrences</summary>
+<summary>Clone 66 — 2 occurrences</summary>
 
     if not this . guard . acquire ( ) then return false end if
     if this . closed or this . stopping then
@@ -1665,7 +1869,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 55 — 2 occurrences</summary>
+<summary>Clone 67 — 2 occurrences</summary>
 
     if this . closed or this . stopping then
     this . guard . release ( )
@@ -1680,7 +1884,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 56 — 2 occurrences</summary>
+<summary>Clone 68 — 2 occurrences</summary>
 
     i = i + 1
     end while
@@ -1695,7 +1899,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 57 — 2 occurrences</summary>
+<summary>Clone 69 — 2 occurrences</summary>
 
     end while
     if not this . guard . acquire ( ) then return false end if
@@ -1710,7 +1914,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 58 — 2 occurrences</summary>
+<summary>Clone 70 — 2 occurrences</summary>
 
     function max ( a , b )
     if a > b then
@@ -1725,7 +1929,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 59 — 2 occurrences</summary>
+<summary>Clone 71 — 2 occurrences</summary>
 
     function clamp ( x , lo , hi )
     if x < lo then
@@ -1740,7 +1944,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 60 — 2 occurrences</summary>
+<summary>Clone 72 — 2 occurrences</summary>
 
     if x < lo then
     return lo
@@ -1755,7 +1959,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 61 — 2 occurrences</summary>
+<summary>Clone 73 — 2 occurrences</summary>
 
     return lo
     end if
@@ -1770,7 +1974,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 62 — 2 occurrences</summary>
+<summary>Clone 74 — 2 occurrences</summary>
 
     end if
     if x > hi then
@@ -1785,7 +1989,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 63 — 2 occurrences</summary>
+<summary>Clone 75 — 2 occurrences</summary>
 
     if x < 0 then
     return - 1
@@ -1800,7 +2004,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 64 — 2 occurrences</summary>
+<summary>Clone 76 — 2 occurrences</summary>
 
     return - 1
     end if
@@ -1815,7 +2019,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 65 — 2 occurrences</summary>
+<summary>Clone 77 — 2 occurrences</summary>
 
     end if
     if x > 0 then
@@ -1830,7 +2034,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 66 — 2 occurrences</summary>
+<summary>Clone 78 — 2 occurrences</summary>
 
     function min ( a , b )
     if a < b then
@@ -1845,7 +2049,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 67 — 2 occurrences</summary>
+<summary>Clone 79 — 2 occurrences</summary>
 
     function _putU32 ( buffer , offset , value )
     buffer [ offset ] = value & 0xFF
@@ -1860,7 +2064,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 68 — 2 occurrences</summary>
+<summary>Clone 80 — 2 occurrences</summary>
 
     ok = provider != 0
     if ok then
@@ -1875,7 +2079,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 69 — 2 occurrences</summary>
+<summary>Clone 81 — 2 occurrences</summary>
 
     if ok then
     status = BCryptImportKeyPair ( provider , 0 , "ECCPRIVATEBLOB" , privateHandleBytes , nativeBytesPtr ( privateBlob ) , len ( privateBlob ) , 0 )
@@ -1890,7 +2094,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 70 — 2 occurrences</summary>
+<summary>Clone 82 — 2 occurrences</summary>
 
     _zero ( resultLength )
     _zero ( privateBlob )
@@ -1905,7 +2109,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 71 — 2 occurrences</summary>
+<summary>Clone 83 — 2 occurrences</summary>
 
     if not this . guard . acquire ( ) then return 0 end if
     result = 0
@@ -1920,7 +2124,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 72 — 2 occurrences</summary>
+<summary>Clone 84 — 2 occurrences</summary>
 
     if this . closed then
     this . guard . release ( )
@@ -1935,7 +2139,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 73 — 2 occurrences</summary>
+<summary>Clone 85 — 2 occurrences</summary>
 
     function clear ( )
     if not this . guard . acquire ( ) then return false end if
@@ -1950,7 +2154,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 74 — 4 occurrences</summary>
+<summary>Clone 86 — 4 occurrences</summary>
 
     if not this . guard . acquire ( ) then return [ ] end if
     if this . closed then
@@ -1967,7 +2171,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 75 — 3 occurrences</summary>
+<summary>Clone 87 — 3 occurrences</summary>
 
     if this . closed then
     this . guard . release ( )
@@ -1983,7 +2187,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 76 — 3 occurrences</summary>
+<summary>Clone 88 — 3 occurrences</summary>
 
     this . guard . release ( )
     return [ ]
@@ -1999,7 +2203,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 77 — 3 occurrences</summary>
+<summary>Clone 89 — 3 occurrences</summary>
 
     return [ ]
     end if
@@ -2015,7 +2219,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 78 — 3 occurrences</summary>
+<summary>Clone 90 — 3 occurrences</summary>
 
     end if
     output = array ( this . size )
@@ -2031,7 +2235,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 79 — 2 occurrences</summary>
+<summary>Clone 91 — 2 occurrences</summary>
 
     h = h ^ ( h >> 16 )
     h = ( h * 0x7feb352d ) & 0xFFFFFFFF
@@ -2046,7 +2250,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 80 — 3 occurrences</summary>
+<summary>Clone 92 — 3 occurrences</summary>
 
     outputIndex = outputIndex + 1
     end if
@@ -2062,7 +2266,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 81 — 3 occurrences</summary>
+<summary>Clone 93 — 3 occurrences</summary>
 
     end if
     i = i + 1
@@ -2078,7 +2282,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 82 — 2 occurrences</summary>
+<summary>Clone 94 — 2 occurrences</summary>
 
     h = ( h * 0x7feb352d ) & 0xFFFFFFFF
     h = h ^ ( h >> 15 )
@@ -2093,7 +2297,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 83 — 2 occurrences</summary>
+<summary>Clone 95 — 2 occurrences</summary>
 
     this . closed = true
     this . guard . release ( )
@@ -2108,7 +2312,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 84 — 2 occurrences</summary>
+<summary>Clone 96 — 2 occurrences</summary>
 
     if typeof ( index ) != "int" then return end if
     if not this . guard . acquire ( ) then return end if
@@ -2123,7 +2327,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 85 — 2 occurrences</summary>
+<summary>Clone 97 — 2 occurrences</summary>
 
     if not this . guard . acquire ( ) then return end if
     if this . closed or index < 0 or index >= this . size then
@@ -2138,7 +2342,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 86 — 2 occurrences</summary>
+<summary>Clone 98 — 2 occurrences</summary>
 
     i = this . size
     while i > index
@@ -2153,7 +2357,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 87 — 2 occurrences</summary>
+<summary>Clone 99 — 2 occurrences</summary>
 
     while i > index
     this . buf [ i ] = this . buf [ i - 1 ]
@@ -2168,7 +2372,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 88 — 3 occurrences</summary>
+<summary>Clone 100 — 3 occurrences</summary>
 
     function _allocArray ( n , fill )
     if typeof ( n ) != "int" then
@@ -2184,7 +2388,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 89 — 3 occurrences</summary>
+<summary>Clone 101 — 3 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return
@@ -2200,7 +2404,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 90 — 3 occurrences</summary>
+<summary>Clone 102 — 3 occurrences</summary>
 
     return
     end if
@@ -2216,7 +2420,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 91 — 3 occurrences</summary>
+<summary>Clone 103 — 3 occurrences</summary>
 
     end if
     if n <= 0 then
@@ -2232,7 +2436,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 92 — 2 occurrences</summary>
+<summary>Clone 104 — 2 occurrences</summary>
 
     function _nextPow2 ( n )
     if typeof ( n ) != "int" then
@@ -2247,7 +2451,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 93 — 2 occurrences</summary>
+<summary>Clone 105 — 2 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return 16
@@ -2262,7 +2466,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 94 — 2 occurrences</summary>
+<summary>Clone 106 — 2 occurrences</summary>
 
     return 16
     end if
@@ -2277,7 +2481,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 95 — 2 occurrences</summary>
+<summary>Clone 107 — 2 occurrences</summary>
 
     end if
     if n <= 16 then
@@ -2292,7 +2496,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 96 — 2 occurrences</summary>
+<summary>Clone 108 — 2 occurrences</summary>
 
     if n <= 16 then
     return 16
@@ -2307,7 +2511,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 97 — 2 occurrences</summary>
+<summary>Clone 109 — 2 occurrences</summary>
 
     return 16
     end if
@@ -2322,7 +2526,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 98 — 2 occurrences</summary>
+<summary>Clone 110 — 2 occurrences</summary>
 
     end if
     c = 16
@@ -2337,7 +2541,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 99 — 2 occurrences</summary>
+<summary>Clone 111 — 2 occurrences</summary>
 
     c = 16
     while c < n
@@ -2352,7 +2556,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 100 — 2 occurrences</summary>
+<summary>Clone 112 — 2 occurrences</summary>
 
     if typeof ( index ) != "int" then
     return
@@ -2367,7 +2571,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 101 — 2 occurrences</summary>
+<summary>Clone 113 — 2 occurrences</summary>
 
     function popOr ( fallbackValue )
     v = this . pop ( )
@@ -2382,7 +2586,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 102 — 2 occurrences</summary>
+<summary>Clone 114 — 2 occurrences</summary>
 
     v = this . pop ( )
     if typeof ( v ) == "void" then
@@ -2397,7 +2601,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 103 — 3 occurrences</summary>
+<summary>Clone 115 — 3 occurrences</summary>
 
     function _nextPow2 ( n )
     if typeof ( n ) != "int" then
@@ -2413,7 +2617,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 104 — 3 occurrences</summary>
+<summary>Clone 116 — 3 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return 8
@@ -2429,7 +2633,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 105 — 3 occurrences</summary>
+<summary>Clone 117 — 3 occurrences</summary>
 
     return 8
     end if
@@ -2445,7 +2649,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 106 — 3 occurrences</summary>
+<summary>Clone 118 — 3 occurrences</summary>
 
     end if
     if n <= 8 then
@@ -2461,7 +2665,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 107 — 3 occurrences</summary>
+<summary>Clone 119 — 3 occurrences</summary>
 
     if n <= 8 then
     return 8
@@ -2477,7 +2681,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 108 — 3 occurrences</summary>
+<summary>Clone 120 — 3 occurrences</summary>
 
     return 8
     end if
@@ -2493,7 +2697,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 109 — 3 occurrences</summary>
+<summary>Clone 121 — 3 occurrences</summary>
 
     end if
     c = 8
@@ -2509,7 +2713,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 110 — 3 occurrences</summary>
+<summary>Clone 122 — 3 occurrences</summary>
 
     c = 8
     while c < n
@@ -2525,7 +2729,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 111 — 2 occurrences</summary>
+<summary>Clone 123 — 2 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return
@@ -2540,7 +2744,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 112 — 2 occurrences</summary>
+<summary>Clone 124 — 2 occurrences</summary>
 
     return
     end if
@@ -2555,7 +2759,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 113 — 2 occurrences</summary>
+<summary>Clone 125 — 2 occurrences</summary>
 
     end if
     if n < 0 then
@@ -2570,7 +2774,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 114 — 2 occurrences</summary>
+<summary>Clone 126 — 2 occurrences</summary>
 
     function _decodeOrEmpty ( b )
     if typeof ( b ) != "bytes" then
@@ -2585,7 +2789,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 115 — 2 occurrences</summary>
+<summary>Clone 127 — 2 occurrences</summary>
 
     if typeof ( b ) != "bytes" then
     return
@@ -2600,7 +2804,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 116 — 2 occurrences</summary>
+<summary>Clone 128 — 2 occurrences</summary>
 
     return
     end if
@@ -2615,7 +2819,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 117 — 2 occurrences</summary>
+<summary>Clone 129 — 2 occurrences</summary>
 
     end if
     if len ( b ) == 0 then
@@ -2630,7 +2834,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 118 — 3 occurrences</summary>
+<summary>Clone 130 — 3 occurrences</summary>
 
     if typeof ( s ) != "string" or typeof ( width ) != "int" or typeof ( ch ) != "string" then
     return
@@ -2646,7 +2850,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 119 — 3 occurrences</summary>
+<summary>Clone 131 — 3 occurrences</summary>
 
     return
     end if
@@ -2662,7 +2866,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 120 — 2 occurrences</summary>
+<summary>Clone 132 — 2 occurrences</summary>
 
     h = CreateFileW (
     path ,
@@ -2677,7 +2881,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 121 — 2 occurrences</summary>
+<summary>Clone 133 — 2 occurrences</summary>
 
     path ,
     std . fs . Access . GENERIC_READ ,
@@ -2692,7 +2896,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 122 — 2 occurrences</summary>
+<summary>Clone 134 — 2 occurrences</summary>
 
     std . fs . Access . GENERIC_READ ,
     std . fs . Share . FILE_SHARE_READ ,
@@ -2707,7 +2911,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 123 — 2 occurrences</summary>
+<summary>Clone 135 — 2 occurrences</summary>
 
     std . fs . Share . FILE_SHARE_READ ,
     0 ,
@@ -2722,7 +2926,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 124 — 2 occurrences</summary>
+<summary>Clone 136 — 2 occurrences</summary>
 
     0 ,
     std . fs . Creation . OPEN_EXISTING ,
@@ -2737,7 +2941,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 125 — 2 occurrences</summary>
+<summary>Clone 137 — 2 occurrences</summary>
 
     pos = 0
     while pos < size
@@ -2752,7 +2956,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 126 — 2 occurrences</summary>
+<summary>Clone 138 — 2 occurrences</summary>
 
     j = 0
     while j < m and hay [ i + j ] == needle [ j ]
@@ -2767,7 +2971,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 127 — 2 occurrences</summary>
+<summary>Clone 139 — 2 occurrences</summary>
 
     while j < m and hay [ i + j ] == needle [ j ]
     j = j + 1
@@ -2782,7 +2986,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 128 — 2 occurrences</summary>
+<summary>Clone 140 — 2 occurrences</summary>
 
     n = len ( hay )
     m = len ( needle )
@@ -2797,7 +3001,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 129 — 2 occurrences</summary>
+<summary>Clone 141 — 2 occurrences</summary>
 
     m = len ( needle )
     i0 = start
@@ -2812,7 +3016,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 130 — 2 occurrences</summary>
+<summary>Clone 142 — 2 occurrences</summary>
 
     i0 = start
     if typeof ( i0 ) != "int" then
@@ -2827,7 +3031,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 131 — 2 occurrences</summary>
+<summary>Clone 143 — 2 occurrences</summary>
 
     if typeof ( i0 ) != "int" then
     i0 = 0
@@ -2842,7 +3046,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 132 — 2 occurrences</summary>
+<summary>Clone 144 — 2 occurrences</summary>
 
     i0 = 0
     end if
@@ -2857,7 +3061,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 133 — 2 occurrences</summary>
+<summary>Clone 145 — 2 occurrences</summary>
 
     end if
     if i0 < 0 then
@@ -2872,7 +3076,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 134 — 5 occurrences</summary>
+<summary>Clone 146 — 5 occurrences</summary>
 
     if typeof ( s ) != "string" then
     return
@@ -2890,7 +3094,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 135 — 2 occurrences</summary>
+<summary>Clone 147 — 2 occurrences</summary>
 
     return
     end if
@@ -2905,7 +3109,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 136 — 2 occurrences</summary>
+<summary>Clone 148 — 2 occurrences</summary>
 
     end if
     if typeof ( needle ) != "string" then
@@ -2920,7 +3124,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 137 — 2 occurrences</summary>
+<summary>Clone 149 — 2 occurrences</summary>
 
     if typeof ( needle ) != "string" then
     return
@@ -2935,7 +3139,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 138 — 2 occurrences</summary>
+<summary>Clone 150 — 2 occurrences</summary>
 
     if typeof ( ch ) != "string" then
     return false
@@ -2950,7 +3154,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 139 — 2 occurrences</summary>
+<summary>Clone 151 — 2 occurrences</summary>
 
     else result . appendString ( ch )
     end if
@@ -2965,7 +3169,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 140 — 3 occurrences</summary>
+<summary>Clone 152 — 3 occurrences</summary>
 
     function close ( )
     if this . closed then return false end if
@@ -2981,7 +3185,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 141 — 3 occurrences</summary>
+<summary>Clone 153 — 3 occurrences</summary>
 
     if this . closed then return false end if
     ok = CloseHandle ( this . handle )
@@ -2997,7 +3201,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 142 — 3 occurrences</summary>
+<summary>Clone 154 — 3 occurrences</summary>
 
     ok = CloseHandle ( this . handle )
     if ok then
@@ -3013,7 +3217,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 143 — 3 occurrences</summary>
+<summary>Clone 155 — 3 occurrences</summary>
 
     if ok then
     this . closed = true
@@ -3029,7 +3233,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 144 — 2 occurrences</summary>
+<summary>Clone 156 — 2 occurrences</summary>
 
     function acquireFor ( milliseconds )
     if this . closed or typeof ( milliseconds ) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
@@ -3044,7 +3248,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 145 — 2 occurrences</summary>
+<summary>Clone 157 — 2 occurrences</summary>
 
     if secBufferType ( buffers , index ) == SECBUFFER_EXTRA then
     extraLength = secBufferLength ( buffers , index )
@@ -3059,7 +3263,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 146 — 2 occurrences</summary>
+<summary>Clone 158 — 2 occurrences</summary>
 
     extraLength = secBufferLength ( buffers , index )
     pointerResult = try ( secBufferPointer ( buffers , index ) )
@@ -3074,7 +3278,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 147 — 2 occurrences</summary>
+<summary>Clone 159 — 2 occurrences</summary>
 
     pointerResult = try ( secBufferPointer ( buffers , index ) )
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
@@ -3089,7 +3293,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 148 — 2 occurrences</summary>
+<summary>Clone 160 — 2 occurrences</summary>
 
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
     end if
@@ -3104,7 +3308,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 149 — 2 occurrences</summary>
+<summary>Clone 161 — 2 occurrences</summary>
 
     inbound = try ( appendBytes ( inbound , received ) )
     if typeof ( inbound ) == "error" then closeContext ( context ) ; return inbound end if
@@ -3119,7 +3323,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 150 — 2 occurrences</summary>
+<summary>Clone 162 — 2 occurrences</summary>
 
     sent = try ( network . tcpSendAll ( socketHandle , outputToken ) )
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
@@ -3134,7 +3338,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 151 — 2 occurrences</summary>
+<summary>Clone 163 — 2 occurrences</summary>
 
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
     end if
@@ -3149,7 +3353,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 152 — 2 occurrences</summary>
+<summary>Clone 164 — 2 occurrences</summary>
 
     end if
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
@@ -3164,7 +3368,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 153 — 2 occurrences</summary>
+<summary>Clone 165 — 2 occurrences</summary>
 
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
@@ -3179,7 +3383,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 154 — 2 occurrences</summary>
+<summary>Clone 166 — 2 occurrences</summary>
 
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
     inbound = extra
@@ -3194,7 +3398,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 155 — 2 occurrences</summary>
+<summary>Clone 167 — 2 occurrences</summary>
 
     inbound = extra
     end while
@@ -3209,7 +3413,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 156 — 2 occurrences</summary>
+<summary>Clone 168 — 2 occurrences</summary>
 
     end while
     context . encryptedInput = inbound
@@ -3224,7 +3428,7 @@ Found 157 clone group(s). At most 157 groups are shown.
 </details>
 
 <details>
-<summary>Clone 157 — 2 occurrences</summary>
+<summary>Clone 169 — 2 occurrences</summary>
 
     writeSecBuffer ( buffers , 1 , SECBUFFER_EMPTY , 0 , 0 )
     writeSecBuffer ( buffers , 2 , SECBUFFER_EMPTY , 0 , 0 )

@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 25 September 2026 against the matching 1.2.10 revisions of:
+Verified through 25 September 2026 against the matching 1.2.11 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -30,34 +30,43 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
-## 25 September 2026 native-video verification
+## 25 September 2026 native-media verification
 
-Both compiler repositories now contain the same 52-module standard library and
-the same version-1 native video bridge sources. The Windows bridge builds with
-MSVC /W4 and uses Media Foundation; the Linux bridge builds with GCC
-`-Wall -Wextra -Werror` and dynamically loads GStreamer 1.x.
+Both compiler repositories now contain the same 53-module standard library and
+the same version-1 native media bridge sources. `std.audio` adds typed WAV, MP3
+and Standard MIDI File playback next to `std.video`. Windows uses Media
+Foundation for WAV/MP3/video and WinMM for MIDI; Linux dynamically loads
+GStreamer 1.x. The bridge builds cleanly with MSVC `/W4` and GCC
+`-Wall -Wextra -Werror`.
 
-The dedicated two-second playback regression validates option and URI policy,
-metadata, stream discovery, pause, seek, resume, end-of-stream, state and
-idempotent cleanup. It passed through both compilers on both targets, including
-the self-hosted object pipeline. For the same source and output path, all
-compiler paths produce byte-identical output:
+The dedicated playback regressions validate option and URI policy, metadata,
+stream discovery, pause, seek, resume, looping, end-of-stream, state, events
+and idempotent cleanup. WAV, MP3, MIDI and video pass through both compilers on
+both targets, including the self-hosted object pipeline. For the same source
+and output path, all compiler paths produce byte-identical output:
 
-| Target | Bytes | SHA-256 |
+| Program and target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 PE | 1,239,552 | `468BE58B8470AE3CBA758EA95526243948B1C9FF4097C34F46C037A83E9B5540` |
-| Linux x64 ELF | 1,308,272 | `163EE4AD5CAC23F9F90D3795C90324CFC9E430103745EE7B47ED2BCDF0A24194` |
+| Video, Windows x64 PE | 1,239,552 | `468BE58B8470AE3CBA758EA95526243948B1C9FF4097C34F46C037A83E9B5540` |
+| Video, Linux x64 ELF | 1,308,272 | `163EE4AD5CAC23F9F90D3795C90324CFC9E430103745EE7B47ED2BCDF0A24194` |
+| Audio, Windows x64 PE | 1,560,064 | `312E535332F262EB29F7E2FB79A760C834B1DE2278C56EC13F6E4E7C716EF9AE` |
+| Audio, Linux x64 ELF | 1,612,288 | `847D47174C085C582AEBD9C8E65483F957F0146300A7E26727D88894D6984FFD` |
 
-The general Python suite remains 151/151, and the complete 1.2.10 self-hosted
-suite passes in 208.127 seconds. Strict MiniDoc regeneration reports 52 files, 1,858
-symbols and zero warnings in each repository.
+The general Python suite remains 151/151. The complete 1.2.11 self-hosted outer
+suite passes in 179.570 seconds, with 136/136 tests in its embedded MiniLang
+harness. Strict MiniDoc regeneration reports 53 files, 1,928 symbols and zero
+warnings in each repository.
 
-For release 1.2.10, Python bootstrap and two self-hosted Windows builds produce
+For release 1.2.11, Python bootstrap and two self-hosted Windows builds produce
 one byte-identical 65,331,200-byte compiler image (SHA-256
-`D1E4312E9ADEA6EB190B68F0210999B06A22D744C43070874CF9BBA018FA05D8`).
+`493965554B865B9666927551165D321D9338359CD4BFCF03AF01A344CA6B3F20`).
 The native Linux build, the Windows-hosted self-hosted compiler and the Python
 compiler also produce one byte-identical 65,335,104-byte Linux image (SHA-256
-`83640A9437C16785647E21EEE254DD5AA4896B54126F28B426FD35FA5930AF28`).
+`3986392C43989A67C30DC70E2A3A8502E49F2BA66DB5C284C39372D24397F300`).
+Measured compiler build times were 72.880 seconds for the Windows Python
+bootstrap, 127.597 and 123.987 seconds for its two self-hosted rebuilds, 92
+seconds for the Linux Python bootstrap, and 124 seconds for the native Linux
+self-hosted rebuild.
 
 ## 20 September 2026 standard-library verification
 

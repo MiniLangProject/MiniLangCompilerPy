@@ -34,6 +34,69 @@
 | [std.assert.assertNe](File-std-assert-ml-1772521196.md#function-function-std-assert-assertne-function-assertne-actual-expected-label-std-assert-ml-221639904) | `function` | `function assertNe(actual, expected, label)` |
 | [std.assert.assertNotVoid](File-std-assert-ml-1772521196.md#function-function-std-assert-assertnotvoid-function-assertnotvoid-x-label-std-assert-ml-1841061316) | `function` | `function assertNotVoid(x, label)` |
 | [std.assert.assertTrue](File-std-assert-ml-1772521196.md#function-function-std-assert-asserttrue-function-asserttrue-cond-label-std-assert-ml-1187416750) | `function` | `function assertTrue(cond, label)` |
+| [std.audio.AUDIO_ERROR](File-std-audio-ml-1379868758.md#constant-constant-std-audio-audio-error-const-audio-error-1782-std-audio-ml-2034036877) | `constant` | `const AUDIO_ERROR = 1782` |
+| [std.audio.backend](File-std-audio-ml-1379868758.md#function-function-std-audio-backend-function-backend-std-audio-ml-1381422234) | `function` | `function backend()` |
+| [std.audio.Event](Type-std-audio-event-1751276296.md) | `struct` | `struct Event` |
+| [std.audio.Event.code](Type-std-audio-event-1751276296.md#field-field-std-audio-event-code-code-std-audio-ml-2006442385) | `field` | `code` |
+| [std.audio.Event.kind](Type-std-audio-event-1751276296.md#field-field-std-audio-event-kind-kind-std-audio-ml-138493303) | `field` | `kind` |
+| [std.audio.Event.message](Type-std-audio-event-1751276296.md#field-field-std-audio-event-message-message-std-audio-ml-1505772211) | `field` | `message` |
+| [std.audio.Event.state](Type-std-audio-event-1751276296.md#field-field-std-audio-event-state-state-std-audio-ml-1219631291) | `field` | `state` |
+| [std.audio.EventKind](Type-std-audio-eventkind-1850962106.md) | `enum` | `enum EventKind` |
+| [std.audio.EventKind.Buffering](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-buffering-buffering-5-std-audio-ml-1185571030) | `enum_variant` | `Buffering = 5` |
+| [std.audio.EventKind.Ended](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-ended-ended-6-std-audio-ml-113571933) | `enum_variant` | `Ended = 6` |
+| [std.audio.EventKind.Error](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-error-error-8-std-audio-ml-1066414315) | `enum_variant` | `Error = 8` |
+| [std.audio.EventKind.FormatChanged](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-formatchanged-formatchanged-7-std-audio-ml-140504144) | `enum_variant` | `FormatChanged = 7` |
+| [std.audio.EventKind.Paused](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-paused-paused-3-std-audio-ml-1847392316) | `enum_variant` | `Paused = 3` |
+| [std.audio.EventKind.Playing](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-playing-playing-2-std-audio-ml-1355971181) | `enum_variant` | `Playing = 2` |
+| [std.audio.EventKind.Ready](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-ready-ready-1-std-audio-ml-1286976502) | `enum_variant` | `Ready = 1` |
+| [std.audio.EventKind.Stopped](Type-std-audio-eventkind-1850962106.md#enum_variant-enum-variant-std-audio-eventkind-stopped-stopped-4-std-audio-ml-2075709495) | `enum_variant` | `Stopped = 4` |
+| [std.audio.Format](Type-std-audio-format-787557795.md) | `enum` | `enum Format` |
+| [std.audio.Format.Midi](Type-std-audio-format-787557795.md#enum_variant-enum-variant-std-audio-format-midi-midi-3-std-audio-ml-2075426831) | `enum_variant` | `Midi = 3` |
+| [std.audio.Format.Mp3](Type-std-audio-format-787557795.md#enum_variant-enum-variant-std-audio-format-mp3-mp3-2-std-audio-ml-982158164) | `enum_variant` | `Mp3 = 2` |
+| [std.audio.Format.Unknown](Type-std-audio-format-787557795.md#enum_variant-enum-variant-std-audio-format-unknown-unknown-0-std-audio-ml-1255864146) | `enum_variant` | `Unknown = 0` |
+| [std.audio.Format.Wave](Type-std-audio-format-787557795.md#enum_variant-enum-variant-std-audio-format-wave-wave-1-std-audio-ml-1510311249) | `enum_variant` | `Wave = 1` |
+| [std.audio.formatFromSource](File-std-audio-ml-1379868758.md#function-function-std-audio-formatfromsource-function-formatfromsource-source-std-audio-ml-1827824367) | `function` | `function formatFromSource(source)` |
+| [std.audio.formatName](File-std-audio-ml-1379868758.md#function-function-std-audio-formatname-function-formatname-value-std-audio-ml-941796055) | `function` | `function formatName(value)` |
+| [std.audio.isAvailable](File-std-audio-ml-1379868758.md#function-function-std-audio-isavailable-function-isavailable-std-audio-ml-629756284) | `function` | `function isAvailable()` |
+| [std.audio.isSupportedFormat](File-std-audio-ml-1379868758.md#function-function-std-audio-issupportedformat-function-issupportedformat-value-std-audio-ml-2003268917) | `function` | `function isSupportedFormat(value)` |
+| [std.audio.MAX_AUDIO_MILLISECONDS](File-std-audio-ml-1379868758.md#constant-constant-std-audio-max-audio-milliseconds-const-max-audio-milliseconds-media-max-video-milliseconds-std-audio-ml-290400000) | `constant` | `const MAX_AUDIO_MILLISECONDS = media.MAX_VIDEO_MILLISECONDS` |
+| [std.audio.Player](Type-std-audio-player-1417198005.md) | `struct` | `struct Player` |
+| [std.audio.Player.backend](Type-std-audio-player-1417198005.md#method-method-std-audio-player-backend-function-backend-std-audio-ml-1800188746) | `method` | `function backend()` |
+| [std.audio.Player.close](Type-std-audio-player-1417198005.md#method-method-std-audio-player-close-function-close-std-audio-ml-1700319502) | `method` | `function close()` |
+| [std.audio.Player.duration](Type-std-audio-player-1417198005.md#method-method-std-audio-player-duration-function-duration-std-audio-ml-452982834) | `method` | `function duration()` |
+| [std.audio.Player.format](Type-std-audio-player-1417198005.md#method-method-std-audio-player-format-function-format-std-audio-ml-554587574) | `method` | `function format()` |
+| [std.audio.Player.hasAudio](Type-std-audio-player-1417198005.md#method-method-std-audio-player-hasaudio-function-hasaudio-std-audio-ml-1580341818) | `method` | `function hasAudio()` |
+| [std.audio.Player.open](Type-std-audio-player-1417198005.md#static_method-static-method-std-audio-player-open-static-function-open-source-options-void-std-audio-ml-11174309) | `static_method` | `static function open(source, options = void)` |
+| [std.audio.Player.options](Type-std-audio-player-1417198005.md#field-field-std-audio-player-options-options-std-audio-ml-620952056) | `field` | `options` |
+| [std.audio.Player.pause](Type-std-audio-player-1417198005.md#method-method-std-audio-player-pause-function-pause-std-audio-ml-217486234) | `method` | `function pause()` |
+| [std.audio.Player.play](Type-std-audio-player-1417198005.md#method-method-std-audio-player-play-function-play-std-audio-ml-1904415466) | `method` | `function play()` |
+| [std.audio.Player.pollEvent](Type-std-audio-player-1417198005.md#method-method-std-audio-player-pollevent-function-pollevent-std-audio-ml-1721749456) | `method` | `function pollEvent()` |
+| [std.audio.Player.position](Type-std-audio-player-1417198005.md#method-method-std-audio-player-position-function-position-std-audio-ml-90934830) | `method` | `function position()` |
+| [std.audio.Player.seek](Type-std-audio-player-1417198005.md#method-method-std-audio-player-seek-function-seek-milliseconds-std-audio-ml-148056452) | `method` | `function seek(milliseconds)` |
+| [std.audio.Player.setLoop](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setloop-function-setloop-enabled-std-audio-ml-294019719) | `method` | `function setLoop(enabled)` |
+| [std.audio.Player.setMuted](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setmuted-function-setmuted-muted-std-audio-ml-798585953) | `method` | `function setMuted(muted)` |
+| [std.audio.Player.setPlaybackRate](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setplaybackrate-function-setplaybackrate-rate-std-audio-ml-692689886) | `method` | `function setPlaybackRate(rate)` |
+| [std.audio.Player.setVolume](Type-std-audio-player-1417198005.md#method-method-std-audio-player-setvolume-function-setvolume-volume-std-audio-ml-637762712) | `method` | `function setVolume(volume)` |
+| [std.audio.Player.state](Type-std-audio-player-1417198005.md#method-method-std-audio-player-state-function-state-std-audio-ml-287810628) | `method` | `function state()` |
+| [std.audio.Player.stop](Type-std-audio-player-1417198005.md#method-method-std-audio-player-stop-function-stop-std-audio-ml-1105092494) | `method` | `function stop()` |
+| [std.audio.PlayerOptions](Type-std-audio-playeroptions-1251061429.md) | `struct` | `struct PlayerOptions` |
+| [std.audio.PlayerOptions.allowNetwork](Type-std-audio-playeroptions-1251061429.md#field-field-std-audio-playeroptions-allownetwork-allownetwork-std-audio-ml-769428434) | `field` | `allowNetwork` |
+| [std.audio.PlayerOptions.defaults](Type-std-audio-playeroptions-1251061429.md#static_method-static-method-std-audio-playeroptions-defaults-static-function-defaults-std-audio-ml-294074605) | `static_method` | `static function defaults()` |
+| [std.audio.PlayerOptions.loopEnabled](Type-std-audio-playeroptions-1251061429.md#field-field-std-audio-playeroptions-loopenabled-loopenabled-std-audio-ml-1950580844) | `field` | `loopEnabled` |
+| [std.audio.PlayerOptions.muted](Type-std-audio-playeroptions-1251061429.md#field-field-std-audio-playeroptions-muted-muted-std-audio-ml-330986456) | `field` | `muted` |
+| [std.audio.PlayerOptions.playbackRate](Type-std-audio-playeroptions-1251061429.md#field-field-std-audio-playeroptions-playbackrate-playbackrate-std-audio-ml-725023934) | `field` | `playbackRate` |
+| [std.audio.PlayerOptions.volume](Type-std-audio-playeroptions-1251061429.md#field-field-std-audio-playeroptions-volume-volume-std-audio-ml-1176627696) | `field` | `volume` |
+| [std.audio.State](Type-std-audio-state-765656853.md) | `enum` | `enum State` |
+| [std.audio.State.Buffering](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-buffering-buffering-6-std-audio-ml-1912538708) | `enum_variant` | `Buffering = 6` |
+| [std.audio.State.Closed](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-closed-closed-9-std-audio-ml-1647284591) | `enum_variant` | `Closed = 9` |
+| [std.audio.State.Empty](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-empty-empty-0-std-audio-ml-710253430) | `enum_variant` | `Empty = 0` |
+| [std.audio.State.Ended](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-ended-ended-7-std-audio-ml-312309505) | `enum_variant` | `Ended = 7` |
+| [std.audio.State.Failed](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-failed-failed-8-std-audio-ml-2071095160) | `enum_variant` | `Failed = 8` |
+| [std.audio.State.Loading](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-loading-loading-1-std-audio-ml-369226939) | `enum_variant` | `Loading = 1` |
+| [std.audio.State.Paused](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-paused-paused-4-std-audio-ml-321921002) | `enum_variant` | `Paused = 4` |
+| [std.audio.State.Playing](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-playing-playing-3-std-audio-ml-1390998649) | `enum_variant` | `Playing = 3` |
+| [std.audio.State.Ready](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-ready-ready-2-std-audio-ml-1253405212) | `enum_variant` | `Ready = 2` |
+| [std.audio.State.Stopped](Type-std-audio-state-765656853.md#enum_variant-enum-variant-std-audio-state-stopped-stopped-5-std-audio-ml-1626753563) | `enum_variant` | `Stopped = 5` |
 | [std.bytes.alloc](File-std-bytes-ml-1351945333.md#function-function-std-bytes-alloc-function-alloc-size-std-bytes-ml-1457681591) | `function` | `function alloc(size)` |
 | [std.bytes.allocFill](File-std-bytes-ml-1351945333.md#function-function-std-bytes-allocfill-function-allocfill-size-fill-std-bytes-ml-871437864) | `function` | `function allocFill(size, fill)` |
 | [std.bytes.BYTES_ERR](File-std-bytes-ml-1351945333.md#constant-constant-std-bytes-bytes-err-const-bytes-err-211-std-bytes-ml-888551107) | `constant` | `const BYTES_ERR = 211` |

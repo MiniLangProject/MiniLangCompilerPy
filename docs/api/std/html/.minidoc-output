@@ -5,6 +5,7 @@ assets/minidoc.js
 diagnostics.html
 file-std-array-ml-1258125823.html
 file-std-assert-ml-1772521196.html
+file-std-audio-ml-1379868758.html
 file-std-bytes-ml-1351945333.html
 file-std-checksum-crc32-ml-1964480723.html
 file-std-checksum-crc32c-ml-144026660.html
@@ -62,6 +63,7 @@ index.html
 metrics.html
 package-std-array-1432837065.html
 package-std-assert-1056679750.html
+package-std-audio-501224270.html
 package-std-bytes-172183927.html
 package-std-checksum-crc32-894971042.html
 package-std-checksum-crc32c-986608595.html
@@ -116,6 +118,12 @@ packages.html
 search-index.json
 symbols.html
 tests.html
+type-std-audio-event-1751276296.html
+type-std-audio-eventkind-1850962106.html
+type-std-audio-format-787557795.html
+type-std-audio-player-1417198005.html
+type-std-audio-playeroptions-1251061429.html
+type-std-audio-state-765656853.html
 type-std-concurrent-cancellation-cancellationtoken-2126484772.html
 type-std-concurrent-cancellation-cancellationtokensource-1458442689.html
 type-std-concurrent-channel-boundedqueue-1937801506.html

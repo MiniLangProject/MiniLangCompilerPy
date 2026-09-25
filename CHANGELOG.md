@@ -4,6 +4,13 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.11 - 2026-09-25
+
+- Added the typed `std.audio` facade for WAV, MP3 and Standard MIDI File
+  playback. Windows uses Media Foundation plus a dedicated WinMM MIDI
+  sequencer; Linux uses GStreamer. Added cross-compiler/target integration and
+  binary-parity coverage.
+
 ## 1.2.10 - 2026-09-25
 
 - Added portable native audio/video playback through `std.video`, backed by

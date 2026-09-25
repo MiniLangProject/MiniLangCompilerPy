@@ -3,6 +3,7 @@ assets/graph-imports.svg
 Diagnostics.md
 File-std-array-ml-1258125823.md
 File-std-assert-ml-1772521196.md
+File-std-audio-ml-1379868758.md
 File-std-bytes-ml-1351945333.md
 File-std-checksum-crc32-ml-1964480723.md
 File-std-checksum-crc32c-ml-144026660.md
@@ -59,6 +60,7 @@ Graph-Imports.md
 Metrics.md
 Package-std-array-1432837065.md
 Package-std-assert-1056679750.md
+Package-std-audio-501224270.md
 Package-std-bytes-172183927.md
 Package-std-checksum-crc32-894971042.md
 Package-std-checksum-crc32c-986608595.md
@@ -113,6 +115,12 @@ Packages.md
 README.md
 Symbols.md
 Tests.md
+Type-std-audio-event-1751276296.md
+Type-std-audio-eventkind-1850962106.md
+Type-std-audio-format-787557795.md
+Type-std-audio-player-1417198005.md
+Type-std-audio-playeroptions-1251061429.md
+Type-std-audio-state-765656853.md
 Type-std-concurrent-cancellation-cancellationtoken-2126484772.md
 Type-std-concurrent-cancellation-cancellationtokensource-1458442689.md
 Type-std-concurrent-channel-boundedqueue-1937801506.md

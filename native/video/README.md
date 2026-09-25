@@ -1,10 +1,11 @@
-# Native std.video bridge
+# Native std.video / std.audio bridge
 
-std.video keeps the MiniLang API identical on both supported targets while
-delegating decoding, clocks, audio output and optional video presentation to
-the operating system's media stack:
+`std.video` and `std.audio` keep the MiniLang API identical on both supported
+targets while delegating decoding, clocks, audio output and optional video
+presentation to the operating system's media stack:
 
-- Windows x64 uses Media Foundation's IMFMediaEngine.
+- Windows x64 uses Media Foundation's IMFMediaEngine for PCM/WAV, MP3 and
+  video, plus the WinMM MCI sequencer for local Standard MIDI Files.
 - Linux x64 uses GStreamer 1.x playbin and GstVideoOverlay.
 
 The bridge has a small versioned C ABI declared in
@@ -29,13 +30,27 @@ The resulting bridge must be deployed beside the MiniLang executable:
 - minilang_video.dll on Windows;
 - libminilang_video.so on Linux.
 
-Windows 10/11 supplies Media Foundation. Linux needs the GStreamer 1.x runtime
-and the plugin packages for the formats an application accepts. On Ubuntu, a
-useful non-patent-encumbered baseline is:
+Windows 10/11 supplies Media Foundation and WinMM. Linux needs the GStreamer
+1.x runtime and the plugin packages for the formats an application accepts.
+On Ubuntu, a useful non-patent-encumbered baseline is:
 
     sudo apt install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
+For Standard MIDI File playback on Ubuntu, also install the WildMIDI plugin
+and its instrument patches:
+
+    sudo apt install gstreamer1.0-plugins-bad libwildmidi-config freepats
+
 Additional codecs are deliberately an application/deployment choice.
+
+`std.audio` names WAV (`.wav`/`.wave`), MP3 (`.mp3`) and Standard MIDI Files
+(`.mid`/`.midi`) as its portable format contract. It has a typed audio-only
+facade with play, pause, stop, seek, loop, volume, mute, playback-rate, state,
+duration/position and polled-event APIs. Unknown extensions may still work
+when the installed native backend recognizes them. Windows MIDI playback is
+restricted to local files because the MCI sequencer does not consume network
+URIs. Per-player MIDI volume support is backend-dependent; the bridge avoids
+changing the process-wide MIDI mapper volume.
 
 ## Ownership and UI integration
 
@@ -60,8 +75,9 @@ codecs follow the installed OS media stack rather than a private codec bundle.
 
 tests/video_stdlib.ml covers option validation, local/network policy, metadata,
 audio/video stream discovery, playback, pause, seek, end-of-stream, state and
-deterministic cleanup. The opt-in runner builds both bridges, generates silent
-and audio/video fixtures with FFmpeg, executes Windows and Linux tests with
+deterministic cleanup. `tests/audio_stdlib.ml` adds WAV, MP3 and MIDI format,
+control, error and ownership coverage. The opt-in runner builds both bridges,
+generates deterministic media fixtures, executes Windows and Linux tests with
 both compiler implementations, and verifies byte-identical target output:
 
     .\native\video\test.ps1

@@ -7,6 +7,7 @@
 | [std/_linux_fs.ml](File-std-linux-fs-ml-2121665983.md) | `std._linux_fs` | no | 65 |
 | [std/array.ml](File-std-array-ml-1258125823.md) | `std.array` | no | 23 |
 | [std/assert.ml](File-std-assert-ml-1772521196.md) | `std.assert` | no | 8 |
+| [std/audio.ml](File-std-audio-ml-1379868758.md) | `std.audio` | no | 70 |
 | [std/bytes.ml](File-std-bytes-ml-1351945333.md) | `std.bytes` | no | 39 |
 | [std/checksum/crc32.ml](File-std-checksum-crc32-ml-1964480723.md) | `std.checksum.crc32` | no | 5 |
 | [std/checksum/crc32c.ml](File-std-checksum-crc32c-ml-144026660.md) | `std.checksum.crc32c` | no | 5 |

@@ -10,6 +10,7 @@
 #include <mfmediaengine.h>
 #include <shlwapi.h>
 #include <oleauto.h>
+#include <mmsystem.h>
 
 #include <atomic>
 #include <cmath>
@@ -25,6 +26,7 @@
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "oleaut32.lib")
 #pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "winmm.lib")
 
 namespace {
 
@@ -100,6 +102,7 @@ struct Player {
     std::atomic<int> state{MLV_STATE_EMPTY};
     IMFMediaEngine *engine = nullptr;
     MediaNotify *notify = nullptr;
+    MCIDEVICEID midi_device = 0;
     std::wstring source;
     uintptr_t window = 0;
     HWND owned_window = nullptr;
@@ -109,6 +112,10 @@ struct Player {
     bool loop = false;
     bool mf_started = false;
     bool co_initialized = false;
+    bool midi = false;
+    bool midi_started = false;
+    bool midi_end_reported = false;
+    DWORD midi_base_tempo = 500000;
     DWORD owner_thread = 0;
 
     Player() {
@@ -215,6 +222,17 @@ bool is_network_source(const std::string &source) {
     return prefix != "file";
 }
 
+bool is_midi_source(const std::string &source) {
+    size_t end = source.find_first_of("?#");
+    if (end == std::string::npos) end = source.size();
+    std::string path = source.substr(0, end);
+    for (char &ch : path) {
+        if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch - 'A' + 'a');
+    }
+    return (path.size() >= 4 && path.compare(path.size() - 4, 4, ".mid") == 0) ||
+           (path.size() >= 5 && path.compare(path.size() - 5, 5, ".midi") == 0);
+}
+
 bool utf8_to_wide(const char *input, std::wstring &output) {
     if (!input || !*input) return false;
     const int count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, input, -1, nullptr, 0);
@@ -278,6 +296,166 @@ bool source_url(const char *input, bool allow_network, std::wstring &output) {
     url.resize(url_size);
     output = std::move(url);
     return true;
+}
+
+// MCI's sequencer consumes filesystem paths rather than Media Foundation
+// URLs. Resolve both ordinary paths and file: URLs without imposing MAX_PATH.
+bool local_source_path(const char *input, std::wstring &output) {
+    const std::string source(input ? input : "");
+    if (source.empty() || is_network_source(source)) {
+        set_open_error("MIDI playback requires a local file");
+        return false;
+    }
+    std::wstring supplied;
+    if (!utf8_to_wide(input, supplied)) {
+        set_open_error("source is not valid UTF-8");
+        return false;
+    }
+    if (source.rfind("file:", 0) == 0) {
+        DWORD count = static_cast<DWORD>(supplied.size() + 1);
+        std::wstring decoded(static_cast<size_t>(count), L'\0');
+        const HRESULT result = PathCreateFromUrlW(supplied.c_str(), decoded.data(), &count, 0);
+        if (FAILED(result)) {
+            fail(nullptr, "PathCreateFromUrlW", result);
+            return false;
+        }
+        decoded.resize(count);
+        supplied = std::move(decoded);
+    }
+
+    const DWORD needed = GetFullPathNameW(supplied.c_str(), 0, nullptr, nullptr);
+    if (needed == 0) {
+        set_open_error("cannot resolve MIDI path");
+        return false;
+    }
+    std::wstring absolute(static_cast<size_t>(needed), L'\0');
+    const DWORD actual = GetFullPathNameW(supplied.c_str(), needed, absolute.data(), nullptr);
+    if (actual == 0 || actual >= needed) {
+        set_open_error("cannot resolve MIDI path");
+        return false;
+    }
+    absolute.resize(actual);
+    const DWORD attributes = GetFileAttributesW(absolute.c_str());
+    if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+        set_open_error("media file does not exist");
+        return false;
+    }
+    output = std::move(absolute);
+    return true;
+}
+
+std::string mci_message(MCIERROR error) {
+    wchar_t wide[256]{};
+    if (!mciGetErrorStringW(error, wide, static_cast<UINT>(std::size(wide)))) {
+        char fallback[64]{};
+        sprintf_s(fallback, "MCI error %u", static_cast<unsigned>(error));
+        return fallback;
+    }
+    const int count = WideCharToMultiByte(CP_UTF8, 0, wide, -1, nullptr, 0, nullptr, nullptr);
+    if (count <= 1) return "MCI error";
+    std::string result(static_cast<size_t>(count), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, wide, -1, result.data(), count, nullptr, nullptr);
+    result.resize(static_cast<size_t>(count - 1));
+    return result;
+}
+
+bool fail_mci(Player *player, const char *operation, MCIERROR error) {
+    const std::string message = std::string(operation) + ": " + mci_message(error);
+    if (player) player->set_error(message.c_str());
+    else set_open_error(message.c_str());
+    return false;
+}
+
+bool midi_status(Player *player, DWORD item, DWORD &value) {
+    MCI_STATUS_PARMS parameters{};
+    parameters.dwItem = item;
+    const MCIERROR result = mciSendCommandW(
+        player->midi_device, MCI_STATUS, MCI_STATUS_ITEM,
+        reinterpret_cast<DWORD_PTR>(&parameters));
+    if (result != 0) return fail_mci(player, "query MIDI status", result);
+    value = static_cast<DWORD>(parameters.dwReturn);
+    return true;
+}
+
+void close_midi(Player *player) {
+    if (!player || player->midi_device == 0) return;
+    mciSendCommandW(player->midi_device, MCI_STOP, 0, 0);
+    mciSendCommandW(player->midi_device, MCI_CLOSE, 0, 0);
+    player->midi_device = 0;
+}
+
+bool create_midi(Player *player) {
+    MCI_OPEN_PARMSW open{};
+    open.lpstrDeviceType = L"sequencer";
+    open.lpstrElementName = player->source.c_str();
+    MCIERROR result = mciSendCommandW(
+        0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_ELEMENT,
+        reinterpret_cast<DWORD_PTR>(&open));
+    if (result != 0) return fail_mci(player, "open MIDI source", result);
+    player->midi_device = open.wDeviceID;
+
+    MCI_SEQ_SET_PARMS settings{};
+    settings.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
+    result = mciSendCommandW(
+        player->midi_device, MCI_SET, MCI_SET_TIME_FORMAT,
+        reinterpret_cast<DWORD_PTR>(&settings));
+    if (result != 0) {
+        close_midi(player);
+        return fail_mci(player, "select MIDI time format", result);
+    }
+    DWORD tempo = 0;
+    if (midi_status(player, MCI_SEQ_STATUS_TEMPO, tempo) && tempo != 0) {
+        player->midi_base_tempo = tempo;
+    } else {
+        // Tempo probing is optional. Clear its diagnostic so ordinary playback
+        // remains usable on minimal third-party MCI sequencers.
+        player->set_error("");
+    }
+    player->state.store(MLV_STATE_READY, std::memory_order_release);
+    player->push(MLV_EVENT_READY);
+    return true;
+}
+
+void update_midi_state(Player *player) {
+    if (!player || !player->midi || !player->midi_started ||
+        player->state.load(std::memory_order_acquire) != MLV_STATE_PLAYING) return;
+    DWORD mode = 0;
+    if (!midi_status(player, MCI_STATUS_MODE, mode)) {
+        player->state.store(MLV_STATE_FAILED, std::memory_order_release);
+        player->push(MLV_EVENT_ERROR, 0, "cannot query MIDI playback state");
+        return;
+    }
+    if (mode == MCI_MODE_PLAY) return;
+
+    DWORD position = 0;
+    DWORD duration = 0;
+    if (!midi_status(player, MCI_STATUS_POSITION, position) ||
+        !midi_status(player, MCI_STATUS_LENGTH, duration)) {
+        player->state.store(MLV_STATE_FAILED, std::memory_order_release);
+        player->push(MLV_EVENT_ERROR, 0, "cannot query MIDI playback position");
+        return;
+    }
+    const bool at_end = duration > 0 && position + 2 >= duration;
+    if (!at_end) return;
+    if (player->loop) {
+        MCI_SEEK_PARMS seek{};
+        MCIERROR result = mciSendCommandW(
+            player->midi_device, MCI_SEEK, MCI_SEEK_TO_START,
+            reinterpret_cast<DWORD_PTR>(&seek));
+        if (result == 0) result = mciSendCommandW(player->midi_device, MCI_PLAY, 0, 0);
+        if (result == 0) {
+            return;
+        }
+        fail_mci(player, "restart looping MIDI source", result);
+        player->state.store(MLV_STATE_FAILED, std::memory_order_release);
+        player->push(MLV_EVENT_ERROR, static_cast<int>(result), "cannot restart looping MIDI source");
+        return;
+    }
+    if (!player->midi_end_reported) {
+        player->midi_end_reported = true;
+        player->state.store(MLV_STATE_ENDED, std::memory_order_release);
+        player->push(MLV_EVENT_ENDED);
+    }
 }
 
 void release_engine(Player *player) {
@@ -422,17 +600,33 @@ MLV_EXPORT int mlv_backend(unsigned char *message, int capacity) {
 
 MLV_EXPORT void *mlv_open(const char *source, uintptr_t window_handle, int allow_network) {
     g_open_error[0] = '\0';
-    std::wstring url;
-    if (!source_url(source, allow_network != 0, url)) return nullptr;
+    const std::string source_text(source ? source : "");
+    const bool use_midi = is_midi_source(source_text) && !is_network_source(source_text);
+    std::wstring resolved;
+    if (use_midi) {
+        if (!local_source_path(source, resolved)) return nullptr;
+    } else if (!source_url(source, allow_network != 0, resolved)) {
+        return nullptr;
+    }
 
     Player *player = new (std::nothrow) Player();
     if (!player) {
         set_open_error("cannot allocate video player");
         return nullptr;
     }
-    player->source = std::move(url);
+    player->source = std::move(resolved);
     player->window = window_handle;
     player->owner_thread = GetCurrentThreadId();
+    player->midi = use_midi;
+
+    if (player->midi) {
+        if (!create_midi(player)) {
+            strncpy_s(g_open_error, player->error, _TRUNCATE);
+            delete player;
+            return nullptr;
+        }
+        return player;
+    }
 
     // A hidden target keeps headless playback and metadata probing fully
     // clocked. attach() replaces it with the caller's visible child window.
@@ -480,6 +674,10 @@ MLV_EXPORT void *mlv_open(const char *source, uintptr_t window_handle, int allow
 MLV_EXPORT int mlv_attach(void *handle, uintptr_t window_handle) {
     Player *player = as_player(handle);
     if (!player || window_handle == 0) return 0;
+    if (player->midi) {
+        player->set_error("MIDI playback has no video target");
+        return 0;
+    }
     const int state = player->state.load(std::memory_order_acquire);
     if (state == MLV_STATE_PLAYING || state == MLV_STATE_BUFFERING) {
         player->set_error("attach must be called before playback");
@@ -496,7 +694,25 @@ MLV_EXPORT int mlv_attach(void *handle, uintptr_t window_handle) {
 
 MLV_EXPORT int mlv_play(void *handle) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0) return 0;
+        if (player->state.load(std::memory_order_acquire) == MLV_STATE_ENDED) {
+            MCI_SEEK_PARMS seek{};
+            const MCIERROR seek_result = mciSendCommandW(
+                player->midi_device, MCI_SEEK, MCI_SEEK_TO_START,
+                reinterpret_cast<DWORD_PTR>(&seek));
+            if (seek_result != 0) return fail_mci(player, "rewind MIDI source", seek_result) ? 1 : 0;
+        }
+        const MCIERROR result = mciSendCommandW(player->midi_device, MCI_PLAY, 0, 0);
+        if (result != 0) return fail_mci(player, "play MIDI source", result) ? 1 : 0;
+        player->midi_started = true;
+        player->midi_end_reported = false;
+        player->state.store(MLV_STATE_PLAYING, std::memory_order_release);
+        player->push(MLV_EVENT_PLAYING);
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->Play();
     if (FAILED(result)) {
         fail(player, "play", result);
@@ -508,7 +724,16 @@ MLV_EXPORT int mlv_play(void *handle) {
 
 MLV_EXPORT int mlv_pause(void *handle) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0) return 0;
+        const MCIERROR result = mciSendCommandW(player->midi_device, MCI_PAUSE, 0, 0);
+        if (result != 0) return fail_mci(player, "pause MIDI source", result) ? 1 : 0;
+        player->state.store(MLV_STATE_PAUSED, std::memory_order_release);
+        player->push(MLV_EVENT_PAUSED);
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->Pause();
     if (FAILED(result)) {
         fail(player, "pause", result);
@@ -520,7 +745,22 @@ MLV_EXPORT int mlv_pause(void *handle) {
 
 MLV_EXPORT int mlv_stop(void *handle) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0) return 0;
+        MCIERROR result = mciSendCommandW(player->midi_device, MCI_STOP, 0, 0);
+        MCI_SEEK_PARMS seek{};
+        if (result == 0) result = mciSendCommandW(
+            player->midi_device, MCI_SEEK, MCI_SEEK_TO_START,
+            reinterpret_cast<DWORD_PTR>(&seek));
+        if (result != 0) return fail_mci(player, "stop MIDI source", result) ? 1 : 0;
+        player->midi_started = false;
+        player->midi_end_reported = false;
+        player->state.store(MLV_STATE_STOPPED, std::memory_order_release);
+        player->push(MLV_EVENT_STOPPED);
+        return 1;
+    }
+    if (!player->engine) return 0;
     HRESULT result = player->engine->Pause();
     if (SUCCEEDED(result)) result = player->engine->SetCurrentTime(0.0);
     if (FAILED(result)) {
@@ -534,8 +774,24 @@ MLV_EXPORT int mlv_stop(void *handle) {
 
 MLV_EXPORT int mlv_seek(void *handle, int64_t milliseconds) {
     Player *player = as_player(handle);
-    if (!player || !player->engine || milliseconds < 0 ||
+    if (!player || milliseconds < 0 ||
         milliseconds > kMaxMilliseconds) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0 || milliseconds > MAXDWORD) return 0;
+        const bool resume = player->state.load(std::memory_order_acquire) == MLV_STATE_PLAYING;
+        MCI_SEEK_PARMS seek{};
+        seek.dwTo = static_cast<DWORD>(milliseconds);
+        MCIERROR result = mciSendCommandW(
+            player->midi_device, MCI_SEEK, MCI_TO,
+            reinterpret_cast<DWORD_PTR>(&seek));
+        if (result == 0 && resume) {
+            result = mciSendCommandW(player->midi_device, MCI_PLAY, 0, 0);
+        }
+        if (result != 0) return fail_mci(player, "seek MIDI source", result) ? 1 : 0;
+        player->midi_end_reported = false;
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->SetCurrentTime(
         static_cast<double>(milliseconds) / 1000.0);
     if (FAILED(result)) {
@@ -547,7 +803,12 @@ MLV_EXPORT int mlv_seek(void *handle, int64_t milliseconds) {
 
 MLV_EXPORT int mlv_set_volume(void *handle, double volume) {
     Player *player = as_player(handle);
-    if (!player || !player->engine || !std::isfinite(volume) || volume < 0.0 || volume > 1.0) return 0;
+    if (!player || !std::isfinite(volume) || volume < 0.0 || volume > 1.0) return 0;
+    if (player->midi) {
+        player->volume = volume;
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->SetVolume(volume);
     if (FAILED(result)) {
         fail(player, "set volume", result);
@@ -559,7 +820,24 @@ MLV_EXPORT int mlv_set_volume(void *handle, double volume) {
 
 MLV_EXPORT int mlv_set_muted(void *handle, int muted) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0) return 0;
+        MCI_SEQ_SET_PARMS settings{};
+        settings.dwAudio = MCI_SET_AUDIO_ALL;
+        const DWORD flags = MCI_SET_AUDIO | (muted ? MCI_SET_OFF : MCI_SET_ON);
+        const MCIERROR result = mciSendCommandW(
+            player->midi_device, MCI_SET, flags,
+            reinterpret_cast<DWORD_PTR>(&settings));
+        // Some sequencers expose no per-instance audio switch. Keep the
+        // logical setting without mutating the process-wide MIDI mapper.
+        if (result != 0 && result != MCIERR_UNSUPPORTED_FUNCTION) {
+            return fail_mci(player, "set MIDI muted state", result) ? 1 : 0;
+        }
+        player->muted = muted != 0;
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->SetMuted(muted ? TRUE : FALSE);
     if (FAILED(result)) {
         fail(player, "set muted", result);
@@ -571,7 +849,20 @@ MLV_EXPORT int mlv_set_muted(void *handle, int muted) {
 
 MLV_EXPORT int mlv_set_rate(void *handle, double rate) {
     Player *player = as_player(handle);
-    if (!player || !player->engine || !std::isfinite(rate) || rate < 0.25 || rate > 4.0) return 0;
+    if (!player || !std::isfinite(rate) || rate < 0.25 || rate > 4.0) return 0;
+    if (player->midi) {
+        if (player->midi_device == 0) return 0;
+        MCI_SEQ_SET_PARMS settings{};
+        settings.dwTempo = static_cast<DWORD>(std::llround(
+            static_cast<double>(player->midi_base_tempo) / rate));
+        const MCIERROR result = mciSendCommandW(
+            player->midi_device, MCI_SET, MCI_SEQ_SET_TEMPO,
+            reinterpret_cast<DWORD_PTR>(&settings));
+        if (result != 0) return fail_mci(player, "set MIDI playback rate", result) ? 1 : 0;
+        player->rate = rate;
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->SetPlaybackRate(rate);
     if (FAILED(result)) {
         fail(player, "set playback rate", result);
@@ -583,7 +874,12 @@ MLV_EXPORT int mlv_set_rate(void *handle, double rate) {
 
 MLV_EXPORT int mlv_set_loop(void *handle, int enabled) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        player->loop = enabled != 0;
+        return 1;
+    }
+    if (!player->engine) return 0;
     const HRESULT result = player->engine->SetLoop(enabled ? TRUE : FALSE);
     if (FAILED(result)) {
         fail(player, "set loop", result);
@@ -595,18 +891,29 @@ MLV_EXPORT int mlv_set_loop(void *handle, int enabled) {
 
 MLV_EXPORT int mlv_state(void *handle) {
     Player *player = as_player(handle);
+    update_midi_state(player);
     return player ? player->state.load(std::memory_order_acquire) : MLV_STATE_CLOSED;
 }
 
 MLV_EXPORT int64_t mlv_position_ms(void *handle) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return 0;
+    if (!player) return 0;
+    if (player->midi) {
+        DWORD value = 0;
+        return midi_status(player, MCI_STATUS_POSITION, value) ? value : 0;
+    }
+    if (!player->engine) return 0;
     return static_cast<int64_t>(player->engine->GetCurrentTime() * 1000.0);
 }
 
 MLV_EXPORT int64_t mlv_duration_ms(void *handle) {
     Player *player = as_player(handle);
-    if (!player || !player->engine) return -1;
+    if (!player) return -1;
+    if (player->midi) {
+        DWORD value = 0;
+        return midi_status(player, MCI_STATUS_LENGTH, value) ? value : -1;
+    }
+    if (!player->engine) return -1;
     const double duration = player->engine->GetDuration();
     if (!std::isfinite(duration) || duration < 0.0) return -1;
     return static_cast<int64_t>(duration * 1000.0);
@@ -614,16 +921,19 @@ MLV_EXPORT int64_t mlv_duration_ms(void *handle) {
 
 MLV_EXPORT int mlv_has_audio(void *handle) {
     Player *player = as_player(handle);
+    if (player && player->midi && player->midi_device != 0) return 1;
     return player && player->engine && player->engine->HasAudio() ? 1 : 0;
 }
 
 MLV_EXPORT int mlv_has_video(void *handle) {
     Player *player = as_player(handle);
+    if (player && player->midi) return 0;
     return player && player->engine && player->engine->HasVideo() ? 1 : 0;
 }
 
 MLV_EXPORT int mlv_video_width(void *handle) {
     Player *player = as_player(handle);
+    if (player && player->midi) return 0;
     if (!player || !player->engine) return 0;
     DWORD width = 0;
     return SUCCEEDED(player->engine->GetNativeVideoSize(&width, nullptr))
@@ -632,6 +942,7 @@ MLV_EXPORT int mlv_video_width(void *handle) {
 
 MLV_EXPORT int mlv_video_height(void *handle) {
     Player *player = as_player(handle);
+    if (player && player->midi) return 0;
     if (!player || !player->engine) return 0;
     DWORD height = 0;
     return SUCCEEDED(player->engine->GetNativeVideoSize(nullptr, &height))
@@ -644,6 +955,7 @@ MLV_EXPORT int mlv_poll_event(void *handle, unsigned char *message, int capacity
         if (message && capacity > 0) message[0] = 0;
         return MLV_EVENT_NONE;
     }
+    update_midi_state(player);
     return player->pop(message, capacity);
 }
 
@@ -665,6 +977,7 @@ MLV_EXPORT void mlv_close(void *handle) {
     Player *player = as_player(handle);
     if (!player) return;
     player->state.store(MLV_STATE_CLOSED, std::memory_order_release);
+    close_midi(player);
     release_engine(player);
     if (player->owned_window) DestroyWindow(player->owned_window);
     if (player->mf_started) MFShutdown();

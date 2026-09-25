@@ -5,6 +5,7 @@
 - [std._linux_fs](Package-std-linux-fs-2121796381.md)
 - [std.array](Package-std-array-1432837065.md)
 - [std.assert](Package-std-assert-1056679750.md)
+- [std.audio](Package-std-audio-501224270.md)
 - [std.bytes](Package-std-bytes-172183927.md)
 - [std.checksum.crc32](Package-std-checksum-crc32-894971042.md)
 - [std.checksum.crc32c](Package-std-checksum-crc32c-986608595.md)

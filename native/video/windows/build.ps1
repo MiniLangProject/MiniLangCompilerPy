@@ -26,7 +26,7 @@ $compileCmd = Join-Path $OutputDir "compile.cmd"
 @echo off
 call "$devcmd" -arch=x64 -host_arch=x64 >nul
 if errorlevel 1 exit /b 1
-cl /nologo /std:c++17 /EHsc /MT /O2 /W4 /LD /I"$include" "$source" /Fo"$OutputDir/minilang_video.obj" /link /IMPLIB:"$OutputDir/minilang_video.lib" /OUT:"$OutputDir/minilang_video.dll" mfplat.lib mfuuid.lib ole32.lib oleaut32.lib shlwapi.lib user32.lib
+cl /nologo /std:c++17 /EHsc /MT /O2 /W4 /LD /I"$include" "$source" /Fo"$OutputDir/minilang_video.obj" /link /IMPLIB:"$OutputDir/minilang_video.lib" /OUT:"$OutputDir/minilang_video.dll" mfplat.lib mfuuid.lib ole32.lib oleaut32.lib shlwapi.lib user32.lib winmm.lib
 "@ | Set-Content -LiteralPath $compileCmd -Encoding ascii
 & $env:ComSpec /d /c $compileCmd
 if ($LASTEXITCODE -ne 0) { throw "std.video Windows bridge build failed." }
