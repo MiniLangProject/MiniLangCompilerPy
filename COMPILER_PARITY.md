@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 25 September 2026 against the matching 1.2.11 revisions of:
+Verified through 28 September 2026 against the matching 1.2.12 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -29,6 +29,32 @@ equivalent monolithic image. The self-hosted compiler streams canonical `.mlo`
 sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
+
+## 28 September 2026 expression-inference verification
+
+Release 1.2.12 removes repeated recursive unary/binary type inference when
+operator overloads are present. The HollowKeep menu executable is byte-identical
+before and after the fix; its isolated build falls from 73.969 s to 14.313 s.
+The new mixed-concatenation regression passes on both targets, with matching
+Python/ML and monolithic/object-option output. The 53 std modules remain
+byte-identical between repositories.
+
+The versioned Python suite passes 153/153. The self-hosted suite passes its
+136/136 embedded tests plus its outer platform, CLI and pipeline checks.
+Native Linux host regressions and extracted-package smoke tests also pass.
+Both version flags and the compile-time constant report 1.2.12.
+
+Python bootstrap and native self-hosted rebuilds produce identical images:
+
+| Host/compiler image | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Windows x64 | 65,327,616 | `DAF2419DECC054DF1DA04B86212C138670458CB93273BD6467C47CAD73329AEB` |
+| Linux x64 | 65,335,104 | `58328CD3EAD5905A9AA95CBDB974F8E9D824455C6C0916381C5A68BFC1E96695` |
+
+See the [HollowKeep measurement report](docs/reports/HOLLOWKEEP_STRING_CONCAT_FIX_2026-09-28.md)
+for the pre-release A/B methodology and the [1.2.12 release notes](RELEASE_NOTES_1.2.12.md)
+for current compiler artifacts. Historical hashes below remain tied to their
+original versions.
 
 ## 25 September 2026 native-media verification
 

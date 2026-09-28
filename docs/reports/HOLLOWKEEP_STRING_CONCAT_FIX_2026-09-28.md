@@ -169,3 +169,10 @@ backup noted above. No release/version bump is included: this remains a
 local fixed 1.2.11 development build. The Linux-host compiler artifact and
 published GitHub releases were not rebuilt or replaced in this task.
 
+## Release follow-up
+
+The measurements above describe the initial local fix before versioning.
+The subsequent 1.2.12 release rebuilds both Windows and Linux host compilers.
+Current release compiler hashes and validation are recorded in
+[the 1.2.12 release notes](../../RELEASE_NOTES_1.2.12.md); the 1.2.11 hashes
+above remain the historical A/B artifacts.

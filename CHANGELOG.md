@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.12 - 2026-09-28
+
 - Fixed exponential unary/binary type inference when operator overloads are
   present (including imports). Reuse full operand facts for overload resolution
   and builtin inference without changing generated code. Added mixed string
