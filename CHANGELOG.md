@@ -4,6 +4,13 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Fixed exponential unary/binary type inference when operator overloads are
+  present (including imports). Reuse full operand facts for overload resolution
+  and builtin inference without changing generated code. Added mixed string
+  concatenation, evaluation-order, error-propagation and pipeline regressions.
+  See the [HollowKeep validation report](docs/reports/HOLLOWKEEP_STRING_CONCAT_FIX_2026-09-28.md)
+  for timings, self-hosting checks and binary hashes.
+
 ## 1.2.11 - 2026-09-25
 
 - Added the typed `std.audio` facade for WAV, MP3 and Standard MIDI File

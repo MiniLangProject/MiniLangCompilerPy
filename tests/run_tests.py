@@ -346,6 +346,13 @@ def test_asm_listing_cli(*, name: str, mlc_runner: Path) -> TestResult:
         return TestResult(name=name, status="PASS", stdout=cr.stdout, stderr=cr.stderr)
 
 
+def test_operator_type_scaling(*, name: str, tests_root: Path) -> TestResult:
+    """Prevent exponential inference without a fragile wall-time threshold."""
+    result = run_cmd([sys.executable, str(tests_root / 'check_operator_type_scaling.py')], timeout_s=20)
+    return TestResult(name=name, status="PASS" if result.returncode == 0 else "FAIL",
+                      stdout=result.stdout, stderr=result.stderr)
+
+
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
     expected = "MiniLang Compiler 1.2.11"
@@ -740,6 +747,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "linux_ffi_concurrent_resolution.ml",
          ["[OK] concurrent Linux extern resolution"], []),
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
+        (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
@@ -815,7 +823,10 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
 
 def test_linux_dynamic_import_module(*, name: str, tests_root: Path) -> TestResult:
     """Run library-identity loader regressions as part of the unified suite."""
-    result = run_cmd([sys.executable, "-m", "unittest", "tests.test_linux_dynamic_imports"],
+    # Discover from our directory: a site-packages package named `tests` can
+    # otherwise shadow this repository's non-package test directory.
+    result = run_cmd([sys.executable, "-m", "unittest", "discover", "-s", "tests",
+                      "-p", "test_linux_dynamic_imports.py"],
                      cwd=tests_root.parent, timeout_s=180)
     if result.returncode != 0:
         return TestResult(name=name, status="FAIL", details="Linux loader unit module failed",
@@ -4233,6 +4244,12 @@ def main() -> int:
         name="long string concat chains compile iteratively",
         mlc_runner=mlc_runner, ml_path=tests_root / "long_string_concat.ml",
         must_contain=["LONG STRING CONCAT [OK]"]))
+    tests.append(lambda: test_operator_type_scaling(
+        name="operator type inference scales linearly", tests_root=tests_root))
+    tests.append(lambda: test_program_no_fail(
+        name="mixed concat with operator overloads",
+        mlc_runner=mlc_runner, ml_path=tests_root / "mixed_concat_overloads.ml",
+        must_contain=["[OK] mixed concat with operator overloads"], timeout_compile_s=20))
     tests.append(lambda: test_compile_expected_fail(
         name="static index type diagnostics",
         mlc_runner=mlc_runner, entry_ml=tests_root / "static_index_type_invalid.ml",

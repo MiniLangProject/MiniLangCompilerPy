@@ -662,10 +662,14 @@ class CodegenExpr:
             return 'bool'
         if isinstance(e, getattr(ml, 'Unary', ())):
             op = str(getattr(e, 'op', '') or '')
-            overload = self._resolve_operator_overload(op, [getattr(e, 'right', None)], e)
+            # Reuse full operand facts for overload resolution and builtin
+            # inference. Recursing through both paths doubles work at each
+            # level whenever any imported module declares an operator.
+            right_fact = self._opt_expr_known_type(getattr(e, 'right', None))
+            overload = self._resolve_operator_overload_facts(op, [right_fact], e)
             if overload is not None:
                 return overload[2]
-            rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
+            rb = self._opt_value_type_base(right_fact)
             if op == 'not' and rb:
                 return 'bool'
             if op == '~' and rb == 'int':
@@ -677,12 +681,16 @@ class CodegenExpr:
             return None
         if isinstance(e, getattr(ml, 'Bin', ())):
             op = str(getattr(e, 'op', '') or '')
-            overload = self._resolve_operator_overload(
-                op, [getattr(e, 'left', None), getattr(e, 'right', None)], e)
+            # Keep qualified struct facts intact until overload selection;
+            # only builtin inference needs their representation base types.
+            left_fact = self._opt_expr_known_type(getattr(e, 'left', None))
+            right_fact = self._opt_expr_known_type(getattr(e, 'right', None))
+            overload = self._resolve_operator_overload_facts(
+                op, [left_fact, right_fact], e)
             if overload is not None:
                 return overload[2]
-            lb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'left', None)))
-            rb = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
+            lb = self._opt_value_type_base(left_fact)
+            rb = self._opt_value_type_base(right_fact)
             if op in ('==', '!='):
                 return 'bool'
             if op in ('<', '<=', '>', '>=') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
