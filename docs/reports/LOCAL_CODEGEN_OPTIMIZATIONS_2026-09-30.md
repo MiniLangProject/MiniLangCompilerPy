@@ -1,6 +1,9 @@
 # Local code-generation optimizations — 30 September 2026
 
-Status: unreleased development work after v1.2.13. No language or std API change.
+Evaluation of development work after v1.2.13, included in release 1.2.14.
+No language or std API change. Measurements and image hashes below describe
+the pre-version-stamp builds; see [release notes](../../RELEASE_NOTES_1.2.14.md)
+for the separately verified, release-stamped compiler hashes.
 
 ## Implementation and limits
 

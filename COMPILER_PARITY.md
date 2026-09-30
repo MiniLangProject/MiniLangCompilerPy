@@ -1,6 +1,15 @@
 # Compiler parity and self-hosting
 
-## Unreleased local-codegen verification
+## 1.2.14 release and local-codegen verification
+
+The release-stamped Windows Python bootstrap and native selfbuild share SHA-256
+`058924B6ABFF723908CF89F5659898D37E3C1A880E68623A6412B27727757158`
+(64,587,264 bytes). Python and Windows ML produce the same Linux compiler:
+`28236D138EEAA9BA79BE3B1C9593CA939927189582DC96201B71EEA19F4E77D1`
+(64,589,648 bytes). The release Linux compiler passes version/runtime fixtures,
+with six-way per-target parity across all three compiler hosts and both pipelines.
+The full Linux-native selfbuild below predates the version-only stamp; it was
+not repeated afterward. See [1.2.14 release notes](RELEASE_NOTES_1.2.14.md).
 
 The development changes after 1.2.13 retain byte-identical output for the
 expanded runtime regression fixture across Python, native ML and ML object

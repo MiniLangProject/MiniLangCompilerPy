@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.14 - 2026-09-30
 
 - Replace proven integer floor division by positive non-power-of-two constants
   with exact reciprocal multiplication and correction. Negative, zero and
