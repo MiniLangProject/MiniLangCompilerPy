@@ -353,6 +353,13 @@ def test_operator_type_scaling(*, name: str, tests_root: Path) -> TestResult:
                       stdout=result.stdout, stderr=result.stderr)
 
 
+def test_floor_div_codegen(*, name: str, tests_root: Path) -> TestResult:
+    """Verify all power-of-two shifts independently of wall-clock performance."""
+    result = run_cmd([sys.executable, str(tests_root / 'check_floor_div_codegen.py')], timeout_s=20)
+    return TestResult(name=name, status="PASS" if result.returncode == 0 else "FAIL",
+                      stdout=result.stdout, stderr=result.stderr)
+
+
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
     expected = "MiniLang Compiler 1.2.12"
@@ -748,6 +755,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
          ["[OK] concurrent Linux extern resolution"], []),
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
+        (tests_root / "runtime_codegen.ml", ["RUNTIME CODEGEN [OK]"], []),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
@@ -4246,10 +4254,16 @@ def main() -> int:
         must_contain=["LONG STRING CONCAT [OK]"]))
     tests.append(lambda: test_operator_type_scaling(
         name="operator type inference scales linearly", tests_root=tests_root))
+    tests.append(lambda: test_floor_div_codegen(
+        name="floor division instruction selection", tests_root=tests_root))
     tests.append(lambda: test_program_no_fail(
         name="mixed concat with operator overloads",
         mlc_runner=mlc_runner, ml_path=tests_root / "mixed_concat_overloads.ml",
         must_contain=["[OK] mixed concat with operator overloads"], timeout_compile_s=20))
+    tests.append(lambda: test_program_no_fail(
+        name="runtime codegen identities and floor division",
+        mlc_runner=mlc_runner, ml_path=tests_root / "runtime_codegen.ml",
+        must_contain=["RUNTIME CODEGEN [OK]"]))
     tests.append(lambda: test_compile_expected_fail(
         name="static index type diagnostics",
         mlc_runner=mlc_runner, entry_ml=tests_root / "static_index_type_invalid.ml",

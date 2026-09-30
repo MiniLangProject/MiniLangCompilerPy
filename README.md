@@ -7,6 +7,10 @@ Current stable release: **1.2.12**. See the [changelog](CHANGELOG.md) and
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
+Development changes since 1.2.12 improve integer floor division and avoid
+unnecessary string copies. See the [runtime/heap evaluation](docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md)
+for measurements, correctness checks and the scope of binary-parity validation.
+
 Release 1.0.0 and later are source-only: generated `.exe` files are not
 tracked in Git and are not attached to GitHub releases.
 [Matching native 1.2.12 Windows and Linux packages](https://github.com/MiniLangProject/MiniLangCompilerML/releases/tag/v1.2.12)

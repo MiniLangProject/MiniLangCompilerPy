@@ -167,3 +167,24 @@ python .\mlc_win64.py .\benchmarks\concurrency.ml .\build\concurrency_bench.exe 
 For Linux, add `--target linux-x64`, make the output executable and run it on
 an x64 Linux host. Record at least five fresh-process runs and compare medians;
 the benchmark validates every result before printing elapsed milliseconds.
+
+## Runtime code generation and allocation identities
+
+`runtime_codegen.ml` measures floor division, repeated strings, allocation-free
+string identities, and ordinary concatenation/repeat/join controls. It uses
+QueryPerformanceCounter on Windows and CLOCK_MONOTONIC on Linux, with reused
+timer buffers to avoid contaminating heap-allocation measurements.
+
+Compile the **same benchmark source** with the before and after compilers:
+
+```powershell
+python mlc_win64.py benchmarks/runtime_codegen.ml build/runtime_codegen.after.exe -I . --heap-reserve 1g --heap-commit 128m --gc-limit 512m
+python benchmarks/compare_runtime_codegen.py build/runtime_codegen.before.exe build/runtime_codegen.after.exe --runs 11 --output build/runtime_codegen.windows.json
+```
+
+For Linux, add `--target linux-x64`, make the ELF files executable, and run the
+comparison script **inside Linux**, not through a separate WSL launch per sample.
+The script alternates A/B order, checks matching checksums and retains raw samples,
+medians, image sizes and SHA-256 hashes. Keep unrelated builds idle during timing.
+Heap bytes are allocations during the workload, not RSS or total process memory.
+See [the evaluation report](../docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md).

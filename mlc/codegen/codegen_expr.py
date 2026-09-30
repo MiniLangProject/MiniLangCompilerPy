@@ -984,6 +984,16 @@ class CodegenExpr:
             a.shl_rax_imm8(3)
             a.or_rax_imm8(TAG_INT)
             return True
+        if (op == 'div' and rhs_const is not None and 0 < rhs_const < (1 << 60)
+                and (rhs_const & (rhs_const - 1)) == 0):
+            # Arithmetic shift is floor division, including negative dividends.
+            # Remove the tag in the same shift; div 1 preserves the tagged value.
+            a.mov_rax_r10()
+            if rhs_const != 1:
+                a.sar_rax_imm8(3 + rhs_const.bit_length() - 1)
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_INT)
+            return True
         if op == '%':
             if rhs_const is not None:
                 divisor = int(rhs_const)

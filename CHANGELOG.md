@@ -4,6 +4,19 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Optimize proven integer floor division by positive powers of two to arithmetic
+  shifts, preserving signed-61-bit wraparound and generic fallback behavior.
+- Avoid new string allocations for empty concatenation operands, repetition by
+  one, and singleton joins. Validation, conversion order and GC roots remain
+  intact; mutable arrays and bytes are not shared by this optimization.
+- Seed and double the initialized prefix in `stringRepeat`, reducing copy-helper
+  calls from linear to logarithmic in the repetition count. One-byte seeds use
+  the existing native fill helper directly.
+- Align the self-hosted compiler's scalar-array classification for large integer
+  constants with Python. Add GC-promotion, boundary, thread-lifetime and pipeline
+  regressions plus reproducible runtime/heap benchmarks.
+- See the [runtime code review and evaluation](docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md).
+
 ## 1.2.12 - 2026-09-28
 
 - Fixed exponential unary/binary type inference when operator overloads are

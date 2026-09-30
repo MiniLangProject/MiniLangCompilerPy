@@ -1430,6 +1430,14 @@ Returns:
         a.add_rsp_imm8(0x38)
         a.ret()
         a.mark(l_add_nonempty)
+        # Both conversions have already completed. Immutable identity results
+        # can share storage, but must still clear the temporary GC roots.
+        a.mov_r64_r64("rax", "r11")
+        a.test_r32_r32("r8d", "r8d")
+        a.jcc("e", l_add_nonempty + "_return")
+        a.mov_r64_r64("rax", "r10")
+        a.test_r32_r32("r9d", "r9d")
+        a.jcc("e", l_add_nonempty + "_return")
 
         # Save totalLen across the alloc call.
         # Note: R8/R9 are volatile and fn_alloc may clobber them.
@@ -1483,6 +1491,7 @@ Returns:
 
         # IMPORTANT: Don't clobber the return value while clearing GC temp roots.
         # Save the newly allocated string pointer, clear roots, then restore RAX.
+        a.mark(l_add_nonempty + "_return")
         a.mov_r11_rax()  # r11 = return value (base)
         a.mov_rax_imm64(enc_void())
         a.mov_rip_qword_rax('gc_tmp2')
@@ -1980,7 +1989,6 @@ Returns:
         a.mark(l_count_pos)
         a.cmp_r64_imm("rax", 0x7FFFFFFF)
         a.jcc("g", l_fail)
-        a.mov_membase_disp_r32("rsp", 0x28, "eax")
 
         a.mov_r64_r64("r10", "rax")
         a.mov_r64_r64("rax", "r9")
@@ -1989,6 +1997,13 @@ Returns:
         a.jcc("g", l_fail)
         a.mov_membase_disp_r32("rsp", 0x30, "eax")
         a.mark(l_have_total)
+
+        # Preserve validation before sharing the immutable input for count one.
+        a.cmp_r64_imm("r10", 1)
+        a.jcc("ne", l_have_total + "_alloc")
+        a.mov_r64_membase_disp("rax", "rsp", 0x20)
+        a.jmp(l_done)
+        a.mark(l_have_total + "_alloc")
 
         a.mov_r32_membase_disp("ecx", "rsp", 0x30)
         a.add_r32_imm("ecx", 9)
@@ -2000,28 +2015,43 @@ Returns:
         a.mov_membase_disp_r32("r11", 4, "edx")
         a.mov_membase_disp_r64("rsp", 0x38, "r11")
 
-        a.lea_r64_membase_disp("rax", "r11", 8)
-        a.mov_membase_disp_r64("rsp", 0x40, "rax")
-
+        # Seed once, then double the initialized prefix. Each chunk is no
+        # larger than the prefix, so source and destination never overlap.
+        # Copying cannot allocate; the result needs no extra GC temporary root.
+        a.mov_r64_membase_disp("r10", "rsp", 0x20)
+        a.mov_r32_membase_disp("r8d", "r10", 4)
+        # A one-byte seed is a fill operation, including embedded NUL.
+        a.cmp_r32_imm("r8d", 1)
+        a.jcc("ne", l_loop + "_seed")
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.mov_r32_membase_disp("edx", "rsp", 0x30)
+        a.movzx_r32_membase_disp("r8d", "r10", 8)
+        a.call("fn_fill_bytes")
+        a.jmp(l_loop + "_done")
+        a.mark(l_loop + "_seed")
+        a.mov_membase_disp_r32("rsp", 0x28, "r8d")
+        a.lea_r64_membase_disp("rcx", "r11", 8)
+        a.lea_r64_membase_disp("rdx", "r10", 8)
+        a.call("fn_copy_bytes")
         a.mark(l_loop)
         a.mov_r32_membase_disp("eax", "rsp", 0x28)
-        a.test_r32_r32("eax", "eax")
-        a.jcc("e", l_loop + "_done")
+        a.mov_r32_membase_disp("r8d", "rsp", 0x30)
+        a.sub_r32_r32("r8d", "eax")
+        a.cmp_r32_r32("r8d", "eax")
+        a.jcc("be", l_loop + "_chunk")
+        a.mov_r32_r32("r8d", "eax")
+        a.mark(l_loop + "_chunk")
         a.mov_r64_membase_disp("r11", "rsp", 0x38)
-        a.mov_r64_membase_disp("r10", "rsp", 0x20)
-        a.mov_r64_membase_disp("rcx", "rsp", 0x40)
-        a.lea_r64_membase_disp("rdx", "r10", 8)
-        a.mov_r32_membase_disp("r8d", "r10", 4)
-        a.call("fn_copy_bytes")
-        a.mov_r64_membase_disp("rax", "rsp", 0x40)
-        a.mov_r64_membase_disp("r10", "rsp", 0x20)
-        a.mov_r32_membase_disp("edx", "r10", 4)
-        a.add_r64_r64("rax", "rdx")
-        a.mov_membase_disp_r64("rsp", 0x40, "rax")
-        a.mov_r32_membase_disp("eax", "rsp", 0x28)
-        a.dec_r32("eax")
+        a.lea_r64_membase_disp("rdx", "r11", 8)
+        a.mov_r64_r64("rcx", "rdx")
+        a.add_r64_r64("rcx", "rax")
+        a.add_r32_r32("eax", "r8d")
         a.mov_membase_disp_r32("rsp", 0x28, "eax")
-        a.jmp(l_loop)
+        a.call("fn_copy_bytes")
+        a.mov_r32_membase_disp("eax", "rsp", 0x28)
+        a.mov_r32_membase_disp("edx", "rsp", 0x30)
+        a.cmp_r32_r32("eax", "edx")
+        a.jcc("b", l_loop)
 
         a.mark(l_loop + "_done")
         a.mov_r64_membase_disp("r11", "rsp", 0x38)
@@ -2774,6 +2804,14 @@ Returns:
         a.mark(l_len_loop + "_done")
         a.test_r32_r32("eax", "eax")
         a.jcc("e", l_done + "_empty")
+        # Only share after validating the separator and every array element.
+        a.mov_r64_membase_disp("r8", "rsp", 0x20)
+        a.mov_r32_membase_disp("r10d", "r8", 4)
+        a.cmp_r32_imm("r10d", 1)
+        a.jcc("ne", l_len_loop + "_many")
+        a.mov_r64_membase_disp("rax", "r8", 8)
+        a.jmp(l_done)
+        a.mark(l_len_loop + "_many")
         a.mov_membase_disp_r32("rsp", 0x30, "eax")
         a.mov_r32_r32("ecx", "eax")
         a.add_r32_imm("ecx", 9)
