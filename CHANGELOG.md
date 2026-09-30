@@ -4,6 +4,18 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Replace proven integer floor division by positive non-power-of-two constants
+  with exact reciprocal multiplication and correction. Negative, zero and
+  dynamic divisors retain their existing checked paths.
+- Use reciprocal division by ten in native decimal integer formatting.
+- Reuse identical, bounded pure local integer expression trees. Calls, heap
+  reads, captures, globals and potentially failing operations are not cached.
+- Remove redundant right-operand stack stores/loads and keep literal-right
+  binary operands in registers, preserving left-to-right evaluation and GC roots.
+- Extend differential, boundary and instruction-selection tests and the
+  Windows/Linux runtime benchmarks. See the
+  [evaluation and scope](docs/reports/LOCAL_CODEGEN_OPTIMIZATIONS_2026-09-30.md).
+
 ## 1.2.13 - 2026-09-30
 
 - Optimize proven integer floor division by positive powers of two to arithmetic

@@ -5,6 +5,11 @@
 Current stable release: **1.2.13**. See the [changelog](CHANGELOG.md) and
 [release notes](RELEASE_NOTES_1.2.13.md).
 
+The development tree additionally improves constant integer division, decimal
+formatting and local expression code generation. See the
+[unreleased optimization evaluation](docs/reports/LOCAL_CODEGEN_OPTIMIZATIONS_2026-09-30.md)
+for correctness, parity, performance and scope; these changes are not in 1.2.13.
+
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
 Release 1.2.13 improves integer floor division and avoids

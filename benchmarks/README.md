@@ -170,7 +170,8 @@ the benchmark validates every result before printing elapsed milliseconds.
 
 ## Runtime code generation and allocation identities
 
-`runtime_codegen.ml` measures floor division, repeated strings, allocation-free
+`runtime_codegen.ml` measures floor division (powers of two and general positive
+constants), repeated pure integer expressions, decimal formatting, repeated strings, allocation-free
 string identities, and ordinary concatenation/repeat/join controls. It uses
 QueryPerformanceCounter on Windows and CLOCK_MONOTONIC on Linux, with reused
 timer buffers to avoid contaminating heap-allocation measurements.
@@ -187,4 +188,8 @@ comparison script **inside Linux**, not through a separate WSL launch per sample
 The script alternates A/B order, checks matching checksums and retains raw samples,
 medians, image sizes and SHA-256 hashes. Keep unrelated builds idle during timing.
 Heap bytes are allocations during the workload, not RSS or total process memory.
+Use the documented heap/GC options: if collection occurs during a workload,
+the reported heap-used delta is not its cumulative allocation count.
 See [the evaluation report](../docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md).
+The extended arithmetic cases are evaluated in the
+[local codegen report](../docs/reports/LOCAL_CODEGEN_OPTIMIZATIONS_2026-09-30.md).

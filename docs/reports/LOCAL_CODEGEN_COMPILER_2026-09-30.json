@@ -1,0 +1,78 @@
+{
+  "platform": "Windows-10-10.0.26200-SP0",
+  "source": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\tests\\runtests.ml",
+  "include": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML",
+  "pipeline": "monolithic",
+  "compilers": {
+    "before": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\mlc_win64.1.2.13.self.exe",
+      "sha256": "28ebded382e66d296254d181d5baa3e786b1514fc2066e21e0fe53a1cbe47ca2"
+    },
+    "after": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\mlc-round2-v3-self.exe",
+      "sha256": "36aa0dd7950515d3e76ac46937d73fcd673a09ae30a2e8668e8f5715fe07884a"
+    }
+  },
+  "summary": {
+    "before": {
+      "seconds": 2.2944590999977663,
+      "peak_working_set": 228782080,
+      "image_bytes": 3264000
+    },
+    "after": {
+      "seconds": 2.215688099968247,
+      "peak_working_set": 226070528,
+      "image_bytes": 3151360
+    }
+  },
+  "samples": [
+    {
+      "version": "before",
+      "run": 0,
+      "seconds": 2.2380125999916345,
+      "peak_working_set": 228782080,
+      "image_bytes": 3264000,
+      "image_sha256": "4ec5550ba5af465e352e00a019848af6f5848729de4562942cbc1d3aa4cca018"
+    },
+    {
+      "version": "after",
+      "run": 0,
+      "seconds": 2.215688099968247,
+      "peak_working_set": 226070528,
+      "image_bytes": 3151360,
+      "image_sha256": "57bca120d827b1c08b4cdc048b3eeb1b1b93ac2bb978fb5b059b9be7536fac84"
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "seconds": 2.3758270000107586,
+      "peak_working_set": 226070528,
+      "image_bytes": 3151360,
+      "image_sha256": "57bca120d827b1c08b4cdc048b3eeb1b1b93ac2bb978fb5b059b9be7536fac84"
+    },
+    {
+      "version": "before",
+      "run": 1,
+      "seconds": 2.4721120000467636,
+      "peak_working_set": 228782080,
+      "image_bytes": 3264000,
+      "image_sha256": "4ec5550ba5af465e352e00a019848af6f5848729de4562942cbc1d3aa4cca018"
+    },
+    {
+      "version": "before",
+      "run": 2,
+      "seconds": 2.2944590999977663,
+      "peak_working_set": 228777984,
+      "image_bytes": 3264000,
+      "image_sha256": "4ec5550ba5af465e352e00a019848af6f5848729de4562942cbc1d3aa4cca018"
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "seconds": 2.119652599969413,
+      "peak_working_set": 226066432,
+      "image_bytes": 3151360,
+      "image_sha256": "57bca120d827b1c08b4cdc048b3eeb1b1b93ac2bb978fb5b059b9be7536fac84"
+    }
+  ]
+}

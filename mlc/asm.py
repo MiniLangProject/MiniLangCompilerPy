@@ -2315,6 +2315,11 @@ class Asm:
     # string ops
     # ---------------------------------------------------------------------
 
+    def mul_r64(self, src: str) -> None:
+        """Multiply unsigned RAX by src, returning the full product in RDX:RAX."""
+        s = self._rid_any(src)
+        self.emit(self._rex(w=1, b=1 if s >= 8 else 0) + b"\xF7" + self._modrm(3, 4, s))
+
     def div_r64(self, src: str) -> None:
         """Emit `DIV` instruction helper.
 

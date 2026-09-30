@@ -22,6 +22,11 @@ function dynamicDiv(x, divisor)
 end function
 
 function checkDivision(x as int)
+  checkEq(x div 3, dynamicDiv(x, 3), "div three")
+  checkEq(x div 10, dynamicDiv(x, 10), "div ten")
+  checkEq(x div 31, dynamicDiv(x, 31), "div 31")
+  checkEq(x div 2147483647, dynamicDiv(x, 2147483647), "div large prime")
+  checkEq(x div 1152921504606846975, dynamicDiv(x, 1152921504606846975), "div maximum")
   checkEq(x div 1, dynamicDiv(x, 1), "div one")
   checkEq(x div 2, dynamicDiv(x, 2), "div two")
   checkEq(x div 8, dynamicDiv(x, 8), "div eight")
@@ -54,6 +59,23 @@ end function
 
 function main(args)
   global visits
+  for sample = -2048 to 2048
+    checkDivision(sample)
+  end for
+  // Tagged wraparound deliberately produces both signs and large magnitudes.
+  seed = 20260930
+  for sample = 0 to 1023
+    seed = seed * 1103515245 + 12345
+    checkDivision(seed)
+    checkEq(toNumber(str(seed)), seed, "decimal roundtrip")
+  end for
+  checkEq(str(-1152921504606846976), "-1152921504606846976", "decimal minimum")
+  checkEq(str(1152921504606846975), "1152921504606846975", "decimal maximum")
+  checkEq(str(0), "0", "decimal zero")
+  checkEq(localRepeated(11, 7), 324, "pure local CSE")
+  visits = 0
+  checkEq(observed(2) + observed(2), 4, "calls must not merge")
+  checkEq(visits, 2, "both calls executed")
   values = [-1152921504606846976, -1152921504606846975, -1025, -1024, -1023, -9, -8, -7, -1, 0, 1, 7, 8, 9, 1023, 1024, 1025, 1152921504606846975]
   for each value in values
     checkDivision(value)
@@ -153,4 +175,9 @@ function main(args)
   if failures != 0 then return 1 end if
   print "RUNTIME CODEGEN [OK]"
   return 0
+end function
+
+/// Repeated primitive trees may be reused, but remain tagged wraparound ints.
+function localRepeated(x as int, y as int) returns int
+  return (x + y) * (x + y)
 end function

@@ -56,6 +56,37 @@ function main(args)
   if mode == "division" then
     checksum = arithmetic(24000000)
   end if
+  if mode == "division-constants" then
+    for i = 0 to 5999999
+      x = i - 3000000
+      checksum += (x div 3) + (x div 10) + (x div 31)
+    end for
+  end if
+  if mode == "local-cse" then
+    for i = 0 to 5999999
+      x = i & 1023
+      checksum += (x + 3) * (x + 3)
+    end for
+  end if
+  if mode == "division-wide" then
+    seed = 20260930
+    for i = 0 to 5999999
+      seed = seed * 1103515245 + 12345
+      checksum += (seed div 3) + (seed div 10) + (seed div 31)
+    end for
+  end if
+  if mode == "integer-format-small" then
+    for i = 0 to 999999
+      text = str(i & 31)
+      checksum += len(text)
+    end for
+  end if
+  if mode == "integer-format" then
+    for i = 0 to 999999
+      text = str(i - 1152921504606846975)
+      checksum += len(text)
+    end for
+  end if
   if mode == "repeat" then
     for i = 0 to 511
       s = stringRepeat("abc", 32768)

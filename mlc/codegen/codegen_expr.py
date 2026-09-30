@@ -506,6 +506,26 @@ class CodegenExpr:
                 return operands_are_int and self._opt_const_nonnegative_int(right)
         return False
 
+    def _opt_same_local_int_expr(self, left: Any, right: Any, depth: int = 0) -> bool:
+        """Bounded expression-local CSE; never cache calls, heap reads or captures.
+
+        Only total primitive integer operations are admitted. Limiting depth
+        keeps analysis linear with a small bound and needs no persistent maps.
+        """
+        if depth > 3 or type(left) is not type(right):
+            return False
+        ml = self.ml
+        if isinstance(left, ml.Var):
+            return left.name == right.name and self._opt_expr_known_int(left)
+        if isinstance(left, ml.Num):
+            return (type(left.value) is int and type(right.value) is int
+                    and wrap_i61(left.value) == wrap_i61(right.value))
+        if isinstance(left, ml.Bin) and left.op in ('+', '-', '*', '&', '|', '^'):
+            return (left.op == right.op
+                    and self._opt_same_local_int_expr(left.left, right.left, depth + 1)
+                    and self._opt_same_local_int_expr(left.right, right.right, depth + 1))
+        return False
+
     @staticmethod
     def _opt_value_type_base(type_name: Optional[str]) -> Optional[str]:
         if not isinstance(type_name, str) or not type_name:
@@ -993,6 +1013,34 @@ class CodegenExpr:
                 a.sar_rax_imm8(3 + rhs_const.bit_length() - 1)
                 a.shl_rax_imm8(3)
                 a.or_rax_imm8(TAG_INT)
+            return True
+        if op == 'div' and rhs_const is not None and 1 < rhs_const < (1 << 60):
+            # Map negative n to ~n, divide the resulting unsigned 60-bit value,
+            # then complement the quotient: floor(n/d) = ~floor((~n)/d).
+            # ceil(2^60/d) overestimates by at most one; a single correction
+            # makes the reciprocal exact, including the signed-61-bit limits.
+            done = f'known_div_recip_{self.new_label_id()}'
+            a.mov_rax_r10()
+            a.sar_rax_imm8(3)
+            a.mov_r64_r64('rcx', 'rax')
+            a.sar_r64_imm8('rcx', 63)
+            a.xor_r64_r64('rax', 'rcx')
+            a.mov_r64_r64('r8', 'rax')
+            a.mov_r64_imm64('r11', ((1 << 60) - 1) // rhs_const + 1)
+            a.mul_r64('r11')
+            a.shr_r64_imm8('rax', 60)
+            a.shl_r64_imm8('rdx', 4)
+            a.or_r64_r64('rax', 'rdx')
+            a.mov_r64_imm64('r11', rhs_const)
+            a.mov_r64_r64('rdx', 'rax')
+            a.imul_r64_r64('rdx', 'r11')
+            a.cmp_r64_r64('rdx', 'r8')
+            a.jcc('be', done)
+            a.dec_r64('rax')
+            a.mark(done)
+            a.xor_r64_r64('rax', 'rcx')
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
             return True
         if op == '%':
             if rhs_const is not None:
@@ -3774,18 +3822,25 @@ class CodegenExpr:
             # generic path on rooted stack homes so nested call-heavy expressions
             # remain semantically stable; the register-backed temp allocator is
             # still used in narrower hot paths that do not hit this hazard.
-            left_tmp = self.alloc_expr_temps(8)
-            right_tmp = self.alloc_expr_temps(8)
-            self.emit_expr(e.left)
-            a.mov_rsp_disp32_rax(left_tmp)
-            self.emit_expr(e.right)
-            a.mov_rsp_disp32_rax(right_tmp)
-
-            # load left -> r10, right -> r11
-            a.mov_r64_membase_disp("r10", "rsp", left_tmp)
-            a.mov_r64_membase_disp("r11", "rsp", right_tmp)
-
-            self.free_expr_temps(16)
+            if isinstance(e.right, ml.Num) and type(e.right.value) is int:
+                # Loading an immediate cannot call, collect or clobber R10.
+                self.emit_expr(e.left)
+                a.mov_r64_r64('r10', 'rax')
+                a.mov_r64_imm64('r11', enc_int(e.right.value))
+            elif (isinstance(e.left, ml.Bin) and isinstance(e.right, ml.Bin)
+                  and self._opt_same_local_int_expr(e.left, e.right)):
+                self.emit_expr(e.left)
+                a.mov_r64_r64('r10', 'rax')
+                a.mov_r64_r64('r11', 'rax')
+            else:
+                left_tmp = self.alloc_expr_temps(8)
+                self.emit_expr(e.left)
+                a.mov_rsp_disp32_rax(left_tmp)
+                self.emit_expr(e.right)
+                # No safepoint intervenes: the right store/load pair is dead.
+                a.mov_r64_r64('r11', 'rax')
+                a.mov_r64_membase_disp('r10', 'rsp', left_tmp)
+                self.free_expr_temps(8)
 
             lhs_const_int = self._opt_try_const_int(getattr(e, 'left', None))
             rhs_const_int = self._opt_try_const_int(getattr(e, 'right', None))

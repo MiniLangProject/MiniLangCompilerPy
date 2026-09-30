@@ -15,7 +15,8 @@ import subprocess
 import time
 from pathlib import Path
 
-CASES = ("division", "repeat", "repeat-one", "concat-empty", "join-one",
+CASES = ("division", "division-constants", "division-wide", "local-cse",
+         "integer-format", "integer-format-small", "repeat", "repeat-one", "concat-empty", "join-one",
          "concat-control", "concat-small-control", "repeat-two-control",
          "repeat-two-multi-control", "join-control")
 PATTERN = re.compile(r"(\S+) ms=([0-9.eE+-]+) bytes=(\d+) checksum=(-?\d+)")

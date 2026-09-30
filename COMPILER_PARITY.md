@@ -1,5 +1,18 @@
 # Compiler parity and self-hosting
 
+## Unreleased local-codegen verification
+
+The development changes after 1.2.13 retain byte-identical output for the
+expanded runtime regression fixture across Python, native ML and ML object
+pipelines on Windows and Linux. Python-bootstrap and selfbuilt compiler
+images are also identical on each target, including a full Linux-native
+selfbuild. Exact hashes, test coverage, performance
+measurements and the scope of these checks are recorded in the
+[30 September local-codegen report](docs/reports/LOCAL_CODEGEN_OPTIMIZATIONS_2026-09-30.md).
+The native `cstr` return exception below is unchanged.
+
+## Released baseline
+
 Verified through 30 September 2026 against the matching 1.2.13 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and

@@ -1844,13 +1844,17 @@ class CodegenRuntime:
         a.mov_r32_imm32("r10d", 1)  # mov r10d,1
         a.mark('itd_pos')
 
+        # Exact unsigned /10: high64(n * ceil(2^67/10)) >> 3.
+        # Hoist the reciprocal; retain n to recover the decimal remainder.
+        a.mov_r64_imm64('r11', 0xCCCCCCCCCCCCCCCD)
         a.mark('itd_loop')
-        # edx = 0
-        a.xor_r32_r32("edx", "edx")
-        # r11d = 10
-        a.mov_r32_imm32("r11d", 10)
-        # div r11  (rdx:rax / r11)
-        a.div_r64("r11")
+        a.mov_r64_r64('r8', 'rax')
+        a.mul_r64('r11')
+        a.shr_r64_imm8('rdx', 3)
+        a.mov_r64_r64('rax', 'rdx')
+        a.imul_r64_r64_imm('rdx', 'rdx', 10)
+        a.sub_r64_r64('r8', 'rdx')
+        a.mov_r64_r64('rdx', 'r8')
         # dl += '0'
         a.add_r8_imm8("dl", 48)
         # dec rdi
