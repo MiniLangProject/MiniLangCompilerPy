@@ -1,6 +1,6 @@
 # Compiler parity and self-hosting
 
-Verified through 28 September 2026 against the matching 1.2.12 revisions of:
+Verified through 30 September 2026 against the matching 1.2.13 revisions of:
 
 - `MiniLangCompilerPy`, the Python bootstrap/reference compiler; and
 - `MiniLangCompilerML`, the compiler implemented in MiniLang.
@@ -30,6 +30,23 @@ sections, labels and relocations into either PE or ELF. Dynamic-import order is
 encoded explicitly, so Linux object builds retain the monolithic image's exact
 bytes.
 
+## 30 September 2026 runtime optimization verification
+
+Release 1.2.13 specializes proven power-of-two integer floor division and
+avoids redundant immutable-string copies. Repetition uses prefix doubling or
+native byte fill. Large-integer scalar-array classification now matches across
+the two backends without changing later GC promotion.
+
+The runtime regression and benchmark images are byte-identical across Python
+and MiniLang for each target; the regression also matches normal and MLO builds.
+Coverage includes signed-61-bit limits, wrapped divisors, UTF-8/NUL data,
+validation/error behavior, scalar/SIMD dispatch, GC and thread result lifetime.
+The unchanged standard libraries contain 53 byte-identical modules.
+
+See the [measurement report](docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md)
+for the pre-release evaluation and [1.2.13 release notes](RELEASE_NOTES_1.2.13.md)
+for the versioned rebuilds, test results and compiler-image hashes.
+
 ## 28 September 2026 expression-inference verification
 
 Release 1.2.12 removes repeated recursive unary/binary type inference when
@@ -53,7 +70,7 @@ Python bootstrap and native self-hosted rebuilds produce identical images:
 
 See the [HollowKeep measurement report](docs/reports/HOLLOWKEEP_STRING_CONCAT_FIX_2026-09-28.md)
 for the pre-release A/B methodology and the [1.2.12 release notes](RELEASE_NOTES_1.2.12.md)
-for current compiler artifacts. Historical hashes below remain tied to their
+for the 1.2.12 compiler artifacts. Historical hashes below remain tied to their
 original versions.
 
 ## 25 September 2026 native-media verification

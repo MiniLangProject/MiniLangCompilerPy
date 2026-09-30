@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.2.13 - 2026-09-30
+
 - Optimize proven integer floor division by positive powers of two to arithmetic
   shifts, preserving signed-61-bit wraparound and generic fallback behavior.
 - Avoid new string allocations for empty concatenation operands, repetition by
