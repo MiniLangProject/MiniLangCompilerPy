@@ -59,6 +59,7 @@ end function
 
 function main(args)
   global visits
+  checkAdvancedCodegen()
   for sample = -2048 to 2048
     checkDivision(sample)
   end for
@@ -180,4 +181,141 @@ end function
 /// Repeated primitive trees may be reused, but remain tagged wraparound ints.
 function localRepeated(x as int, y as int) returns int
   return (x + y) * (x + y)
+end function
+
+/// Constructor projections may disappear only when discarded arguments are pure.
+struct CodegenPair
+  first as int
+  second as int
+end struct
+
+function projectedPair(x as int, y as int) returns int
+  return CodegenPair(x + 1, y * 3).second
+end function
+
+function effectfulPair()
+  return CodegenPair(observed(7), observed(9)).second
+end function
+
+function invalidPair(value)
+  return CodegenPair(1, value).first
+end function
+
+function dynamicSum(values as array) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    values[i] = values[i] + 1
+  end for
+  return total
+end function
+
+function emptyLoop(values as array)
+  global visits
+  for i = 0 to len(values) - 1
+    visits += 1
+    value = values[i]
+  end for
+end function
+
+function reboundLoop(values as array)
+  total = 0
+  for i = 0 to len(values) - 1
+    values = [10, 20]
+    total += values[i]
+  end for
+  return total
+end function
+
+function collectedLoop(values as array)
+  total = 0
+  for i = 0 to len(values) - 1
+    gc_collect()
+    total += values[i]
+  end for
+  return total
+end function
+
+function changedIndex(values as array)
+  total = 0
+  for i = 0 to len(values) - 1
+    i += 1
+    total += values[i]
+  end for
+  return total
+end function
+
+function dynamicBytes(values as bytes)
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    values[i] = 255
+  end for
+  return total
+end function
+
+function inline specializedInteger(x)
+  return (x + 3) * (x - 2)
+end function
+
+function literalEntry()
+  result = specializedInteger(11)
+  return result
+end function
+
+function inline reassignedInteger(x)
+  x = "changed"
+  return x + x
+end function
+
+/// Preserve captures, argument effects, allocation roots and error provenance.
+function checkAdvancedCodegen()
+  global visits
+  checkEq(projectedPair(4, 7), 21, "temporary struct projection")
+  visits = 0
+  checkEq(effectfulPair(), 9, "effectful struct projection")
+  checkEq(visits, 2, "discarded fields still execute effects")
+  bad = try(invalidPair("wrong"))
+  checkEq(typeof(bad), "error", "discarded field contract remains checked")
+  checkEq(specializedInteger(11), 126, "literal inline specialization")
+  checkEq(literalEntry(), 126, "specialized native entry")
+  checkEq(specializedInteger("a"), void, "noninteger inline fallback")
+  checkEq(reassignedInteger(11), "changedchanged", "inline type changes")
+  data = [1, 2, 3, 4]
+  checkEq(dynamicSum(data), 10, "dynamic-length loop")
+  checkEq(data[3], 5, "dynamic-length stores")
+  checkEq(dynamicSum([9]), 9, "singleton loop")
+  checkEq(reboundLoop([1, 2]), 30, "mutated container is not hoisted")
+  checkEq(collectedLoop([3, 5, 7]), 15, "hoisted root survives GC")
+  checkEq(changedIndex([1, 2, 3, 4]), 6, "mutated index retains checks")
+  byteData = bytes([1, 2, 3])
+  checkEq(dynamicBytes(byteData), 6, "dynamic bytes read and store")
+  checkEq(byteData[2], 255, "dynamic byte store result")
+  guardError = try(dynamicSum("wrong"))
+  checkEq(typeof(guardError), "error", "container contract is still checked")
+  visits = 0
+  problem = try(emptyLoop([]))
+  checkEq(typeof(problem), "error", "empty descending loop retains error")
+  checkEq(visits, 1, "empty loop preserves effects before failing")
+  checkEq(problem.code, 1300, "cold error code")
+  checkEq(problem.func, "emptyLoop", "cold error function")
+  checkTrue(problem.line > 0, "cold error line")
+  checkTrue(len(problem.script) > 0, "cold error script")
+  captured = 3
+  function changeCaptured()
+    return 1
+  end function
+  checkEq(changeCaptured() + captured, 4, "RHS local loaded after call")
+  visits = 3
+  checkEq(observed(1) + visits, 5, "RHS global loaded after call")
+  gc_collect()
+  checkEq(problem.code, 1300, "error survives collection")
+  beforeProjection = heap_bytes_used()
+  result = 0
+  for i = 0 to 99
+    result += projectedPair(i, i)
+  end for
+  projectionBytes = heap_bytes_used() - beforeProjection
+  checkEq(result, 14850, "projection checksum")
+  checkEq(projectionBytes, 0, "projected structs allocate no heap")
 end function

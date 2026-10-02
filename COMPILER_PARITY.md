@@ -1,5 +1,15 @@
 # Compiler parity and self-hosting
 
+## 2 October 2026 development verification
+
+The bounded-codegen development changes have byte-identical Windows Python
+bootstrap/native-selfbuild images and matching Linux cross-builds. Expanded
+runtime fixtures also match across Python, Windows ML and Linux ML, including
+ML's normal and object pipelines. A full Linux-native compiler selfbuild was
+not repeated in this round. Exact hashes, scope, regressions and measurements:
+[bounded-codegen evaluation](docs/reports/BOUNDED_CODEGEN_2026-10-02.md).
+Published 1.2.14 release artifacts/checksums below are unchanged.
+
 ## 1.2.14 release and local-codegen verification
 
 The release-stamped Windows Python bootstrap and native selfbuild share SHA-256

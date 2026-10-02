@@ -2,6 +2,22 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Eliminate immediate field projections of small temporary structs when all
+  positional arguments are bounded, total integer expressions and contracts
+  cannot fail. Escaping objects and effectful constructors remain unchanged.
+- Hoist stable local array/bytes roots in dynamic-length loops. Preserve all
+  dynamic bounds checks, descending empty ranges, GC roots and cancellation.
+- Keep the left operand in a register across a proven non-allocating integer
+  local/parameter right-operand load.
+- Share constant runtime-error construction in one cold helper, retaining
+  error codes, messages, source locations and collection safety.
+- Specialize untyped literal integer parameters inside existing single-return
+  inline expansions, retaining the generic callable body and inline byte budget.
+- Extend cross-backend runtime/structure tests and paired Windows/Linux
+  benchmarks, including managed heap growth and per-process peak RSS.
+
 ## 1.2.14 - 2026-09-30
 
 - Replace proven integer floor division by positive non-power-of-two constants

@@ -360,6 +360,14 @@ def test_floor_div_codegen(*, name: str, tests_root: Path) -> TestResult:
                       stdout=result.stdout, stderr=result.stderr)
 
 
+def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> TestResult:
+    """Verify allocation elimination, loop safety and bounded specialization."""
+    result = run_cmd([sys.executable, str(tests_root / 'check_codegen_structure.py'),
+                      str(mlc_runner)], timeout_s=120)
+    return TestResult(name=name, status="PASS" if result.returncode == 0 else "FAIL",
+                      stdout=result.stdout, stderr=result.stderr)
+
+
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
     expected = "MiniLang Compiler 1.2.14"
@@ -4256,6 +4264,8 @@ def main() -> int:
         name="operator type inference scales linearly", tests_root=tests_root))
     tests.append(lambda: test_floor_div_codegen(
         name="floor division instruction selection", tests_root=tests_root))
+    tests.append(lambda: test_codegen_structure(
+        name="bounded codegen optimization structure", tests_root=tests_root, mlc_runner=mlc_runner))
     tests.append(lambda: test_program_no_fail(
         name="mixed concat with operator overloads",
         mlc_runner=mlc_runner, ml_path=tests_root / "mixed_concat_overloads.ml",

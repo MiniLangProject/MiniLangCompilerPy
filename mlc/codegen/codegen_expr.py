@@ -506,6 +506,38 @@ class CodegenExpr:
                 return operands_are_int and self._opt_const_nonnegative_int(right)
         return False
 
+    def _opt_project_temporary_struct(self, member: Any) -> Any:
+        """Elide a nonescaping constructor used only for a primitive field read.
+
+        Full positional arity, at most eight fields and total integer arguments
+        make the discarded evaluations unobservable. Contracts must be absent
+        or integer contracts; failed guards and unknown calls retain allocation.
+        """
+        ml = self.ml
+        call = getattr(member, 'target', None)
+        if not isinstance(call, ml.Call) or not isinstance(call.callee, ml.Var):
+            return None
+        raw = str(call.callee.name)
+        name = self._qualify_identifier(raw, call, kind='struct')
+        binding = self.resolve_binding(raw)
+        if binding is not None and getattr(binding, 'kind', None) != 'global':
+            return None
+        fields = (getattr(self, 'struct_fields', {}) or {}).get(name)
+        args = list(call.args)
+        if (name == 'error' or not fields or not 1 <= len(fields) <= 8
+                or len(args) != len(fields)
+                or any(n is not None for n in (getattr(call, 'arg_names', []) or []))):
+            return None
+        if member.name not in fields:
+            return None
+        contracts = (getattr(self, 'struct_field_types', {}) or {}).get(name, [])
+        for i, arg in enumerate(args):
+            if not self._opt_same_local_int_expr(arg, arg):
+                return None
+            if i < len(contracts) and contracts[i][0] not in (None, '', 'int'):
+                return None
+        return args[fields.index(member.name)]
+
     def _opt_same_local_int_expr(self, left: Any, right: Any, depth: int = 0) -> bool:
         """Bounded expression-local CSE; never cache calls, heap reads or captures.
 
@@ -1485,36 +1517,10 @@ class CodegenExpr:
         lbl = f"objstr_{len(self.rdata.labels)}"
         self.rdata.add_obj_string(lbl, str(message))
 
-        # Allocate a 5-field struct: 8-byte header + 5*8 fields = 48 bytes.
-        a.mov_rcx_imm32(48)
-        a.call('fn_alloc')
-
-        a.mov_r11_rax()
-        # header: type / struct_id
-        a.mov_membase_disp_imm32('r11', 0, OBJ_STRUCT, qword=False)
-        a.mov_membase_disp_imm32('r11', 4, ERROR_STRUCT_ID, qword=False)
-
-        # field0 = code (TAG_INT)
-        a.mov_rax_imm64(enc_int(int(code)))
-        a.mov_membase_disp_r64('r11', 8, 'rax')
-
-        # field1 = message (TAG_PTR to OBJ_STRING)
-        a.lea_rax_rip(lbl)
-        a.mov_membase_disp_r64('r11', 16, 'rax')
-
-        # field2 = script (string|void)
-        a.mov_rax_rip_qword('dbg_loc_script')
-        a.mov_membase_disp_r64('r11', 24, 'rax')
-
-        # field3 = func (string|void)
-        a.mov_rax_rip_qword('dbg_loc_func')
-        a.mov_membase_disp_r64('r11', 32, 'rax')
-
-        # field4 = line (int|void)
-        a.mov_rax_rip_qword('dbg_loc_line')
-        a.mov_membase_disp_r64('r11', 40, 'rax')
-
-        a.mov_rax_r11()
+        # The message is immortal rdata, not an unrooted managed argument.
+        a.mov_r64_imm64('rcx', enc_int(int(code)))
+        a.lea_rdx_rip(lbl)
+        a.call('fn_make_error_const')
 
     def _emit_concat_string_parts_one_alloc(self, parts: List[tuple[str, Any]]) -> None:
         """Emit a one-allocation concat for a small mix of string constants and tagged values.
@@ -2719,6 +2725,13 @@ class CodegenExpr:
             for index, name in enumerate(params_typed):
                 optional = bool(declared_optional[index]) if index < len(declared_optional) else False
                 raw_type = declared_types[index] if index < len(declared_types) else None
+                # Specialize an existing inline expansion for literal integer
+                # arguments. No clones or new inlining decisions are introduced;
+                # the normal byte budget and all parameter guards still apply.
+                if (not raw_type and len(body) == 1 and isinstance(body[0], ml.Return)
+                        and isinstance(args[index], ml.Num) and type(args[index].value) is int):
+                    self._known_value_types[str(name)] = 'int'
+                    continue
                 if optional or not raw_type:
                     continue
                 raw = str(raw_type)
@@ -3234,8 +3247,12 @@ class CodegenExpr:
 
         # Struct member read: obj.field
         if hasattr(ml, 'Member') and isinstance(e, ml.Member):
-            # Step 4: resolve dotted names inside package/namespace context
-            # e.g. inside `package std.time`, `win32.Sleep` should resolve to `std.time.win32.Sleep`
+            # Immediate primitive projections need no temporary heap object.
+            projected = self._opt_project_temporary_struct(e)
+            if projected is not None:
+                self.emit_expr(projected)
+                return
+            # Resolve dotted names, e.g. package std.time: win32.Sleep -> std.time.win32.Sleep.
             def _qualify_dotted(qn: str, *, kind: str | None = None) -> str:
                 qn0 = self._apply_import_alias(str(qn))
                 # Simple name: reuse existing qualifier (package + function prefix)
@@ -3827,6 +3844,15 @@ class CodegenExpr:
                 self.emit_expr(e.left)
                 a.mov_r64_r64('r10', 'rax')
                 a.mov_r64_imm64('r11', enc_int(e.right.value))
+            elif (isinstance(e.right, ml.Var) and self._opt_expr_known_int(e.right)
+                  and self._opt_expr_known_int(e.left)):
+                # An unboxed integer local/parameter (or constexpr) is loaded
+                # using RAX only. Preserve left-to-right effects, but keep the
+                # completed left value in R10 across this non-allocating load.
+                self.emit_expr(e.left)
+                a.mov_r64_r64('r10', 'rax')
+                self.emit_expr(e.right)
+                a.mov_r64_r64('r11', 'rax')
             elif (isinstance(e.left, ml.Bin) and isinstance(e.right, ml.Bin)
                   and self._opt_same_local_int_expr(e.left, e.right)):
                 self.emit_expr(e.left)

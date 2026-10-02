@@ -857,7 +857,9 @@ class CodegenStmt:
             if not ty or optional:
                 excluded.add(str(param))
                 continue
-            if operator_types_enabled:
+            # Container contracts also seed loop layout facts without operator
+            # overloads. The validation pass below still rejects later writes.
+            if operator_types_enabled or ty in ('array', 'bytes'):
                 fact = self._operator_declared_type_fact(ty, '', fn)
                 if fact:
                     typed_param_facts[str(param)] = fact
@@ -1259,7 +1261,11 @@ class CodegenStmt:
         return assigned
 
     def _for_index_hoist_plans(self, loop: Any, index_binding: Any) -> list[dict[str, Any]]:
-        """Find fixed-layout containers safely indexed by this inclusive loop."""
+        """Hoist stable container roots; only fixed lengths prove bounds.
+
+        Dynamic lengths retain every bounds check, including descending empty
+        ranges (MiniLang's inclusive 0 to -1 loop is not a zero-trip loop).
+        """
         ml = self.ml
         if not bool(getattr(self, 'in_function', False)) or index_binding is None:
             return []
@@ -1344,7 +1350,7 @@ class CodegenStmt:
                 return start_value <= end_value < exact_len
             if not isinstance(end_expr, getattr(ml, 'Bin', ())) or str(getattr(end_expr, 'op', '')) != '-':
                 return False
-            if self._opt_try_const_int(getattr(end_expr, 'right', None)) != 1 or start_value != 0 or exact_len <= 0:
+            if self._opt_try_const_int(getattr(end_expr, 'right', None)) != 1 or start_value != 0:
                 return False
             left = getattr(end_expr, 'left', None)
             if not isinstance(left, getattr(ml, 'Call', ())):
@@ -1363,9 +1369,9 @@ class CodegenStmt:
             fact = (getattr(self, '_known_value_types', {}) or {}).get(target_name)
             kind = self._value_type_base(fact)
             exact_len = self._value_type_exact_length(fact)
-            if kind not in ('array', 'bytes') or not isinstance(exact_len, int):
+            if kind not in ('array', 'bytes'):
                 continue
-            if not end_proves_bounds(target_name, exact_len):
+            if not end_proves_bounds(target_name, exact_len if isinstance(exact_len, int) else -1):
                 continue
             try:
                 binding = self.resolve_binding(target_name)
@@ -1373,11 +1379,13 @@ class CodegenStmt:
                 binding = None
             if binding is None or getattr(binding, 'kind', None) not in ('local', 'param'):
                 continue
+            if bool(getattr(binding, 'boxed', False)):
+                continue
             plans.append({
                 'target_id': int(getattr(binding, 'id', -1)),
                 'target_expr': target_exprs[target_name],
                 'kind': kind,
-                'bounds_proven': True,
+                'bounds_proven': isinstance(exact_len, int) and exact_len > 0,
             })
         return plans
 

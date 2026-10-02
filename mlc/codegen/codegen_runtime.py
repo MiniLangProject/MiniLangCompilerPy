@@ -25,6 +25,37 @@ class CodegenRuntime:
     - helper emitters like ``emit_writefile`` / ``emit_writefile_ptr_len``
     """
 
+    def emit_make_error_const_function(self) -> None:
+        """Share cold error construction; RCX is a tagged code, RDX immortal text.
+
+        Save both arguments outside Win64 shadow space across fn_alloc. No
+        managed pointer argument needs publishing. Debug location is captured
+        at the same allocation boundary as the former inline sequence.
+        """
+        a = self.asm
+        a.mark("fn_make_error_const")
+        a.sub_rsp_imm32(56)
+        a.mov_membase_disp_r64("rsp", 32, "rcx")
+        a.mov_membase_disp_r64("rsp", 40, "rdx")
+        a.mov_rcx_imm32(48)
+        a.call("fn_alloc")
+        a.mov_r64_r64("r11", "rax")
+        a.mov_membase_disp_imm32("r11", 0, OBJ_STRUCT, qword=False)
+        a.mov_membase_disp_imm32("r11", 4, ERROR_STRUCT_ID, qword=False)
+        a.mov_r64_membase_disp("rax", "rsp", 32)
+        a.mov_membase_disp_r64("r11", 8, "rax")
+        a.mov_r64_membase_disp("rax", "rsp", 40)
+        a.mov_membase_disp_r64("r11", 16, "rax")
+        a.mov_rax_rip_qword("dbg_loc_script")
+        a.mov_membase_disp_r64("r11", 24, "rax")
+        a.mov_rax_rip_qword("dbg_loc_func")
+        a.mov_membase_disp_r64("r11", 32, "rax")
+        a.mov_rax_rip_qword("dbg_loc_line")
+        a.mov_membase_disp_r64("r11", 40, "rax")
+        a.mov_r64_r64("rax", "r11")
+        a.add_rsp_imm32(56)
+        a.ret()
+
     def emit_cpu_init_function(self) -> None:
         """Probe x86 capabilities once and publish detected/active masks.
 

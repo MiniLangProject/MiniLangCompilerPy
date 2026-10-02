@@ -12,6 +12,12 @@ for correctness, parity, performance and scope.
 
 Supported native targets: **Windows x64 (PE32+)** and **Linux x64 (ELF64)**.
 
+Current development also adds bounded temporary-struct projection, dynamic
+container-root hoisting, fewer integer operand spills, shared cold error
+construction and literal-type specialization of existing leaf inline calls.
+See the [2 October evaluation](docs/reports/BOUNDED_CODEGEN_2026-10-02.md)
+for measured benefits, regression coverage and deliberately conservative limits.
+
 These changes build on the integer-division and string-allocation improvements
 in 1.2.13. See the [earlier runtime/heap evaluation](docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md)
 for measurements, correctness checks and the scope of binary-parity validation.

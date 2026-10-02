@@ -1339,6 +1339,7 @@ class CodegenCore:
     def emit_used_helpers(self) -> None:
         """Emit only the internal runtime helpers that were referenced (fn_*)."""
         emitters = {'fn_int_to_dec': getattr(self, 'emit_int_to_dec_function', None),
+            'fn_make_error_const': getattr(self, 'emit_make_error_const_function', None),
             'fn_cpu_init': getattr(self, 'emit_cpu_init_function', None),
             'fn_runtime_cpu_features': getattr(self, 'emit_runtime_cpu_features_function', None),
             'fn_runtime_cpu_active_features': getattr(self, 'emit_runtime_cpu_active_features_function', None),
@@ -1476,7 +1477,7 @@ class CodegenCore:
             'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_copyArray', 'fn_builtin_copyStringBytes', 'fn_builtin_fillBytes',
             'fn_builtin_gc_collect', 'fn_builtin_gc_set_limit', 'fn_build_args', 'fn_init_argvw', 'fn_incref',
             'fn_decref', 'fn_callStats', 'fn_heap_count', 'fn_heap_bytes_used', 'fn_heap_bytes_committed',
-            'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', ]
+            'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', 'fn_make_error_const', ]
         helper_rank = {lbl: i for i, lbl in enumerate(helper_order)}
 
         used = getattr(self, 'used_helpers', set())

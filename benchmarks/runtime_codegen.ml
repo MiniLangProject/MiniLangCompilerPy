@@ -1,5 +1,5 @@
 /// Runtime and allocation benchmark; run before/after binaries alternately.
-/// Heap deltas count allocated MiniLang heap bytes, not process working set.
+/// Heap deltas measure bump-pointer growth, not cumulative allocation or RSS.
 #if TARGET_OS == "windows"
 extern function counter(output as bytes) from "kernel32.dll" symbol "QueryPerformanceCounter" returns i32
 extern function frequency(output as bytes) from "kernel32.dll" symbol "QueryPerformanceFrequency" returns i32
@@ -43,6 +43,7 @@ function main(args)
   singleton = [source]
   small = stringRepeat("a", 1)
   pieces = ["a", "b", "c"]
+  numbers = array(512, 1)
   timer = bytes(16)
   ticksPerSecond = 1000000000
 #if TARGET_OS == "windows"
@@ -50,9 +51,36 @@ function main(args)
   ticksPerSecond = readCounter(timer, 0)
 #endif
   gc_collect()
+  // Isolate projection allocation volume from periodic collection/reuse.
+  // This bounded case allocates at most 16 MB in the unoptimized build.
+  if mode == "struct-projection" then gc_set_limit(0) end if
   before = heap_bytes_used()
   started = ticks(timer)
   checksum = 0
+  if mode == "struct-projection" then
+    for i = 0 to 499999
+      checksum += BenchPair(i, i + 1).second
+    end for
+  end if
+  if mode == "dynamic-index" then
+    for i = 0 to 19999
+      checksum += dynamicIndexSum(numbers)
+    end for
+  end if
+  if mode == "local-register" then
+    checksum = localRegisters(6000000, 17)
+  end if
+  if mode == "inline-literal" then
+    for i = 0 to 1999999
+      checksum += literalArithmetic(17)
+    end for
+  end if
+  if mode == "cold-errors" then
+    for i = 0 to 99999
+      problem = try(outside(numbers, 512))
+      checksum += problem.code
+    end for
+  end if
   if mode == "division" then
     checksum = arithmetic(24000000)
   end if
@@ -147,4 +175,33 @@ function main(args)
   elapsed = ((finished - started) * 1000) / ticksPerSecond
   print mode + " ms=" + elapsed + " bytes=" + allocated + " checksum=" + checksum
   return 0
+end function
+
+struct BenchPair
+  first as int
+  second as int
+end struct
+
+function dynamicIndexSum(values as array) returns int
+  sum = 0
+  for i = 0 to len(values) - 1
+    sum += values[i]
+  end for
+  return sum
+end function
+
+function localRegisters(n as int, y as int) returns int
+  sum = 0
+  for i = 0 to n - 1
+    sum += i * y + y
+  end for
+  return sum
+end function
+
+function inline literalArithmetic(x)
+  return (x + 3) * (x - 2)
+end function
+
+function outside(values as array, index as int)
+  return values[index]
 end function
