@@ -1,7 +1,8 @@
 # Bounded code-generation improvements — 2 October 2026
 
-Development evaluation after v1.2.14. No language/API/version change and no
-release publication is part of this work.
+Development evaluation after v1.2.14, included in release 1.2.15. No language
+or API change. Measurements and hashes preserve the pre-version-stamp builds;
+see [release notes](../../RELEASE_NOTES_1.2.15.md) for release artifact checksums.
 
 ## Implementation and limits
 
@@ -172,8 +173,8 @@ Full samples, checksums, peak RSS and image SHA-256 values:
 | Windows benchmark: Python = ML | `9BA8C6DE82FE34222825FDDBEE34905F8B9BAC18517D9CFB8A26B5A461B9AC61` |
 | Linux benchmark: Python = ML | `BB41806A3DC0189F8DE5F680A2EACB9A539C1FBB90DF4EB9DA1F30ECFC4E4036` |
 
-These are development artifacts, not replacements for published v1.2.14
-release checksums. The existing canonical release executables were not replaced.
+These are development artifacts, not release-stamped 1.2.15 checksums.
+Published v1.2.14 release artifacts are unchanged.
 
 ## Reproduction
 
@@ -188,4 +189,5 @@ python tests/check_codegen_structure.py path/to/compiler
 
 For the Python compiler, pass `mlc_win64.py` to the structural checker; for the
 native compiler, pass its executable. Run the Linux benchmark command inside
-Linux. No commit, push, version bump or release upload is performed here.
+Linux. Release stamping, packaging and publication are documented separately
+in the [1.2.15 release notes](../../RELEASE_NOTES_1.2.15.md).

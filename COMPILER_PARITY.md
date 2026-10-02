@@ -1,5 +1,26 @@
 # Compiler parity and self-hosting
 
+## 1.2.15 release verification (2 October 2026)
+
+The release-stamped Windows Python bootstrap and native selfbuild share SHA-256
+`4357346D79C3C3D9E3A2D8FB20CAE974C5B94D0A66830B95762B15EBC65AFBBA`
+(54,494,720 bytes). Python and Windows ML produce the same Linux compiler:
+`D0C73E7CD0CC83BCBB195F2D10E5FD4EAB271F6562452CFD7ADC36A6A9DF42B4`
+(54,497,120 bytes).
+
+The release version/runtime fixtures execute on their respective target and
+match across Python, Windows ML and Linux ML hosts with both pipeline options
+(six-way parity per target). Both CLI version flags and compile-time
+`MINILANG_VERSION` report 1.2.15. All 53 standard-library modules match.
+Python's full suite passes 156/156 cases; the self-hosted suite passes 136/136
+core cases and its outer checks. Structural codegen checks pass in both.
+A full Linux-native compiler selfbuild was not repeated in this round.
+The native `cstr` return exception described below remains unchanged.
+
+See [1.2.15 release notes](RELEASE_NOTES_1.2.15.md) and the
+[bounded-codegen evaluation](docs/reports/BOUNDED_CODEGEN_2026-10-02.md)
+for changes, pre-stamp performance measurements and trade-offs.
+
 ## 2 October 2026 development verification
 
 The bounded-codegen development changes have byte-identical Windows Python

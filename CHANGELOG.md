@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.15 - 2026-10-02
 
 - Eliminate immediate field projections of small temporary structs when all
   positional arguments are bounded, total integer expressions and contracts
