@@ -1,0 +1,243 @@
+{
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "summary": {
+    "before": {
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    "after": {
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    }
+  },
+  "samples": [
+    {
+      "version": "before",
+      "run": 0,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 0,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "before",
+      "run": 1,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "before",
+      "run": 2,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "after",
+      "run": 3,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "before",
+      "run": 3,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "before",
+      "run": 4,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 4,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "after",
+      "run": 5,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2166784
+      }
+    },
+    {
+      "version": "before",
+      "run": 5,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "before",
+      "run": 6,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 6,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2166784
+      }
+    },
+    {
+      "version": "after",
+      "run": 7,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "before",
+      "run": 7,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "before",
+      "run": 8,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 8,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2162688
+      }
+    },
+    {
+      "version": "after",
+      "run": 9,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2166784
+      }
+    },
+    {
+      "version": "before",
+      "run": 9,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "before",
+      "run": 10,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 69206016
+      }
+    },
+    {
+      "version": "after",
+      "run": 10,
+      "allocated": {
+        "resident_bytes": 68026368
+      },
+      "collected": {
+        "resident_bytes": 2166784
+      }
+    }
+  ]
+}

@@ -395,6 +395,9 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mark('linux_VirtualAlloc')
     l_commit = 'linux_valloc_commit'
     l_vfail = 'linux_valloc_fail'
+    # MEM_RESET discards only dead payload pages, keeping them accessible.
+    a.test_r64_imm32('r8', 0x80000)
+    a.jcc('ne', 'linux_valloc_reset')
     a.test_r32_r32('r8d', 'r8d')
     a.mov_r32_r32('eax', 'r8d')
     a.and_r32_imm('eax', 0x2000)
@@ -442,6 +445,24 @@ def emit_linux_runtime(cg: Any) -> None:
     a.xor_r32_r32('eax', 'eax')
     a.ret()
 
+    a.mark('linux_valloc_reset')
+    a.push_reg('rdi')
+    a.push_reg('rsi')
+    a.mov_r64_r64('rdi', 'rcx')
+    a.mov_r64_r64('rsi', 'rdx')
+    a.mov_r32_imm32('edx', 4)  # MADV_DONTNEED, private anonymous pages
+    a.mov_r32_imm32('eax', 28)
+    _syscall(a)
+    a.test_r64_r64('rax', 'rax')
+    a.jcc('ne', 'linux_valloc_reset_done')
+    a.mov_r64_r64('rax', 'rdi')
+    a.mark('linux_valloc_reset_done')
+    a.pop_reg('rsi')
+    a.pop_reg('rdi')
+    a.cmp_r64_imm32('rax', -4095)
+    a.jcc('ae', l_vfail)
+    a.ret()
+
     # Decommit pages with madvise(DONTNEED) followed by PROT_NONE.
     a.mark('linux_VirtualFree')
     a.push_reg('rdi')
@@ -451,12 +472,17 @@ def emit_linux_runtime(cg: Any) -> None:
     a.mov_r32_imm32('edx', 4)
     a.mov_r32_imm32('eax', 28)
     _syscall(a)
+    a.test_r64_r64('rax', 'rax')
+    a.jcc('ne', 'linux_vfree_done')
     a.xor_r32_r32('edx', 'edx')
     a.mov_r32_imm32('eax', 10)
     _syscall(a)
+    a.mark('linux_vfree_done')
     a.pop_reg('rsi')
     a.pop_reg('rdi')
-    a.mov_r32_imm32('eax', 1)
+    a.test_r64_r64('rax', 'rax')
+    a.setcc_al('e')
+    a.movzx_eax_al()
     a.ret()
 
     # Sleep(milliseconds). Windows Sleep(0) yields the remainder of the current

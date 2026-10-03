@@ -10,6 +10,36 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 # Native primitive benchmarks
 
+## Memory management
+
+`memory_management.ml` isolates small allocation churn, retained live graphs,
+leaf/reference marking, fragmented free-list misses and an arithmetic control.
+The churn cases perform five million allocations. `compare_memory_management.py`
+alternates before/after processes, checks checksums and records workload time,
+process time and peak working set/RSS. Its `bytes` field is **final committed
+managed heap**, not allocation volume. Use the same source and target flags for
+both versions; compile the baseline with a preserved older compiler.
+
+```text
+python benchmarks/compare_memory_management.py BEFORE AFTER --runs 11 --cpu 0 --output memory.json
+python benchmarks/compare_memory_threads.py THREADS_BEFORE THREADS_AFTER --runs 11 --output threads.json
+python benchmarks/compare_memory_pauses.py BEFORE AFTER --runs 5 --output pauses.json
+python benchmarks/compare_memory_commit.py BEFORE.exe AFTER.exe --output commit.json
+python benchmarks/compare_memory_residency.py RESIDENT_BEFORE RESIDENT_AFTER --output resident.json
+```
+
+Run Linux images/runners inside Linux (WSL is supported). Do not pin the thread
+benchmark to one CPU. It uses 1–24 workers with high-resolution QPC/monotonic
+timing. Pause samples cover explicit collections on a retained graph, not
+contended-thread safepoint wait times. The Windows-only commit probe separates
+commit charge from resident memory. Compile `memory_residency.ml` with
+`--heap-shrink --heap-shrink-min 1m`; the runner samples the live process at
+handshakes before/after reclaiming a 64-MiB interior object. `MEM_RESET` need not
+immediately reduce Windows RSS; Linux `MADV_DONTNEED` has different semantics.
+
+See the [measured evaluation](../docs/reports/MEMORY_MANAGEMENT_2026-10-03.md)
+for benefits, regressions, raw samples and reproducible correctness checks.
+
 ## Crypto and compression
 
 `crypto_compression.ml` measures SHA-256/384, HMAC-SHA-256/384, HKDF,

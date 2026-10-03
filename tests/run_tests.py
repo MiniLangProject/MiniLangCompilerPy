@@ -764,6 +764,9 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
         (tests_root / "runtime_codegen.ml", ["RUNTIME CODEGEN [OK]"], []),
+        (tests_root / "memory_management.ml", ["MEMORY MANAGEMENT [OK]"], []),
+        (tests_root / "memory_purge.ml", ["MEMORY PURGE [OK]"], [],
+         ["--heap-shrink", "--heap-shrink-min", "1m"]),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
@@ -4274,6 +4277,15 @@ def main() -> int:
         name="runtime codegen identities and floor division",
         mlc_runner=mlc_runner, ml_path=tests_root / "runtime_codegen.ml",
         must_contain=["RUNTIME CODEGEN [OK]"]))
+    tests.append(lambda: test_program_no_fail(
+        name="memory diagnostics, worklist growth, adaptive policy and free-list misses",
+        mlc_runner=mlc_runner, ml_path=tests_root / "memory_management.ml",
+        must_contain=["MEMORY MANAGEMENT [OK]"]))
+    tests.append(lambda: test_program_no_fail(
+        name="interior dead-page purge, reuse and top recommit",
+        mlc_runner=mlc_runner, ml_path=tests_root / "memory_purge.ml",
+        must_contain=["MEMORY PURGE [OK]"],
+        extra_args=["--heap-shrink", "--heap-shrink-min", "1m"]))
     tests.append(lambda: test_compile_expected_fail(
         name="static index type diagnostics",
         mlc_runner=mlc_runner, entry_ml=tests_root / "static_index_type_invalid.ml",

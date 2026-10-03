@@ -5,6 +5,10 @@
 Current stable release: **1.2.15**. See the [changelog](CHANGELOG.md) and
 [release notes](RELEASE_NOTES_1.2.15.md).
 
+Development after 1.2.15 adds GC diagnostics, bounded adaptive defaults,
+allocator/worklist optimizations and optional interior dead-page discard.
+These changes are not yet part of the published 1.2.15 binaries.
+
 Release 1.2.15 adds bounded temporary-struct projection, dynamic container-root
 hoisting, fewer integer operand spills, shared cold error construction and
 literal-type specialization of existing leaf inline calls. Compiler binaries
@@ -177,9 +181,9 @@ Common options:
 - `--heap-reserve <size>` reserve heap address space (e.g. `256m`)
 - `--heap-commit <size>` initial committed heap bytes (e.g. `16m`)
 - `--heap-grow <size>` minimum commit growth step when the heap needs to grow (e.g. `1m`)
-- `--heap-shrink` enable decommit after GC (trim-from-top). Default: off
+- `--heap-shrink` enable top decommit and interior dead-page discard after GC. Default: off
 - `--heap-shrink-min <size>` minimum committed heap when shrinking (default: initial commit)
-- `--gc-limit <size>` bytes allocated between periodic GC runs (default: backend constant)
+- `--gc-limit <size>` fix both periodic GC thresholds (omission uses bounded adaptive defaults)
 - `--no-gc-periodic` disable periodic GC trigger (collect only on OOM)
 
 **Profiling / tracing**
@@ -2698,7 +2702,8 @@ end if
 These builtins are intended for debugging and validating the generated runtime.
 
 #### heap_count()
-Returns the number of *currently live* heap blocks (objects that are not marked as `free`).
+Returns allocated blocks not marked as free, including unreachable objects
+awaiting collection. This is not a reachability count.
 
 #### heap_bytes_used()
 Returns the current bump pointer offset: `heap_ptr - heap_base`.
@@ -2718,6 +2723,64 @@ Returns the number of blocks currently in the free-list.
 
 #### gc_collect()
 Runs the mark/sweep collector and returns `void`.
+
+#### gc_stat(index)
+
+Reads one scalar diagnostic without allocating or taking the heap lock. Invalid
+indices or non-integers return `void`. A disabled periodic limit is reported as
+`-1`. Separate reads are not a transactional snapshot: another thread may
+collect between them, and collection-local fields can be observed while being
+updated. Synchronize application sampling if necessary.
+
+| Index | Meaning |
+| ---: | --- |
+| 0 | Started collection count |
+| 1 | Reachable block bytes in the latest sweep, including headers |
+| 2 | Previously allocated block bytes reclaimed in the latest sweep |
+| 3 | Largest coalesced free-list block after the latest sweep |
+| 4 | Maximum pending worklist entries in the latest collection |
+| 5 | Cumulative central allocator requests, excluding retries/fast-path hits |
+| 6 | Cumulative free-list nodes examined |
+| 7 | Cumulative central TLAB refill requests |
+| 8 | Unused TLAB bytes returned by explicit retirement, not GC revocation |
+| 9 | Current overall periodic allocation threshold |
+| 10 | Current small-object periodic allocation threshold |
+| 11 | Adaptive defaults active: 1; explicit policy: 0 |
+| 12 | Cumulative central requested block bytes, including prepaid TLAB batches |
+| 13 | Committed mark-worklist capacity, in 8-byte entries |
+| 14 | Bytes successfully submitted for interior-page discard in the latest GC |
+
+These are diagnostic counters, not allocation totals or process RSS. Index 3
+excludes the unused bump tail and is a post-GC sample, not a current allocator
+index. Central counts charge each TLAB range once, not each object. Reclaimed
+bytes exclude already-free blocks and unused TLAB tails. Counters use the
+signed tagged integer range.
+
+Hot per-allocation/probe counters and detailed mark/reclaim accounting are
+omitted from generated code when no emitted application code references
+`gc_stat`, including first-class references. No runtime switch is required.
+Adaptive thresholds still use live-byte accounting in either case.
+
+Without explicit GC settings, thresholds start at 64 MiB overall and 8 MiB for
+small objects. After full GC they become
+`clamp(liveBlockBytes / 2, 64 MiB, 256 MiB)` and
+`clamp(liveBlockBytes / 4, 8 MiB, 64 MiB)`.
+This is bounded live-size adaptation, not generational/concurrent collection.
+`--gc-limit`, `--no-gc-periodic` and any `gc_set_limit()` call disable adaptation.
+Explicit settings retain prior behavior, including OOM retry collection.
+
+The worklist reserves the existing 64-MiB maximum outside the managed heap,
+initially commits 64 KiB, and doubles committed capacity on demand. Growth never
+invokes managed allocation. Reference-free leaves are marked without queuing.
+
+With `--heap-shrink`, full pages inside dead blocks spanning at least 4 MiB
+(after excluding edge pages) may also
+be discarded. Headers, free-list links and live neighbors are excluded.
+Windows uses `MEM_RESET` (a reclaim hint, not guaranteed immediate RSS reduction);
+Linux uses `MADV_DONTNEED` without changing access permissions. Reuse needs no
+recommit, but constructors must initialize contents. Interior hints do not lower
+the committed-heap counter; top trimming still decommits. This is not compaction
+or an independently managed large-object heap.
 
 #### gc_set_limit(limitBytes)
 Sets the allocation threshold for the **periodic** GC trigger and returns
@@ -2740,7 +2803,8 @@ Notes:
 - The central allocator reuses freed blocks via a free-list and falls back to
   bump allocation.
 - If the bump pointer would exceed the committed end, the runtime commits more pages (up to the reserved limit).
-- If `--heap-shrink` is enabled, the runtime may decommit unused pages at the top of the heap after GC (trim-from-top).
+- If `--heap-shrink` is enabled, the runtime may decommit unused top pages and
+  discard large interior dead-page ranges as described above.
 
 ---
 
@@ -3191,7 +3255,7 @@ What works:
   `copyArray`, `fillBytes`, native string/bytes helpers, `Thread` and its worker
   helpers,
   `nativeBytesPtr`, `nativeRawValue`, `nativeValueFromRaw`, `nativeCallback`,
-  plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`, `gc_set_limit`, `callStats`
+  plus debug helpers: `heap_count`, `heap_bytes_used`, `heap_bytes_committed`, `heap_bytes_reserved`, `heap_free_bytes`, `heap_free_blocks`, `gc_collect`, `gc_set_limit`, `gc_stat`, `callStats`
 
 Debugging / listings:
 - `--asm` writes a combined `.asm` listing
@@ -3202,7 +3266,7 @@ Heap sizing flags:
 - `--heap-reserve <size>`: reserved address space
 - `--heap-commit <size>`: initial committed bytes
 - `--heap-grow <size>`: minimum commit growth step
-- `--heap-shrink`: enable decommit after GC (trim-from-top)
+- `--heap-shrink`: enable top decommit and interior dead-page discard after GC
 - `--heap-shrink-min <size>`: minimum committed heap when shrinking
 
 Optimizations (always-on, conservative):
@@ -3261,7 +3325,7 @@ Optimizations (always-on, conservative):
 - **Helper pruning**: only referenced `fn_*` runtime helpers are emitted.
 
 GC flags:
-- `--gc-limit <size>` overrides the periodic GC threshold (default: `1m` in the current backend).
+- `--gc-limit <size>` fixes both periodic GC thresholds, disabling default live-size adaptation.
 - `--no-gc-periodic` disables periodic GC triggering (GC runs only on allocation failure / OOM path).
 
 ## Native checksums, cryptography, and SIMD search

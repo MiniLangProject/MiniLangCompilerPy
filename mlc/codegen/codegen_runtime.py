@@ -3916,6 +3916,8 @@ class CodegenRuntime:
         a.mov_rip_qword_rax('gc_young_bytes_since')
 
         a.mark(l_done)
+        a.mov_rax_imm64(0)
+        a.mov_rip_qword_rax("gc_adaptive")
         a.sub_rsp_imm8(0x28)
         a.call('tlab_retire_internal')
         a.add_rsp_imm8(0x28)

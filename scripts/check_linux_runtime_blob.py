@@ -65,6 +65,8 @@ def main() -> int:
                       lambda m: m[1] + str(cg.asm.labels[m[2]]) + m[3], expected)
     declared = re.findall(r'RuntimeLabel\("([^"]+)"', expected)
     assert set(declared) == set(cg.asm.labels), 'Runtime label inventory differs'
+    offsets_in_order = [cg.asm.labels[name] for name in declared]
+    assert offsets_in_order == sorted(offsets_in_order), 'Runtime labels must be in emission order'
     if expected == source:
         print(f'OK: canonical Linux runtime blob ({len(code)} bytes; {len(declared)} labels; 3 external relocations)')
         return 0

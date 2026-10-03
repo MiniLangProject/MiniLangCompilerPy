@@ -1,0 +1,168 @@
+{
+  "summary": {
+    "before": {
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744
+    },
+    "after": {
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35393536
+    }
+  },
+  "samples": [
+    {
+      "version": "before",
+      "run": 0,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=12.7251 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 0,
+      "peak_working_set_bytes": 7479296,
+      "peak_commit_bytes": 35397632,
+      "output": "control ms=12.6291 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35393536,
+      "output": "control ms=12.5456 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 1,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=12.9089 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 2,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102555648,
+      "output": "control ms=12.6814 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35393536,
+      "output": "control ms=12.5409 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 3,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35389440,
+      "output": "control ms=12.6466 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 3,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=12.6652 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 4,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=12.9482 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 4,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35393536,
+      "output": "control ms=12.6644 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 5,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35389440,
+      "output": "control ms=12.6748 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 5,
+      "peak_working_set_bytes": 7471104,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=13.1293 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 6,
+      "peak_working_set_bytes": 7471104,
+      "peak_commit_bytes": 102563840,
+      "output": "control ms=12.6514 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 6,
+      "peak_working_set_bytes": 7479296,
+      "peak_commit_bytes": 35393536,
+      "output": "control ms=12.8359 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 7,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35389440,
+      "output": "control ms=12.6322 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 7,
+      "peak_working_set_bytes": 7471104,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=12.6888 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 8,
+      "peak_working_set_bytes": 7471104,
+      "peak_commit_bytes": 102563840,
+      "output": "control ms=13.5192 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 8,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35389440,
+      "output": "control ms=12.5631 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 9,
+      "peak_working_set_bytes": 7479296,
+      "peak_commit_bytes": 35393536,
+      "output": "control ms=12.9759 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 9,
+      "peak_working_set_bytes": 7467008,
+      "peak_commit_bytes": 102559744,
+      "output": "control ms=13.3394 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "before",
+      "run": 10,
+      "peak_working_set_bytes": 7471104,
+      "peak_commit_bytes": 102563840,
+      "output": "control ms=13.0213 bytes=33554432 checksum=624959760"
+    },
+    {
+      "version": "after",
+      "run": 10,
+      "peak_working_set_bytes": 7475200,
+      "peak_commit_bytes": 35389440,
+      "output": "control ms=12.6051 bytes=33554432 checksum=624959760"
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "platform": "Windows-10-10.0.26200-SP0",
+  "summary": {
+    "before": {
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    "after": {
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    }
+  },
+  "samples": [
+    {
+      "version": "before",
+      "run": 0,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 136716288
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 136716288
+      }
+    },
+    {
+      "version": "after",
+      "run": 0,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "before",
+      "run": 1,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 136716288
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 136716288
+      }
+    },
+    {
+      "version": "before",
+      "run": 2,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "after",
+      "run": 3,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 69550080
+      },
+      "collected": {
+        "resident_bytes": 74989568,
+        "commit_bytes": 69550080
+      }
+    },
+    {
+      "version": "before",
+      "run": 3,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 136716288
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 136716288
+      }
+    },
+    {
+      "version": "before",
+      "run": 4,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 136716288
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 136716288
+      }
+    },
+    {
+      "version": "after",
+      "run": 4,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "after",
+      "run": 5,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "before",
+      "run": 5,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "before",
+      "run": 6,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "after",
+      "run": 6,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "after",
+      "run": 7,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74989568,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "before",
+      "run": 7,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "before",
+      "run": 8,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 136716288
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 136716288
+      }
+    },
+    {
+      "version": "after",
+      "run": 8,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74985472,
+        "commit_bytes": 69545984
+      }
+    },
+    {
+      "version": "after",
+      "run": 9,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 69550080
+      },
+      "collected": {
+        "resident_bytes": 74989568,
+        "commit_bytes": 69550080
+      }
+    },
+    {
+      "version": "before",
+      "run": 9,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "before",
+      "run": 10,
+      "allocated": {
+        "resident_bytes": 73924608,
+        "commit_bytes": 136712192
+      },
+      "collected": {
+        "resident_bytes": 74981376,
+        "commit_bytes": 136712192
+      }
+    },
+    {
+      "version": "after",
+      "run": 10,
+      "allocated": {
+        "resident_bytes": 73928704,
+        "commit_bytes": 69545984
+      },
+      "collected": {
+        "resident_bytes": 74989568,
+        "commit_bytes": 69545984
+      }
+    }
+  ]
+}

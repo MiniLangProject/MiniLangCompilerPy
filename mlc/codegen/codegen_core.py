@@ -1358,6 +1358,7 @@ class CodegenCore:
             'fn_unhandled_error_exit': getattr(self, 'emit_unhandled_error_exit_function', None),
             'fn_heap_count': getattr(self, 'emit_heap_count_function', None),
             'fn_heap_bytes_used': getattr(self, 'emit_heap_bytes_used_function', None),
+            'fn_gc_stat': getattr(self, 'emit_gc_stat_function', None),
             'fn_heap_bytes_committed': getattr(self, 'emit_heap_bytes_committed_function', None),
             'fn_heap_bytes_reserved': getattr(self, 'emit_heap_bytes_reserved_function', None),
             'fn_heap_free_bytes': getattr(self, 'emit_heap_free_bytes_function', None),
@@ -1477,7 +1478,7 @@ class CodegenCore:
             'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_copyArray', 'fn_builtin_copyStringBytes', 'fn_builtin_fillBytes',
             'fn_builtin_gc_collect', 'fn_builtin_gc_set_limit', 'fn_build_args', 'fn_init_argvw', 'fn_incref',
             'fn_decref', 'fn_callStats', 'fn_heap_count', 'fn_heap_bytes_used', 'fn_heap_bytes_committed',
-            'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', 'fn_make_error_const', ]
+            'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', 'fn_make_error_const', 'fn_gc_stat', ]
         helper_rank = {lbl: i for i, lbl in enumerate(helper_order)}
 
         used = getattr(self, 'used_helpers', set())

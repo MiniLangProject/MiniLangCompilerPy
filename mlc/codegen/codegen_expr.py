@@ -7217,6 +7217,13 @@ class CodegenExpr:
                 a.call('fn_typeName')
                 return
 
+            # Allocation-free scalar GC diagnostics.
+            if callee_name == 'gc_stat' and len(e.args) == 1:
+                self.emit_expr(e.args[0])
+                a.mov_r64_r64("rcx", "rax")
+                a.call('fn_gc_stat')
+                return
+
             # Builtin heap_count()
             if callee_name == 'heap_count' and len(e.args) == 0:
                 a.call('fn_heap_count')

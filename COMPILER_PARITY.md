@@ -1,5 +1,16 @@
 # Compiler parity and self-hosting
 
+## Memory-runtime development verification (3 October 2026)
+
+Both backends implement the same memory-runtime changes. Windows and Linux
+native selfbuilds match their Python bootstrap when built with identical heap
+options. The dedicated memory fixture matrix checks both pipelines and all
+three compiler hosts. The 53 standard-library modules remain byte-identical.
+Exact hashes, test scope and measured trade-offs are recorded in the
+[memory-management evaluation](docs/reports/MEMORY_MANAGEMENT_2026-10-03.md).
+These are development artifacts, not replacements for the published 1.2.15
+release. The existing native `cstr` return-lowering exception remains unchanged.
+
 ## 1.2.15 release verification (2 October 2026)
 
 The release-stamped Windows Python bootstrap and native selfbuild share SHA-256

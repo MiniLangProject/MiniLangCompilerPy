@@ -1,6 +1,30 @@
 /* Parallel short-lived allocation benchmark for server-style object churn. */
 
-extern function GetTickCount64() from "kernel32.dll" returns u64
+#if TARGET_OS == "windows"
+extern function counter(output as bytes) from "kernel32.dll" symbol "QueryPerformanceCounter" returns i32
+extern function frequency(output as bytes) from "kernel32.dll" symbol "QueryPerformanceFrequency" returns i32
+#else
+extern function counter(clockId as i32, output as bytes) from "libc.so.6" symbol "clock_gettime" returns i32
+#endif
+
+function readCounter(buffer, offset as int) returns int
+  value = 0
+  for i = 0 to 7
+    value = value | (buffer[offset + i] << (8 * i))
+  end for
+  return value
+end function
+
+/// Main-thread high-resolution timing with a preallocated buffer.
+function ticks(buffer) returns int
+#if TARGET_OS == "windows"
+  counter(buffer)
+  return readCounter(buffer, 0)
+#else
+  counter(1, buffer)
+  return readCounter(buffer, 0) * 1000000000 + readCounter(buffer, 8)
+#endif
+end function
 
 synchronized workersReady = 0
 synchronized startWorkers = false
@@ -60,6 +84,12 @@ function main(args)
   threadCount = selectedThreadCount(args)
   if threadCount == 0 then return 10 end if
 
+  timer = bytes(16)
+  perSecond = 1000000000
+#if TARGET_OS == "windows"
+  frequency(timer)
+  perSecond = readCounter(timer, 0)
+#endif
   iterations = 1000000
   threads = array(threadCount, void)
   for index = 0 to threadCount - 1
@@ -72,7 +102,7 @@ function main(args)
     threadSleep(0)
   end while
 
-  started = GetTickCount64()
+  started = ticks(timer)
   startWorkers = true
 
   checksum = 0
@@ -84,7 +114,7 @@ function main(args)
     checksum = checksum + result.checksum
     if not threads[index].Close() then return 14 end if
   end for
-  elapsed = GetTickCount64() - started
+  elapsed = (ticks(timer) - started) * 1000.0 / perSecond
 
   gc_collect()
   print "threads=" + threadCount

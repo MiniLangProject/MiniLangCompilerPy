@@ -2,6 +2,28 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+Evaluation and compatibility scope:
+[memory management review](docs/reports/MEMORY_MANAGEMENT_2026-10-03.md).
+
+- Add allocation-free `gc_stat(index)` diagnostics for collection, live/reclaimed
+  blocks, free-list search, TLAB refill/retirement and worklist capacity.
+  Elide hot diagnostic accounting when application code does not reference it.
+- Bound adaptive default GC thresholds by live block size; preserve explicit
+  CLI/runtime limits and disabled-periodic behavior.
+- Add a single-thread small-object bump fast path and a negative-fit free-list
+  cache, invalidated on GC and TLAB retirement.
+- Mark reference-free leaves without queuing. Replace the fixed 64-MiB BSS
+  worklist with an OS-reserved, initially 64-KiB committed worklist.
+- With `--heap-shrink`, discard full interior dead pages without unmapping
+  metadata/live neighbors. Preserve top-trim state on OS failure and propagate
+  Linux decommit errors.
+- Remove an unused self-recursive ML helper, align runtime counters, correct
+  stale comments and verify Linux runtime label emission order.
+- Add cross-platform GC policy, broad-graph growth, fragmented allocation,
+  page reuse and normal/object-pipeline tests plus A/B benchmarks.
+
 ## 1.2.15 - 2026-10-02
 
 - Eliminate immediate field projections of small temporary structs when all

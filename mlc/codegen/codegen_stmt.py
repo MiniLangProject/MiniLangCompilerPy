@@ -5196,6 +5196,7 @@ class CodegenStmt:
             'gc_collect': (0, 0, 'fn_builtin_gc_collect'),
 
             'gc_set_limit': (1, 1, 'fn_builtin_gc_set_limit'),
+            'gc_stat': (1, 1, 'fn_gc_stat'),
 
             # heap / debug builtins
             'heap_count': (0, 0, 'fn_heap_count'), 'heap_bytes_used': (0, 0, 'fn_heap_bytes_used'),
@@ -6124,7 +6125,7 @@ class CodegenStmt:
             "runtimeCpuFeatures", "runtimeCpuActiveFeatures", "runtimeCpuSetMask",
             "nativeBytesPtr", "nativeRawValue", "nativeValueFromRaw", "nativeCallback",
             "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed", "heap_bytes_reserved", "heap_free_bytes",
-            "heap_free_blocks", "gc_collect", "gc_set_limit", "callStats" }
+            "heap_free_blocks", "gc_collect", "gc_set_limit", "gc_stat", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
         allowed_function_names = set(getattr(self, "user_functions", {}).keys())
         # Struct type identifiers are not variables; they may be used as callees (Point(...))
