@@ -1,0 +1,77 @@
+{
+  "version": "1.2.16",
+  "images": [
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3b003d588a1ff38012d895f6132c3937c2802f81077a4b08ef571273902a1182"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "632fa3d19fc1e83d677c13569f0421bfaae092723e6a9631b2e20e9230d22191"
+    }
+  ]
+}

@@ -1,5 +1,27 @@
 # Compiler parity and self-hosting
 
+## 1.2.16 release verification (3 October 2026)
+
+The release-stamped Windows Python bootstrap and native selfbuild share SHA-256
+`0BB6AF2112F74DFF0E4EEC0584434B2174F5ACA45C852018875F711A891C959A`
+(55,015,936 bytes). Python and Windows ML produce the same Linux compiler:
+`986044376AD1BC6E625E5424607C876C5471991045A3E616D27672EED4BFE1C5`
+(55,017,456 bytes).
+
+The 96-image memory fixture matrix and version/runtime fixtures match per
+target/configuration across Python, Windows ML and Linux ML hosts with both
+pipeline options. Runtime checks pass on Windows and Linux/WSL. Both CLI
+version flags and compile-time `MINILANG_VERSION` report 1.2.16. All 53
+standard-library modules match. Python passes 158/158 full-suite cases; ML
+passes 136/136 core cases and its outer checks. Structural checks pass.
+The full Linux-native selfbuild below predates the version-only stamp and was
+not repeated afterward; the release-stamped Linux compiler passed the fixture
+checks. The native `cstr` return exception remains unchanged.
+
+See [1.2.16 release notes](RELEASE_NOTES_1.2.16.md) for release checksums and
+validation, and the [memory evaluation](docs/reports/MEMORY_MANAGEMENT_2026-10-03.md)
+for pre-stamp benchmarks and their performance/memory trade-offs.
+
 ## Memory-runtime development verification (3 October 2026)
 
 Both backends implement the same memory-runtime changes. Windows and Linux
@@ -8,8 +30,8 @@ options. The dedicated memory fixture matrix checks both pipelines and all
 three compiler hosts. The 53 standard-library modules remain byte-identical.
 Exact hashes, test scope and measured trade-offs are recorded in the
 [memory-management evaluation](docs/reports/MEMORY_MANAGEMENT_2026-10-03.md).
-These are development artifacts, not replacements for the published 1.2.15
-release. The existing native `cstr` return-lowering exception remains unchanged.
+These are pre-version-stamp development artifacts; the 1.2.16 release-stamped
+checksums are listed above. The native `cstr` return exception is unchanged.
 
 ## 1.2.15 release verification (2 October 2026)
 

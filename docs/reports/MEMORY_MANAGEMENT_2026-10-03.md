@@ -19,9 +19,11 @@ program, but this is **not** 64 MiB less resident RAM. Linux can now discard
 interior free pages with heap shrinking enabled. Adaptive collection trades
 more temporary heap for less repeated traversal on a large retained graph.
 
-The changes and documents are local development work after 1.2.15. No version
-stamp, release checksum, canonical compiler executable or GitHub release was
-replaced. There was no commit or push in this task.
+This evaluation measured development work after 1.2.15, before the 1.2.16
+version stamp. Its raw samples and development-image hashes are preserved.
+The subsequent [1.2.16 release notes](../../RELEASE_NOTES_1.2.16.md) record
+release-stamped checksums and the final packaging/validation scope; changing
+the version stamp was not treated as a new performance measurement.
 
 ## Changes and safety constraints
 

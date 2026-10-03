@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.16 - 2026-10-03
 
 Evaluation and compatibility scope:
 [memory management review](docs/reports/MEMORY_MANAGEMENT_2026-10-03.md).
