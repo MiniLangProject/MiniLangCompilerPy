@@ -799,6 +799,7 @@
 | [std.process.MAX_PATH_BYTES](File-std-process-ml-507069519.md#constant-constant-std-process-max-path-bytes-const-max-path-bytes-32768-std-process-ml-1282008749) | `constant` | `const MAX_PATH_BYTES = 32768` |
 | [std.process.PROCESS_ERR](File-std-process-ml-507069519.md#constant-constant-std-process-process-err-const-process-err-261-std-process-ml-699786150) | `constant` | `const PROCESS_ERR = 261` |
 | [std.process.setCurrentDirectory](File-std-process-ml-507069519.md#function-function-std-process-setcurrentdirectory-function-setcurrentdirectory-path-std-process-ml-2023618091) | `function` | `function setCurrentDirectory(path)` |
+| [std.random.autoSeeded](File-std-random-ml-66683891.md#function-function-std-random-autoseeded-function-autoseeded-std-random-ml-320500032) | `function` | `function autoSeeded()` |
 | [std.random.choice](File-std-random-ml-66683891.md#function-function-std-random-choice-function-choice-rng-xs-std-random-ml-362850290) | `function` | `function choice(rng, xs)` |
 | [std.random.DEFAULT_SEED](File-std-random-ml-66683891.md#constant-constant-std-random-default-seed-const-default-seed-1831565813-std-random-ml-1317203572) | `constant` | `const DEFAULT_SEED = 1831565813` |
 | [std.random.RNG](Type-std-random-rng-1201142756.md) | `struct` | `struct RNG` |

@@ -8,6 +8,7 @@
 
 ## Symbols
 
+- [`std.random.autoSeeded`](File-std-random-ml-66683891.md#function-function-std-random-autoseeded-function-autoseeded-std-random-ml-320500032) — function
 - [`std.random.choice`](File-std-random-ml-66683891.md#function-function-std-random-choice-function-choice-rng-xs-std-random-ml-362850290) — function
 - [`std.random.DEFAULT_SEED`](File-std-random-ml-66683891.md#constant-constant-std-random-default-seed-const-default-seed-1831565813-std-random-ml-1317203572) — constant
 - [`std.random.RNG`](Type-std-random-rng-1201142756.md) — struct

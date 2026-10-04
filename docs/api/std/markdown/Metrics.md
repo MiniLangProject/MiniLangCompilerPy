@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2826 |
+| Blank lines | 2828 |
 | Clone groups | 169 |
-| Cognitive complexity | 3513 (maximum per function: 116) |
-| Comment lines | 4466 |
-| Cyclomatic complexity | 3895 (average: 3.75, maximum: 33) |
-| Documentation coverage | 98.03% (1986 of 2026 documentation items) |
-| Duplicated lines | 1048 (9.28%) |
+| Cognitive complexity | 3518 (maximum per function: 116) |
+| Comment lines | 4477 |
+| Cyclomatic complexity | 3900 (average: 3.75, maximum: 33) |
+| Documentation coverage | 98.03% (1987 of 2027 documentation items) |
+| Duplicated lines | 1048 (9.27%) |
 | Files | 53 |
-| Functions | 1039 |
+| Functions | 1041 |
 | Maintainability index | 7.76 / 100 |
-| Physical lines | 18581 |
-| Source lines | 11292 |
-| Statements | 8098 |
+| Physical lines | 18606 |
+| Source lines | 11304 |
+| Statements | 8106 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 792 | 792 | 100% |
+| API declarations | 793 | 793 | 100% |
 | Constants | 135 | 135 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
 | Fields | 208 | 208 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1986 | 2026 | 98.03% |
+| Overall | 1987 | 2027 | 98.03% |
 | Parameters | 828 | 828 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3403 | 46517 | 31816 | 3459 | 78333 | 920893.65 | 261.78 | 241074425.17 | 306.96 |
+| 56 | 3406 | 46584 | 31855 | 3462 | 78439 | 922237.91 | 261.87 | 241509359.86 | 307.41 |
 
 ## Files
 
@@ -86,7 +86,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 80 | 9 | 49 / 5.44 / 13 | 47 / 12 | 0 (0%) | 4532.65 | 26.29 |
 | [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
 | [`std/process.ml`](File-std-process-ml-507069519.md) | 42 | 6 | 19 / 3.17 / 7 | 13 / 6 | 0 (0%) | 2210.57 | 38.62 |
-| [`std/random.ml`](File-std-random-ml-66683891.md) | 84 | 10 | 22 / 2.2 / 4 | 13 / 4 | 0 (0%) | 2755.34 | 30.98 |
+| [`std/random.ml`](File-std-random-ml-66683891.md) | 96 | 12 | 27 / 2.25 / 4 | 18 / 5 | 0 (0%) | 3585.36 | 28.24 |
 | [`std/result.ml`](File-std-result-ml-986518417.md) | 88 | 17 | 26 / 1.53 / 2 | 9 / 1 | 0 (0%) | 1976.31 | 31.01 |
 | [`std/sort.ml`](File-std-sort-ml-1000391650.md) | 209 | 11 | 54 / 4.91 / 17 | 79 / 32 | 8 (3.83%) | 6770.89 | 15.3 |
 | [`std/string.ml`](File-std-string-ml-1276545685.md) | 394 | 33 | 121 / 3.67 / 20 | 109 / 27 | 107 (27.16%) | 13558.13 | 0 |
@@ -616,16 +616,17 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.process.executablePath`](File-std-process-ml-507069519.md#function-function-std-process-executablepath-function-executablepath-std-process-ml-649110652) | `std/process.ml:77` | 6 | 5 | 3 | 2 | 1 | 215.49 | 66.28 |
 | [`std.process.id`](File-std-process-ml-507069519.md#function-function-std-process-id-function-id-std-process-ml-156871044) | `std/process.ml:68` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
 | [`std.process.setCurrentDirectory`](File-std-process-ml-507069519.md#function-function-std-process-setcurrentdirectory-function-setcurrentdirectory-path-std-process-ml-2023618091) | `std/process.ml:132` | 5 | 5 | 4 | 3 | 1 | 200.67 | 68.09 |
-| [`std.random.choice`](File-std-random-ml-66683891.md#function-function-std-random-choice-function-choice-rng-xs-std-random-ml-362850290) | `std/random.ml:136` | 10 | 6 | 3 | 2 | 1 | 199.04 | 61.69 |
-| [`std.random.RNG.nextBool`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextbool-function-nextbool-std-random-ml-792594308) | `std/random.ml:83` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.random.RNG.nextFloat`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextfloat-function-nextfloat-std-random-ml-266740162) | `std/random.ml:77` | 3 | 1 | 1 | 0 | 0 | 66.61 | 76.69 |
-| [`std.random.RNG.nextInt`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextint-function-nextint-maxexclusive-std-random-ml-549682610) | `std/random.ml:66` | 9 | 5 | 3 | 2 | 1 | 145.95 | 63.63 |
-| [`std.random.RNG.nextU32`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextu32-function-nextu32-std-random-ml-1111191742) | `std/random.ml:55` | 8 | 6 | 1 | 0 | 0 | 303.07 | 62.79 |
-| [`std.random.RNG.rangeFloat`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-rangefloat-function-rangefloat-mininclusive-maxexclusive-std-random-ml-375016824) | `std/random.ml:103` | 3 | 1 | 1 | 0 | 0 | 97.67 | 75.53 |
-| [`std.random.RNG.rangeInt`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-rangeint-function-rangeint-mininclusive-maxexclusive-std-random-ml-1648743864) | `std/random.ml:90` | 9 | 5 | 4 | 3 | 1 | 206.44 | 62.44 |
-| [`std.random.RNG.Seed`](Type-std-random-rng-1201142756.md#static_method-static-method-std-random-rng-seed-static-function-seed-seed-std-random-ml-1525826490) | `std/random.ml:35` | 15 | 9 | 4 | 4 | 2 | 354.63 | 55.95 |
-| [`std.random.seeded`](File-std-random-ml-66683891.md#function-function-std-random-seeded-function-seeded-seed-std-random-ml-2021080487) | `std/random.ml:110` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.random.shuffleInPlace`](File-std-random-ml-66683891.md#function-function-std-random-shuffleinplace-function-shuffleinplace-rng-xs-std-random-ml-2030459042) | `std/random.ml:117` | 14 | 10 | 3 | 2 | 1 | 354.63 | 56.74 |
+| [`std.random.autoSeeded`](File-std-random-ml-66683891.md#function-function-std-random-autoseeded-function-autoseeded-std-random-ml-320500032) | `std/random.ml:135` | 3 | 1 | 1 | 0 | 0 | 60.94 | 76.96 |
+| [`std.random.choice`](File-std-random-ml-66683891.md#function-function-std-random-choice-function-choice-rng-xs-std-random-ml-362850290) | `std/random.ml:161` | 10 | 6 | 3 | 2 | 1 | 199.04 | 61.69 |
+| [`std.random.RNG.nextBool`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextbool-function-nextbool-std-random-ml-792594308) | `std/random.ml:84` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.random.RNG.nextFloat`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextfloat-function-nextfloat-std-random-ml-266740162) | `std/random.ml:78` | 3 | 1 | 1 | 0 | 0 | 66.61 | 76.69 |
+| [`std.random.RNG.nextInt`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextint-function-nextint-maxexclusive-std-random-ml-549682610) | `std/random.ml:67` | 9 | 5 | 3 | 2 | 1 | 145.95 | 63.63 |
+| [`std.random.RNG.nextU32`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextu32-function-nextu32-std-random-ml-1111191742) | `std/random.ml:56` | 8 | 6 | 1 | 0 | 0 | 303.07 | 62.79 |
+| [`std.random.RNG.rangeFloat`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-rangefloat-function-rangefloat-mininclusive-maxexclusive-std-random-ml-375016824) | `std/random.ml:104` | 3 | 1 | 1 | 0 | 0 | 97.67 | 75.53 |
+| [`std.random.RNG.rangeInt`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-rangeint-function-rangeint-mininclusive-maxexclusive-std-random-ml-1648743864) | `std/random.ml:91` | 9 | 5 | 4 | 3 | 1 | 206.44 | 62.44 |
+| [`std.random.RNG.Seed`](Type-std-random-rng-1201142756.md#static_method-static-method-std-random-rng-seed-static-function-seed-seed-std-random-ml-1525826490) | `std/random.ml:36` | 15 | 9 | 4 | 4 | 2 | 354.63 | 55.95 |
+| [`std.random.seeded`](File-std-random-ml-66683891.md#function-function-std-random-seeded-function-seeded-seed-std-random-ml-2021080487) | `std/random.ml:111` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.random.shuffleInPlace`](File-std-random-ml-66683891.md#function-function-std-random-shuffleinplace-function-shuffleinplace-rng-xs-std-random-ml-2030459042) | `std/random.ml:142` | 14 | 10 | 3 | 2 | 1 | 354.63 | 56.74 |
 | [`std.result.Option.andThen`](Type-std-result-option-1652402760.md#method-method-std-result-option-andthen-function-andthen-f-std-result-ml-1549329048) | `std/result.ml:86` | 6 | 3 | 2 | 1 | 1 | 126.71 | 68.03 |
 | [`std.result.Option.isNone`](Type-std-result-option-1652402760.md#method-method-std-result-option-isnone-function-isnone-std-result-ml-2144417308) | `std/result.ml:45` | 3 | 1 | 1 | 0 | 0 | 36.54 | 78.52 |
 | [`std.result.Option.isSome`](Type-std-result-option-1652402760.md#method-method-std-result-option-issome-function-issome-std-result-ml-965212188) | `std/result.ml:40` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |

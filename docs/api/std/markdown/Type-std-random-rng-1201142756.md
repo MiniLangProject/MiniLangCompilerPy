@@ -12,7 +12,7 @@ struct RNG
 Deterministic per-instance pseudorandom number generator.
 
 
-Source: `std/random.ml:29`
+Source: `std/random.ml:30`
 
 ## Members
 
@@ -26,7 +26,7 @@ function nextBool()
 Generates a random boolean.
 
 
-Source: `std/random.ml:83`
+Source: `std/random.ml:84`
 
 <a id="method-method-std-random-rng-nextfloat-function-nextfloat-std-random-ml-266740162"></a>
 ### nextFloat
@@ -38,7 +38,7 @@ function nextFloat()
 Generates a float in [0, 1).
 
 
-Source: `std/random.ml:77`
+Source: `std/random.ml:78`
 
 <a id="method-method-std-random-rng-nextint-function-nextint-maxexclusive-std-random-ml-549682610"></a>
 ### nextInt
@@ -54,7 +54,7 @@ Generates an integer in [0, maxExclusive).
 | `maxExclusive` | `dynamic` | — | Value supplied for `maxExclusive`. |
 
 
-Source: `std/random.ml:66`
+Source: `std/random.ml:67`
 
 <a id="method-method-std-random-rng-nextu32-function-nextu32-std-random-ml-1111191742"></a>
 ### nextU32
@@ -66,7 +66,7 @@ function nextU32()
 Generates the next 32-bit unsigned value.
 
 
-Source: `std/random.ml:55`
+Source: `std/random.ml:56`
 
 <a id="method-method-std-random-rng-rangefloat-function-rangefloat-mininclusive-maxexclusive-std-random-ml-375016824"></a>
 ### rangeFloat
@@ -83,7 +83,7 @@ Generates a float in [minInclusive, maxExclusive).
 | `maxExclusive` | `dynamic` | — | Value supplied for `maxExclusive`. |
 
 
-Source: `std/random.ml:103`
+Source: `std/random.ml:104`
 
 <a id="method-method-std-random-rng-rangeint-function-rangeint-mininclusive-maxexclusive-std-random-ml-1648743864"></a>
 ### rangeInt
@@ -100,7 +100,7 @@ Generates an integer in [minInclusive, maxExclusive).
 | `maxExclusive` | `dynamic` | — | Value supplied for `maxExclusive`. |
 
 
-Source: `std/random.ml:90`
+Source: `std/random.ml:91`
 
 <a id="static_method-static-method-std-random-rng-seed-static-function-seed-seed-std-random-ml-1525826490"></a>
 ### Seed
@@ -116,7 +116,7 @@ Creates a deterministic RNG from a seed.
 | `seed` | `dynamic` | — | Value supplied for `seed`. |
 
 
-Source: `std/random.ml:35`
+Source: `std/random.ml:36`
 
 <a id="field-field-std-random-rng-state-state-std-random-ml-225453968"></a>
 ### state
@@ -128,4 +128,4 @@ state
 State associated with `RNG`.
 
 
-Source: `std/random.ml:31`
+Source: `std/random.ml:32`

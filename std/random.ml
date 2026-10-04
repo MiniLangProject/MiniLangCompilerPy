@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//! Provides the std random package.
+//! Provides deterministic or securely auto-seeded non-cryptographic generators.
 
 package std.random
+import std.crypto as crypto
 
 /// Std.random Simple deterministic PRNG (xorshift32). - Deterministic across runs. - Not cryptographically secure.
 const U32_MASK = 0xFFFFFFFF
@@ -109,6 +110,30 @@ end struct
 /// @param seed Value supplied for `seed`.
 function seeded(seed)
   return std.random.RNG.Seed(seed)
+end function
+
+/// Build an RNG from an internal four-byte entropy provider.
+/// @internal
+/// @param randomBytes Callable accepting a byte count and returning bytes or an error.
+function _autoSeededFrom(randomBytes)
+  while true
+    raw = try(randomBytes(4))
+    if typeof(raw) == "error" then return raw end if
+    // Decode explicitly: native byte order must not affect the seed.
+    seed = raw[0] | (raw[1] << 8) | (raw[2] << 16) | (raw[3] << 24)
+    // Xorshift32 cannot leave state zero. Reject it instead of biasing a
+    // particular replacement seed; a provider failure must never fall back.
+    if seed != 0 then return std.random.RNG.Seed(seed) end if
+  end while
+end function
+
+/// Create an independent RNG seeded by the platform's secure random provider.
+/// Returns RNG on success; provider errors propagate and can be caught with try.
+/// The generated sequence is still non-cryptographic; use std.crypto.secureRandom
+/// for secrets. Linux requires OpenSSL 3. Do not share a mutable RNG across
+/// threads without synchronization; normally create one instance per thread.
+function autoSeeded()
+  return std.random._autoSeededFrom(crypto.secureRandom)
 end function
 
 /// Shuffles an array in place using Fisher-Yates.

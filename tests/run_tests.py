@@ -770,6 +770,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
         (tests_root / "threading_stdlib.ml", ["[OK] thread-safe stdlib collections"], []),
         (tests_root / "crypto_cng.ml", ["[OK] platform crypto"], []),
+        (tests_root / "random_auto_seeded.ml", ["[OK] auto-seeded random"], []),
         (tests_root / "compression_codecs.ml", ["[OK] compression codecs"], []),
         (tests_root / "ecdsa_p256.ml", ["[OK] ECDSA-P256"], []),
         (tests_root / "shared_value.ml", ["[OK] portable native shared-value snapshots"], []),
@@ -4175,6 +4176,7 @@ def main() -> int:
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
     simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
     crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
+    random_auto_seeded_ml = find_file_by_name(tests_root, "random_auto_seeded.ml")
     compression_codecs_ml = find_file_by_name(tests_root, "compression_codecs.ml")
     ecdsa_p256_ml = find_file_by_name(tests_root, "ecdsa_p256.ml")
     platform_services_ml = find_file_by_name(tests_root, "platform_services.ml")
@@ -4403,6 +4405,7 @@ def main() -> int:
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
         ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
+        ("random_auto_seeded.ml (secure seeding, errors and independent state)", random_auto_seeded_ml, "[OK] auto-seeded random"),
         ("compression_codecs.ml (portable codecs and hostile input)", compression_codecs_ml, "[OK] compression codecs"),
         ("ecdsa_p256.ml (cross-platform signature verification)", ecdsa_p256_ml, "[OK] ECDSA-P256"),
         ("platform_services.ml (portable OS and durable I/O)", platform_services_ml, "=== PLATFORM SERVICES DONE ==="),

@@ -2212,6 +2212,39 @@ in both compiler repositories (two provider files differ only in line endings):
   `std.concurrent.shared_value` provides a legacy unmanaged snapshot codec;
   `std._linux_fs` is the internal POSIX filesystem backend.
 
+**Random numbers**
+
+`autoSeeded()` is an unreleased addition after 1.2.16; use the updated source
+standard library when compiling with the existing compiler binaries.
+
+`std.random.seeded(seed)` creates a reproducible xorshift32 generator.
+`std.random.autoSeeded()` creates a new independent generator using four bytes
+from `std.crypto.secureRandom` (Windows CNG / Linux OpenSSL 3). A zero seed is
+rejected and sampled again because xorshift32 cannot leave state zero.
+
+```ml
+import std.random as random
+
+function main(args)
+  rng = try(random.autoSeeded())
+  if typeof(rng) == "error" then
+    print rng.message
+    return 1
+  end if
+  print rng.rangeInt(1, 7) // 1 through 6
+  print rng.nextFloat()   // [0, 1)
+  return 0
+end function
+```
+
+Provider failures propagate as errors; there is no clock-based or fixed-seed
+fallback. Automatic seeding does **not** make xorshift32 cryptographically
+secure: use `std.crypto.secureRandom(length)` directly for secrets.
+Seeds may collide; neither seeds nor generated values are unique identifiers.
+Initialize once and reuse the generator, normally one per thread. Sharing an
+RNG's mutable state requires synchronization. Explicit `seeded(...)` behavior
+and sequences are unchanged. Linux automatic seeding needs `libcrypto.so.3`.
+
 `std.sort.sortBy` is stable with O(n log n) comparisons and O(n) temporary
 storage; `sortFastBy` is an unstable in-place quicksort with a bounded work
 stack. Ordinary and thread-safe hash maps update existing keys without

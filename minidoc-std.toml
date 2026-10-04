@@ -34,4 +34,4 @@ granularity = "package"
 hide_empty = true
 
 [links]
-revision = "shared-stdlib-unreleased-2026-09-20"
+revision = "shared-stdlib-unreleased-2026-10-04"

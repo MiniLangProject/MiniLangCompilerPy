@@ -2,6 +2,14 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Add `std.random.autoSeeded()` using the platform secure random provider;
+  reject zero state and propagate entropy errors without a weak fallback.
+  Keep deterministic `seeded(...)` sequences and non-cryptographic PRNG semantics.
+- Cover automatic seeding, explicit seed compatibility, zero-state retry,
+  provider failures, independent instances and concurrent per-thread use.
+
 ## 1.2.16 - 2026-10-03
 
 Evaluation and compatibility scope:

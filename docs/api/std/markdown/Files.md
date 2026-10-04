@@ -44,7 +44,7 @@
 | [std/path.ml](File-std-path-ml-701536411.md) | `std.path` | no | 10 |
 | [std/platform.ml](File-std-platform-ml-201801091.md) | `std.platform` | no | 8 |
 | [std/process.ml](File-std-process-ml-507069519.md) | `std.process` | no | 14 |
-| [std/random.ml](File-std-random-ml-66683891.md) | `std.random` | no | 15 |
+| [std/random.ml](File-std-random-ml-66683891.md) | `std.random` | no | 17 |
 | [std/result.ml](File-std-result-ml-986518417.md) | `std.result` | no | 24 |
 | [std/sort.ml](File-std-sort-ml-1000391650.md) | `std.sort` | no | 11 |
 | [std/string.ml](File-std-string-ml-1276545685.md) | `std.string` | no | 33 |
