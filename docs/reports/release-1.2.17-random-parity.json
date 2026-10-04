@@ -1,0 +1,196 @@
+{
+  "images": [
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "a834fe9fcf97a2cc40bf9955e384dbc21d911962aacf31be500e3ff72d509e96",
+      "size": 613376
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "260f6b4ede70c329de0ec463ff2b0bc7acb83e3cbb34cc7c7d29556afb9cb452",
+      "size": 411648
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_auto_seeded.ml",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "cb6d63303eb9e3a7b38a3c146eb7b9129c8e22b55bc53bcc1f8397aef178bac0",
+      "size": 593728
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "random_seeded_only.ml",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "7652d54b2288cb8cc92ba7cc64e0d1dbc3e357d29116ea287fe252ed759945d1",
+      "size": 392576
+    }
+  ]
+}

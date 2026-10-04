@@ -1,5 +1,31 @@
 # Compiler parity and self-hosting
 
+## 1.2.17 release verification (4 October 2026)
+
+Windows Python bootstrap and native selfbuild are byte-identical:
+`0895874C84BBFFFDB060B784B99030903C663281D81F06D69EA5059941C78EAB`
+(55,015,936 bytes). Python and Windows ML emit the same Linux compiler:
+`69131667618014713A6D7107A92298F8196FE72169FAD2BB17BD600817CA84C8`
+(55,017,456 bytes).
+
+The 24-image random regression matrix executes successfully and matches per
+target/fixture across Python, Windows ML and Linux ML with both pipeline
+options. Coverage includes automatic secure seeding, deterministic vectors,
+zero-state rejection, injected entropy failures and independent per-thread
+state. The Linux deterministic-only fixture does not load OpenSSL.
+Version/runtime fixtures pass with six-way per-target byte parity, and both
+CLI flags and compile-time `MINILANG_VERSION` report 1.2.17.
+
+Python passes 159/159 full-suite cases; ML passes 136/136 core cases and outer
+checks. All 53 standard-library modules and their generated references match.
+A full Linux-native compiler selfbuild was not repeated for this release;
+the release-stamped Linux compiler passed the fixture matrices.
+The native `cstr` return exception remains unchanged.
+
+See [1.2.17 release notes](RELEASE_NOTES_1.2.17.md),
+[random parity hashes](docs/reports/release-1.2.17-random-parity.json) and
+[version/runtime hashes](docs/reports/release-1.2.17-version-matrix.json).
+
 ## 1.2.16 release verification (3 October 2026)
 
 The release-stamped Windows Python bootstrap and native selfbuild share SHA-256

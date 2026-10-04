@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.17 - 2026-10-04
 
 - Add `std.random.autoSeeded()` using the platform secure random provider;
   reject zero state and propagate entropy errors without a weak fallback.
