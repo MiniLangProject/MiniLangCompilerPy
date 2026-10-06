@@ -643,6 +643,10 @@ def emit_linux_runtime(cg: Any) -> None:
     a.ret()
 
     a.mark('linux_WaitForSingleObject')
+    # The runtime uses the Win64 register contract on both targets. pthread_join
+    # takes SysV arguments in RDI/RSI, which are nonvolatile for our caller.
+    a.push_reg('rdi')
+    a.push_reg('rsi')
     a.push_reg('r12')
     a.push_reg('r13')
     a.push_reg('r14')
@@ -705,6 +709,8 @@ def emit_linux_runtime(cg: Any) -> None:
     a.pop_reg('r14')
     a.pop_reg('r13')
     a.pop_reg('r12')
+    a.pop_reg('rsi')
+    a.pop_reg('rdi')
     a.ret()
 
     a.mark('linux_CloseHandle')

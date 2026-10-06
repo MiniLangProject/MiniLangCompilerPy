@@ -1497,6 +1497,7 @@ class CodegenCore:
                 raise self.error(f"Unknown internal helper referenced: {lbl}")
 
             emitted.add(lbl)
+            self.emit_runtime_alignment()
             fn()
 
             used_now = getattr(self, 'used_helpers', set())

@@ -11,16 +11,16 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 | Blank lines | 2828 |
 | Clone groups | 169 |
 | Cognitive complexity | 3518 (maximum per function: 116) |
-| Comment lines | 4477 |
+| Comment lines | 4479 |
 | Cyclomatic complexity | 3900 (average: 3.75, maximum: 33) |
 | Documentation coverage | 98.03% (1987 of 2027 documentation items) |
 | Duplicated lines | 1048 (9.27%) |
 | Files | 53 |
 | Functions | 1041 |
 | Maintainability index | 7.76 / 100 |
-| Physical lines | 18606 |
-| Source lines | 11304 |
-| Statements | 8106 |
+| Physical lines | 18609 |
+| Source lines | 11305 |
+| Statements | 8107 |
 
 ## Documentation coverage
 
@@ -40,7 +40,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3406 | 46584 | 31855 | 3462 | 78439 | 922237.91 | 261.87 | 241509359.86 | 307.41 |
+| 56 | 3406 | 46585 | 31857 | 3462 | 78442 | 922273.18 | 261.89 | 241533760.32 | 307.42 |
 
 ## Files
 
@@ -60,7 +60,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/concurrent/channel.ml`](File-std-concurrent-channel-ml-2137315633.md) | 157 | 25 | 66 / 2.64 / 10 | 45 / 11 | 0 (0%) | 7900.28 | 15.93 |
 | [`std/concurrent/shared_value.ml`](File-std-concurrent-shared-value-ml-2112657235.md) | 133 | 15 | 49 / 3.27 / 9 | 37 / 11 | 15 (11.28%) | 6847.36 | 20.22 |
 | [`std/concurrent/task.ml`](File-std-concurrent-task-ml-139288457.md) | 114 | 18 | 49 / 2.72 / 11 | 39 / 16 | 0 (0%) | 5401.01 | 22.41 |
-| [`std/concurrent/thread_pool.ml`](File-std-concurrent-thread-pool-ml-72857761.md) | 373 | 43 | 117 / 2.72 / 9 | 89 / 11 | 40 (10.72%) | 16551.36 | 0 |
+| [`std/concurrent/thread_pool.ml`](File-std-concurrent-thread-pool-ml-72857761.md) | 374 | 43 | 117 / 2.72 / 9 | 89 / 11 | 40 (10.7%) | 16573.38 | 0 |
 | [`std/console.ml`](File-std-console-ml-1875579671.md) | 101 | 9 | 44 / 4.89 / 24 | 36 / 24 | 0 (0%) | 7093.64 | 23.4 |
 | [`std/core.ml`](File-std-core-ml-750389783.md) | 82 | 16 | 28 / 1.75 / 4 | 12 / 3 | 29 (35.37%) | 1907.85 | 31.52 |
 | [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 17 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 320 | 55.21 |
@@ -282,26 +282,26 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.concurrent.task.whenAll`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenall-function-whenall-futures-std-concurrent-task-ml-504238549) | `std/concurrent/task.ml:140` | 13 | 13 | 5 | 6 | 2 | 520.95 | 56 |
 | [`std.concurrent.task.whenAny`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenany-function-whenany-futures-std-concurrent-task-ml-1373291439) | `std/concurrent/task.ml:177` | 3 | 1 | 1 | 0 | 0 | 51.89 | 77.45 |
 | [`std.concurrent.task.whenAnyFor`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenanyfor-function-whenanyfor-futures-milliseconds-std-concurrent-task-ml-1029684509) | `std/concurrent/task.ml:157` | 17 | 19 | 11 | 16 | 3 | 795.39 | 51.37 |
-| [`std.concurrent.thread_pool.ThreadPool.AwaitTermination`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaittermination-function-awaittermination-std-concurrent-thread-pool-ml-6637564) | `std/concurrent/thread_pool.ml:506` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.AwaitTerminationFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaitterminationfor-function-awaitterminationfor-milliseconds-std-concurrent-thread-pool-ml-1960742116) | `std/concurrent/thread_pool.ml:509` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.thread_pool.ThreadPool.close`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-close-function-close-std-concurrent-thread-pool-ml-1182797580) | `std/concurrent/thread_pool.ml:474` | 16 | 17 | 6 | 6 | 2 | 600.13 | 53.47 |
-| [`std.concurrent.thread_pool.ThreadPool.Dispose`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-dispose-function-dispose-std-concurrent-thread-pool-ml-1118298946) | `std/concurrent/thread_pool.ml:511` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.isShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-811388460) | `std/concurrent/thread_pool.ml:396` | 6 | 5 | 2 | 1 | 1 | 145.95 | 67.6 |
-| [`std.concurrent.thread_pool.ThreadPool.IsShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-1713408876) | `std/concurrent/thread_pool.ml:500` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.join`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-join-function-join-std-concurrent-thread-pool-ml-1493137732) | `std/concurrent/thread_pool.ml:444` | 12 | 12 | 5 | 5 | 2 | 402.36 | 57.55 |
-| [`std.concurrent.thread_pool.ThreadPool.joinFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-joinfor-function-joinfor-milliseconds-std-concurrent-thread-pool-ml-663703616) | `std/concurrent/thread_pool.ml:459` | 13 | 14 | 8 | 8 | 2 | 541.78 | 55.48 |
-| [`std.concurrent.thread_pool.ThreadPool.new`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-new-static-function-new-workercount-std-concurrent-thread-pool-ml-1759983018) | `std/concurrent/thread_pool.ml:294` | 3 | 1 | 1 | 0 | 0 | 62.91 | 76.86 |
-| [`std.concurrent.thread_pool.ThreadPool.pendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-78633876) | `std/concurrent/thread_pool.ml:383` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
-| [`std.concurrent.thread_pool.ThreadPool.PendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-1884661524) | `std/concurrent/thread_pool.ml:496` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-586367372) | `std/concurrent/thread_pool.ml:404` | 12 | 10 | 4 | 3 | 1 | 347.83 | 58.13 |
-| [`std.concurrent.thread_pool.ThreadPool.Shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-648357004) | `std/concurrent/thread_pool.ml:502` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.ShutdownNow`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdownnow-function-shutdownnow-std-concurrent-thread-pool-ml-1083023640) | `std/concurrent/thread_pool.ml:504` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.stop`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-stop-function-stop-std-concurrent-thread-pool-ml-1402724008) | `std/concurrent/thread_pool.ml:418` | 24 | 22 | 6 | 6 | 2 | 856.15 | 48.55 |
-| [`std.concurrent.thread_pool.ThreadPool.submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-704351741) | `std/concurrent/thread_pool.ml:350` | 31 | 26 | 8 | 7 | 1 | 1013.76 | 45.34 |
-| [`std.concurrent.thread_pool.ThreadPool.Submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-1887013117) | `std/concurrent/thread_pool.ml:494` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
-| [`std.concurrent.thread_pool.ThreadPool.withQueueCapacity`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-withqueuecapacity-static-function-withqueuecapacity-workercount-queuecapacity-std-concurrent-thread-pool-ml-10704545) | `std/concurrent/thread_pool.ml:301` | 43 | 23 | 9 | 11 | 3 | 1381.86 | 41.17 |
-| [`std.concurrent.thread_pool.ThreadPool.workerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-724788614) | `std/concurrent/thread_pool.ml:391` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
-| [`std.concurrent.thread_pool.ThreadPool.WorkerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-609593798) | `std/concurrent/thread_pool.ml:498` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.AwaitTermination`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaittermination-function-awaittermination-std-concurrent-thread-pool-ml-6637564) | `std/concurrent/thread_pool.ml:509` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.AwaitTerminationFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaitterminationfor-function-awaitterminationfor-milliseconds-std-concurrent-thread-pool-ml-1960742116) | `std/concurrent/thread_pool.ml:512` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.thread_pool.ThreadPool.close`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-close-function-close-std-concurrent-thread-pool-ml-1182797580) | `std/concurrent/thread_pool.ml:477` | 16 | 17 | 6 | 6 | 2 | 600.13 | 53.47 |
+| [`std.concurrent.thread_pool.ThreadPool.Dispose`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-dispose-function-dispose-std-concurrent-thread-pool-ml-1118298946) | `std/concurrent/thread_pool.ml:514` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.isShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-811388460) | `std/concurrent/thread_pool.ml:399` | 6 | 5 | 2 | 1 | 1 | 145.95 | 67.6 |
+| [`std.concurrent.thread_pool.ThreadPool.IsShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-1713408876) | `std/concurrent/thread_pool.ml:503` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.join`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-join-function-join-std-concurrent-thread-pool-ml-1493137732) | `std/concurrent/thread_pool.ml:447` | 12 | 12 | 5 | 5 | 2 | 402.36 | 57.55 |
+| [`std.concurrent.thread_pool.ThreadPool.joinFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-joinfor-function-joinfor-milliseconds-std-concurrent-thread-pool-ml-663703616) | `std/concurrent/thread_pool.ml:462` | 13 | 14 | 8 | 8 | 2 | 541.78 | 55.48 |
+| [`std.concurrent.thread_pool.ThreadPool.new`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-new-static-function-new-workercount-std-concurrent-thread-pool-ml-1759983018) | `std/concurrent/thread_pool.ml:297` | 3 | 1 | 1 | 0 | 0 | 62.91 | 76.86 |
+| [`std.concurrent.thread_pool.ThreadPool.pendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-78633876) | `std/concurrent/thread_pool.ml:386` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
+| [`std.concurrent.thread_pool.ThreadPool.PendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-1884661524) | `std/concurrent/thread_pool.ml:499` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-586367372) | `std/concurrent/thread_pool.ml:407` | 12 | 10 | 4 | 3 | 1 | 347.83 | 58.13 |
+| [`std.concurrent.thread_pool.ThreadPool.Shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-648357004) | `std/concurrent/thread_pool.ml:505` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.ShutdownNow`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdownnow-function-shutdownnow-std-concurrent-thread-pool-ml-1083023640) | `std/concurrent/thread_pool.ml:507` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.stop`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-stop-function-stop-std-concurrent-thread-pool-ml-1402724008) | `std/concurrent/thread_pool.ml:421` | 24 | 22 | 6 | 6 | 2 | 856.15 | 48.55 |
+| [`std.concurrent.thread_pool.ThreadPool.submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-704351741) | `std/concurrent/thread_pool.ml:353` | 31 | 26 | 8 | 7 | 1 | 1013.76 | 45.34 |
+| [`std.concurrent.thread_pool.ThreadPool.Submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-1887013117) | `std/concurrent/thread_pool.ml:497` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
+| [`std.concurrent.thread_pool.ThreadPool.withQueueCapacity`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-withqueuecapacity-static-function-withqueuecapacity-workercount-queuecapacity-std-concurrent-thread-pool-ml-10704545) | `std/concurrent/thread_pool.ml:304` | 43 | 23 | 9 | 11 | 3 | 1381.86 | 41.17 |
+| [`std.concurrent.thread_pool.ThreadPool.workerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-724788614) | `std/concurrent/thread_pool.ml:394` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
+| [`std.concurrent.thread_pool.ThreadPool.WorkerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-609593798) | `std/concurrent/thread_pool.ml:501` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.thread_pool.ThreadPoolJob.cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1078125767) | `std/concurrent/thread_pool.ml:105` | 13 | 11 | 4 | 3 | 1 | 350.94 | 57.34 |
 | [`std.concurrent.thread_pool.ThreadPoolJob.Cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1381498503) | `std/concurrent/thread_pool.ml:181` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.thread_pool.ThreadPoolJob.close`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-close-function-close-std-concurrent-thread-pool-ml-957207643) | `std/concurrent/thread_pool.ml:160` | 16 | 14 | 4 | 3 | 1 | 539.75 | 54.06 |
@@ -1864,8 +1864,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     this . accepting = false
 
-- [`std/concurrent/thread_pool.ml:405`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:419`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:408`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:422`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1879,8 +1879,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     this . accepting = false
     this . stopping = true
 
-- [`std/concurrent/thread_pool.ml:406`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:420`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:409`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:423`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1894,8 +1894,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     this . guard . release ( )
     return true
 
-- [`std/concurrent/thread_pool.ml:449`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:465`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:452`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:468`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1909,8 +1909,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     return true
     end function
 
-- [`std/concurrent/thread_pool.ml:450`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:466`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:453`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:469`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 

@@ -2,6 +2,38 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.18 - 2026-10-06
+
+- Follow up the reevaluation with aligned runtime entries/GC loops and qword
+  bitmap bit tests; retain bounds checks and bulk clearing at collection entry.
+- Unify checked heap-size parsing: ASCII decimal, underscores, binary
+  b/k/kb/kib/m/mb/mib/g/gb/gib/t/tb/tib units, maximum 2^60 - 65536 bytes.
+- Generate requested Linux assembly listings in the ML compiler; honor data
+  sections and loaded virtual addresses in both compilers. Report listing write
+  failures and reject conflicting --asm/--no-asm switches.
+- Match native cstr return code generation across both compilers, with cyclic
+  bitmap-boundary and concurrent FFI conversion regression tests.
+- Make Thread control records GC-managed with a weak registry. Reclaim abandoned
+  created/terminated threads, their payload graphs and terminated native handles;
+  retain active workers until native termination completes.
+- Allow atomic Close on Created threads. Preserve reachable status/result/identity
+  and prevent Start/SetLogicalId after closing.
+- Retire stale allocation handoffs at precise-root publication boundaries and
+  clear completed thread-pool jobs before workers wait.
+- Cache exact-size free-list search prefixes, invalidating on GC/TLAB retirement.
+- Clamp heap growth to the reservation, page-align custom growth quanta and
+  compare large quanta without signed-32-bit truncation.
+- With --heap-shrink, trim surplus mark-bitmap pages and the mark worklist after
+  sustained low usage; retain default high-water capacity for throughput.
+- Fix first-class gc_collect call-frame alignment and preserve RDI/RSI in the
+  Linux native thread-wait adapter.
+- Add lifecycle/race/heap-ceiling/metadata/fragmentation regressions, cross-host
+  byte-parity checks and alternating Windows/Linux A/B benchmarks. See the
+  [initial audit](docs/reports/MEMORY_LIFECYCLE_2026-10-06.md) and
+  [final follow-up evaluation](docs/reports/MEMORY_FOLLOWUP_2026-10-06.md).
+- Synchronize the 232-opcode reference set and add native BT/BTS encoder checks.
+
+
 ## 1.2.17 - 2026-10-04
 
 - Add `std.random.autoSeeded()` using the platform secure random provider;

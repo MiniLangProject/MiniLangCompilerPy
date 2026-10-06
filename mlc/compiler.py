@@ -22,7 +22,7 @@ from .project import ProjectError, expand_project_args, fingerprint as project_f
 from .tools import u32, u64, extern_library_label_token
 
 
-COMPILER_VERSION = "1.2.17"
+COMPILER_VERSION = "1.2.18"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -49,16 +49,31 @@ _SIZE_SUFFIXES = {
     "tib": 1024 ** 4,
 }
 
+# Shared with the self-hosted parser: leave room for 64-KiB rounding within
+# MiniLang's positive signed-61-bit integer range. Never truncate CLI sizes
+# when encoding native immediates, even if an OS would reject the reservation.
+MAX_SIZE_BYTES = (1 << 60) - 65536
+
 def parse_size(s: str) -> int:
     """Parse byte sizes like '256m', '16mb', '4096'.
 
     Uses binary units (KiB/MiB/GiB) for k/m/g/t suffixes.
     """
-    raw = str(s).strip().lower().replace("_", "")
-    m = re.fullmatch(r"(\d+)([a-z]+)?", raw)
+    raw = str(s).strip(" \t\r\n\v\f").replace("_", "")
+    # Validate before case folding: Unicode Kelvin sign lowercases to ASCII k,
+    # while the native parser deliberately accepts ASCII suffixes only.
+    if not raw.isascii():
+        raise argparse.ArgumentTypeError(f"invalid size: {s!r}")
+    raw = raw.lower()
+    m = re.fullmatch(r"([0-9]+)([a-z]+)?", raw)
     if not m:
         raise argparse.ArgumentTypeError(f"invalid size: {s!r}")
-    n = int(m.group(1))
+    # Bound the decimal text before int() as well (including Python's own
+    # decimal-conversion limit); arbitrarily many leading zeroes are harmless.
+    digits = m.group(1).lstrip("0") or "0"
+    if len(digits) > len(str(MAX_SIZE_BYTES)):
+        raise argparse.ArgumentTypeError(f"size exceeds maximum {MAX_SIZE_BYTES}: {s!r}")
+    n = int(digits)
     suf = m.group(2) or "b"
     if suf not in _SIZE_SUFFIXES:
         raise argparse.ArgumentTypeError(
@@ -67,6 +82,8 @@ def parse_size(s: str) -> int:
     out = n * _SIZE_SUFFIXES[suf]
     if out <= 0:
         raise argparse.ArgumentTypeError(f"size must be > 0: {s!r}")
+    if out > MAX_SIZE_BYTES:
+        raise argparse.ArgumentTypeError(f"size exceeds maximum {MAX_SIZE_BYTES}: {s!r}")
     return out
 
 
@@ -1552,12 +1569,26 @@ def compile_to_exe(
         if asm_listing and asm_listing_path:
             cg.asm.write_listing(
                 asm_listing_path,
-                base_addr=text_rva,
-                label_addr_map=label_rva_map,
+                base_addr=layout.base + text_rva,
+                label_addr_map={name: layout.base + rva for name, rva in label_rva_map.items()},
+                addr_label='VA',
                 show_addr=asm_show_addr,
                 show_bytes=asm_show_bytes,
                 show_text=asm_show_text,
             )
+            # ELF listings use loaded virtual addresses and honor --asm-data
+            # just like PE listings. Section headers also identify empty data.
+            with open(asm_listing_path, 'a', encoding='utf-8') as listing:
+                listing.write('\n; section .text (ELF64 Linux x64)\n')
+                if asm_dump_data:
+                    for title, blob, offset in (
+                        ('.rdata', cg.rdata.data, rdata_rva),
+                        ('.data', cg.data.data, data_rva),
+                    ):
+                        _append_blob_dump(listing, title=title, blob=bytes(blob),
+                                          base_addr=layout.base + offset, addr_label='VA',
+                                          show_addr=asm_show_addr, show_bytes=asm_show_bytes,
+                                          show_text=asm_show_text)
         return
 
     # Build PE with 2-pass layout (important!)

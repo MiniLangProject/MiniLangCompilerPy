@@ -38,8 +38,6 @@ THREAD_TLAB_END = 192
 # removes the handle first, then waits for this count before releasing it.
 THREAD_HANDLE_USERS = 200
 THREAD_CONTEXT_SIZE = 208
-THREAD_CONTEXT_STRIDE = 208  # 16-byte alignment inside packed native arenas
-THREAD_CONTEXT_POOL_SIZE = 0x10000
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -81,10 +79,6 @@ class CodegenThreads:
             d.add_bytes('main_thread_context', b'\x00' * THREAD_CONTEXT_SIZE)
         if 'thread_contexts_head' not in d.labels:
             d.add_u64('thread_contexts_head', 0)
-        if 'thread_context_pool_cursor' not in d.labels:
-            d.add_u64('thread_context_pool_cursor', 0)
-        if 'thread_context_pool_end' not in d.labels:
-            d.add_u64('thread_context_pool_end', 0)
         if 'gc_requested' not in d.labels:
             d.add_u64('gc_requested', 0)
         if 'managed_thread_count' not in d.labels:
@@ -139,6 +133,7 @@ class CodegenThreads:
         a.mov_rax_rip_qword('gc_requested')
         a.test_r64_r64('rax', 'rax')
         a.jcc('e', done)
+        self.emit_gc_release_handoffs()
         a.call('fn_gc_safepoint')
         a.mark(done)
 
@@ -339,6 +334,16 @@ class CodegenThreads:
         a.mov_rax_rip_qword('iat_EnterCriticalSection')
         a.call_rax()
         a.mov_r11_gs_qword_28()
+        # No runtime helper is constructing values after the entry returns.
+        # Keep the published result, but retire scratch/handoff roots at exit.
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 0 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 1 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 2 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 3 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 4 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 5 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 6 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('r11', THREAD_TMP0 + 7 * 8, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=False)
         a.lea_rax_rip('gc_coord_monitor')
         a.mov_r64_r64('rcx', 'rax')
@@ -556,78 +561,54 @@ class CodegenThreads:
         a.ret()
 
     def emit_thread_new_function(self) -> None:
-        """RCX=entry code, EDX=entry arity, R8=logical id; returns context."""
-        self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave'})
+        """Allocate a GC-owned Thread; the context registry is weak."""
+        self.used_helpers.add('fn_alloc')
         self.ensure_thread_data()
         a = self.asm
         a.mark('fn_thread_new')
-        a.sub_rsp_imm8(0x58)
+        a.sub_rsp_imm8(0x78)
         a.mov_membase_disp_r64('rsp', 0x38, 'rcx')
         a.mov_membase_disp_r64('rsp', 0x40, 'rdx')
         a.mov_membase_disp_r64('rsp', 0x48, 'r8')
-        lid = self.new_label_id()
-        l_have_context = f'thnew_have_context_{lid}'
-        l_alloc_fail = f'thnew_alloc_fail_{lid}'
-        l_leave_fail = f'thnew_leave_fail_{lid}'
-        l_done = f'thnew_done_{lid}'
-        # Serialize the arena cursor with the heap monitor. Allocating one
-        # context per VirtualAlloc used a full 4-KiB page for a 208-byte object;
-        # packed 64-KiB arenas retain stable addresses at a fraction of the RSS.
-        a.call('fn_heap_enter')
-        a.mov_rax_rip_qword('thread_context_pool_cursor')
-        a.test_r64_r64('rax', 'rax')
-        a.jcc('e', l_alloc_fail)
-        a.mov_r64_r64('r10', 'rax')
-        a.mov_r64_r64('r11', 'rax')
-        a.add_r64_imm('r11', THREAD_CONTEXT_STRIDE)
-        a.mov_rax_rip_qword('thread_context_pool_end')
-        a.cmp_r64_r64('r11', 'rax')
-        a.jcc('be', l_have_context)
-        a.mark(l_alloc_fail)
-        a.xor_r32_r32('ecx', 'ecx')
-        a.mov_r32_imm32('edx', THREAD_CONTEXT_POOL_SIZE)
-        a.mov_r8d_imm32(0x3000)  # MEM_RESERVE | MEM_COMMIT
-        a.mov_r9d_imm32(0x04)    # PAGE_READWRITE
-        a.mov_rax_rip_qword('iat_VirtualAlloc')
-        a.call_rax()
-        a.test_r64_r64('rax', 'rax')
-        a.jcc('e', l_leave_fail)
-        a.mov_r64_r64('r10', 'rax')
-        a.mov_r64_r64('r11', 'rax')
-        a.add_r64_imm('r11', THREAD_CONTEXT_POOL_SIZE)
-        a.mov_r64_r64('rax', 'r11')
-        a.mov_rip_qword_rax('thread_context_pool_end')
-        a.mov_r64_r64('r11', 'r10')
-        a.add_r64_imm('r11', THREAD_CONTEXT_STRIDE)
-        a.mark(l_have_context)
-        # R10 is the chosen context, R11 is the next arena cursor.
-        a.mov_r64_r64('rax', 'r10')
-        a.mov_rip_qword_r11('thread_context_pool_cursor')
+        # Protect the logical id across managed allocation, including when the
+        # constructor is nested in an expression with no named local.
+        self.emit_gc_push_root_frame(0x50, 0x48, 0x50)
+        a.mov_r32_imm32('ecx', THREAD_CONTEXT_SIZE)
+        a.call('fn_alloc')
         a.mov_membase_disp_r64('rsp', 0x30, 'rax')
-        a.call('fn_heap_leave')
-        a.mov_r64_membase_disp('rax', 'rsp', 0x30)
+        # Managed storage may be recycled. Initialize every native field rather
+        # than relying on the zero-filled pages of the old permanent arenas.
         a.mov_membase_disp_imm32('rax', THREAD_TYPE, OBJ_THREAD, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_STATUS, THREAD_CREATED, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDLE, 0, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_ID, 0, qword=True)
         a.mov_r64_membase_disp('r11', 'rsp', 0x38)
         a.mov_membase_disp_r64('rax', THREAD_CODE, 'r11')
+        a.mov_membase_disp_imm32('rax', THREAD_STOP, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_RESULT, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ROOTS, 0, qword=True)
-        for i in range(8):
-            a.mov_membase_disp_imm32('rax', THREAD_TMP0 + i * 8, enc_void(), qword=True)
-        a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=False)
-        a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=False)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 0 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 1 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 2 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 3 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 4 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 5 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 6 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 7 * 8, enc_void(), qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=True)
+        a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
         a.mov_r64_membase_disp('r11', 'rsp', 0x48)
         a.mov_membase_disp_r64('rax', THREAD_LOGICAL_ID, 'r11')
-        a.mov_r32_membase_disp('r11d', 'rsp', 0x40)
-        a.mov_membase_disp_r32('rax', THREAD_ARITY, 'r11d')
-        a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
+        a.mov_r64_membase_disp('r11', 'rsp', 0x40)
+        a.mov_membase_disp_r64('rax', THREAD_ARITY, 'r11')
+        a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
-        a.mov_membase_disp_imm32('rax', THREAD_HANDLE_USERS, 0, qword=False)
-        # Context identities remain stable for the process lifetime. Close()
-        # clears managed roots; packed arenas avoid one OS page per identity.
+        a.mov_membase_disp_imm32('rax', THREAD_HANDLE_USERS, 0, qword=True)
+        # NEXT is a weak registry link, never a managed ownership edge. GC
+        # prunes unreachable inactive contexts before recycling their blocks.
         a.lea_rax_rip('gc_coord_monitor')
         a.mov_r64_r64('rcx', 'rax')
         a.mov_rax_rip_qword('iat_EnterCriticalSection')
@@ -642,12 +623,8 @@ class CodegenThreads:
         a.mov_rax_rip_qword('iat_LeaveCriticalSection')
         a.call_rax()
         a.mov_r64_membase_disp('rax', 'rsp', 0x30)
-        a.jmp(l_done)
-        a.mark(l_leave_fail)
-        a.call('fn_heap_leave')
-        a.xor_r32_r32('eax', 'eax')
-        a.mark(l_done)
-        a.add_rsp_imm8(0x58)
+        self.emit_gc_pop_root_frame(0x50)
+        a.add_rsp_imm8(0x78)
         a.ret()
 
     def emit_thread_start_function(self) -> None:
@@ -982,7 +959,18 @@ class CodegenThreads:
         l_wait_native = f'thclose_wait_native_{lid}'
         l_native_restore = f'thclose_native_restore_{lid}'
         l_done = f'thclose_done_{lid}'
+        # Closing a never-started Thread atomically consumes its one-shot
+        # lifecycle. Racing Start/SetLogicalId cannot republish cleared roots.
         a.mov_r32_membase_disp('eax', 'rcx', THREAD_STATUS)
+        a.cmp_r32_imm('eax', THREAD_CREATED)
+        a.jcc('ne', l_done + '_handle')
+        a.mov_r32_imm32('edx', THREAD_STOPPED)
+        a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'edx')
+        a.jcc('ne', l_false)
+        a.jmp(l_done + '_clear')
+        a.mark(l_done + '_handle')
+        a.cmp_r32_imm('eax', THREAD_CONFIGURING)
+        a.jcc('e', l_false)
         a.cmp_r32_imm('eax', THREAD_RUNNING)
         a.jcc('e', l_false)
         a.cmp_r32_imm('eax', THREAD_STOP_REQUESTED)
@@ -1031,6 +1019,7 @@ class CodegenThreads:
         a.call('fn_gc_native_leave')
         a.test_r32_r32('eax', 'eax')
         a.jcc('e', l_restore)
+        a.mark(l_done + '_clear')
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
         a.mov_membase_disp_imm32('r11', THREAD_CODE, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_RESULT, enc_void(), qword=True)
@@ -1164,8 +1153,8 @@ class CodegenThreads:
         a.jmp(l_finish)
         a.mark(l_finish)
         # The stack-root chain is empty after the user function epilogue. Mark
-        # the context inactive; its published result remains a registered root
-        # until Close() clears it.
+        # the context inactive; its result belongs to reachable Thread objects.
+        # GC may reap the weak entry only after native termination is complete.
         a.call('tlab_retire_internal')
         a.call('fn_gc_managed_exit')
         self._emit_managed_thread_count_delta(-1)

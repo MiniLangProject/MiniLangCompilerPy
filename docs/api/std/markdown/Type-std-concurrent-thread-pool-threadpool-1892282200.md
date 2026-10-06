@@ -12,7 +12,7 @@ struct ThreadPool
 Fixed-size worker set backed by an optionally bounded FIFO queue.
 
 
-Source: `std/concurrent/thread_pool.ml:266`
+Source: `std/concurrent/thread_pool.ml:269`
 
 ## Members
 
@@ -26,7 +26,7 @@ accepting
 Accepting associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:284`
+Source: `std/concurrent/thread_pool.ml:287`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-awaittermination-function-awaittermination-std-concurrent-thread-pool-ml-6637564"></a>
 ### AwaitTermination
@@ -38,7 +38,7 @@ function AwaitTermination()
 Provide await termination behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:506`
+Source: `std/concurrent/thread_pool.ml:509`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-awaitterminationfor-function-awaitterminationfor-milliseconds-std-concurrent-thread-pool-ml-1960742116"></a>
 ### AwaitTerminationFor
@@ -54,7 +54,7 @@ Provide await termination for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/thread_pool.ml:509`
+Source: `std/concurrent/thread_pool.ml:512`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-close-function-close-std-concurrent-thread-pool-ml-1182797580"></a>
 ### close
@@ -66,7 +66,7 @@ function close()
 Shut down, join and release all worker and synchronization handles.
 
 
-Source: `std/concurrent/thread_pool.ml:474`
+Source: `std/concurrent/thread_pool.ml:477`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-closed-closed-std-concurrent-thread-pool-ml-109960782"></a>
 ### closed
@@ -78,7 +78,7 @@ closed
 Closed associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:290`
+Source: `std/concurrent/thread_pool.ml:293`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-dispose-function-dispose-std-concurrent-thread-pool-ml-1118298946"></a>
 ### Dispose
@@ -90,7 +90,7 @@ function Dispose()
 Provide dispose behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:511`
+Source: `std/concurrent/thread_pool.ml:514`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-guard-guard-std-concurrent-thread-pool-ml-304843242"></a>
 ### guard
@@ -102,7 +102,7 @@ guard
 Guard associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:268`
+Source: `std/concurrent/thread_pool.ml:271`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-1713408876"></a>
 ### IsShutdown
@@ -114,7 +114,7 @@ function IsShutdown()
 Reports whether is shutdown.
 
 
-Source: `std/concurrent/thread_pool.ml:500`
+Source: `std/concurrent/thread_pool.ml:503`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-811388460"></a>
 ### isShutdown
@@ -126,7 +126,7 @@ function isShutdown()
 Report whether the pool has stopped accepting new jobs.
 
 
-Source: `std/concurrent/thread_pool.ml:396`
+Source: `std/concurrent/thread_pool.ml:399`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-join-function-join-std-concurrent-thread-pool-ml-1493137732"></a>
 ### join
@@ -138,7 +138,7 @@ function join()
 Wait indefinitely for all workers after shutdown has begun.
 
 
-Source: `std/concurrent/thread_pool.ml:444`
+Source: `std/concurrent/thread_pool.ml:447`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-joinfor-function-joinfor-milliseconds-std-concurrent-thread-pool-ml-663703616"></a>
 ### joinFor
@@ -154,7 +154,7 @@ Wait for each worker with the supplied per-worker timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/thread_pool.ml:459`
+Source: `std/concurrent/thread_pool.ml:462`
 
 <a id="static_method-static-method-std-concurrent-thread-pool-threadpool-new-static-function-new-workercount-std-concurrent-thread-pool-ml-1759983018"></a>
 ### new
@@ -170,7 +170,7 @@ Create an unbounded pool with workerCount native workers.
 | `workerCount` | `dynamic` | — | Value supplied for `workerCount`. |
 
 
-Source: `std/concurrent/thread_pool.ml:294`
+Source: `std/concurrent/thread_pool.ml:297`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-1884661524"></a>
 ### PendingCount
@@ -182,7 +182,7 @@ function PendingCount()
 Provide pending count behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:496`
+Source: `std/concurrent/thread_pool.ml:499`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-78633876"></a>
 ### pendingCount
@@ -194,7 +194,7 @@ function pendingCount()
 Return the number of jobs that have not yet been claimed by workers.
 
 
-Source: `std/concurrent/thread_pool.ml:383`
+Source: `std/concurrent/thread_pool.ml:386`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-queue-queue-std-concurrent-thread-pool-ml-467937354"></a>
 ### queue
@@ -206,7 +206,7 @@ queue
 Queue associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:274`
+Source: `std/concurrent/thread_pool.ml:277`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-queuecapacity-queuecapacity-std-concurrent-thread-pool-ml-1555178226"></a>
 ### queueCapacity
@@ -218,7 +218,7 @@ queueCapacity
 Queue capacity associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:282`
+Source: `std/concurrent/thread_pool.ml:285`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-queuedcount-queuedcount-std-concurrent-thread-pool-ml-1341410970"></a>
 ### queuedCount
@@ -230,7 +230,7 @@ queuedCount
 Queued count associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:280`
+Source: `std/concurrent/thread_pool.ml:283`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-queuehead-queuehead-std-concurrent-thread-pool-ml-230070806"></a>
 ### queueHead
@@ -242,7 +242,7 @@ queueHead
 Queue head associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:276`
+Source: `std/concurrent/thread_pool.ml:279`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-queuetail-queuetail-std-concurrent-thread-pool-ml-254067894"></a>
 ### queueTail
@@ -254,7 +254,7 @@ queueTail
 Queue tail associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:278`
+Source: `std/concurrent/thread_pool.ml:281`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-648357004"></a>
 ### Shutdown
@@ -266,7 +266,7 @@ function Shutdown()
 Provide shutdown behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:502`
+Source: `std/concurrent/thread_pool.ml:505`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-586367372"></a>
 ### shutdown
@@ -278,7 +278,7 @@ function shutdown()
 Stop accepting jobs and drain the existing queue before worker exit.
 
 
-Source: `std/concurrent/thread_pool.ml:404`
+Source: `std/concurrent/thread_pool.ml:407`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-shutdownnow-function-shutdownnow-std-concurrent-thread-pool-ml-1083023640"></a>
 ### ShutdownNow
@@ -290,7 +290,7 @@ function ShutdownNow()
 Provide shutdown now behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:504`
+Source: `std/concurrent/thread_pool.ml:507`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-signal-signal-std-concurrent-thread-pool-ml-1133216446"></a>
 ### signal
@@ -302,7 +302,7 @@ signal
 Signal associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:270`
+Source: `std/concurrent/thread_pool.ml:273`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-stop-function-stop-std-concurrent-thread-pool-ml-1402724008"></a>
 ### stop
@@ -314,7 +314,7 @@ function stop()
 Stop accepting jobs and cancel every job that is still queued.
 
 
-Source: `std/concurrent/thread_pool.ml:418`
+Source: `std/concurrent/thread_pool.ml:421`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-stopped-stopped-std-concurrent-thread-pool-ml-88571118"></a>
 ### stopped
@@ -326,7 +326,7 @@ stopped
 Stopped associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:288`
+Source: `std/concurrent/thread_pool.ml:291`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-stopping-stopping-std-concurrent-thread-pool-ml-392538930"></a>
 ### stopping
@@ -338,7 +338,7 @@ stopping
 Stopping associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:286`
+Source: `std/concurrent/thread_pool.ml:289`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-1887013117"></a>
 ### Submit
@@ -355,7 +355,7 @@ PascalCase aliases provide the conventional pool API surface.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/concurrent/thread_pool.ml:494`
+Source: `std/concurrent/thread_pool.ml:497`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-704351741"></a>
 ### submit
@@ -372,7 +372,7 @@ Queue a callback and return its job handle, or void when rejected.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/concurrent/thread_pool.ml:350`
+Source: `std/concurrent/thread_pool.ml:353`
 
 <a id="static_method-static-method-std-concurrent-thread-pool-threadpool-withqueuecapacity-static-function-withqueuecapacity-workercount-queuecapacity-std-concurrent-thread-pool-ml-10704545"></a>
 ### withQueueCapacity
@@ -389,7 +389,7 @@ Create a pool whose zero capacity means an unbounded pending queue.
 | `queueCapacity` | `dynamic` | — | Value supplied for `queueCapacity`. |
 
 
-Source: `std/concurrent/thread_pool.ml:301`
+Source: `std/concurrent/thread_pool.ml:304`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-609593798"></a>
 ### WorkerCount
@@ -401,7 +401,7 @@ function WorkerCount()
 Provide worker count behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:498`
+Source: `std/concurrent/thread_pool.ml:501`
 
 <a id="method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-724788614"></a>
 ### workerCount
@@ -413,7 +413,7 @@ function workerCount()
 Return the fixed number of native workers created with this pool.
 
 
-Source: `std/concurrent/thread_pool.ml:391`
+Source: `std/concurrent/thread_pool.ml:394`
 
 <a id="field-field-std-concurrent-thread-pool-threadpool-workers-workers-std-concurrent-thread-pool-ml-1874553574"></a>
 ### workers
@@ -425,4 +425,4 @@ workers
 Workers associated with `ThreadPool`.
 
 
-Source: `std/concurrent/thread_pool.ml:272`
+Source: `std/concurrent/thread_pool.ml:275`

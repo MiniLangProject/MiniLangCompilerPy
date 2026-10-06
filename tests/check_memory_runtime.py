@@ -28,6 +28,16 @@ def main():
         ("memory_policy.ml", ["--gc-limit", "1m", "--no-gc-periodic"], ["disabled"], "MEMORY POLICY [OK]"),
         ("tlab_shared_heap.ml", ["--heap-shrink", "--heap-shrink-min", "1m"], [], "[OK]"),
         ("gc_back_to_back_safepoint.ml", [], [], "[OK]"),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m"], [], "MEMORY CEILING [OK]"),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "128m"], [], "MEMORY CEILING [OK]"),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "4g"], ["full-reserve"], "MEMORY CEILING [OK]"),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "5001"], ["alignment"], "MEMORY CEILING [OK]"),
+        ("gc_thread_lifetime.ml", [], [], "GC THREAD LIFETIME [OK]"),
+        ("gc_handoff_lifetime.ml", [], [], "GC HANDOFF LIFETIME [OK]"),
+        ("memory_gc_metadata.ml", ["--heap-shrink", "--heap-shrink-min", "1m"], [], "GC METADATA [OK]"),
+        ("memory_fragmentation_cursor.ml", [], [], "MEMORY CURSOR [OK]"),
+        ("gc_bitmap_words.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"], [], "GC BITMAP WORDS [OK]"),
+        ("ffi_cstr_return.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"], [], "FFI CSTR RETURN [OK]"),
     ]
     with tempfile.TemporaryDirectory(prefix="ml_memory_matrix_") as temporary:
         for target in ("windows-x64", "linux-x64"):
@@ -49,6 +59,15 @@ def main():
                     else:
                         image.chmod(0o755)
                         output = run([str(image), *arguments])
+                    # Above-reserve requests must still fail, never silently
+                    # overcommit beyond the declared managed-heap reservation.
+                    if fixture == "memory_heap_ceiling.ml":
+                        if target == "windows-x64" or os.name != "nt":
+                            negative_command = [str(image), "overflow"]
+                        else:
+                            negative_command = ["wsl", "-d", "Ubuntu", "--", "timeout", "90s", linux, "overflow"]
+                        negative = subprocess.run(negative_command, capture_output=True, text=True, timeout=120)
+                        assert negative.returncode == 1 and "heap exhausted" in negative.stderr, negative
                     assert marker in output, output
                 assert images[0] == images[1], f"Pipeline mismatch: {target} {fixture}"
                 print(f"[OK] {target}: {fixture} {flags}, normal/object parity")

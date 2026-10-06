@@ -1,0 +1,3252 @@
+{
+  "platform": "Windows-10-10.0.26200-SP0",
+  "runs": 7,
+  "images": {
+    "lifecycle": {
+      "before": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_lifecycle-before-windows-x64.exe",
+        "size": 187392,
+        "sha256": "43dfa67def95bcb701957464e6ecfac3b356b63e284a1c52bdc63cc9d2a5a1dc"
+      },
+      "after": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_lifecycle-verified-windows-x64.exe",
+        "size": 188928,
+        "sha256": "2692fe8d98e7417d228f7df77ca55cebe6f68c195501e71efdae0f490aa8b4d9"
+      }
+    },
+    "fragmentation": {
+      "before": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_fragmentation-before-windows-x64.exe",
+        "size": 124416,
+        "sha256": "e0c29bb6724c5724443e90291ca2550f2b0013003525d91fe607ec2b3bec6c5d"
+      },
+      "after": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_fragmentation-verified-windows-x64.exe",
+        "size": 124416,
+        "sha256": "6b923276679446375ca2118cfc4af5337b0350800661d86c7364ac6cbe49aad6"
+      }
+    },
+    "metadata": {
+      "before": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_metadata-before-windows-x64.exe",
+        "size": 187392,
+        "sha256": "c4042b2515140c1e157e81071e55d81ad50ee493fc2ec259932be22037b5edf4"
+      },
+      "after": {
+        "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_metadata-verified-windows-x64.exe",
+        "size": 189440,
+        "sha256": "92f737ebdd2b87f2e819a4969b32f727b55d550a8a6e27cf2f48130d567ff7c5"
+      }
+    }
+  },
+  "summary": {
+    "lifecycle:contexts": {
+      "before": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          45854720.0,
+          56295424.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          25.9864,
+          55.6136
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      },
+      "after": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0079,
+          0.0079
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    "lifecycle:closed-contexts": {
+      "before": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35676160.0,
+          35872768.0
+        ],
+        "gc50_ms": [
+          0.0091,
+          0.4874,
+          0.9729
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      },
+      "after": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.008,
+          0.0084
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    "lifecycle:ids": {
+      "before": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      },
+      "after": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    "lifecycle:cleared-ids": {
+      "before": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      },
+      "after": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    "lifecycle:handoff": {
+      "before": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      },
+      "after": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    "fragmentation:none": {
+      "before": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5919
+        ]
+      },
+      "after": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1283
+        ]
+      }
+    },
+    "fragmentation:double": {
+      "before": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9218
+        ]
+      },
+      "after": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2626
+        ]
+      }
+    },
+    "fragmentation:quadruple": {
+      "before": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.4191
+        ]
+      },
+      "after": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.62
+        ]
+      }
+    },
+    "metadata:worklist": {
+      "before": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      },
+      "after": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    }
+  },
+  "samples": [
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          45858816.0,
+          56299520.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          27.0509,
+          54.0825
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35409920.0,
+          35409920.0
+        ],
+        "gc50_ms": [
+          0.0081,
+          0.0087,
+          0.0084
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.0078,
+          0.0077,
+          0.0077
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          45854720.0,
+          56295424.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          25.9864,
+          60.3426
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35418112.0,
+          45858816.0,
+          56299520.0
+        ],
+        "gc50_ms": [
+          0.0089,
+          26.6091,
+          57.7741
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0079,
+          0.0081
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35409920.0,
+          35409920.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0085,
+          0.0079
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35405824.0,
+          45850624.0,
+          56291328.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          25.8026,
+          55.6136
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          45854720.0,
+          56295424.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          28.3524,
+          56.3376
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.0079,
+          0.0079,
+          0.0081
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35409920.0,
+          35409920.0
+        ],
+        "gc50_ms": [
+          0.0079,
+          0.0078,
+          0.0076
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          45850624.0,
+          56291328.0
+        ],
+        "gc50_ms": [
+          0.0091,
+          25.982,
+          54.7984
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          45854720.0,
+          56295424.0
+        ],
+        "gc50_ms": [
+          0.0094,
+          25.5914,
+          52.7027
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "contexts",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.0082,
+          0.0082,
+          0.0078
+        ],
+        "closed": [
+          0.0,
+          0.0
+        ],
+        "contexts": [
+          50000.0,
+          100000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35672064.0,
+          35868672.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          0.4828,
+          0.9651
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0079,
+          0.0082
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35418112.0,
+          35418112.0,
+          35418112.0
+        ],
+        "gc50_ms": [
+          0.0078,
+          0.0077,
+          0.0082
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35676160.0,
+          35872768.0
+        ],
+        "gc50_ms": [
+          0.0091,
+          0.4874,
+          0.9563
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35672064.0,
+          35868672.0
+        ],
+        "gc50_ms": [
+          0.0089,
+          0.4814,
+          0.9634
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35409920.0,
+          35409920.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0078,
+          0.0081
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.008,
+          0.0084
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35676160.0,
+          35872768.0
+        ],
+        "gc50_ms": [
+          0.0091,
+          0.4954,
+          0.9729
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35676160.0,
+          35872768.0
+        ],
+        "gc50_ms": [
+          0.0088,
+          0.4835,
+          1.0201
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35409920.0,
+          35409920.0
+        ],
+        "gc50_ms": [
+          0.0079,
+          0.0085,
+          0.0084
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.008,
+          0.0082,
+          0.0086
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35676160.0,
+          35872768.0
+        ],
+        "gc50_ms": [
+          0.0096,
+          0.5404,
+          1.4091
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "live": [
+          280.0,
+          280.0,
+          280.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35409920.0,
+          35672064.0,
+          35868672.0
+        ],
+        "gc50_ms": [
+          0.0099,
+          0.5483,
+          1.2623
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "closed-contexts",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "live": [
+          184.0,
+          184.0,
+          184.0
+        ],
+        "heap_committed": [
+          33554432.0,
+          33554432.0,
+          33554432.0
+        ],
+        "private_commit": [
+          35414016.0,
+          35414016.0,
+          35414016.0
+        ],
+        "gc50_ms": [
+          0.009,
+          0.0091,
+          0.0094
+        ],
+        "closed": [
+          1000.0,
+          1000.0
+        ],
+        "contexts": [
+          1000.0,
+          2000.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          16777872.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "ids",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "before_live": [
+          280.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          280.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "cleared-ids",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "before_live": [
+          184.0
+        ],
+        "closed": [
+          0.0
+        ],
+        "after_live": [
+          184.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "before_live": [
+          272.0
+        ],
+        "dropped_graph_live": [
+          16777488.0
+        ],
+        "flushed_live": [
+          272.0
+        ]
+      }
+    },
+    {
+      "group": "lifecycle",
+      "mode": "handoff",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "before_live": [
+          176.0
+        ],
+        "dropped_graph_live": [
+          176.0
+        ],
+        "flushed_live": [
+          176.0
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5934
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1507
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1287
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.588
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5863
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1212
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1288
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.6015
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5919
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1283
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1187
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5986
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          500500.0
+        ],
+        "allocation_ms": [
+          0.5825
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "none",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          1000.0
+        ],
+        "free_list_probes": [
+          1999.0
+        ],
+        "allocation_ms": [
+          0.1212
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9389
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2625
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2228
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9702
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9194
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2675
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2605
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9651
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.8925
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2713
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.3023
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.9218
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          2001000.0
+        ],
+        "allocation_ms": [
+          1.8964
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "double",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          2000.0
+        ],
+        "free_list_probes": [
+          3999.0
+        ],
+        "allocation_ms": [
+          0.2626
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.4191
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.6163
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.62
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.5067
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.525
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.6213
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.599
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.5417
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.2775
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.6111
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.6386
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.349
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          8002000.0
+        ],
+        "allocation_ms": [
+          7.3702
+        ]
+      }
+    },
+    {
+      "group": "fragmentation",
+      "mode": "quadruple",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "small_holes": [
+          0.0
+        ],
+        "allocations": [
+          4000.0
+        ],
+        "free_list_probes": [
+          7999.0
+        ],
+        "allocation_ms": [
+          0.6383
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 0,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 0,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 1,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 1,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 2,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 2,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 3,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 3,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 4,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 4,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 5,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 5,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "before",
+      "run": 6,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          280.0
+        ],
+        "after_worklist_bytes": [
+          2097152.0
+        ]
+      }
+    },
+    {
+      "group": "metadata",
+      "mode": "worklist",
+      "version": "after",
+      "run": 6,
+      "values": {
+        "before_worklist_bytes": [
+          65536.0
+        ],
+        "broad_live": [
+          6401376.0
+        ],
+        "broad_worklist_bytes": [
+          2097152.0
+        ],
+        "after_live": [
+          184.0
+        ],
+        "after_worklist_bytes": [
+          65536.0
+        ]
+      }
+    }
+  ]
+}

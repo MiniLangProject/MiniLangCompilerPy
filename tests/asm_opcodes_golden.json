@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-09-05T01:34:09.706979Z",
-  "count": 229,
+  "generated_utc": "2026-10-06T04:22:16.855696Z",
+  "count": 232,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -223,6 +223,26 @@
       "kwargs": {},
       "hex": "450fbdda",
       "asm": "; bsr_r32_r32(r11d, r10d)"
+    },
+    {
+      "name": "bt_r64_r64",
+      "args": [
+        "r11",
+        "r11"
+      ],
+      "kwargs": {},
+      "hex": "4d0fa3db",
+      "asm": "bt r11, r11"
+    },
+    {
+      "name": "bts_r64_r64",
+      "args": [
+        "r11",
+        "r11"
+      ],
+      "kwargs": {},
+      "hex": "4d0fabdb",
+      "asm": "bts r11, r11"
     },
     {
       "name": "call",
@@ -1365,6 +1385,15 @@
       "kwargs": {},
       "hex": "450fb6da",
       "asm": "; movzx_r32_r8(r11d, r10b)"
+    },
+    {
+      "name": "mul_r64",
+      "args": [
+        "r11"
+      ],
+      "kwargs": {},
+      "hex": "49f7e3",
+      "asm": "; mul_r64(r11)"
     },
     {
       "name": "mulsd_xmm_xmm",

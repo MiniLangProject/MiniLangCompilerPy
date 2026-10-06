@@ -3390,8 +3390,13 @@ class CodegenRuntime:
         """
         a = self.asm
         a.mark('fn_builtin_gc_collect')
+        # A first-class builtin is a real callee: reserve Win64 shadow space
+        # and align RSP before entering the collector and its OS callbacks.
+        a.sub_rsp_imm8(0x28)
+        self.emit_gc_release_handoffs()
         a.call('fn_gc_collect')
         a.mov_rax_imm64(enc_void())
+        a.add_rsp_imm8(0x28)
         a.ret()
 
     def emit_builtin_copyBytes_function(self) -> None:

@@ -1,5 +1,76 @@
 # Compiler parity and self-hosting
 
+## 1.2.18 release verification 6 October 2026
+
+The release-stamped Windows Python bootstrap, native stage 2 and stage 3 match:
+`D2C03E5C02BFC5F455FE1078EDBCD6FD7A34A4C3130E6D4F1E570749719B30AA`
+(55,379,968 bytes). Python Linux output, Windows ML crossbuild and Linux-native
+selfbuild match:
+`730F85B06CA42833B0C15560256607E97AC3D0BDE950273836C3357B47EB2F38`
+(55,382,096 bytes).
+
+Both version flags and compile-time `MINILANG_VERSION` report 1.2.18 on all
+three hosts. The release-stamped 228-image memory matrix matches per target,
+fixture and option set across three hosts and both pipeline modes. Version
+and runtime fixtures execute on Windows and Linux with six-way byte parity.
+Native `cstr` return code generation now matches too; the historical exception
+below no longer applies to 1.2.18.
+
+The full suites pass: Python 166 cases; ML 136 core cases plus outer checks.
+All 53 std modules and 351 generated std reference files are byte-identical.
+See [release notes](RELEASE_NOTES_1.2.18.md),
+[version and self-host hashes](docs/reports/release-1.2.18-version-matrix.json)
+and [memory hashes](docs/reports/release-1.2.18-memory-parity.json).
+
+The following development checkpoints retain their original pre-version-bump
+hashes and measurements; they are not the published 1.2.18 artifact hashes.
+
+
+## Memory follow-up verification 6 October 2026
+
+The current Windows Python bootstrap and ML selfbuild are byte-identical:
+`F37B7EDCE0A3D379C9119A056A9D0E433E11FAEA01578A3E4AB186CDE735FF5F`
+(55,379,968 bytes). Python Linux output, Windows-ML crossbuild and Linux-native
+selfbuild are also byte-identical:
+`2C5995975E261CF8F879086A9D7DF8EA470430CB5C09DBD1F4702A7F01F844A2`
+(55,382,096 bytes).
+
+The expanded matrix covers 228 images: 19 fixture/option combinations, two
+targets, three compiler hosts and two CLI pipeline modes. Each six-image group
+matches exactly. This includes concurrent native cstr returns, so the historical
+cstr emitter exception below is resolved for the current development sources.
+The native ML compiler exercises distinct monolithic/MLO backends; Python accepts
+the object flag for CLI parity but emits its monolithic image.
+
+Python passes 166 full-suite cases; ML passes 136 core cases and the complete
+outer integration runner. Both target/pipeline memory matrices, all three host
+CLI contracts, 146 stress executions and 24 benchmark-image comparisons pass.
+All 53 std sources and 351 generated std reference files still match.
+
+These remain **unreleased development artifacts**, reporting 1.2.17.
+See the [follow-up evaluation and audit](docs/reports/MEMORY_FOLLOWUP_2026-10-06.md).
+
+## Memory-lifecycle development verification (6 October 2026)
+
+The final Python bootstrap and Windows native selfbuild match byte-for-byte:
+`C04EC7312CE8A9B3877F15590AB02263F6877D1A276AF8526C8488769F790E16`
+(55,367,168 bytes). The Python Linux bootstrap, Windows-ML crossbuild and
+Linux-native selfbuild also match:
+`EB8A70566220F3E72B28B4B6C4DC41BFBE34CBFBAAA51CA8FEE64D3A9B6C4920`
+(55,365,616 bytes).
+
+The expanded 192-image memory matrix is byte-identical per target/configuration
+across three compiler hosts and both pipelines. Windows/Linux execution,
+expected reserve-exhaustion failures, full suites (Python 164; ML 136 core
+cases plus outer checks), and all ten benchmark-image comparisons pass.
+All 53 std modules and 351 generated std reference files remain identical.
+
+These are **unreleased development artifacts**, still reporting 1.2.17.
+Published 1.2.17 hashes below are unchanged. The native `cstr` return exception
+is unchanged. See the [audit/evaluation](docs/reports/MEMORY_LIFECYCLE_2026-10-06.md)
+for ownership invariants, test scope, raw results and measured trade-offs.
+
+
 ## 1.2.17 release verification (4 October 2026)
 
 Windows Python bootstrap and native selfbuild are byte-identical:

@@ -1,0 +1,2296 @@
+{
+  "images": [
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8985c054ab6069dc1a52bd8556a15f0a190d2b8dffdb27a551d29242b0abb198",
+      "size": 118272
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "073e4a1d9d32bfa8db766e0b8144a4da398a01a7670b2f70b2e4632ffbafa493",
+      "size": 90112
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "c84c04859def82ee6089b3457faed8bff5769b0e67e712a836626f3b1f910a0d",
+      "size": 104448
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "59ffa29ffa5fb3552f8b20aa71f96072a10e5c71798af588a6f801f65e1117fa",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "8108818b25bda8a0512a0f07a987f09c178a45e216d3d4183bdf00586d3b0d91",
+      "size": 91648
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "bbc00540b7a91cbb5fe603509329fd3525788789269ee0704b990c997f63f45f",
+      "size": 121344
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "9aa71ca9a49cf902ecbb41c24f61fb1b74507268be20355d2e2b980e5abfbe8e",
+      "size": 108544
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "d0f5ac08c45ab562a8e41b79b99ec4d9983de7fe4aeb0e28c170d27dac9cd48f",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3f2a887bbd7d10e956b8487a26d1e910da7e91bb5115753ba3ecf7471306f46e",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "e300ed791bec4bf31281c24ce7990ad6fbdd69cda8652b70c3f1c9dbef4496ec",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "32e9c926bc7062b365e22226fd289d275afb374cbc28f79cce0000263a0c82e4",
+      "size": 96768
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "31d583fbcbc6585931c3abcaba179fd0dea31e203c2ba8f23a98a42f23130c08",
+      "size": 185856
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "251efd1a1a5b1f733356f94e47b33e211dcb9b76789bff73551177583c960081",
+      "size": 484864
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "32341f30a380cdaf2de0f114d4901797451afaa9a0fcb2707660c2488010c432",
+      "size": 94720
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "81221bccb844fa6645e7e556a0f82a586cff93e7e8c65065e8e510b71d17e859",
+      "size": 102400
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "1cbdea6c268e266f6705103298ac856316ea95d86c60bbbe5f90514204d5beab",
+      "size": 124736
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_stats_indirect.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "fb8dc17a97f5c37215100995d6e5078f17844a79c2b21050c9384895ec61517a",
+      "size": 96048
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_purge.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "46f51b49722b82d1d37c5952a548421a62c6e9c70f497e2903bc94fb84e9a39f",
+      "size": 112432
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "ab2618e70dbdeb7c1987ac8050f8985e2a7ea07b52524b3235f53f5d419dc4bf",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "3c10857944ea24aa957384ab9c21a2d7abaaa0de5fd1bab33dfa93c6654499fe",
+      "size": 100128
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "ec04e3e3909cae540bd17674a5521baebecd63322d7edae1c4a8309fd29e8d10",
+      "size": 128832
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "bfd8083dc6570d4ac61b08355eef3d78b495ab08658b98a42585890f3f9898a4",
+      "size": 116528
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "6c7dfd85a587bef4de39ce341afae90c71ff384d4df0b415fa40a492187c843b",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "128m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "1c561d381b77a8be21f1c3cf5b468cdc61dd0b8bb417885b18f1447ff2a2c784",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "4g"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "eefc5b886921bc039358499ed25e3ed4f1567b35f975474b165ede8866c59664",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m",
+        "--heap-grow",
+        "5001"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "90c79413adb2518b159481472eb896c1285fcb3d47d3723db0cc0b3ceac619b7",
+      "size": 104224
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "39f79e3d9ce11645c14f5177c44fa1599bf43f33f4d45a5083e19b6a3c95ba32",
+      "size": 190384
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "e168399f7ea87b35f92c72a228f99564694c69f4d6bcbe3743a97ddde216b197",
+      "size": 1319328
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_gc_metadata.ml",
+      "flags": [
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "1m"
+      ],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "5ecbc881db369108bbe56e990fae325abb53b01743a9e9923b2025b176924a6a",
+      "size": 104240
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "memory_fragmentation_cursor.ml",
+      "flags": [],
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "cf5dd7b58c3da7cd41b113a043a9e7c2ac6680fa6908c26516968b5dc44a81f7",
+      "size": 108336
+    }
+  ]
+}

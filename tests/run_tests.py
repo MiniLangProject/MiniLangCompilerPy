@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.17"
+    expected = "MiniLang Compiler 1.2.18"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -765,6 +765,15 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
         (tests_root / "runtime_codegen.ml", ["RUNTIME CODEGEN [OK]"], []),
         (tests_root / "memory_management.ml", ["MEMORY MANAGEMENT [OK]"], []),
+        (tests_root / "memory_heap_ceiling.ml", ["MEMORY CEILING [OK]"], [],
+         ["--heap-reserve", "40m", "--heap-commit", "32m"]),
+        (tests_root / "gc_thread_lifetime.ml", ["GC THREAD LIFETIME [OK]"], []),
+        (tests_root / "gc_handoff_lifetime.ml", ["GC HANDOFF LIFETIME [OK]"], []),
+        (tests_root / "gc_bitmap_words.ml", ["GC BITMAP WORDS [OK]"], []),
+        (tests_root / "ffi_cstr_return.ml", ["FFI CSTR RETURN [OK]"], []),
+        (tests_root / "memory_fragmentation_cursor.ml", ["MEMORY CURSOR [OK]"], []),
+        (tests_root / "memory_gc_metadata.ml", ["GC METADATA [OK]"], [],
+         ["--heap-shrink", "--heap-shrink-min", "1m"]),
         (tests_root / "memory_purge.ml", ["MEMORY PURGE [OK]"], [],
          ["--heap-shrink", "--heap-shrink-min", "1m"]),
         (tests_root / "stdlib_unit_tests.ml", ["=== DONE ==="], []),
@@ -4220,7 +4229,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.17", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.18", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4283,6 +4292,18 @@ def main() -> int:
         name="memory diagnostics, worklist growth, adaptive policy and free-list misses",
         mlc_runner=mlc_runner, ml_path=tests_root / "memory_management.ml",
         must_contain=["MEMORY MANAGEMENT [OK]"]))
+    for fixture, marker, flags in (
+        ("memory_heap_ceiling.ml", "MEMORY CEILING [OK]", ["--heap-reserve", "40m", "--heap-commit", "32m"]),
+        ("gc_thread_lifetime.ml", "GC THREAD LIFETIME [OK]", []),
+        ("gc_handoff_lifetime.ml", "GC HANDOFF LIFETIME [OK]", []),
+        ("gc_bitmap_words.ml", "GC BITMAP WORDS [OK]", []),
+        ("ffi_cstr_return.ml", "FFI CSTR RETURN [OK]", []),
+        ("memory_fragmentation_cursor.ml", "MEMORY CURSOR [OK]", []),
+        ("memory_gc_metadata.ml", "GC METADATA [OK]", ["--heap-shrink", "--heap-shrink-min", "1m"]),
+    ):
+        tests.append(lambda fixture=fixture, marker=marker, flags=flags: test_program_no_fail(
+            name=fixture, mlc_runner=mlc_runner, ml_path=tests_root / fixture,
+            must_contain=[marker], extra_args=flags, timeout_run_s=120))
     tests.append(lambda: test_program_no_fail(
         name="interior dead-page purge, reuse and top recommit",
         mlc_runner=mlc_runner, ml_path=tests_root / "memory_purge.ml",

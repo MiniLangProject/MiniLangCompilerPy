@@ -144,6 +144,10 @@ class TestAsmOpcodeVectors(unittest.TestCase):
             ('and_rax_imm8', [7], '83e007'),
             ('cmp_rax_imm32', [128], '483d80000000'),
             ('test_r64_imm32', ['r8', 7], '49f7c007000000'),
+            ('bt_r64_r64', ['rax', 'rcx'], '480fa3c8'),
+            ('bts_r64_r64', ['rax', 'rcx'], '480fabc8'),
+            ('bt_r64_r64', ['r10', 'r8'], '4d0fa3c2'),
+            ('bts_r64_r64', ['r10', 'r8'], '4d0fabc2'),
         ]
         for method, args, expected in vectors:
             with self.subTest(method=method, args=args):
@@ -259,6 +263,19 @@ class TestAsmOpcodeVectors(unittest.TestCase):
                 self.assertTrue(kernel.VirtualFree(address, 0, 0x8000))
 
         inputs = (0, 1, 127, 0x80000000, 0xffffffff, 0x8000000000000000, 0xffffffffffffffff, 0x123456789abcdef0)
+        # Register bit indexes are modulo 64; CF must report the old bit.
+        # Test independently of generated golden vectors, including aliases
+        # across bitmap words and the sign bit of a loaded qword.
+        for method in ('bt_r64_r64', 'bts_r64_r64'):
+            for index in (0, 1, 7, 8, 31, 32, 63, 64, 65, 127, 4095):
+                a = Asm()
+                a.mov_r64_imm64('r8', index)
+                getattr(a, method)('r10', 'r8')
+                for value in inputs:
+                    result, flags = execute(a.finalize(), 'r10', value)
+                    bit = 1 << (index % 64)
+                    self.assertEqual(flags & 1, int(bool(value & bit)))
+                    self.assertEqual(result, value | bit if method.startswith('bts') else value)
         for reg, rid in [('rax', 0), ('rcx', 1), ('rdx', 2), ('r8', 8), ('r10', 10)]:
             for mask in (0, 1, 7, 127, 128, 0x7fffffff, 0x80000000, -1, -2147483648):
                 prefix = bytes([0x48 | (rid >> 3)])

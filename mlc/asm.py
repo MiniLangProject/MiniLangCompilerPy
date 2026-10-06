@@ -2021,6 +2021,16 @@ class Asm:
         rex_b = 1 if bb >= 8 else 0
         self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x85" + self._modrm(3, aa, bb))
 
+    def bts_r64_r64(self, dst: str, index: str) -> None:
+        """Set a register bit (index modulo 64), returning its previous value in CF."""
+        d, i = self._rid_any(dst), self._rid_any(index)
+        self.emit(self._rex(w=1, r=i >> 3, b=d >> 3) + b"\x0F\xAB" + self._modrm(3, i, d))
+
+    def bt_r64_r64(self, value: str, index: str) -> None:
+        """Read a register bit (index modulo 64) into CF without modifying it."""
+        v, i = self._rid_any(value), self._rid_any(index)
+        self.emit(self._rex(w=1, r=i >> 3, b=v >> 3) + b"\x0F\xA3" + self._modrm(3, i, v))
+
     def test_r64_imm32(self, reg: str, imm: int) -> None:
         """Emit `TEST` instruction helper.
 
@@ -3104,6 +3114,8 @@ class Asm:
             return f"{op} {reg}, 0x{int(imm) & 0xFF:X}", ()
 
         # div/idiv
+        if name in ('bt_r64_r64', 'bts_r64_r64'):
+            return f"{name.split('_', 1)[0]} {args[0]}, {args[1]}", ()
         if name in ('div_r64', 'idiv_r64'):
             op = 'div' if name == 'div_r64' else 'idiv'
             return f"{op} {args[0]}", ()
@@ -3113,7 +3125,8 @@ class Asm:
 
     def write_listing(self, path: Optional[str] = None, *, base_addr: int = 0,
                       label_addr_map: Optional[Dict[str, int]] = None, show_addr: Optional[bool] = None,
-                      show_bytes: Optional[bool] = None, show_text: Optional[bool] = None, ) -> None:
+                      show_bytes: Optional[bool] = None, show_text: Optional[bool] = None,
+                      addr_label: str = "RVA") -> None:
         """Write a deterministic mixed address/opcode/source assembly listing."""
 
         if path is None:
@@ -3151,7 +3164,7 @@ class Asm:
                     if rva is None:
                         f.write(f'{lab}: ; off=0x{at:X}\n')
                     else:
-                        f.write(f'{lab}: ; off=0x{at:X} rva=0x{rva:X}\n')
+                        f.write(f'{lab}: ; off=0x{at:X} {addr_label.lower()}=0x{rva:X}\n')
 
         def write_span_line(f, off: int, bs: bytes, txt: str) -> None:
             cols: List[str] = []
@@ -3168,7 +3181,7 @@ class Asm:
             f.write('; MiniLang .text listing (generated)\n')
             f.write(f'; code size: 0x{end_pos:X} bytes\n')
             if base_addr:
-                f.write(f'; .text base RVA: 0x{base_addr:X}\n')
+                f.write(f'; .text base {addr_label}: 0x{base_addr:X}\n')
             f.write('\n')
 
             cur = 0

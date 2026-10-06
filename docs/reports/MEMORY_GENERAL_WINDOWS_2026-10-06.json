@@ -1,0 +1,957 @@
+{
+  "platform": "Windows-10-10.0.26200-SP0",
+  "runs": 7,
+  "cpu": 0,
+  "summary": {
+    "small-churn": {
+      "before": {
+        "wall_ms": 80.3455,
+        "ms": 67.6304,
+        "bytes": 33554432,
+        "checksum": 624993160,
+        "peak_rss_bytes": 16101376
+      },
+      "after": {
+        "wall_ms": 79.8442,
+        "ms": 67.0811,
+        "bytes": 33554432,
+        "checksum": 624993160,
+        "peak_rss_bytes": 16101376
+      }
+    },
+    "large-live": {
+      "before": {
+        "wall_ms": 298.2572,
+        "ms": 234.3087,
+        "bytes": 100663296,
+        "checksum": 625393159,
+        "peak_rss_bytes": 104177664
+      },
+      "after": {
+        "wall_ms": 297.8294,
+        "ms": 233.891,
+        "bytes": 100663296,
+        "checksum": 625393159,
+        "peak_rss_bytes": 104177664
+      }
+    },
+    "leaf-mark": {
+      "before": {
+        "wall_ms": 30.2451,
+        "ms": 16.0653,
+        "bytes": 33554432,
+        "checksum": 12492401,
+        "peak_rss_bytes": 16494592
+      },
+      "after": {
+        "wall_ms": 30.534,
+        "ms": 16.0983,
+        "bytes": 33554432,
+        "checksum": 12492401,
+        "peak_rss_bytes": 16494592
+      }
+    },
+    "graph-mark": {
+      "before": {
+        "wall_ms": 62.7122,
+        "ms": 47.3397,
+        "bytes": 33554432,
+        "checksum": 5000050000,
+        "peak_rss_bytes": 15638528
+      },
+      "after": {
+        "wall_ms": 63.2971,
+        "ms": 48.4055,
+        "bytes": 33554432,
+        "checksum": 5000050000,
+        "peak_rss_bytes": 15638528
+      }
+    },
+    "fragmented": {
+      "before": {
+        "wall_ms": 15.7258,
+        "ms": 3.2332,
+        "bytes": 50331648,
+        "checksum": 498322,
+        "peak_rss_bytes": 42143744
+      },
+      "after": {
+        "wall_ms": 15.846,
+        "ms": 3.1606,
+        "bytes": 50331648,
+        "checksum": 498322,
+        "peak_rss_bytes": 42143744
+      }
+    },
+    "control": {
+      "before": {
+        "wall_ms": 24.3787,
+        "ms": 13.3197,
+        "bytes": 33554432,
+        "checksum": 624959760,
+        "peak_rss_bytes": 7454720
+      },
+      "after": {
+        "wall_ms": 24.1573,
+        "ms": 12.9912,
+        "bytes": 33554432,
+        "checksum": 624959760,
+        "peak_rss_bytes": 7454720
+      }
+    }
+  },
+  "samples": [
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 80.3455,
+      "ms": 67.4294,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 79.4542,
+      "ms": 66.7193,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 80.481,
+      "ms": 67.4871,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 82.0916,
+      "ms": 69.0979,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 80.4549,
+      "ms": 67.7086,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 78.9587,
+      "ms": 66.2828,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 78.7723,
+      "ms": 66.2963,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 82.5262,
+      "ms": 69.225,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 80.3289,
+      "ms": 67.6304,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16039936
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 79.8442,
+      "ms": 67.4753,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 99.2025,
+      "ms": 67.0811,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 80.0169,
+      "ms": 67.5659,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 79.6741,
+      "ms": 66.9746,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 80.4086,
+      "ms": 67.7126,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16101376
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 299.0718,
+      "ms": 235.229,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 296.724,
+      "ms": 232.6904,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 297.7983,
+      "ms": 234.5257,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 298.2572,
+      "ms": 234.3087,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 297.8255,
+      "ms": 234.241,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 297.5077,
+      "ms": 232.6749,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 299.279,
+      "ms": 233.4456,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104169472
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 297.8709,
+      "ms": 232.9447,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 297.8705,
+      "ms": 234.0434,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 300.0675,
+      "ms": 235.0008,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 299.2952,
+      "ms": 234.8904,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 300.5774,
+      "ms": 235.0781,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 299.4119,
+      "ms": 235.2692,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 297.8294,
+      "ms": 233.891,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104177664
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 30.1568,
+      "ms": 16.3544,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 30.534,
+      "ms": 16.0411,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16482304
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 30.2644,
+      "ms": 16.0193,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 30.3141,
+      "ms": 15.7923,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 29.8833,
+      "ms": 16.1792,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16482304
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 30.609,
+      "ms": 16.0983,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 30.7029,
+      "ms": 16.1677,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 30.5029,
+      "ms": 16.0757,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 30.2451,
+      "ms": 16.0316,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16482304
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 31.3572,
+      "ms": 16.2554,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16482304
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 30.3397,
+      "ms": 16.1113,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16482304
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 30.34,
+      "ms": 16.0653,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "leaf-mark",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 29.7662,
+      "ms": 16.023,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16486400
+    },
+    {
+      "case": "leaf-mark",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 30.3866,
+      "ms": 16.0241,
+      "bytes": 33554432,
+      "checksum": 12492401,
+      "peak_rss_bytes": 16494592
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 62.7845,
+      "ms": 47.2524,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15642624
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 63.6049,
+      "ms": 48.5687,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 63.7513,
+      "ms": 48.3824,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15589376
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 62.7122,
+      "ms": 47.4448,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 61.8584,
+      "ms": 47.3397,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 63.0425,
+      "ms": 48.4066,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 63.2348,
+      "ms": 48.205,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 62.1806,
+      "ms": 47.2551,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 62.1343,
+      "ms": 47.3598,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 63.6823,
+      "ms": 48.6872,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 63.2971,
+      "ms": 48.4055,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 64.4003,
+      "ms": 49.1781,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15589376
+    },
+    {
+      "case": "graph-mark",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 62.8149,
+      "ms": 47.1001,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "graph-mark",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 63.067,
+      "ms": 48.0165,
+      "bytes": 33554432,
+      "checksum": 5000050000,
+      "peak_rss_bytes": 15638528
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 15.8773,
+      "ms": 3.3904,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 15.9171,
+      "ms": 3.4369,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42135552
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 15.846,
+      "ms": 3.453,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 15.8705,
+      "ms": 3.0644,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42147840
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 15.7258,
+      "ms": 3.1444,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 15.4804,
+      "ms": 3.1176,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 15.9044,
+      "ms": 3.0784,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42131456
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 15.7225,
+      "ms": 3.1365,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 15.5745,
+      "ms": 3.2332,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 15.7504,
+      "ms": 3.104,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 15.7995,
+      "ms": 3.1606,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42131456
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 15.6188,
+      "ms": 3.3838,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 15.7945,
+      "ms": 3.4704,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 15.8587,
+      "ms": 3.3966,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42143744
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 24.4583,
+      "ms": 13.3734,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 24.4616,
+      "ms": 13.4589,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7458816
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 23.9018,
+      "ms": 12.9553,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 24.3787,
+      "ms": 13.4935,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7458816
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 44.0136,
+      "ms": 13.185,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7442432
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 24.3111,
+      "ms": 13.209,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7446528
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 24.4469,
+      "ms": 12.9831,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 24.9256,
+      "ms": 13.3387,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 23.7549,
+      "ms": 12.8991,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 24.1573,
+      "ms": 12.9912,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 23.7297,
+      "ms": 12.9655,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7446528
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 24.01,
+      "ms": 13.0581,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 23.7039,
+      "ms": 13.3197,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    },
+    {
+      "case": "control",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 23.9976,
+      "ms": 13.1736,
+      "bytes": 33554432,
+      "checksum": 624959760,
+      "peak_rss_bytes": 7454720
+    }
+  ],
+  "images": {
+    "before": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_management-before-windows-x64.exe",
+      "size": 151552,
+      "sha256": "7acf2bccd8b61432d4e960ae1df642450ff46d582f1d5b8e746e33ea0e57b9bc"
+    },
+    "after": {
+      "path": "C:\\Users\\nilsk\\Desktop\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\gc-audit-2026-10-06\\memory_management-verified-windows-x64.exe",
+      "size": 151552,
+      "sha256": "e3751b71407c89b743ed9fbb08d9ac79e232de373370f84007ab923e96d56d12"
+    }
+  }
+}

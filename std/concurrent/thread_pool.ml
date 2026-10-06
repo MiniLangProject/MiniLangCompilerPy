@@ -259,6 +259,9 @@ function _threadPoolWorker(pool)
         job._execute()
       end if
     end if
+    // An idle worker must not retain the previous job/result while waiting
+    // for the next semaphore token. The submitter owns completed job handles.
+    job = void
   end while
 end function
 

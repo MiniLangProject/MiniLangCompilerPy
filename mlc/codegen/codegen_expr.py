@@ -2314,6 +2314,7 @@ class CodegenExpr:
         # Native code may block indefinitely. Publish a stable stack-root chain
         # before entering it so stop-the-world GC need not wait for the OS call.
         if threaded_native:
+            self.emit_gc_release_handoffs()
             a.call('fn_gc_native_enter')
 
         # Move first 4 args into registers (Windows x64 ABI), rest into outgoing stack args.
@@ -2461,6 +2462,7 @@ class CodegenExpr:
             required = max(required, 0x20 + out_args * 8 + 0x20)
             frame = align_to_mod(required, 16, 8)  # keep 16B alignment for nested calls
 
+            self.emit_runtime_alignment()
             a.mark(stub_lbl)
             if frame <= 0x7F:
                 a.sub_rsp_imm8(frame)
@@ -2507,6 +2509,7 @@ class CodegenExpr:
                     a.mov_membase_disp_r64('rsp', native_off + i * 8, 'rax')
 
             if threaded_native:
+                self.emit_gc_release_handoffs()
                 a.call('fn_gc_native_enter')
 
             # Marshal args to the stable internal native ABI. Linux slots lead
@@ -5656,6 +5659,7 @@ class CodegenExpr:
                 a.cmp_r64_imm('rax', 0x7FFFFFFF)
                 a.jcc('g', l_bad_range)
                 a.mov_r32_r32('r12d', 'eax')
+                self.emit_gc_release_handoffs()
                 threaded_native = bool(getattr(self, 'native_threads_possible', True))
                 if threaded_native:
                     self.used_helpers.update({'fn_gc_native_enter', 'fn_gc_native_leave'})
@@ -7246,6 +7250,7 @@ class CodegenExpr:
 
             # Builtin gc_collect()
             if callee_name == 'gc_collect' and len(e.args) == 0:
+                self.emit_gc_release_handoffs()
                 a.call('fn_gc_collect')
                 a.mov_rax_imm64(enc_void())
                 return

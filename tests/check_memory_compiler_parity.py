@@ -50,6 +50,17 @@ def main():
         ("memory_policy.ml", ["--gc-limit", "1m", "--no-gc-periodic"]),
         ("tlab_shared_heap.ml", ["--heap-shrink", "--heap-shrink-min", "1m"]),
         ("gc_back_to_back_safepoint.ml", []),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m"]),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "128m"]),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "4g"]),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40m", "--heap-commit", "32m", "--heap-grow", "5001"]),
+        ("gc_thread_lifetime.ml", []),
+        ("gc_handoff_lifetime.ml", []),
+        ("memory_gc_metadata.ml", ["--heap-shrink", "--heap-shrink-min", "1m"]),
+        ("memory_fragmentation_cursor.ml", []),
+        ("gc_bitmap_words.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"]),
+        ("ffi_cstr_return.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"]),
+        ("memory_heap_ceiling.ml", ["--heap-reserve", "40MiB", "--heap-commit", "32MB", "--heap-grow", "1t"]),
     ]
     rows = []
     with tempfile.TemporaryDirectory(prefix="ml_memory_parity_") as temporary:

@@ -1,0 +1,123 @@
+{
+  "version": "1.2.18",
+  "compilerBuilds": [
+    {
+      "file": "python-windows.exe",
+      "bytes": 55379968,
+      "sha256": "d2c03e5c02bfc5f455fe1078edbcd6fd7a34a4c3130e6d4f1e570749719b30aa"
+    },
+    {
+      "file": "windows-stage2.exe",
+      "bytes": 55379968,
+      "sha256": "d2c03e5c02bfc5f455fe1078edbcd6fd7a34a4c3130e6d4f1e570749719b30aa"
+    },
+    {
+      "file": "windows-stage3.exe",
+      "bytes": 55379968,
+      "sha256": "d2c03e5c02bfc5f455fe1078edbcd6fd7a34a4c3130e6d4f1e570749719b30aa"
+    },
+    {
+      "file": "python-linux",
+      "bytes": 55382096,
+      "sha256": "730f85b06ca42833b0c15560256607e97ac3d0bde950273836c3357b47eb2f38"
+    },
+    {
+      "file": "linux-self",
+      "bytes": 55382096,
+      "sha256": "730f85b06ca42833b0c15560256607e97ac3d0bde950273836c3357b47eb2f38"
+    },
+    {
+      "file": "linux-cross",
+      "bytes": 55382096,
+      "sha256": "730f85b06ca42833b0c15560256607e97ac3d0bde950273836c3357b47eb2f38"
+    }
+  ],
+  "images": [
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "0abbc0be4a0fb73944ebeb8081c6efe78ac64ceb7106f1994adb66a332c1e898"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "9129c92db1805f8a464c62e2d6dc1b930dad9798db1d8327e36c9c2fd25a5691"
+    }
+  ],
+  "qualification": {
+    "pythonFullSuitePassed": 166,
+    "nativeCoreSuitePassed": 136,
+    "nativeOuterChecksPassed": true,
+    "cliHosts": [
+      "python",
+      "windows-ml",
+      "linux-ml"
+    ],
+    "memoryParityImages": 228,
+    "identicalStdModules": 53,
+    "identicalStdReferenceFiles": 351,
+    "synchronizedOpcodeVectors": 232
+  }
+}
