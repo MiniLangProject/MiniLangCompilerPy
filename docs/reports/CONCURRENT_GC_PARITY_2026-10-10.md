@@ -3,8 +3,9 @@
 Both compiler implementations support the Windows background collector and
 produce identical executables for the configurations checked below. Python
 previously lacked ML's new collector, barriers, options and asynchronous
-builtin. This is an unreleased development change above 1.2.18; published
-release packages have not been replaced.
+builtin. This report records the development verification above 1.2.18, before
+the release version bump. Release-stamped binaries, hashes and validation are
+documented separately in the [1.2.19 release notes](../../RELEASE_NOTES_1.2.19.md).
 
 ## Implementation and corrections
 
@@ -74,8 +75,8 @@ documentation-complete source rather than the earlier checkpoint.
 | Windows x64 | 56,266,752 | `8a627dce1536a526e927f34583e6be36fc13432f3662cf9dfbaefe22e2a8b1d2` |
 | Linux x64 | 56,267,008 | `e3d91f8f262b775f1cbbda52ee7be4db6638d216103eca4618e7de69586c7183` |
 
-The local `build/mlc_win64.exe` and `build/mlc_linux_x64` now contain these
-verified images. Their predecessors remain in the same directory with the
+At the end of this pre-release verification, local `build/mlc_win64.exe` and
+`build/mlc_linux_x64` contained these verified development images. Their predecessors remain in the same directory with the
 `before-parity-2026-10-10` suffix. No version bump, commit, push or release was
 performed in this verification pass.
 

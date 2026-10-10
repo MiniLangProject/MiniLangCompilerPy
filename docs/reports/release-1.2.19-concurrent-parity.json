@@ -1,0 +1,305 @@
+{
+  "images": [
+    {
+      "fixture": "gc_concurrent.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d7cb9d82f7e323e00972cb6285a8177229b7f75a211fef8550ffd7afae79b024",
+      "size": 211968
+    },
+    {
+      "fixture": "gc_concurrent.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "d7cb9d82f7e323e00972cb6285a8177229b7f75a211fef8550ffd7afae79b024",
+      "size": 211968
+    },
+    {
+      "fixture": "gc_concurrent.ml",
+      "flags": [
+        "--gc-satb-limit",
+        "64"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "c0e3031d7372083f99338e2f0d4e4ab9aaddbc414a8aa9093a7e582e1239ea5e",
+      "size": 211968
+    },
+    {
+      "fixture": "gc_concurrent.ml",
+      "flags": [
+        "--gc-satb-limit",
+        "64"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "c0e3031d7372083f99338e2f0d4e4ab9aaddbc414a8aa9093a7e582e1239ea5e",
+      "size": 211968
+    },
+    {
+      "fixture": "gc_concurrent_pressure.ml",
+      "flags": [
+        "--heap-reserve",
+        "64m",
+        "--heap-commit",
+        "32m"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2322ecdb9547056db1ffb6ca72c3f448c793dbc585017d3475d135f616289c20",
+      "size": 118784
+    },
+    {
+      "fixture": "gc_concurrent_pressure.ml",
+      "flags": [
+        "--heap-reserve",
+        "64m",
+        "--heap-commit",
+        "32m"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "2322ecdb9547056db1ffb6ca72c3f448c793dbc585017d3475d135f616289c20",
+      "size": 118784
+    },
+    {
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e52fc1356d48cf55784df0158ed45dd20605e38951a2e5d81a4f6139ce429c3f",
+      "size": 190464
+    },
+    {
+      "fixture": "gc_thread_lifetime.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "e52fc1356d48cf55784df0158ed45dd20605e38951a2e5d81a4f6139ce429c3f",
+      "size": 190464
+    },
+    {
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d2be8314f09a860f980ca75958e58262c1b4e650b0631943d093f92925cd734f",
+      "size": 489984
+    },
+    {
+      "fixture": "gc_handoff_lifetime.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "d2be8314f09a860f980ca75958e58262c1b4e650b0631943d093f92925cd734f",
+      "size": 489984
+    },
+    {
+      "fixture": "gc_reference_write_roots.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "12312b617d616250b05d1005d35e1a2230fb915a350ce1c9a61945f3c46c04b9",
+      "size": 143360
+    },
+    {
+      "fixture": "gc_reference_write_roots.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "12312b617d616250b05d1005d35e1a2230fb915a350ce1c9a61945f3c46c04b9",
+      "size": 143360
+    },
+    {
+      "fixture": "gc_nested_graph_roots.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a3e86c4976a68ae51be6acc1ebba122df0839c2d297ca903b60b42177c5b5f53",
+      "size": 253440
+    },
+    {
+      "fixture": "gc_nested_graph_roots.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "a3e86c4976a68ae51be6acc1ebba122df0839c2d297ca903b60b42177c5b5f53",
+      "size": 253440
+    },
+    {
+      "fixture": "gc_box_float_safepoint.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "709a63c2f609654a31af6fdb151b5b7c176ed8a08dd413e65758be1c4cb132ce",
+      "size": 370688
+    },
+    {
+      "fixture": "gc_box_float_safepoint.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "709a63c2f609654a31af6fdb151b5b7c176ed8a08dd413e65758be1c4cb132ce",
+      "size": 370688
+    },
+    {
+      "fixture": "gc_float_call_roots.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "874b9ada8fce22502d99e82122632e0810f4e4ea682ae0d949450132533ccb3b",
+      "size": 413184
+    },
+    {
+      "fixture": "gc_float_call_roots.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "874b9ada8fce22502d99e82122632e0810f4e4ea682ae0d949450132533ccb3b",
+      "size": 413184
+    },
+    {
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e7953487e13e516ab2687da54770c2db06d06fe4e93ef5a0da3052ec69f9019a",
+      "size": 113664
+    },
+    {
+      "fixture": "gc_back_to_back_safepoint.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "e7953487e13e516ab2687da54770c2db06d06fe4e93ef5a0da3052ec69f9019a",
+      "size": 113664
+    },
+    {
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8b925ec5930f26a0f10aa0bdfe513a52b9bf0f2e94e2ec173dc13e3a350b60f1",
+      "size": 125952
+    },
+    {
+      "fixture": "tlab_shared_heap.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "8b925ec5930f26a0f10aa0bdfe513a52b9bf0f2e94e2ec173dc13e3a350b60f1",
+      "size": 125952
+    },
+    {
+      "fixture": "thread_lifecycle_races.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "c9ff59f77d41555b9e23a21808f7be288e0fe0d493381007c8044c073a0f3476",
+      "size": 219648
+    },
+    {
+      "fixture": "thread_lifecycle_races.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "c9ff59f77d41555b9e23a21808f7be288e0fe0d493381007c8044c073a0f3476",
+      "size": 219648
+    },
+    {
+      "fixture": "thread_pool.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "89cf200f267cf15cc152a18c79930289aa633a831c2735781fc1fb3c48f83f5e",
+      "size": 648704
+    },
+    {
+      "fixture": "thread_pool.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "89cf200f267cf15cc152a18c79930289aa633a831c2735781fc1fb3c48f83f5e",
+      "size": 648704
+    },
+    {
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5f046723cef45769c7257c8584c2f4ff6bbe7d8ae8179310c3a7f94eabee8414",
+      "size": 128512
+    },
+    {
+      "fixture": "memory_management.ml",
+      "flags": [],
+      "pipeline": "--object-pipeline",
+      "sha256": "5f046723cef45769c7257c8584c2f4ff6bbe7d8ae8179310c3a7f94eabee8414",
+      "size": 128512
+    },
+    {
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "8c9f22c620e8d0b3c3ca6580d51eaad7dd1a81cbf968a48ffa430d6ce7bf9712",
+      "size": 98304
+    },
+    {
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--gc-limit",
+        "1m"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "8c9f22c620e8d0b3c3ca6580d51eaad7dd1a81cbf968a48ffa430d6ce7bf9712",
+      "size": 98304
+    },
+    {
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "27a8f664ea9d9a743ed1ebf2e098dd0bbb8697d1409ce3f1384df2ffe13513e8",
+      "size": 98304
+    },
+    {
+      "fixture": "memory_policy.ml",
+      "flags": [
+        "--no-gc-periodic"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "27a8f664ea9d9a743ed1ebf2e098dd0bbb8697d1409ce3f1384df2ffe13513e8",
+      "size": 98304
+    },
+    {
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "553a5384d503aa030880ceeadeead051c7fbdf3b0f463e4cf93547a8f4ba27bb",
+      "size": 104448
+    },
+    {
+      "fixture": "memory_heap_ceiling.ml",
+      "flags": [
+        "--heap-reserve",
+        "40m",
+        "--heap-commit",
+        "32m"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "553a5384d503aa030880ceeadeead051c7fbdf3b0f463e4cf93547a8f4ba27bb",
+      "size": 104448
+    },
+    {
+      "fixture": "heap_growth_precedes_gc.ml",
+      "flags": [
+        "--heap-commit",
+        "8m",
+        "--gc-limit",
+        "1g"
+      ],
+      "pipeline": "--no-object-pipeline",
+      "sha256": "afde6c50d997c17d54cb2610c356df7bab9e143da65c51ebc6341b7876e81765",
+      "size": 87040
+    },
+    {
+      "fixture": "heap_growth_precedes_gc.ml",
+      "flags": [
+        "--heap-commit",
+        "8m",
+        "--gc-limit",
+        "1g"
+      ],
+      "pipeline": "--object-pipeline",
+      "sha256": "afde6c50d997c17d54cb2610c356df7bab9e143da65c51ebc6341b7876e81765",
+      "size": 87040
+    }
+  ],
+  "comparedHosts": 3,
+  "fallbackImages": 12,
+  "capacityImages": 36
+}

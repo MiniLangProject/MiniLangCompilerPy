@@ -2,6 +2,23 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.19 - 2026-10-10
+
+- Add matching optional Windows concurrent GC to both compilers with
+  `--gc-concurrent`, bounded `--gc-satb-limit` logging and `gc_collect_async()`.
+  Without the option, async requests perform one synchronous collection on
+  Windows and Linux. Reject concurrent GC for Linux and with `--heap-shrink`.
+- Add SATB deletion barriers, safe collector/mutator handshakes, conservative
+  overflow retention and GC statistics 16-21. Preserve nested heap-monitor
+  ownership and thread lifetime safety across background collections.
+- Align direct and first-class async builtin validation and runtime code
+  generation, including leaf barrier calls that must not spill transient roots.
+- Verify Python/native Windows/native Linux output parity, both object-pipeline
+  modes, self-hosting, pressure/overflow behavior and identical standard libraries.
+- Document the latency/throughput trade-off: the retained-graph benchmark reduces
+  maximum polling intervals substantially, but takes longer overall. Concurrent
+  GC remains opt-in. See the [audit and measurements](docs/reports/CONCURRENT_GC_PARITY_2026-10-10.md).
+
 ## 1.2.18 - 2026-10-06
 
 - Follow up the reevaluation with aligned runtime entries/GC loops and qword
