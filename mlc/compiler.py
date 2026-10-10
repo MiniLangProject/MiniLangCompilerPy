@@ -2055,6 +2055,8 @@ def main(argv: List[str]) -> int:
 
     # GC configuration (optional)
     parser.add_argument('--gc-limit', type=parse_size, default=None, help='bytes allocated between GC collections (e.g. 16m)')
+    parser.add_argument('--gc-concurrent', action='store_true', help='Windows background SATB collection (no heap shrink)')
+    parser.add_argument('--gc-satb-limit', type=parse_size, default=None, help='SATB deletion log bytes (clamped to 64 bytes through 64 MiB)')
     parser.add_argument('--no-gc-periodic', action='store_true', help='disable periodic GC trigger (collect only on OOM)')
 
 
@@ -2067,6 +2069,14 @@ def main(argv: List[str]) -> int:
                         help='PE subsystem: console|cui or windows|window|gui (Windows target only)')
 
     args = parser.parse_args(argv[1:])
+
+    if args.gc_concurrent:
+        if args.target != 'windows-x64':
+            print('CompileOptionError: --gc-concurrent currently requires windows-x64')
+            return 2
+        if args.heap_shrink:
+            print('CompileOptionError: --gc-concurrent cannot be combined with --heap-shrink')
+            return 2
 
     inp = args.input
     out = args.output
@@ -2136,6 +2146,10 @@ def main(argv: List[str]) -> int:
 
 
     # GC config
+    if args.gc_concurrent:
+        heap_config['gc_concurrent'] = True
+    if args.gc_satb_limit is not None:
+        heap_config['gc_satb_limit_bytes'] = int(args.gc_satb_limit)
     if args.gc_limit is not None:
         heap_config['gc_bytes_limit'] = int(args.gc_limit)
     if getattr(args, 'no_gc_periodic', False):

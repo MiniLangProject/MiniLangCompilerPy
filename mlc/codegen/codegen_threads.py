@@ -38,6 +38,8 @@ THREAD_TLAB_END = 192
 # removes the handle first, then waits for this count before releasing it.
 THREAD_HANDLE_USERS = 200
 THREAD_CONTEXT_SIZE = 208
+# Optional per-context count of actual recursive heap-monitor acquisitions.
+THREAD_HEAP_LOCK_DEPTH = 208
 
 THREAD_CREATED = 0
 THREAD_RUNNING = 1
@@ -60,6 +62,10 @@ GC_THREAD_COLLECTOR = 4
 class CodegenThreads:
     """Runtime emitters shared by Thread(...), thread methods and synchronization."""
 
+    def _concurrent_context_extra(self):
+        """Default contexts retain their original binary layout."""
+        return 8 if self.heap_config.get('gc_concurrent') else 0
+
     def ensure_thread_data(self) -> None:
         """Materialize global monitors, main context and GC counters once."""
 
@@ -76,7 +82,7 @@ class CodegenThreads:
             d.add_bytes('gc_coord_monitor', b'\x00' * 40)
         if 'main_thread_context' not in d.labels:
             d.pad_align(8)
-            d.add_bytes('main_thread_context', b'\x00' * THREAD_CONTEXT_SIZE)
+            d.add_bytes('main_thread_context', b'\x00' * (THREAD_CONTEXT_SIZE + self._concurrent_context_extra()))
         if 'thread_contexts_head' not in d.labels:
             d.add_u64('thread_contexts_head', 0)
         if 'gc_requested' not in d.labels:
@@ -95,6 +101,7 @@ class CodegenThreads:
         a.lea_rax_rip('main_thread_context')
         a.mov_gs_qword_28_rax()
         a.mov_membase_disp_imm32('rax', THREAD_TYPE, 0, qword=False)
+        self.emit_gc_write_barrier('rax', THREAD_RESULT)
         a.mov_membase_disp_imm32('rax', THREAD_RESULT, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ROOTS, 0, qword=True)
         for i in range(8):
@@ -102,10 +109,14 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_NEXT, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_RUNNING, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=False)
+        self.emit_gc_write_barrier('rax', THREAD_ARG)
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
+        self.emit_gc_write_barrier('rax', THREAD_LOGICAL_ID)
         a.mov_membase_disp_imm32('rax', THREAD_LOGICAL_ID, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ARITY, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=False)
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_membase_disp_imm32('rax', THREAD_HEAP_LOCK_DEPTH, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
@@ -113,7 +124,7 @@ class CodegenThreads:
         a.mov_rip_qword_rax('thread_contexts_head')
         a.xor_r32_r32('eax', 'eax')
         a.mov_rip_qword_rax('gc_requested')
-        a.mov_rax_imm64(1)
+        a.mov_rax_imm64(2 if self.heap_config.get('gc_concurrent') else 1)
         a.mov_rip_qword_rax('managed_thread_count')
         for monitor in ('sync_monitor', 'heap_monitor', 'gc_coord_monitor'):
             a.lea_rax_rip(monitor)
@@ -403,6 +414,10 @@ class CodegenThreads:
         a.jmp(l_retry)
         a.mark(l_owned)
         a.mov_r11_gs_qword_28()
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_r32_membase_disp('r10d', 'r11', THREAD_HEAP_LOCK_DEPTH)
+            a.inc_r32('r10d')
+            a.mov_membase_disp_r32('r11', THREAD_HEAP_LOCK_DEPTH, 'r10d')
         a.mov_membase_disp_imm32('r11', THREAD_GC_STATE, GC_THREAD_RUNNING, qword=False)
         a.lea_rax_rip('gc_coord_monitor')
         a.mov_r64_r64('rcx', 'rax')
@@ -427,6 +442,10 @@ class CodegenThreads:
         a.mov_membase_disp_r32('r11', THREAD_HEAP_BYPASS_DEPTH, 'r10d')
         a.ret()
         a.mark(l_locked)
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_r32_membase_disp('r10d', 'r11', THREAD_HEAP_LOCK_DEPTH)
+            a.dec_r32('r10d')
+            a.mov_membase_disp_r32('r11', THREAD_HEAP_LOCK_DEPTH, 'r10d')
         a.sub_rsp_imm8(0x38)
         a.mov_membase_disp_r64('rsp', 0x20, 'rax')
         a.movsd_membase_disp_xmm('rsp', 0x28, 'xmm0')
@@ -573,7 +592,7 @@ class CodegenThreads:
         # Protect the logical id across managed allocation, including when the
         # constructor is nested in an expression with no named local.
         self.emit_gc_push_root_frame(0x50, 0x48, 0x50)
-        a.mov_r32_imm32('ecx', THREAD_CONTEXT_SIZE)
+        a.mov_r32_imm32('ecx', THREAD_CONTEXT_SIZE + self._concurrent_context_extra())
         a.call('fn_alloc')
         a.mov_membase_disp_r64('rsp', 0x30, 'rax')
         # Managed storage may be recycled. Initialize every native field rather
@@ -583,8 +602,10 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_HANDLE, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ID, 0, qword=True)
         a.mov_r64_membase_disp('r11', 'rsp', 0x38)
+        self.emit_gc_write_barrier('rax', THREAD_CODE)
         a.mov_membase_disp_r64('rax', THREAD_CODE, 'r11')
         a.mov_membase_disp_imm32('rax', THREAD_STOP, 0, qword=True)
+        self.emit_gc_write_barrier('rax', THREAD_RESULT)
         a.mov_membase_disp_imm32('rax', THREAD_RESULT, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_ROOTS, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 0 * 8, enc_void(), qword=True)
@@ -597,12 +618,16 @@ class CodegenThreads:
         a.mov_membase_disp_imm32('rax', THREAD_TMP0 + 7 * 8, enc_void(), qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_GC_STATE, GC_THREAD_INACTIVE, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_HANDOFF_CURSOR, 0, qword=True)
+        self.emit_gc_write_barrier('rax', THREAD_ARG)
         a.mov_membase_disp_imm32('rax', THREAD_ARG, enc_void(), qword=True)
         a.mov_r64_membase_disp('r11', 'rsp', 0x48)
+        self.emit_gc_write_barrier('rax', THREAD_LOGICAL_ID)
         a.mov_membase_disp_r64('rax', THREAD_LOGICAL_ID, 'r11')
         a.mov_r64_membase_disp('r11', 'rsp', 0x40)
         a.mov_membase_disp_r64('rax', THREAD_ARITY, 'r11')
         a.mov_membase_disp_imm32('rax', THREAD_HEAP_BYPASS_DEPTH, 0, qword=True)
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_membase_disp_imm32('rax', THREAD_HEAP_LOCK_DEPTH, 0, qword=False)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_CURSOR, 0, qword=True)
         a.mov_membase_disp_imm32('rax', THREAD_TLAB_END, 0, qword=True)
@@ -660,6 +685,7 @@ class CodegenThreads:
         a.jmp(l_claim)
         a.mark(l_claimed)
         a.mov_membase_disp_imm32('rcx', THREAD_STOP, 0, qword=False)
+        self.emit_gc_write_barrier('rcx', THREAD_ARG)
         a.mov_membase_disp_r64('rcx', THREAD_ARG, 'rdx')
         # Count the worker before CreateThread can enter managed execution.
         self._emit_managed_thread_count_delta(1)
@@ -688,6 +714,7 @@ class CodegenThreads:
         a.mark(l_create_fail)
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
         a.mov_membase_disp_imm32('r11', THREAD_STATUS, THREAD_FAILED, qword=False)
+        self.emit_gc_write_barrier('r11', THREAD_ARG)
         a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
         self._emit_managed_thread_count_delta(-1)
         a.mark(l_wrong_arity)
@@ -885,6 +912,7 @@ class CodegenThreads:
         a.lock_cmpxchg_membase_disp_r32('rcx', THREAD_STATUS, 'r11d')
         a.cmp_r32_imm('eax', THREAD_CREATED)
         a.jcc('ne', l_false)
+        self.emit_gc_write_barrier('rcx', THREAD_LOGICAL_ID)
         a.mov_membase_disp_r64('rcx', THREAD_LOGICAL_ID, 'rdx')
         a.mov_membase_disp_imm32('rcx', THREAD_STATUS, THREAD_CREATED, qword=False)
         a.mov_rax_imm64(enc_bool(True))
@@ -1021,9 +1049,13 @@ class CodegenThreads:
         a.jcc('e', l_restore)
         a.mark(l_done + '_clear')
         a.mov_r64_membase_disp('r11', 'rsp', 0x30)
+        self.emit_gc_write_barrier('r11', THREAD_CODE)
         a.mov_membase_disp_imm32('r11', THREAD_CODE, enc_void(), qword=True)
+        self.emit_gc_write_barrier('r11', THREAD_RESULT)
         a.mov_membase_disp_imm32('r11', THREAD_RESULT, enc_void(), qword=True)
+        self.emit_gc_write_barrier('r11', THREAD_ARG)
         a.mov_membase_disp_imm32('r11', THREAD_ARG, enc_void(), qword=True)
+        self.emit_gc_write_barrier('r11', THREAD_LOGICAL_ID)
         a.mov_membase_disp_imm32('r11', THREAD_LOGICAL_ID, enc_void(), qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_TLAB_START, 0, qword=True)
         a.mov_membase_disp_imm32('r11', THREAD_TLAB_CURSOR, 0, qword=True)
@@ -1122,9 +1154,11 @@ class CodegenThreads:
         a.mov_r64_membase_disp('rcx', 'r12', THREAD_ARG)
         # Once managed execution is running, the callee's parameter slot is the
         # precise root. No safepoint exists between this clear and its prologue.
+        self.emit_gc_write_barrier('r12', THREAD_ARG)
         a.mov_membase_disp_imm32('r12', THREAD_ARG, enc_void(), qword=True)
         a.mov_r64_membase_disp('rax', 'r12', THREAD_CODE)
         a.call_rax()
+        self.emit_gc_write_barrier('r12', THREAD_RESULT)
         a.mov_membase_disp_r64('r12', THREAD_RESULT, 'rax')
         # An automatically propagated MiniLang error marks the worker Failed.
         l_not_error = f'thentry_not_error_{lid}'

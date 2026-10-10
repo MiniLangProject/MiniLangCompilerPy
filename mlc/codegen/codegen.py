@@ -20,9 +20,10 @@ from .codegen_runtime import CodegenRuntime
 from .codegen_scope import CodegenScope
 from .codegen_stmt import CodegenStmt
 from .codegen_threads import CodegenThreads
+from .codegen_concurrent_gc import CodegenConcurrentGC
 
 
-class Codegen(CodegenCore, CodegenScope, CodegenMemory, CodegenThreads, CodegenBuiltinsAlloc, CodegenRuntime, CodegenExpr,
+class Codegen(CodegenCore, CodegenScope, CodegenMemory, CodegenConcurrentGC, CodegenThreads, CodegenBuiltinsAlloc, CodegenRuntime, CodegenExpr,
               CodegenStmt, ):
     """Facade class that combines all codegen mixins into one implementation."""
 

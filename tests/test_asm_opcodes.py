@@ -153,6 +153,19 @@ class TestAsmOpcodeVectors(unittest.TestCase):
             with self.subTest(method=method, args=args):
                 self.assertEqual(_emit_bytes(method, args, {}).hex(), expected)
 
+    def test_generic_rip_lea(self) -> None:
+        """Pin REX.R and signed displacements independently of the golden file."""
+        from mlc.asm import Asm
+
+        a = Asm()
+        a.lea_r64_rip('rcx', 'target')
+        a.mark('target')
+        self.assertEqual(a.finalize().hex(), '488d0d00000000')
+        a = Asm()
+        a.mark('target')
+        a.lea_r64_rip('r11', 'target')
+        self.assertEqual(a.finalize().hex(), '4c8d1df9ffffff')
+
     def test_implicit_one_shifts(self) -> None:
         """Do not reinterpret masked-zero or multi-bit counts as implicit one."""
         for width in (32, 64):

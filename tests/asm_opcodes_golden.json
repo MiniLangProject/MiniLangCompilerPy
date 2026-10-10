@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-10-06T04:22:16.855696Z",
-  "count": 232,
+  "generated_utc": "2026-10-10T17:05:54.085216Z",
+  "count": 233,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -755,6 +755,16 @@
       "kwargs": {},
       "hex": "4c8d5df0",
       "asm": "; lea_r64_membase_disp(r11, rbp, -16)"
+    },
+    {
+      "name": "lea_r64_rip",
+      "args": [
+        "r11",
+        "L"
+      ],
+      "kwargs": {},
+      "hex": "4c8d1df9ffffff",
+      "asm": "lea r64, [rip+r11]"
     },
     {
       "name": "lea_r8_rip",

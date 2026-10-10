@@ -871,6 +871,14 @@ class Asm:
         self.emit32(0)
         self.patches.append((p, label, "rip32"))
 
+    def lea_r64_rip(self, dst: str, label: str) -> None:
+        """Load a RIP-relative address; the destination extends through REX.R."""
+        reg = self._rid_any(dst)
+        self.emit(self._rex(w=1, r=int(reg >= 8)) + b"\x8D" + bytes([((reg & 7) << 3) | 5]))
+        position = self.pos
+        self.emit32(0)
+        self.patches.append((position, label, "rip32"))
+
     def lea_rdx_rip(self, label: str) -> None:
         """Emit `LEA` instruction helper.
 

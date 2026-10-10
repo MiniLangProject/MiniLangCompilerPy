@@ -4297,6 +4297,7 @@ def main() -> int:
         ("gc_thread_lifetime.ml", "GC THREAD LIFETIME [OK]", []),
         ("gc_handoff_lifetime.ml", "GC HANDOFF LIFETIME [OK]", []),
         ("gc_bitmap_words.ml", "GC BITMAP WORDS [OK]", []),
+        ("gc_async_fallback.ml", "GC ASYNC FALLBACK [OK]", []),
         ("ffi_cstr_return.ml", "FFI CSTR RETURN [OK]", []),
         ("memory_fragmentation_cursor.ml", "MEMORY CURSOR [OK]", []),
         ("memory_gc_metadata.ml", "GC METADATA [OK]", ["--heap-shrink", "--heap-shrink-min", "1m"]),

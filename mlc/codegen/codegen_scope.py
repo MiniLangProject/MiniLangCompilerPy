@@ -932,6 +932,7 @@ class CodegenScope:
             a.mark(l_cap_full)
             a.mov_r64_membase_disp('r11', 'r11', 16 + int(idx) * 8)  # cell ptr
             a.mark(l_cap_done)
+            self.emit_gc_write_barrier('r11', 8)
             a.mov_membase_disp_r64('r11', 8, 'rax')  # cell[0] = value
             return
         if b.kind in ("param", "local"):
@@ -940,6 +941,7 @@ class CodegenScope:
             # boxed local/param: slot holds cell pointer; write into cell[0]
             if getattr(b, 'boxed', False):
                 a.mov_r64_membase_disp('r11', 'rsp', b.offset)
+                self.emit_gc_write_barrier('r11', 8)
                 a.mov_membase_disp_r64('r11', 8, 'rax')
                 return
             a.mov_rsp_disp32_rax(b.offset)

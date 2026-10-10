@@ -322,6 +322,9 @@ class CodegenCore:
 
         }
 
+        if self.heap_config.get('gc_concurrent'):
+            self.imports[KERNEL32].extend(['CreateEventW', 'SetEvent', 'ResetEvent', 'QueryPerformanceCounter'])
+
         # Extend PE imports from `extern function` declarations.
         self._add_extern_imports()
 
@@ -1364,7 +1367,13 @@ class CodegenCore:
             'fn_heap_free_bytes': getattr(self, 'emit_heap_free_bytes_function', None),
             'fn_heap_free_blocks': getattr(self, 'emit_heap_free_blocks_function', None),
             'fn_heap_grow': getattr(self, 'emit_heap_grow_function', None),
-            'fn_gc_collect': getattr(self, 'emit_gc_collect_function', None),
+            'fn_gc_collect': self.emit_concurrent_gc_collect if self.heap_config.get('gc_concurrent') else self.emit_gc_collect_function,
+            'fn_gc_concurrent_request': self.emit_concurrent_gc_request,
+            'fn_gc_concurrent_worker': self.emit_concurrent_gc_worker,
+            'fn_gc_concurrent_cycle': self.emit_gc_collect_function,
+            'fn_gc_satb_record': self.emit_concurrent_gc_satb_record,
+            'fn_gc_satb_pop': self.emit_concurrent_gc_satb_pop,
+            'fn_builtin_gc_collect_async': self.emit_builtin_gc_collect_async_function,
             'fn_sync_enter': getattr(self, 'emit_sync_enter_function', None),
             'fn_sync_leave': getattr(self, 'emit_sync_leave_function', None),
             'fn_gc_safepoint': getattr(self, 'emit_gc_safepoint_function', None),

@@ -3383,6 +3383,18 @@ class CodegenRuntime:
         a.mov_rax_imm64(enc_void())
         a.ret()
 
+    def emit_builtin_gc_collect_async_function(self) -> None:
+        """First-class async request, or exactly one default-mode collection."""
+        a = self.asm
+        a.mark('fn_builtin_gc_collect_async')
+        a.sub_rsp_imm8(0x28)
+        collector = 'fn_gc_concurrent_request' if self.heap_config.get('gc_concurrent') else 'fn_gc_collect'
+        self.emit_gc_release_handoffs()
+        a.call(collector)
+        a.mov_rax_imm64(enc_void())
+        a.add_rsp_imm8(0x28)
+        a.ret()
+
     def emit_builtin_gc_collect_function(self) -> None:
         """Emit fn_builtin_gc_collect():
 
@@ -3638,6 +3650,7 @@ class CodegenRuntime:
         a.add_r64_r64('rdx', 'r8')
         a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
         a.shl_r64_imm8('r8', 3)
+        self.emit_gc_write_barrier_range()
         a.call('fn_copy_bytes')
 
         a.mark(l_ret_void)

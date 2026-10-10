@@ -7248,6 +7248,15 @@ class CodegenExpr:
                 a.call('fn_heap_free_blocks')
                 return
 
+            # Async is a nonblocking request only in explicitly concurrent images.
+            if callee_name == 'gc_collect_async':
+                if len(e.args) != 0:
+                    raise self.error('gc_collect_async() expects 0 arguments', e)
+                self.emit_gc_release_handoffs()
+                a.call('fn_gc_concurrent_request' if self.heap_config.get('gc_concurrent') else 'fn_gc_collect')
+                a.mov_rax_imm64(enc_void())
+                return
+
             # Builtin gc_collect()
             if callee_name == 'gc_collect' and len(e.args) == 0:
                 self.emit_gc_release_handoffs()

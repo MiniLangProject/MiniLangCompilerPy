@@ -1459,6 +1459,7 @@ class CodegenStmt:
             a.jcc('ne', l_store)
             a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
             a.mark(l_store)
+            self.emit_gc_write_barrier_index('r11', 'rcx', 8)
             a.mov_mem_bis_r64('r11', 'rcx', 8, 8, 'r10')
             a.jmp(l_done)
         else:
@@ -3892,6 +3893,7 @@ class CodegenStmt:
                     a.mov_r64_r64('r13', 'rax')
                     a.mov_r64_membase_disp('r12', 'rsp', target_fast_off)
                     self.free_expr_temps(8)
+                    self.emit_gc_write_barrier('r12', 8 + fields_fast.index(field) * 8)
                     a.mov_membase_disp_r64('r12', 8 + fields_fast.index(field) * 8, 'r13')
                     return
 
@@ -3944,6 +3946,7 @@ class CodegenStmt:
 
             a.mark(l_ok)
             # store value: [obj + 8 + rcx*8] = r13
+            self.emit_gc_write_barrier_index('r12', 'rcx', 8)
             a.mov_mem_bis_r64('r12', 'rcx', 8, 8, 'r13')
             a.jmp(l_done)
 
@@ -4054,6 +4057,7 @@ class CodegenStmt:
             a.jcc('ne', l_store_array)
             a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
             a.mark(l_store_array)
+            self.emit_gc_write_barrier_index('r11', 'rcx', 8)
             a.mov_mem_bis_r64("r11", "rcx", 8, 8, "r10")
             a.jmp(l_done)
 
@@ -4570,7 +4574,7 @@ class CodegenStmt:
         a = self.asm
         # Whole-program feature gating keeps TLS/GC polling and allocator
         # synchronization out of binaries that cannot create a native thread.
-        self.native_threads_possible = self._program_uses_native_threads(program)
+        self.native_threads_possible = self._program_uses_native_threads(program) or bool(self.heap_config.get('gc_concurrent'))
         # Step 10: value-enum storage (EnumName -> {Member -> Expr})
         self.value_enum_values = {}
 
@@ -5194,6 +5198,7 @@ class CodegenStmt:
             'fillBytes': (4, 4, 'fn_builtin_fillBytes'),
 
             'gc_collect': (0, 0, 'fn_builtin_gc_collect'),
+            'gc_collect_async': (0, 0, 'fn_builtin_gc_collect_async'),
 
             'gc_set_limit': (1, 1, 'fn_builtin_gc_set_limit'),
             'gc_stat': (1, 1, 'fn_gc_stat'),
@@ -6125,7 +6130,7 @@ class CodegenStmt:
             "runtimeCpuFeatures", "runtimeCpuActiveFeatures", "runtimeCpuSetMask",
             "nativeBytesPtr", "nativeRawValue", "nativeValueFromRaw", "nativeCallback",
             "typeName", "heap_count", "heap_bytes_used", "heap_bytes_committed", "heap_bytes_reserved", "heap_free_bytes",
-            "heap_free_blocks", "gc_collect", "gc_set_limit", "gc_stat", "callStats" }
+            "heap_free_blocks", "gc_collect", "gc_collect_async", "gc_set_limit", "gc_stat", "callStats" }
         # Function identifiers (top-level defs) are also not variables, but may appear in call/typeof contexts.
         allowed_function_names = set(getattr(self, "user_functions", {}).keys())
         # Struct type identifiers are not variables; they may be used as callees (Point(...))

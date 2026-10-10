@@ -223,3 +223,18 @@ the reported heap-used delta is not its cumulative allocation count.
 See [the evaluation report](../docs/reports/RUNTIME_CODEGEN_REVIEW_2026-09-30.md).
 The extended arithmetic cases are evaluated in the
 [local codegen report](../docs/reports/LOCAL_CODEGEN_OPTIMIZATIONS_2026-09-30.md).
+
+## Windows background collector
+
+Compile `concurrent_gc_pauses.ml` with the preserved baseline compiler, the
+current default compiler and the current compiler with `--gc-concurrent`.
+Then compare the prebuilt images while other builds are idle:
+
+```powershell
+python benchmarks/compare_concurrent_gc.py build/baseline.exe build/synchronous.exe build/concurrent.exe --runs 5 --output build/concurrent-pauses.json
+```
+
+The fixture retains 800,000 nodes, collects twelve times on a worker, checks the
+final payload, and samples main-thread progress. The report separates maximum
+observed intervals, internal handshake timers, total wall time and peak RSS.
+Scheduling contributes to these samples; they are not worst-case guarantees.

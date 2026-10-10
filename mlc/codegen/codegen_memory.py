@@ -540,6 +540,10 @@ class CodegenMemory:
         # cursor are updated, so the cooperative collector observes either the
         # old or the new fully formatted block chain.
         threaded_heap = bool(getattr(self, 'native_threads_possible', True))
+        periodic_collector = "fn_gc_collect"
+        if self.heap_config.get('gc_concurrent'):
+            periodic_collector = "fn_gc_concurrent_request"
+            self.used_helpers.add(periodic_collector)
         a.mark("fn_alloc")
         # Closed single-threaded programs deliberately do not initialize the
         # GS allocation context.  Bypass TLAB code at compile time instead of
@@ -1026,7 +1030,7 @@ class CodegenMemory:
         a.mov_rax_rip_qword("gc_young_bytes_limit")
         a.cmp_r64_r64("r10", "rax")
         a.jcc("b", l_young_skip)
-        a.call("fn_gc_collect")
+        a.call(periodic_collector)
         a.mov_r64_membase_disp("rcx", "rsp", 0x20)
         a.mov_rax_rip_qword("gc_bytes_since")
         a.mov_r64_r64("rdx", "rax")
@@ -1036,7 +1040,7 @@ class CodegenMemory:
         a.mov_rax_rip_qword("gc_bytes_limit")
         a.cmp_r64_r64("rdx", "rax")
         a.jcc("b", l_periodic_done)
-        a.call("fn_gc_collect")
+        a.call(periodic_collector)
 
         a.mark(l_periodic_done)
         a.mov_rax_imm64(1)
@@ -1458,7 +1462,7 @@ class CodegenMemory:
         if 'gc_young_bytes_limit' not in d.labels:
             d.add_u64('gc_young_bytes_limit', young_limit)
 
-        for name in GC_STAT_LABELS:
+        for name in self._gc_stat_labels():
             if name not in d.labels:
                 value = int(not periodic_disabled and configured_limit is None) if name == 'gc_adaptive' else 0
                 d.add_u64(name, value)
@@ -1512,49 +1516,151 @@ class CodegenMemory:
         while (base + self.asm.pos) & 31:
             self.asm.nop()
 
-    def emit_gc_collect_function(self) -> None:
+    def _emit_gc_satb_leaf_call(self):
+        """Bypass ordinary call spills: this leaf preserves registers and never polls.
+
+        Barrier pushes temporarily move RSP. A normal expression-temp spill here
+        would address the caller's frame at the wrong offset and corrupt it.
         """
-        Emit fn_gc_collect(): a mark/sweep garbage collector.
+        callback = self.asm._before_call
+        self.asm._before_call = None
+        try:
+            self.asm.call("fn_gc_satb_record")
+        finally:
+            self.asm._before_call = callback
 
-        Roots scanned:
-        - gc_tmp0..gc_tmp7
-        - global variable slots (self.global_slots)
-        - shadow-stack frames via gc_roots_head
-        - (optional) conservative scan of native stack (useful for debugging)
+    def _gc_stat_labels(self):
+        """Keep the default diagnostics layout unchanged when SATB is disabled."""
+        extra = ('gc_concurrent_completed', 'gc_concurrent_phase', 'gc_concurrent_pause_ticks',
+                 'gc_concurrent_pause_max', 'gc_concurrent_overflows', 'gc_concurrent_marked')
+        return GC_STAT_LABELS + (extra if self.heap_config.get('gc_concurrent') else ())
 
-        Heap layout assumptions:
-        - header = obj_ptr - GC_HEADER_SIZE
-          [header+0]  u64 block_size_and_flags
-        - mark bits live in the side bitmap at gc_mark_bits_base
-        - free-list links live in [header+GC_HEADER_SIZE]
-
-        Correctness requirements:
-        - Preserve non-volatile registers per Windows x64 ABI (notably RDI if used).
-        - Rebuild gc_free_head from scratch each collection (reset head before sweep),
-          otherwise duplicates accumulate and the free list becomes corrupt.
-        - The external mark stack grows committed capacity without managed
-          allocation, up to the guarded GC_MARK_STACK_QWORDS maximum.
-        """
-        self.ensure_gc_data()
+    def emit_gc_write_barrier(self, base, displacement):
+        """Log one overwritten tagged field while preserving registers and FLAGS."""
         a = self.asm
-        # GC diagnostic strings (rdata)
+        if bool(self.heap_config.get("gc_concurrent", False)) == False:
+            return
+        self.used_helpers.add("fn_gc_satb_record")
+        a.emit(bytes.fromhex("9c"))
+        a.push_reg("rax")
+        a.mov_r64_membase_disp("rax", base, displacement)
+        self._emit_gc_satb_leaf_call()
+        a.pop_reg("rax")
+        a.emit(bytes.fromhex("9d"))
+        return
+
+    def emit_gc_write_barrier_index(self, base, index, displacement):
+        """Log one indexed array slot before storing the replacement value."""
+        a = self.asm
+        if bool(self.heap_config.get("gc_concurrent", False)) == False:
+            return
+        self.used_helpers.add("fn_gc_satb_record")
+        a.emit(bytes.fromhex("9c"))
+        a.push_reg("rax")
+        a.mov_r64_mem_bis("rax", base, index, 8, displacement)
+        self._emit_gc_satb_leaf_call()
+        a.pop_reg("rax")
+        a.emit(bytes.fromhex("9d"))
+        return
+
+    # Preserve every destination reference before copyArray overwrites a range.
+    # This helper has no safepoints; a new snapshot cannot begin halfway through
+    # the inactive fast path or between logging and the following bulk copy.
+    def emit_gc_write_barrier_range(self):
+        """Log destination slots before an allocation-free copyArray bulk write."""
+        a = self.asm
+        if bool(self.heap_config.get("gc_concurrent", False)) == False:
+            return
+        self.used_helpers.add("fn_gc_satb_record")
+        lid = self.new_label_id()
+        a.emit(bytes.fromhex("9c"))
+        a.push_reg("rax")
+        a.push_reg("rcx")
+        a.push_reg("r9")
+        a.mov_rax_rip_qword("gc_satb_active")
+        a.test_r64_r64("rax", "rax")
+        a.jcc("e", "satb_range_done_" + str(lid))
+        a.mov_r64_r64("r9", "r8")
+        a.shr_r64_imm8("r9", 3)
+        a.mark("satb_range_loop_" + str(lid))
+        a.test_r64_r64("r9", "r9")
+        a.jcc("e", "satb_range_done_" + str(lid))
+        a.mov_r64_membase_disp("rax", "rcx", 0)
+        self._emit_gc_satb_leaf_call()
+        a.add_r64_imm("rcx", 8)
+        a.dec_r64("r9")
+        a.jmp("satb_range_loop_" + str(lid))
+        a.mark("satb_range_done_" + str(lid))
+        a.pop_reg("r9")
+        a.pop_reg("rcx")
+        a.pop_reg("rax")
+        a.emit(bytes.fromhex("9d"))
+        return
+
+    def emit_gc_concurrent_pause_begin(self):
+        """Start a timed world-stop handshake with the heap monitor already held."""
+        a = self.asm
+        a.lea_r64_rip("rcx", "gc_concurrent_pause_start")
+        a.mov_rax_rip_qword("iat_QueryPerformanceCounter")
+        a.call_rax()
+        a.call("fn_gc_world_stop")
+        return
+
+    def emit_gc_concurrent_pause_end(self):
+        """Account handshake ticks, resume managed threads and release the monitor."""
+        a = self.asm
+        lid = self.new_label_id()
+        a.lea_r64_membase_disp("rcx", "rsp", 0x20)
+        a.mov_rax_rip_qword("iat_QueryPerformanceCounter")
+        a.call_rax()
+        a.mov_r64_membase_disp("rdx", "rsp", 0x20)
+        a.mov_rax_rip_qword("gc_concurrent_pause_start")
+        a.sub_r64_r64("rdx", "rax")
+        a.mov_rax_rip_qword("gc_concurrent_pause_ticks")
+        a.add_r64_r64("rax", "rdx")
+        a.mov_rip_qword_rax("gc_concurrent_pause_ticks")
+        a.mov_rax_rip_qword("gc_concurrent_pause_max")
+        a.cmp_r64_r64("rdx", "rax")
+        a.jcc("be", "gc_pause_max_done_" + str(lid))
+        a.mov_rip_qword_rdx("gc_concurrent_pause_max")
+        a.mark("gc_pause_max_done_" + str(lid))
+        a.call("fn_gc_world_resume")
+        a.call("fn_heap_leave")
+        return
+
+    # Emit mark/sweep collection. The default stops the world throughout; the
+    # optional SATB worker resumes it after roots and sweeps an isolated frontier.
+    def emit_gc_collect_function(self):
+        """Emit a full-stop cycle or the SATB worker's isolated-frontier cycle."""
+        a = self.asm
+        self.ensure_gc_data()
         if hasattr(self, "rdata"):
-            r = self.rdata
-            if "gc_ms_overflow" not in r.labels:
-                r.add_str("gc_ms_overflow", "ERROR: GC mark stack overflow\n", add_newline=False)
-
-        # Heap config (optional, provided by CLI via CodegenCore)
-        cfg = getattr(self, 'heap_config', None) or {}
-        shrink_enabled = bool(cfg.get('shrink_enabled'))
-        # Decommit only if at least this many bytes can be released (avoid thrashing)
-        shrink_threshold = int(cfg.get('shrink_threshold_bytes') or (4 << 20))  # 4 MiB
-
-        threaded_gc = bool(getattr(self, 'native_threads_possible', True))
+            if "gc_ms_overflow" not in self.rdata.labels:
+                self.rdata.add_str("gc_ms_overflow", "ERROR: GC mark stack overflow\n", add_newline=False)
+        threaded_gc = self.native_threads_possible
+        concurrent_gc = bool(self.heap_config.get("gc_concurrent", False))
+        collector_label = "fn_gc_collect"
+        sweep_frontier_label = "heap_ptr"
+        free_head_label = "gc_free_head"
+        if concurrent_gc:
+            collector_label = "fn_gc_concurrent_cycle"
+            sweep_frontier_label = "gc_concurrent_frontier"
+            free_head_label = "gc_concurrent_free_head"
+            self.used_helpers.add("fn_gc_satb_pop")
+        shrink_enabled = bool(self.heap_config.get("shrink_enabled", False))
+        shrink_threshold = int(self.heap_config.get("shrink_threshold_bytes", 0))
+        # Match Python's `configured_value or 4 MiB` semantics. A missing entry is
+        # represented as integer zero by the compact self-hosted config reader.
+        if shrink_threshold <= 0:
+            shrink_threshold = 4 << 20
         if threaded_gc:
-            self.used_helpers.update({'fn_heap_enter', 'fn_heap_leave', 'fn_gc_world_stop', 'fn_gc_world_resume'})
-        a.mark('fn_gc_collect')
+            self.used_helpers.add("fn_heap_enter")
+            self.used_helpers.add("fn_heap_leave")
+            self.used_helpers.add("fn_gc_world_stop")
+            self.used_helpers.add("fn_gc_world_resume")
+        a.mark(collector_label)
 
-        # Save non-volatile regs we use
+        # Preserve non-volatile regs used by collector.
         a.push_rbx()
         a.push_rbp()
         a.push_reg("rsi")
@@ -1562,54 +1668,69 @@ class CodegenMemory:
         a.push_r13()
         a.push_r14()
         a.push_r15()
-        a.push_reg("rdi")  # push rdi (non-volatile)
-
-        # Win64 ABI: provide 32B shadow space + align stack for calls inside GC
-        # After pushes, rsp is still 8 mod 16; sub 0x28 makes it 0 mod 16.
+        a.push_reg("rdi")
         a.sub_rsp_imm8(0x28)
-        # Serialize heap metadata, then cooperatively park every other managed
-        # thread before examining roots or object graphs.
         if threaded_gc:
-            a.call('fn_heap_enter')
-            a.call('fn_gc_world_stop')
+            a.call("fn_heap_enter")
+            if concurrent_gc:
+                self.emit_gc_concurrent_pause_begin()
+            else:
+                a.call("fn_gc_world_stop")
 
         lid = self.new_label_id()
-        L_MARK_VALUE = f"gc_mark_value_{lid}"
-        L_MARK_VALUE_RET = f"gc_mark_value_ret_{lid}"
-        L_BODY = f"gc_body_{lid}"
-        L_MARK_LOOP = f"gc_mark_loop_{lid}"
-        L_MARK_DONE = f"gc_mark_done_{lid}"
-        L_SCAN_ARRAY = f"gc_scan_array_{lid}"
-        L_SCAN_ARRAY_LOOP = f"gc_scan_array_loop_{lid}"
-        L_SCAN_ARRAY_DONE = f"gc_scan_array_done_{lid}"
-        L_SCAN_STRUCT = f"gc_scan_struct_{lid}"
-        L_SCAN_STRUCT_LOOP = f"gc_scan_struct_loop_{lid}"
-        L_SCAN_STRUCT_DONE = f"gc_scan_struct_done_{lid}"
-        L_SCAN_FUNCTION = f"gc_scan_function_{lid}"
-        L_SCAN_ENV = f"gc_scan_env_{lid}"
-        L_SCAN_ENV_LOCAL = f"gc_scan_env_local_{lid}"
-        L_SCAN_ENV_LOOP = f"gc_scan_env_loop_{lid}"
-        L_SCAN_ENV_DONE = f"gc_scan_env_done_{lid}"
-        L_SCAN_BOX = f"gc_scan_box_{lid}"
-        L_ROOT_FRAMES = f"gc_root_frames_{lid}"
-        L_ROOT_FRAME_LOOP = f"gc_root_frame_loop_{lid}"
-        L_ROOT_FRAME_SLOTS = f"gc_root_frame_slots_{lid}"
-        L_ROOT_FRAME_SLOTS_LOOP = f"gc_root_frame_slots_loop_{lid}"
-        L_ROOT_FRAME_NEXT = f"gc_root_frame_next_{lid}"
-        L_CONTEXT_LOOP = f"gc_context_loop_{lid}"
-        L_CONTEXT_NEXT = f"gc_context_next_{lid}"
-        L_SWEEP_LOOP = f"gc_sweep_loop_{lid}"
-        L_SWEEP_LIVE = f"gc_sweep_live_{lid}"
-        L_SWEEP_DEAD = f"gc_sweep_dead_{lid}"
-        L_SWEEP_DONE = f"gc_sweep_done_{lid}"
-        L_REBUILD_LOOP = f"gc_rebuild_free_loop_{lid}"
-        L_REBUILD_LIVE = f"gc_rebuild_free_live_{lid}"
-        L_REBUILD_DONE = f"gc_rebuild_free_done_{lid}"
-        L_REBUILD_NEXT = f"gc_rebuild_free_next_{lid}"
-        L_TRIM_SKIP = f"gc_trim_skip_{lid}"
-        L_TRIM_DONE = f"gc_trim_done_{lid}"
-        L_MS_OVERFLOW = f"gc_mark_stack_overflow_{lid}"
+        L_MARK_VALUE = "gc_mark_value_" + str(lid)
+        L_MARK_VALUE_RET = "gc_mark_value_ret_" + str(lid)
+        L_BODY = "gc_body_" + str(lid)
+        L_MARK_LOOP = "gc_mark_loop_" + str(lid)
+        L_MARK_DONE = "gc_mark_done_" + str(lid)
+        L_SCAN_ARRAY = "gc_scan_array_" + str(lid)
+        L_SCAN_ARRAY_LOOP = "gc_scan_array_loop_" + str(lid)
+        L_SCAN_ARRAY_DONE = "gc_scan_array_done_" + str(lid)
+        L_SCAN_STRUCT = "gc_scan_struct_" + str(lid)
+        L_SCAN_STRUCT_LOOP = "gc_scan_struct_loop_" + str(lid)
+        L_SCAN_STRUCT_DONE = "gc_scan_struct_done_" + str(lid)
+        L_SCAN_FUNCTION = "gc_scan_function_" + str(lid)
+        L_SCAN_ENV = "gc_scan_env_" + str(lid)
+        L_SCAN_ENV_LOCAL = "gc_scan_env_local_" + str(lid)
+        L_SCAN_ENV_LOOP = "gc_scan_env_loop_" + str(lid)
+        L_SCAN_ENV_DONE = "gc_scan_env_done_" + str(lid)
+        L_SCAN_BOX = "gc_scan_box_" + str(lid)
+        L_MS_OVERFLOW = "gc_mark_stack_overflow_" + str(lid)
+        L_ROOT_FRAMES = "gc_root_frames_" + str(lid)
+        L_ROOT_FRAME_LOOP = "gc_root_frame_loop_" + str(lid)
+        L_ROOT_FRAME_SLOTS = "gc_root_frame_slots_" + str(lid)
+        L_ROOT_FRAME_SLOTS_LOOP = "gc_root_frame_slots_loop_" + str(lid)
+        L_ROOT_FRAME_NEXT = "gc_root_frame_next_" + str(lid)
+        L_CONTEXT_LOOP = "gc_context_loop_" + str(lid)
+        L_CONTEXT_NEXT = "gc_context_next_" + str(lid)
+        L_SWEEP_LOOP = "gc_sweep_loop_" + str(lid)
+        L_SWEEP_LIVE = "gc_sweep_live_" + str(lid)
+        L_SWEEP_DEAD = "gc_sweep_dead_" + str(lid)
+        L_SWEEP_DONE = "gc_sweep_done_" + str(lid)
+        L_REBUILD_LOOP = "gc_rebuild_loop_" + str(lid)
+        L_REBUILD_LIVE = "gc_rebuild_live_" + str(lid)
+        L_REBUILD_NEXT = "gc_rebuild_next_" + str(lid)
+        L_REBUILD_DONE = "gc_rebuild_done_" + str(lid)
+        L_REBUILD2_LOOP = "gc_rebuild2_loop_" + str(lid)
+        L_REBUILD2_LIVE = "gc_rebuild2_live_" + str(lid)
+        L_REBUILD2_NEXT = "gc_rebuild2_next_" + str(lid)
+        L_REBUILD2_DONE = "gc_rebuild2_done_" + str(lid)
+        L_REBUILD2_AFTER = "gc_rebuild2_after_" + str(lid)
+        L_COAL_LOOP = "gc_coal_loop_" + str(lid)
+        L_COAL_DONE = "gc_coal_done_" + str(lid)
+        L_COAL2_LOOP = "gc_coal2_loop_" + str(lid)
+        L_COAL2_DONE = "gc_coal2_done_" + str(lid)
+        L_TRIM_SKIP = "gc_trim_skip_" + str(lid)
+        L_TRIM_DONE = "gc_trim_done_" + str(lid)
 
+        if concurrent_gc:
+            # Freeze the old allocation frontier and free list. Refilled TLABs and
+            # reusable tails created after this point stay above that frontier.
+            a.mov_rax_rip_qword("heap_ptr")
+            a.mov_rip_qword_rax("gc_concurrent_frontier")
+            a.xor_r32_r32("eax", "eax")
+            for name in ["gc_free_head", "gc_concurrent_free_head", "gc_concurrent_free_tail", "gc_satb_count", "gc_satb_overflow", "gc_concurrent_marked"]:
+                a.mov_rip_qword_rax(name)
         # Reset collection-local counters while holding the heap/world monitor.
         a.mov_rax_rip_qword("gc_collections")
         a.add_rax_imm8(1)
@@ -1623,25 +1744,19 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_free_search_size")
         a.mov_rip_qword_rax("gc_purged_bytes")
         # Stable OS-reserved worklist address, committed on demand.
-        a.mov_rax_rip_qword('gc_mark_stack_base')
-        a.mov_r64_r64("r12", "rax")  # mov r12, rax
-
-        # Keep the hot GC side tables in non-volatile regs across the collection.
-        a.mov_rax_rip_qword('heap_base')
+        a.mov_rax_rip_qword("gc_mark_stack_base")
+        a.mov_r64_r64("r12", "rax")
+        a.mov_rax_rip_qword("heap_base")
         a.mov_r64_r64("rbp", "rax")
-        a.mov_rax_rip_qword('gc_mark_bits_base')
+        a.mov_rax_rip_qword("gc_mark_bits_base")
         a.mov_r64_r64("rsi", "rax")
 
-        # Start every mark phase from a genuinely empty bitmap.  Clearing only
-        # the bits of block headers visited by the sweep is insufficient: a
-        # stale/interior Value can pass the defensive header plausibility checks
-        # and set a bit for an aligned address that is not currently a block
-        # header.  If a later free-list split creates a real object at that
-        # address, the stale bit makes gc_mark_value treat the new object as
-        # already scanned, losing all of its children.  One bitmap byte covers
-        # 64 heap bytes, so clearing the used prefix is small compared with the
-        # heap sweep that follows.
-        a.mov_rax_rip_qword('heap_ptr')
+        # Start every mark phase from a genuinely empty bitmap. Clearing only the
+        # bits of real live headers during sweep leaves marks made through plausible
+        # interior pointers behind. A later free-list split can turn such an address
+        # into a real object header, which would then be skipped as already scanned.
+        # One bitmap byte covers 64 heap bytes, so clear only the used prefix.
+        a.mov_rax_rip_qword("heap_ptr")
         a.sub_r64_r64("rax", "rbp")
         a.add_r64_imm("rax", 63)
         a.shr_r64_imm8("rax", 6)
@@ -1650,82 +1765,62 @@ class CodegenMemory:
         a.xor_r32_r32("eax", "eax")
         a.rep_stosb()
 
-        # gc_mark_top = 0
         a.mov_rax_imm64(0)
-        a.mov_rip_qword_rax('gc_mark_top')
+        a.mov_rip_qword_rax("gc_mark_top")
 
-        # IMPORTANT: gc_mark_value is an internal helper that ends with RET.
-        # We must jump over its code so fn_gc_collect doesn't "fall into" it.
+        # Jump over local helper body.
         a.jmp(L_BODY)
 
-        # ------------------------------------------------------------
-        # local helper: gc_mark_value( RAX = tagged value )
-        # pushes object pointers onto mark stack
-        # ------------------------------------------------------------
+        concurrent_gc_bound_label = "heap_end"
+        if concurrent_gc:
+            concurrent_gc_bound_label = "gc_concurrent_frontier"
+
+        # local helper: mark tagged value in RAX
         self.emit_runtime_alignment()
         a.mark(L_MARK_VALUE)
-        # if ((rax & 7) != 0) return
-        # Test the tag without a copy/mask dependency chain. RAX remains the
-        # original candidate; RDX is initialized below only for pointer values.
+        # The tag test preserves RAX and avoids the copy/mask dependency chain.
         a.test_r64_imm32("rax", 7)
-        a.jcc('ne', L_MARK_VALUE_RET)
+        a.jcc("ne", L_MARK_VALUE_RET)
 
-        # r11 = objptr (keep)
         a.mov_r64_r64("r11", "rax")
+        a.mov_r64_r64("rdx", "r11")
 
-        # ---- ignore non-heap pointers (e.g. boxed constants in .rdata/.data) ----
-        # rdx = objptr
-        a.mov_r64_r64("rdx", "r11")  # mov rdx, r11
-
-        # if rdx < heap_base + GC_HEADER_SIZE -> return
         a.lea_r64_membase_disp("rax", "rbp", GC_HEADER_SIZE)
-        a.cmp_r64_r64("rdx", "rax")  # cmp rdx, rax
-        a.jcc('b', L_MARK_VALUE_RET)
+        a.cmp_r64_r64("rdx", "rax")
+        a.jcc("b", L_MARK_VALUE_RET)
 
-        # if rdx >= heap_end -> return
-        a.mov_rax_rip_qword('heap_end')
-        a.cmp_r64_r64("rdx", "rax")  # cmp rdx, rax
-        a.jcc('ae', L_MARK_VALUE_RET)
+        a.mov_rax_rip_qword(concurrent_gc_bound_label)
+        a.cmp_r64_r64("rdx", "rax")
+        a.jcc("ae", L_MARK_VALUE_RET)
 
-        # rdx = header = obj - GC_HEADER_SIZE
-        a.sub_r64_imm("rdx", GC_HEADER_SIZE)  # sub rdx, GC_HEADER_SIZE
-
-        # Stale roots may still point at blocks that have already been returned
-        # to the free list. Those payload bytes now contain ``next_free`` instead
-        # of a benign OBJ_FREE tag, so we must reject free blocks here before any
-        # mark-bit or object-type logic can observe them as live objects.
+        a.sub_r64_imm("rdx", GC_HEADER_SIZE)
         a.mov_r64_membase_disp("r10", "rdx", 0)
         a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
-        a.jcc('ne', L_MARK_VALUE_RET)
+        a.jcc("ne", L_MARK_VALUE_RET)
 
-        # Reject bogus interior pointers whose synthetic "header" does not
-        # describe a plausible block. This keeps stale stack/global roots from
-        # turning random payload bytes into fake markable objects.
         a.mov_r64_r64("r8", "r10")
         a.and_r64_imm("r8", GC_BLOCK_SIZE_MASK)
         a.cmp_r64_imm("r8", GC_HEADER_SIZE + 8)
-        a.jcc('b', L_MARK_VALUE_RET)
+        a.jcc("b", L_MARK_VALUE_RET)
         a.mov_r64_r64("rcx", "rdx")
         a.add_r64_r64("rcx", "r8")
         a.cmp_r64_r64("rcx", "rdx")
-        a.jcc('b', L_MARK_VALUE_RET)
-        # RAX still holds heap_end from the candidate bounds check. No call
-        # or allocation intervenes, and the world/heap remain stopped.
+        a.jcc("b", L_MARK_VALUE_RET)
+        # Reuse heap_end from the bounds check: no call or allocation intervenes.
         a.cmp_r64_r64("rcx", "rax")
-        a.jcc('a', L_MARK_VALUE_RET)
+        a.jcc("a", L_MARK_VALUE_RET)
 
-        # Same bitmap mapping, but update a full aligned word with register BTS.
-        # The index is one bit per 8 heap bytes; BTS masks the register index
-        # modulo 64. Bitmap commit is page-aligned, so even its last word is
-        # fully readable. World-stop makes the load/test/store exclusive.
         a.mov_r64_r64("r8", "rdx")
         a.sub_r64_r64("r8", "rbp")
+        # One bit per 8 heap bytes. Register BTS masks the index modulo 64;
+        # page-aligned bitmap commitment covers the final aligned word as well.
+        # Only the collector writes mark bits, including in concurrent mode.
         a.shr_r64_imm8("r8", 3)
         a.mov_r64_r64("r9", "r8")
         a.shr_r64_imm8("r9", 6)
         a.mov_r64_mem_bis("r10", "rsi", "r9", 8, 0)
         a.bts_r64_r64("r10", "r8")
-        a.jcc('b', L_MARK_VALUE_RET)
+        a.jcc("b", L_MARK_VALUE_RET)
         a.mov_mem_bis_r64("rsi", "r9", 8, 0, "r10")
         # Only pointer-bearing objects need worklist entries; leaves remain marked.
         a.mov_r32_membase_disp("ecx", "r11", 0)
@@ -1747,11 +1842,8 @@ class CodegenMemory:
         a.jmp(L_MARK_VALUE_RET)
         a.mark(L_MARK_VALUE + "_push")
 
-        # r10 = gc_mark_top
-        a.mov_rax_rip_qword('gc_mark_top')
-        a.mov_r10_rax()
-
-        # Guard against mark stack overflow (otherwise it will corrupt .data)
+        a.mov_rax_rip_qword("gc_mark_top")
+        a.mov_r64_r64("r10", "rax")
         a.mov_rax_rip_qword("gc_mark_capacity")
         a.cmp_r64_r64("r10", "rax")
         a.jcc("b", L_MARK_VALUE + "_capacity_ok")
@@ -1781,35 +1873,26 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_mark_capacity")
         a.mark(L_MARK_VALUE + "_capacity_ok")
 
-        # mark_stack[r10] = r11
-        a.mov_mem_bis_r64("r12", "r10", 8, 0, "r11")  # mov [r12 + r10*8], r11
-        # r10++
-        a.inc_r64("r10")  # inc r10
-
-        # gc_mark_top = r10
-        a.mov_r64_r64("rax", "r10")  # mov rax, r10
-        a.mov_rip_qword_rax('gc_mark_top')
+        a.mov_mem_bis_r64("r12", "r10", 8, 0, "r11")
+        a.inc_r64("r10")
+        a.mov_r64_r64("rax", "r10")
+        a.mov_rip_qword_rax("gc_mark_top")
 
         # Peak is sampled before popping, after each monotonic run of pushes.
         a.mark(L_MARK_VALUE_RET)
         a.ret()
 
-        # ------------------------------------------------------------
-        # Mark stack overflow handler (fatal): print to stderr and exit
-        # ------------------------------------------------------------
         a.mark(L_MS_OVERFLOW)
         if hasattr(self, "rdata"):
-            off, ln = self.rdata.labels["gc_ms_overflow"]
-            a.mov_rcx_imm32(-12)  # STDERR
+            ln = self.rdata.labels["gc_ms_overflow"][1]
+            a.mov_rcx_imm32(-12)
             a.mov_rax_rip_qword("iat_GetStdHandle")
             a.call_rax()
-            a.mov_r64_r64("rcx", "rax")  # handle
+            a.mov_r64_r64("rcx", "rax")
             a.lea_rdx_rip("gc_ms_overflow")
             a.mov_r8d_imm32(ln)
-
             a.lea_r64_membase_disp("r9", "rsp", 0x28)
-            a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)  # lpOverlapped = NULL
-
+            a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
             a.mov_rax_rip_qword("iat_WriteFile")
             a.call_rax()
         a.mov_rcx_imm32(1)
@@ -1820,102 +1903,118 @@ class CodegenMemory:
         # R15 holds the pending-work peak throughout marking; RBX counts roots.
         a.xor_r32_r32("r15d", "r15d")
 
-        # Shared runtime helper scratch remains part of the precise root set.
-        for i in range(8):
-            a.mov_rax_rip_qword(f'gc_tmp{i}')
+        # Shared runtime-helper scratch remains part of the precise root set.
+        for i in range(0, 7 + 1):
+            a.mov_rax_rip_qword("gc_tmp" + str(i))
             a.call(L_MARK_VALUE)
 
-        # Mark roots: globals (var slots)
-        for lbl in getattr(self, 'scope_global_slots', getattr(self, 'global_slots', [])):
-            a.mov_rax_rip_qword(lbl)
-            a.call(L_MARK_VALUE)
+        # Roots: global slots
+        if isinstance(self.global_slots, list) and len(self.global_slots) > 0:
+            for gi in range(0, len(self.global_slots) - 1 + 1):
+                glb = self.global_slots[gi]
+                if not isinstance(glb, str) or glb == "":
+                    continue
+                a.mov_rax_rip_qword(glb)
+                a.call(L_MARK_VALUE)
 
         a.mark(L_ROOT_FRAMES)
         if threaded_gc:
-            # Trace active contexts; inactive entries are weak registry links.
-            a.mov_rax_rip_qword('thread_contexts_head')
-            a.mov_r64_r64('rdi', 'rax')
+            a.mov_rax_rip_qword("thread_contexts_head")
+            a.mov_r64_r64("rdi", "rax")
             a.mark(L_CONTEXT_LOOP)
-            a.test_r64_r64('rdi', 'rdi')
-            a.jcc('e', L_MARK_LOOP)
+            a.test_r64_r64("rdi", "rdi")
+            a.jcc("e", L_MARK_LOOP + "_entry")
             # The registry is weak for inactive objects. A native epilogue can
             # outlive the inactive publication: retain the context until the OS
             # has actually signalled completion. Never wait for a running worker.
-            a.mov_r32_membase_disp('eax', 'rdi', 128)
-            a.cmp_r32_imm('eax', 3)
-            a.jcc('ne', L_CONTEXT_LOOP + '_active')
-            a.mov_r64_membase_disp('rcx', 'rdi', 8)
-            a.test_r64_r64('rcx', 'rcx')
-            a.jcc('e', L_CONTEXT_NEXT)
-            a.xor_r32_r32('edx', 'edx')
-            a.mov_rax_rip_qword('iat_WaitForSingleObject')
+            a.mov_r32_membase_disp("eax", "rdi", 128)
+            a.cmp_r32_imm("eax", 3)
+            a.jcc("ne", L_CONTEXT_LOOP + "_active")
+            a.mov_r64_membase_disp("rcx", "rdi", 8)
+            a.test_r64_r64("rcx", "rcx")
+            a.jcc("e", L_CONTEXT_NEXT)
+            a.xor_r32_r32("edx", "edx")
+            a.mov_rax_rip_qword("iat_WaitForSingleObject")
             a.call_rax()
-            a.test_r32_r32('eax', 'eax')
-            a.jcc('e', L_CONTEXT_NEXT)
-            a.mark(L_CONTEXT_LOOP + '_active')
-            a.mov_r64_r64('rax', 'rdi')
+            a.test_r32_r32("eax", "eax")
+            a.jcc("e", L_CONTEXT_NEXT)
+            a.mark(L_CONTEXT_LOOP + "_active")
+            a.mov_r64_r64("rax", "rdi")
             a.call(L_MARK_VALUE)
-            # The world is stopped and heap metadata is serialized.  Retire all
-            # TLAB ownership before sweeping: their free-tail headers are
-            # already valid, and pass 2 will coalesce/link them normally.  A
-            # resumed thread must refill instead of using a range the sweep may
-            # have reclaimed or moved behind the lowered heap_ptr.
-            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_START_OFFSET, 0, qword=True)
-            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
-            a.mov_membase_disp_imm32('rdi', THREAD_TLAB_END_OFFSET, 0, qword=True)
-            a.mov_r64_membase_disp('rax', 'rdi', 24)
+            # Stop-the-world collection revokes every private allocation range before
+            # sweep/coalescing; resumed threads must refill from the rebuilt heap.
+            a.mov_membase_disp_imm32("rdi", THREAD_TLAB_START_OFFSET, 0, qword=True)
+            a.mov_membase_disp_imm32("rdi", THREAD_TLAB_CURSOR_OFFSET, 0, qword=True)
+            a.mov_membase_disp_imm32("rdi", THREAD_TLAB_END_OFFSET, 0, qword=True)
+            a.mov_r64_membase_disp("rax", "rdi", 24)
             a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('rax', 'rdi', 40)
+            a.mov_r64_membase_disp("rax", "rdi", 40)
             a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('rax', 'rdi', 144)
+            a.mov_r64_membase_disp("rax", "rdi", 144)
             a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('rax', 'rdi', 152)
+            a.mov_r64_membase_disp("rax", "rdi", 152)
             a.call(L_MARK_VALUE)
-            for i in range(8):
-                a.mov_r64_membase_disp('rax', 'rdi', 56 + i * 8)
+            for i in range(0, 7 + 1):
+                a.mov_r64_membase_disp("rax", "rdi", 56 + i * 8)
                 a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('r13', 'rdi', 48)
+            a.mov_r64_membase_disp("r13", "rdi", 48)
         else:
-            a.mov_rax_rip_qword('gc_roots_head')
-            a.mov_r64_r64('r13', 'rax')
+            a.mov_rax_rip_qword("gc_roots_head")
+            a.mov_r64_r64("r13", "rax")
         a.mark(L_ROOT_FRAME_LOOP)
-        a.test_r64_r64("r13", "r13")  # test r13, r13
-        a.jcc('e', L_CONTEXT_NEXT if threaded_gc else L_MARK_LOOP)
+        a.test_r64_r64("r13", "r13")
+        if threaded_gc:
+            a.jcc("e", L_CONTEXT_NEXT)
+        else:
+            a.jcc("e", L_MARK_LOOP + "_entry")
 
-        # r14 = [r13+8]  (base)
-        a.mov_r64_membase_disp("r14", "r13", 8)  # mov r14, [r13+8]
-        # rbx = [r13+16] (count)
+        a.mov_r64_membase_disp("r14", "r13", 8)
         a.mov_r64_membase_disp("rbx", "r13", 16)
 
-        # Scan root slots without disturbing the register-held worklist peak.
+        a.mark(L_ROOT_FRAME_SLOTS)
         a.mark(L_ROOT_FRAME_SLOTS_LOOP)
         a.test_r64_r64("rbx", "rbx")
-        a.jcc('e', L_ROOT_FRAME_NEXT)
-
-        a.mov_r64_membase_disp("rax", "r14", 0)  # mov rax, [r14]
+        a.jcc("e", L_ROOT_FRAME_NEXT)
+        a.mov_r64_membase_disp("rax", "r14", 0)
         a.call(L_MARK_VALUE)
-        a.add_r64_imm("r14", 8)  # add r14, 8
+        a.add_r64_imm("r14", 8)
         a.dec_r64("rbx")
         a.jmp(L_ROOT_FRAME_SLOTS_LOOP)
 
         a.mark(L_ROOT_FRAME_NEXT)
-        # r13 = [r13]  (next)   (r13 needs disp8=0)
-        a.mov_r64_membase_disp("rax", "r13", 0)  # mov rax, [r13+0]
-        a.mov_r64_r64("r13", "rax")  # mov r13, rax
+        a.mov_r64_membase_disp("rax", "r13", 0)
+        a.mov_r64_r64("r13", "rax")
         a.jmp(L_ROOT_FRAME_LOOP)
 
         if threaded_gc:
             a.mark(L_CONTEXT_NEXT)
-            a.mov_r64_membase_disp('rdi', 'rdi', 120)
+            a.mov_r64_membase_disp("rdi", "rdi", 120)
             a.jmp(L_CONTEXT_LOOP)
 
-        # ------------------------------------------------------------
-        # Mark loop: pop objects and scan children
-        # ------------------------------------------------------------
+        a.mark(L_MARK_LOOP + "_entry")
+        if concurrent_gc:
+            a.mov_rax_imm64(1)
+            a.mov_rip_qword_rax("gc_satb_active")
+            a.mov_rip_qword_rax("gc_concurrent_phase")
+            self.emit_gc_concurrent_pause_end()
+
+        # mark loop
         self.emit_runtime_alignment()
         a.mark(L_MARK_LOOP)
-        a.mov_rax_rip_qword('gc_mark_top')
-        a.mov_r10_rax()
+        if concurrent_gc:
+            a.mov_rax_rip_qword("gc_satb_overflow")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("ne", L_MARK_DONE)
+            # Drain deleted edges continuously, rather than deferring their graph to
+            # the final handshake. This keeps remark independent of mutation volume.
+            a.call("fn_gc_satb_pop")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_MARK_LOOP + "_logged_done")
+            a.call(L_MARK_VALUE)
+            a.jmp(L_MARK_LOOP)
+            a.mark(L_MARK_LOOP + "_logged_done")
+        a.mov_rax_rip_qword("gc_mark_top")
+        a.mov_r64_r64("r10", "rax")
         # Trimming also needs the peak when application diagnostics are absent.
         # Sampling once per pop preserves the exact maximum without stores per push.
         if self._uses_gc_stats() or shrink_enabled:
@@ -1923,198 +2022,131 @@ class CodegenMemory:
             a.jcc("be", L_MARK_LOOP + "_peak_done")
             a.mov_r64_r64("r15", "r10")
             a.mark(L_MARK_LOOP + "_peak_done")
-        a.test_r64_r64("r10", "r10")  # test r10, r10
-        a.jcc('e', L_MARK_DONE)
+        a.test_r64_r64("r10", "r10")
+        a.jcc("e", L_MARK_DONE)
 
-        a.dec_r64("r10")  # dec r10
-        a.mov_r64_r64("rax", "r10")  # mov rax, r10
-        a.mov_rip_qword_rax('gc_mark_top')
+        if concurrent_gc:
+            a.mov_rax_rip_qword("gc_concurrent_marked")
+            a.inc_r64("rax")
+            a.mov_rip_qword_rax("gc_concurrent_marked")
+        a.dec_r64("r10")
+        a.mov_r64_r64("rax", "r10")
+        a.mov_rip_qword_rax("gc_mark_top")
+        a.mov_r64_mem_bis("r11", "r12", "r10", 8, 0)
+        a.mov_r64_r64("rax", "r11")
 
-        # r11 = mark_stack[r10]
-        a.mov_r64_mem_bis("r11", "r12", "r10", 8, 0)  # mov r11, [r12 + r10*8]
-        a.mov_r64_r64("rax", "r11")  # rax = objptr
-
-        # type in ecx = [rax]
-        a.mov_r32_membase_disp("ecx", "rax", 0)  # mov ecx, [rax]
-        a.cmp_r32_imm("ecx", OBJ_ARRAY)  # cmp ecx, OBJ_ARRAY
-        a.jcc('e', L_SCAN_ARRAY)
-        a.cmp_r32_imm("ecx", OBJ_STRUCT)  # cmp ecx, OBJ_STRUCT
-        a.jcc('e', L_SCAN_STRUCT)
-
-        a.cmp_r32_imm("ecx", OBJ_CLOSURE)  # cmp ecx, OBJ_CLOSURE
-        a.jcc('e', L_SCAN_FUNCTION)
-
-        a.cmp_r32_imm("ecx", OBJ_ENV)  # cmp ecx, OBJ_ENV
-        a.jcc('e', L_SCAN_ENV)
-
-        a.cmp_r32_imm("ecx", OBJ_ENV_LOCAL)  # cmp ecx, OBJ_ENV_LOCAL
-        a.jcc('e', L_SCAN_ENV_LOCAL)
-
-        a.cmp_r32_imm("ecx", OBJ_BOX)  # cmp ecx, OBJ_BOX
-        a.jcc('e', L_SCAN_BOX)
-
+        a.mov_r32_membase_disp("ecx", "rax", 0)
+        a.cmp_r32_imm("ecx", OBJ_ARRAY)
+        a.jcc("e", L_SCAN_ARRAY)
+        a.cmp_r32_imm("ecx", OBJ_STRUCT)
+        a.jcc("e", L_SCAN_STRUCT)
+        a.cmp_r32_imm("ecx", OBJ_CLOSURE)
+        a.jcc("e", L_SCAN_FUNCTION)
+        a.cmp_r32_imm("ecx", OBJ_ENV)
+        a.jcc("e", L_SCAN_ENV)
+        a.cmp_r32_imm("ecx", OBJ_ENV_LOCAL)
+        a.jcc("e", L_SCAN_ENV_LOCAL)
+        a.cmp_r32_imm("ecx", OBJ_BOX)
+        a.jcc("e", L_SCAN_BOX)
         if threaded_gc:
-            a.cmp_r32_imm('ecx', OBJ_THREAD)
-            a.jcc('e', L_MARK_LOOP + '_thread')
-
+            a.cmp_r32_imm("ecx", OBJ_THREAD)
+            a.jcc("e", L_MARK_LOOP + "_thread")
         a.jmp(L_MARK_LOOP)
         if threaded_gc:
 
             # Only tagged payload fields belong to the object's managed graph.
             # Native handles, stack links and weak NEXT links must never be traced.
-            a.mark(L_MARK_LOOP + '_thread')
-            a.mov_r64_membase_disp('rcx', 'r11', GC_OFF_BLOCK_SIZE)
-            a.and_r64_imm('rcx', GC_BLOCK_SIZE_MASK)
-            a.cmp_r64_imm('rcx', GC_HEADER_SIZE + 208)
-            a.jcc('b', L_MARK_LOOP)
-            a.mov_r64_r64('rdi', 'r11')
-            a.mov_r64_membase_disp('rax', 'rdi', 40)
+            a.mark(L_MARK_LOOP + "_thread")
+            a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
+            a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
+            a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 208)
+            a.jcc("b", L_MARK_LOOP)
+            a.mov_r64_r64("rdi", "r11")
+            a.mov_r64_membase_disp("rax", "rdi", 40)
             a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('rax', 'rdi', 144)
+            a.mov_r64_membase_disp("rax", "rdi", 144)
             a.call(L_MARK_VALUE)
-            a.mov_r64_membase_disp('rax', 'rdi', 152)
+            a.mov_r64_membase_disp("rax", "rdi", 152)
             a.call(L_MARK_VALUE)
             a.jmp(L_MARK_LOOP)
 
-
-        # ------------------------------------------------------------
-        # scan array elements
-        # ------------------------------------------------------------
         a.mark(L_SCAN_ARRAY)
-        # Raw native values can conservatively resemble interior heap
-        # pointers. Bound embedded counts to the candidate block before they
-        # can drive a scan beyond committed heap memory.
+        # Raw native values can conservatively resemble interior heap pointers.
+        # Bound embedded counts to the candidate block before scanning payloads.
         a.mov_r64_membase_disp("rcx", "rax", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
         a.sub_r64_imm("rcx", GC_HEADER_SIZE + 8)
         a.shr_r64_imm8("rcx", 3)
-        # edx = len
-        a.mov_r32_membase_disp("edx", "rax", 4)  # mov edx, [rax+4]
+        a.mov_r32_membase_disp("edx", "rax", 4)
         a.cmp_r32_r32("edx", "ecx")
-        a.jcc('a', L_MARK_LOOP)
-        # rbx = data base = rax + 8
-        a.lea_r64_membase_disp("rbx", "rax", 8)  # lea rbx, [rax+8]
-        # Use non-volatile regs for loop state; gc_mark_value clobbers r8/r9.
+        a.jcc("a", L_MARK_LOOP)
+        a.lea_r64_membase_disp("rbx", "rax", 8)
         a.mov_r32_r32("r14d", "edx")
         a.xor_r32_r32("r13d", "r13d")
-
         a.mark(L_SCAN_ARRAY_LOOP)
         a.cmp_r32_r32("r13d", "r14d")
-        a.jcc('ge', L_SCAN_ARRAY_DONE)
-
-        # rax = [rbx + i*8]
+        a.jcc("ge", L_SCAN_ARRAY_DONE)
         a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)
         a.call(L_MARK_VALUE)
-
         a.inc_r32("r13d")
         a.jmp(L_SCAN_ARRAY_LOOP)
-
         a.mark(L_SCAN_ARRAY_DONE)
         a.jmp(L_MARK_LOOP)
 
-        # ------------------------------------------------------------
-        # scan struct fields
-        # layout:
-        #   [0] u32 type = OBJ_STRUCT
-        #   [4] u32 struct_id
-        #   [8] qword field0 ...
-        #
-        # The field count is derived from the block size:
-        #   (block_size - GC_HEADER_SIZE - 8) / 8
-        # ------------------------------------------------------------
         a.mark(L_SCAN_STRUCT)
-        # rdx = nfields
         a.mov_r64_membase_disp("rdx", "rax", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rdx", GC_BLOCK_SIZE_MASK)
         a.sub_r64_imm("rdx", GC_HEADER_SIZE + 8)
         a.shr_r64_imm8("rdx", 3)
-        # rbx = fields base = rax + 8
-        a.lea_r64_membase_disp("rbx", "rax", 8)  # lea rbx, [rax+8]
+        a.lea_r64_membase_disp("rbx", "rax", 8)
         a.mov_r32_r32("r14d", "edx")
         a.xor_r32_r32("r13d", "r13d")
-
         a.mark(L_SCAN_STRUCT_LOOP)
         a.cmp_r32_r32("r13d", "r14d")
-        a.jcc('ge', L_SCAN_STRUCT_DONE)
-
+        a.jcc("ge", L_SCAN_STRUCT_DONE)
         a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)
         a.call(L_MARK_VALUE)
-
         a.inc_r32("r13d")
         a.jmp(L_SCAN_STRUCT_LOOP)
-
         a.mark(L_SCAN_STRUCT_DONE)
         a.jmp(L_MARK_LOOP)
 
-        # ------------------------------------------------------------
-        # scan closure object
-        # layout:
-        #   [0]  u32 type = OBJ_CLOSURE
-        #   [4]  u32 arity
-        #   [8]  u64 code_ptr (raw)
-        #   [16] u64 env (Value)
-        # ------------------------------------------------------------
         a.mark(L_SCAN_FUNCTION)
         a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
         a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 24)
-        a.jcc('b', L_MARK_LOOP)
-        a.mov_r64_membase_disp("rax", "r11", 16)  # rax = fn.env
+        a.jcc("b", L_MARK_LOOP)
+        a.mov_r64_membase_disp("rax", "r11", 16)
         a.call(L_MARK_VALUE)
         a.jmp(L_MARK_LOOP)
 
-        # ------------------------------------------------------------
-        # scan env object
-        # layout:
-        #   [0]  u32 type = OBJ_ENV
-        #   [4]  u32 nslots
-        #   [8]  u64 parent (Value)
-        #   [16] qword slot0 (Value) ...
-        # ------------------------------------------------------------
         a.mark(L_SCAN_ENV)
         a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
         a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 16)
-        a.jcc('b', L_MARK_LOOP)
+        a.jcc("b", L_MARK_LOOP)
         a.sub_r64_imm("rcx", GC_HEADER_SIZE + 16)
         a.shr_r64_imm8("rcx", 3)
         a.mov_r32_membase_disp("edx", "r11", 4)
         a.cmp_r32_r32("edx", "ecx")
-        a.jcc('a', L_MARK_LOOP)
-        # preserve env pointer across calls (gc_mark_value clobbers r11)
-        a.mov_r64_r64("rdi", "r11")  # rdi = env
-
-        # mark parent
-        a.mov_r64_membase_disp("rax", "rdi", 8)  # rax = env.parent
+        a.jcc("a", L_MARK_LOOP)
+        a.mov_r64_r64("rdi", "r11")
+        a.mov_r64_membase_disp("rax", "rdi", 8)
         a.call(L_MARK_VALUE)
-
-        # edx = nslots
-        a.mov_r32_membase_disp("edx", "rdi", 4)  # mov edx, [env+4]
-        # rbx = slots base = env + 16
-        a.lea_r64_membase_disp("rbx", "rdi", 16)  # lea rbx, [env+16]
+        a.mov_r32_membase_disp("edx", "rdi", 4)
+        a.lea_r64_membase_disp("rbx", "rdi", 16)
         a.mov_r32_r32("r14d", "edx")
         a.xor_r32_r32("r13d", "r13d")
-
         a.mark(L_SCAN_ENV_LOOP)
         a.cmp_r32_r32("r13d", "r14d")
-        a.jcc('ge', L_SCAN_ENV_DONE)
-
-        a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)  # slot value
+        a.jcc("ge", L_SCAN_ENV_DONE)
+        a.mov_r64_mem_bis("rax", "rbx", "r13", 8, 0)
         a.call(L_MARK_VALUE)
-
         a.inc_r32("r13d")
         a.jmp(L_SCAN_ENV_LOOP)
-
         a.mark(L_SCAN_ENV_DONE)
         a.jmp(L_MARK_LOOP)
 
-        # ------------------------------------------------------------
-        # scan parentless env object
-        # layout:
-        #   [0]  u32 type = OBJ_ENV_LOCAL
-        #   [4]  u32 nslots
-        #   [8]  qword slot0 (Value) ...
-        # ------------------------------------------------------------
         a.mark(L_SCAN_ENV_LOCAL)
         a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
@@ -2122,30 +2154,73 @@ class CodegenMemory:
         a.shr_r64_imm8("rcx", 3)
         a.mov_r32_membase_disp("edx", "r11", 4)
         a.cmp_r32_r32("edx", "ecx")
-        a.jcc('a', L_MARK_LOOP)
+        a.jcc("a", L_MARK_LOOP)
         a.mov_r64_r64("rdi", "r11")
         a.lea_r64_membase_disp("rbx", "rdi", 8)
         a.mov_r32_r32("r14d", "edx")
         a.xor_r32_r32("r13d", "r13d")
         a.jmp(L_SCAN_ENV_LOOP)
 
-        # ------------------------------------------------------------
-        # scan box/cell object
-        # layout:
-        #   [0]  u32 type = OBJ_BOX
-        #   [4]  u32 pad
-        #   [8]  u64 value (Value)
-        # ------------------------------------------------------------
         a.mark(L_SCAN_BOX)
         a.mov_r64_membase_disp("rcx", "r11", GC_OFF_BLOCK_SIZE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
         a.cmp_r64_imm("rcx", GC_HEADER_SIZE + 16)
-        a.jcc('b', L_MARK_LOOP)
-        a.mov_r64_membase_disp("rax", "r11", 8)  # rax = box.value
+        a.jcc("b", L_MARK_LOOP)
+        a.mov_r64_membase_disp("rax", "r11", 8)
         a.call(L_MARK_VALUE)
         a.jmp(L_MARK_LOOP)
 
         a.mark(L_MARK_DONE)
+        if concurrent_gc:
+            a.call("fn_heap_enter")
+            self.emit_gc_concurrent_pause_begin()
+            a.mov_rax_rip_qword("gc_satb_overflow")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("ne", L_MARK_DONE + "_snapshot_ready")
+            a.mov_rax_rip_qword("gc_satb_count")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_MARK_DONE + "_snapshot_ready")
+            self.emit_gc_concurrent_pause_end()
+            a.jmp(L_MARK_LOOP)
+            a.mark(L_MARK_DONE + "_snapshot_ready")
+            a.xor_r32_r32("eax", "eax")
+            a.mov_rip_qword_rax("gc_satb_active")
+            a.mov_rax_rip_qword("gc_satb_overflow")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_MARK_DONE + "_overflow_done")
+            # On log overflow retain every allocated snapshot block. The worker can
+            # perform this linear fallback after resuming the game; reclaim none.
+            a.mov_rax_rip_qword("gc_concurrent_overflows")
+            a.inc_r64("rax")
+            a.mov_rip_qword_rax("gc_concurrent_overflows")
+            a.mov_rax_imm64(4)
+            a.mov_rip_qword_rax("gc_concurrent_phase")
+            self.emit_gc_concurrent_pause_end()
+            a.mov_r64_r64("rbx", "rbp")
+            a.mov_rax_rip_qword("gc_concurrent_frontier")
+            a.mov_r64_r64("r14", "rax")
+            a.mark(L_MARK_DONE + "_retain_loop")
+            a.cmp_r64_r64("rbx", "r14")
+            a.jcc("ae", L_MARK_DONE + "_retain_done")
+            a.mov_r64_membase_disp("r10", "rbx", 0)
+            a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
+            a.jcc("ne", L_MARK_DONE + "_retain_next")
+            a.mov_r64_r64("r8", "rbx")
+            a.sub_r64_r64("r8", "rbp")
+            a.shr_r64_imm8("r8", 3)
+            a.mov_r64_r64("r9", "r8")
+            a.shr_r64_imm8("r9", 6)
+            a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)
+            a.bts_r64_r64("rax", "r8")
+            a.mov_mem_bis_r64("rsi", "r9", 8, 0, "rax")
+            a.mark(L_MARK_DONE + "_retain_next")
+            a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
+            a.add_r64_r64("rbx", "r10")
+            a.jmp(L_MARK_DONE + "_retain_loop")
+            a.mark(L_MARK_DONE + "_retain_done")
+            a.call("fn_heap_enter")
+            self.emit_gc_concurrent_pause_begin()
+            a.mark(L_MARK_DONE + "_overflow_done")
         if threaded_gc:
 
             # Reap weak registry entries before sweep can recycle their storage.
@@ -2153,70 +2228,71 @@ class CodegenMemory:
             # keeps status/result/identity readable; an unreachable one also closes
             # its terminated native handle. Close failure conservatively retains
             # and traces the object for a later retry, never a dangling handle.
-            a.xor_r32_r32('eax', 'eax')
-            a.mov_rip_qword_rax('gc_thread_contexts')
-            a.lea_rax_rip('thread_contexts_head')
-            a.mov_r64_r64('rbx', 'rax')
-            a.mov_r64_membase_disp('rdi', 'rbx', 0)
-            a.mark(L_MARK_DONE + '_weak_loop')
-            a.test_r64_r64('rdi', 'rdi')
-            a.jcc('e', L_MARK_DONE + '_weak_done')
-            a.lea_rax_rip('main_thread_context')
-            a.cmp_r64_r64('rdi', 'rax')
-            a.jcc('e', L_MARK_DONE + '_weak_next')
-            a.lea_r64_membase_disp('r8', 'rdi', -GC_HEADER_SIZE)
-            a.sub_r64_r64('r8', 'rbp')
-            a.shr_r64_imm8('r8', 3)
-            a.mov_r64_r64('r9', 'r8')
-            a.shr_r64_imm8('r9', 6)
-            a.mov_r64_mem_bis('rax', 'rsi', 'r9', 8, 0)
-            a.bt_r64_r64('rax', 'r8')
-            a.jcc('b', L_MARK_DONE + '_weak_live')
-            a.mov_r64_membase_disp('rcx', 'rdi', 8)
-            a.test_r64_r64('rcx', 'rcx')
-            a.jcc('e', L_MARK_DONE + '_weak_unlink')
-            a.mov_rax_rip_qword('iat_CloseHandle')
+            a.xor_r32_r32("eax", "eax")
+            a.mov_rip_qword_rax("gc_thread_contexts")
+            a.lea_rax_rip("thread_contexts_head")
+            a.mov_r64_r64("rbx", "rax")
+            a.mov_r64_membase_disp("rdi", "rbx", 0)
+            a.mark(L_MARK_DONE + "_weak_loop")
+            a.test_r64_r64("rdi", "rdi")
+            a.jcc("e", L_MARK_DONE + "_weak_done")
+            a.lea_rax_rip("main_thread_context")
+            a.cmp_r64_r64("rdi", "rax")
+            a.jcc("e", L_MARK_DONE + "_weak_next")
+            if concurrent_gc:
+                a.mov_rax_rip_qword("gc_concurrent_frontier")
+                a.cmp_r64_r64("rdi", "rax")
+                a.jcc("ae", L_MARK_DONE + "_weak_live")
+            a.lea_r64_membase_disp("r8", "rdi", -GC_HEADER_SIZE)
+            a.sub_r64_r64("r8", "rbp")
+            a.shr_r64_imm8("r8", 3)
+            a.mov_r64_r64("r9", "r8")
+            a.shr_r64_imm8("r9", 6)
+            a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)
+            a.bt_r64_r64("rax", "r8")
+            a.jcc("b", L_MARK_DONE + "_weak_live")
+            a.mov_r64_membase_disp("rcx", "rdi", 8)
+            a.test_r64_r64("rcx", "rcx")
+            a.jcc("e", L_MARK_DONE + "_weak_unlink")
+            a.mov_rax_rip_qword("iat_CloseHandle")
             a.call_rax()
-            a.test_r32_r32('eax', 'eax')
-            a.jcc('ne', L_MARK_DONE + '_weak_unlink')
-            a.mov_r64_r64('rax', 'rdi')
+            a.test_r32_r32("eax", "eax")
+            a.jcc("ne", L_MARK_DONE + "_weak_unlink")
+            a.mov_r64_r64("rax", "rdi")
             a.call(L_MARK_VALUE)
+            if concurrent_gc:
+                a.mov_rax_imm64(1)
+                a.mov_rip_qword_rax("gc_satb_active")
+                self.emit_gc_concurrent_pause_end()
             a.jmp(L_MARK_LOOP)
-            a.mark(L_MARK_DONE + '_weak_unlink')
-            a.mov_r64_membase_disp('rdi', 'rdi', 120)
-            a.mov_membase_disp_r64('rbx', 0, 'rdi')
-            a.jmp(L_MARK_DONE + '_weak_loop')
-            a.mark(L_MARK_DONE + '_weak_live')
-            a.mov_rax_rip_qword('gc_thread_contexts')
-            a.inc_r64('rax')
-            a.mov_rip_qword_rax('gc_thread_contexts')
-            a.mark(L_MARK_DONE + '_weak_next')
-            a.lea_r64_membase_disp('rbx', 'rdi', 120)
-            a.mov_r64_membase_disp('rdi', 'rbx', 0)
-            a.jmp(L_MARK_DONE + '_weak_loop')
-            a.mark(L_MARK_DONE + '_weak_done')
+            a.mark(L_MARK_DONE + "_weak_unlink")
+            a.mov_r64_membase_disp("rdi", "rdi", 120)
+            a.mov_membase_disp_r64("rbx", 0, "rdi")
+            a.jmp(L_MARK_DONE + "_weak_loop")
+            a.mark(L_MARK_DONE + "_weak_live")
+            a.mov_rax_rip_qword("gc_thread_contexts")
+            a.inc_r64("rax")
+            a.mov_rip_qword_rax("gc_thread_contexts")
+            a.mark(L_MARK_DONE + "_weak_next")
+            a.lea_r64_membase_disp("rbx", "rdi", 120)
+            a.mov_r64_membase_disp("rdi", "rbx", 0)
+            a.jmp(L_MARK_DONE + "_weak_loop")
+            a.mark(L_MARK_DONE + "_weak_done")
         a.mov_r64_r64("rax", "r15")
         a.mov_rip_qword_rax("gc_mark_peak")
 
-        # ------------------------------------------------------------
-        # Sweep pass 1:
-        # - compute new heap_ptr = end of highest marked live block (r15)
-        # - keep mark bits intact for pass 2
-        # ------------------------------------------------------------
+        if concurrent_gc:
+            a.mov_rax_imm64(2)
+            a.mov_rip_qword_rax("gc_concurrent_phase")
+            self.emit_gc_concurrent_pause_end()
 
-        # Clear gc_free_head now; we rebuild it in pass 2.
+        # Sweep pass 1: keep bitmap marks intact and compute the new live heap end.
         a.mov_rax_imm64(0)
-        a.mov_rip_qword_rax('gc_free_head')
-
-        # rbx = scan = heap_base
-        a.mov_rax_rip_qword('heap_base')
-        a.mov_rbx_rax()
-
-        # r14 = old heap_ptr
-        a.mov_rax_rip_qword('heap_ptr')
+        a.mov_rip_qword_rax(free_head_label)
+        a.mov_rax_rip_qword("heap_base")
+        a.mov_r64_r64("rbx", "rax")
+        a.mov_rax_rip_qword(sweep_frontier_label)
         a.mov_r64_r64("r14", "rax")
-
-        # r15 = max_live_end (init to heap_base)
         a.mov_r64_r64("r15", "rbx")
 
         # Accumulate statistics in registers; publish once after the sweep.
@@ -2225,15 +2301,13 @@ class CodegenMemory:
         self.emit_runtime_alignment()
         a.mark(L_SWEEP_LOOP)
         a.cmp_r64_r64("rbx", "r14")
-        a.jcc('ae', L_SWEEP_DONE)
+        a.jcc("ae", L_SWEEP_DONE)
 
-        # r10 = block_size
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
-        a.jcc('e', L_SWEEP_DONE)
+        a.jcc("e", L_SWEEP_DONE)
         a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
 
-        # Check the side-bitmap mark bit for this block header.
         a.mov_r64_r64("r8", "rbx")
         a.sub_r64_r64("r8", "rbp")
         a.shr_r64_imm8("r8", 3)
@@ -2241,7 +2315,7 @@ class CodegenMemory:
         a.shr_r64_imm8("r9", 6)
         a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)
         a.bt_r64_r64("rax", "r8")
-        a.jcc('b', L_SWEEP_LIVE)
+        a.jcc("b", L_SWEEP_LIVE)
 
         # Exclude already-free blocks and unused TLAB tails from reclaimed bytes.
         if self._uses_gc_stats():
@@ -2250,21 +2324,16 @@ class CodegenMemory:
             a.jcc("ne", L_SWEEP_LOOP + "_dead_free")
             a.add_r64_r64("r13", "r10")
             a.mark(L_SWEEP_LOOP + "_dead_free")
-        # dead block -> just advance
         a.add_r64_r64("rbx", "r10")
         a.jmp(L_SWEEP_LOOP)
 
         a.mark(L_SWEEP_LIVE)
         # Count reachable block bytes, including headers, not the heap frontier.
         a.add_r64_r64("r12", "r10")
-
-        # end = rbx + block_size
         a.mov_r64_r64("rdx", "rbx")
         a.add_r64_r64("rdx", "r10")
-
-        # if end > max_live_end: max_live_end = end
         a.cmp_r64_r64("rdx", "r15")
-        a.jcc('be', L_SWEEP_DEAD)
+        a.jcc("be", L_SWEEP_DEAD)
         a.mov_r64_r64("r15", "rdx")
 
         a.mark(L_SWEEP_DEAD)
@@ -2276,38 +2345,26 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_live_bytes")
         a.mov_r64_r64("rax", "r13")
         a.mov_rip_qword_rax("gc_last_reclaimed")
-
-        # heap_ptr = max_live_end
         a.mov_r64_r64("rax", "r15")
-        a.mov_rip_qword_rax('heap_ptr')
+        if concurrent_gc == False:
+            a.mov_rip_qword_rax("heap_ptr")
 
-        # New rebuild path: free-list links live in free-block payloads and
-        # liveness comes from the side mark bitmap.
-        L_REBUILD2_LOOP = f"gc_rebuild2_loop_{lid}"
-        L_REBUILD2_LIVE = f"gc_rebuild2_live_{lid}"
-        L_REBUILD2_NEXT = f"gc_rebuild2_next_{lid}"
-        L_REBUILD2_DONE = f"gc_rebuild2_done_{lid}"
-        L_REBUILD2_AFTER = f"gc_rebuild2_after_{lid}"
-        l_coal2_loop = f"gc_coal2_loop_{lid}"
-        l_coal2_done = f"gc_coal2_done_{lid}"
-
+        # Sweep pass 2: rebuild free list from the side bitmap and clear live bits.
         a.mov_rax_imm64(0)
-        a.mov_rip_qword_rax('gc_free_head')
-
-        a.mov_rax_rip_qword('heap_base')
-        a.mov_rbx_rax()
-
-        a.mov_rax_rip_qword('heap_ptr')
+        a.mov_rip_qword_rax(free_head_label)
+        a.mov_rax_rip_qword("heap_base")
+        a.mov_r64_r64("rbx", "rax")
+        a.mov_rax_rip_qword(sweep_frontier_label)
         a.mov_r64_r64("r14", "rax")
 
         self.emit_runtime_alignment()
         a.mark(L_REBUILD2_LOOP)
         a.cmp_r64_r64("rbx", "r14")
-        a.jcc('ae', L_REBUILD2_DONE)
+        a.jcc("ae", L_REBUILD2_DONE)
 
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
-        a.jcc('e', L_REBUILD2_DONE)
+        a.jcc("e", L_REBUILD2_DONE)
         a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
 
         a.mov_r64_r64("r8", "rbx")
@@ -2317,17 +2374,17 @@ class CodegenMemory:
         a.shr_r64_imm8("r9", 6)
         a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)
         a.bt_r64_r64("rax", "r8")
-        a.jcc('b', L_REBUILD2_LIVE)
+        a.jcc("b", L_REBUILD2_LIVE)
 
-        a.mark(l_coal2_loop)
+        a.mark(L_COAL2_LOOP)
         a.mov_r64_r64("r11", "rbx")
         a.add_r64_r64("r11", "r10")
         a.cmp_r64_r64("r11", "r14")
-        a.jcc('ae', l_coal2_done)
+        a.jcc("ae", L_COAL2_DONE)
 
         a.mov_r64_membase_disp("rcx", "r11", 0)
         a.test_r64_r64("rcx", "rcx")
-        a.jcc('e', l_coal2_done)
+        a.jcc("e", L_COAL2_DONE)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
 
         a.mov_r64_r64("r8", "r11")
@@ -2337,14 +2394,14 @@ class CodegenMemory:
         a.shr_r64_imm8("r9", 6)
         a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)
         a.bt_r64_r64("rax", "r8")
-        a.jcc('b', l_coal2_done)
+        a.jcc("b", L_COAL2_DONE)
 
         a.mov_r64_membase_disp("rcx", "r11", 0)
         a.and_r64_imm("rcx", GC_BLOCK_SIZE_MASK)
         a.add_r64_r64("r10", "rcx")
-        a.jmp(l_coal2_loop)
+        a.jmp(L_COAL2_LOOP)
 
-        a.mark(l_coal2_done)
+        a.mark(L_COAL2_DONE)
         # Largest reusable hole after GC, excluding the untouched heap tail.
         a.mov_rax_rip_qword("gc_largest_free")
         a.cmp_r64_r64("r10", "rax")
@@ -2380,10 +2437,16 @@ class CodegenMemory:
         a.mov_r64_r64("rax", "r10")
         a.or_r64_imm("rax", GC_BLOCK_FREE_BIT)
         a.mov_membase_disp_r64("rbx", 0, "rax")
-        a.mov_rax_rip_qword('gc_free_head')
+        a.mov_rax_rip_qword(free_head_label)
+        if concurrent_gc:
+            a.test_r64_r64("rax", "rax")
+            a.jcc("ne", L_COAL2_DONE + "_tail_done")
+            a.mov_r64_r64("rdx", "rbx")
+            a.mov_rip_qword_rdx("gc_concurrent_free_tail")
+            a.mark(L_COAL2_DONE + "_tail_done")
         a.mov_membase_disp_r64("rbx", GC_OFF_NEXT_FREE, "rax")
         a.mov_r64_r64("rax", "rbx")
-        a.mov_rip_qword_rax('gc_free_head')
+        a.mov_rip_qword_rax(free_head_label)
         a.jmp(L_REBUILD2_NEXT)
 
         a.mark(L_REBUILD2_LIVE)
@@ -2397,203 +2460,182 @@ class CodegenMemory:
         a.mark(L_REBUILD2_DONE)
         a.jmp(L_REBUILD2_AFTER)
 
-        # ------------------------------------------------------------
-        # Sweep pass 2: rebuild free list in [heap_base, heap_ptr)
-        # With block coalescing (prevents “hanging” due to O(N^2))
-        # ------------------------------------------------------------
-
         a.mov_rax_imm64(0)
-        a.mov_rip_qword_rax('gc_free_head')
-
-        a.mov_rax_rip_qword('heap_base')
-        a.mov_rbx_rax()
-
-        a.mov_rax_rip_qword('heap_ptr')
-        a.mov_r64_r64("r14", "rax")  # r14 = new heap_ptr
+        a.mov_rip_qword_rax(free_head_label)
+        a.mov_rax_rip_qword("heap_base")
+        a.mov_r64_r64("rbx", "rax")
+        a.mov_rax_rip_qword(sweep_frontier_label)
+        a.mov_r64_r64("r14", "rax")
 
         a.mark(L_REBUILD_LOOP)
         a.cmp_r64_r64("rbx", "r14")
-        a.jcc('ae', L_REBUILD_DONE)
+        a.jcc("ae", L_REBUILD_DONE)
 
-        # r10 = block_size
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
-        a.jcc('e', L_REBUILD_DONE)
+        a.jcc("e", L_REBUILD_DONE)
 
-        # payload type (u32) at [rbx+GC_HEADER_SIZE]
         a.lea_r64_membase_disp("rdx", "rbx", GC_HEADER_SIZE)
         a.mov_r32_membase_disp("ecx", "rdx", 0)
         a.test_r32_r32("ecx", "ecx")
-        a.jcc('ne', L_REBUILD_NEXT)  # Live block: keep it out of the free list.
+        # Live blocks stay out of the rebuilt free list.
+        a.jcc("ne", L_REBUILD_NEXT)
 
-        # Coalesce adjacent dead blocks before linking one maximal free range.
-        l_coal_loop = f"gc_coal_loop_{lid}"
-        l_coal_done = f"gc_coal_done_{lid}"
-
-        a.mark(l_coal_loop)
-        # r11 = next_block = rbx + block_size (r10)
+        # Merge adjacent dead blocks before linking one maximal free range.
+        a.mark(L_COAL_LOOP)
         a.mov_r64_r64("r11", "rbx")
         a.add_r64_r64("r11", "r10")
-
-        # Stop when the candidate successor reaches the allocated heap frontier.
         a.cmp_r64_r64("r11", "r14")
-        a.jcc('ae', l_coal_done)
+        a.jcc("ae", L_COAL_DONE)
 
-        # A nonzero payload type marks a live successor and ends coalescing.
         a.lea_r64_membase_disp("rdx", "r11", GC_HEADER_SIZE)
         a.mov_r32_membase_disp("ecx", "rdx", 0)
         a.test_r32_r32("ecx", "ecx")
-        a.jcc('ne', l_coal_done)
+        a.jcc("ne", L_COAL_DONE)
 
-        # Merge the dead successor into the current block in place.
-        a.mov_r64_membase_disp("rcx", "r11", 0)  # rcx = next_block.size
-        a.add_r64_r64("r10", "rcx")  # r10 += rcx
-        a.mov_membase_disp_r64("rbx", 0, "r10")  # Publish the enlarged block size.
-        a.jmp(l_coal_loop)
+        a.mov_r64_membase_disp("rcx", "r11", 0)
+        a.add_r64_r64("r10", "rcx")
+        a.mov_membase_disp_r64("rbx", 0, "r10")
+        a.jmp(L_COAL_LOOP)
 
-        a.mark(l_coal_done)
+        a.mark(L_COAL_DONE)
         # Link the maximal coalesced range into the rebuilt free list.
-        a.mov_rax_rip_qword('gc_free_head')
+        a.mov_rax_rip_qword(free_head_label)
         a.mov_membase_disp_r64("rbx", 8, "rax")
-
-        # gc_free_head = rbx
         a.mov_r64_r64("rax", "rbx")
-        a.mov_rip_qword_rax('gc_free_head')
+        a.mov_rip_qword_rax(free_head_label)
 
         a.mark(L_REBUILD_NEXT)
-        a.add_r64_r64("rbx", "r10")  # Skip the complete coalesced range.
+        # r10 contains the complete coalesced size, so one step skips every merge.
+        a.add_r64_r64("rbx", "r10")
         a.jmp(L_REBUILD_LOOP)
 
         a.mark(L_REBUILD_DONE)
         a.mark(L_REBUILD2_AFTER)
 
         if shrink_enabled:
-            # ------------------------------------------------------------
-            # Optional heap trim (decommit) "from the top" after GC.
-            # Safe because we rebuilt free list and lowered heap_ptr.
-            #
-            # Decommit range: [target_end, heap_end) where:
-            #   target_end = align_up(max(heap_ptr, heap_min_end), 4KiB)
-            # Only decommit if at least `shrink_threshold` bytes can be released.
-            # ------------------------------------------------------------
-
-            # r11 = heap_end (current committed end)
-            a.mov_rax_rip_qword('heap_end')
+            # Trim committed pages above the live heap frontier after rebuilding the
+            # free list. The lower bound and threshold mirror the Python backend so
+            # both compilers retain identical runtime behavior and target bytes.
+            a.mov_rax_rip_qword(concurrent_gc_bound_label)
             a.mov_r64_r64("r11", "rax")
-
-            # r10 = heap_ptr
-            a.mov_rax_rip_qword('heap_ptr')
+            a.mov_rax_rip_qword(sweep_frontier_label)
             a.mov_r64_r64("r10", "rax")
-
-            # r10 = align_up(r10, 4096)
             a.add_r64_imm("r10", MEM_PAGE_SIZE - 1)
             a.and_r64_imm("r10", -MEM_PAGE_SIZE)
 
-            # clamp to heap_min_end
-            a.mov_rax_rip_qword('heap_min_end')
+            a.mov_rax_rip_qword("heap_min_end")
             a.cmp_r64_r64("r10", "rax")
-            a.jcc('ae', L_TRIM_DONE)
+            a.jcc("ae", L_TRIM_DONE)
             a.mov_r64_r64("r10", "rax")
             a.mark(L_TRIM_DONE)
 
-            # if target_end >= heap_end: skip
             a.cmp_r64_r64("r10", "r11")
-            a.jcc('ae', L_TRIM_SKIP)
-
-            # rdx = bytes_to_decommit = heap_end - target_end
+            a.jcc("ae", L_TRIM_SKIP)
             a.mov_r64_r64("rdx", "r11")
             a.sub_r64_r64("rdx", "r10")
-
-            # if bytes_to_decommit < threshold: skip
             a.cmp_r64_imm("rdx", shrink_threshold)
-            a.jcc('b', L_TRIM_SKIP)
+            a.jcc("b", L_TRIM_SKIP)
 
-            # VirtualFree(target_end, bytes_to_decommit, MEM_DECOMMIT)
-            # NOTE: VirtualFree may clobber volatile regs; preserve target_end in r13 (non-volatile).
+            # VirtualFree/madvise may clobber volatile registers; r13 preserves the
+            # new committed end until the platform adapter returns.
             a.mov_r64_r64("r13", "r10")
             a.mov_r64_r64("rcx", "r10")
-            a.mov_r8d_imm32(0x4000)  # MEM_DECOMMIT
-            a.mov_rax_rip_qword('iat_VirtualFree')
+            a.mov_r8d_imm32(0x4000)
+            a.mov_rax_rip_qword("iat_VirtualFree")
             a.call_rax()
             a.test_r64_r64("rax", "rax")
             a.jcc("e", L_TRIM_SKIP)
-
-            # heap_end = target_end
             a.mov_r64_r64("rax", "r13")
-            a.mov_rip_qword_rax('heap_end')
-
+            a.mov_rip_qword_rax("heap_end")
             a.mark(L_TRIM_SKIP)
 
             # --heap-shrink also trims out-of-heap GC metadata. Keep bitmap coverage
             # for the full committed heap, not merely its live prefix.
-            a.mov_rax_rip_qword('heap_end')
-            a.mov_rdx_rip_qword('heap_base')
-            a.sub_r64_r64('rax', 'rdx')
-            a.add_r64_imm('rax', 63)
-            a.shr_r64_imm8('rax', 6)
-            a.add_r64_imm('rax', 4095)
-            a.and_r64_imm('rax', -4096)
-            a.mov_rdx_rip_qword('gc_mark_bits_base')
-            a.add_r64_r64('rax', 'rdx')
-            a.mov_r64_r64('r13', 'rax')
-            a.mov_rdx_rip_qword('gc_mark_bits_end')
-            a.sub_r64_r64('rdx', 'rax')
-            a.cmp_r64_imm('rdx', 65536)
-            a.jcc('b', L_TRIM_SKIP + '_bitmap_done')
-            a.mov_r64_r64('rcx', 'rax')
+            a.mov_rax_rip_qword(concurrent_gc_bound_label)
+            a.mov_rdx_rip_qword("heap_base")
+            a.sub_r64_r64("rax", "rdx")
+            a.add_r64_imm("rax", 63)
+            a.shr_r64_imm8("rax", 6)
+            a.add_r64_imm("rax", 4095)
+            a.and_r64_imm("rax", -4096)
+            a.mov_rdx_rip_qword("gc_mark_bits_base")
+            a.add_r64_r64("rax", "rdx")
+            a.mov_r64_r64("r13", "rax")
+            a.mov_rdx_rip_qword("gc_mark_bits_end")
+            a.sub_r64_r64("rdx", "rax")
+            a.cmp_r64_imm("rdx", 65536)
+            a.jcc("b", L_TRIM_SKIP + "_bitmap_done")
+            a.mov_r64_r64("rcx", "rax")
             a.mov_r8d_imm32(0x4000)
-            a.mov_rax_rip_qword('iat_VirtualFree')
+            a.mov_rax_rip_qword("iat_VirtualFree")
             a.call_rax()
-            a.test_r64_r64('rax', 'rax')
-            a.jcc('e', L_TRIM_SKIP + '_bitmap_done')
-            a.mov_r64_r64('rax', 'r13')
-            a.mov_rip_qword_rax('gc_mark_bits_end')
-            a.mark(L_TRIM_SKIP + '_bitmap_done')
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_TRIM_SKIP + "_bitmap_done")
+            a.mov_r64_r64("rax", "r13")
+            a.mov_rip_qword_rax("gc_mark_bits_end")
+            a.mark(L_TRIM_SKIP + "_bitmap_done")
             # Eight consecutive collections using at most a quarter of capacity
             # provide hysteresis. Retain twice the observed peak (at least 64 KiB)
             # so a transient dip does not cause commit/decommit thrashing.
-            a.mov_rax_rip_qword('gc_mark_capacity')
-            a.cmp_r64_imm('rax', 8192)
-            a.jcc('be', L_TRIM_SKIP + '_work_reset')
-            a.shr_r64_imm8('rax', 2)
-            a.mov_rdx_rip_qword('gc_mark_peak')
-            a.cmp_r64_r64('rdx', 'rax')
-            a.jcc('a', L_TRIM_SKIP + '_work_reset')
-            a.mov_rax_rip_qword('gc_mark_low_usage')
-            a.inc_r64('rax')
-            a.mov_rip_qword_rax('gc_mark_low_usage')
-            a.cmp_r64_imm('rax', 8)
-            a.jcc('b', L_TRIM_SKIP + '_work_done')
-            a.shl_r64_imm8('rdx', 1)
-            a.mov_r64_imm64('r14', 8192)
-            a.mark(L_TRIM_SKIP + '_work_size')
-            a.cmp_r64_r64('r14', 'rdx')
-            a.jcc('ae', L_TRIM_SKIP + '_work_release')
-            a.shl_r64_imm8('r14', 1)
-            a.jmp(L_TRIM_SKIP + '_work_size')
-            a.mark(L_TRIM_SKIP + '_work_release')
-            a.mov_rax_rip_qword('gc_mark_stack_base')
-            a.mov_r64_r64('rcx', 'r14')
-            a.shl_r64_imm8('rcx', 3)
-            a.add_r64_r64('rcx', 'rax')
-            a.mov_rdx_rip_qword('gc_mark_capacity')
-            a.sub_r64_r64('rdx', 'r14')
-            a.shl_r64_imm8('rdx', 3)
+            a.mov_rax_rip_qword("gc_mark_capacity")
+            a.cmp_r64_imm("rax", 8192)
+            a.jcc("be", L_TRIM_SKIP + "_work_reset")
+            a.shr_r64_imm8("rax", 2)
+            a.mov_rdx_rip_qword("gc_mark_peak")
+            a.cmp_r64_r64("rdx", "rax")
+            a.jcc("a", L_TRIM_SKIP + "_work_reset")
+            a.mov_rax_rip_qword("gc_mark_low_usage")
+            a.inc_r64("rax")
+            a.mov_rip_qword_rax("gc_mark_low_usage")
+            a.cmp_r64_imm("rax", 8)
+            a.jcc("b", L_TRIM_SKIP + "_work_done")
+            a.shl_r64_imm8("rdx", 1)
+            a.mov_r64_imm64("r14", 8192)
+            a.mark(L_TRIM_SKIP + "_work_size")
+            a.cmp_r64_r64("r14", "rdx")
+            a.jcc("ae", L_TRIM_SKIP + "_work_release")
+            a.shl_r64_imm8("r14", 1)
+            a.jmp(L_TRIM_SKIP + "_work_size")
+            a.mark(L_TRIM_SKIP + "_work_release")
+            a.mov_rax_rip_qword("gc_mark_stack_base")
+            a.mov_r64_r64("rcx", "r14")
+            a.shl_r64_imm8("rcx", 3)
+            a.add_r64_r64("rcx", "rax")
+            a.mov_rdx_rip_qword("gc_mark_capacity")
+            a.sub_r64_r64("rdx", "r14")
+            a.shl_r64_imm8("rdx", 3)
             a.mov_r8d_imm32(0x4000)
-            a.mov_rax_rip_qword('iat_VirtualFree')
+            a.mov_rax_rip_qword("iat_VirtualFree")
             a.call_rax()
-            a.test_r64_r64('rax', 'rax')
-            a.jcc('e', L_TRIM_SKIP + '_work_reset')
-            a.mov_r64_r64('rax', 'r14')
-            a.mov_rip_qword_rax('gc_mark_capacity')
-            a.mark(L_TRIM_SKIP + '_work_reset')
-            a.xor_r32_r32('eax', 'eax')
-            a.mov_rip_qword_rax('gc_mark_low_usage')
-            a.mark(L_TRIM_SKIP + '_work_done')
-        # reset allocation pressure counters after a full collection
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_TRIM_SKIP + "_work_reset")
+            a.mov_r64_r64("rax", "r14")
+            a.mov_rip_qword_rax("gc_mark_capacity")
+            a.mark(L_TRIM_SKIP + "_work_reset")
+            a.xor_r32_r32("eax", "eax")
+            a.mov_rip_qword_rax("gc_mark_low_usage")
+            a.mark(L_TRIM_SKIP + "_work_done")
+
+        if concurrent_gc:
+            a.call("fn_heap_enter")
+            self.emit_gc_concurrent_pause_begin()
+            a.mov_rax_rip_qword("gc_concurrent_free_tail")
+            a.test_r64_r64("rax", "rax")
+            a.jcc("e", L_MARK_DONE + "_publish_done")
+            a.mov_r64_r64("r11", "rax")
+            a.mov_rax_rip_qword("gc_free_head")
+            a.mov_membase_disp_r64("r11", GC_OFF_NEXT_FREE, "rax")
+            a.mov_rax_rip_qword("gc_concurrent_free_head")
+            a.mov_rip_qword_rax("gc_free_head")
+            a.mark(L_MARK_DONE + "_publish_done")
+            a.xor_r32_r32("eax", "eax")
+            a.mov_rip_qword_rax("gc_free_miss_size")
+            a.mov_rip_qword_rax("gc_free_search_size")
+            a.mov_rip_qword_rax("gc_free_search_prev")
         a.mov_rax_imm64(0)
-        a.mov_rip_qword_rax('gc_bytes_since')
-        a.mov_rip_qword_rax('gc_young_bytes_since')
+        a.mov_rip_qword_rax("gc_bytes_since")
+        a.mov_rip_qword_rax("gc_young_bytes_since")
 
         # Adapt only defaults; explicit CLI/runtime limits remain fixed.
         a.mov_rax_rip_qword("gc_adaptive")
@@ -2623,15 +2665,24 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_young_bytes_limit")
         a.mark(L_MARK_DONE + "_adaptive_done")
 
-        if threaded_gc:
-            a.call('fn_gc_world_resume')
-            a.call('fn_heap_leave')
+        if concurrent_gc:
+            a.mov_rax_rip_qword("gc_concurrent_completed")
+            a.inc_r64("rax")
+            a.mov_rip_qword_rax("gc_concurrent_completed")
+            a.xor_r32_r32("eax", "eax")
+            a.mov_rip_qword_rax("gc_concurrent_phase")
+            # Signal under the monitor, before another request can reset the event.
+            a.mov_rax_rip_qword("gc_concurrent_done")
+            a.mov_r64_r64("rcx", "rax")
+            a.mov_rax_rip_qword("iat_SetEvent")
+            a.call_rax()
+            self.emit_gc_concurrent_pause_end()
+        elif threaded_gc:
+            a.call("fn_gc_world_resume")
+            a.call("fn_heap_leave")
 
-        # restore stack (shadow space + alignment)
         a.add_rsp_imm8(0x28)
-
-        # Restore regs and return
-        a.pop_reg("rdi")  # pop rdi
+        a.pop_reg("rdi")
         a.pop_r15()
         a.pop_r14()
         a.pop_r13()
@@ -2639,7 +2690,9 @@ class CodegenMemory:
         a.pop_reg("rsi")
         a.pop_rbp()
         a.pop_rbx()
+
         a.ret()
+        return
 
     def emit_incref_function(self) -> None:
         """
@@ -2831,7 +2884,7 @@ class CodegenMemory:
         a.cmp_r64_imm("rax", 1)
         a.jcc("ne", invalid)
         a.sar_r64_imm8("rcx", 3)
-        for index, name in enumerate(GC_STAT_LABELS):
+        for index, name in enumerate(self._gc_stat_labels()):
             next_label = f"gc_stat_next_{lid}_{index}"
             a.cmp_r64_imm("rcx", index)
             a.jcc("ne", next_label)
