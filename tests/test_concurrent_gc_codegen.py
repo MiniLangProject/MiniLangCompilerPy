@@ -202,6 +202,46 @@ class ConcurrentGCCodegenTests(unittest.TestCase):
                 for offset in range(0, min(size, 16384), 8):
                     self.assertEqual(contains(base + offset), (mask >> (offset // 8)) & 1)
 
+            # Nonzero bits at a 128-byte bulk-scan boundary, a qword boundary
+            # and a partial final word must never be skipped or overrun.
+            clear_bins()
+            globals_['gc_concurrent_frontier'].value = base + 65560
+            globals_['heap_ptr'].value = base + 65560
+            boundary_spans = [(0, 16), (8176, 32), (16376, 24), (65536, 24)]
+            for start, width in boundary_spans:
+                ctypes.c_uint64.from_address(base + start).value = width | 1
+                push(base + start)
+            snapshot()
+            self.assertEqual(free_ranges(base, 4), [(s, s + w) for s, w in boundary_spans])
+            for start, width in boundary_spans:
+                self.assertEqual(contains(base + start), 1)
+                self.assertEqual(range_end(base + start + width - 8), base + start + width)
+            self.assertEqual(contains(base + 8192 + 16), 0)
+            self.assertEqual(contains(base + 16384 + 16), 0)
+            self.assertEqual(contains(base + 65560), 0)
+
+            # Mix a detached legacy list with several size classes. Adjacent
+            # holes across input lists must be coalesced without duplication.
+            clear_bins()
+            globals_['gc_concurrent_frontier'].value = base + 1048576
+            globals_['heap_ptr'].value = base + 1048576
+            ctypes.c_uint64.from_address(base).value = 16 | 1
+            ctypes.c_uint64.from_address(base + 8).value = 0
+            globals_['gc_free_head'].value = base
+            for start, width in ((16, 16), (128, 4096), (4224, 64), (65536, 1024)):
+                ctypes.c_uint64.from_address(base + start).value = width | 1
+                push(base + start)
+            expected = [(0, 32), (128, 4288), (65536, 66560)]
+            for _ in range(3):
+                snapshot()
+                self.assertEqual(free_ranges(base, 3), expected)
+                self.assertEqual(stats(), 4160)
+                self.assertEqual(globals_['stats_count'].value, 3)
+                self.assertEqual(globals_['stats_bytes'].value, 5216)
+                for start, end in expected:
+                    self.assertEqual(contains(base + start), 1)
+                    self.assertEqual(range_end(base + end - 8), base + end)
+
             # Entire-heap and empty-list snapshots cover the lower bound and
             # ensure stale exclusions cannot survive a later empty free list.
             size = 262144
