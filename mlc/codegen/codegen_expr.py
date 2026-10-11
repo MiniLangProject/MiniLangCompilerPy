@@ -784,7 +784,7 @@ class CodegenExpr:
         if isinstance(e, getattr(ml, 'Call', ())):
             callee = getattr(e, 'callee', None)
             try:
-                fn_qname = self._native_callback_resolve_user_fn(callee)
+                fn_qname = self._opt_static_user_fn(callee)
             except Exception:
                 fn_qname = ''
             declared = (getattr(self, 'user_functions', {}) or {}).get(fn_qname) if fn_qname else None
@@ -1410,6 +1410,24 @@ class CodegenExpr:
         if fpref and not qn.startswith(fpref):
             cands.append(fpref + qn)
         return cands
+
+    def _opt_static_user_fn(self, expr: Any, shadows=None) -> str:
+        """Resolve return contracts only for an unshadowed, immutable callable.
+
+        A declaration annotates the original function, not future values stored
+        in its global slot. Direct-call fallback still permits those rebindings.
+        """
+        name = self._native_callback_qname_of(expr)
+        root = name.split('.', 1)[0] if name else ''
+        if shadows is not None:
+            if root in shadows:
+                return ''
+        else:
+            binding = self.resolve_binding(root) if root else None
+            if binding is not None and getattr(binding, 'kind', None) != 'global':
+                return ''
+        qname = self._native_callback_resolve_user_fn(expr)
+        return '' if qname in getattr(self, 'mutable_user_functions', set()) else qname
 
     def _native_callback_resolve_user_fn(self, expr: Any) -> str:
         qn = self._native_callback_qname_of(expr)
@@ -7292,6 +7310,7 @@ class CodegenExpr:
             inline_used = (int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(callee_name, 0) or 0)
                            if callee_name is not None else 0)
             if (callee_name is not None
+                    and callee_name not in getattr(self, 'mutable_user_functions', set())
                     and inline_used < 4096
                     and not any(bool(getattr(arg, 'stack_variadic', False)) for arg in list(getattr(e, 'args', []) or []))
                     and callee_name in (getattr(self, 'inline_functions', {}) or {})):

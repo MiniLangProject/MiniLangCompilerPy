@@ -106,8 +106,8 @@ function main(args)
     concurrentState.source[i] = void
     concurrentState.box.value = value
     set(value)
-    // New objects must stay outside the worker's sweep frontier, even when
-    // their TLAB is retired and reallocated before the collection finishes.
+    // New objects must stay outside the worker's snapshot, including TLAB
+    // retirement and reallocation inside protected below-frontier holes.
     replacement = ConcurrentNode(i + 10000, [bytes(128, 37)])
     if replacement.payload[0][127] != 37 then return error(1911, "new allocation corrupted") end if
   end for

@@ -1480,6 +1480,8 @@ def compile_to_exe(
         extern_structs=extern_structs,
         call_profile=bool(call_profile),
         trace_calls=bool(trace_calls),
+        # Runtime helpers must use the same subsystem as the PE header.
+        subsystem='windows' if int(subsystem) == 2 and target == 'windows-x64' else 'console',
         target=target,
     )
 

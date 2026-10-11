@@ -1,5 +1,70 @@
 # Compiler parity and self-hosting
 
+## Full Hollowkeep parity restored 11 October 2026
+
+The current development Python and Windows ML object-pipeline compilers produce
+the same **86,633,472-byte** Hollowkeep executable from frozen source and identical
+flags, including the Windows GUI subsystem and concurrent GC:
+`C0EC23FB3780655405B7AC9FFB85813395CE0CE5C30EC4C534E49C83C0200499`.
+
+Windows Python bootstrap and Windows ML object selfbuild match:
+`90BDC48EA2F2980492093F3152C8EEE06D3A2A56D537707D4A29A37504D59C94`
+(57,280,512 bytes). Windows ML Linux crossbuild and Linux-native monolithic
+selfbuild match:
+`033353EE91DBB595614B26645CE1DFE0D6081F0E020951976C93B0DFE8266437`
+(57,278,800 bytes).
+
+Python passes 175 tests; ML passes 136 core tests and 220 outer checks. The new
+context/GUI matrix covers 60 images across three hosts and both pipeline flags.
+The concurrent-GC matrix covers another 180 images without exclusions, and all
+140 repeated stress runs pass. Five unroll-model and four native GC-helper tests
+pass too. This is exact equality within each target/configuration, not PE/ELF
+equality or a blanket proof for every source program.
+
+See the [fixes and native memory evaluation](docs/reports/HOLLOWKEEP_PARITY_AND_NATIVE_MEMORY_2026-10-11.md).
+These are unreleased development artifacts still reporting 1.2.19.
+
+## Concurrent fragmentation follow-up 11 October 2026
+
+Unreleased size classes and partial TLAB refills are implemented in both
+backends. Windows Python bootstrap and ML object-pipeline selfbuild match
+`C3335D4A31606697BC5034D0B3072B3441D5BB0A9A0434D575C9A4F3311E3C79`
+(57,180,672 bytes). Windows ML Linux output and Linux-native monolithic
+selfbuild match
+`4871EC23116942F9414208411E4DE9805B3B4FB20B895BCB6B1F72E3B28096B3`
+(57,180,480 bytes).
+
+The complete concurrent matrix passes with 180 images across three hosts and
+both pipeline modes, without exclusions. Eight default-collector before/after
+pairs remain byte-identical. Python: 171 passes. ML: 136 core tests and 212
+outer checks. Native helper tests and 140 repeated stress executions also pass.
+Both compilers' Hollowkeep builds finish a full ten-minute fixture with zero
+warm committed-heap growth.
+
+At this earlier allocator checkpoint, full-game byte parity was not established:
+frozen-source Hollowkeep builds differed already in the pre-bin comparison.
+The later code-generation fixes above resolve that finding. The original
+allocator measurements remain in the
+[fragmentation report and measurements](docs/reports/CONCURRENT_GC_FRAGMENTATION_2026-10-11.md).
+
+## Concurrent free-range reuse development check (10 October 2026)
+
+The Windows Python bootstrap and native ML selfbuild are byte-identical:
+`11A428DBFB817FC81E166D2605261DFDE910EB8F7C191171E667302C5E7843B1`
+(56,737,792 bytes). The Python Linux crossbuild and Linux-native ML selfbuild
+also match:
+`D08D0A8C7DC7B6936D6C5FEFD0970BF15B8EDF9E1D170650D0F8C59D973C9206`
+(56,742,160 bytes). These are unreleased development artifacts, not the
+published 1.2.19 packages; their version string has not been bumped.
+
+The completed portion of the memory/concurrent matrix covers 342 images across
+three hosts and both pipelines, matching within each target/configuration.
+Twelve additional qualified-type/global-member images execute and match too.
+The full matrix is **not** a complete pass: Windows Defender blocked generated
+fixtures; exclusions are explicit in the logs. Eight unchanged-default fixture
+pairs also match the pre-fix release byte-for-byte on Windows and Linux.
+See the [fix, measurements and validation limits](docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md).
+
 ## 1.2.18 release verification 6 October 2026
 
 The release-stamped Windows Python bootstrap, native stage 2 and stage 3 match:

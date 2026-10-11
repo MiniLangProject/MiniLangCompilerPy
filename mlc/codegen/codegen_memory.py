@@ -544,6 +544,8 @@ class CodegenMemory:
         if self.heap_config.get('gc_concurrent'):
             periodic_collector = "fn_gc_concurrent_request"
             self.used_helpers.add(periodic_collector)
+            self.ensure_concurrent_gc_data()
+            self.used_helpers.update(["fn_gc_free_take", "fn_gc_free_push"])
         a.mark("fn_alloc")
         # Closed single-threaded programs deliberately do not initialize the
         # GS allocation context.  Bypass TLAB code at compile time instead of
@@ -749,6 +751,12 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_free_miss_size")
         a.mov_rip_qword_rax("gc_free_search_size")
         a.mov_rax_rip_qword("gc_free_head")
+        if self.heap_config.get('gc_concurrent'):
+            a.or_r64_imm("r10", GC_BLOCK_FREE_BIT)
+            a.mov_membase_disp_r64("r8", 0, "r10")
+            a.mov_r64_r64("rax", "r8")
+            a.call("fn_gc_free_push")
+            a.jmp(l_retire_publish + "_done")
         # A central TLAB refill splits its range from the front of a free block
         # and leaves the right remainder at the list head.  When that head is
         # still adjacent, fold the private tail into it instead of retaining
@@ -770,6 +778,7 @@ class CodegenMemory:
         a.mov_membase_disp_r64("r8", GC_OFF_NEXT_FREE, "rax")
         a.mov_r64_r64("rax", "r8")
         a.mov_rip_qword_rax("gc_free_head")
+        a.mark(l_retire_publish + "_done")
         if threaded_heap:
             a.call("fn_heap_leave")
         a.jmp(l_retire_done)
@@ -1053,6 +1062,29 @@ class CodegenMemory:
         # 1) Try free list (first-fit)
         # ------------------------------------------------------------
         a.mark(l_try_free)
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_r64_membase_disp("rdx", "rsp", 0x48)
+            a.call("fn_gc_free_take")
+            a.test_r64_r64("r8", "r8")
+            a.jcc("e", l_bump)
+            # Partial TLABs reserve their actual capacity. A request may have
+            # reset pressure counters, so saturate rather than underflow them.
+            a.mov_r64_membase_disp("r9", "rsp", 0x20)
+            a.sub_r64_r64("r9", "rcx")
+            a.jcc("e", l_free_unlinked)
+            a.mov_membase_disp_r64("rsp", 0x20, "rcx")
+            counters = ["gc_bytes_since", "gc_young_bytes_since"]
+            if self._uses_gc_stats():
+                counters.append("gc_central_bytes")
+            for name in counters:
+                a.mov_rax_rip_qword(name)
+                a.cmp_r64_r64("rax", "r9")
+                a.jcc("ae", l_try_free + "_adjust_" + name)
+                a.mov_r64_r64("rax", "r9")
+                a.mark(l_try_free + "_adjust_" + name)
+                a.sub_r64_r64("rax", "r9")
+                a.mov_rip_qword_rax(name)
+            a.jmp(l_free_unlinked)
         a.mov_rax_rip_qword("gc_free_miss_size")
         a.test_r64_r64("rax", "rax")
         a.jcc("e", l_try_free + "_search")
@@ -1153,6 +1185,11 @@ class CodegenMemory:
         a.mov_membase_disp_r64("rdx", 0, "r11")
 
         # push new_free to free-list head:
+        if self.heap_config.get('gc_concurrent'):
+            a.mov_r64_r64("rax", "rdx")
+            a.call("fn_gc_free_push")
+            a.mov_membase_disp_r64("r8", 0, "rcx")
+            a.jmp(l_free_return)
         a.mov_rax_rip_qword("gc_free_head")
         a.mov_membase_disp_r64("rdx", GC_OFF_NEXT_FREE, "rax")  # new_free.next = old_head
         a.mov_r64_r64("rax", "rdx")
@@ -1630,6 +1667,26 @@ class CodegenMemory:
 
     # Emit mark/sweep collection. The default stops the world throughout; the
     # optional SATB worker resumes it after roots and sweeps an isolated frontier.
+    def emit_gc_reuse_test(self, pointer, target):
+        """Branch for a snapshot-free address, clobbering only RAX/R8/R9/flags."""
+        a = self.asm
+        done = "gc_reuse_test_" + str(self.new_label_id())
+        # The minimum also disables all bitmap reads on metadata OOM.
+        a.mov_rax_rip_qword("gc_reuse_min")
+        a.cmp_r64_r64(pointer, "rax")
+        a.jcc("b", done)
+        a.mov_r64_r64("r8", pointer)
+        a.mov_rax_rip_qword("heap_base")
+        a.sub_r64_r64("r8", "rax")
+        a.shr_r64_imm8("r8", 3)
+        a.mov_r64_r64("r9", "r8")
+        a.shr_r64_imm8("r9", 6)
+        a.mov_rax_rip_qword("gc_reuse_bits")
+        a.mov_r64_mem_bis("rax", "rax", "r9", 8, 0)
+        a.bt_r64_r64("rax", "r8")
+        a.jcc("b", target)
+        a.mark(done)
+
     def emit_gc_collect_function(self):
         """Emit a full-stop cycle or the SATB worker's isolated-frontier cycle."""
         a = self.asm
@@ -1724,12 +1781,14 @@ class CodegenMemory:
         L_TRIM_DONE = "gc_trim_done_" + str(lid)
 
         if concurrent_gc:
-            # Freeze the old allocation frontier and free list. Refilled TLABs and
-            # reusable tails created after this point stay above that frontier.
+            # Existing free ranges stay allocatable, but their immutable bitmap
+            # excludes them from this snapshot, including all subsequent splits.
             a.mov_rax_rip_qword("heap_ptr")
             a.mov_rip_qword_rax("gc_concurrent_frontier")
+            self.used_helpers.update(["fn_gc_reuse_snapshot", "fn_gc_reuse_end"])
+            a.call("fn_gc_reuse_snapshot")
             a.xor_r32_r32("eax", "eax")
-            for name in ["gc_free_head", "gc_concurrent_free_head", "gc_concurrent_free_tail", "gc_satb_count", "gc_satb_overflow", "gc_concurrent_marked"]:
+            for name in ["gc_concurrent_free_head", "gc_concurrent_free_tail", "gc_satb_count", "gc_satb_overflow", "gc_concurrent_marked"]:
                 a.mov_rip_qword_rax(name)
         # Reset collection-local counters while holding the heap/world monitor.
         a.mov_rax_rip_qword("gc_collections")
@@ -1794,6 +1853,11 @@ class CodegenMemory:
         a.jcc("ae", L_MARK_VALUE_RET)
 
         a.sub_r64_imm("rdx", GC_HEADER_SIZE)
+        if concurrent_gc:
+            # Do not even read a protected header: a mutator may be splitting
+            # it or initializing a new object while the worker traces roots.
+            self.emit_gc_reuse_test("rdx", L_MARK_VALUE_RET)
+            a.mov_rax_rip_qword(concurrent_gc_bound_label)
         a.mov_r64_membase_disp("r10", "rdx", 0)
         a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
         a.jcc("ne", L_MARK_VALUE_RET)
@@ -2202,6 +2266,7 @@ class CodegenMemory:
             a.mark(L_MARK_DONE + "_retain_loop")
             a.cmp_r64_r64("rbx", "r14")
             a.jcc("ae", L_MARK_DONE + "_retain_done")
+            self.emit_gc_reuse_test("rbx", L_MARK_DONE + "_retain_reuse")
             a.mov_r64_membase_disp("r10", "rbx", 0)
             a.test_r64_imm32("r10", GC_BLOCK_FREE_BIT)
             a.jcc("ne", L_MARK_DONE + "_retain_next")
@@ -2216,6 +2281,11 @@ class CodegenMemory:
             a.mark(L_MARK_DONE + "_retain_next")
             a.and_r64_imm("r10", GC_BLOCK_SIZE_MASK)
             a.add_r64_r64("rbx", "r10")
+            a.jmp(L_MARK_DONE + "_retain_loop")
+            a.mark(L_MARK_DONE + "_retain_reuse")
+            a.mov_r64_r64("rax", "rbx")
+            a.call("fn_gc_reuse_end")
+            a.mov_r64_r64("rbx", "rax")
             a.jmp(L_MARK_DONE + "_retain_loop")
             a.mark(L_MARK_DONE + "_retain_done")
             a.call("fn_heap_enter")
@@ -2243,6 +2313,7 @@ class CodegenMemory:
                 a.mov_rax_rip_qword("gc_concurrent_frontier")
                 a.cmp_r64_r64("rdi", "rax")
                 a.jcc("ae", L_MARK_DONE + "_weak_live")
+                self.emit_gc_reuse_test("rdi", L_MARK_DONE + "_weak_live")
             a.lea_r64_membase_disp("r8", "rdi", -GC_HEADER_SIZE)
             a.sub_r64_r64("r8", "rbp")
             a.shr_r64_imm8("r8", 3)
@@ -2303,6 +2374,9 @@ class CodegenMemory:
         a.cmp_r64_r64("rbx", "r14")
         a.jcc("ae", L_SWEEP_DONE)
 
+        if concurrent_gc:
+            self.emit_gc_reuse_test("rbx", L_SWEEP_LOOP + "_reuse")
+
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
         a.jcc("e", L_SWEEP_DONE)
@@ -2340,6 +2414,12 @@ class CodegenMemory:
         a.add_r64_r64("rbx", "r10")
         a.jmp(L_SWEEP_LOOP)
 
+        if concurrent_gc:
+            a.mark(L_SWEEP_LOOP + "_reuse")
+            a.mov_r64_r64("rax", "rbx")
+            a.call("fn_gc_reuse_end")
+            a.mov_r64_r64("rbx", "rax")
+            a.jmp(L_SWEEP_LOOP)
         a.mark(L_SWEEP_DONE)
         a.mov_r64_r64("rax", "r12")
         a.mov_rip_qword_rax("gc_live_bytes")
@@ -2362,6 +2442,9 @@ class CodegenMemory:
         a.cmp_r64_r64("rbx", "r14")
         a.jcc("ae", L_REBUILD2_DONE)
 
+        if concurrent_gc:
+            self.emit_gc_reuse_test("rbx", L_REBUILD2_LOOP + "_reuse")
+
         a.mov_r64_membase_disp("r10", "rbx", 0)
         a.test_r64_r64("r10", "r10")
         a.jcc("e", L_REBUILD2_DONE)
@@ -2381,6 +2464,9 @@ class CodegenMemory:
         a.add_r64_r64("r11", "r10")
         a.cmp_r64_r64("r11", "r14")
         a.jcc("ae", L_COAL2_DONE)
+
+        if concurrent_gc:
+            self.emit_gc_reuse_test("r11", L_COAL2_DONE)
 
         a.mov_r64_membase_disp("rcx", "r11", 0)
         a.test_r64_r64("rcx", "rcx")
@@ -2457,6 +2543,12 @@ class CodegenMemory:
         a.add_r64_r64("rbx", "r10")
         a.jmp(L_REBUILD2_LOOP)
 
+        if concurrent_gc:
+            a.mark(L_REBUILD2_LOOP + "_reuse")
+            a.mov_r64_r64("rax", "rbx")
+            a.call("fn_gc_reuse_end")
+            a.mov_r64_r64("rbx", "rax")
+            a.jmp(L_REBUILD2_LOOP)
         a.mark(L_REBUILD2_DONE)
         a.jmp(L_REBUILD2_AFTER)
 
@@ -2620,19 +2712,18 @@ class CodegenMemory:
         if concurrent_gc:
             a.call("fn_heap_enter")
             self.emit_gc_concurrent_pause_begin()
-            a.mov_rax_rip_qword("gc_concurrent_free_tail")
-            a.test_r64_r64("rax", "rax")
-            a.jcc("e", L_MARK_DONE + "_publish_done")
-            a.mov_r64_r64("r11", "rax")
-            a.mov_rax_rip_qword("gc_free_head")
-            a.mov_membase_disp_r64("r11", GC_OFF_NEXT_FREE, "rax")
+            self.used_helpers.update(["fn_gc_free_merge", "fn_gc_free_stats"])
             a.mov_rax_rip_qword("gc_concurrent_free_head")
-            a.mov_rip_qword_rax("gc_free_head")
-            a.mark(L_MARK_DONE + "_publish_done")
+            a.call("fn_gc_free_merge")
             a.xor_r32_r32("eax", "eax")
             a.mov_rip_qword_rax("gc_free_miss_size")
             a.mov_rip_qword_rax("gc_free_search_size")
             a.mov_rip_qword_rax("gc_free_search_prev")
+            if self._uses_gc_stats():
+                # Sample actual current bins, including partial TLAB splits.
+                a.call("fn_gc_free_stats")
+                a.mov_r64_r64("rax", "rcx")
+                a.mov_rip_qword_rax("gc_largest_free")
         a.mov_rax_imm64(0)
         a.mov_rip_qword_rax("gc_bytes_since")
         a.mov_rip_qword_rax("gc_young_bytes_since")
@@ -2986,6 +3077,9 @@ class CodegenMemory:
         - If an invalid pointer is detected (corruption), returns 0 instead of crashing.
         - Hard caps iterations to avoid infinite loops on cycles.
         """
+        if self.heap_config.get('gc_concurrent'):
+            self.emit_concurrent_gc_heap_free_stat(False)
+            return
         self.ensure_gc_data()
         threaded_heap = bool(getattr(self, 'native_threads_possible', True))
         if threaded_heap:
@@ -3070,6 +3164,9 @@ class CodegenMemory:
         - If an invalid pointer is detected (corruption), returns 0 instead of crashing.
         - Hard caps iterations to avoid infinite loops on cycles.
         """
+        if self.heap_config.get('gc_concurrent'):
+            self.emit_concurrent_gc_heap_free_stat(True)
+            return
         self.ensure_gc_data()
         threaded_heap = bool(getattr(self, 'native_threads_possible', True))
         if threaded_heap:

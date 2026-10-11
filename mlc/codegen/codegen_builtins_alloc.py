@@ -58,6 +58,7 @@ Returns:
         if getattr(self, 'is_windows_subsystem', False):
             a.lea_rax_rip('obj_empty_string')
             a.ret()
+            return
 
         # Windows x64 ABI:
         # - stack must be 16-byte aligned at each CALL instruction

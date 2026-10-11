@@ -1,0 +1,379 @@
+{
+  "date": "2026-10-11",
+  "releaseStatus": "unreleased development after 1.2.19",
+  "sourceManifestSHA256": "0ee4e048f8e15ae38397590eaca41679b026ce549fccf275f0a85a42881ee909",
+  "gameBuilds": [
+    {
+      "name": "py",
+      "seconds": 168.6122403999325,
+      "bytes": 86633472,
+      "sha256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499"
+    },
+    {
+      "name": "ml",
+      "seconds": 304.58766550011933,
+      "bytes": 86633472,
+      "sha256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499"
+    }
+  ],
+  "gameBuildTimesIsolated": false,
+  "compilerArtifacts": {
+    "compiler-parity3.exe": {
+      "bytes": 57280512,
+      "sha256": "90bdc48ea2f2980492093f3152c8eee06d3a2a56d537707d4a29a37504d59c94"
+    },
+    "compiler-parity3-self.exe": {
+      "bytes": 57280512,
+      "sha256": "90bdc48ea2f2980492093f3152c8eee06d3a2a56d537707d4a29a37504d59c94"
+    },
+    "compiler-parity3-linux": {
+      "bytes": 57278800,
+      "sha256": "033353ee91dbb595614b26645ce1dfe0d6081f0e020951976c93b0dfe8266437"
+    },
+    "compiler-parity3-linux-self": {
+      "bytes": 57278800,
+      "sha256": "033353ee91dbb595614b26645ce1dfe0d6081f0e020951976c93b0dfe8266437"
+    }
+  },
+  "tests": {
+    "pythonPassed": 175,
+    "pythonFailed": 0,
+    "pythonSkipped": 0,
+    "mlCorePassed": 136,
+    "mlOuterPassed": 220,
+    "contextImages": 60,
+    "concurrentImages": 180,
+    "concurrentExcluded": [],
+    "stressRuns": 140,
+    "unrollModelPassed": 5,
+    "nativeGCHelperPassed": 4,
+    "identicalStdModules": 53,
+    "identicalStdDocFiles": 351,
+    "miniDocFiles": 38,
+    "miniDocSymbols": 3321,
+    "miniDocWarnings": 0
+  },
+  "graphicsTrace": {
+    "seconds": 12.0088,
+    "graphicsCalls": 436,
+    "commitmentChanges": 51,
+    "reservations": 20,
+    "committedMiB": 4.0625,
+    "releasedMiB": 19.1875,
+    "limitation": "Other threads can run between debugger stops; not every original endpoint byte is attributed."
+  },
+  "runs": {
+    "native-census-run": {
+      "debuggerAttached": false,
+      "concurrentAgentBuilds": true,
+      "executableSHA256": "c889f886df24ad5e986288a9c277e4b2845d4cdc166caca13fe512601a583b10",
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "steadyCacheMemory": {
+        "first_wall_seconds": 109.630125,
+        "last_wall_seconds": 619.678125,
+        "first_private_MiB": 2307.046875,
+        "last_private_MiB": 2328.8125,
+        "private_growth_MiB": 21.765625,
+        "private_growth_MiB_per_min": 2.5604207839262187,
+        "first_committed_MiB": 1176.84375,
+        "last_committed_MiB": 1176.84375,
+        "first_live_MiB": 824.783073425293,
+        "last_live_MiB": 825.2882919311523,
+        "live_growth_MiB": 0.505218505859375,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 213.06793594360352
+      },
+      "warmFrames": {
+        "count": 145184,
+        "mean_ms": 4.12216761075581,
+        "p50_ms_le": 3.87,
+        "p95_ms_le": 6.64,
+        "p99_ms_le": 9.69,
+        "p999_ms_le": 18.47,
+        "max_ms": 267.797600012273,
+        "misses_2ms": 144130,
+        "misses_4ms": 66537,
+        "misses_8ms": 2858,
+        "misses_16ms": 338,
+        "overflow_100ms": 3
+      },
+      "warmAverageFPS": 242.59081493696166,
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "gc": {
+        "completed": 653,
+        "phase": 0,
+        "pause_total_ms": 9355.5759,
+        "pause_max_ms": 36.0014,
+        "overflows": 0
+      },
+      "privateWindows": {
+        "windowSeconds": 60,
+        "firstCount": 113,
+        "lastCount": 113,
+        "firstMedianMiB": 2322.543,
+        "lastMedianMiB": 2326.164,
+        "medianChangeMiB": 3.6210000000000946,
+        "warmMinimumMiB": 2301.609,
+        "warmMaximumMiB": 2334.742
+      }
+    },
+    "native2/native-debug-run": {
+      "debuggerAttached": true,
+      "concurrentAgentBuilds": true,
+      "executableSHA256": "c889f886df24ad5e986288a9c277e4b2845d4cdc166caca13fe512601a583b10",
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "steadyCacheMemory": {
+        "first_wall_seconds": 108.587525,
+        "last_wall_seconds": 618.618525,
+        "first_private_MiB": 2297.8984375,
+        "last_private_MiB": 2312.1328125,
+        "private_growth_MiB": 14.234375,
+        "private_growth_MiB_per_min": 1.6745305677498035,
+        "first_committed_MiB": 1167.55078125,
+        "last_committed_MiB": 1167.55078125,
+        "first_live_MiB": 824.7814559936523,
+        "last_live_MiB": 825.2889785766602,
+        "live_growth_MiB": 0.5075225830078125,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 213.08998489379883
+      },
+      "warmFrames": {
+        "count": 154618,
+        "mean_ms": 3.86771137577704,
+        "p50_ms_le": 3.43,
+        "p95_ms_le": 7.19,
+        "p99_ms_le": 12.45,
+        "p999_ms_le": 19.27,
+        "max_ms": 53.4584000706673,
+        "misses_2ms": 148231,
+        "misses_4ms": 52094,
+        "misses_8ms": 5524,
+        "misses_16ms": 494,
+        "overflow_100ms": 0
+      },
+      "warmAverageFPS": 258.5508335143275,
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "gc": {
+        "completed": 686,
+        "phase": 0,
+        "pause_total_ms": 9092.5612,
+        "pause_max_ms": 21.3034,
+        "overflows": 0
+      },
+      "privateWindows": {
+        "windowSeconds": 60,
+        "firstCount": 113,
+        "lastCount": 113,
+        "firstMedianMiB": 2304.609,
+        "lastMedianMiB": 2303.086,
+        "medianChangeMiB": -1.5230000000001382,
+        "warmMinimumMiB": 2288.5,
+        "warmMaximumMiB": 2316.844
+      }
+    },
+    "native3/native-debug-run": {
+      "debuggerAttached": true,
+      "concurrentAgentBuilds": true,
+      "executableSHA256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499",
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "steadyCacheMemory": {
+        "first_wall_seconds": 115.836074,
+        "last_wall_seconds": 625.877074,
+        "first_private_MiB": 2391.640625,
+        "last_private_MiB": 2368.77734375,
+        "private_growth_MiB": -22.86328125,
+        "private_growth_MiB_per_min": -2.689581572853947,
+        "first_committed_MiB": 1200.796875,
+        "last_committed_MiB": 1200.796875,
+        "first_live_MiB": 824.7823333740234,
+        "last_live_MiB": 825.2913360595703,
+        "live_growth_MiB": 0.509002685546875,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.96651077270508
+      },
+      "warmFrames": {
+        "count": 145074,
+        "mean_ms": 4.16650438052294,
+        "p50_ms_le": 3.75,
+        "p95_ms_le": 6.82,
+        "p99_ms_le": 12.03,
+        "p999_ms_le": 22.49,
+        "max_ms": 460.112200118601,
+        "misses_2ms": 143869,
+        "misses_4ms": 61376,
+        "misses_8ms": 4310,
+        "misses_16ms": 603,
+        "overflow_100ms": 52
+      },
+      "warmAverageFPS": 240.00934804597264,
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "gc": {
+        "completed": 653,
+        "phase": 0,
+        "pause_total_ms": 9382.6397,
+        "pause_max_ms": 53.8028,
+        "overflows": 0
+      },
+      "privateWindows": {
+        "windowSeconds": 60,
+        "firstCount": 112,
+        "lastCount": 113,
+        "firstMedianMiB": 2364.656,
+        "lastMedianMiB": 2365.734,
+        "medianChangeMiB": 1.0779999999999745,
+        "warmMinimumMiB": 2333.16,
+        "warmMaximumMiB": 2401.645
+      }
+    },
+    "final-run": {
+      "debuggerAttached": false,
+      "concurrentAgentBuilds": false,
+      "executableSHA256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499",
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "steadyCacheMemory": {
+        "first_wall_seconds": 109.141862,
+        "last_wall_seconds": 619.166862,
+        "first_private_MiB": 2386.3984375,
+        "last_private_MiB": 2378.98828125,
+        "private_growth_MiB": -7.41015625,
+        "private_growth_MiB_per_min": -0.8717403558649084,
+        "first_committed_MiB": 1194.75,
+        "last_committed_MiB": 1194.75,
+        "first_live_MiB": 824.783561706543,
+        "last_live_MiB": 825.2851104736328,
+        "live_growth_MiB": 0.5015487670898438,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 213.05029678344727
+      },
+      "warmFrames": {
+        "count": 174209,
+        "mean_ms": 3.43408848165099,
+        "p50_ms_le": 3.28,
+        "p95_ms_le": 5.17,
+        "p99_ms_le": 7.04,
+        "p999_ms_le": 16.86,
+        "max_ms": 242.762299953029,
+        "misses_2ms": 171023,
+        "misses_4ms": 41610,
+        "misses_8ms": 1243,
+        "misses_16ms": 297,
+        "overflow_100ms": 2
+      },
+      "warmAverageFPS": 291.19808803506277,
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "gc": {
+        "completed": 752,
+        "phase": 0,
+        "pause_total_ms": 10469.9651,
+        "pause_max_ms": 21.7354,
+        "overflows": 0
+      },
+      "privateWindows": {
+        "windowSeconds": 60,
+        "firstCount": 111,
+        "lastCount": 113,
+        "firstMedianMiB": 2373.492,
+        "lastMedianMiB": 2373.078,
+        "medianChangeMiB": -0.41400000000021464,
+        "warmMinimumMiB": 2357.406,
+        "warmMaximumMiB": 2402.559
+      }
+    }
+  }
+}

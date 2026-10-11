@@ -594,7 +594,7 @@ class CodegenStmt:
             if self._is_foreach_stmt(st):
                 return False
 
-            if hasattr(ml, 'Assign') and isinstance(st, ml.Assign):
+            if isinstance(st, (ml.Assign, ml.SynchronizedDecl)):
                 if str(getattr(st, 'name', '')) == loop_var:
                     return False
 
@@ -617,25 +617,24 @@ class CodegenStmt:
             return True
 
         def visit_expr(expr: Any) -> bool:
-            if expr is None:
+            if not isinstance(expr, ml.Expr):
                 return True
             budget[0] -= 1
             if budget[0] < 0:
                 return False
-            # We only use the expression walk as a tiny complexity budget, not
-            # as a semantic filter, so keep it shallow and structural.
-            for attr in ('left', 'right', 'expr', 'cond', 'value', 'target', 'index', 'start', 'end', 'iterable'):
+            # Count AST expressions, not literal payloads. A child with the
+            # same node class is still a distinct expression: skipping nested
+            # Bin nodes made large boolean trees look cheap and caused Python
+            # to unroll loops that the self-hosted compiler kept intact.
+            # The shared budget bounds recursion even for deeply nested trees.
+            for attr in ('left', 'right', 'expr', 'cond', 'value', 'target', 'index', 'start', 'end', 'iterable', 'callee'):
                 child = getattr(expr, attr, None)
                 if isinstance(child, list):
                     for it in child:
                         if not visit_expr(it):
                             return False
-                elif child is not None and type(child) is not type(expr):
-                    try:
-                        if not visit_expr(child):
-                            return False
-                    except RecursionError:
-                        return False
+                elif not visit_expr(child):
+                    return False
             for attr in ('args', 'items'):
                 child_list = getattr(expr, attr, None)
                 if isinstance(child_list, list):
@@ -918,6 +917,10 @@ class CodegenStmt:
                     walk(list(getattr(st, 'default_body', []) or []), direct=False, loop_depth=loop_depth)
 
         walk(list(getattr(fn, 'body', []) or []), direct=True)
+        # The analysis runs before this function's local bindings are emitted.
+        # Preserve lexical shadowing when resolving annotated callees.
+        call_shadows = (set(getattr(fn, '_ml_locals', ()) or ())
+                        | set(getattr(fn, '_ml_captures', ()) or ()) | set(params))
         excluded.update(loop_names.intersection(normal_names))
 
         # Function-wide facts are only safe when the unconditional initializer
@@ -1124,7 +1127,7 @@ class CodegenStmt:
                 if raw in ('typeof', 'typeName'):
                     return 'string'
                 try:
-                    fn_qname = self._native_callback_resolve_user_fn(getattr(expr, 'callee', None))
+                    fn_qname = self._opt_static_user_fn(getattr(expr, 'callee', None), call_shadows)
                 except Exception:
                     fn_qname = ''
                 declared = (getattr(self, 'user_functions', {}) or {}).get(fn_qname) if fn_qname else None
@@ -1647,6 +1650,51 @@ class CodegenStmt:
                 int(stats['cost']) <= 64)
         setattr(fn, '_ml_inline_stats', stats)
         return stats
+
+    def _collect_mutable_user_functions(self, program: List[Any]) -> set[str]:
+        """Conservatively find writes to callable globals before optimizing calls.
+
+        Global declarations count as potential writes, including writes from
+        nested functions or another thread. Local assignments do not affect the
+        original callable. Qualified module writes also work through aliases.
+        """
+        ml = self.ml
+        mutable: set[str] = set()
+        contexts = [(None, program)] + [(fn, list(getattr(fn, 'body', []) or []))
+                    for fn in [*self.user_functions.values(), *self.nested_user_functions.values()]]
+        for owner, body in contexts:
+            qname = str(getattr(owner, 'name', '') or '')
+            qprefix = qname.rsplit('.', 1)[0] + '.' if '.' in qname else ''
+            fprefix = self.file_prefix_map.get(getattr(owner, '_filename', ''), '')
+            shadows = (set(getattr(owner, '_ml_locals', ()) or ())
+                       | set(getattr(owner, '_ml_captures', ()) or ()))
+            work = list(body)
+            while work:
+                st = work.pop()
+                if isinstance(st, (ml.FunctionDef, ml.StructDef, ml.NamespaceDef)):
+                    continue
+                names = []
+                if isinstance(st, ml.GlobalDecl):
+                    names = list(st.names)
+                elif isinstance(st, (ml.Assign, ml.ConstDecl)):
+                    if owner is None or '.' in st.name:
+                        names = [st.name]
+                elif isinstance(st, ml.SetMember):
+                    obj = self._native_callback_qname_of(st.obj)
+                    if obj and obj.split('.', 1)[0] not in shadows:
+                        names = [obj + '.' + st.field]
+                for name in names:
+                    name = self._apply_import_alias(name)
+                    for candidate in (name, qprefix + name, fprefix + name):
+                        if candidate in self.user_functions:
+                            mutable.add(candidate)
+                for attr in ('body', 'then_body', 'else_body', 'default_body'):
+                    work.extend(getattr(st, attr, []) or [])
+                for case in getattr(st, 'cases', []) or []:
+                    work.extend(getattr(case, 'body', []) or [])
+                for _, branch in getattr(st, 'elifs', []) or []:
+                    work.extend(branch or [])
+        return mutable
 
     def _analyze_inline_only_functions(self, program: List[Any]) -> set[str]:
         """Return functions eligible for native-body pruning.
@@ -3866,6 +3914,12 @@ class CodegenStmt:
                 bound = False
                 try:
                     bound = (self.resolve_binding(root) is not None)
+                    if not bound:
+                        # A package/namespace global is also a runtime object;
+                        # resolve it like a read before treating its field as a
+                        # namespace-qualified global write (matching ML).
+                        qualified_root = self._qualify_identifier(root, s)
+                        bound = (self.resolve_binding(qualified_root) is not None)
                 except Exception:
                     bound = False
                 if not bound:
@@ -5490,6 +5544,7 @@ class CodegenStmt:
             self.inline_function_stats[qn] = stats
             if bool(stats.get('ok', False)):
                 self.inline_functions[qn] = fn
+        self.mutable_user_functions = self._collect_mutable_user_functions(program)
         self.inline_only_functions = self._analyze_inline_only_functions(program)
 
         # ------------------------------------------------------------
@@ -6571,7 +6626,10 @@ class CodegenStmt:
                 self._current_fn_qname = prior_fn_qname
 
         # Now `_function_locals` contains *bindings*, not names.
-        known_value_types_for_fn = self._infer_known_value_types(fn)
+        # Value-flow resolves unqualified typed calls and struct names too.
+        # Running it in the last module initializer's context makes generated
+        # code depend on unrelated source order and differs from MLO emission.
+        known_value_types_for_fn = infer_with_function_context(lambda: self._infer_known_value_types(fn))
         promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
         n_locals = len(getattr(self, "_function_locals", []))
 

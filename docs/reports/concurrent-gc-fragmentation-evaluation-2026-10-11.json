@@ -1,0 +1,2424 @@
+{
+  "date": "2026-10-11",
+  "status": "unreleased development after 1.2.19",
+  "scope": "Windows optional concurrent GC; default target collectors unchanged",
+  "game_source_sha256": "0ee4e048f8e15ae38397590eaca41679b026ce549fccf275f0a85a42881ee909",
+  "games": {
+    "profile": {
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "memory": {
+        "first_wall_seconds": 109.632836,
+        "last_wall_seconds": 619.678836,
+        "first_private_MiB": 2603,
+        "last_private_MiB": 2819.1640625,
+        "private_growth_MiB": 216.1640625,
+        "private_growth_MiB_per_min": 25.42877260090266,
+        "first_committed_MiB": 1450.640625,
+        "last_committed_MiB": 1626.640625,
+        "first_live_MiB": 824.7808837890625,
+        "last_live_MiB": 825.2879486083984,
+        "live_growth_MiB": 0.5070648193359375,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 213.08998489379883
+      },
+      "warm_average_fps": 258.33529726067985,
+      "warm_frames": {
+        "count": 154487,
+        "mean_ms": 3.87093831390344,
+        "p50_ms_le": 3.55,
+        "p95_ms_le": 6.63,
+        "p99_ms_le": 9.99,
+        "p999_ms_le": 15.78,
+        "max_ms": 75.1214998308569,
+        "misses_2ms": 151795,
+        "misses_4ms": 56207,
+        "misses_8ms": 3651,
+        "misses_16ms": 146,
+        "overflow_100ms": 0
+      },
+      "gc": {
+        "completed": 687,
+        "phase": 0,
+        "pause_total_ms": 7635.1436,
+        "pause_max_ms": 24.0895,
+        "overflows": 0
+      },
+      "runtime": {
+        "collections": 687,
+        "live_bytes": 865376384,
+        "reclaimed_bytes": 68874368,
+        "largest_free": 12540448,
+        "mark_peak": 5032,
+        "central_requests": 780039,
+        "free_probes": 66452046,
+        "tlab_refills": 706792,
+        "retired_tlab_bytes": 879920,
+        "limit": 268435456,
+        "small_limit": 67108864,
+        "adaptive": 1,
+        "central_requested_bytes": 50328755808,
+        "mark_capacity": 8192
+      },
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "executable_sha256": "668b441302112e50ee31e9e56370de965c49999098fad2d0625bf0542d56a314",
+      "warm_expansions": [
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 217,
+          "free_bytes": 586057248,
+          "free_count": 53622,
+          "free_max": 8314904
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 255,
+          "free_bytes": 641961592,
+          "free_count": 52308,
+          "free_max": 8314904
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 289,
+          "free_bytes": 564116608,
+          "free_count": 53498,
+          "free_max": 4753312
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 323,
+          "free_bytes": 569662992,
+          "free_count": 52043,
+          "free_max": 4753312
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 361,
+          "free_bytes": 590123568,
+          "free_count": 53465,
+          "free_max": 4753312
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 401,
+          "free_bytes": 599292256,
+          "free_count": 51937,
+          "free_max": 4687216
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 439,
+          "free_bytes": 652470568,
+          "free_count": 53876,
+          "free_max": 4980616
+        },
+        {
+          "request": 5102816,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 531,
+          "free_bytes": 635389984,
+          "free_count": 53677,
+          "free_max": 4963384
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 588,
+          "free_bytes": 709885560,
+          "free_count": 52160,
+          "free_max": 7887480
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 613,
+          "free_bytes": 734615688,
+          "free_count": 53336,
+          "free_max": 6635552
+        },
+        {
+          "request": 5097680,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 661,
+          "free_bytes": 669050024,
+          "free_count": 53342,
+          "free_max": 4988840
+        }
+      ]
+    },
+    "ordered": {
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "memory": {
+        "first_wall_seconds": 116.979392,
+        "last_wall_seconds": 627.010392,
+        "first_private_MiB": 2730.29296875,
+        "last_private_MiB": 3076.48046875,
+        "private_growth_MiB": 346.1875,
+        "private_growth_MiB_per_min": 40.72546570698644,
+        "first_committed_MiB": 1513.421875,
+        "last_committed_MiB": 1881.421875,
+        "first_live_MiB": 824.7816925048828,
+        "last_live_MiB": 0,
+        "live_growth_MiB": -824.7816925048828,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.98414993286133
+      },
+      "warm_average_fps": 235.46479274733542,
+      "warm_frames": {
+        "count": 141572,
+        "mean_ms": 4.24691941556225,
+        "p50_ms_le": 3.9,
+        "p95_ms_le": 7.24,
+        "p99_ms_le": 10.88,
+        "p999_ms_le": 17.39,
+        "max_ms": 589.505400042981,
+        "misses_2ms": 139797,
+        "misses_4ms": 66231,
+        "misses_8ms": 4840,
+        "misses_16ms": 210,
+        "overflow_100ms": 9
+      },
+      "gc": {
+        "completed": 645,
+        "phase": 0,
+        "pause_total_ms": 6743.016,
+        "pause_max_ms": 562.3942,
+        "overflows": 0
+      },
+      "runtime": {
+        "collections": 645,
+        "live_bytes": 865376392,
+        "reclaimed_bytes": 68684320,
+        "largest_free": 21492144,
+        "mark_peak": 5032,
+        "central_requests": 733212,
+        "free_probes": 200015752,
+        "tlab_refills": 659547,
+        "retired_tlab_bytes": 1042832,
+        "limit": 268435456,
+        "small_limit": 67108864,
+        "adaptive": 1,
+        "central_requested_bytes": 47232715520,
+        "mark_capacity": 8192
+      },
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "executable_sha256": "5a09b362161e5a6933b38db9beeb72a83f2fa52458e561bba1926d7859743da8",
+      "warm_expansions": [
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 171,
+          "free_bytes": 626110120,
+          "free_count": 53531,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 171,
+          "free_bytes": 625913192,
+          "free_count": 53531,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 199,
+          "free_bytes": 629617776,
+          "free_count": 53412,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 1,
+          "gc_concurrent_completed": 199,
+          "free_bytes": 628371904,
+          "free_count": 50737,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 227,
+          "free_bytes": 697646664,
+          "free_count": 53408,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 227,
+          "free_bytes": 673312296,
+          "free_count": 53233,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 256,
+          "free_bytes": 751266584,
+          "free_count": 52169,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 256,
+          "free_bytes": 732963480,
+          "free_count": 52152,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102832,
+          "gc_concurrent_phase": 2,
+          "gc_concurrent_completed": 256,
+          "free_bytes": 686110832,
+          "free_count": 50963,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 283,
+          "free_bytes": 765744736,
+          "free_count": 53382,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102824,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 283,
+          "free_bytes": 764433304,
+          "free_count": 53376,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 315,
+          "free_bytes": 841005928,
+          "free_count": 52497,
+          "free_max": 5077264
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 344,
+          "free_bytes": 805275712,
+          "free_count": 53359,
+          "free_max": 5775896
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 344,
+          "free_bytes": 797419680,
+          "free_count": 53349,
+          "free_max": 5077264
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 404,
+          "free_bytes": 848883264,
+          "free_count": 53695,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 404,
+          "free_bytes": 848620776,
+          "free_count": 53694,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 404,
+          "free_bytes": 846326648,
+          "free_count": 53684,
+          "free_max": 5077264
+        },
+        {
+          "request": 5102816,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 435,
+          "free_bytes": 897728720,
+          "free_count": 52169,
+          "free_max": 5077264
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 468,
+          "free_bytes": 958677648,
+          "free_count": 53491,
+          "free_max": 7316968
+        },
+        {
+          "request": 5102808,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 468,
+          "free_bytes": 945718920,
+          "free_count": 53489,
+          "free_max": 5077264
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 505,
+          "free_bytes": 955943856,
+          "free_count": 52115,
+          "free_max": 5647208
+        },
+        {
+          "request": 5102800,
+          "gc_concurrent_phase": 0,
+          "gc_concurrent_completed": 505,
+          "free_bytes": 944876184,
+          "free_count": 52057,
+          "free_max": 5085936
+        },
+        {
+          "request": 8388624,
+          "gc_concurrent_phase": 2,
+          "gc_concurrent_completed": 580,
+          "free_bytes": 969771528,
+          "free_count": 51036,
+          "free_max": 7955144
+        }
+      ]
+    },
+    "bins": {
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "memory": {
+        "first_wall_seconds": 115.822371,
+        "last_wall_seconds": 625.855371,
+        "first_private_MiB": 2301.484375,
+        "last_private_MiB": 2323.63671875,
+        "private_growth_MiB": 22.15234375,
+        "private_growth_MiB_per_min": 2.6059894653875335,
+        "first_committed_MiB": 1163.61328125,
+        "last_committed_MiB": 1163.61328125,
+        "first_live_MiB": 824.7793121337891,
+        "last_live_MiB": 825.2898025512695,
+        "live_growth_MiB": 0.5104904174804688,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.73720169067383
+      },
+      "warm_average_fps": 232.16025071651842,
+      "warm_frames": {
+        "count": 138834,
+        "mean_ms": 4.30736957301558,
+        "p50_ms_le": 3.84,
+        "p95_ms_le": 8.07,
+        "p99_ms_le": 13.53,
+        "p999_ms_le": 22.28,
+        "max_ms": 48.1736001092941,
+        "misses_2ms": 135647,
+        "misses_4ms": 62979,
+        "misses_8ms": 7110,
+        "misses_16ms": 709,
+        "overflow_100ms": 0
+      },
+      "gc": {
+        "completed": 634,
+        "phase": 0,
+        "pause_total_ms": 8954.1088,
+        "pause_max_ms": 26.1395,
+        "overflows": 0
+      },
+      "runtime": {
+        "collections": 634,
+        "live_bytes": 865378256,
+        "reclaimed_bytes": 68736664,
+        "largest_free": 76182456,
+        "mark_peak": 5032,
+        "central_requests": 4135575,
+        "free_probes": 15175780,
+        "tlab_refills": 4062215,
+        "retired_tlab_bytes": 1816424,
+        "limit": 268435456,
+        "small_limit": 67108864,
+        "adaptive": 1,
+        "central_requested_bytes": 46706715776,
+        "mark_capacity": 8192
+      },
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "executable_sha256": "dd2c32e4c85a1abdbbae813510e554dc8075571aa52f2c035efdd28115b65f9c",
+      "warm_expansions": []
+    },
+    "bins-native": {
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "memory": {
+        "first_wall_seconds": 111.228238,
+        "last_wall_seconds": 621.291238,
+        "first_private_MiB": 2291.09765625,
+        "last_private_MiB": 2312.578125,
+        "private_growth_MiB": 21.48046875,
+        "private_growth_MiB_per_min": 2.5268018362437585,
+        "first_committed_MiB": 1173.87890625,
+        "last_committed_MiB": 1173.87890625,
+        "first_live_MiB": 824.7834091186523,
+        "last_live_MiB": 825.2894439697266,
+        "live_growth_MiB": 0.5060348510742188,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.71515274047852
+      },
+      "warm_average_fps": 209.41066977550358,
+      "warm_frames": {
+        "count": 125242,
+        "mean_ms": 4.77530586704125,
+        "p50_ms_le": 4.38,
+        "p95_ms_le": 8.35,
+        "p99_ms_le": 13.07,
+        "p999_ms_le": 21.22,
+        "max_ms": 125.495599815622,
+        "misses_2ms": 124099,
+        "misses_4ms": 74643,
+        "misses_8ms": 7466,
+        "misses_16ms": 574,
+        "overflow_100ms": 1
+      },
+      "gc": {
+        "completed": 585,
+        "phase": 0,
+        "pause_total_ms": 9003.7451,
+        "pause_max_ms": 26.7172,
+        "overflows": 0
+      },
+      "runtime": {
+        "collections": 585,
+        "live_bytes": 865377664,
+        "reclaimed_bytes": 68485576,
+        "largest_free": 76410704,
+        "mark_peak": 5032,
+        "central_requests": 3835950,
+        "free_probes": 14391590,
+        "tlab_refills": 3762511,
+        "retired_tlab_bytes": 1676880,
+        "limit": 268435456,
+        "small_limit": 67108864,
+        "adaptive": 1,
+        "central_requested_bytes": 43412037128,
+        "mark_capacity": 8192
+      },
+      "activity": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "executable_sha256": "c889f886df24ad5e986288a9c277e4b2845d4cdc166caca13fe512601a583b10"
+    }
+  },
+  "measurement_limits": [
+    "Game runs overlapped compiler verification and other local benchmarks; FPS is not an isolated speed comparison.",
+    "profile is the previous free-range reuse fix, ordered is a rejected address-only candidate, bins is the new Python image, bins-native is the new ML object image.",
+    "Python game images contain equal diagnostic census instrumentation; the ML game image is uninstrumented.",
+    "The final invalid-pointer statistics guard was added after game builds; helper tests and the final matrix include it.",
+    "The ordered candidate sampled a reset in-progress live counter at its last memory endpoint; use its final GC_RUNTIME live_bytes instead.",
+    "Approximately 21-22 MiB of native process growth remains unattributed; no claim of unlimited-time memory stability."
+  ],
+  "verification": {
+    "python_passed": 171,
+    "python_failed": 0,
+    "python_skipped": 0,
+    "ml_core_passed": 136,
+    "ml_outer_checks": 212,
+    "native_helper_tests": 4,
+    "std_modules_equal": 53,
+    "std_reference_files_equal": 351,
+    "minidoc_warnings": 0,
+    "concurrent_matrix_image_count": 180,
+    "self_host": {
+      "windows-x64": {
+        "bytes": 57180672,
+        "sha256": "c3335d4a31606697bc5034d0b3072b3441d5bb0a9a0434d575c9a4f3311e3c79"
+      },
+      "linux-x64": {
+        "bytes": 57180480,
+        "sha256": "4871ec23116942f9414208411e4de9805b3b4fb20b895bcb6b1f72e3b28096b3"
+      }
+    },
+    "unchanged_default_pairs": [
+      {
+        "target": "windows-x64",
+        "fixture": "gc_async_fallback",
+        "sha256": "2201021c6f6ee432f067fc026893a12b296c93ae8766e9004526645962ae98dc"
+      },
+      {
+        "target": "windows-x64",
+        "fixture": "heap_growth_precedes_gc",
+        "sha256": "56a67e1cc8e1ff5409160263fa47f2fec267f49997e2f4a1808439103b31633b"
+      },
+      {
+        "target": "windows-x64",
+        "fixture": "tlab_shared_heap",
+        "sha256": "67a858fa3b1d47c6d38aeb17a1f534003f040b25d616fe9ec3a3096d6271cb0e"
+      },
+      {
+        "target": "windows-x64",
+        "fixture": "memory_policy",
+        "sha256": "f9f55363e6121a5a2b3a2609bfcd4d05ab7792baa2feae132ba856485d40f632"
+      },
+      {
+        "target": "linux-x64",
+        "fixture": "gc_async_fallback",
+        "sha256": "ee15dbef543f3ad1e6e7558d629e0026672815ee149bb7b080fc2b6e92e07128"
+      },
+      {
+        "target": "linux-x64",
+        "fixture": "heap_growth_precedes_gc",
+        "sha256": "650a8b13244654b7ff26a29b3093d138be9b5ad2133937a5692ccd2b745661dd"
+      },
+      {
+        "target": "linux-x64",
+        "fixture": "tlab_shared_heap",
+        "sha256": "e7cec25b1f5fafb5c4d2c317966d4bbb061d9d1eed4512c9a20a4626394bc624"
+      },
+      {
+        "target": "linux-x64",
+        "fixture": "memory_policy",
+        "sha256": "dc6f49f13aa8e8cbdc0cb8f8fe3819e41f70c8d4cf54f85a0144d5c9baa3ed83"
+      }
+    ],
+    "stress": [
+      {
+        "fixture": "gc_concurrent_reuse",
+        "flags": [
+          "--heap-reserve",
+          "512m",
+          "--heap-commit",
+          "16m"
+        ],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "284ac1e5c11713c6b1358fce534386450aeacbf30364c7f793fe59b935948177"
+      },
+      {
+        "fixture": "gc_concurrent_reuse_fragments",
+        "flags": [],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "49aff3558149fc2cfa8ebf3c8360fb91e1f6b81a20893be1692ca3962036e35a"
+      },
+      {
+        "fixture": "gc_concurrent",
+        "flags": [],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "d870aadbd19cc36f6ddeb73e0238b7c4d3c2f6869f5e1567abd3e0137f8cbe49"
+      },
+      {
+        "fixture": "gc_concurrent",
+        "flags": [
+          "--gc-satb-limit",
+          "64"
+        ],
+        "arguments": [
+          "overflow"
+        ],
+        "runs": 20,
+        "sha256": "a18af0ac5b5dac82b6d062dcce1837833c3c60097fde09f3cb054a60650a7f88"
+      },
+      {
+        "fixture": "gc_concurrent_pressure",
+        "flags": [
+          "--heap-reserve",
+          "64m",
+          "--heap-commit",
+          "32m"
+        ],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "0d97ad4bed432d2e169b8bedc72e4eb67081a3d7049ab14f6a1227d531a6017a"
+      },
+      {
+        "fixture": "gc_concurrent_order",
+        "flags": [],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "4ad92f176c263cf514c12e094ce1c59917d30410be4f78aff15572a6204933ee"
+      },
+      {
+        "fixture": "gc_concurrent_bins",
+        "flags": [],
+        "arguments": [],
+        "runs": 20,
+        "sha256": "d190d68eef2c7667b2833c257bcd1f358efa1405622f9467e517289f16f22a81"
+      }
+    ],
+    "concurrent_matrix": {
+      "images": [
+        {
+          "fixture": "gc_concurrent.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "d870aadbd19cc36f6ddeb73e0238b7c4d3c2f6869f5e1567abd3e0137f8cbe49",
+          "size": 214528
+        },
+        {
+          "fixture": "gc_concurrent.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "d870aadbd19cc36f6ddeb73e0238b7c4d3c2f6869f5e1567abd3e0137f8cbe49",
+          "size": 214528
+        },
+        {
+          "fixture": "gc_concurrent.ml",
+          "flags": [
+            "--gc-satb-limit",
+            "64"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "a18af0ac5b5dac82b6d062dcce1837833c3c60097fde09f3cb054a60650a7f88",
+          "size": 214528
+        },
+        {
+          "fixture": "gc_concurrent.ml",
+          "flags": [
+            "--gc-satb-limit",
+            "64"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "a18af0ac5b5dac82b6d062dcce1837833c3c60097fde09f3cb054a60650a7f88",
+          "size": 214528
+        },
+        {
+          "fixture": "gc_concurrent_pressure.ml",
+          "flags": [
+            "--heap-reserve",
+            "64m",
+            "--heap-commit",
+            "32m"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "0d97ad4bed432d2e169b8bedc72e4eb67081a3d7049ab14f6a1227d531a6017a",
+          "size": 121344
+        },
+        {
+          "fixture": "gc_concurrent_pressure.ml",
+          "flags": [
+            "--heap-reserve",
+            "64m",
+            "--heap-commit",
+            "32m"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "0d97ad4bed432d2e169b8bedc72e4eb67081a3d7049ab14f6a1227d531a6017a",
+          "size": 121344
+        },
+        {
+          "fixture": "gc_concurrent_reuse.ml",
+          "flags": [
+            "--heap-reserve",
+            "512m",
+            "--heap-commit",
+            "16m"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "284ac1e5c11713c6b1358fce534386450aeacbf30364c7f793fe59b935948177",
+          "size": 149504
+        },
+        {
+          "fixture": "gc_concurrent_reuse.ml",
+          "flags": [
+            "--heap-reserve",
+            "512m",
+            "--heap-commit",
+            "16m"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "284ac1e5c11713c6b1358fce534386450aeacbf30364c7f793fe59b935948177",
+          "size": 149504
+        },
+        {
+          "fixture": "gc_concurrent_reuse_fragments.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "49aff3558149fc2cfa8ebf3c8360fb91e1f6b81a20893be1692ca3962036e35a",
+          "size": 148480
+        },
+        {
+          "fixture": "gc_concurrent_reuse_fragments.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "49aff3558149fc2cfa8ebf3c8360fb91e1f6b81a20893be1692ca3962036e35a",
+          "size": 148480
+        },
+        {
+          "fixture": "gc_concurrent_order.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "4ad92f176c263cf514c12e094ce1c59917d30410be4f78aff15572a6204933ee",
+          "size": 122880
+        },
+        {
+          "fixture": "gc_concurrent_order.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "4ad92f176c263cf514c12e094ce1c59917d30410be4f78aff15572a6204933ee",
+          "size": 122880
+        },
+        {
+          "fixture": "gc_concurrent_bins.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "d190d68eef2c7667b2833c257bcd1f358efa1405622f9467e517289f16f22a81",
+          "size": 136192
+        },
+        {
+          "fixture": "gc_concurrent_bins.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "d190d68eef2c7667b2833c257bcd1f358efa1405622f9467e517289f16f22a81",
+          "size": 136192
+        },
+        {
+          "fixture": "gc_thread_lifetime.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "3703ba83a6f5df7f1d287f23a83a3a46684486dfb72c20b4d0cbf7c7d735f009",
+          "size": 192512
+        },
+        {
+          "fixture": "gc_thread_lifetime.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "3703ba83a6f5df7f1d287f23a83a3a46684486dfb72c20b4d0cbf7c7d735f009",
+          "size": 192512
+        },
+        {
+          "fixture": "gc_handoff_lifetime.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "102825ea2e537b050154791cf51dffeea939be05749cac752292fda00d8860a4",
+          "size": 492544
+        },
+        {
+          "fixture": "gc_handoff_lifetime.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "102825ea2e537b050154791cf51dffeea939be05749cac752292fda00d8860a4",
+          "size": 492544
+        },
+        {
+          "fixture": "gc_reference_write_roots.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "bfa8b6c968c8234863cb5a34c242cce1bba58d66c4f5d84cf8418dc5ab2bcfc5",
+          "size": 145920
+        },
+        {
+          "fixture": "gc_reference_write_roots.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "bfa8b6c968c8234863cb5a34c242cce1bba58d66c4f5d84cf8418dc5ab2bcfc5",
+          "size": 145920
+        },
+        {
+          "fixture": "gc_nested_graph_roots.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "a4e0f5ebbeaccfdc678d7bb783b8639130c9a5651bcdbbbc55af59db347ea023",
+          "size": 255488
+        },
+        {
+          "fixture": "gc_nested_graph_roots.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "a4e0f5ebbeaccfdc678d7bb783b8639130c9a5651bcdbbbc55af59db347ea023",
+          "size": 255488
+        },
+        {
+          "fixture": "gc_box_float_safepoint.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "82ee9eb2fd941c0837a03ea60cccd4a3578bfc3023a66d4cd8a16cce2d316a44",
+          "size": 372736
+        },
+        {
+          "fixture": "gc_box_float_safepoint.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "82ee9eb2fd941c0837a03ea60cccd4a3578bfc3023a66d4cd8a16cce2d316a44",
+          "size": 372736
+        },
+        {
+          "fixture": "gc_float_call_roots.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "dbaacc87f8e76a528e135cabbde92db03afe92a5194bb9a67d59b589430d35de",
+          "size": 415232
+        },
+        {
+          "fixture": "gc_float_call_roots.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "dbaacc87f8e76a528e135cabbde92db03afe92a5194bb9a67d59b589430d35de",
+          "size": 415232
+        },
+        {
+          "fixture": "gc_back_to_back_safepoint.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "2270cc56e92f1f6aee7d7db266294a1dcd876bd51d1bd5c1e053cc69062d3530",
+          "size": 115712
+        },
+        {
+          "fixture": "gc_back_to_back_safepoint.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "2270cc56e92f1f6aee7d7db266294a1dcd876bd51d1bd5c1e053cc69062d3530",
+          "size": 115712
+        },
+        {
+          "fixture": "tlab_shared_heap.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "dfa89dbdd738b01f0985fccbe7b7fafbd4c301da41e659b177acc718b8991823",
+          "size": 128512
+        },
+        {
+          "fixture": "tlab_shared_heap.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "dfa89dbdd738b01f0985fccbe7b7fafbd4c301da41e659b177acc718b8991823",
+          "size": 128512
+        },
+        {
+          "fixture": "thread_lifecycle_races.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "20d8671bae7dd5b2e0385b7b2640f402f8610b88d207eba1fb986ff285536f7d",
+          "size": 221696
+        },
+        {
+          "fixture": "thread_lifecycle_races.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "20d8671bae7dd5b2e0385b7b2640f402f8610b88d207eba1fb986ff285536f7d",
+          "size": 221696
+        },
+        {
+          "fixture": "thread_pool.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "4d1b6c19401d318530e2d646f570351590c73084afe2d2cbb1fa47e22eb3a950",
+          "size": 651264
+        },
+        {
+          "fixture": "thread_pool.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "4d1b6c19401d318530e2d646f570351590c73084afe2d2cbb1fa47e22eb3a950",
+          "size": 651264
+        },
+        {
+          "fixture": "memory_management.ml",
+          "flags": [],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "9b349d6e73ca2b6bcdcaf401155605527a677ed60514b952e3752fdfca49dd88",
+          "size": 131072
+        },
+        {
+          "fixture": "memory_management.ml",
+          "flags": [],
+          "pipeline": "--object-pipeline",
+          "sha256": "9b349d6e73ca2b6bcdcaf401155605527a677ed60514b952e3752fdfca49dd88",
+          "size": 131072
+        },
+        {
+          "fixture": "memory_policy.ml",
+          "flags": [
+            "--gc-limit",
+            "1m"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "ea27bc12bd192c532cbe42706e098dc0758432d0866544e9e2c18e48a9dc330a",
+          "size": 100864
+        },
+        {
+          "fixture": "memory_policy.ml",
+          "flags": [
+            "--gc-limit",
+            "1m"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "ea27bc12bd192c532cbe42706e098dc0758432d0866544e9e2c18e48a9dc330a",
+          "size": 100864
+        },
+        {
+          "fixture": "memory_policy.ml",
+          "flags": [
+            "--no-gc-periodic"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "1f231a9138cdb1b909ed94797978e96e2f0d7a087516331e2b1101f138c0e77b",
+          "size": 100864
+        },
+        {
+          "fixture": "memory_policy.ml",
+          "flags": [
+            "--no-gc-periodic"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "1f231a9138cdb1b909ed94797978e96e2f0d7a087516331e2b1101f138c0e77b",
+          "size": 100864
+        },
+        {
+          "fixture": "memory_heap_ceiling.ml",
+          "flags": [
+            "--heap-reserve",
+            "40m",
+            "--heap-commit",
+            "32m"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "d9dfbef1cf51c284e03dd0c9b0c788e805e5e5d73380ffaa20d04738d104ee92",
+          "size": 106496
+        },
+        {
+          "fixture": "memory_heap_ceiling.ml",
+          "flags": [
+            "--heap-reserve",
+            "40m",
+            "--heap-commit",
+            "32m"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "d9dfbef1cf51c284e03dd0c9b0c788e805e5e5d73380ffaa20d04738d104ee92",
+          "size": 106496
+        },
+        {
+          "fixture": "heap_growth_precedes_gc.ml",
+          "flags": [
+            "--heap-commit",
+            "8m",
+            "--gc-limit",
+            "1g"
+          ],
+          "pipeline": "--no-object-pipeline",
+          "sha256": "3ba54f43cb9a37e86b8aa141a7f79b2a419a91d4d7f6319476e7316ed4550126",
+          "size": 89088
+        },
+        {
+          "fixture": "heap_growth_precedes_gc.ml",
+          "flags": [
+            "--heap-commit",
+            "8m",
+            "--gc-limit",
+            "1g"
+          ],
+          "pipeline": "--object-pipeline",
+          "sha256": "3ba54f43cb9a37e86b8aa141a7f79b2a419a91d4d7f6319476e7316ed4550126",
+          "size": 89088
+        }
+      ],
+      "comparedHosts": 3,
+      "excludedFixtures": [],
+      "fallbackImages": 12,
+      "capacityImages": 36
+    }
+  },
+  "compiler_images": [
+    {
+      "name": "compiler-final.exe",
+      "bytes": 57180672,
+      "sha256": "c3335d4a31606697bc5034d0b3072b3441d5bb0a9a0434d575c9a4f3311e3c79"
+    },
+    {
+      "name": "compiler-final-self.exe",
+      "bytes": 57180672,
+      "sha256": "c3335d4a31606697bc5034d0b3072b3441d5bb0a9a0434d575c9a4f3311e3c79"
+    },
+    {
+      "name": "compiler-final-linux",
+      "bytes": 57180480,
+      "sha256": "4871ec23116942f9414208411e4de9805b3b4fb20b895bcb6b1f72e3b28096b3"
+    },
+    {
+      "name": "compiler-final-linux-self",
+      "bytes": 57180480,
+      "sha256": "4871ec23116942f9414208411e4de9805b3b4fb20b895bcb6b1f72e3b28096b3"
+    },
+    {
+      "name": "compiler-documented-verified.exe",
+      "bytes": 57180672,
+      "sha256": "c3335d4a31606697bc5034d0b3072b3441d5bb0a9a0434d575c9a4f3311e3c79"
+    }
+  ],
+  "full_game_parity": {
+    "byte_identical": false,
+    "affected_user_function_lengths_before_bins": 46,
+    "additional_monolithic_probe": "Stopped after a ten-minute diagnostic bound; no parity conclusion from that incomplete build.",
+    "images": [
+      {
+        "name": "game-ml.exe",
+        "bytes": 86770176,
+        "sha256": "c388b6548bbabf3bb4934b606e8a1a6e36230d696ee597f918c4f1b0e8c0471d"
+      },
+      {
+        "name": "game-py.exe",
+        "bytes": 88335872,
+        "sha256": "715ba63d2a1c4eef1995ef5ec7ddbb5b358ccc0ef84b543bcc511d8036863d8f"
+      },
+      {
+        "name": "game-bins-ml.exe",
+        "bytes": 86771200,
+        "sha256": "c889f886df24ad5e986288a9c277e4b2845d4cdc166caca13fe512601a583b10"
+      },
+      {
+        "name": "game-bins-py.exe",
+        "bytes": 88336896,
+        "sha256": "a5c793d865ea3dc7d25bb352c957feb8626c142bc6a237e38ec770ae968ca38e"
+      }
+    ]
+  },
+  "benchmarks": {
+    "comparison-final": {
+      "platform": "Windows-10-10.0.26200-SP0",
+      "wait": false,
+      "samples": [
+        {
+          "version": "before",
+          "run": 0,
+          "wall_seconds": 1.1067395999561995,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 132169712
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 0,
+          "wall_seconds": 1.1298839000519365,
+          "peak_rss_bytes": 212238336,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 1,
+          "wall_seconds": 1.107831200119108,
+          "peak_rss_bytes": 212238336,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 1,
+          "wall_seconds": 1.1112132999114692,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 132169712
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 2,
+          "wall_seconds": 1.1089494000189006,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 132169712
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 2,
+          "wall_seconds": 1.1312168000731617,
+          "peak_rss_bytes": 212238336,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 3,
+          "wall_seconds": 1.1152768000029027,
+          "peak_rss_bytes": 212242432,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 3,
+          "wall_seconds": 1.1312758999411017,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 132169712
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 4,
+          "wall_seconds": 1.0797189997974783,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 132169712
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 132169712
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 4,
+          "wall_seconds": 1.1107654001098126,
+          "peak_rss_bytes": 212242432,
+          "concurrent_allocations": 64,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 132169648
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      ],
+      "summary": {
+        "before": {
+          "wall_seconds": 1.1089494000189006,
+          "peak_rss_bytes": 212246528,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        "after": {
+          "wall_seconds": 1.1152768000029027,
+          "peak_rss_bytes": 212238336,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      },
+      "images": {
+        "before": {
+          "path": "bench-before.exe",
+          "size": 118272,
+          "sha256": "25911e82be1f5c2cbdd16c6906de2c2d3ee06a885037c59f06e5b97f89c5a2d2"
+        },
+        "after": {
+          "path": "bench-final.exe",
+          "size": 119296,
+          "sha256": "0c04112927af38eb3d57d89755cd99dddde660b638b88b96d30716d2544122b6"
+        }
+      }
+    },
+    "control-final": {
+      "platform": "Windows-10-10.0.26200-SP0",
+      "wait": true,
+      "samples": [
+        {
+          "version": "before",
+          "run": 0,
+          "wall_seconds": 1.0598281999118626,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133152768
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 133152768
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 0,
+          "wall_seconds": 1.0430922999512404,
+          "peak_rss_bytes": 212238336,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133152704
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 1,
+          "wall_seconds": 1.0680815000087023,
+          "peak_rss_bytes": 212242432,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133152704
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 1,
+          "wall_seconds": 1.0462881000712514,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133152768
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 133152768
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 2,
+          "wall_seconds": 1.0420272999908775,
+          "peak_rss_bytes": 212254720,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133152768
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 133152768
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 2,
+          "wall_seconds": 1.0583727001212537,
+          "peak_rss_bytes": 212242432,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133152704
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 3,
+          "wall_seconds": 1.0582379000261426,
+          "peak_rss_bytes": 212242432,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133152704
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 3,
+          "wall_seconds": 1.0458372000139207,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133152768
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 133152768
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 4,
+          "wall_seconds": 1.0571784002240747,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 134266896
+            },
+            {
+              "round": 16,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133152768
+            },
+            {
+              "round": 32,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 48,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 64,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 133218256,
+              "largest": 133218304
+            },
+            {
+              "round": 65,
+              "frontier": 191932448,
+              "committed": 191934464,
+              "live": 57600064,
+              "free": 134266848,
+              "largest": 133152768
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 4,
+          "wall_seconds": 1.1007067998871207,
+          "peak_rss_bytes": 212238336,
+          "concurrent_allocations": 0,
+          "checkpoints": [
+            {
+              "round": 0,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 134266832
+            },
+            {
+              "round": 16,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133152704
+            },
+            {
+              "round": 32,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 48,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 64,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 133152704,
+              "largest": 133218240
+            },
+            {
+              "round": 65,
+              "frontier": 191866912,
+              "committed": 191868928,
+              "live": 57600080,
+              "free": 134201296,
+              "largest": 133152704
+            }
+          ],
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      ],
+      "summary": {
+        "before": {
+          "wall_seconds": 1.0462881000712514,
+          "peak_rss_bytes": 212250624,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        "after": {
+          "wall_seconds": 1.0583727001212537,
+          "peak_rss_bytes": 212242432,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      },
+      "images": {
+        "before": {
+          "path": "bench-before.exe",
+          "size": 118272,
+          "sha256": "25911e82be1f5c2cbdd16c6906de2c2d3ee06a885037c59f06e5b97f89c5a2d2"
+        },
+        "after": {
+          "path": "bench-final.exe",
+          "size": 119296,
+          "sha256": "0c04112927af38eb3d57d89755cd99dddde660b638b88b96d30716d2544122b6"
+        }
+      }
+    }
+  },
+  "benchmark_conditions": "Five warmed alternating pairs per mode, after observed compiler builds, documentation generation and local game benchmark activity finished."
+}

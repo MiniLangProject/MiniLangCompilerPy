@@ -32,5 +32,38 @@ function main(args)
   if sum1 != 10 or sum2 != 6 or sum3 != 2 then
     return 1
   end if
+  if nestedCondition(5, 6, 7, 8) != 6 then return 2 end if
+  if literalBudget(1) != 16 or literalBudget(0) != 0 then return 3 end if
   return 0
+end function
+
+// Every Bin child counts, including another Bin. This short source used to
+// produce a 14 KiB larger image with Python than with the native compiler.
+function nestedCondition(a, b, c, d)
+  value = 0
+  for side = 0 to 3
+    if a > side and b > side and c > side and d > side then
+      value = value + side
+    end if
+  end for
+  return value
+end function
+
+// Twelve AST nodes exactly: If + Bin + Var + Num + eight assignments.
+// The numeric literal's payload is not an extra expression node.
+function literalBudget(a)
+  value = 0
+  for side = 0 to 1
+    if a > 0 then
+      value = value + 1
+      value = value + 1
+      value = value + 1
+      value = value + 1
+      value = value + 1
+      value = value + 1
+      value = value + 1
+      value = value + 1
+    end if
+  end for
+  return value
 end function

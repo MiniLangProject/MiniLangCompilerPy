@@ -3,6 +3,22 @@
    Licensed under the Apache License, Version 2.0.
 */
 
+import "qualified_type_lib.ml" as importedGeom
+
+namespace QualifiedProbe
+  struct Box
+    value
+  end struct
+  enum State are
+    Ready
+  end enum
+  shared = QualifiedProbe.Box(0)
+  function writeShared(value)
+    // The unqualified namespace global is an object, not a module alias.
+    shared.value = value
+  end function
+end namespace
+
 struct TypeProbe
   value
 end struct
@@ -53,6 +69,19 @@ function main(args)
   if typeof(worker) != "thread" or typeName(worker) != "thread" then return 18 end if
   if not worker.Start() or not worker.Join(10000) then return 19 end if
   if worker.Result() != 99 or not worker.Close() then return 20 end if
+
+  // Dotted names use lexer DOT tokens, including imported aliases and enums.
+  qualified = QualifiedProbe.Box(3)
+  if not (qualified is QualifiedProbe.Box) or qualified is not QualifiedProbe.Box then return 21 end if
+  if probe is QualifiedProbe.Box or qualified is TypeProbe then return 22 end if
+  if not (QualifiedProbe.State.Ready is QualifiedProbe.State) then return 23 end if
+  point = importedGeom.Point(3, 4)
+  if not (point is importedGeom.Point) or point is not importedGeom.Point then return 24 end if
+  if qualified is importedGeom.Point then return 25 end if
+  nested = importedGeom.nested.Box(7)
+  if not (nested is importedGeom.nested.Box) or point is importedGeom.nested.Box then return 26 end if
+  QualifiedProbe.writeShared(29)
+  if QualifiedProbe.shared.value != 29 then return 27 end if
 
   print "[OK] exhaustive public is-type categories"
   return 0

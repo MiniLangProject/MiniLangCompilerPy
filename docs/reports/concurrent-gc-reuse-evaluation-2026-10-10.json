@@ -1,0 +1,594 @@
+{
+  "date": "2026-10-10",
+  "status": "unreleased development after 1.2.19",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "benchmarks": {
+    "reuse": {
+      "platform": "Windows-10-10.0.26200-SP0",
+      "wait": false,
+      "samples": [
+        {
+          "version": "before",
+          "run": 0,
+          "wall_seconds": 1.0703390999697149,
+          "peak_rss_bytes": 277360640,
+          "concurrent_allocations": 64,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        {
+          "version": "after",
+          "run": 0,
+          "wall_seconds": 1.0893486998975277,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 64,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 1,
+          "wall_seconds": 1.0870864999014884,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 64,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 1,
+          "wall_seconds": 1.0847172001376748,
+          "peak_rss_bytes": 277364736,
+          "concurrent_allocations": 64,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        {
+          "version": "before",
+          "run": 2,
+          "wall_seconds": 1.0773981001693755,
+          "peak_rss_bytes": 277364736,
+          "concurrent_allocations": 64,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        {
+          "version": "after",
+          "run": 2,
+          "wall_seconds": 1.0881393000017852,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 64,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 3,
+          "wall_seconds": 1.082393400138244,
+          "peak_rss_bytes": 212246528,
+          "concurrent_allocations": 64,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 3,
+          "wall_seconds": 1.0401228000409901,
+          "peak_rss_bytes": 277364736,
+          "concurrent_allocations": 64,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        {
+          "version": "before",
+          "run": 4,
+          "wall_seconds": 1.0414246001746505,
+          "peak_rss_bytes": 277360640,
+          "concurrent_allocations": 64,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        {
+          "version": "after",
+          "run": 4,
+          "wall_seconds": 1.0629392999690026,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 64,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      ],
+      "summary": {
+        "before": {
+          "wall_seconds": 1.0703390999697149,
+          "peak_rss_bytes": 277364736,
+          "committed_growth": 67108864,
+          "frontier_growth": 67109888
+        },
+        "after": {
+          "wall_seconds": 1.0870864999014884,
+          "peak_rss_bytes": 212250624,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      },
+      "images": {
+        "before": {
+          "path": "gc-reuse-before.exe",
+          "size": 117248,
+          "sha256": "4f87fdb65a276f3670d377fc1e611aec51d72ceb35d28de1964b03723a5d2f93"
+        },
+        "after": {
+          "path": "gc-reuse-after.exe",
+          "size": 118272,
+          "sha256": "25911e82be1f5c2cbdd16c6906de2c2d3ee06a885037c59f06e5b97f89c5a2d2"
+        }
+      }
+    },
+    "wait_control": {
+      "platform": "Windows-10-10.0.26200-SP0",
+      "wait": true,
+      "samples": [
+        {
+          "version": "before",
+          "run": 0,
+          "wall_seconds": 1.0461365000810474,
+          "peak_rss_bytes": 209252352,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 0,
+          "wall_seconds": 1.0798816001042724,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 1,
+          "wall_seconds": 1.0749512000475079,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 1,
+          "wall_seconds": 1.043525599874556,
+          "peak_rss_bytes": 209252352,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 2,
+          "wall_seconds": 1.050717999925837,
+          "peak_rss_bytes": 209227776,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 2,
+          "wall_seconds": 1.0897575998678803,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 3,
+          "wall_seconds": 1.0666370000690222,
+          "peak_rss_bytes": 212254720,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 3,
+          "wall_seconds": 1.0340138000901788,
+          "peak_rss_bytes": 209248256,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "before",
+          "run": 4,
+          "wall_seconds": 1.0430986999999732,
+          "peak_rss_bytes": 209248256,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        {
+          "version": "after",
+          "run": 4,
+          "wall_seconds": 1.0628814001102,
+          "peak_rss_bytes": 212250624,
+          "concurrent_allocations": 0,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      ],
+      "summary": {
+        "before": {
+          "wall_seconds": 1.043525599874556,
+          "peak_rss_bytes": 209248256,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        },
+        "after": {
+          "wall_seconds": 1.0749512000475079,
+          "peak_rss_bytes": 212250624,
+          "committed_growth": 0,
+          "frontier_growth": 0
+        }
+      },
+      "images": {
+        "before": {
+          "path": "gc-reuse-before.exe",
+          "size": 117248,
+          "sha256": "4f87fdb65a276f3670d377fc1e611aec51d72ceb35d28de1964b03723a5d2f93"
+        },
+        "after": {
+          "path": "gc-reuse-after.exe",
+          "size": 118272,
+          "sha256": "25911e82be1f5c2cbdd16c6906de2c2d3ee06a885037c59f06e5b97f89c5a2d2"
+        }
+      }
+    },
+    "pauses": {
+      "platform": "Windows-10-10.0.26200-SP0",
+      "samples": [
+        {
+          "version": "baseline",
+          "run": 0,
+          "wall_seconds": 0.4056025999598205,
+          "peak_rss_bytes": 72929280,
+          "max_interval_ms": 0.381,
+          "max_handshake_ms": 0.3978,
+          "mark_progress": 2013574
+        },
+        {
+          "version": "synchronous",
+          "run": 0,
+          "wall_seconds": 0.24849030002951622,
+          "peak_rss_bytes": 72896512,
+          "max_interval_ms": 14.717,
+          "max_handshake_ms": null,
+          "mark_progress": 0
+        },
+        {
+          "version": "concurrent",
+          "run": 0,
+          "wall_seconds": 0.4188476998824626,
+          "peak_rss_bytes": 73834496,
+          "max_interval_ms": 0.381,
+          "max_handshake_ms": 0.1968,
+          "mark_progress": 2092683
+        },
+        {
+          "version": "synchronous",
+          "run": 1,
+          "wall_seconds": 0.2329496000893414,
+          "peak_rss_bytes": 72908800,
+          "max_interval_ms": 13.8515,
+          "max_handshake_ms": null,
+          "mark_progress": 0
+        },
+        {
+          "version": "concurrent",
+          "run": 1,
+          "wall_seconds": 0.4046267999801785,
+          "peak_rss_bytes": 73838592,
+          "max_interval_ms": 0.3778,
+          "max_handshake_ms": 0.1837,
+          "mark_progress": 1975887
+        },
+        {
+          "version": "baseline",
+          "run": 1,
+          "wall_seconds": 0.40543019981123507,
+          "peak_rss_bytes": 72929280,
+          "max_interval_ms": 0.3633,
+          "max_handshake_ms": 0.0926,
+          "mark_progress": 1991290
+        },
+        {
+          "version": "concurrent",
+          "run": 2,
+          "wall_seconds": 0.4026977999601513,
+          "peak_rss_bytes": 73838592,
+          "max_interval_ms": 0.493,
+          "max_handshake_ms": 0.1719,
+          "mark_progress": 1954235
+        },
+        {
+          "version": "baseline",
+          "run": 2,
+          "wall_seconds": 0.4045597000513226,
+          "peak_rss_bytes": 72925184,
+          "max_interval_ms": 0.4489,
+          "max_handshake_ms": 0.1597,
+          "mark_progress": 1867591
+        },
+        {
+          "version": "synchronous",
+          "run": 2,
+          "wall_seconds": 0.2330581999849528,
+          "peak_rss_bytes": 72908800,
+          "max_interval_ms": 13.3394,
+          "max_handshake_ms": null,
+          "mark_progress": 0
+        },
+        {
+          "version": "baseline",
+          "run": 3,
+          "wall_seconds": 0.4042036000173539,
+          "peak_rss_bytes": 72925184,
+          "max_interval_ms": 0.359,
+          "max_handshake_ms": 0.0947,
+          "mark_progress": 2022404
+        },
+        {
+          "version": "synchronous",
+          "run": 3,
+          "wall_seconds": 0.23332230001688004,
+          "peak_rss_bytes": 72908800,
+          "max_interval_ms": 13.5957,
+          "max_handshake_ms": null,
+          "mark_progress": 0
+        },
+        {
+          "version": "concurrent",
+          "run": 3,
+          "wall_seconds": 0.4043501999694854,
+          "peak_rss_bytes": 73838592,
+          "max_interval_ms": 0.1753,
+          "max_handshake_ms": 0.1885,
+          "mark_progress": 2034345
+        },
+        {
+          "version": "synchronous",
+          "run": 4,
+          "wall_seconds": 0.24884499981999397,
+          "peak_rss_bytes": 72904704,
+          "max_interval_ms": 15.3167,
+          "max_handshake_ms": null,
+          "mark_progress": 0
+        },
+        {
+          "version": "concurrent",
+          "run": 4,
+          "wall_seconds": 0.404585599899292,
+          "peak_rss_bytes": 73834496,
+          "max_interval_ms": 0.1651,
+          "max_handshake_ms": 0.2005,
+          "mark_progress": 2028498
+        },
+        {
+          "version": "baseline",
+          "run": 4,
+          "wall_seconds": 0.4039936999324709,
+          "peak_rss_bytes": 72929280,
+          "max_interval_ms": 0.434,
+          "max_handshake_ms": 0.1008,
+          "mark_progress": 1990485
+        }
+      ],
+      "summary": {
+        "baseline": {
+          "wall_seconds": 0.4045597000513226,
+          "peak_rss_bytes": 72929280,
+          "max_interval_ms": 0.381
+        },
+        "synchronous": {
+          "wall_seconds": 0.23332230001688004,
+          "peak_rss_bytes": 72908800,
+          "max_interval_ms": 13.8515
+        },
+        "concurrent": {
+          "wall_seconds": 0.404585599899292,
+          "peak_rss_bytes": 73838592,
+          "max_interval_ms": 0.3778
+        }
+      },
+      "images": {
+        "baseline": {
+          "sha256": "496673f4e46e22d184fc7fb79df410accb4a79ba1aab216c246e2865d1008f62",
+          "size": 114176
+        },
+        "synchronous": {
+          "sha256": "1d9f95b930b449876ce631a30550448a4b0423d3ca81e654824278cf234adcaa",
+          "size": 111104
+        },
+        "concurrent": {
+          "sha256": "65ced2def02ee13f522e9e1ddeeb184859d77efd88c1b2d529701d37f7c8cd5e",
+          "size": 115712
+        }
+      }
+    }
+  },
+  "hollowkeep": {
+    "baseline": {
+      "steady_cache_memory": {
+        "first_wall_seconds": 118.176408,
+        "last_wall_seconds": 628.210408,
+        "first_private_MiB": 2838.0234375,
+        "last_private_MiB": 4235.09765625,
+        "private_growth_MiB": 1397.07421875,
+        "private_growth_MiB_per_min": 164.3507160797123,
+        "first_committed_MiB": 1669.42578125,
+        "last_committed_MiB": 3061.42578125,
+        "first_live_MiB": 824.7739868164062,
+        "last_live_MiB": 825.2829437255859,
+        "live_growth_MiB": 0.5089569091796875,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.78570938110352
+      },
+      "warm_average_fps": 301.1945220042771,
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "frames": {
+        "count": 180717,
+        "mean_ms": 3.32011350454043,
+        "p50_ms_le": 3.16,
+        "p95_ms_le": 5.23,
+        "p99_ms_le": 6.77,
+        "p999_ms_le": 9.2,
+        "max_ms": 453.815200133249,
+        "misses_2ms": 173257,
+        "misses_4ms": 38602,
+        "misses_8ms": 563,
+        "misses_16ms": 14,
+        "overflow_100ms": 9
+      },
+      "gc": {
+        "completed": 777,
+        "phase": 0,
+        "pause_total_ms": 647.3603,
+        "pause_max_ms": 28.5596,
+        "overflows": 0
+      },
+      "gameplay": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "process": {
+        "wall_seconds": 638.397,
+        "exit_code": 0,
+        "original_save_unchanged": true
+      },
+      "source_sha256": "9b9da75eb43f2140382b1f3257c0d8f07f586c61ff10593aa844a5345f1f5f0c",
+      "compiler_sha256": "6ecc7b00933257a68e6fd6f6f9f443928defef567aa590a958231050f107add5",
+      "executable_sha256": "3632f6254dc2f4d341c36ae13e6bbeadddcea9934755284a528062abdcd3c814"
+    },
+    "fixed": {
+      "steady_cache_memory": {
+        "first_wall_seconds": 108.164205,
+        "last_wall_seconds": 618.194205,
+        "first_private_MiB": 2631.453125,
+        "last_private_MiB": 2795.078125,
+        "private_growth_MiB": 163.625,
+        "private_growth_MiB_per_min": 19.248867713663902,
+        "first_committed_MiB": 1491.96484375,
+        "last_committed_MiB": 1635.96484375,
+        "first_live_MiB": 824.7796859741211,
+        "last_live_MiB": 825.2847442626953,
+        "live_growth_MiB": 0.5050582885742188,
+        "first_texture_MiB": 82.69279098510742,
+        "last_texture_MiB": 84.5063362121582,
+        "first_actor_MiB": 212.96651077270508,
+        "last_actor_MiB": 212.78129959106445
+      },
+      "warm_average_fps": 310.944782062995,
+      "validation": {
+        "normal_exit": true,
+        "full_ten_gameplay_minutes": true,
+        "warm_frame_seconds_at_least_590": true,
+        "dungeon_floor_nine": true,
+        "sustained_combat": true,
+        "cast_counter_matches_log": true,
+        "kill_counter_matches_log": true,
+        "twenty_autosave_captures": true,
+        "zero_satb_overflows": true,
+        "gpu_renderer_confirmed": true,
+        "original_save_unchanged": true,
+        "no_automated_fault": true,
+        "no_logged_errors": true
+      },
+      "frames": {
+        "count": 186128,
+        "mean_ms": 3.21600508413551,
+        "p50_ms_le": 3.05,
+        "p95_ms_le": 5.01,
+        "p99_ms_le": 6.87,
+        "p999_ms_le": 13.4,
+        "max_ms": 344.197900034487,
+        "misses_2ms": 175298,
+        "misses_4ms": 33164,
+        "misses_8ms": 1133,
+        "misses_16ms": 29,
+        "overflow_100ms": 4
+      },
+      "gc": {
+        "completed": 797,
+        "phase": 0,
+        "pause_total_ms": 8176.1048,
+        "pause_max_ms": 34.1762,
+        "overflows": 0
+      },
+      "gameplay": {
+        "elapsed_seconds": 600.01666666645,
+        "floor": 9,
+        "waves": 51,
+        "kills": 1818,
+        "new_kills": 408,
+        "walk_distance": 102.264166666128,
+        "successful_casts": 658
+      },
+      "process": {
+        "wall_seconds": 626.835,
+        "exit_code": 0,
+        "original_save_unchanged": true
+      },
+      "source_sha256": "9b9da75eb43f2140382b1f3257c0d8f07f586c61ff10593aa844a5345f1f5f0c",
+      "compiler_sha256": "11a428dbfb817fc81e166d2605261dfde910eb8f7c191171e667302c5e7843b1",
+      "executable_sha256": "93d5c639a0cfad997cb50db521e7cdaa28547b60ee46f32fab93edf678321962"
+    }
+  },
+  "validation": {
+    "python_suite_passed": 169,
+    "ml_core_passed": 136,
+    "ml_outer_checks_passed": 208,
+    "stress_runs_passed": 100,
+    "native_emitter_tests_passed": 4,
+    "assembler_tests_passed": 9,
+    "optional_nasm_skipped": 1,
+    "memory_subset_images": 192,
+    "concurrent_subset_images": 150,
+    "qualified_name_parity_images": 12,
+    "unchanged_default_pairs": 8,
+    "std_modules_identical": 53,
+    "std_api_files_identical": 351,
+    "excluded_default_fixtures": [
+      "memory_policy.ml"
+    ],
+    "excluded_concurrent_fixtures": [
+      "memory_policy.ml",
+      "gc_float_call_roots.ml"
+    ],
+    "reason": "Generated images blocked by Windows Defender; no protection/exclusion changes; partial matrix results only."
+  },
+  "timing_caveat": "Five warmed alternating/rotating microbenchmark samples with builds and games idle. One ten-minute application run per variant; early baseline overlapped other compiler work. Game source later changed externally; only the preserved native A/B pair is compared, not the later Python game build. No universal FPS or leak-freedom claim."
+}

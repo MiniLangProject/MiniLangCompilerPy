@@ -32,6 +32,8 @@ def main():
     parser.add_argument("windows_compiler", type=Path)
     parser.add_argument("linux_compiler", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--exclude-fixture", action="append", default=[],
+                        help="explicit partial run; report an excluded fixture (repeatable)")
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("Run this three-host comparison on Windows with WSL Ubuntu")
@@ -62,10 +64,16 @@ def main():
         ("ffi_cstr_return.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"]),
         ("memory_heap_ceiling.ml", ["--heap-reserve", "40MiB", "--heap-commit", "32MB", "--heap-grow", "1t"]),
     ]
+    unknown = set(args.exclude_fixture) - {case[0] for case in cases}
+    if unknown:
+        parser.error('Unknown excluded fixture: ' + ', '.join(sorted(unknown)))
     rows = []
     with tempfile.TemporaryDirectory(prefix="ml_memory_parity_") as temporary:
         for target in ("windows-x64", "linux-x64"):
             for case, (fixture, flags) in enumerate(cases):
+                if fixture in args.exclude_fixture:
+                    print(f"[EXCLUDED] {target}: {fixture} {flags}", flush=True)
+                    continue
                 hashes = []
                 for host, command in compilers.items():
                     for pipeline in ("--no-object-pipeline", "--object-pipeline"):
@@ -83,8 +91,8 @@ def main():
                 if len(set(hashes)) != 1:
                     raise AssertionError(f"Compiler mismatch: {target} {fixture} {flags}")
                 print(f"[OK] {target}: {fixture} {flags}, six-way byte parity")
-    args.output.write_text(json.dumps(dict(images=rows), indent=2) + "\n", encoding="utf-8")
-    print("MEMORY COMPILER PARITY [OK]")
+    args.output.write_text(json.dumps(dict(images=rows, excludedFixtures=args.exclude_fixture), indent=2) + "\n", encoding="utf-8")
+    print("MEMORY COMPILER PARITY [PARTIAL OK]" if args.exclude_fixture else "MEMORY COMPILER PARITY [OK]")
 
 
 if __name__ == "__main__":

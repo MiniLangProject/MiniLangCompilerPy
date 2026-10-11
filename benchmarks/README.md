@@ -238,3 +238,36 @@ The fixture retains 800,000 nodes, collects twelve times on a worker, checks the
 final payload, and samples main-thread progress. The report separates maximum
 observed intervals, internal handshake timers, total wall time and peak RSS.
 Scheduling contributes to these samples; they are not worst-case guarantees.
+
+### Free-range reuse during background collection
+
+The [full-game follow-up](../docs/reports/HOLLOWKEEP_PARITY_AND_NATIVE_MEMORY_2026-10-11.md)
+restores exact Python/ML Hollowkeep bytes and separates managed commitment from
+native graphics-memory fluctuations. Compare complete traces and equal-duration
+warm windows; a private-byte endpoint delta alone does not establish a leak.
+
+The [11 October fragmentation follow-up](../docs/reports/CONCURRENT_GC_FRAGMENTATION_2026-10-11.md)
+adds size classes and partial TLAB refills to the reuse fix below. Its
+`gc_concurrent_order.ml` and `gc_concurrent_bins.ml` regressions preserve large
+holes under smaller allocations. Game memory results and timing limitations
+are reported separately; zero heap growth is not evidence of unchanged FPS.
+
+`concurrent_gc_reuse.ml` holds a fixed 800,000-node graph, seeds a reusable
+128 MiB hole, then allocates one short-lived MiB during each of 64 background
+cycles. It prints frontier, commitment, live bytes and free-list measurements.
+The `wait` argument is a control that allocates only after each cycle finishes.
+
+Compile the same source with the preserved old compiler and the current one,
+using `--gc-concurrent --heap-reserve 512m --heap-commit 16m`, then run:
+
+```powershell
+python benchmarks/compare_concurrent_gc_reuse.py build/gc-reuse-before.exe build/gc-reuse-after.exe --runs 5 --output build/gc-reuse-comparison.json
+python benchmarks/compare_concurrent_gc_reuse.py build/gc-reuse-before.exe build/gc-reuse-after.exe --runs 5 --wait --output build/gc-reuse-control.json
+```
+
+The runner alternates order, validates the live set, and records actual overlap,
+heap growth, wall time, peak RSS, hashes and raw checkpoints. Use idle builds
+and applications for timing. The strict growth assertion belongs to
+`tests/gc_concurrent_reuse.ml`; this benchmark intentionally also runs the old,
+regressing executable. See the
+[evaluation](../docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md).

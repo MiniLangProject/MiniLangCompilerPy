@@ -1005,7 +1005,7 @@ def test_conditional_compilation_cli(*, name: str, mlc_runner: Path, tests_root:
 def test_program_no_fail(*, name: str, mlc_runner: Path, ml_path: Path, must_contain: list[str],
                          timeout_compile_s: int = 240, timeout_run_s: int = 240,
                          extra_args: Optional[list[str]] = None,
-                         stdin_text: Optional[str] = None) -> TestResult:
+                         stdin_text: Optional[str] = None, require_ok_marker: bool = True) -> TestResult:
     """Compile and run the full language suite program.
 
     Returns:
@@ -1036,8 +1036,9 @@ def test_program_no_fail(*, name: str, mlc_runner: Path, ml_path: Path, must_con
                 return TestResult(name=name, status="FAIL", details=f"missing expected output marker: {m!r}",
                                   stdout=rr.stdout, stderr=rr.stderr, )
 
-        # Sanity: ensure tests actually executed.
-        if "[OK]" not in out:
+        # Console tests prove execution with a marker. GUI-subsystem tests have
+        # no console stream; their explicit process exit status is the contract.
+        if require_ok_marker and "[OK]" not in out:
             return TestResult(name=name, status="FAIL", details="no [OK] markers found (did the test program run?)",
                               stdout=rr.stdout, stderr=rr.stderr, )
 
@@ -3459,6 +3460,14 @@ def test_codegen_small_const_for_unroll(*, name: str, mlc_runner: Path) -> TestR
                               details="complex tiny-trip for-loop exceeded the unroll budget but was still duplicated",
                               stdout=rr.stdout, stderr=budget_asm)
 
+        for function, should_unroll in [('nestedCondition', False), ('literalBudget', True)]:
+            match = re.search(rf'(?ms)^fn_user_{function}:.*?(?=^fn_[A-Za-z_].*?:|\Z)',
+                              '\n'.join(line.lstrip() for line in asm_lines))
+            if match is None or (('for_top_' not in match.group()) != should_unroll):
+                return TestResult(name=name, status="FAIL",
+                                  details=f"incorrect expression-node unroll budget in {function}",
+                                  stdout=rr.stdout, stderr=match.group() if match else "missing function")
+
         return TestResult(name=name, status="PASS", stdout=rr.stdout, stderr="")
 
 
@@ -4298,6 +4307,10 @@ def main() -> int:
         ("gc_handoff_lifetime.ml", "GC HANDOFF LIFETIME [OK]", []),
         ("gc_bitmap_words.ml", "GC BITMAP WORDS [OK]", []),
         ("gc_async_fallback.ml", "GC ASYNC FALLBACK [OK]", []),
+        ("gc_concurrent_reuse.ml", "GC CONCURRENT REUSE [OK]", ["--gc-concurrent", "--heap-reserve", "512m", "--heap-commit", "16m"]),
+        ("gc_concurrent_reuse_fragments.ml", "GC CONCURRENT REUSE FRAGMENTS [OK]", ["--gc-concurrent"]),
+        ("gc_concurrent_order.ml", "GC CONCURRENT ORDER [OK]", ["--gc-concurrent"]),
+        ("gc_concurrent_bins.ml", "GC CONCURRENT BINS [OK]", ["--gc-concurrent"]),
         ("ffi_cstr_return.ml", "FFI CSTR RETURN [OK]", []),
         ("memory_fragmentation_cursor.ml", "MEMORY CURSOR [OK]", []),
         ("memory_gc_metadata.ml", "GC METADATA [OK]", ["--heap-shrink", "--heap-shrink-min", "1m"]),
@@ -4551,6 +4564,21 @@ def main() -> int:
     else:
         tests.append(lambda: TestResult(name="type_checks.ml (exhaustive public is-type categories)", status="SKIP",
                                         details="type_checks.ml not found"))
+
+    tests.append(lambda: test_program_no_fail(
+        name="method_globals.ml (root and module globals in methods)",
+        mlc_runner=mlc_runner, ml_path=tests_root / "method_globals.ml",
+        must_contain=["[OK] method globals"], timeout_compile_s=120, timeout_run_s=120))
+
+    for flow_fixture, marker in (("type_flow_context.ml", "[OK] type-flow function context"),
+                                 ("type_flow_rebinding.ml", "[OK] callable rebinding type flow")):
+        tests.append(lambda fixture=flow_fixture, text=marker: test_program_no_fail(
+            name=fixture, mlc_runner=mlc_runner, ml_path=tests_root / fixture,
+            must_contain=[text], timeout_compile_s=120, timeout_run_s=120))
+    tests.append(lambda: test_program_no_fail(
+        name="gui_input.ml (empty input without console code)", mlc_runner=mlc_runner,
+        ml_path=tests_root / "gui_input.ml", must_contain=[], extra_args=["--subsystem", "windows"],
+        stdin_text="must not be read\n", require_ok_marker=False, timeout_compile_s=120, timeout_run_s=30))
 
     if member_callable_direct_ml is not None:
         tests.append(lambda: test_program_no_fail(

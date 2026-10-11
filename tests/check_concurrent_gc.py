@@ -24,6 +24,8 @@ def main():
     parser.add_argument('--reference', type=Path, help='also check byte parity with this compiler')
     parser.add_argument('--linux-reference', type=Path, help='Windows only: Linux ML compiler run through WSL Ubuntu')
     parser.add_argument('--output', type=Path, help='save the executed image hashes')
+    parser.add_argument('--exclude-fixture', action='append', default=[],
+                        help='explicit partial run; report an excluded fixture (repeatable)')
     args = parser.parse_args()
     if os.name != 'nt':
         parser.error('This runtime matrix requires Windows with WSL Ubuntu')
@@ -53,6 +55,10 @@ def main():
         ('gc_concurrent.ml', [], [], 'GC CONCURRENT [OK]'),
         ('gc_concurrent.ml', ['--gc-satb-limit', '64'], ['overflow'], 'GC CONCURRENT [OK]'),
         ('gc_concurrent_pressure.ml', ['--heap-reserve', '64m', '--heap-commit', '32m'], [], 'GC CONCURRENT PRESSURE [OK]'),
+        ('gc_concurrent_reuse.ml', ['--heap-reserve', '512m', '--heap-commit', '16m'], [], 'GC CONCURRENT REUSE [OK]'),
+        ('gc_concurrent_reuse_fragments.ml', [], [], 'GC CONCURRENT REUSE FRAGMENTS [OK]'),
+        ('gc_concurrent_order.ml', [], [], 'GC CONCURRENT ORDER [OK]'),
+        ('gc_concurrent_bins.ml', [], [], 'GC CONCURRENT BINS [OK]'),
         ('gc_thread_lifetime.ml', [], [], 'GC THREAD LIFETIME [OK]'),
         ('gc_handoff_lifetime.ml', [], [], 'GC HANDOFF LIFETIME [OK]'),
         ('gc_reference_write_roots.ml', [], [], '[OK]'),
@@ -69,9 +75,15 @@ def main():
         ('memory_heap_ceiling.ml', ['--heap-reserve', '40m', '--heap-commit', '32m'], [], 'MEMORY CEILING [OK]'),
         ('heap_growth_precedes_gc.ml', ['--heap-commit', '8m', '--gc-limit', '1g'], [], '[OK]'),
     ]
+    unknown = set(args.exclude_fixture) - {case[0] for case in cases}
+    if unknown:
+        parser.error('Unknown excluded fixture: ' + ', '.join(sorted(unknown)))
     with tempfile.TemporaryDirectory(prefix='ml_concurrent_gc_') as folder:
         folder = Path(folder)
         for index, (fixture, flags, arguments, marker) in enumerate(cases):
+            if fixture in args.exclude_fixture:
+                print(f'[EXCLUDED] {fixture} {flags}', flush=True)
+                continue
             images = []
             for pipeline in ('--no-object-pipeline', '--object-pipeline'):
                 image = folder / f'{index}-{pipeline[2:]}.exe'
@@ -139,9 +151,10 @@ def main():
                 invoke([*peer_command, path_for(bad_arity, linux), path_for(rejected, linux),
                         '--gc-satb-limit', invalid], expected=2)
             assert not rejected.exists(), 'Rejected command wrote an image'
-        print('CONCURRENT GC MATRIX [OK]', flush=True)
+        print('CONCURRENT GC MATRIX [PARTIAL OK]' if args.exclude_fixture else 'CONCURRENT GC MATRIX [OK]', flush=True)
     if args.output:
         args.output.write_text(json.dumps(dict(images=rows, comparedHosts=1 + len(peers),
+                                              excludedFixtures=args.exclude_fixture,
                                               fallbackImages=4 * (1 + len(peers)),
                                               capacityImages=12 * (1 + len(peers))), indent=2) + '\n', encoding='utf-8')
 

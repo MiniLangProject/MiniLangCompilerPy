@@ -2099,9 +2099,8 @@ class Parser:
                     raise ParseError("Expected type name after 'is'", ty_tok.pos)
                 parts = [str(ty_tok.value)]
                 self.advance()
-                # allow dotted qualified names: Foo.Bar.Baz
-                while self.peek().kind == "OP" and self.peek().value == ".":
-                    dot = self.peek()
+                # The lexer emits DOT, not OP, for Foo.Bar.Baz type names.
+                while self.peek().kind == "DOT":
                     self.advance()
                     seg = self.peek()
                     if seg.kind != "IDENT":

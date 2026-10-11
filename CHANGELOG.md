@@ -2,6 +2,43 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Restore exact full-game Python/ML parity for Hollowkeep: resolve method
+  `global` declarations in the correct module, count real AST nodes consistently
+  for bounded loop unrolling, and run value-flow analysis in the function's own
+  namespace. Align integer `div` facts in the ML backend.
+- Pass the selected Windows PE subsystem into Python runtime generation.
+  GUI `input()` now returns an empty string without emitting or executing
+  console-reading code, matching ML.
+- Do not infer original return contracts or inline original bodies after a
+  callable global may be rebound. Respect parameter, local and captured
+  callable shadowing during type flow.
+- Add shared global-resolution, unroll-budget, type-flow/rebinding and GUI
+  input regressions, plus a 60-image Windows/Linux cross-host/pipeline check.
+
+- Reduce residual concurrent-GC fragmentation with power-of-two size classes
+  and partial TLAB refills down to 4 KiB. Preserve large contiguous holes for
+  buffers, coalesce snapshot-free ranges through the compact bitmap, and account
+  for actual refill capacity. Add allocation-order and almost-64-KiB-hole
+  regressions, randomized native allocator checks, 64-bit sizes, safe invalid
+  pointer diagnostics and free-list statistics beyond 200,000 entries.
+- Fix concurrent-GC heap growth with a stable live set: retain allocator access
+  to old free ranges using an immutable snapshot exclusion bitmap. Protect
+  below-frontier allocations, TLAB splits, SATB barriers and weak Thread records;
+  coalesce adjacent free ranges and fall back safely on bitmap allocation failure.
+- Add repeated-cycle plateau and fragmented multi-mutator regression tests,
+  native bitmap boundary/OOM checks, and a reproducible old/new memory benchmark.
+  Document metadata overhead and the unchanged no-decommit limitation.
+- Align Python's qualified `is` parsing and writes to members of implicit
+  namespace/package globals with the existing ML compiler behavior. Cover
+  imported aliases, nested type names, enum checks and global-object field writes.
+- Add explicit partial-run reporting to the GC parity tools for excluded
+  fixtures; exclusions are never reported as a complete successful matrix.
+
+See the [reuse evaluation](docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md)
+and [fragmentation follow-up](docs/reports/CONCURRENT_GC_FRAGMENTATION_2026-10-11.md).
+
 ## 1.2.19 - 2026-10-10
 
 - Add matching optional Windows concurrent GC to both compilers with
