@@ -1,0 +1,138 @@
+{
+  "version": "1.2.20",
+  "compilerBuilds": [
+    {
+      "file": "python-windows.exe",
+      "bytes": 57280512,
+      "sha256": "3ae28058916b6931dd4b13af49a3306e3eec7166128fdd7ead7ae60fdead6426"
+    },
+    {
+      "file": "windows-stage2.exe",
+      "bytes": 57280512,
+      "sha256": "3ae28058916b6931dd4b13af49a3306e3eec7166128fdd7ead7ae60fdead6426"
+    },
+    {
+      "file": "windows-stage3.exe",
+      "bytes": 57280512,
+      "sha256": "3ae28058916b6931dd4b13af49a3306e3eec7166128fdd7ead7ae60fdead6426"
+    },
+    {
+      "file": "python-linux",
+      "bytes": 57278800,
+      "sha256": "d458f61655b085566ff658b0cb1a9b17c5a404a38919e36a1a48927b11b78cd9"
+    },
+    {
+      "file": "linux-self",
+      "bytes": 57278800,
+      "sha256": "d458f61655b085566ff658b0cb1a9b17c5a404a38919e36a1a48927b11b78cd9"
+    },
+    {
+      "file": "linux-cross",
+      "bytes": 57278800,
+      "sha256": "d458f61655b085566ff658b0cb1a9b17c5a404a38919e36a1a48927b11b78cd9"
+    }
+  ],
+  "images": [
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "5b957ac6b0920660518ec7590c08287f1a3f6ba5cb600cce5a239af38434bfd4"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "f29af59b257d0b68181ce96e9bc45ab7ce300dbc6869994028f1e030f3851458"
+    }
+  ],
+  "qualification": {
+    "pythonFullSuitePassed": 175,
+    "nativeCoreSuitePassed": 136,
+    "nativeOuterChecksPassed": true,
+    "cliHosts": [
+      "python",
+      "windows-ml",
+      "linux-ml"
+    ],
+    "memoryParityImages": 192,
+    "concurrentImages": 132,
+    "asyncFallbackImages": 12,
+    "satbCapacityImages": 36,
+    "identicalStdModules": 53,
+    "identicalStdReferenceFiles": 351,
+    "synchronizedOpcodeVectors": 233,
+    "memoryParityComplete": false,
+    "memoryParityExcludedFixtures": [
+      "memory_policy.ml"
+    ],
+    "memoryParityLimitation": "Windows Defender quarantined a generated memory_policy.ml image in both full-matrix attempts (Trojan:Win32/Wacatac.C!ml). The remaining 192 images passed in an explicitly partial run. No antivirus settings or quarantine state were changed.",
+    "contextParityImages": 60,
+    "minidocFiles": 38,
+    "minidocSymbols": 3321,
+    "minidocWarnings": 0,
+    "nativeOuterChecksPassedCount": 220,
+    "nativeGcEmitterTestsPassed": 4,
+    "unrollModelTestsPassed": 5
+  }
+}

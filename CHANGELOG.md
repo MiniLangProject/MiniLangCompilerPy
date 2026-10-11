@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.2.20 - 2026-10-11
 
 - Restore exact full-game Python/ML parity for Hollowkeep: resolve method
   `global` declarations in the correct module, count real AST nodes consistently
@@ -36,8 +36,11 @@ All notable changes to the MiniLang compiler are documented here.
 - Add explicit partial-run reporting to the GC parity tools for excluded
   fixtures; exclusions are never reported as a complete successful matrix.
 
-See the [reuse evaluation](docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md)
-and [fragmentation follow-up](docs/reports/CONCURRENT_GC_FRAGMENTATION_2026-10-11.md).
+See the [reuse evaluation](docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md),
+[fragmentation follow-up](docs/reports/CONCURRENT_GC_FRAGMENTATION_2026-10-11.md)
+and [full-game parity and native memory investigation](docs/reports/HOLLOWKEEP_PARITY_AND_NATIVE_MEMORY_2026-10-11.md).
+Release-stamped compiler hashes and validation are in the
+[1.2.20 release notes](RELEASE_NOTES_1.2.20.md).
 
 ## 1.2.19 - 2026-10-10
 

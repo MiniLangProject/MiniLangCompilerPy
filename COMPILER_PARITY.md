@@ -1,5 +1,24 @@
 # Compiler parity and self-hosting
 
+## 1.2.20 release verification 11 October 2026
+
+Release 1.2.20 includes the concurrent allocator and full-game code-generation
+fixes described in the historical development checkpoints below.
+
+The release-stamped Windows Python bootstrap, native object-pipeline stage 2
+and monolithic stage 3 are byte-identical:
+`3AE28058916B6931DD4B13AF49A3306E3EEC7166128FDD7EAD7AE60FDEAD6426`
+(57,280,512 bytes). Python Linux output, Linux-native monolithic selfbuild
+and Windows ML object-pipeline crossbuild are also byte-identical:
+`D458F61655B085566FF658B0CB1A9B17C5A404A38919E36A1A48927B11B78CD9`
+(57,278,800 bytes).
+
+See the [release notes](RELEASE_NOTES_1.2.20.md) and
+[release validation manifest](docs/reports/release-1.2.20-version-matrix.json)
+for version checks, regression coverage and the Defender-related exclusion
+in the additional default-memory matrix. A partial matrix is not a full pass.
+The older hashes below identify pre-version-bump checkpoints, not the packages.
+
 ## Full Hollowkeep parity restored 11 October 2026
 
 The current development Python and Windows ML object-pipeline compilers produce

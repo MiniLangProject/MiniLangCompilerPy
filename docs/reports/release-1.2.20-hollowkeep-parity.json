@@ -1,0 +1,20 @@
+{
+  "version": "1.2.20",
+  "images": [
+    {
+      "host": "python",
+      "pipeline": "monolithic",
+      "bytes": 86633472,
+      "sha256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499"
+    },
+    {
+      "host": "windows-ml",
+      "pipeline": "object",
+      "bytes": 86633472,
+      "sha256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499"
+    }
+  ],
+  "previousValidatedImageSha256": "c0ec23fb3780655405b7ac9ffb85813395ce0ce5c30ec4c534e49c83c0200499",
+  "identicalToPreviousTenMinuteImage": true,
+  "timingQualification": "Builds overlap each other and release validation; not isolated performance measurements."
+}
