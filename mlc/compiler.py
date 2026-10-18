@@ -20,9 +20,10 @@ from .minilang_parser import ParseError, parse_compile_define_specs
 from .pe import PEBuilder, build_idata, KERNEL32, MSVCRT
 from .project import ProjectError, expand_project_args, fingerprint as project_fingerprint, restore as project_restore, store as project_store
 from .tools import u32, u64, extern_library_label_token
+from . import packing
 
 
-COMPILER_VERSION = "1.2.20"
+COMPILER_VERSION = "1.2.21"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -2009,6 +2010,17 @@ def main(argv: List[str]) -> int:
         print(f"ProjectError: {e}")
         return 2
 
+    try:
+        pack_options = packing.parse_options(argv[1:])
+        argv = [argv[0], *pack_options.args]
+        if pack_options.mode in ('pack', 'unpack'):
+            packing.transform(*pack_options.args, pack_options.upx,
+                              unpack=pack_options.mode == 'unpack')
+            return 0
+    except (packing.PackingError, OSError) as e:
+        print(f"PackError: {e}")
+        return 2
+
     parser = argparse.ArgumentParser(
         prog='mlc_win64.py',
         description=f'MiniLang native compiler {COMPILER_VERSION} (Windows/Linux x64)',
@@ -2016,6 +2028,9 @@ def main(argv: List[str]) -> int:
     parser.add_argument('-version', '--version', action='version', version=COMPILER_VERSION_TEXT)
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output native image path')
+    parser.add_argument('--pack', action='store_true', help='pack the compiled image with UPX and exact-restoration metadata')
+    parser.add_argument('--upx', metavar='PATH', help='trusted UPX executable (or MINILANG_UPX)')
+    parser.epilog = 'Standalone: --pack-exe INPUT OUTPUT --upx PATH; --unpack-exe INPUT OUTPUT --upx PATH. Outputs must not exist.'
     object_pipeline_group = parser.add_mutually_exclusive_group()
     object_pipeline_group.add_argument('--object-pipeline', action='store_true',
                                        help='accepted for project parity; Python emits the equivalent monolithic image')
@@ -2106,7 +2121,7 @@ def main(argv: List[str]) -> int:
         return 2
 
     project_digest = ""
-    project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels)
+    project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels and not pack_options.mode)
     if project_cache_enabled:
         try:
             project_digest = project_fingerprint(project_build, inp, include_dirs)
@@ -2271,6 +2286,13 @@ def main(argv: List[str]) -> int:
         # Non-position exceptions: keep it clean (or print traceback if you have a flag)
         print(f"{kind}: {e}")
         return 2
+
+    if pack_options.mode == 'compile':
+        try:
+            packing.transform(out, out, pack_options.upx, replace=True)
+        except (packing.PackingError, OSError) as e:
+            print(f"PackError: {e}; unpacked compiler output retained at {out}")
+            return 2
 
     try:
         project_store(project_build if project_cache_enabled else None, project_digest, out)

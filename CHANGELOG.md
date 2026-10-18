@@ -2,6 +2,27 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.21 - 2026-10-18
+
+- Include the post-1.2.20 concurrent-GC snapshot improvement: consume free bins
+  directly, publish coalesced ranges without extra list walks, and skip bounded
+  zero-bitmap spans while preserving the frozen-frontier boundary.
+- Relax bounded forward branches, including relocation/chunk boundaries, and
+  stabilize ELF counted-loop alignment using canonical MLO stream offsets.
+  Keep the existing PE loop layout, which performed better in the A/B tests.
+  Remove only native function bodies proven unreferenced in all loaded source.
+  Preserve diagnostics and inline fallback behavior.
+- Reuse up to six nonvolatile primitive register mirrors with conservative
+  lifetimes and a profitability gate; keep canonical stack roots intact.
+- Scalar-replace nonescaping, untyped local struct fields in rooted stack slots.
+  Keep allocations for aliases, escapes, typed guards and uncertain cases.
+- Align bare-return analysis and deferred-cleanup package context in the two
+  backends; refresh the canonical Linux runtime after branch shortening.
+- Add optional UPX packing and byte-exact unpacking for PE/ELF, with validated
+  restoration metadata, atomic publication and cross-compiler regression tests.
+  See [packing](docs/EXECUTABLE_PACKING.md) and the
+  [evaluation](docs/reports/CODEGEN_COMPACTION_AND_PACKING_2026-10-18.md).
+
 ## 1.2.20 - 2026-10-11
 
 - Restore exact full-game Python/ML parity for Hollowkeep: resolve method

@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from .codegen_scope import VarBinding
+from . import codegen_opt
+from ..asm import Asm
 from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_STRING, OBJ_ARRAY, OBJ_ARRAY_IMM, OBJ_BYTES, OBJ_FUNCTION,
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
                           OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
@@ -1230,7 +1232,7 @@ class CodegenStmt:
         return dict(facts)
 
     def _select_promoted_local_registers(self, fn: Any, known_types: dict[str, str]) -> list[str]:
-        """Assign up to two immediate-only locals to ABI-preserved XMM homes.
+        """Assign up to six immediate-only locals to ABI-preserved XMM homes.
 
         The ordinary stack slot remains authoritative for diagnostics, GC-frame
         layout and native interop. Loads can nevertheless use the register copy;
@@ -1247,20 +1249,30 @@ class CodegenStmt:
                 counts[name] = counts.get(name, 0) + 1
             setattr(binding, 'promoted_xmm', None)
 
-        registers = ('xmm6', 'xmm7')
+        lifetimes = codegen_opt.intervals(fn.body) if len(bindings) > 2 else None
+        registers = ('xmm6', 'xmm7', 'xmm8', 'xmm9', 'xmm10', 'xmm11') if lifetimes is not None else ('xmm6', 'xmm7')
         assigned: list[str] = []
+        occupants: dict[str, list[tuple[int, int]]] = {}
         for binding in bindings:
-            if len(assigned) >= len(registers):
-                break
             name = str(getattr(binding, 'name', '') or '')
             fact = self._value_type_base(known_types.get(name))
             if (not name or name not in hot_names or counts.get(name, 0) != 1 or fact not in ('int', 'bool')
                     or bool(getattr(binding, 'boxed', False))
                     or getattr(binding, 'capture_index', None) is not None):
                 continue
-            reg = registers[len(assigned)]
+            interval = (lifetimes or {}).get(name, [0, len(fn.body), 0, 1, False])
+            # Induction variables already have specialized stack-based loop
+            # lowering. Extra cross-domain copies hurt throughput on that path.
+            profitable = not interval[4] and interval[2] >= 3 * max(1, interval[3])
+            reg = next((r for r in registers if ((r in ('xmm6', 'xmm7') and r not in occupants) or profitable)
+                       and all(interval[1] < other[0] or interval[0] > other[1]
+                       for other in occupants.get(r, []))), None)
+            if reg is None:
+                continue
             setattr(binding, 'promoted_xmm', reg)
-            assigned.append(reg)
+            occupants.setdefault(reg, []).append(tuple(interval))
+            if reg not in assigned:
+                assigned.append(reg)
         return assigned
 
     def _for_index_hoist_plans(self, loop: Any, index_binding: Any) -> list[dict[str, Any]]:
@@ -2856,6 +2868,16 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.Assign):
+            for declaration, _binding, _fields, offsets in getattr(self, '_scalar_structs', []):
+                if s is declaration:
+                    # Publish the ordinary binding as void; only its field slots
+                    # carry values. All slots are already in the precise root frame.
+                    a.mov_rax_imm64(enc_void())
+                    self.emit_store_var(s.name, s)
+                    for arg, offset in zip(s.expr.args, offsets):
+                        self.emit_expr(arg)
+                        a.mov_rsp_disp32_rax(offset)
+                    return
             is_sync_decl = hasattr(ml, 'SynchronizedDecl') and isinstance(s, ml.SynchronizedDecl)
             if is_sync_decl and bool(getattr(self, 'in_function', False)):
                 raise self.error('synchronized variables may only be declared at top level or in a namespace', s)
@@ -3832,6 +3854,11 @@ class CodegenStmt:
                 _state_store_qword_rax(step_slot)
                 a.mark(lbl_step_done)
 
+            # Stabilize the measured ELF hot-loop layout after branch shortening.
+            # PE keeps its existing policy: the same padding regressed that
+            # layout. Entry padding is skipped by subsequent backedges.
+            if self.is_linux_target:
+                a.align_loop()
             a.mark(top)
             # body
             self._loop_index_fast_stack.append({
@@ -3887,6 +3914,11 @@ class CodegenStmt:
             return
 
         if hasattr(ml, 'SetMember') and isinstance(s, ml.SetMember):
+            scalar_offset = codegen_opt.scalar_slot(self, s.obj, s.field)
+            if scalar_offset is not None:
+                self.emit_expr(s.expr)
+                a.mov_rsp_disp32_rax(scalar_offset)
+                return
             # obj.field = expr
             #
             # Step 5: If the left side is a dotted identifier chain whose *root* is NOT a
@@ -4971,6 +5003,7 @@ class CodegenStmt:
         # Keep CodegenCore package-resolution helpers in sync.
         self._file_prefix_map = file_prefix_map
         self.current_file_prefix = ''
+        self._dead_functions = codegen_opt.unused_functions(self)
 
         # Step 10.0: materialize boxed string constants for typeName(x).
         # typeName() is like typeof(), but returns concrete struct/enum names.
@@ -5316,7 +5349,8 @@ class CodegenStmt:
                 + b"\x00" * 8,
             )
             off, _ = self.rdata.labels[obj_lbl]
-            self.rdata.add_abs64_patch(int(off) + 8, f"fn_user_{nm}")
+            if nm not in self._dead_functions:
+                self.rdata.add_abs64_patch(int(off) + 8, f"fn_user_{nm}")
             self.function_static_obj_labels[nm] = obj_lbl
 
         self.struct_static_obj_labels: Dict[str, str] = {}
@@ -5644,6 +5678,8 @@ class CodegenStmt:
         voidv = enc_void()
         for nm, fn in self.user_functions.items():
             lbl = getattr(self, "function_global_labels", {}).get(nm)
+            if nm in self._dead_functions:
+                continue
             obj_lbl = getattr(self, "function_static_obj_labels", {}).get(nm)
             if not lbl or not obj_lbl:
                 continue
@@ -6026,6 +6062,14 @@ class CodegenStmt:
 
         if not isinstance(fn, ml.FunctionDef):
             return
+
+        # Still lower unused bodies for all semantic diagnostics and deterministic
+        # metadata/budget effects. Only their machine-code fragment is discarded.
+        retained_asm = None
+        if fn.name in getattr(self, '_dead_functions', set()):
+            retained_asm = self.asm
+            self.asm = Asm()
+            a = self.asm
 
         defer_sites = self._collect_defer_sites(fn)
 
@@ -6630,6 +6674,8 @@ class CodegenStmt:
         # Running it in the last module initializer's context makes generated
         # code depend on unrelated source order and differs from MLO emission.
         known_value_types_for_fn = infer_with_function_context(lambda: self._infer_known_value_types(fn))
+        old_scalar_structs = getattr(self, '_scalar_structs', [])
+        self._scalar_structs = infer_with_function_context(lambda: codegen_opt.scalar_candidates(self, fn))
         promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
         n_locals = len(getattr(self, "_function_locals", []))
 
@@ -6662,6 +6708,11 @@ class CodegenStmt:
         locals_base = local_base + 8
 
         local_bytes = n_locals * 8
+        scalar_cursor = locals_base + local_bytes
+        for plan in self._scalar_structs:
+            plan[3] = [scalar_cursor + i * 8 for i in range(len(plan[2]))]
+            scalar_cursor += len(plan[2]) * 8
+        local_bytes = scalar_cursor - locals_base
         params_base = locals_base + local_bytes
 
         # call-temp slots: spill evaluated call arguments
@@ -7035,22 +7086,22 @@ class CodegenStmt:
         try:
             for st in fn.body:
                 self.emit_stmt(st)
+
+            # Deferred calls still belong to this lexical/package context.
+            # Restoring it early loses qualified call specialization and can
+            # resolve synthesized cleanup expressions in an unrelated scope.
+            a.mov_rax_imm64(enc_void())
+            a.jmp(defer_label)
+            if defer_sites:
+                a.mark(defer_label)
+                self._emit_defer_cleanup(defer_sites, defer_ret_off)
+                a.jmp(ret_label)
+            self.emit_deferred_cold_blocks()
+            self.pop_cold_block_scope()
         finally:
             self.current_qname_prefix = old_qpref
             self._current_fn_qname = _old_fn_qn
             self._current_fn_file = _old_fn_file
-
-        # Default return void
-        a.mov_rax_imm64(enc_void())
-        a.jmp(defer_label)
-
-        if defer_sites:
-            a.mark(defer_label)
-            self._emit_defer_cleanup(defer_sites, defer_ret_off)
-            a.jmp(ret_label)
-
-        self.emit_deferred_cold_blocks()
-        self.pop_cold_block_scope()
 
         # ---- epilogue ----
         a.mark(ret_label)
@@ -7094,6 +7145,7 @@ class CodegenStmt:
         self._current_root_static_qwords = old_root_static_qwords
         self._known_int_names = old_known_int_names
         self._known_value_types = old_known_value_types
+        self._scalar_structs = old_scalar_structs
         self._loop_index_fast_stack = old_loop_index_fast_stack
 
         for index, reg in enumerate(promoted_local_regs):
@@ -7110,3 +7162,5 @@ class CodegenStmt:
         # restore analysis state for outer compilation (other functions)
         self._decl_site_bindings = saved_decl_site
         self._function_locals = saved_fn_locals
+        if retained_asm is not None:
+            self.asm = retained_asm

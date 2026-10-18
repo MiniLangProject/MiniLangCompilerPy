@@ -46,6 +46,7 @@ def _current_asm_methods() -> list[str]:
 
     ignore = {
         "emit",
+        "align_loop",
         "emit8",
         "emit32",
         "emit64",
@@ -116,6 +117,24 @@ def _assemble_with_nasm(lines: list[str]) -> bytes:
 
 
 class TestAsmOpcodeVectors(unittest.TestCase):
+    def test_loop_alignment_survives_forward_and_backward_branches(self):
+        import sys
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+        for prefix in range(32):
+            a = Asm()
+            a.emit(b'\x90' * prefix)
+            a.jcc('e', 'after')
+            a.align_loop(12)
+            a.mark('loop')
+            self.assertEqual((12 + a.pos) % 16, 0)
+            loop = a.pos
+            a.nop()
+            a.jmp('loop')
+            a.mark('after')
+            self.assertEqual(a.labels['loop'], loop)
+            self.assertEqual(a.finalize()[loop:loop + 3], b'\x90\xeb\xfd')
+
     """Verify exact x64 encodings and the assembler's local peephole rules."""
 
     def setUp(self) -> None:
@@ -217,7 +236,7 @@ class TestAsmOpcodeVectors(unittest.TestCase):
             a.nop()
             a.mark('no')
             self.assertEqual(a.finalize()[:2], b'\x0f\x84')
-            self.assertEqual(len(a.patches), 2)
+            self.assertEqual(len(a.patches), 1)
         a = Asm()
         a.call('no')
         a.lea_rax_rip('yes')
@@ -326,7 +345,7 @@ class TestAsmOpcodeVectors(unittest.TestCase):
         self.assertEqual(a.finalize(), bytes.fromhex("50b80000005058"))
 
     def test_short_backward_branches(self) -> None:
-        """Resolved loop back-edges use rel8; unresolved forward edges stay rel32."""
+        """Backward edges and local forward edges use their shortest encoding."""
         import sys
 
         sys.path.insert(0, str(_project_root()))
@@ -348,13 +367,69 @@ class TestAsmOpcodeVectors(unittest.TestCase):
         a.jmp("later")
         a.nop()
         a.mark("later")
-        self.assertEqual(a.finalize(), bytes.fromhex("e90100000090"))
+        self.assertEqual(a.finalize(), bytes.fromhex("eb0190"))
 
         a = Asm()
         a.jcc("e", "later")
         a.nop()
         a.mark("later")
-        self.assertEqual(a.finalize(), bytes.fromhex("0f840100000090"))
+        self.assertEqual(a.finalize(), bytes.fromhex("740190"))
+
+    def test_forward_branch_boundaries_and_relocations(self) -> None:
+        """Local relaxation preserves calls, RIP operands and external labels."""
+        import sys
+        import struct
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+
+        for size in (0, 1, 126, 127, 128):
+            a = Asm()
+            a.jcc('ne', 'done')
+            for _ in range(size):
+                a.nop()
+            a.mark('done')
+            result = a.finalize()
+            if size == 0:
+                self.assertEqual(result, b'')
+                continue
+            self.assertEqual(len(result), size + (2 if size <= 127 else 6))
+            self.assertEqual(result[0], 0x75 if size <= 127 else 0x0f)
+        for prefix in (0, 254, 255, 256, 65530):
+            a = Asm()
+            a.mark('before')
+            a.emit(b'\x90' * prefix)
+            a.jcc('e', 'done')
+            a.call('before')
+            a.lea_rax_rip('done')
+            a.mark('done')
+            result = a.finalize()
+            self.assertEqual(result[prefix:prefix + 2], bytes((0x74, 12)))
+            self.assertEqual(prefix + 7 + struct.unpack_from('<i', result, prefix + 3)[0], 0)
+            self.assertEqual(struct.unpack_from('<i', result, prefix + 10)[0], 0)
+        for barrier in ('label', 'backward'):
+            a = Asm()
+            a.mark('before')
+            a.jcc('e', 'done')
+            if barrier == 'label':
+                a.mark('middle')
+            else:
+                a.jmp('before')
+            a.nop()
+            a.mark('done')
+            self.assertEqual(a.finalize()[0], 0x74 if barrier == 'label' else 0x0f)
+            if barrier == 'label':
+                self.assertEqual(a.labels['middle'], 2)
+
+    def test_forward_branch_listing(self) -> None:
+        import sys
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+        a = Asm()
+        a.enable_listing('unused.asm')
+        a.jcc('e', 'done')
+        a.nop()
+        a.mark('done')
+        self.assertEqual([(e.start, e.end) for e in a._trace], [(0, 2), (2, 3)])
 
     def test_vectors_match_golden(self) -> None:
         golden = _load_golden()

@@ -32,6 +32,7 @@ def main() -> int:
 
     ignore = {
         "emit",
+        "align_loop",
         "emit8",
         "emit32",
         "emit64",

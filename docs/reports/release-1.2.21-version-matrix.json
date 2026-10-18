@@ -1,0 +1,282 @@
+{
+  "version": "1.2.21",
+  "compilerBuilds": [
+    {
+      "file": "final-source-windows.exe",
+      "bytes": 56576512,
+      "sha256": "68bc63c79f7ce5b50b750652baaefdfcb808ea1bd825280b927a143d8ea0bebe"
+    },
+    {
+      "file": "windows-final-stage2.exe",
+      "bytes": 56576512,
+      "sha256": "68bc63c79f7ce5b50b750652baaefdfcb808ea1bd825280b927a143d8ea0bebe"
+    },
+    {
+      "file": "windows-final-stage3.exe",
+      "bytes": 56576512,
+      "sha256": "68bc63c79f7ce5b50b750652baaefdfcb808ea1bd825280b927a143d8ea0bebe"
+    },
+    {
+      "file": "final-source-linux",
+      "bytes": 56586912,
+      "sha256": "6c28b63b871dcec6263ce0102b049fd67e02cdc361809796421d8ebaa87005fd"
+    },
+    {
+      "file": "linux-final-self",
+      "bytes": 56586912,
+      "sha256": "6c28b63b871dcec6263ce0102b049fd67e02cdc361809796421d8ebaa87005fd"
+    },
+    {
+      "file": "linux-final-cross",
+      "bytes": 56586912,
+      "sha256": "6c28b63b871dcec6263ce0102b049fd67e02cdc361809796421d8ebaa87005fd"
+    }
+  ],
+  "images": [
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "a57470838d86c935c2f9be399606acd8b70ae378af47f2c9a1b415c0e0d38bfe"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "153cb29e207bbf2a662830ab9f1859783f98b3e90f63db71aad78544f3f0555d"
+    }
+  ],
+  "qualification": {
+    "pythonFullSuitePassed": 177,
+    "pythonFailed": 0,
+    "pythonSkipped": 0,
+    "nativeCoreSuitePassed": 138,
+    "nativeOuterChecksPassedCount": 230,
+    "nativeFailed": 0,
+    "cliHosts": [
+      "python",
+      "windows-ml",
+      "linux-ml"
+    ],
+    "identicalStdModules": 53,
+    "identicalStdReferenceFiles": 351,
+    "packedFixtureConfigurations": 9,
+    "packingExactRoundtrip": true,
+    "canonicalLinuxRuntimeBlob": "pass",
+    "minidocLog": "MiniDoc: 40 file(s), 3361 symbol(s), 0 warning(s).",
+    "scope": "Release-stamped regular suites, six full compiler builds, twelve version images and nine compaction/packing configurations. The full 1.2.20 memory matrices and Hollowkeep ten-minute benchmark were not rerun for this release.",
+    "minidocLinuxLog": "MiniDoc: 41 file(s), 3363 symbol(s), 0 warning(s).",
+    "focusedTests": {
+      "packing": 5,
+      "compaction": 3,
+      "assemblerRun": 13,
+      "optionalNasmSkipped": 1,
+      "concurrentGcEmitter": 4,
+      "unrollBudget": 5
+    }
+  },
+  "fullCompilerPacking": [
+    {
+      "target": "windows-x64",
+      "originalBytes": 56576512,
+      "originalSha256": "68bc63c79f7ce5b50b750652baaefdfcb808ea1bd825280b927a143d8ea0bebe",
+      "packedBytes": 5847096,
+      "packedSha256": "1f6491708dee96858a706e969b2feee0b13ecdc24971536e7e1183364e37e245",
+      "exactRestore": true,
+      "packedCompilerVersion": true,
+      "compiledOptimizerFixture": true
+    },
+    {
+      "target": "linux-x64",
+      "originalBytes": 56586912,
+      "originalSha256": "6c28b63b871dcec6263ce0102b049fd67e02cdc361809796421d8ebaa87005fd",
+      "packedBytes": 5847628,
+      "packedSha256": "bfed56bd38e61fb138224930c0487964f1f245411543c83e8374161909b7b01c",
+      "exactRestore": true,
+      "packedCompilerVersion": true,
+      "compiledOptimizerFixture": true
+    }
+  ],
+  "packingWindowsHost": [
+    {
+      "target": "windows-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 119808,
+      "sha256": "c8015811a79729937f200c0a364a996aa9e885a26811efc5d9a4ded444e00ef3",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.12178859999403358,
+      "packed_bytes": 29240,
+      "packed_sha256": "487b818556c7185bf39c53bd7abc3d9ca4211fde2d353475301b417bcbd7811f",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 276480,
+      "sha256": "0f4b0c19845f62755b8c3a7fe8a548f7e8c2f1441b3f42d8fc1cf14b6c812382",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.20533060003072023,
+      "packed_bytes": 61496,
+      "packed_sha256": "9d449bfb22cf8b4b22850870ab9de0b651f8858af7bf72b3ac27f484089576c1",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "thread_features",
+      "bytes": 235520,
+      "sha256": "d0b8814e0db42c3b9895d01e8b32f1a39b285248e5ff55c2541a799f08ef41f4",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.2133595000486821,
+      "packed_bytes": 56888,
+      "packed_sha256": "85238d735a1d4d8aa04ec4dfda300615fc84a46fe8d15199659aea948d356c2f",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 124864,
+      "sha256": "cbd9c2ea379a3ab0d2c1ecfb88a8025467403babc752d5016be9c67782865890",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.1462598000653088,
+      "packed_bytes": 23124,
+      "packed_sha256": "2b65ddfb51ff72ec6a7978c0f445215f5048dc5fdf122aaf6d8541ef6b3cac56",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 284752,
+      "sha256": "96cfe003b6a8d4ecff251f19dad4f0873d9835ff735c1f0e7a0685f55887cf98",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.3617604000028223,
+      "packed_bytes": 40964,
+      "packed_sha256": "30b9fbd239963cee4b75eb6c0b980f1bdcb962fd8b5fdea0a0d5b5d5b877eedc",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "thread_features",
+      "bytes": 243696,
+      "sha256": "f9ebcc48f8ff47cd00efae5f7767d554acfce13704f82621abec56e866d53258",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.4644340998493135,
+      "packed_bytes": 34652,
+      "packed_sha256": "be4db29e315dbb612b06724cf506b42df7f01300af6ffb5a22633ffc88832df4",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    }
+  ],
+  "packingLinuxHost": [
+    {
+      "target": "linux-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 124864,
+      "sha256": "cbd9c2ea379a3ab0d2c1ecfb88a8025467403babc752d5016be9c67782865890",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.15228187100001378,
+      "packed_bytes": 23124,
+      "packed_sha256": "2b65ddfb51ff72ec6a7978c0f445215f5048dc5fdf122aaf6d8541ef6b3cac56",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 284752,
+      "sha256": "96cfe003b6a8d4ecff251f19dad4f0873d9835ff735c1f0e7a0685f55887cf98",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.3920643079999877,
+      "packed_bytes": 40964,
+      "packed_sha256": "30b9fbd239963cee4b75eb6c0b980f1bdcb962fd8b5fdea0a0d5b5d5b877eedc",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "thread_features",
+      "bytes": 243696,
+      "sha256": "f9ebcc48f8ff47cd00efae5f7767d554acfce13704f82621abec56e866d53258",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.48421345499997415,
+      "packed_bytes": 34652,
+      "packed_sha256": "be4db29e315dbb612b06724cf506b42df7f01300af6ffb5a22633ffc88832df4",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    }
+  ],
+  "date": "2026-10-18"
+}

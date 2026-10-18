@@ -151,8 +151,9 @@ struct Slot
 end struct
 
 struct FlowPoint
-  x,
-  y,
+  // Keep the heap-field fast path covered independently of scalar replacement.
+  x as int,
+  y as int,
 end struct
 
 struct MethodPoint

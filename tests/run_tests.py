@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.20"
+    expected = "MiniLang Compiler 1.2.21"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -861,6 +861,17 @@ def test_linux_dynamic_import_module(*, name: str, tests_root: Path) -> TestResu
         return TestResult(name=name, status="FAIL", details="Linux loader unit module failed",
                           stdout=result.stdout, stderr=result.stderr)
     return TestResult(name=name, status="PASS", stdout=result.stdout, stderr=result.stderr)
+
+
+def test_compaction_unit_modules(*, name: str, tests_root: Path) -> TestResult:
+    """Keep pure encoder, packing format and optimization proof tests in CI/local runs."""
+    for pattern in ('test_codegen_compaction.py', 'test_packing.py', 'test_asm_opcodes.py'):
+        result = run_cmd([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', pattern],
+                         cwd=tests_root.parent, timeout_s=180)
+        if result.returncode:
+            return TestResult(name=name, status="FAIL", details=pattern,
+                              stdout=result.stdout, stderr=result.stderr)
+    return TestResult(name=name, status="PASS")
 
 
 def test_project_manifest_cli(*, name: str, mlc_runner: Path) -> TestResult:
@@ -4238,7 +4249,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.20", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.21", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4973,6 +4984,13 @@ def main() -> int:
                                                              mlc_runner=mlc_runner))
     tests.append(lambda: test_codegen_optimization_bundle(name="codegen: optimization bundle regressions",
                                                            mlc_runner=mlc_runner))
+    tests.append(lambda: test_compaction_unit_modules(
+        name="codegen: compaction, assembler and packing unit modules", tests_root=tests_root))
+    tests.append(lambda: test_program_no_fail(
+        name="codegen: scalar roots, escape safety and register lifetimes",
+        mlc_runner=mlc_runner, ml_path=tests_root / "optimizer_safety.ml",
+        must_contain=["982104", "OPTIMIZER SAFETY [OK]"],
+        timeout_compile_s=120, timeout_run_s=120))
     tests.append(lambda: test_codegen_box_float_safepoint_spill(
         name="codegen: box-float XMM0 safepoint spill", mlc_runner=mlc_runner))
     tests.append(lambda: test_immediate_array_runtime(name="arrays: immediate layout + upgrade semantics", mlc_runner=mlc_runner))

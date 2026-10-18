@@ -70,6 +70,62 @@ class Asm:
         self._peephole_last_push: tuple[bytes, str, int] | None = None
         self._peephole_last_jump: tuple[int, int, str, int] | None = None  # (start, end, label, disp_pos)
         self._peephole_prev_jump: tuple[int, int, str, int] | None = None
+        # Only the last forward branch in a straight-line span is
+        # eligible. This bounds compaction to 127 bytes and needs no global
+        # layout pass (important for streaming object emission).
+        self._forward_branch: tuple[int, str, int, int] | None = None
+
+    def _relax_forward_branch(self, name: str) -> None:
+        """Shorten one local edge; rebase intervening labels and call/RIP fixups."""
+        candidate = self._forward_branch
+        if candidate is None:
+            return
+        start, target, opcode, width = candidate
+        distance = self.pos - (start + width)
+        patch_pos = start + width - 4
+        if not 0 <= distance <= 127:
+            self._forward_branch = None
+            return
+        if target != name:
+            return
+        self._forward_branch = None
+        found = -1
+        for i in range(len(self.patches) - 1, -1, -1):
+            if self.patches[i][0] < patch_pos:
+                break
+            if self.patches[i] == (patch_pos, target, 'rel32'):
+                found = i
+                break
+        if found < 0:
+            return
+        # No other branch has occurred since the candidate.
+        # All remaining PC-relative instructions in the span still have fixups.
+        replacement = bytes((opcode, distance)) if distance else b''
+        cut = width - len(replacement)
+        self.buf[start:start + width] = replacement
+        for i in range(len(self.patches) - 1, -1, -1):
+            pos, label, kind = self.patches[i]
+            if pos == patch_pos:
+                del self.patches[i]
+                break
+            if pos < patch_pos:
+                break
+            self.patches[i] = (pos - cut, label, kind)
+        for i in range(len(self._label_defs) - 1, -1, -1):
+            pos, label = self._label_defs[i]
+            if pos < start + width:
+                break
+            self._label_defs[i] = (pos - cut, label)
+            self.labels[label] = pos - cut
+        if self._trace_enabled:
+            for i in range(len(self._trace) - 1, -1, -1):
+                entry = self._trace[i]
+                if entry.end <= start:
+                    break
+                self._trace[i] = TraceEntry(max(start, entry.start - cut) if entry.start > start else entry.start,
+                                            entry.end - cut, entry.text, entry.refs)
+                if self._trace[i].end <= self._trace[i].start:
+                    del self._trace[i]
 
     # -----------------------------------------------------------------
     # peephole helpers
@@ -172,6 +228,15 @@ class Asm:
         """
         self.buf += b
 
+    def align_loop(self, stream_base: int = 0) -> None:
+        """Keep counted-loop headers on a stable 16-byte instruction boundary.
+
+        Freeze earlier forward relaxation so it cannot move an aligned header.
+        stream_base accounts for a fragment's location in the canonical stream.
+        """
+        self._forward_branch = None
+        self.emit(b'\x90' * (-(stream_base + self.pos) % 16))
+
     def emit8(self, x: int) -> None:
         """Append a single byte to the output buffer.
 
@@ -269,6 +334,7 @@ class Asm:
                     self._peephole_trim_tail(end - start)
                 self._peephole_last_jump = None
             self._peephole_prev_jump = None
+        self._relax_forward_branch(name)
         if name in self.labels:
             raise ValueError(f"Label already defined: {name}")
         self._label_defs.append((self.pos, name))
@@ -479,8 +545,9 @@ class Asm:
             label: Label name.
         """
         # Back-edges are already resolved when they are emitted. Prefer the
-        # two-byte rel8 form when possible; forward edges keep their rel32
-        # fixup because their final distance is not known yet.
+        # two-byte rel8 form when possible. Forward edges start with rel32;
+        # marking a nearby target can subsequently relax the last branch.
+        self._forward_branch = None
         target = self.labels.get(str(label))
         if target is not None:
             disp8 = int(target) - (self.pos + 2)
@@ -498,6 +565,8 @@ class Asm:
         p = self.pos
         self.emit32(0)
         self.patches.append((p, label, "rel32"))
+        if target is None:
+            self._forward_branch = (start, label, 0xEB, 5)
         if getattr(self, '_peephole_enabled', False):
             self._peephole_last_jump = (start, self.pos, str(label), p)
 
@@ -524,6 +593,7 @@ class Asm:
         if cc not in cc_map:
             raise ValueError(f"Unknown jcc: {cc}")
 
+        self._forward_branch = None
         target = self.labels.get(str(label))
         if target is not None:
             disp8 = int(target) - (self.pos + 2)
@@ -538,6 +608,8 @@ class Asm:
         p = self.pos
         self.emit32(0)
         self.patches.append((p, label, "rel32"))
+        if target is None:
+            self._forward_branch = (start, label, 0x70 | (cc_map[cc] & 15), 6)
         if getattr(self, '_peephole_enabled', False):
             self._peephole_last_jump = (start, self.pos, str(label), p)
 

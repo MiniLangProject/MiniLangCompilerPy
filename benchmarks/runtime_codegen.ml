@@ -53,10 +53,21 @@ function main(args)
   gc_collect()
   // Isolate projection allocation volume from periodic collection/reuse.
   // This bounded case allocates at most 16 MB in the unoptimized build.
-  if mode == "struct-projection" then gc_set_limit(0) end if
+  if mode == "struct-projection" or mode == "struct-local" then gc_set_limit(0) end if
   before = heap_bytes_used()
   started = ticks(timer)
   checksum = 0
+  if mode == "struct-local" then
+    for i = 0 to 499999
+      checksum += localPair(i)
+    end for
+  end if
+  if mode == "many-registers" then
+    checksum = manyRegisters(20000000)
+  end if
+  if mode == "register-dependent" then
+    checksum = dependentRegisters(8000000)
+  end if
   if mode == "struct-projection" then
     for i = 0 to 499999
       checksum += BenchPair(i, i + 1).second
@@ -181,6 +192,63 @@ struct BenchPair
   first as int
   second as int
 end struct
+
+/// Untyped, nonescaping aggregate: its two fields can become rooted slots.
+struct LocalPair
+  first
+  second
+end struct
+
+function localPair(i as int)
+  pair = LocalPair(i, i + 1)
+  pair.second = pair.second + 2
+  return pair.first + pair.second
+end function
+
+/// Six simultaneously hot accumulators, followed by a disjoint lifetime.
+function manyRegisters(n as int) returns int
+  aa = 1
+  bb = 2
+  cc = 3
+  dd = 4
+  ee = 5
+  ff = 6
+  for i = 1 to n
+    aa += i & 7
+    bb += i & 15
+    cc += i & 31
+    dd += i & 63
+    ee += i & 127
+    ff += i & 255
+  end for
+  first = aa + bb + cc + dd + ee + ff
+  gg = 10
+  hh = 20
+  for j = 1 to n
+    gg += j & 7
+    hh += j & 15
+  end for
+  return first + gg + hh
+end function
+
+/// Repeated reads along dependent updates are the useful case for extra mirrors.
+function dependentRegisters(n as int) returns int
+  aa = 1
+  bb = 2
+  cc = 3
+  dd = 4
+  ee = 5
+  ff = 6
+  for i = 1 to n
+    aa += (aa & 7) + (bb & 15)
+    bb += (bb & 7) + (cc & 15)
+    cc += (cc & 7) + (dd & 15)
+    dd += (dd & 7) + (ee & 15)
+    ee += (ee & 7) + (ff & 15)
+    ff += (ff & 7) + (aa & 15)
+  end for
+  return aa + bb + cc + dd + ee + ff
+end function
 
 function dynamicIndexSum(values as array) returns int
   sum = 0

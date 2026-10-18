@@ -1,5 +1,38 @@
 # Compiler parity and self-hosting
 
+## 1.2.21 release verification 18 October 2026
+
+The release-stamped Windows Python bootstrap, native MLO stage 2 and native
+monolithic stage 3 are byte-identical at 56,576,512 bytes:
+`68BC63C79F7CE5B50B750652BAAEFDFCB808EA1BD825280B927A143D8EA0BEBE`.
+Python Linux output, Windows ML MLO crossbuild and Linux-native monolithic
+selfbuild match at 56,586,912 bytes:
+`6C28B63B871DCEC6263CE0102B049FD67E02CDC361809796421D8EBAA87005FD`.
+
+See the [release notes](RELEASE_NOTES_1.2.21.md) and
+[release validation manifest](docs/reports/release-1.2.21-version-matrix.json)
+for version, suite and packing checks. Optional packing is off by default.
+The performance measurements below predate the version bump; their hashes
+remain historical development artifacts, not release-package checksums.
+
+## Development compaction and packing verification 18 October 2026
+
+The pre-release checkpoint implements bounded branch relaxation, measured ELF
+loop alignment, conservative unused native bodies, cost-gated primitive
+register reuse and rooted local struct scalar replacement in both backends.
+
+Full Windows Python/MLO/monolithic selfbuilds are byte-identical at 56,576,512
+bytes; full Linux Python/cross-MLO/native-monolithic builds match at 56,586,912
+bytes. Optional UPX packing also matches between backends in the checked
+Windows/Linux fixture matrix, and explicit unpacking restores original bytes.
+
+See the [evaluation and full hashes](docs/reports/CODEGEN_COMPACTION_AND_PACKING_2026-10-18.md)
+and [machine-readable manifest](docs/reports/codegen-compaction-and-packing-2026-10-18.json).
+Python passes 177 tests; ML passes 138 core tests and 230 outer checks.
+This is verified parity within each target/configuration, not PE/ELF equality
+or a proof for every program. Release 1.2.21 includes these changes; the
+pre-release hashes and older checkpoints remain historical records.
+
 ## 1.2.20 release verification 11 October 2026
 
 Release 1.2.20 includes the concurrent allocator and full-game code-generation

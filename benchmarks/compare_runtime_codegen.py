@@ -57,7 +57,7 @@ def run_measured(path, case):
             raise RuntimeError("Peak RSS measurement supports Windows and Linux only")
         return stdout, peak
 
-CASES = ("struct-projection", "dynamic-index", "local-register", "inline-literal", "cold-errors",
+CASES = ("struct-local", "many-registers", "register-dependent", "struct-projection", "dynamic-index", "local-register", "inline-literal", "cold-errors",
          "division", "division-constants", "division-wide", "local-cse",
          "integer-format", "integer-format-small", "repeat", "repeat-one", "concat-empty", "join-one",
          "concat-control", "concat-small-control", "repeat-two-control",
@@ -69,6 +69,8 @@ def main():
     parser.add_argument("before", type=Path)
     parser.add_argument("after", type=Path)
     parser.add_argument("--runs", type=int, default=11)
+    parser.add_argument("--cases", nargs="+", choices=CASES, default=list(CASES),
+                        help="workloads to compare (default: all)")
     parser.add_argument("--cpu", type=int, help="pin this runner and inherited child processes to one logical CPU")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -94,7 +96,7 @@ def main():
             parser.error("CPU affinity supports Windows and Linux only")
     paths = {"before": args.before.resolve(), "after": args.after.resolve()}
     rows = []
-    for case in CASES:
+    for case in args.cases:
         # Warm each executable once, then alternate order to reduce drift.
         for path in paths.values():
             subprocess.run([str(path), case], check=True, capture_output=True, timeout=60)
@@ -113,7 +115,7 @@ def main():
         if len(checksums) != 1:
             raise RuntimeError(f"Semantic mismatch in {case}: {checksums}")
     summary = {}
-    for case in CASES:
+    for case in args.cases:
         summary[case] = {}
         for version in paths:
             samples = [r for r in rows if r["case"] == case and r["version"] == version]

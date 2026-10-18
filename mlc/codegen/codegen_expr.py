@@ -1,6 +1,7 @@
 """Expression, call, constant-folding and native-interop lowering to x86-64."""
 
 from __future__ import annotations
+from . import codegen_opt
 
 import os
 import copy
@@ -3269,6 +3270,10 @@ class CodegenExpr:
         # Struct member read: obj.field
         if hasattr(ml, 'Member') and isinstance(e, ml.Member):
             # Immediate primitive projections need no temporary heap object.
+            scalar_offset = codegen_opt.scalar_slot(self, e.target, e.name)
+            if scalar_offset is not None:
+                self.asm.mov_r64_membase_disp('rax', 'rsp', scalar_offset)
+                return
             projected = self._opt_project_temporary_struct(e)
             if projected is not None:
                 self.emit_expr(projected)
