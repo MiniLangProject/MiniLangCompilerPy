@@ -76,6 +76,8 @@ class CodegenRuntime:
         l_leaf7 = f"cpuinit_leaf7_{lid}"
         l_no_avx2 = f"cpuinit_no_avx2_{lid}"
         l_no_sha = f"cpuinit_no_sha_{lid}"
+        l_no_erms = f"cpuinit_no_erms_{lid}"
+        l_no_fsrm = f"cpuinit_no_fsrm_{lid}"
         l_store = f"cpuinit_store_{lid}"
         l_done = f"cpuinit_done_{lid}"
 
@@ -108,7 +110,7 @@ class CodegenRuntime:
         a.or_r32_imm('r9d', 2)
         a.mark(l_no_sse42)
 
-        # AES-NI and PCLMULQDQ are exposed for future intrinsic dispatch.
+        # PCLMUL gates IEEE CRC folding; AES-NI is available to other dispatchers.
         a.mov_r32_r32('r8d', 'ecx')
         a.and_r32_imm('r8d', 1 << 25)
         a.jcc('e', l_no_aes)
@@ -156,6 +158,17 @@ class CodegenRuntime:
         a.jcc('e', l_no_sha)
         a.or_r32_imm('r9d', 64)
         a.mark(l_no_sha)
+        # ERMS: CPUID.7.0:EBX[9]; FSRM: EDX[4] (MOVS only, not STOS).
+        a.mov_r32_r32('r8d', 'ebx')
+        a.and_r32_imm('r8d', 1 << 9)
+        a.jcc('e', l_no_erms)
+        a.or_r32_imm('r9d', 128)
+        a.mark(l_no_erms)
+        a.mov_r32_r32('r8d', 'edx')
+        a.and_r32_imm('r8d', 1 << 4)
+        a.jcc('e', l_no_fsrm)
+        a.or_r32_imm('r9d', 256)
+        a.mark(l_no_fsrm)
 
         a.mark(l_store)
         a.mov_r32_r32('eax', 'r9d')
@@ -762,13 +775,75 @@ class CodegenRuntime:
         a.ret()
 
     def emit_crc32_update_raw_function(self) -> None:
-        """Emit table-driven reflected CRC-32/IEEE update."""
+        """IEEE CRC32: PCLMUL folding for >=64 bytes, exact table-driven tail.
+
+        Folding/reduction adapted from Intel ISA-L; see THIRD_PARTY_NOTICES.md.
+        No SSSE3/SSE4.1/AVX dependency, overreads, allocation or stack scratch.
+        """
         self._ensure_crc_tables()
+        self.rdata.add_bytes('crc32_fold_constants', bytes.fromhex(
+            '9e00aacc00000000d0971975010000009e00aacc000000002461cd6301000000401601f701000000400671db0100000000000000ffffffffffffffffffffffffffffffffffffffff0000000000000000'))
         a = self.asm
         a.mark('fn_crc32_update_raw')
         lid = self.new_label_id()
         l_loop = f'crc32_sw_loop_{lid}'
         l_finish = f'crc32_finish_{lid}'
+        l_table = f'crc32_table_{lid}'
+        l_fold = f'crc32_fold_{lid}'
+        a.mov_r64_r64('r9', 'rdx')
+        a.mov_r32_r32('r10d', 'r8d')
+        a.cmp_r32_imm('r8d', 64)
+        a.jcc('b', l_table)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 32)
+        a.jcc('e', l_table)
+        a.mov_r32_r32('eax', 'ecx')
+        a.xor_r32_imm('eax', 0xFFFFFFFF)
+        a.movq_xmm_r64('xmm0', 'rax')
+        a.movdqu_xmm_membase_disp('xmm1', 'r9', 0)
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.lea_r11_rip('crc32_fold_constants')
+        a.movdqu_xmm_membase_disp('xmm3', 'r11', 0)
+        a.add_r64_imm('r9', 16)
+        a.sub_r32_imm('r10d', 16)
+        a.mark(l_fold)
+        a.movapd_xmm_xmm('xmm1', 'xmm0')
+        a.pclmulqdq_xmm_xmm_imm8('xmm0', 'xmm3', 1)
+        a.pclmulqdq_xmm_xmm_imm8('xmm1', 'xmm3', 16)
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.movdqu_xmm_membase_disp('xmm1', 'r9', 0)
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.add_r64_imm('r9', 16)
+        a.sub_r32_imm('r10d', 16)
+        a.cmp_r32_imm('r10d', 16)
+        a.jcc('ae', l_fold)
+        a.movdqu_xmm_membase_disp('xmm3', 'r11', 16)
+        a.movapd_xmm_xmm('xmm1', 'xmm0')
+        a.pclmulqdq_xmm_xmm_imm8('xmm0', 'xmm3', 0)
+        a.psrldq_xmm_imm8('xmm1', 8)
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.movapd_xmm_xmm('xmm1', 'xmm0')
+        a.pslldq_xmm_imm8('xmm0', 4)
+        a.pclmulqdq_xmm_xmm_imm8('xmm0', 'xmm3', 16)
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.movdqu_xmm_membase_disp('xmm3', 'r11', 48)
+        a.pand_xmm_xmm('xmm0', 'xmm3')
+        a.movapd_xmm_xmm('xmm1', 'xmm0')
+        a.movapd_xmm_xmm('xmm2', 'xmm0')
+        a.movdqu_xmm_membase_disp('xmm3', 'r11', 32)
+        a.pclmulqdq_xmm_xmm_imm8('xmm0', 'xmm3', 0)
+        a.pxor_xmm_xmm('xmm0', 'xmm2')
+        a.movdqu_xmm_membase_disp('xmm2', 'r11', 64)
+        a.pand_xmm_xmm('xmm0', 'xmm2')
+        a.movapd_xmm_xmm('xmm2', 'xmm0')
+        a.pclmulqdq_xmm_xmm_imm8('xmm0', 'xmm3', 16)
+        a.pxor_xmm_xmm('xmm0', 'xmm2')
+        a.pxor_xmm_xmm('xmm0', 'xmm1')
+        a.psrldq_xmm_imm8('xmm0', 8)
+        a.movd_r32_xmm('eax', 'xmm0')
+        a.lea_r11_rip('crc32_table')
+        a.jmp(l_loop)
+        a.mark(l_table)
         a.mov_r32_r32('eax', 'ecx')
         a.xor_r32_imm('eax', 0xFFFFFFFF)
         a.mov_r64_r64('r9', 'rdx')
@@ -1557,7 +1632,11 @@ class CodegenRuntime:
         a.ret()
 
     def emit_copy_bytes_function(self) -> None:
-        """Emit fn_copy_bytes(dst, src, len)."""
+        """Non-overlapping copy: bounded small loads, vectors, then ERMS >=64 KiB.
+
+        FSRM is not an unconditional win, particularly for unaligned Zen copies.
+        Keep medium transfers vectorized even when short REP is advertised.
+        """
         a = self.asm
         a.mark('fn_copy_bytes')
 
@@ -1570,9 +1649,10 @@ class CodegenRuntime:
         l_large = f"cpy_large_{lid}"
         l_avx_loop = f"cpy_avx_loop_{lid}"
         l_avx_done = f"cpy_avx_done_{lid}"
-        l_sse_loop = f"cpy_sse_loop_{lid}"
-        l_tail = f"cpy_tail_{lid}"
+        l_avx_tail = f"cpy_avx_tail_{lid}"
         l_rep = f"cpy_rep_{lid}"
+        l_dispatch = f"cpy_dispatch_{lid}"
+        l_vector = f"cpy_vector_{lid}"
 
         a.test_r32_r32('r8d', 'r8d')
         a.jcc('e', l_ret)
@@ -1622,47 +1702,66 @@ class CodegenRuntime:
         a.ret()
 
         a.mark(l_large)
+        a.cmp_r32_imm('r8d', 64)
+        a.jcc('a', l_dispatch)
+        a.movdqu_xmm_membase_disp('xmm0', 'rdx', 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'rdx', 16)
+        a.movdqu_membase_disp_xmm('rcx', 0, 'xmm0')
+        a.movdqu_membase_disp_xmm('rcx', 16, 'xmm1')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.sub_r32_imm('r11d', 32)
+        a.lea_r64_mem_bis('r10', 'rdx', 'r11', 1, 0)
+        a.lea_r64_mem_bis('r9', 'rcx', 'r11', 1, 0)
+        a.movdqu_xmm_membase_disp('xmm0', 'r10', 0)
+        a.movdqu_xmm_membase_disp('xmm1', 'r10', 16)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.movdqu_membase_disp_xmm('r9', 16, 'xmm1')
+        a.ret()
+        a.mark(l_dispatch)
+        # Keep doubling string copies below 64 KiB vectorized: an earlier REP
+        # crossover regresses allocation-heavy stringRepeat workloads on Zen.
+        a.cmp_r32_imm('r8d', 65536)
+        a.jcc('b', l_vector)
+        a.mov_eax_rip_dword('cpu_features_active')
+        a.and_r32_imm('eax', 128)
+        a.jcc('ne', l_rep)
+        a.mark(l_vector)
         a.mov_r64_r64('r9', 'rcx')
         a.mov_r64_r64('r10', 'rdx')
         a.mov_r32_r32('r11d', 'r8d')
         a.mov_eax_rip_dword('cpu_has_avx2')
         a.test_r32_r32('eax', 'eax')
         a.jcc('e', l_rep)
-        a.cmp_r32_imm('r11d', 64)
-        a.jcc('b', l_sse_loop)
 
         a.mark(l_avx_loop)
+        # Interleave loads/stores: grouping both loads penalizes the measured
+        # hot-source / newly allocated destination string-concatenation case.
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r10', 0)
+        a.vmovdqu_membase_disp_ymm('r9', 0, 'ymm0')
+        a.vmovdqu_ymm_membase_disp('ymm1', 'r10', 32)
+        a.vmovdqu_membase_disp_ymm('r9', 32, 'ymm1')
+        a.add_r64_imm('r9', 64)
+        a.add_r64_imm('r10', 64)
+        a.sub_r32_imm('r11d', 64)
+        a.cmp_r32_imm('r11d', 64)
+        a.jcc('ae', l_avx_loop)
         a.cmp_r32_imm('r11d', 32)
-        a.jcc('b', l_avx_done)
+        a.jcc('b', l_avx_tail)
         a.vmovdqu_ymm_membase_disp('ymm0', 'r10', 0)
         a.vmovdqu_membase_disp_ymm('r9', 0, 'ymm0')
         a.add_r64_imm('r9', 32)
         a.add_r64_imm('r10', 32)
         a.sub_r32_imm('r11d', 32)
-        a.jmp(l_avx_loop)
-
+        a.mark(l_avx_tail)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_avx_done)
+        a.lea_r64_mem_bis('r10', 'r10', 'r11', 1, -32)
+        a.lea_r64_mem_bis('r9', 'r9', 'r11', 1, -32)
+        a.vmovdqu_ymm_membase_disp('ymm0', 'r10', 0)
+        a.vmovdqu_membase_disp_ymm('r9', 0, 'ymm0')
         a.mark(l_avx_done)
         a.vzeroupper()
-
-        a.mark(l_sse_loop)
-        a.cmp_r32_imm('r11d', 16)
-        a.jcc('b', l_tail)
-        a.movdqu_xmm_membase_disp('xmm0', 'r10', 0)
-        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
-        a.add_r64_imm('r9', 16)
-        a.add_r64_imm('r10', 16)
-        a.sub_r32_imm('r11d', 16)
-        a.jmp(l_sse_loop)
-
-        a.mark(l_tail)
-        a.test_r32_r32('r11d', 'r11d')
-        a.jcc('e', l_ret)
-        a.mov_r8_membase_disp('al', 'r10', 0)
-        a.mov_membase_disp_r8('r9', 0, 'al')
-        a.inc_r64('r9')
-        a.inc_r64('r10')
-        a.dec_r32('r11d')
-        a.jmp(l_tail)
+        a.ret()
 
         a.mark(l_rep)
         a.push_reg('rsi')
@@ -1678,7 +1777,7 @@ class CodegenRuntime:
         a.ret()
 
     def emit_fill_bytes_function(self) -> None:
-        """Emit fn_fill_bytes(dst, len, fill_u8)."""
+        """Bounded SIMD fills through 256 bytes; the established REP path above."""
         a = self.asm
         a.mark('fn_fill_bytes')
 
@@ -1697,6 +1796,10 @@ class CodegenRuntime:
         a.jcc('e', l_ret)
         a.cmp_r32_imm('edx', 8)
         a.jcc('b', l_scalar)
+        # Do not load dispatch globals or construct a vector pattern for a
+        # large fill: that regresses cache-sized STOS workloads on Zen.
+        a.cmp_r32_imm('edx', 256)
+        a.jcc('a', l_rep)
 
         a.movzx_r32_r8('eax', 'r8b')
         a.mov_r64_r64('r10', 'rax')
@@ -1728,8 +1831,6 @@ class CodegenRuntime:
         a.punpcklqdq_xmm_xmm('xmm0', 'xmm0')
         a.cmp_r32_imm('edx', 32)
         a.jcc('be', l_xmm)
-        a.cmp_r32_imm('edx', 64)
-        a.jcc('a', l_rep)
 
         a.mov_r64_r64('r9', 'rcx')
         a.mov_r32_r32('r10d', 'edx')
@@ -1762,10 +1863,11 @@ class CodegenRuntime:
         a.mark(l_tail)
         a.test_r32_r32('r10d', 'r10d')
         a.jcc('e', l_ret)
-        a.mov_membase_disp_r8('r9', 0, 'r8b')
-        a.inc_r64('r9')
-        a.dec_r32('r10d')
-        a.jmp(l_tail)
+        # The SIMD loop has stored at least two vectors: an overlapping final
+        # vector is inside the destination and avoids a byte-at-a-time tail.
+        a.lea_r64_mem_bis('r9', 'r9', 'r10', 1, -16)
+        a.movdqu_membase_disp_xmm('r9', 0, 'xmm0')
+        a.ret()
 
         a.mark(l_rep)
         a.push_reg('rdi')

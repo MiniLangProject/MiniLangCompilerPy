@@ -1,0 +1,901 @@
+{
+  "version": "1.2.22",
+  "compilerBuilds": [
+    {
+      "file": "python-windows.exe",
+      "bytes": 56744960,
+      "sha256": "830d54239616cd5ec4975413492981ffcd6688e53a5341ea45075db07d5d79fe"
+    },
+    {
+      "file": "windows-stage2.exe",
+      "bytes": 56744960,
+      "sha256": "830d54239616cd5ec4975413492981ffcd6688e53a5341ea45075db07d5d79fe"
+    },
+    {
+      "file": "windows-stage3.exe",
+      "bytes": 56744960,
+      "sha256": "830d54239616cd5ec4975413492981ffcd6688e53a5341ea45075db07d5d79fe"
+    },
+    {
+      "file": "python-linux",
+      "bytes": 56758992,
+      "sha256": "fdbcd5baa4aef7c36edd602e1aa35eefd3587dfbc7193eaec444a74d629dc7e1"
+    },
+    {
+      "file": "linux-self",
+      "bytes": 56758992,
+      "sha256": "fdbcd5baa4aef7c36edd602e1aa35eefd3587dfbc7193eaec444a74d629dc7e1"
+    },
+    {
+      "file": "linux-cross",
+      "bytes": 56758992,
+      "sha256": "fdbcd5baa4aef7c36edd602e1aa35eefd3587dfbc7193eaec444a74d629dc7e1"
+    }
+  ],
+  "images": [
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "windows-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "windows-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "2297531eb6f147d935a393095712390c2d042f2d99fe1219610aabcb2bff1627"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    },
+    {
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    },
+    {
+      "target": "linux-x64",
+      "host": "windows-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    },
+    {
+      "target": "linux-x64",
+      "host": "linux-ml",
+      "pipeline": "--object-pipeline",
+      "sha256": "6d4c2c3be5f09b18af62ad3a12badd9bcfad9447223b5d1d6cd9e22686cb7875"
+    }
+  ],
+  "qualification": {
+    "pythonFullSuitePassed": 178,
+    "pythonFailed": 0,
+    "pythonSkipped": 0,
+    "nativeCoreSuitePassed": 138,
+    "nativeOuterChecksPassedCount": 232,
+    "nativeFailed": 0,
+    "cliHosts": [
+      "python",
+      "windows-ml",
+      "linux-ml"
+    ],
+    "identicalStdModules": 53,
+    "identicalStdReferenceFiles": 351,
+    "stdReferenceVisibleFiles": 349,
+    "stdReferenceMarkerFiles": 2,
+    "isaNativeTestsWindows": 6,
+    "isaNativeTestsLinux": 6,
+    "gcNativeTestsWindows": 4,
+    "gcNativeTestsLinux": 3,
+    "gcNativeWindowsOnlySkippedOnLinux": 1,
+    "assemblerTestsPassed": 12,
+    "optionalNasmSkipped": 1,
+    "sharedGoldenOpcodes": 239,
+    "packedFixtureConfigurations": 9,
+    "packingExactRoundtrip": true,
+    "canonicalLinuxRuntimeBlob": "pass",
+    "nativeLinuxHostRegressions": "pass",
+    "minidocLog": "MiniDoc: 40 file(s), 3368 symbol(s), 0 warning(s).",
+    "minidocLinuxLog": "MiniDoc: 41 file(s), 3370 symbol(s), 0 warning(s).",
+    "runnerEnvironmentNote": "The first ML runner launch through Python -> Windows PowerShell 5 inherited an incompatible PSModulePath and could not resolve Get-FileHash. This was reproduced with Get-Command alone. The formatter and full suite were rerun from PowerShell 7 without changing compiler sources.",
+    "scope": "Release-stamped regular suites, six full compiler builds, twelve version/runtime images, thirty ISA fixture images, concurrent-GC three-host matrix and nine packing configurations. Timings in ISA_RUNTIME_2026-10-20 use the pre-version-bump checkpoint, not release remeasurements. No full Hollowkeep/MiniSQL/MiniQuake gameplay/performance rerun."
+  },
+  "isaRuntime": {
+    "images": [
+      {
+        "fixture": "isa_runtime",
+        "target": "windows-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 125952,
+        "sha256": "b194e8a658a7d61a79e1ae8f97ad7986f4b7e2552adefa69614fbd441b65d65e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 125952,
+        "sha256": "b194e8a658a7d61a79e1ae8f97ad7986f4b7e2552adefa69614fbd441b65d65e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 125952,
+        "sha256": "b194e8a658a7d61a79e1ae8f97ad7986f4b7e2552adefa69614fbd441b65d65e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 125952,
+        "sha256": "b194e8a658a7d61a79e1ae8f97ad7986f4b7e2552adefa69614fbd441b65d65e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 125952,
+        "sha256": "b194e8a658a7d61a79e1ae8f97ad7986f4b7e2552adefa69614fbd441b65d65e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "linux-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 133088,
+        "sha256": "963bb4d43648681e3a4ff979b7830f1704f02dca9d16a88cc2f8aebddde6615e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 133088,
+        "sha256": "963bb4d43648681e3a4ff979b7830f1704f02dca9d16a88cc2f8aebddde6615e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 133088,
+        "sha256": "963bb4d43648681e3a4ff979b7830f1704f02dca9d16a88cc2f8aebddde6615e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 133088,
+        "sha256": "963bb4d43648681e3a4ff979b7830f1704f02dca9d16a88cc2f8aebddde6615e"
+      },
+      {
+        "fixture": "isa_runtime",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 133088,
+        "sha256": "963bb4d43648681e3a4ff979b7830f1704f02dca9d16a88cc2f8aebddde6615e"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "windows-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 190976,
+        "sha256": "288771243b4d51404b4eccf540a94f50312c8160f2563d461102a2f2564ee77d"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 190976,
+        "sha256": "288771243b4d51404b4eccf540a94f50312c8160f2563d461102a2f2564ee77d"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 190976,
+        "sha256": "288771243b4d51404b4eccf540a94f50312c8160f2563d461102a2f2564ee77d"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 190976,
+        "sha256": "288771243b4d51404b4eccf540a94f50312c8160f2563d461102a2f2564ee77d"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 190976,
+        "sha256": "288771243b4d51404b4eccf540a94f50312c8160f2563d461102a2f2564ee77d"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "linux-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 198752,
+        "sha256": "1c25ad828787209e40d0ff0c4ce4fa90e5bad1cfb42cefc9a8257a8bbe588bab"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 198752,
+        "sha256": "1c25ad828787209e40d0ff0c4ce4fa90e5bad1cfb42cefc9a8257a8bbe588bab"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 198752,
+        "sha256": "1c25ad828787209e40d0ff0c4ce4fa90e5bad1cfb42cefc9a8257a8bbe588bab"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 198752,
+        "sha256": "1c25ad828787209e40d0ff0c4ce4fa90e5bad1cfb42cefc9a8257a8bbe588bab"
+      },
+      {
+        "fixture": "checksum_runtime",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 198752,
+        "sha256": "1c25ad828787209e40d0ff0c4ce4fa90e5bad1cfb42cefc9a8257a8bbe588bab"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "windows-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 222720,
+        "sha256": "0bd2a417888eb1af1e50583d9c0031d4f90c84e705a6d8e13bf1a90123833d4a"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 222720,
+        "sha256": "0bd2a417888eb1af1e50583d9c0031d4f90c84e705a6d8e13bf1a90123833d4a"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "windows-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 222720,
+        "sha256": "0bd2a417888eb1af1e50583d9c0031d4f90c84e705a6d8e13bf1a90123833d4a"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 222720,
+        "sha256": "0bd2a417888eb1af1e50583d9c0031d4f90c84e705a6d8e13bf1a90123833d4a"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "windows-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 222720,
+        "sha256": "0bd2a417888eb1af1e50583d9c0031d4f90c84e705a6d8e13bf1a90123833d4a"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "linux-x64",
+        "compiler": "python",
+        "pipeline": "direct",
+        "bytes": 231392,
+        "sha256": "4feaedcdff7852aaa3f0bb6433158d539454dd06e421115f67fb9ecc9146cd2f"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 231392,
+        "sha256": "4feaedcdff7852aaa3f0bb6433158d539454dd06e421115f67fb9ecc9146cd2f"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "linux-x64",
+        "compiler": "self",
+        "pipeline": "--object-pipeline",
+        "bytes": 231392,
+        "sha256": "4feaedcdff7852aaa3f0bb6433158d539454dd06e421115f67fb9ecc9146cd2f"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--no-object-pipeline",
+        "bytes": 231392,
+        "sha256": "4feaedcdff7852aaa3f0bb6433158d539454dd06e421115f67fb9ecc9146cd2f"
+      },
+      {
+        "fixture": "isa_workloads",
+        "target": "linux-x64",
+        "compiler": "linux-self",
+        "pipeline": "--object-pipeline",
+        "bytes": 231392,
+        "sha256": "4feaedcdff7852aaa3f0bb6433158d539454dd06e421115f67fb9ecc9146cd2f"
+      }
+    ]
+  },
+  "concurrentGc": {
+    "images": [
+      {
+        "fixture": "gc_concurrent.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "5a82f51bacc0cd58ac246e81e19d285c8baa1aeb1d93e136c093189777554188",
+        "size": 211456
+      },
+      {
+        "fixture": "gc_concurrent.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "5a82f51bacc0cd58ac246e81e19d285c8baa1aeb1d93e136c093189777554188",
+        "size": 211456
+      },
+      {
+        "fixture": "gc_concurrent.ml",
+        "flags": [
+          "--gc-satb-limit",
+          "64"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "4278f0365f965864d76c5168f539b20141da581dd252e826b604e75ddad8e09d",
+        "size": 211456
+      },
+      {
+        "fixture": "gc_concurrent.ml",
+        "flags": [
+          "--gc-satb-limit",
+          "64"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "4278f0365f965864d76c5168f539b20141da581dd252e826b604e75ddad8e09d",
+        "size": 211456
+      },
+      {
+        "fixture": "gc_concurrent_pressure.ml",
+        "flags": [
+          "--heap-reserve",
+          "64m",
+          "--heap-commit",
+          "32m"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "e24b7887046857a1ff3f98f517544a5d826fe4f8dc9eb5eedeadff9d9227d4eb",
+        "size": 120320
+      },
+      {
+        "fixture": "gc_concurrent_pressure.ml",
+        "flags": [
+          "--heap-reserve",
+          "64m",
+          "--heap-commit",
+          "32m"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "e24b7887046857a1ff3f98f517544a5d826fe4f8dc9eb5eedeadff9d9227d4eb",
+        "size": 120320
+      },
+      {
+        "fixture": "gc_concurrent_reuse.ml",
+        "flags": [
+          "--heap-reserve",
+          "512m",
+          "--heap-commit",
+          "16m"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "9be2772cfe990e558dba0da55f7b58d73a1c61d9064e7c9326a075d24a20fbc2",
+        "size": 147968
+      },
+      {
+        "fixture": "gc_concurrent_reuse.ml",
+        "flags": [
+          "--heap-reserve",
+          "512m",
+          "--heap-commit",
+          "16m"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "9be2772cfe990e558dba0da55f7b58d73a1c61d9064e7c9326a075d24a20fbc2",
+        "size": 147968
+      },
+      {
+        "fixture": "gc_concurrent_reuse_fragments.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "1c5c83a26fe2df86f02788cbc94c3239f7bceb9f8e7f38cbf92d2bb63f445114",
+        "size": 146432
+      },
+      {
+        "fixture": "gc_concurrent_reuse_fragments.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "1c5c83a26fe2df86f02788cbc94c3239f7bceb9f8e7f38cbf92d2bb63f445114",
+        "size": 146432
+      },
+      {
+        "fixture": "gc_concurrent_order.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "1630c7b7944c2b3c012b4aac4f224dc9129e9947c08f46ebe20164e9064ae71e",
+        "size": 121856
+      },
+      {
+        "fixture": "gc_concurrent_order.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "1630c7b7944c2b3c012b4aac4f224dc9129e9947c08f46ebe20164e9064ae71e",
+        "size": 121856
+      },
+      {
+        "fixture": "gc_concurrent_bins.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "e2653e80acea5d0bfbfd110f6b7b7cd36b3409315c08833fb556d188fde4e88c",
+        "size": 134656
+      },
+      {
+        "fixture": "gc_concurrent_bins.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "e2653e80acea5d0bfbfd110f6b7b7cd36b3409315c08833fb556d188fde4e88c",
+        "size": 134656
+      },
+      {
+        "fixture": "gc_thread_lifetime.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "2af6c4371df0f5302ddf5b2e1cf37441cf6e9c2fef17210c5643e5a511df3b53",
+        "size": 190464
+      },
+      {
+        "fixture": "gc_thread_lifetime.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "2af6c4371df0f5302ddf5b2e1cf37441cf6e9c2fef17210c5643e5a511df3b53",
+        "size": 190464
+      },
+      {
+        "fixture": "gc_handoff_lifetime.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "0598da916ae5021fe19db03b9bf9e797195bde3a75d5e1410d9e977fbf2cd060",
+        "size": 484352
+      },
+      {
+        "fixture": "gc_handoff_lifetime.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "0598da916ae5021fe19db03b9bf9e797195bde3a75d5e1410d9e977fbf2cd060",
+        "size": 484352
+      },
+      {
+        "fixture": "gc_reference_write_roots.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "496b0d6b6adf9c7341c969e81f119b1da0a6cea058b4f584f933f4bd507e076d",
+        "size": 144384
+      },
+      {
+        "fixture": "gc_reference_write_roots.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "496b0d6b6adf9c7341c969e81f119b1da0a6cea058b4f584f933f4bd507e076d",
+        "size": 144384
+      },
+      {
+        "fixture": "gc_nested_graph_roots.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "cc89934eb6bb390875a965f612650472723c3ae46682db22e08ce8e650d3e4f0",
+        "size": 251392
+      },
+      {
+        "fixture": "gc_nested_graph_roots.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "cc89934eb6bb390875a965f612650472723c3ae46682db22e08ce8e650d3e4f0",
+        "size": 251392
+      },
+      {
+        "fixture": "gc_box_float_safepoint.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "3077bdcb199fa712bee5e6eeb2ee9dbcc72280d5cb4121a18bf9a9f1888aef8e",
+        "size": 300544
+      },
+      {
+        "fixture": "gc_box_float_safepoint.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "3077bdcb199fa712bee5e6eeb2ee9dbcc72280d5cb4121a18bf9a9f1888aef8e",
+        "size": 300544
+      },
+      {
+        "fixture": "gc_float_call_roots.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "29f89a9e019d9e244aab9f6fd62d12d57b551dcf52215e308843a8756f0f1610",
+        "size": 344576
+      },
+      {
+        "fixture": "gc_float_call_roots.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "29f89a9e019d9e244aab9f6fd62d12d57b551dcf52215e308843a8756f0f1610",
+        "size": 344576
+      },
+      {
+        "fixture": "gc_back_to_back_safepoint.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "dc37b211c517b9b35e76a7062cdaa8a0491ab93333131431b56ed9c80fb37a8f",
+        "size": 115200
+      },
+      {
+        "fixture": "gc_back_to_back_safepoint.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "dc37b211c517b9b35e76a7062cdaa8a0491ab93333131431b56ed9c80fb37a8f",
+        "size": 115200
+      },
+      {
+        "fixture": "tlab_shared_heap.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "946700afcc753797247d1f0cb701bcbdf35d14efa98e171840dec960e4ea682e",
+        "size": 127488
+      },
+      {
+        "fixture": "tlab_shared_heap.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "946700afcc753797247d1f0cb701bcbdf35d14efa98e171840dec960e4ea682e",
+        "size": 127488
+      },
+      {
+        "fixture": "thread_lifecycle_races.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "e6df033d537ecdf5aac98d20877277ae2fd40046301cf370abd2cad78b912a2d",
+        "size": 219136
+      },
+      {
+        "fixture": "thread_lifecycle_races.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "e6df033d537ecdf5aac98d20877277ae2fd40046301cf370abd2cad78b912a2d",
+        "size": 219136
+      },
+      {
+        "fixture": "thread_pool.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "6b7e601c741d59f7dc6585323edb8eaf81a15eee3af7e19b18c438dfdba7e17f",
+        "size": 641024
+      },
+      {
+        "fixture": "thread_pool.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "6b7e601c741d59f7dc6585323edb8eaf81a15eee3af7e19b18c438dfdba7e17f",
+        "size": 641024
+      },
+      {
+        "fixture": "memory_management.ml",
+        "flags": [],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "b50a9d119019f8acd476a057cf7da7c7895ebd4fe00dd8604810b8b4f1d572b2",
+        "size": 129536
+      },
+      {
+        "fixture": "memory_management.ml",
+        "flags": [],
+        "pipeline": "--object-pipeline",
+        "sha256": "b50a9d119019f8acd476a057cf7da7c7895ebd4fe00dd8604810b8b4f1d572b2",
+        "size": 129536
+      },
+      {
+        "fixture": "memory_policy.ml",
+        "flags": [
+          "--gc-limit",
+          "1m"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "07c1b384ac24514211fe6644416114de28bf705c56294efb51cb2930e64a3338",
+        "size": 100352
+      },
+      {
+        "fixture": "memory_policy.ml",
+        "flags": [
+          "--gc-limit",
+          "1m"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "07c1b384ac24514211fe6644416114de28bf705c56294efb51cb2930e64a3338",
+        "size": 100352
+      },
+      {
+        "fixture": "memory_policy.ml",
+        "flags": [
+          "--no-gc-periodic"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "369c6257808365fd99677063def302cc1517eacd74917732f88b27f736493ba5",
+        "size": 100352
+      },
+      {
+        "fixture": "memory_policy.ml",
+        "flags": [
+          "--no-gc-periodic"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "369c6257808365fd99677063def302cc1517eacd74917732f88b27f736493ba5",
+        "size": 100352
+      },
+      {
+        "fixture": "memory_heap_ceiling.ml",
+        "flags": [
+          "--heap-reserve",
+          "40m",
+          "--heap-commit",
+          "32m"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "124411ca4b21ae04ce9c92c5fdd3637e70513894635fbaf26e455affa2fca327",
+        "size": 105984
+      },
+      {
+        "fixture": "memory_heap_ceiling.ml",
+        "flags": [
+          "--heap-reserve",
+          "40m",
+          "--heap-commit",
+          "32m"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "124411ca4b21ae04ce9c92c5fdd3637e70513894635fbaf26e455affa2fca327",
+        "size": 105984
+      },
+      {
+        "fixture": "heap_growth_precedes_gc.ml",
+        "flags": [
+          "--heap-commit",
+          "8m",
+          "--gc-limit",
+          "1g"
+        ],
+        "pipeline": "--no-object-pipeline",
+        "sha256": "1da2d40f4e8fa29c3b256ccf9630f03f595e0eea2324fb9f92e34ea2e0c579e2",
+        "size": 88576
+      },
+      {
+        "fixture": "heap_growth_precedes_gc.ml",
+        "flags": [
+          "--heap-commit",
+          "8m",
+          "--gc-limit",
+          "1g"
+        ],
+        "pipeline": "--object-pipeline",
+        "sha256": "1da2d40f4e8fa29c3b256ccf9630f03f595e0eea2324fb9f92e34ea2e0c579e2",
+        "size": 88576
+      }
+    ],
+    "comparedHosts": 3,
+    "excludedFixtures": [],
+    "fallbackImages": 12,
+    "capacityImages": 36
+  },
+  "fullCompilerPacking": [
+    {
+      "target": "windows-x64",
+      "originalBytes": 56744960,
+      "originalSha256": "830d54239616cd5ec4975413492981ffcd6688e53a5341ea45075db07d5d79fe",
+      "packedBytes": 5870136,
+      "packedSha256": "bfc06bd51a1871a46a1c5fc4ca7c5714607df0ccebd69a023988152570cc80fb",
+      "exactRestore": true,
+      "packedCompilerVersion": true,
+      "compiledOptimizerFixture": true
+    },
+    {
+      "target": "linux-x64",
+      "originalBytes": 56758992,
+      "originalSha256": "fdbcd5baa4aef7c36edd602e1aa35eefd3587dfbc7193eaec444a74d629dc7e1",
+      "packedBytes": 5869308,
+      "packedSha256": "08824f9ca28f83c915b244c3505b1149982a5af9419718db96037d5ab50204d8",
+      "exactRestore": true,
+      "packedCompilerVersion": true,
+      "compiledOptimizerFixture": true
+    }
+  ],
+  "packingWindowsHost": [
+    {
+      "target": "windows-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 119808,
+      "sha256": "cb3b5c4ac08b1d3ab4035e555fa4ead27f269a91fa304ad9ed8d91dc6e26ebb4",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 1.1936260999646038,
+      "packed_bytes": 29240,
+      "packed_sha256": "fc25c1d49fd19f07997b0def854c0004d5f8a6449fd204b6706baa553f906a13",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 276992,
+      "sha256": "9d318e3bf7e7a8efc34a896d3ac901137469e755fbaa44553a6e5ca2ec70841b",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.2699456000700593,
+      "packed_bytes": 62008,
+      "packed_sha256": "7c84ad85c39ae831e5048a3c2e9ef85dad51cd7b6b9a78bc5577891af1badfdb",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "windows-x64",
+      "fixture": "thread_features",
+      "bytes": 235520,
+      "sha256": "2dbfe2d92c9a9e98979baa3f381b3951eb8149c5b7c4fca1afd5d1cbeb8ff405",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.22507010004483163,
+      "packed_bytes": 57400,
+      "packed_sha256": "34fc7bf9ffce96b228dc37185ecc891f577b8c8dac5c0f3ed35465c853f5d3c3",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 124864,
+      "sha256": "6015008af6a8eec9903d2bcaf32755071967e587b7509f7a7477022285971425",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.9327243999578059,
+      "packed_bytes": 23212,
+      "packed_sha256": "6daced89c0a540bde9bddf697e071dd1d41a49549cef888dcf10b80fe78d241a",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 288864,
+      "sha256": "7b0f4e5df733e8fa131b26c32999577b7c8e3ce0884b5bb23e4170514dbf33cc",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.7928094000089914,
+      "packed_bytes": 41044,
+      "packed_sha256": "03ae2e62cebb51010d857a832ccf8bd4f1de19be2013655a03c321dcbd489032",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "thread_features",
+      "bytes": 243696,
+      "sha256": "2afa169e57722dc75425e4f8461d83ea10bb2ecc4cf4e033e0dd23ac93c5c6a7",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.7944434999953955,
+      "packed_bytes": 34732,
+      "packed_sha256": "0ce7cfd95c16f3d3168f0b5c9701b640b13ca422b091a5cd4c50b3964edf56ad",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    }
+  ],
+  "packingLinuxHost": [
+    {
+      "target": "linux-x64",
+      "fixture": "optimizer_safety",
+      "bytes": 124864,
+      "sha256": "6015008af6a8eec9903d2bcaf32755071967e587b7509f7a7477022285971425",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 1.31989322000004,
+      "packed_bytes": 23212,
+      "packed_sha256": "6daced89c0a540bde9bddf697e071dd1d41a49549cef888dcf10b80fe78d241a",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "runtime_codegen",
+      "bytes": 288864,
+      "sha256": "7b0f4e5df733e8fa131b26c32999577b7c8e3ce0884b5bb23e4170514dbf33cc",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.39151251600003434,
+      "packed_bytes": 41044,
+      "packed_sha256": "03ae2e62cebb51010d857a832ccf8bd4f1de19be2013655a03c321dcbd489032",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    },
+    {
+      "target": "linux-x64",
+      "fixture": "thread_features",
+      "bytes": 243696,
+      "sha256": "2afa169e57722dc75425e4f8461d83ea10bb2ecc4cf4e033e0dd23ac93c5c6a7",
+      "runtime": "pass",
+      "object_parity": true,
+      "packing_seconds": 0.455655188000037,
+      "packed_bytes": 34732,
+      "packed_sha256": "0ce7cfd95c16f3d3168f0b5c9701b640b13ca422b091a5cd4c50b3964edf56ad",
+      "exact_restore": true,
+      "packed_runtime": "pass"
+    }
+  ]
+}

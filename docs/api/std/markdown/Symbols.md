@@ -377,7 +377,9 @@
 | [std.cpu.AES_NI](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-aes-ni-const-aes-ni-16-std-cpu-ml-222885170) | `constant` | `const AES_NI = 16` |
 | [std.cpu.AVX](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-avx-const-avx-4-std-cpu-ml-2010030883) | `constant` | `const AVX = 4` |
 | [std.cpu.AVX2](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-avx2-const-avx2-8-std-cpu-ml-626354591) | `constant` | `const AVX2 = 8` |
+| [std.cpu.ERMS](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-erms-const-erms-128-std-cpu-ml-1343764468) | `constant` | `const ERMS = 128` |
 | [std.cpu.features](File-std-cpu-ml-1561418518.md#function-function-std-cpu-features-function-features-std-cpu-ml-440708594) | `function` | `function features()` |
+| [std.cpu.FSRM](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-fsrm-const-fsrm-256-std-cpu-ml-425420974) | `constant` | `const FSRM = 256` |
 | [std.cpu.PCLMULQDQ](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-pclmulqdq-const-pclmulqdq-32-std-cpu-ml-1357320056) | `constant` | `const PCLMULQDQ = 32` |
 | [std.cpu.setDispatchMaskForTesting](File-std-cpu-ml-1561418518.md#function-function-std-cpu-setdispatchmaskfortesting-function-setdispatchmaskfortesting-mask-std-cpu-ml-816780596) | `function` | `function setDispatchMaskForTesting(mask)` |
 | [std.cpu.SHA](File-std-cpu-ml-1561418518.md#constant-constant-std-cpu-sha-const-sha-64-std-cpu-ml-2038744909) | `constant` | `const SHA = 64` |

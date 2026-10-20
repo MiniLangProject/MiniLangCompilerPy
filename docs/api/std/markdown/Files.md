@@ -21,7 +21,7 @@
 | [std/concurrent/thread_pool.ml](File-std-concurrent-thread-pool-ml-72857761.md) | `std.concurrent.thread_pool` | no | 72 |
 | [std/console.ml](File-std-console-ml-1875579671.md) | `std.console` | no | 24 |
 | [std/core.ml](File-std-core-ml-750389783.md) | `std.core` | yes | 16 |
-| [std/cpu.ml](File-std-cpu-ml-1561418518.md) | `std.cpu` | no | 10 |
+| [std/cpu.ml](File-std-cpu-ml-1561418518.md) | `std.cpu` | no | 12 |
 | [std/crypto.ml](File-std-crypto-ml-1263151193.md) | `std.crypto` | no | 17 |
 | [std/crypto/_cng.ml](File-std-crypto-cng-ml-1099901917.md) | `std.crypto._cng` | no | 40 |
 | [std/crypto/_openssl.ml](File-std-crypto-openssl-ml-882852629.md) | `std.crypto._openssl` | no | 56 |

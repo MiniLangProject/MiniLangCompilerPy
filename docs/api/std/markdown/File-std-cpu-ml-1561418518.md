@@ -20,7 +20,7 @@ function activeFeatures()
 Return the feature mask currently used by runtime dispatch.
 
 
-Source: `std/cpu.ml:42`
+Source: `std/cpu.ml:46`
 
 <a id="constant-constant-std-cpu-aes-ni-const-aes-ni-16-std-cpu-ml-222885170"></a>
 ### AES_NI
@@ -58,6 +58,18 @@ Track the avx2 value used by this standard-library module.
 
 Source: `std/cpu.ml:28`
 
+<a id="constant-constant-std-cpu-erms-const-erms-128-std-cpu-ml-1343764468"></a>
+### ERMS
+
+```ml
+const ERMS = 128
+```
+
+Enhanced REP MOVSB/STOSB. Dispatch thresholds still depend on transfer size.
+
+
+Source: `std/cpu.ml:36`
+
 <a id="function-function-std-cpu-features-function-features-std-cpu-ml-440708594"></a>
 ### features
 
@@ -68,7 +80,19 @@ function features()
 Return capabilities detected once during process startup.
 
 
-Source: `std/cpu.ml:37`
+Source: `std/cpu.ml:41`
+
+<a id="constant-constant-std-cpu-fsrm-const-fsrm-256-std-cpu-ml-425420974"></a>
+### FSRM
+
+```ml
+const FSRM = 256
+```
+
+Fast short REP MOVSB; this flag does not promise fast short STOSB.
+
+
+Source: `std/cpu.ml:38`
 
 <a id="constant-constant-std-cpu-pclmulqdq-const-pclmulqdq-32-std-cpu-ml-1357320056"></a>
 ### PCLMULQDQ
@@ -96,7 +120,7 @@ Restrict dispatch for differential tests and benchmarks. The mask cannot enable 
 | `mask` | `dynamic` | — | Value supplied for `mask`. |
 
 
-Source: `std/cpu.ml:48`
+Source: `std/cpu.ml:52`
 
 <a id="constant-constant-std-cpu-sha-const-sha-64-std-cpu-ml-2038744909"></a>
 ### SHA

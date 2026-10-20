@@ -2,6 +2,18 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.22 - 2026-10-20
+
+- Use baseline-x64 64-bit bit scans for concurrent-GC free bins and reuse bitmaps.
+- Tune bounded copy/fill helpers: unrolled small/vector copies, ERMS for copies
+  of at least 64 KiB, SIMD fills through 256 bytes, and a direct large-fill REP
+  path. Expose ERMS/FSRM through `std.cpu`; do not blindly select short REP.
+- Accelerate reflected IEEE CRC32 with runtime-gated PCLMUL folding for buffers
+  of at least 64 bytes. Preserve incremental seeds, table fallbacks and CRC32C.
+  See [third-party notices](THIRD_PARTY_NOTICES.md) for binary redistribution.
+- Add native guard-page/randomized tests and synchronized Windows/Linux runtime
+  fixtures. See [the evaluation](docs/reports/ISA_RUNTIME_2026-10-20.md).
+
 ## 1.2.21 - 2026-10-18
 
 - Include the post-1.2.20 concurrent-GC snapshot improvement: consume free bins

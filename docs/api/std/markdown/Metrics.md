@@ -11,15 +11,15 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 | Blank lines | 2828 |
 | Clone groups | 169 |
 | Cognitive complexity | 3518 (maximum per function: 116) |
-| Comment lines | 4479 |
+| Comment lines | 4481 |
 | Cyclomatic complexity | 3900 (average: 3.75, maximum: 33) |
-| Documentation coverage | 98.03% (1987 of 2027 documentation items) |
+| Documentation coverage | 98.03% (1989 of 2029 documentation items) |
 | Duplicated lines | 1048 (9.27%) |
 | Files | 53 |
 | Functions | 1041 |
-| Maintainability index | 7.76 / 100 |
-| Physical lines | 18609 |
-| Source lines | 11305 |
+| Maintainability index | 7.77 / 100 |
+| Physical lines | 18613 |
+| Source lines | 11307 |
 | Statements | 8107 |
 
 ## Documentation coverage
@@ -29,18 +29,18 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
 | API declarations | 793 | 793 | 100% |
-| Constants | 135 | 135 | 100% |
+| Constants | 137 | 137 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
 | Fields | 208 | 208 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1987 | 2027 | 98.03% |
+| Overall | 1989 | 2029 | 98.03% |
 | Parameters | 828 | 828 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3406 | 46585 | 31857 | 3462 | 78442 | 922273.18 | 261.89 | 241533760.32 | 307.42 |
+| 56 | 3408 | 46589 | 31861 | 3464 | 78450 | 922432.6 | 261.77 | 241464056.82 | 307.48 |
 
 ## Files
 
@@ -63,7 +63,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/concurrent/thread_pool.ml`](File-std-concurrent-thread-pool-ml-72857761.md) | 374 | 43 | 117 / 2.72 / 9 | 89 / 11 | 40 (10.7%) | 16573.38 | 0 |
 | [`std/console.ml`](File-std-console-ml-1875579671.md) | 101 | 9 | 44 / 4.89 / 24 | 36 / 24 | 0 (0%) | 7093.64 | 23.4 |
 | [`std/core.ml`](File-std-core-ml-750389783.md) | 82 | 16 | 28 / 1.75 / 4 | 12 / 3 | 29 (35.37%) | 1907.85 | 31.52 |
-| [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 17 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 320 | 55.21 |
+| [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 19 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 372.23 | 53.7 |
 | [`std/crypto.ml`](File-std-crypto-ml-1263151193.md) | 98 | 16 | 59 / 3.69 / 10 | 43 / 9 | 0 (0%) | 6101.03 | 22.12 |
 | [`std/crypto/_cng.ml`](File-std-crypto-cng-ml-1099901917.md) | 330 | 16 | 80 / 5 / 13 | 69 / 14 | 32 (9.7%) | 22981.95 | 3.76 |
 | [`std/crypto/_openssl.ml`](File-std-crypto-openssl-ml-882852629.md) | 228 | 12 | 77 / 6.42 / 21 | 83 / 32 | 0 (0%) | 19690.73 | 8.14 |
@@ -341,9 +341,9 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.core.safeLen`](File-std-core-ml-750389783.md#function-function-std-core-safelen-function-safelen-x-fallback-std-core-ml-2007178136) | `std/core.ml:147` | 7 | 4 | 4 | 3 | 1 | 159.91 | 65.6 |
 | [`std.core.safeToNumber`](File-std-core-ml-750389783.md#function-function-std-core-safetonumber-function-safetonumber-x-fallback-std-core-ml-527887072) | `std/core.ml:158` | 7 | 4 | 2 | 1 | 1 | 118.54 | 66.77 |
 | [`std.core.sign`](File-std-core-ml-750389783.md#function-function-std-core-sign-function-sign-x-std-core-ml-1151146318) | `std/core.ml:134` | 9 | 5 | 3 | 2 | 1 | 106.61 | 64.58 |
-| [`std.cpu.activeFeatures`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-activefeatures-function-activefeatures-std-cpu-ml-774821314) | `std/cpu.ml:42` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
-| [`std.cpu.features`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-features-function-features-std-cpu-ml-440708594) | `std/cpu.ml:37` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
-| [`std.cpu.setDispatchMaskForTesting`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-setdispatchmaskfortesting-function-setdispatchmaskfortesting-mask-std-cpu-ml-816780596) | `std/cpu.ml:48` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.cpu.activeFeatures`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-activefeatures-function-activefeatures-std-cpu-ml-774821314) | `std/cpu.ml:46` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
+| [`std.cpu.features`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-features-function-features-std-cpu-ml-440708594) | `std/cpu.ml:41` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
+| [`std.cpu.setDispatchMaskForTesting`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-setdispatchmaskfortesting-function-setdispatchmaskfortesting-mask-std-cpu-ml-816780596) | `std/cpu.ml:52` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
 | [`std.crypto.aes_gcm.decrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-decrypt-function-decrypt-key-nonce-ciphertext-tag-aad-std-crypto-aes-gcm-ml-485061609) | `std/crypto/aes_gcm.ml:107` | 4 | 3 | 3 | 2 | 1 | 248.8 | 69.69 |
 | [`std.crypto.aes_gcm.encrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-encrypt-function-encrypt-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-125820132) | `std/crypto/aes_gcm.ml:94` | 6 | 5 | 2 | 1 | 1 | 329.03 | 65.13 |
 | [`std.crypto.aes_gcm.open`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-open-function-open-key-nonce-sealed-aad-taglength-std-crypto-aes-gcm-ml-1220352403) | `std/crypto/aes_gcm.ml:77` | 10 | 6 | 5 | 4 | 1 | 468.05 | 58.82 |

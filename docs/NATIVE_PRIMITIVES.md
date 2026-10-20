@@ -33,9 +33,17 @@ CRC-32C uses the reflected Castagnoli polynomial `0x82F63B78`
 
 CRC-32C dispatches to x64 SSE4.2 `CRC32` instructions, processing eight bytes
 per main-loop iteration. The bit-compatible table implementation is selected
-when SSE4.2 is unavailable or disabled. CRC-32/IEEE always uses its separate
-table because the x86 `CRC32` instruction does not implement IEEE CRC-32.
+when SSE4.2 is unavailable or disabled. CRC-32/IEEE uses runtime-gated PCLMULQDQ
+folding for ranges of at least 64 bytes. Short inputs, disabled/unsupported
+PCLMUL, and the last 0–15 bytes use its separate table. The x86 `CRC32`
+instruction itself does not implement IEEE CRC-32. Incremental seeds and
+zero-length updates have identical semantics in both paths. No AVX, SSSE3 or
+SSE4.1 capability is needed by the IEEE folding path.
 Range and tag checks occur once before the allocation-free raw update loop.
+
+The IEEE folding/reduction implementation is derived from Intel ISA-L.
+Distribute [its notice](../THIRD_PARTY_NOTICES.md) with generated programs that
+include that helper. See the [measurements](reports/ISA_RUNTIME_2026-10-20.md).
 
 ## Cryptography
 
@@ -106,7 +114,8 @@ and invalid argument behavior remain unchanged.
 ## CPU features and testing
 
 `std.cpu` publishes these flags: `SSE2`, `SSE42`, `AVX`, `AVX2`,
-`AES_NI`, `PCLMULQDQ`, and `SHA`. Detection runs once during process
+`AES_NI`, `PCLMULQDQ`, `SHA`, `ERMS` (128), and `FSRM` (256).
+The existing flag values are unchanged. Detection runs once during process
 startup. AVX and AVX2 are active only when CPUID and XGETBV confirm OS support
 for XMM/YMM state.
 
@@ -115,6 +124,15 @@ the current dispatch mask. `setDispatchMaskForTesting(mask)` can only remove
 detected features; passing `-1` restores them. It exists for deterministic
 fallback tests and benchmarks, not for application feature spoofing.
 
-The focused suites are `tests/checksum_runtime.ml`,
+Copy helpers use bounded scalar/SSE2 loads for small ranges, unrolled AVX
+copies where available, and ERMS `REP MOVSB` starting at 64 KiB. FSRM does not
+unconditionally select short REP: it was slower for unaligned short copies on
+the evaluation CPU. Fill helpers use SIMD through 256 bytes and retain the
+established `REP STOSB` path above that, bypassing redundant vector setup.
+FSRM is a MOVSB capability, not a guarantee about STOSB. Baseline x64 remains
+supported; no new minimum CPU requirement is introduced. Copy ranges must
+remain non-overlapping, as already required by `copyBytes` and `copyArray`.
+
+The focused suites are `tests/isa_runtime.ml`, `tests/checksum_runtime.ml`,
 `tests/crypto_cng.ml`, `tests/ecdsa_p256.ml`, and `tests/simd_search.ml`. Reproducible diagnostic
 benchmarks and comparison guidance are in `benchmarks/`.

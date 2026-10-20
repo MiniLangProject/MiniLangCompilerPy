@@ -256,7 +256,7 @@ class CodegenCore:
         self.data.add_u64('dbg_loc_line', enc_int(0))
         # CPU capabilities are detected once by fn_cpu_init.  The active mask
         # may be reduced by tests/benchmarks to exercise portable fallbacks.
-        # Bit layout: SSE2, SSE4.2, AVX, AVX2, AES-NI, PCLMULQDQ, SHA.
+        # Bit layout: SSE2, SSE4.2, AVX, AVX2, AES-NI, PCLMULQDQ, SHA, ERMS, FSRM.
         self.data.add_u32('cpu_features_detected', 0)
         self.data.add_u32('cpu_features_active', 0)
         self.data.add_u32('cpu_has_avx2', 0)  # legacy fast-path flag

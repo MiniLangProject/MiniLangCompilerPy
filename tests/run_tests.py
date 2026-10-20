@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.21"
+    expected = "MiniLang Compiler 1.2.22"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -864,8 +864,9 @@ def test_linux_dynamic_import_module(*, name: str, tests_root: Path) -> TestResu
 
 
 def test_compaction_unit_modules(*, name: str, tests_root: Path) -> TestResult:
-    """Keep pure encoder, packing format and optimization proof tests in CI/local runs."""
-    for pattern in ('test_codegen_compaction.py', 'test_packing.py', 'test_asm_opcodes.py'):
+    """Keep encoder, native-runtime, packing and optimization proofs in local runs."""
+    for pattern in ('test_codegen_compaction.py', 'test_packing.py', 'test_asm_opcodes.py',
+                    'test_isa_runtime.py', 'test_concurrent_gc_codegen.py'):
         result = run_cmd([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', pattern],
                          cwd=tests_root.parent, timeout_s=180)
         if result.returncode:
@@ -4203,6 +4204,7 @@ def main() -> int:
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
+    isa_runtime_ml = find_file_by_name(tests_root, "isa_runtime.ml")
     simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
     crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
     random_auto_seeded_ml = find_file_by_name(tests_root, "random_auto_seeded.ml")
@@ -4249,7 +4251,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.21", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.22", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4449,6 +4451,7 @@ def main() -> int:
 
     for test_name, test_path, marker in [
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
+        ("isa_runtime.ml (copy/fill/CRC dispatch boundaries)", isa_runtime_ml, "[OK] ISA runtime"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
         ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
         ("random_auto_seeded.ml (secure seeding, errors and independent state)", random_auto_seeded_ml, "[OK] auto-seeded random"),

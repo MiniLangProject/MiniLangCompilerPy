@@ -2252,6 +2252,46 @@ class Asm:
         rex_b = 1 if s.id >= 8 else 0
         self.emit(self._rex(w=0, r=rex_r, b=rex_b) + b"\x0F\xBD" + self._modrm(3, d.id, s.id))
 
+    def bsf_r64_r64(self, dst: str, src: str) -> None:
+        """Scan a nonzero 64-bit operand; available on every x86-64 CPU."""
+        d, s = self.gpr(dst), self.gpr(src)
+        if d.size != 64 or s.size != 64:
+            raise ValueError("bsf_r64_r64 requires (r64, r64)")
+        self.emit(self._rex(w=1, r=d.id >> 3, b=s.id >> 3) + b"\x0F\xBC" + self._modrm(3, d.id, s.id))
+
+    def bsr_r64_r64(self, dst: str, src: str) -> None:
+        """Scan a nonzero 64-bit operand; available on every x86-64 CPU."""
+        d, s = self.gpr(dst), self.gpr(src)
+        if d.size != 64 or s.size != 64:
+            raise ValueError("bsr_r64_r64 requires (r64, r64)")
+        self.emit(self._rex(w=1, r=d.id >> 3, b=s.id >> 3) + b"\x0F\xBD" + self._modrm(3, d.id, s.id))
+
+    def pclmulqdq_xmm_xmm_imm8(self, dst: str, src: str, imm: int) -> None:
+        """Carry-less multiply selected qwords; requires CPUID.PCLMULQDQ."""
+        if not 0 <= imm <= 255:
+            raise ValueError("PCLMULQDQ selector must fit imm8")
+        d, s = self.XMM[dst], self.XMM[src]
+        self.emit(b"\x66" + self._rex(r=d >> 3, b=s >> 3) + b"\x0F\x3A\x44" + self._modrm(3, d, s) + bytes([imm]))
+
+    def pand_xmm_xmm(self, dst: str, src: str) -> None:
+        """Bitwise AND two SSE2 vectors."""
+        d, s = self.XMM[dst], self.XMM[src]
+        self.emit(b"\x66" + self._rex(r=d >> 3, b=s >> 3) + b"\x0F\xDB" + self._modrm(3, d, s))
+
+    def psrldq_xmm_imm8(self, dst: str, imm: int) -> None:
+        """Shift an SSE2 vector by bytes with zero fill (not a per-lane shift)."""
+        if not 0 <= imm <= 255:
+            raise ValueError("psrldq count must fit imm8")
+        d = self.XMM[dst]
+        self.emit(b"\x66" + self._rex(b=d >> 3) + b"\x0F\x73" + self._modrm(3, 3, d) + bytes([imm]))
+
+    def pslldq_xmm_imm8(self, dst: str, imm: int) -> None:
+        """Shift an SSE2 vector by bytes with zero fill (not a per-lane shift)."""
+        if not 0 <= imm <= 255:
+            raise ValueError("pslldq count must fit imm8")
+        d = self.XMM[dst]
+        self.emit(b"\x66" + self._rex(b=d >> 3) + b"\x0F\x73" + self._modrm(3, 7, d) + bytes([imm]))
+
     def crc32_r64_membase_disp(self, dst64: str, base: str, disp: int = 0) -> None:
         """Emit SSE4.2 ``CRC32 r64, qword [base+disp]``.
 

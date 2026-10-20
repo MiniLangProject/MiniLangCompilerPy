@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-10-10T17:05:54.085216Z",
-  "count": 233,
+  "generated_utc": "2026-10-19T23:20:14.657603Z",
+  "count": 239,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -215,6 +215,16 @@
       "asm": "; bsf_r32_r32(r11d, r10d)"
     },
     {
+      "name": "bsf_r64_r64",
+      "args": [
+        "r11",
+        "r10"
+      ],
+      "kwargs": {},
+      "hex": "4d0fbcda",
+      "asm": "; bsf_r64_r64(r11, r10)"
+    },
+    {
       "name": "bsr_r32_r32",
       "args": [
         "r11d",
@@ -223,6 +233,16 @@
       "kwargs": {},
       "hex": "450fbdda",
       "asm": "; bsr_r32_r32(r11d, r10d)"
+    },
+    {
+      "name": "bsr_r64_r64",
+      "args": [
+        "r11",
+        "r10"
+      ],
+      "kwargs": {},
+      "hex": "4d0fbdda",
+      "asm": "; bsr_r64_r64(r11, r10)"
     },
     {
       "name": "bt_r64_r64",
@@ -1518,6 +1538,27 @@
       "asm": "; or_rax_imm8(127)"
     },
     {
+      "name": "pand_xmm_xmm",
+      "args": [
+        "xmm9",
+        "xmm1"
+      ],
+      "kwargs": {},
+      "hex": "66440fdbc9",
+      "asm": "; pand_xmm_xmm(xmm9, xmm1)"
+    },
+    {
+      "name": "pclmulqdq_xmm_xmm_imm8",
+      "args": [
+        "xmm9",
+        "xmm1",
+        127
+      ],
+      "kwargs": {},
+      "hex": "66440f3a44c97f",
+      "asm": "; pclmulqdq_xmm_xmm_imm8(xmm9, xmm1, 127)"
+    },
+    {
       "name": "pcmpeqb_xmm_xmm",
       "args": [
         "xmm9",
@@ -1597,6 +1638,26 @@
       "kwargs": {},
       "hex": "415b",
       "asm": "pop r11"
+    },
+    {
+      "name": "pslldq_xmm_imm8",
+      "args": [
+        "xmm9",
+        127
+      ],
+      "kwargs": {},
+      "hex": "66410f73f97f",
+      "asm": "; pslldq_xmm_imm8(xmm9, 127)"
+    },
+    {
+      "name": "psrldq_xmm_imm8",
+      "args": [
+        "xmm9",
+        127
+      ],
+      "kwargs": {},
+      "hex": "66410f73d97f",
+      "asm": "; psrldq_xmm_imm8(xmm9, 127)"
     },
     {
       "name": "punpcklqdq_xmm_xmm",

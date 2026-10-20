@@ -32,6 +32,10 @@ const AES_NI = 16
 const PCLMULQDQ = 32
 /// Track the sha value used by this standard-library module.
 const SHA = 64
+/// Enhanced REP MOVSB/STOSB. Dispatch thresholds still depend on transfer size.
+const ERMS = 128
+/// Fast short REP MOVSB; this flag does not promise fast short STOSB.
+const FSRM = 256
 
 /// Return capabilities detected once during process startup.
 function features()
