@@ -6069,6 +6069,13 @@ class CodegenStmt:
         if fn.name in getattr(self, '_dead_functions', set()):
             retained_asm = self.asm
             self.asm = Asm()
+            # Dead bodies are lowered for semantic diagnostics, but their
+            # instructions are discarded.  Preserve the normal call hooks on
+            # this temporary assembler: concurrent-GC write barriers emit a
+            # leaf call and must temporarily suppress the expression spill
+            # hook without assuming the attribute already exists.
+            self.asm._on_call_label = getattr(retained_asm, '_on_call_label', None)
+            self.asm._before_call = getattr(retained_asm, '_before_call', None)
             a = self.asm
 
         defer_sites = self._collect_defer_sites(fn)

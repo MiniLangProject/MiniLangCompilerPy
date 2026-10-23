@@ -59,6 +59,7 @@ def main():
         ('gc_concurrent_reuse_fragments.ml', [], [], 'GC CONCURRENT REUSE FRAGMENTS [OK]'),
         ('gc_concurrent_order.ml', [], [], 'GC CONCURRENT ORDER [OK]'),
         ('gc_concurrent_bins.ml', [], [], 'GC CONCURRENT BINS [OK]'),
+        ('gc_concurrent_dead_function.ml', [], [], 'GC CONCURRENT DEAD FUNCTION [OK]'),
         ('gc_thread_lifetime.ml', [], [], 'GC THREAD LIFETIME [OK]'),
         ('gc_handoff_lifetime.ml', [], [], 'GC HANDOFF LIFETIME [OK]'),
         ('gc_reference_write_roots.ml', [], [], '[OK]'),
