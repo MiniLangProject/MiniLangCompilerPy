@@ -1,6 +1,6 @@
 // Regression: an unreachable function is still lowered for diagnostics.
 // Concurrent-GC member writes in that transient code path must retain the
-// normal assembler call hooks even though the instructions are discarded.
+// spill hook, without making helpers from discarded instructions reachable.
 struct DeadBarrierBox
   value
 end struct

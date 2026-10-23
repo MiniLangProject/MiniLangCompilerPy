@@ -46,6 +46,45 @@ class CompactionTests(unittest.TestCase):
         loop = ast.For('i', ast.Num(1), ast.Num(3), [ast.Print(ast.Var('i'))])
         self.assertTrue(opt.intervals([loop])['i'][4])
 
+    def test_ordered_comparison_fallthrough_shape(self):
+        """The void-error skip stays rel8 when try suppresses propagation."""
+        with tempfile.TemporaryDirectory() as tmp:
+            image, listing = Path(tmp) / 'ordered.exe', Path(tmp) / 'ordered.asm'
+            result = subprocess.run([sys.executable, str(ROOT / 'mlc_win64.py'),
+                                     str(ROOT / 'tests/ordered_comparison.ml'), str(image), '-I', str(ROOT),
+                                     '--asm', '--asm-out', str(listing)], capture_output=True, text=True, timeout=120)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            text = listing.read_text(encoding='utf-8')
+            names = [stem + suffix for suffix in ('Caught', 'Argument')
+                     for stem in ('less', 'greater', 'lessEqual', 'greaterEqual')]
+            for name in names + ['adjacentComparisons']:
+                block = re.search(r'(?ms)^fn_user_' + name + r':.*?(?=^fn_user_|\Z)', text)
+                self.assertIsNotNone(block, name)
+                joins = re.findall(r'(?m)^[0-9A-F]+\s+EB 1D\s+jmp cmp_done_', block[0])
+                self.assertEqual(len(joins), 4 if name == 'adjacentComparisons' else 1, name)
+
+    def test_dead_calls_do_not_retain_runtime_helpers(self):
+        """Diagnostic-only lowering keeps spill hooks, not helper reachability."""
+        with tempfile.TemporaryDirectory() as tmp:
+            image, listing = Path(tmp) / 'dead.exe', Path(tmp) / 'dead.asm'
+            source = ROOT / 'tests/gc_concurrent_dead_function.ml'
+            for target, flags in (('windows-x64', []),
+                                  ('windows-x64', ['--gc-concurrent']),
+                                  ('linux-x64', [])):
+                images = []
+                for pipeline in ('--no-object-pipeline', '--object-pipeline'):
+                    with self.subTest(target=target, flags=flags, pipeline=pipeline):
+                        result = subprocess.run(
+                            [sys.executable, str(ROOT / 'mlc_win64.py'), str(source), str(image),
+                             '-I', str(ROOT), '--target', target, pipeline, *flags,
+                             '--asm', '--asm-out', str(listing)],
+                            capture_output=True, text=True, timeout=120)
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                        self.assertNotRegex(listing.read_text(encoding='utf-8'),
+                                            r'(?m)^fn_fill_qwords:')
+                        images.append(image.read_bytes())
+                self.assertEqual(images[0], images[1])
+
     def test_codegen_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             image, listing = Path(tmp) / 'safe.exe', Path(tmp) / 'safe.asm'

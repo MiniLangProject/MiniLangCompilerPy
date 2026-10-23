@@ -420,6 +420,47 @@ class TestAsmOpcodeVectors(unittest.TestCase):
             if barrier == 'label':
                 self.assertEqual(a.labels['middle'], 2)
 
+    def test_adjacent_error_path_joins(self) -> None:
+        """Fallthrough error blocks retain the previous edge and PC fixups."""
+        import sys
+        import struct
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+
+        for prefix in (0, 65531):
+            for size in (29, 126, 127, 128):
+                with self.subTest(prefix=prefix, size=size):
+                    a = Asm()
+                    a.emit(b'\x90' * prefix)
+                    a.jmp('done')
+                    a.mark('non_numeric')
+                    a.mov_r32_imm32('ecx', 1200)
+                    a.lea_rdx_rip('payload')
+                    a.call('make_error')
+                    a.emit(b'\x90' * (size - 17))
+                    # No redundant JMP done: the error block falls through.
+                    a.mark('done')
+                    a.nop()
+                    a.jmp('following')
+                    a.mark('neighbor')
+                    a.nop()
+                    a.mark('following')
+                    a.mark('make_error')
+                    a.ret()
+                    a.mark('payload')
+                    a.emit(b'\0' * 8)
+                    code = a.finalize()
+                    width = 2 if size <= 127 else 5
+                    body = prefix + width
+                    done = body + size
+                    self.assertEqual(code[prefix], 0xEB if width == 2 else 0xE9)
+                    self.assertEqual(a.labels['non_numeric'], body)
+                    self.assertEqual(a.labels['done'], done)
+                    self.assertEqual(code[done + 1:done + 4], bytes.fromhex('eb0190'))
+                    self.assertEqual(a.labels['neighbor'], done + 3)
+                    self.assertEqual(body + 12 + struct.unpack_from('<i', code, body + 8)[0], a.labels['payload'])
+                    self.assertEqual(body + 17 + struct.unpack_from('<i', code, body + 13)[0], a.labels['make_error'])
+
     def test_forward_branch_listing(self) -> None:
         import sys
         sys.path.insert(0, str(_project_root()))

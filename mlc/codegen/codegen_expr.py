@@ -4777,6 +4777,8 @@ class CodegenExpr:
                     self._emit_make_error_const(ERR_VOID_OP, f"Cannot apply '{e.op}' to non-numeric values")
                     self._emit_auto_errprop()
 
+                # Fall through without replacing the earlier void-error skip
+                # as the assembler's sole candidate for forward relaxation.
                 a.mark(l_done)
                 return
 

@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.2.22"
+    expected = "MiniLang Compiler 1.2.23"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -764,6 +764,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
         (tests_root / "runtime_codegen.ml", ["RUNTIME CODEGEN [OK]"], []),
+        (tests_root / "ordered_comparison.ml", ["[OK] dynamic ordered comparisons"], []),
         (tests_root / "memory_management.ml", ["MEMORY MANAGEMENT [OK]"], []),
         (tests_root / "memory_heap_ceiling.ml", ["MEMORY CEILING [OK]"], [],
          ["--heap-reserve", "40m", "--heap-commit", "32m"]),
@@ -4251,7 +4252,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.2.22", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.2.23", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4989,6 +4990,11 @@ def main() -> int:
                                                            mlc_runner=mlc_runner))
     tests.append(lambda: test_compaction_unit_modules(
         name="codegen: compaction, assembler and packing unit modules", tests_root=tests_root))
+    tests.append(lambda: test_program_no_fail(
+        name="codegen: dynamic ordered comparisons and error joins",
+        mlc_runner=mlc_runner, ml_path=tests_root / "ordered_comparison.ml",
+        must_contain=["[OK] dynamic ordered comparisons"],
+        timeout_compile_s=120, timeout_run_s=120))
     tests.append(lambda: test_program_no_fail(
         name="codegen: scalar roots, escape safety and register lifetimes",
         mlc_runner=mlc_runner, ml_path=tests_root / "optimizer_safety.ml",

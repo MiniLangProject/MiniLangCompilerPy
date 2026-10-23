@@ -2,6 +2,21 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.23 - 2026-10-23
+
+- Restore Python/native byte parity for dynamic ordered comparisons inside
+  `try(...)`: let the final non-numeric error block fall through, preserving
+  the earlier void-error branch's eligibility for short-jump relaxation.
+  Add runtime/error, code-shape, relocation and cross-pipeline regressions.
+- Preserve Python assembler spill hooks when lowering unreachable functions
+  for diagnostics with concurrent GC enabled. Mirror the regression fixture
+  and three-host check in the native repository.
+- Isolate runtime-helper reachability during that diagnostic-only lowering.
+  Calls in discarded functions must not retain helpers in Python output;
+  this restores CRC/concurrent-GC fixture parity without losing spill hooks.
+- Rebuild and verify both release compilers, version constants, Windows/Linux
+  self-hosting, mono/MLO output and the MiniSQL backup executable.
+
 ## 1.2.22 - 2026-10-20
 
 - Use baseline-x64 64-bit bit scans for concurrent-GC free bins and reuse bitmaps.

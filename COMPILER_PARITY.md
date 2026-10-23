@@ -1,5 +1,85 @@
 # Compiler parity and self-hosting
 
+## 1.2.23 ordered-comparison parity fix — 23 October 2026
+
+The native compiler now matches the reference lowering of dynamic `<`, `>`,
+`<=` and `>=`. The final non-numeric error block falls through to its join.
+Previously it emitted a redundant jump to that immediately following label.
+Although the peephole pass removed the redundant instruction, it had already
+replaced the earlier void-error skip as the assembler's only forward-branch
+candidate. In a `try(...)` context the earlier edge consequently remained
+`E9 1D 00 00 00` instead of the reference's `EB 1D`.
+
+The fix removes only that redundant jump. The later, superficially similar
+jump in the generic comparison fallback remains necessary and is unchanged.
+The bounded assembler relaxation algorithm itself is unchanged. Python code
+generation for ordered comparisons is unchanged apart from an explanatory
+comment.
+
+### MiniSQL backup verification
+
+The original mismatch was reproduced exactly on the existing MiniSQL working
+tree: Python `96B20B164074A12D6275FC399B15106E480503CBD5ECF6F5D16B2DEB09BAA6B5`
+versus native `8C82B1FC71F0BB30CE581EC45132F83CBA726AE4849928D55BEA77D62FED8C9E`,
+with 12,479 differing byte positions. Native monolithic and MLO output already
+matched one another.
+
+After the fix, **Python, native monolithic and native MLO** builds of
+`MiniSQL/src/apps/minisql_backup/main.ml` are byte-identical, all at
+**24,089,600 bytes**, with SHA-256:
+
+```text
+96B20B164074A12D6275FC399B15106E480503CBD5ECF6F5D16B2DEB09BAA6B5
+```
+
+All three pass `--version` and `--m0-self-test`. MiniSQL source fingerprints
+were checked before and after; no MiniSQL workaround, source or database
+change was made. This is not a new full MiniSQL test-suite or throughput run.
+
+### Regression and bootstrap coverage
+
+- Shared `tests/ordered_comparison.ml`: 320 assertions covering all four
+  operators, integer/real/mixed comparisons, both operand positions for void
+  and non-numeric errors, propagation, direct `try`, call-argument `try`
+  and adjacent comparisons.
+- The Python/native/Windows-host/Linux-host matrix executes 15 images with
+  per-target/configuration byte equality, including Windows concurrent GC.
+  The old compiler fails this regression for default Windows and Linux output.
+- Actual generated-code checks require the 12 suppressed error joins to use
+  short jumps. Mirrored assembler tests cover 29/126/127/128-byte spans,
+  adjacent joins, labels, RIP/call relocation rebasing and a 64-KiB boundary.
+- Python: 179 tests pass, none failed/skipped. ML: 138 core tests and 237 outer
+  checks pass. The assembler suite has 13 passing checks plus one optional
+  NASM skip; all 239 shared opcode vectors remain unchanged.
+- Full Windows Python bootstrap/native MLO stage 2/native monolithic stage 3
+  match; Python Linux/native Linux selfbuild/Windows MLO crossbuild also match.
+- MiniDoc regeneration: 40 compiler files, 3,368 symbols, zero warnings.
+  Both standard-library source and generated documentation trees are unchanged
+  and still byte-identical.
+
+See the [machine-readable evidence](docs/reports/ORDERED_COMPARISON_PARITY_2026-10-23.json).
+That report records the pre-version-bump development checkpoint (1.2.22).
+The fix is included in 1.2.23; see the separate
+[release-stamped verification](docs/reports/release-1.2.23-version-matrix.json)
+for rebuilt compiler hashes and repeated checks. Existing 1.2.22 release
+assets remain unchanged. No runtime performance claim is made for the fix.
+
+### Additional release qualification finding
+
+The full 1.2.23 release matrix exposed a separate Python-only regression in
+the earlier concurrent-GC dead-function fix: copying the call-tracking hook
+into the temporary diagnostic assembler retained runtime helpers referenced
+only by discarded code. The native compiler already discards that temporary
+helper set.
+
+Python now retains the expression-spill hook, including the concurrent-GC
+leaf-call override, without forwarding helper reachability into live code.
+The CRC fixture and unused concurrent-GC function again match native bytes.
+The shared concurrent-GC matrix includes the latter fixture, and an explicit
+Python code-shape test checks that dead calls cannot retain the array-fill
+helper across Windows/default, Windows/concurrent and Linux/default builds,
+in both pipelines. Full suites and release parity are repeated after this fix.
+
 ## 1.2.21 release verification 18 October 2026
 
 The release-stamped Windows Python bootstrap, native MLO stage 2 and native
