@@ -212,6 +212,10 @@ def parse_program(minilang_mod: Any, input_path: str) -> tuple[str, Any]:
     with open(input_path, "r", encoding="utf-8") as f:
         code = f.read()
 
+    identities = getattr(minilang_mod, '_incremental_source_ids', None)
+    if identities is not None:
+        import hashlib
+        identities[input_path] = hashlib.sha256(code.encode('utf-8')).hexdigest()
     code = normalize_code_for_tokenizer(code)
     source_for_tokens = code
     preprocess = getattr(minilang_mod, "preprocess_compile_directives", None)
@@ -257,6 +261,10 @@ def parse_program_keepgoing(
     with open(input_path, "r", encoding="utf-8") as f:
         code = f.read()
 
+    identities = getattr(minilang_mod, '_incremental_source_ids', None)
+    if identities is not None:
+        import hashlib
+        identities[input_path] = hashlib.sha256(code.encode('utf-8')).hexdigest()
     code = normalize_code_for_tokenizer(code)
 
     source_for_tokens = code

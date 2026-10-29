@@ -1,5 +1,27 @@
 # Compiler parity and self-hosting
 
+## 1.2.24 incremental-build verification — 29 October 2026
+
+Both compilers now cache native function fragments after source edits while
+preserving the canonical clean-build instruction stream. The native compiler
+supports this in monolithic and MLO modes on Windows and Linux. See the
+[incremental guide](docs/INCREMENTAL_BUILDS.md) for invalidation rules and the
+[release verification](docs/reports/release-1.2.24-version-matrix.json) for the
+release-stamped compiler hashes and checked configurations.
+
+The three full Windows builds (Python bootstrap, native MLO stage 2 and native
+monolithic stage 3) are byte-identical. The three full Linux builds (Python
+bootstrap, Linux-native monolithic selfbuild and Windows-native MLO crossbuild)
+also match. Twelve version/runtime programs have six-way byte parity per
+target and verify `MINILANG_VERSION = "1.2.24"`; all three compiler hosts also
+report 1.2.24 through both CLI version flags.
+
+The [development evaluation](docs/reports/INCREMENTAL_BUILDS_2026-10-29.md)
+contains the earlier cache/runtime matrix and performance measurements. Its
+1.2.23 development executable hashes remain historical evidence; use the
+1.2.24 release manifest or release notes for download checksums. No new
+full-game performance claim is made by the release qualification.
+
 ## 1.2.23 ordered-comparison parity fix — 23 October 2026
 
 The native compiler now matches the reference lowering of dynamic `<`, `>`,

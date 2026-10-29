@@ -2,6 +2,20 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.24 - 2026-10-29
+
+- Reuse validated native function fragments across changed builds in both
+  compilers. Project manifests enable the cache automatically; direct builds
+  can opt in with `--incremental-cache DIR`. `--no-incremental` bypasses it.
+- Preserve clean-build bytes, optimization decisions, constant pooling,
+  relocations and diagnostics. Validate declarations, inline dependencies,
+  body-derived global facts, compiler/options and incoming layout before reuse.
+- Make cache writes atomic and optional, reject damaged records, and capture
+  parsed source identities so editor saves cannot mislabel a cached fragment.
+  Recheck whole-build fingerprints before publishing artifacts.
+- Add changed-build, parallel-publication, corruption, language/runtime replay
+  and multi-module performance checks. See [incremental builds](docs/INCREMENTAL_BUILDS.md).
+
 ## 1.2.23 - 2026-10-23
 
 - Restore Python/native byte parity for dynamic ordered comparisons inside

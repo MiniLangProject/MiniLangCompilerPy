@@ -23,7 +23,7 @@ from .tools import u32, u64, extern_library_label_token
 from . import packing
 
 
-COMPILER_VERSION = "1.2.23"
+COMPILER_VERSION = "1.2.24"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -1447,10 +1447,14 @@ def compile_to_exe(
     subsystem: int = 3,
     target: str = "windows-x64",
     compile_defines: Optional[Dict[str, bool | int | str]] = None,
+    incremental_cache: Optional[str] = None,
 ) -> None:
     """Compile one MiniLang entry file and its imports to a native x64 image."""
 
     ml = load_minilang_frontend(input_ml)
+    # Keys must identify the text actually parsed, not a later disk read while
+    # an editor may already have saved the next revision.
+    ml._incremental_source_ids = {} if incremental_cache else None
     configure_target = getattr(ml, "set_compile_target", None)
     if callable(configure_target):
         configure_target(target)
@@ -1486,6 +1490,12 @@ def compile_to_exe(
         target=target,
     )
 
+    if incremental_cache and not asm_listing and not dump_labels_out:
+        from .incremental import FunctionCache
+        cg._incremental_cache = FunctionCache(incremental_cache,
+            (target, subsystem, heap_config, call_profile, trace_calls, compile_defines, include_dirs),
+            source_ids=ml._incremental_source_ids, frontend_path=ml.__file__)
+
     asm_listing_path: Optional[str] = None
     if asm_listing:
         asm_listing_path = asm_out or (os.path.splitext(output_exe)[0] + '.asm')
@@ -1500,6 +1510,8 @@ def compile_to_exe(
         from .linux_runtime import emit_linux_startup
         emit_linux_startup(cg)
     cg.emit_program(program)
+    if getattr(cg, '_incremental_cache', None) is not None:
+        cg._incremental_cache.report()
 
     if target == 'linux-x64':
         from .elf import build_elf64, dynamic_size, plan_elf64
@@ -2038,6 +2050,10 @@ def main(argv: List[str]) -> int:
                                        help='force monolithic mode (the Python compiler default)')
     parser.add_argument('--target', default='windows-x64', choices=('windows-x64', 'linux-x64'),
                         help='native output target (default: windows-x64)')
+    parser.add_argument('--incremental-cache', metavar='DIR',
+                        help='reuse validated native functions across changed builds')
+    parser.add_argument('--no-incremental', action='store_true',
+                        help='compile without reading or writing incremental caches')
 
     parser.add_argument('-I', '--import-path', dest='include_dirs', action='append', default=[], metavar='DIR',
                         help='Add DIR to import search paths (may be repeated).')
@@ -2193,6 +2209,8 @@ def main(argv: List[str]) -> int:
             subsystem=int(getattr(args, "subsystem", 3) or 3),
             target=str(getattr(args, "target", "windows-x64") or "windows-x64"),
             compile_defines=compile_defines,
+            incremental_cache=(str(project_build.cache_dir) if project_build is not None else args.incremental_cache)
+                if not args.no_incremental and (project_build is None or project_build.incremental) else None,
         )
 
     except MultiCompileError as me:
@@ -2295,6 +2313,9 @@ def main(argv: List[str]) -> int:
             return 2
 
     try:
+        if project_cache_enabled and project_fingerprint(project_build, inp, include_dirs) != project_digest:
+            print("[incremental] inputs changed during compilation; artifact cache not published")
+            project_cache_enabled = False
         project_store(project_build if project_cache_enabled else None, project_digest, out)
     except OSError as e:
         print(f"ProjectError: cannot update incremental cache: {e}")

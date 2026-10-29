@@ -311,6 +311,10 @@ def fingerprint(project: ProjectBuild, input_path: str, include_dirs: Sequence[s
     # Compiler changes invalidate project artifacts as well.
     compiler_root = Path(__file__).resolve().parent
     compiler_files = [Path(sys.argv[0]).resolve(), *sorted(compiler_root.rglob("*.py"))]
+    # The frontend can be overridden beside the input or in the working
+    # directory. Whole-build hits must respect that compiler dependency too.
+    from .frontend import load_minilang_frontend
+    compiler_files.append(Path(load_minilang_frontend(input_path).__file__).resolve())
     for path in compiler_files:
         if path.is_file():
             h.update(b"\0compiler\0")

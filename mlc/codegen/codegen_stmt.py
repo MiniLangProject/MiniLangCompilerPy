@@ -4657,6 +4657,8 @@ class CodegenStmt:
     def emit_program(self, program: List[Any]) -> None:
         """Plan and emit a complete closed MiniLang program."""
 
+        if getattr(self, '_incremental_cache', None) is not None:
+            self._incremental_cache.prepare(program)
         a = self.asm
         # Whole-program feature gating keeps TLS/GC polling and allocator
         # synchronization out of binaries that cannot create a native thread.
@@ -6040,6 +6042,13 @@ class CodegenStmt:
     # ---------- user functions ----------
 
     def emit_user_function(self, fn: Any) -> None:
+        """Reuse a validated native fragment or lower its function normally."""
+        cache = getattr(self, '_incremental_cache', None)
+        if cache is not None:
+            return cache.emit(self, fn, self._emit_user_function_uncached)
+        return self._emit_user_function_uncached(fn)
+
+    def _emit_user_function_uncached(self, fn: Any) -> None:
         """Emit a top-level MiniLang function as a native subroutine.
 
         Step 10: function codegen is now compatible with lexical block scopes and true shadowing.
