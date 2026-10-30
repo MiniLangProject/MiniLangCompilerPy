@@ -383,9 +383,7 @@ function _growStringArray(items, need)
 
   grown = array(newLen)
   if oldLen > 0 then
-    for i = 0 to(oldLen - 1)
-      grown[i] = items[i]
-    end for
+    copyArray(grown, 0, items, 0, oldLen)
   end if
   return grown
 end function
@@ -407,9 +405,7 @@ function _takeStringArray(items, count)
   end if
 
   output = array(count)
-  for i = 0 to(count - 1)
-    output[i] = items[i]
-  end for
+  copyArray(output, 0, items, 0, count)
   return output
 end function
 

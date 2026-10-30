@@ -92,6 +92,13 @@ end function
 
 /// Removes all items (keeps capacity).
 function clear()
+  // Drop references in the live ring before resetting its indices.
+  if this.size > 0 then
+    mask = this.cap - 1
+    for i = 0 to(this.size - 1)
+      this.buf[(this.head + i) & mask] = 0
+    end for
+  end if
   this.head = 0
   this.tail = 0
   this.size = 0
@@ -105,9 +112,10 @@ function _grow(newCap)
 
   if this.size > 0 then
     mask = this.cap - 1
-    for i = 0 to(this.size - 1)
-      nb[i] = this.buf[(this.head + i) & mask]
-    end for
+    first = this.cap - this.head
+    if first > this.size then first = this.size end if
+    copyArray(nb, 0, this.buf, this.head, first)
+    if first < this.size then copyArray(nb, first, this.buf, 0, this.size - first) end if
   end if
 
   this.buf = nb
@@ -158,10 +166,10 @@ function toArray()
     return output
   end if
 
-  mask = this.cap - 1
-  for i = 0 to(this.size - 1)
-    output[i] = this.buf[(this.head + i) & mask]
-  end for
+  first = this.cap - this.head
+  if first > this.size then first = this.size end if
+  copyArray(output, 0, this.buf, this.head, first)
+  if first < this.size then copyArray(output, first, this.buf, 0, this.size - first) end if
   return output
 end function
 end struct

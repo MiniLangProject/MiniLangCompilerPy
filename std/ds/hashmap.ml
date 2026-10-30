@@ -64,7 +64,9 @@ end function
 /// @internal
 function _mix32(x)
   // 32-bit finalizer (Murmur-style), masked to u32.
-  h = x & 0xFFFFFFFF
+  // Fold the high payload bits before reducing to a 32-bit hash.
+  // Otherwise keys separated by 2^32 have identical probe sequences.
+  h = (x ^ (x >> 32)) & 0xFFFFFFFF
   h = h ^(h >> 16)
   h =(h * 0x7feb352d) & 0xFFFFFFFF
   h = h ^(h >> 15)

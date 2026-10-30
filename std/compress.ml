@@ -131,11 +131,10 @@ function decompress(container, maxOutputBytes)
     if payloadSize != size then return error(COMPRESS_ERR, "Invalid raw payload size") end if
     output = slice(container, HEADER_SIZE, size)
   else
-    payload = slice(container, HEADER_SIZE, payloadSize)
     if algorithm == LZ4 then
-      output = lz4.decode(payload, size)
+      output = lz4.decodeRange(container, HEADER_SIZE, payloadSize, size)
     else
-      output = rle.decode(payload, size)
+      output = rle.decodeRange(container, HEADER_SIZE, payloadSize, size)
     end if
     if typeof(output) == "error" then return output end if
   end if

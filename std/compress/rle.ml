@@ -62,16 +62,26 @@ end function
 /// @param block Encoded RLE bytes.
 /// @param expectedSize Exact decoded byte count.
 function decode(block, expectedSize)
+  if typeof(block) != "bytes" then return error(RLE_ERR, "RLE decode expects bytes and an int size") end if
+  return decodeRange(block, 0, len(block), expectedSize)
+end function
+
+/// Decode a bounded range without copying a container payload first.
+/// @internal
+function decodeRange(block, start, length, expectedSize)
   if typeof(block) != "bytes" or typeof(expectedSize) != "int" then
     return error(RLE_ERR, "RLE decode expects bytes and an int size")
+  end if
+  if typeof(start) != "int" or typeof(length) != "int" or start < 0 or length < 0 or start > len(block) or length > len(block) - start then
+    return error(RLE_ERR, "Invalid RLE input range")
   end if
   if expectedSize < 0 or expectedSize > 0x7FFFFFFF then
     return error(RLE_ERR, "Invalid RLE output size")
   end if
   output = bytes(expectedSize, 0)
-  readAt = 0
+  readAt = start
   written = 0
-  n = len(block)
+  n = start + length
   while readAt < n
     token = block[readAt]
     readAt = readAt + 1

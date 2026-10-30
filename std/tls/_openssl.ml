@@ -336,10 +336,18 @@ end function
 /// Provide the send bytes operation for this standard-library module.
 /// @internal
 function sendBytes(state, data)
+  if typeof(data) != "bytes" then return _fail("send", "payload must be bytes") end if
+  return sendRange(state, data, 0, len(data))
+end function
+
+/// Send a validated subrange directly from the original plaintext buffer.
+/// @internal
+function sendRange(state, data, offset, length)
   if state is not OpenSslState or state.closed then return _fail("send", "session is closed or invalid") end if
-  if len(data) == 0 then return 0 end if
+  if typeof(data) != "bytes" or typeof(offset) != "int" or typeof(length) != "int" or offset < 0 or length < 0 or offset > len(data) or length > len(data) - offset then return _fail("send", "invalid payload range") end if
+  if length == 0 then return 0 end if
   count = bytes(8, 0)
-  result = _sessionWrite(state.session, nativeBytesPtr(data), len(data), count)
+  result = _sessionWrite(state.session, nativeBytesPtr(data) + offset, length, count)
   if result != 1 then return _fail("send", "SSL_write_ex failed, SSL error " + _sessionError(state.session, result)) end if
   return _getU64(count)
 end function

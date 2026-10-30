@@ -46,6 +46,19 @@ function consume(work)
   return total
 end function
 
+function blockedSend(channel)
+  return channel.SendFor("second", 10000)
+end function
+
+function blockedReceive(channel)
+  return channel.ReceiveFor(10000).received
+end function
+
+function signalSoon(event)
+  threadSleep(50)
+  return event.Set()
+end function
+
 function main(args)
   pool = threadPool.ThreadPool.withQueueCapacity(4, 32)
   futures = []
@@ -123,6 +136,19 @@ function main(args)
   finalResult = timedChannel.ReceiveFor(0)
   if not finalResult.received or not timedChannel.Dispose() then return 39 end if
 
+  closingFull = channels.Channel.new(1)
+  if not closingFull.Send("first") then return 43 end if
+  blockedProducer = tasks.run(channelPool, blockedSend, closingFull)
+  threadSleep(20)
+  if not closingFull.close() or not blockedProducer.WaitFor(10000) or blockedProducer.result() then return 44 end if
+  if closingFull.ReceiveFor(0).value != "first" or not blockedProducer.Dispose() or not closingFull.Dispose() then return 45 end if
+
+  closingEmpty = channels.Channel.new(1)
+  blockedConsumer = tasks.run(channelPool, blockedReceive, closingEmpty)
+  threadSleep(20)
+  if not closingEmpty.close() or not blockedConsumer.WaitFor(10000) or blockedConsumer.result() then return 46 end if
+  if not blockedConsumer.Dispose() or not closingEmpty.Dispose() then return 47 end if
+
   if not channelPool.Shutdown() or not channelPool.AwaitTerminationFor(10000) then return 18 end if
   if not channelPool.Dispose() then return 19 end if
 
@@ -137,7 +163,13 @@ function main(args)
   if elapsed < 40 or elapsed > 500 then return 42 end if
   if not queued.Cancel() or not queued.WaitFor(10000) or queued.status() != "Cancelled" then return 29 end if
   if typeof(queued.result()) != "void" or not queued.Dispose() then return 30 end if
-  if not gate.Set() or not blocker.WaitFor(10000) or blocker.result() != 77 then return 31 end if
+  signalPool = threadPool.ThreadPool.withQueueCapacity(1, 2)
+  signaller = tasks.run(signalPool, signalSoon, gate)
+  if typeof(signaller) != "struct" then return 48 end if
+  if tasks.whenAnyFor([blocker], 10000) != 0 then return 48 end if
+  if not signaller.WaitFor(10000) or not signaller.result() or not signaller.Dispose() then return 49 end if
+  if not signalPool.Shutdown() or not signalPool.AwaitTerminationFor(10000) or not signalPool.Dispose() then return 50 end if
+  if not blocker.WaitFor(10000) or blocker.result() != 77 then return 31 end if
   if not blocker.Dispose() then return 32 end if
   if not cancelPool.Shutdown() or not cancelPool.AwaitTerminationFor(10000) then return 33 end if
   if not cancelPool.Dispose() or not gate.close() then return 34 end if

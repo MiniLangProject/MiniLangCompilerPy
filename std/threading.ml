@@ -322,6 +322,10 @@ const PTHREAD_MUTEX_SIZE = 40
 const PTHREAD_MUTEXATTR_SIZE = 4
 /// Track the pthread cond size value used by this standard-library module.
 const PTHREAD_COND_SIZE = 48
+/// glibc x86-64 pthread_condattr_t storage size.
+const PTHREAD_CONDATTR_SIZE = 4
+/// Linux clock id used for deadline-based condition waits.
+const CLOCK_MONOTONIC = 1
 /// Track the semaphore size value used by this standard-library module.
 const SEMAPHORE_SIZE = 32
 /// Track the pthread mutex recursive value used by this standard-library module.
@@ -354,9 +358,17 @@ extern function _mutexDestroy(mutex as ptr) from "libc.so.6" symbol "pthread_mut
 /// Provide the cond init operation for this standard-library module.
 /// @internal
 extern function _condInit(condition as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_cond_init" returns i32
+/// @internal
+extern function _condAttrInit(attribute as ptr) from "libc.so.6" symbol "pthread_condattr_init" returns i32
+/// @internal
+extern function _condAttrSetClock(attribute as ptr, clockId as int) from "libc.so.6" symbol "pthread_condattr_setclock" returns i32
+/// @internal
+extern function _condAttrDestroy(attribute as ptr) from "libc.so.6" symbol "pthread_condattr_destroy" returns i32
 /// Provide the cond wait operation for this standard-library module.
 /// @internal
 extern function _condWait(condition as ptr, mutex as ptr) from "libc.so.6" symbol "pthread_cond_wait" returns i32
+/// @internal
+extern function _condTimedWait(condition as ptr, mutex as ptr, deadline as ptr) from "libc.so.6" symbol "pthread_cond_timedwait" returns i32
 /// Provide the cond signal operation for this standard-library module.
 /// @internal
 extern function _condSignal(condition as ptr) from "libc.so.6" symbol "pthread_cond_signal" returns i32
@@ -387,6 +399,15 @@ extern function _semDestroy(semaphore as ptr) from "libc.so.6" symbol "sem_destr
 /// Provide the sleep micros operation for this standard-library module.
 /// @internal
 extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
+
+/// Write a nonnegative 64-bit timespec field in native little-endian order.
+/// @internal
+function _putTimespecField(buffer, offset, value)
+  for i = 0 to 7
+    buffer[offset + i] = value & 255
+    value = value >> 8
+  end for
+end function
 
 /// Creates new recursive mutex.
 /// @internal
@@ -612,7 +633,23 @@ struct Event
     if typeof(manualReset) != "bool" or typeof(initialState) != "bool" then return error(1602, "event flags must be booleans") end if
     mutex = _newRecursiveMutex()
     condition = bytes(PTHREAD_COND_SIZE, 0)
-    if typeof(mutex) != "bytes" or _condInit(nativeBytesPtr(condition), 0) != 0 then return error(1602, "could not create native event") end if
+    if typeof(mutex) != "bytes" then return error(1602, "could not create native event") end if
+    attribute = bytes(PTHREAD_CONDATTR_SIZE, 0)
+    if _condAttrInit(nativeBytesPtr(attribute)) != 0 then
+      _mutexDestroy(nativeBytesPtr(mutex))
+      return error(1602, "could not create condition attributes")
+    end if
+    if _condAttrSetClock(nativeBytesPtr(attribute), CLOCK_MONOTONIC) != 0 then
+      _condAttrDestroy(nativeBytesPtr(attribute))
+      _mutexDestroy(nativeBytesPtr(mutex))
+      return error(1602, "could not select monotonic event clock")
+    end if
+    initialized = _condInit(nativeBytesPtr(condition), nativeBytesPtr(attribute)) == 0
+    _condAttrDestroy(nativeBytesPtr(attribute))
+    if not initialized then
+      _mutexDestroy(nativeBytesPtr(mutex))
+      return error(1602, "could not create native event")
+    end if
     return Event(mutex, condition, manualReset, initialState, false)
   end function
 
@@ -631,24 +668,38 @@ struct Event
     return true
   end function
 
-  /// Poll for a signal until the requested timeout expires.
+  /// Block on the monotonic condition until signaled or the deadline expires.
   /// @param milliseconds Maximum duration in milliseconds.
   function waitFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
     deadline = time.ticks() + milliseconds
-    while true
-      _mutexLock(nativeBytesPtr(this.mutex))
-      ready = this.signaled
-      if ready and not this.manualReset then this.signaled = false end if
-      _mutexUnlock(nativeBytesPtr(this.mutex))
-      if ready then return true end if
-      if time.ticks() >= deadline then return false end if
-      _sleepMicros(1000)
+    seconds = (deadline - (deadline % 1000)) / 1000
+    nanoseconds = (deadline % 1000) * 1000000
+    absolute = bytes(16, 0)
+    _putTimespecField(absolute, 0, seconds)
+    _putTimespecField(absolute, 8, nanoseconds)
+    _mutexLock(nativeBytesPtr(this.mutex))
+    while not this.signaled
+      result = _condTimedWait(nativeBytesPtr(this.condition), nativeBytesPtr(this.mutex), nativeBytesPtr(absolute))
+      if result != 0 then
+        _mutexUnlock(nativeBytesPtr(this.mutex))
+        return false
+      end if
     end while
+    if not this.manualReset then this.signaled = false end if
+    _mutexUnlock(nativeBytesPtr(this.mutex))
+    return true
   end function
 
-  /// Provide try wait behavior for this standard-library module.
-  function tryWait() return this.waitFor(0) end function
+  /// Test the signal state without allocating a timed-wait buffer.
+  function tryWait()
+    if this.closed then return false end if
+    _mutexLock(nativeBytesPtr(this.mutex))
+    ready = this.signaled
+    if ready and not this.manualReset then this.signaled = false end if
+    _mutexUnlock(nativeBytesPtr(this.mutex))
+    return ready
+  end function
 
   /// Updates set.
   function set()

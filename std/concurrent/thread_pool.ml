@@ -46,6 +46,8 @@ struct ThreadPoolJob
   result
   /// Closed associated with `ThreadPoolJob`.
   closed
+  /// Completion events registered by concurrent whenAny callers.
+  listeners
 
   /// Create a queued job owned by the pool until it reaches a terminal state.
   /// @param callback Value supplied for `callback`.
@@ -60,8 +62,45 @@ struct ThreadPoolJob
       data,
       JOB_QUEUED,
       void,
-      false
+      false,
+      []
     )
+  end function
+
+  /// Register a completion event and return its stable slot for removal.
+  /// @internal
+  function _watch(event)
+    if not this.guard.acquire() then return -2 end if
+    terminal = this.status == JOB_COMPLETED or this.status == JOB_FAILED or this.status == JOB_CANCELLED
+    if terminal or this.closed then
+      event.set()
+      this.guard.release()
+      return -1
+    end if
+    slot = len(this.listeners)
+    this.listeners = this.listeners + [event]
+    this.guard.release()
+    return slot
+  end function
+
+  /// Remove one event before its owner closes the native handle.
+  /// @internal
+  function _unwatch(slot)
+    if slot < 0 then return true end if
+    if not this.guard.acquire() then return false end if
+    if slot < len(this.listeners) then this.listeners[slot] = void end if
+    this.guard.release()
+    return true
+  end function
+
+  /// Publish completion to every currently registered observer under guard.
+  /// @internal
+  function _signalCompletionLocked()
+    this.done.set()
+    for each event in this.listeners
+      if typeof(event) == "struct" then event.set() end if
+    end for
+    this.listeners = []
   end function
 
   /// Atomically claim a queued job for exactly one worker.
@@ -96,8 +135,8 @@ struct ThreadPoolJob
     end if
     this.callback = void
     this.data = void
+    this._signalCompletionLocked()
     this.guard.release()
-    this.done.set()
     return true
   end function
 
@@ -111,8 +150,8 @@ struct ThreadPoolJob
     this.status = JOB_CANCELLED
     this.callback = void
     this.data = void
+    this._signalCompletionLocked()
     this.guard.release()
-    this.done.set()
     return true
   end function
 
@@ -171,6 +210,7 @@ struct ThreadPoolJob
     this.callback = void
     this.data = void
     this.result = void
+    this.listeners = []
     this.guard.release()
     doneOk = this.done.close()
     guardOk = this.guard.close()
@@ -214,13 +254,13 @@ function _poolEnsureQueueSpaceLocked(pool)
   if pool.queueCapacity > 0 and newCapacity > pool.queueCapacity then newCapacity = pool.queueCapacity end if
   if newCapacity <= pool.queuedCount then return false end if
   grown = array(newCapacity, 0)
-  i = 0
-  while i < pool.queuedCount
-    oldIndex = pool.queueHead + i
-    if len(pool.queue) > 0 then oldIndex = oldIndex % len(pool.queue) end if
-    grown[i] = pool.queue[oldIndex]
-    i = i + 1
-  end while
+  if pool.queuedCount > 0 then
+    oldLength = len(pool.queue)
+    first = oldLength - pool.queueHead
+    if first > pool.queuedCount then first = pool.queuedCount end if
+    copyArray(grown, 0, pool.queue, pool.queueHead, first)
+    if first < pool.queuedCount then copyArray(grown, first, pool.queue, 0, pool.queuedCount - first) end if
+  end if
   pool.queue = grown
   pool.queueHead = 0
   pool.queueTail = pool.queuedCount

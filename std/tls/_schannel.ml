@@ -1581,12 +1581,19 @@ function sendAll(context, socketHandle, data)
   if context is not TlsContext then return error(INVALID_ARGUMENT, "platform.tls_schannel.sendAll: context must be TlsContext") end if
   if typeof(data) == "string" then data = bytes(data) end if
   if typeof(data) != "bytes" then return error(INVALID_ARGUMENT, "platform.tls_schannel.sendAll: data must be bytes or string") end if
+  return sendAllRange(context, socketHandle, data, 0, len(data))
+end function
+
+/// Encrypt and send one validated range without copying a short-send tail.
+/// @internal
+function sendAllRange(context, socketHandle, data, offset, count)
+  if context is not TlsContext or typeof(data) != "bytes" or typeof(offset) != "int" or typeof(count) != "int" or offset < 0 or count < 0 or offset > len(data) or count > len(data) - offset then return error(INVALID_ARGUMENT, "platform.tls_schannel.sendAllRange: invalid plaintext range") end if
   sentPlain = 0
-  while sentPlain < len(data)
-    remaining = len(data) - sentPlain
+  while sentPlain < count
+    remaining = count - sentPlain
     chunkSize = fragmentLimit(context, remaining)
     if chunkSize > remaining then chunkSize = remaining end if
-    encrypted = try(encryptChunkRange(context, data, sentPlain, chunkSize))
+    encrypted = try(encryptChunkRange(context, data, offset + sentPlain, chunkSize))
     if typeof(encrypted) == "error" then return encrypted end if
     written = try(network.tcpSendAll(socketHandle, encrypted))
     fillBytes(encrypted, 0, len(encrypted), 0)
@@ -1653,6 +1660,12 @@ end function
 /// @internal
 function sendBytes(context, data)
   return sendAll(context, context.socketHandle, data)
+end function
+
+/// Send a subrange for the provider-neutral ranged callback.
+/// @internal
+function sendRange(context, data, offset, count)
+  return sendAllRange(context, context.socketHandle, data, offset, count)
 end function
 
 /// Provide the receive bytes operation for this standard-library module.

@@ -62,6 +62,8 @@ struct Provider
   shutdownStream
   /// Close stream associated with `Provider`.
   closeStream
+  /// Optional ranged send callback: (state, bytes, offset, count) -> consumed count.
+  sendRange
 end struct
 
 /// Represents stream.
@@ -140,12 +142,21 @@ function provider(name, openClient, openServer, sendBytes, receiveBytes, shutdow
   for each callback in callbacks
     if typeof(callback) != "function" then return _error("provider callbacks must be functions") end if
   end for
-  return Provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream)
+  return Provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream, void)
+end function
+
+/// Create a provider that can retry short sends without copying the remaining bytes.
+function providerWithRange(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream, sendRange)
+  active = provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream)
+  if typeof(active) == "error" then return active end if
+  if typeof(sendRange) != "function" then return _error("ranged send callback must be a function") end if
+  active.sendRange = sendRange
+  return active
 end function
 
 /// Return the target-native provider: Schannel on Windows or OpenSSL 3 on Linux.
 function nativeProvider()
-  return Provider(native.providerName(), native.openClient, native.openServer, native.sendBytes, native.receiveBytes, native.shutdownStream, native.closeStream)
+  return Provider(native.providerName(), native.openClient, native.openServer, native.sendBytes, native.receiveBytes, native.shutdownStream, native.closeStream, native.sendRange)
 end function
 
 /// Provide the native provider name operation for this standard-library module.
@@ -209,13 +220,18 @@ function sendAll(stream, data)
   if typeof(data) != "bytes" then return _error("TLS payload must be bytes") end if
   total = 0
   while total < len(data)
-    // Most providers accept everything in one call; avoid copying that first
-    // payload and slice only after an actual short send.
-    payload = data
-    if total != 0 then payload = slice(data, total, len(data) - total) end if
-    written = try(stream.provider.sendBytes(stream.state, payload))
+    remaining = len(data) - total
+    written = void
+    if typeof(stream.provider.sendRange) == "function" then
+      written = try(stream.provider.sendRange(stream.state, data, total, remaining))
+    else
+      // Preserve the existing callback contract for older custom providers.
+      payload = data
+      if total != 0 then payload = slice(data, total, remaining) end if
+      written = try(stream.provider.sendBytes(stream.state, payload))
+    end if
     if typeof(written) == "error" then return written end if
-    if typeof(written) != "int" or written <= 0 or written > len(data) - total then
+    if typeof(written) != "int" or written <= 0 or written > remaining then
       return _error("TLS provider returned an invalid send count")
     end if
     total = total + written

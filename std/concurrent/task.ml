@@ -10,6 +10,7 @@ package std.concurrent.task
 import std.concurrent.cancellation as cancellation
 import std.concurrent.thread_pool as threadPool
 import std.time as time
+import std.threading as threading
 
 /// Track the task error value used by this standard-library module.
 const TASK_ERROR = 1651
@@ -157,19 +158,38 @@ end function
 function whenAnyFor(futures, milliseconds)
   if typeof(futures) != "array" or len(futures) == 0 then return error(TASK_ERROR, "whenAny expects a non-empty array") end if
   if typeof(milliseconds) != "int" then return error(TASK_ERROR, "whenAny timeout must be an integer") end if
+  count = len(futures)
   deadline = 0
   if milliseconds >= 0 then deadline = time.ticks() + milliseconds end if
-  while true
-    i = 0
-    while i < len(futures)
-      future = futures[i]
-      if future is not Future then return error(TASK_ERROR, "whenAny expects Future values") end if
-      if future.isDone() then return i end if
-      i = i + 1
-    end while
-    if milliseconds >= 0 and time.ticks() >= deadline then return -1 end if
-    threadSleep(1)
-  end while
+  for i = 0 to count - 1
+    if futures[i] is not Future then return error(TASK_ERROR, "whenAny expects Future values") end if
+  end for
+  for i = 0 to count - 1
+    if futures[i].isDone() then return i end if
+  end for
+  if milliseconds == 0 then return -1 end if
+
+  notice = threading.Event.new(true, false)
+  if typeof(notice) == "error" then return notice end if
+  slots = array(count, -1)
+  for i = 0 to count - 1
+    slots[i] = futures[i].job._watch(notice)
+  end for
+  if milliseconds < 0 then
+    notice.wait()
+  else
+    remaining = deadline - time.ticks()
+    if remaining > 0 then notice.waitFor(remaining) end if
+  end if
+  result = -1
+  for i = 0 to count - 1
+    if futures[i].isDone() then result = i; break end if
+  end for
+  for i = 0 to count - 1
+    futures[i].job._unwatch(slots[i])
+  end for
+  notice.close()
+  return result
 end function
 
 /// Provide the when any operation for this standard-library module.

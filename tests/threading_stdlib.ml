@@ -164,6 +164,14 @@ function main(args)
   end while
   if churnMap.count() != 0 or churnMap.tombstones * 2 > churnMap.bucketCount then return 57 end if
   if churnMap.increment("final", 7) != 7 or churnMap.get("final") != 7 then return 58 end if
+  highMap = concurrentMap.ThreadSafeHashMap.withCapacity(16)
+  for i = 0 to 127
+    if not highMap.set(i << 32, i) then return 60 end if
+  end for
+  for i = 0 to 127
+    if highMap.get(i << 32) != i then return 61 end if
+  end for
+  if not highMap.close() then return 62 end if
   if not growthMap.close() or not churnMap.close() then return 59 end if
 
   // Two real workers concurrently mutate managed containers in the global heap.

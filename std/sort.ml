@@ -76,6 +76,13 @@ function sortBy(arr, lessFn)
       if middle > n then middle = n end if
       finish = middle + width
       if finish > n then finish = n end if
+      orderedRuns = middle == finish
+      if not orderedRuns then orderedRuns = not __less(source[middle], source[middle - 1], lessFn) end if
+      if orderedRuns then
+        copyArray(destination, base, source, base, finish - base)
+        base = finish
+        continue
+      end if
       left = base
       right = middle
       output = base
@@ -90,16 +97,16 @@ function sortBy(arr, lessFn)
         end if
         output = output + 1
       end while
-      while left < middle
-        destination[output] = source[left]
-        left = left + 1
-        output = output + 1
-      end while
-      while right < finish
-        destination[output] = source[right]
-        right = right + 1
-        output = output + 1
-      end while
+      if left < middle then
+        remaining = middle - left
+        copyArray(destination, output, source, left, remaining)
+        output = output + remaining
+      end if
+      if right < finish then
+        remaining = finish - right
+        copyArray(destination, output, source, right, remaining)
+        output = output + remaining
+      end if
       base = finish
     end while
     source = destination
@@ -108,9 +115,7 @@ function sortBy(arr, lessFn)
     width = width * 2
   end while
   if not sourceIsOriginal then
-    for index = 0 to n - 1
-      arr[index] = source[index]
-    end for
+    copyArray(arr, 0, source, 0, n)
   end if
   return arr
 end function

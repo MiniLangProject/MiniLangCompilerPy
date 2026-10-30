@@ -17,6 +17,13 @@ function fakeTlsSend(state, data)
   if len(data) > 2 then return 2 end if
   return len(data)
 end function
+rangedOffsets = []
+function fakeTlsSendRange(state, data, offset, count)
+  global rangedOffsets
+  rangedOffsets = rangedOffsets + [offset]
+  if count > 2 then return 2 end if
+  return count
+end function
 function fakeTlsReceive(state, maximumBytes) return bytes("tls") end function
 function fakeTlsShutdown(state) return true end function
 function fakeTlsClose(state) return true end function
@@ -32,6 +39,15 @@ function main(args)
   if not check(platform.architecture() == "x64", "platform architecture") then failed = true end if
   if not check(path.fileName(path.join("alpha", "beta.txt")) == "beta.txt", "path join/name") then failed = true end if
   if not check(path.extension("alpha.beta") == ".beta", "path extension") then failed = true end if
+  unicodePath = path.join("über", "größe.txt")
+  if not check(path.fileName(unicodePath) == "größe.txt" and path.directoryName(unicodePath) == "über", "path UTF-8 segments") then failed = true end if
+  if not check(path.changeExtension(unicodePath, "bin") == path.join("über", "größe.bin"), "path UTF-8 extension") then failed = true end if
+#if TARGET_OS == "windows"
+  if not check(path.fileName("C:\\root\\file.txt") == "file.txt" and path.directoryName("C:\\root\\file.txt") == "C:\\root", "path Windows separators") then failed = true end if
+  if not check(path.isAbsolute("C:\\root") and path.isAbsolute("\\\\server\\share") and not path.isAbsolute("C:relative"), "path Windows absolute forms") then failed = true end if
+#else
+  if not check(path.isAbsolute("/root") and not path.isAbsolute("relative"), "path Linux absolute forms") then failed = true end if
+#endif
   if not check(process.id() > 0, "process id") then failed = true end if
   executablePath = process.executablePath()
   if not check(typeof(executablePath) == "string" and len(executablePath) > 0, "process executable path") then failed = true end if
@@ -55,6 +71,10 @@ function main(args)
   if not check(tls.isStream(stream), "TLS provider contract") then failed = true end if
   if not check(tls.sendAll(stream, bytes("abc")) == 3 and tls.receive(stream, 16) == bytes("tls"), "TLS stream contract") then failed = true end if
   if not check(tls.shutdown(stream) == true and tls.close(stream) == true, "TLS stream lifecycle") then failed = true end if
+  rangeProvider = tls.providerWithRange("range-test", fakeTlsOpenClient, fakeTlsOpenServer, fakeTlsSend, fakeTlsReceive, fakeTlsShutdown, fakeTlsClose, fakeTlsSendRange)
+  rangeStream = tls.connectClient(rangeProvider, 8, tls.clientOptions("localhost"))
+  if not check(tls.sendAll(rangeStream, bytes("abcde")) == 5 and rangedOffsets == [0, 2, 4], "TLS ranged partial sends") then failed = true end if
+  if not check(tls.close(rangeStream) == true, "TLS ranged stream lifecycle") then failed = true end if
   if not check(typeof(tls.nativeProviderName()) == "string" and len(tls.nativeProviderName()) > 0, "TLS native provider selection") then failed = true end if
   invalidPinned = tls.clientOptions("localhost")
   invalidPinned.verifyPeer = false

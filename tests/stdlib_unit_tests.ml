@@ -262,6 +262,11 @@ function test_array_sort_random()
   chk(a.assertEq(arr.last(xs), 4, "array: last"))
   chk(a.assertEq(arr.append([1, 2], 3)[2], 3, "array: append"))
   chk(a.assertEq(len(arr.concat([1],[2, 3])), 3, "array: concat"))
+  mixed = ["first", [2, 3], void, 4]
+  chk(a.assertEq(arr.copy(mixed), mixed, "array: copy mixed values"))
+  chk(a.assertEq(arr.slice(mixed, -3, 2), [[2, 3], void], "array: negative slice mixed values"))
+  chk(a.assertEq(arr.append(mixed, "last"), ["first", [2, 3], void, 4, "last"], "array: append mixed values"))
+  chk(a.assertEq(arr.concat(mixed, ["last"]), ["first", [2, 3], void, 4, "last"], "array: concat mixed values"))
 
   sorted = sort.sort([3, 1, 2, 5, 4])
   chk(a.assertEq(sorted[0], 1, "sort: first"))
@@ -287,6 +292,14 @@ function test_array_sort_random()
     if pairs[i][0] != i div 10 or pairs[i][1] != (i % 10) * 5 + (i div 10) then stable = false end if
   end for
   chk(a.assertTrue(stable, "sortBy: stable merge for larger arrays"))
+  orderedPairs = array(64)
+  for i = 0 to 63 orderedPairs[i] = [i div 8, i] end for
+  sort.sortBy(orderedPairs, _sortPairLess)
+  orderedStable = true
+  for i = 0 to 63
+    if orderedPairs[i][0] != i div 8 or orderedPairs[i][1] != i then orderedStable = false end if
+  end for
+  chk(a.assertTrue(orderedStable, "sortBy: ordered runs retain stable ties"))
 
   rng1 = rand.seeded(123)
   rng2 = rand.seeded(123)
@@ -516,6 +529,9 @@ function test_base64_ds()
   e = b64.toBase64(hello)
   chk(a.assertTrue(typeof(e) == "string", "base64: toBase64 type"))
   chk(a.assertEq(e, "SGVsbG8=", "base64: toBase64"))
+  chk(a.assertEq(b64.toBase64(bytes("M")), "TQ==", "base64: one byte padding"))
+  chk(a.assertEq(b64.toBase64(bytes("Ma")), "TWE=", "base64: two byte padding"))
+  chk(a.assertEq(b64.toBase64(bytes("Man")), "TWFu", "base64: full block"))
 
   d = b64.fromBase64(e)
   chk(a.assertTrue(typeof(d) == "bytes", "base64: fromBase64 type"))
@@ -583,6 +599,19 @@ function test_base64_ds()
   chk(a.assertEq(q.dequeue(), "a", "queue: dequeue"))
   chk(a.assertEq(q.dequeue(), "b", "queue: dequeue2"))
   chk(a.assertTrue(q.isEmpty(), "queue: isEmpty"))
+  wrapped = queue.Queue.withCapacity(8)
+  for i = 0 to 7 wrapped.enqueue([i]) end for
+  for i = 0 to 4 wrapped.dequeue() end for
+  for i = 8 to 11 wrapped.enqueue([i]) end for
+  chk(a.assertEq(wrapped.toArray(), [[5], [6], [7], [8], [9], [10], [11]], "queue: wrapped snapshot"))
+  wrapped.clear()
+  clearedSlots = true
+  for i = 0 to wrapped.cap - 1
+    if wrapped.buf[i] != 0 then clearedSlots = false end if
+  end for
+  chk(a.assertTrue(clearedSlots and wrapped.isEmpty(), "queue: clear releases wrapped values"))
+  wrapped.enqueue("again")
+  chk(a.assertEq(wrapped.dequeue(), "again", "queue: reusable after clear"))
 
   // ds.hashmap + set
   mp = hm.HashMap.new()
@@ -614,6 +643,13 @@ function test_base64_ds()
   chk(a.assertTrue(churnProbe.tombstones * 2 < churnProbe.cap, "hashmap: tombstones periodically rebuilt"))
   chk(a.assertTrue(churnProbe.set("final", 7), "hashmap: insert after churn"))
   chk(a.assertEq(churnProbe.get("final"), 7, "hashmap: lookup after churn"))
+  highBits = hm.HashMap.withCapacity(16)
+  for i = 0 to 127 highBits.set(i << 32, i) end for
+  highBitsOk = true
+  for i = 0 to 127
+    if highBits.get(i << 32) != i then highBitsOk = false end if
+  end for
+  chk(a.assertTrue(highBitsOk, "hashmap: keys differing in high 32 bits"))
 
   hs = hset.HashSet.new()
   chk(a.assertTrue(hs.add(10), "set: add"))

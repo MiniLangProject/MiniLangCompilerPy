@@ -208,9 +208,7 @@ function _grow(items, need)
   if newLength < 8 then newLength = 8 end if
   while newLength < need newLength = newLength * 2 end while
   output = array(newLength)
-  if len(items) > 0 then
-    for i = 0 to len(items) - 1 output[i] = items[i] end for
-  end if
+  if len(items) > 0 then copyArray(output, 0, items, 0, len(items)) end if
   return output
 end function
 
@@ -218,8 +216,9 @@ end function
 /// @internal
 function _take(items, count)
   if count <= 0 then return [] end if
+  if count == len(items) then return items end if
   output = array(count)
-  for i = 0 to count - 1 output[i] = items[i] end for
+  copyArray(output, 0, items, 0, count)
   return output
 end function
 

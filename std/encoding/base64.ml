@@ -46,9 +46,16 @@ function _cleanBytes(text)
     return bytes(0)
   end if
 
-  output = bytes(n, 0)
-  oi = 0
   i = 0
+  while i < n and not _isWsByte(src[i])
+    i = i + 1
+  end while
+  if i == n then return src end if
+
+  output = bytes(n, 0)
+  if i > 0 then copyBytes(output, 0, src, 0, i) end if
+  oi = i
+  i = i + 1
   while i < n
     if not _isWsByte(src[i]) then
       output[oi] = src[i]
@@ -57,9 +64,6 @@ function _cleanBytes(text)
     i = i + 1
   end while
 
-  if oi == n then
-    return src
-  end if
   return slice(output, 0, oi)
 end function
 
@@ -109,12 +113,7 @@ function toBase64(b)
   end if
 
   alph = bytes(ALPHABET)
-  blocks = 0
-  i = 0
-  while i < n
-    blocks = blocks + 1
-    i = i + 3
-  end while
+  blocks = (n + 2) div 3
   output = bytes(blocks * 4, 0)
   oi = 0
   i = 0

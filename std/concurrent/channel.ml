@@ -12,8 +12,6 @@ import std.time as time
 
 /// Track the channel error value used by this standard-library module.
 const CHANNEL_ERROR = 1652
-/// Track the channel poll milliseconds value used by this standard-library module.
-const CHANNEL_POLL_MILLISECONDS = 1
 
 /// A receive result distinguishes a closed/drained channel from a valid void.
 struct ChannelReceive
@@ -29,6 +27,10 @@ struct BoundedQueue
   guard
   /// Closed event associated with `BoundedQueue`.
   closedEvent
+  /// Signaled while a producer can make progress or the channel is sealed.
+  notFull
+  /// Signaled while a consumer can make progress or the channel is sealed.
+  notEmpty
   /// Slots associated with `BoundedQueue`.
   slots
   /// Items associated with `BoundedQueue`.
@@ -53,6 +55,8 @@ struct BoundedQueue
   static function new(capacity)
     return BoundedQueue(
       threading.Lock.new(),
+      threading.Event.new(true, false),
+      threading.Event.new(true, true),
       threading.Event.new(true, false),
       threading.Semaphore.new(capacity, capacity),
       threading.Semaphore.new(0, capacity),
@@ -86,8 +90,11 @@ struct BoundedQueue
     this.tail = this.tail + 1
     if this.tail == this.capacity then this.tail = 0 end if
     this.size = this.size + 1
+    released = this.items.release()
+    if this.size == this.capacity then this.notFull.reset() end if
+    this.notEmpty.set()
     this.guard.release()
-    return this.items.release()
+    return released
   end function
 
   /// Provide try take behavior for this standard-library module.
@@ -102,8 +109,10 @@ struct BoundedQueue
     this.head = this.head + 1
     if this.head == this.capacity then this.head = 0 end if
     this.size = this.size - 1
-    this.guard.release()
     this.slots.release()
+    if this.size == 0 and not this.closedEvent.tryWait() then this.notEmpty.reset() end if
+    this.notFull.set()
+    this.guard.release()
     if wasVoid then return ChannelReceive(true, void) end if
     return ChannelReceive(true, value)
   end function
@@ -126,6 +135,8 @@ struct BoundedQueue
     if this.closed or not this.guard.acquire() then return false end if
     if this.closedEvent.tryWait() then this.guard.release(); return false end if
     ok = this.closedEvent.set()
+    this.notFull.set()
+    this.notEmpty.set()
     this.guard.release()
     return ok
   end function
@@ -136,9 +147,11 @@ struct BoundedQueue
     this.closed = true
     itemsOk = this.items.close()
     slotsOk = this.slots.close()
+    notFullOk = this.notFull.close()
+    notEmptyOk = this.notEmpty.close()
     eventOk = this.closedEvent.close()
     guardOk = this.guard.close()
-    return itemsOk and slotsOk and eventOk and guardOk
+    return itemsOk and slotsOk and notFullOk and notEmptyOk and eventOk and guardOk
   end function
 end struct
 
@@ -169,7 +182,12 @@ struct Channel
     while true
       if this.queue.tryPut(value) then return true end if
       if this.queue.isSealed() or (milliseconds >= 0 and time.ticks() >= deadline) then return false end if
-      threadSleep(CHANNEL_POLL_MILLISECONDS)
+      if milliseconds < 0 then
+        this.queue.notFull.wait()
+      else
+        remaining = deadline - time.ticks()
+        if remaining > 0 then this.queue.notFull.waitFor(remaining) end if
+      end if
     end while
   end function
 
@@ -191,7 +209,12 @@ struct Channel
       result = this.queue.tryTake()
       if result.received then return result end if
       if this.queue.isSealed() or (milliseconds >= 0 and time.ticks() >= deadline) then return result end if
-      threadSleep(CHANNEL_POLL_MILLISECONDS)
+      if milliseconds < 0 then
+        this.queue.notEmpty.wait()
+      else
+        remaining = deadline - time.ticks()
+        if remaining > 0 then this.queue.notEmpty.waitFor(remaining) end if
+      end if
     end while
   end function
 

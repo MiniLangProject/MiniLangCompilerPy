@@ -32,7 +32,7 @@ end function
 /// Avalanche integer keys into a stable unsigned 32-bit hash.
 /// @internal
 function _mix32(value)
-  h = value & 0xFFFFFFFF
+  h = (value ^ (value >> 32)) & 0xFFFFFFFF
   h = h ^ (h >> 16)
   h = (h * 0x7feb352d) & 0xFFFFFFFF
   h = h ^ (h >> 15)

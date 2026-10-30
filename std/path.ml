@@ -36,17 +36,50 @@ function _separatorByte(value)
 #endif
 end function
 
+/// Locate the final platform separator without copying the whole path.
+/// @internal
+function _lastSeparator(path)
+  index = stringLastIndexOf(path, "/")
+#if TARGET_OS == "windows"
+  alternate = stringLastIndexOf(path, "\\")
+  if alternate > index then index = alternate end if
+#endif
+  return index
+end function
+
+/// Recognize either native path separator at the start or end.
+/// @internal
+function _startsSeparator(path)
+  if stringStartsWith(path, "/") then return true end if
+#if TARGET_OS == "windows"
+  return stringStartsWith(path, "\\")
+#else
+  return false
+#endif
+end function
+
+/// @internal
+function _endsSeparator(path)
+  if stringEndsWith(path, "/") then return true end if
+#if TARGET_OS == "windows"
+  return stringEndsWith(path, "\\")
+#else
+  return false
+#endif
+end function
+
 /// Reports whether is absolute.
 /// @param path Path to operate on.
 function isAbsolute(path)
   if typeof(path) != "string" or len(path) == 0 then return false end if
-  raw = bytes(path)
 #if TARGET_OS == "windows"
-  if len(raw) >= 2 and _separatorByte(raw[0]) and _separatorByte(raw[1]) then return true end if
-  if len(raw) >= 3 and ((raw[0] >= 65 and raw[0] <= 90) or (raw[0] >= 97 and raw[0] <= 122)) and raw[1] == 58 and _separatorByte(raw[2]) then return true end if
+  if stringStartsWith(path, "//") or stringStartsWith(path, "\\\\") or stringStartsWith(path, "/\\") or stringStartsWith(path, "\\/") then return true end if
+  if len(path) < 3 then return false end if
+  prefix = bytes(stringSlice(path, 0, 3))
+  if ((prefix[0] >= 65 and prefix[0] <= 90) or (prefix[0] >= 97 and prefix[0] <= 122)) and prefix[1] == 58 and _separatorByte(prefix[2]) then return true end if
   return false
 #else
-  return raw[0] == 47
+  return stringStartsWith(path, "/")
 #endif
 end function
 
@@ -58,11 +91,9 @@ function join(left, right)
   if left == "" then return right end if
   if right == "" then return left end if
   if isAbsolute(right) then return right end if
-  a = bytes(left)
-  b = bytes(right)
-  leftEnds = _separatorByte(a[len(a) - 1])
-  rightStarts = _separatorByte(b[0])
-  if leftEnds and rightStarts then return left + decode(slice(b, 1, len(b) - 1)) end if
+  leftEnds = _endsSeparator(left)
+  rightStarts = _startsSeparator(right)
+  if leftEnds and rightStarts then return left + stringSlice(right, 1, len(right) - 1) end if
   if leftEnds or rightStarts then return left + right end if
   return left + separator() + right
 end function
@@ -71,34 +102,22 @@ end function
 /// @param path Path to operate on.
 function fileName(path)
   if typeof(path) != "string" then return _error("fileName expects string") end if
-  raw = bytes(path)
-  if len(raw) == 0 then return "" end if
-  i = len(raw) - 1
-  while i >= 0
-    if _separatorByte(raw[i]) then
-      if i == len(raw) - 1 then return "" end if
-      return decode(slice(raw, i + 1, len(raw) - i - 1))
-    end if
-    i = i - 1
-  end while
-  return path
+  if len(path) == 0 then return "" end if
+  i = _lastSeparator(path)
+  if i < 0 then return path end if
+  if i == len(path) - 1 then return "" end if
+  return stringSlice(path, i + 1, len(path) - i - 1)
 end function
 
 /// Provide the directory name operation for this standard-library module.
 /// @param path Path to operate on.
 function directoryName(path)
   if typeof(path) != "string" then return _error("directoryName expects string") end if
-  raw = bytes(path)
-  if len(raw) == 0 then return "" end if
-  i = len(raw) - 1
-  while i >= 0
-    if _separatorByte(raw[i]) then
-      if i == 0 then return separator() end if
-      return decode(slice(raw, 0, i))
-    end if
-    i = i - 1
-  end while
-  return ""
+  if len(path) == 0 then return "" end if
+  i = _lastSeparator(path)
+  if i < 0 then return "" end if
+  if i == 0 then return separator() end if
+  return stringSlice(path, 0, i)
 end function
 
 /// Provide the extension operation for this standard-library module.
@@ -106,12 +125,8 @@ end function
 function extension(path)
   name = fileName(path)
   if typeof(name) == "error" or len(name) == 0 then return "" end if
-  raw = bytes(name)
-  i = len(raw) - 1
-  while i > 0
-    if raw[i] == 46 then return decode(slice(raw, i, len(raw) - i)) end if
-    i = i - 1
-  end while
+  i = stringLastIndexOf(name, ".")
+  if i > 0 then return stringSlice(name, i, len(name) - i) end if
   return ""
 end function
 
@@ -122,8 +137,8 @@ function changeExtension(path, newExtension)
   if typeof(path) != "string" or typeof(newExtension) != "string" then return _error("changeExtension expects strings") end if
   ext = extension(path)
   prefix = path
-  if len(ext) > 0 then prefix = decode(slice(bytes(path), 0, len(path) - len(ext))) end if
+  if len(ext) > 0 then prefix = stringSlice(path, 0, len(path) - len(ext)) end if
   if newExtension == "" then return prefix end if
-  if bytes(newExtension)[0] == 46 then return prefix + newExtension end if
+  if stringStartsWith(newExtension, ".") then return prefix + newExtension end if
   return prefix + "." + newExtension
 end function

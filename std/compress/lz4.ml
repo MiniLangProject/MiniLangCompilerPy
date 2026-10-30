@@ -45,14 +45,20 @@ function encode(input)
     if n > 0 then copyBytes(output, 1, input, 0, n) end if
     return slice(output, 0, n + 1)
   end if
-  table = array(65536, -1)
+  // Small blocks do not need a half-megabyte match table. Keep a modest
+  // minimum and grow with input size; large blocks retain the original table.
+  tableSize = 4096
+  while tableSize < n * 4 and tableSize < 65536
+    tableSize = tableSize << 1
+  end while
+  table = array(tableSize, -1)
   anchor = 0
   position = 0
   written = 0
   matchLimit = n - 12
   search = 1
   while position <= matchLimit
-    slot = _hash(input, position)
+    slot = _hash(input, position) & (tableSize - 1)
     previous = table[slot]
     table[slot] = position
     if previous >= 0 and position - previous <= 65535 and
@@ -110,15 +116,25 @@ end function
 /// @param block Encoded LZ4 bytes.
 /// @param expectedSize Exact decoded byte count.
 function decode(block, expectedSize)
+  if typeof(block) != "bytes" then return error(LZ4_ERR, "LZ4 decode expects bytes and an int size") end if
+  return decodeRange(block, 0, len(block), expectedSize)
+end function
+
+/// Decode a bounded range without copying a container payload first.
+/// @internal
+function decodeRange(block, start, length, expectedSize)
   if typeof(block) != "bytes" or typeof(expectedSize) != "int" then
     return error(LZ4_ERR, "LZ4 decode expects bytes and an int size")
+  end if
+  if typeof(start) != "int" or typeof(length) != "int" or start < 0 or length < 0 or start > len(block) or length > len(block) - start then
+    return error(LZ4_ERR, "Invalid LZ4 input range")
   end if
   if expectedSize < 0 or expectedSize > 0x7FFFFFFF then
     return error(LZ4_ERR, "Invalid LZ4 output size")
   end if
-  inputLength = len(block)
+  inputLength = start + length
   output = bytes(expectedSize, 0)
-  readAt = 0
+  readAt = start
   written = 0
   while readAt < inputLength
     token = block[readAt]

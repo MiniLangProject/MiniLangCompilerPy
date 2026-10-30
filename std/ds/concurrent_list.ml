@@ -65,11 +65,9 @@ struct ThreadSafeList
       return error(1610, "ThreadSafeList.fromArray expects an array")
     end if
     output = ThreadSafeList.withCapacity(len(values))
-    i = 0
-    while i < len(values)
-      output.add(values[i])
-      i = i + 1
-    end while
+    count = len(values)
+    if count > 0 then copyArray(output.buf, 0, values, 0, count) end if
+    output.size = count
     return output
   end function
 
@@ -79,11 +77,7 @@ struct ThreadSafeList
     if minimumCapacity <= this.capacity then return true end if
     newCapacity = _nextCapacity(minimumCapacity)
     newBuffer = _newBuffer(newCapacity)
-    i = 0
-    while i < this.size
-      newBuffer[i] = this.buf[i]
-      i = i + 1
-    end while
+    if this.size > 0 then copyArray(newBuffer, 0, this.buf, 0, this.size) end if
     this.buf = newBuffer
     this.capacity = newCapacity
     return true
@@ -155,12 +149,9 @@ struct ThreadSafeList
       return false
     end if
     this._growLocked(this.size + len(values))
-    i = 0
-    while i < len(values)
-      this.buf[this.size] = values[i]
-      this.size = this.size + 1
-      i = i + 1
-    end while
+    count = len(values)
+    if count > 0 then copyArray(this.buf, this.size, values, 0, count) end if
+    this.size = this.size + count
     this.guard.release()
     return true
   end function
@@ -302,11 +293,7 @@ struct ThreadSafeList
       return []
     end if
     output = array(this.size)
-    i = 0
-    while i < this.size
-      output[i] = this.buf[i]
-      i = i + 1
-    end while
+    if this.size > 0 then copyArray(output, 0, this.buf, 0, this.size) end if
     this.guard.release()
     return output
   end function

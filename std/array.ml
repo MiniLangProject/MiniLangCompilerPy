@@ -120,9 +120,7 @@ function copy(a)
     return val
   end if
 
-  for i = 0 to(n - 1)
-    val[i] = a[i]
-  end for
+  copyArray(val, 0, a, 0, n)
   return val
 end function
 
@@ -166,9 +164,7 @@ function slice(a, offset, length)
     return val
   end if
 
-  for i = 0 to(length - 1)
-    val[i] = a[off + i]
-  end for
+  copyArray(val, 0, a, off, length)
   return val
 end function
 
@@ -421,9 +417,7 @@ function append(a, value)
   n = len(a)
   val = array(n + 1)
   if n > 0 then
-    for i = 0 to(n - 1)
-      val[i] = a[i]
-    end for
+    copyArray(val, 0, a, 0, n)
   end if
   val[n] = value
   return val
@@ -444,13 +438,8 @@ function concat(a, b)
   n2 = len(b)
   val = array(n1 + n2)
 
-  for i = 0 to(n1 - 1)
-    val[i] = a[i]
-  end for
-
-  for i = 0 to(n2 - 1)
-    val[n1 + i] = b[i]
-  end for
+  if n1 > 0 then copyArray(val, 0, a, 0, n1) end if
+  if n2 > 0 then copyArray(val, n1, b, 0, n2) end if
   return val
 end function
 
