@@ -60,8 +60,8 @@ def main():
         assert "call fn_alloc" in function("effectfulPair"), "effectful constructor was eliminated"
         dynamic = function("dynamicSum")
         assert "loop_invariant_base_array_" in dynamic, "dynamic array root was not hoisted"
-        assert "idx_fast_oob_" in dynamic and "seti_fast_oob_" in dynamic, "dynamic bounds checks lost"
-        assert "bounds_elided_" not in dynamic, "unknown length incorrectly proved"
+        assert "idx_fast_bounds_elided_" in dynamic and "seti_fast_bounds_elided_" in dynamic, "fast array version retains bounds checks"
+        assert "idx_fast_oob_" in dynamic and "seti_fast_oob_" in dynamic, "empty-array fallback lost bounds checks"
         assert "loop_invariant_base_array_" not in function("reboundLoop"), "mutated target hoisted"
         assert len(re.findall(r"(?m)^fn_make_error_const:", text)) == 1, "cold helper missing/duplicated"
         assert "call fn_make_error_const" in dynamic, "cold path did not use shared helper"

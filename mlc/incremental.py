@@ -133,10 +133,47 @@ class FunctionCache:
 
     def prepare(self, program):
         """Hash global declarations; non-inline bodies have per-module keys."""
+        cache_key = None
+        try:
+            if self.files:
+                cache_key = _digest(("interface-py-v1", self.compiler_id,
+                                     self.options, sorted(self.files.items())))
+                path = self.directory / (cache_key + ".mif")
+                if path.stat().st_size <= 4096:
+                    raw = path.read_bytes()
+                    header, payload = raw.split(b"\n", 1)
+                    record = json.loads(payload)
+                    if (header.decode("ascii") == hashlib.sha256(payload).hexdigest()
+                            and isinstance(record, list) and len(record) == 2
+                            and record[0] == cache_key and isinstance(record[1], str)
+                            and len(record[1]) == 64
+                            and all(ch in "0123456789abcdef" for ch in record[1])):
+                        self.interface = record[1]
+                        return
+        except (OSError, TypeError, ValueError, KeyError, IndexError, UnicodeError):
+            pass
         try:
             self.interface = _digest(_view(program, interface=True))
         except (TypeError, ValueError, RecursionError):
             self.interface = None  # Unknown future AST nodes fail closed.
+            return
+        if cache_key is not None:
+            temporary = None
+            try:
+                self.directory.mkdir(parents=True, exist_ok=True)
+                payload = json.dumps([cache_key, self.interface], separators=(",", ":")).encode("ascii")
+                with tempfile.NamedTemporaryFile(dir=self.directory, delete=False) as handle:
+                    temporary = Path(handle.name)
+                    handle.write(hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n" + payload)
+                os.replace(temporary, self.directory / (cache_key + ".mif"))
+            except OSError:
+                pass
+            finally:
+                if temporary is not None:
+                    try:
+                        temporary.unlink(missing_ok=True)
+                    except OSError:
+                        pass
 
     def _initialize(self, cg):
         functions = dict(cg.user_functions)

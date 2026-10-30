@@ -3891,11 +3891,11 @@ class CodegenStmt:
                 _state_store_qword_rax(step_slot)
                 a.mark(lbl_step_done)
 
-            # Version a bounded byte loop once at entry. For nonempty buffers
-            # 0..len(buf)-1 is in range; the slow copy preserves MiniLang's
-            # descending 0..-1 behavior for empty buffers.
+            # Version a bounded array or byte loop once at entry. Container
+            # lengths are fixed, so 0..len(buf)-1 is in range when nonempty.
+            # The slow copy preserves the descending 0..-1 empty case.
             versioned = (not const_bounds and len(index_hoists) == 1
-                         and index_hoists[0]['kind'] == 'bytes'
+                         and index_hoists[0]['kind'] in ('array', 'bytes')
                          and not index_hoists[0].get('bounds_proven', False)
                          and len(getattr(s, 'body', []) or []) <= 8)
             slow_top = f'for_slow_top_{a.pos}'

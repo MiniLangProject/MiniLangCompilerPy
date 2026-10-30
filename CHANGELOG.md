@@ -2,6 +2,18 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.26 - 2026-10-30
+
+- Cache validated declaration fingerprints for unchanged incremental builds in
+  both compiler implementations. Recompute after source or option changes and
+  recover from damaged cache records.
+- Extend guarded bounds elimination to dynamic array loops, retaining the
+  checked descending behavior for empty arrays. Use native page copies in the
+  self-hosted compiler's MLO serializer.
+- Optimize standard-library array, path, sort, encoding, compression and
+  concurrency hot paths. Preserve Python/native byte parity and add measured
+  regression coverage for compile time, memory and generated code.
+
 ## 1.2.25 - 2026-10-30
 
 - Use `--profile-calls` output as an optional `--pgo-profile FILE` input for

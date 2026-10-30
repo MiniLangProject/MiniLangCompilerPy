@@ -2,8 +2,14 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.25**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.25.md).
+Current stable release: **1.2.26**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.2.26.md).
+
+Release 1.2.26 caches declaration fingerprints in unchanged incremental builds
+and extends guarded bounds elimination to dynamic array loops. It also includes
+standard-library hot path improvements. See the
+[release notes](RELEASE_NOTES_1.2.26.md) and
+[measurements](https://github.com/MiniLangProject/MiniLangCompilerML/blob/v1.2.26/docs/reports/COMPILER_OPTIMIZATION_EXPERIMENTS_2026-10-30.md).
 
 Release 1.2.25 adds profile-guided inline budgets, three-string concat
 fusion, local integer value numbering, a persistent lexer cache and versioned
