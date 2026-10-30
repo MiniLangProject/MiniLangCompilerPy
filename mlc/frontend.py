@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import marshal
+import hashlib
 import sys
 from typing import Any, List, Tuple
 
@@ -214,7 +216,6 @@ def parse_program(minilang_mod: Any, input_path: str) -> tuple[str, Any]:
 
     identities = getattr(minilang_mod, '_incremental_source_ids', None)
     if identities is not None:
-        import hashlib
         identities[input_path] = hashlib.sha256(code.encode('utf-8')).hexdigest()
     code = normalize_code_for_tokenizer(code)
     source_for_tokens = code
@@ -222,13 +223,57 @@ def parse_program(minilang_mod: Any, input_path: str) -> tuple[str, Any]:
     if callable(preprocess):
         source_for_tokens = preprocess(code, input_path)
 
+    def cached_tokens() -> Any:
+        cache_root = getattr(minilang_mod, '_incremental_cache_dir', None)
+        # The regex lexer is faster than cache I/O on small modules.
+        if not cache_root or len(source_for_tokens) < 65536:
+            return minilang_mod.tokenize(source_for_tokens)
+        parser_path = getattr(minilang_mod, '__file__', '')
+        directory = os.path.join(cache_root, 'tokens-py-v2')
+        path = ''
+        try:
+            parser_id = getattr(minilang_mod, '_tokenizer_source_id', None)
+            if parser_id is None:
+                with open(parser_path, 'rb') as parser_file:
+                    parser_id = hashlib.sha256(parser_file.read()).hexdigest()
+                minilang_mod._tokenizer_source_id = parser_id
+            key = hashlib.sha256((parser_id + '\0' + str(sys.version_info[:2]) + '\0' + source_for_tokens).encode('utf-8')).hexdigest()
+            path = os.path.join(directory, key + '.mtok')
+            if os.path.getsize(path) <= 64 * 1024 * 1024:
+                with open(path, 'rb') as cache_file:
+                    raw = cache_file.read()
+                if raw[:8] == b'MLCPTOK2' and raw[8:40] == hashlib.sha256(raw[40:]).digest():
+                    rows = marshal.loads(raw[40:])
+                    if isinstance(rows, list) and rows and all(
+                        isinstance(row, tuple) and len(row) == 3
+                        and isinstance(row[0], str) and isinstance(row[1], str)
+                        and isinstance(row[2], int) and 0 <= row[2] <= len(source_for_tokens)
+                        for row in rows
+                    ) and rows[-1] == ('EOF', '', len(source_for_tokens)):
+                        return [minilang_mod.Token(*row) for row in rows]
+        except (OSError, ValueError, TypeError, UnicodeError, EOFError):
+            pass
+        tokens = minilang_mod.tokenize(source_for_tokens)
+        try:
+            if not path:
+                return tokens
+            os.makedirs(directory, exist_ok=True)
+            temp_path = path + f'.{os.getpid()}.tmp'
+            payload = marshal.dumps([(tok.kind, tok.value, tok.pos) for tok in tokens])
+            with open(temp_path, 'wb') as cache_file:
+                cache_file.write(b'MLCPTOK2' + hashlib.sha256(payload).digest() + payload)
+            os.replace(temp_path, path)
+        except OSError:
+            pass
+        return tokens
+
     # Current signature: Parser(tokens, source, filename)
     try:
         try:
-            program = minilang_mod.Parser(minilang_mod.tokenize(source_for_tokens), code, input_path, ).parse_program()
+            program = minilang_mod.Parser(cached_tokens(), code, input_path, ).parse_program()
         except TypeError:
             # Legacy signature: Parser(tokens)
-            program = minilang_mod.Parser(minilang_mod.tokenize(source_for_tokens)).parse_program()
+            program = minilang_mod.Parser(cached_tokens()).parse_program()
     except Exception as e:
         # Ensure position-bearing frontend errors (especially ParseError) carry
         # filename + the *normalized* source, so diagnostics point to the correct

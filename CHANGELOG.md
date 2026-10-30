@@ -2,6 +2,17 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.2.25 - 2026-10-30
+
+- Use `--profile-calls` output as an optional `--pgo-profile FILE` input for
+  hot and cold inline budgets. Instrument inline expansions for accurate counts.
+- Fuse pure three-part string concatenation into one allocation; reuse equal
+  local integer expressions within straight-line regions.
+- Cache validated lexer tokens across incremental builds and version bounded
+  byte-index loops so nonempty buffers skip repeated bounds checks.
+- Preserve Python/native and cold/warm byte parity; add semantic, cache,
+  profile, PGO and performance regression fixtures.
+
 ## 1.2.24 - 2026-10-29
 
 - Reuse validated native function fragments across changed builds in both

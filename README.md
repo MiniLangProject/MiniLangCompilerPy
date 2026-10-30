@@ -2,8 +2,14 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.24**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.24.md).
+Current stable release: **1.2.25**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.2.25.md).
+
+Release 1.2.25 adds profile-guided inline budgets, three-string concat
+fusion, local integer value numbering, a persistent lexer cache and versioned
+byte-index loops to both compiler implementations. The measured Windows
+fixtures retain Python/native byte parity. See the [release notes](RELEASE_NOTES_1.2.25.md)
+for performance and validation details.
 
 Release 1.2.24 adds persistent native-function reuse after source edits in
 both compilers. Project manifests enable it automatically; direct builds
@@ -246,6 +252,15 @@ Common options:
 **Conditional compilation**
 - `-DNAME[=VALUE]` / `--define NAME[=VALUE]` override a typed source option;
   an omitted value means `true`
+
+**Optimization profiles and incremental builds**
+- `--profile-calls` instruments `callStats()`, including inline expansions. Have
+  the program print `[call-profile] name=<function> calls=<count>` records.
+- `--pgo-profile <file>` uses those records to increase the inline budget for
+  functions called at least 1,000 times and reduce code growth for cold ones.
+- `--incremental-cache <dir>` retains native function fragments and validated
+  lexer tokens for unchanged large source files. The cache can be deleted at
+  any time.
 
 **Heap / GC tuning (native runtime)**
 - `--heap-reserve <size>` reserve heap address space (e.g. `256m`)

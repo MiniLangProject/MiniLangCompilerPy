@@ -1648,6 +1648,99 @@ class CodegenExpr:
         finally:
             self.free_expr_temps((len(parts) + 1) * 8)
 
+    def _concat_three_leaf_is_pure(self, expr: Any) -> bool:
+        """Allow only immutable literals and ordinary stack reads in the fused path."""
+        if isinstance(expr, self.ml.Str):
+            return True
+        if not isinstance(expr, self.ml.Var) or not self.in_function:
+            return False
+        binding = self.resolve_binding(getattr(expr, 'name', ''))
+        return (binding is not None and binding.kind in ('local', 'param')
+                and not binding.boxed and binding.capture_index is None)
+
+    def _pgo_inline_budget(self, name: str) -> int:
+        """Give hot callees more expansion room and avoid cold code growth."""
+        counts = (getattr(self, 'heap_config', {}) or {}).get('pgo_calls')
+        if counts is None:
+            return 4096
+        return 32768 if int(counts.get(name, 0)) >= 1000 else 1024
+
+    def _emit_concat_three_strings(self, operands: List[Any]) -> None:
+        """Fuse three already evaluated strings; retain the ordinary path on a guard miss."""
+        a = self.asm
+        base = self.alloc_expr_temps(32)
+        lid = self.new_label_id()
+        slow = f'concat_three_slow_{lid}'
+        done = f'concat_three_done_{lid}'
+        try:
+            for i, operand in enumerate(operands):
+                self.emit_expr(operand)
+                a.mov_rsp_disp32_rax(base + i * 8)
+
+            a.xor_r32_r32('r10d', 'r10d')
+            for i in range(3):
+                a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
+                a.mov_r64_r64('rax', 'r11')
+                a.and_r64_imm('rax', 7)
+                a.cmp_r64_imm('rax', TAG_PTR)
+                a.jcc('ne', slow)
+                a.mov_r32_membase_disp('eax', 'r11', 0)
+                a.cmp_r32_imm('eax', OBJ_STRING)
+                a.jcc('ne', slow)
+                a.mov_r32_membase_disp('eax', 'r11', 4)
+                a.test_r32_r32('eax', 'eax')
+                a.jcc('e', slow)
+                a.add_r32_r32('r10d', 'eax')
+                a.cmp_r32_imm('r10d', 0x3fffffff)
+                a.jcc('a', slow)
+
+            a.mov_r32_r32('ecx', 'r10d')
+            a.add_r32_imm('ecx', 9)
+            a.call('fn_alloc')
+            a.mov_rsp_disp32_rax(base + 24)
+            a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
+            a.xor_r32_r32('r10d', 'r10d')
+            for i in range(3):
+                a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
+                a.mov_r32_membase_disp('edx', 'r11', 4)
+                a.add_r32_r32('r10d', 'edx')
+            a.mov_r64_membase_disp('rax', 'rsp', base + 24)
+            a.mov_membase_disp_r32('rax', 4, 'r10d')
+
+            for i in range(3):
+                a.mov_r64_membase_disp('r11', 'rsp', base + 24)
+                a.lea_r64_membase_disp('rcx', 'r11', 8)
+                for earlier in range(i):
+                    a.mov_r64_membase_disp('r11', 'rsp', base + earlier * 8)
+                    a.mov_r32_membase_disp('eax', 'r11', 4)
+                    a.add_r64_r64('rcx', 'rax')
+                a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
+                a.lea_r64_membase_disp('rdx', 'r11', 8)
+                a.mov_r32_membase_disp('r8d', 'r11', 4)
+                a.call('fn_copy_bytes')
+
+            a.mov_r64_membase_disp('r11', 'rsp', base + 24)
+            a.mov_r32_membase_disp('r10d', 'r11', 4)
+            a.lea_r64_membase_disp('rax', 'r11', 8)
+            a.add_r64_r64('rax', 'r10')
+            a.mov_membase_disp_imm8('rax', 0, 0)
+            a.mov_rax_r11()
+            a.jmp(done)
+
+            a.mark(slow)
+            a.mov_r64_membase_disp('rcx', 'rsp', base)
+            a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
+            a.call('fn_add_string')
+            self._emit_auto_errprop()
+            a.mov_rsp_disp32_rax(base + 24)
+            a.mov_r64_membase_disp('rcx', 'rsp', base + 24)
+            a.mov_r64_membase_disp('rdx', 'rsp', base + 16)
+            a.call('fn_add_string')
+            self._emit_auto_errprop()
+            a.mark(done)
+        finally:
+            self.free_expr_temps(32)
+
     def _try_emit_left_string_concat_chain(self, expr: Any) -> bool:
         """Lower a left-associated string concat without recursive tree walk.
 
@@ -1666,6 +1759,12 @@ class CodegenExpr:
             current = getattr(current, 'left', None)
         if len(rights) < 2 or self._opt_value_type_base(self._opt_expr_known_type(current)) != 'string':
             return False
+
+        if len(rights) == 2:
+            operands = [current, rights[1], rights[0]]
+            if all(self._concat_three_leaf_is_pure(part) for part in operands):
+                self._emit_concat_three_strings(operands)
+                return True
 
         a = self.asm
         accumulator = self.alloc_expr_temps(8)
@@ -2680,6 +2779,13 @@ class CodegenExpr:
         for i, arg in enumerate(args):
             self.emit_expr(arg)
             a.mov_rsp_disp32_rax(param_base + i * 8)
+
+        if bool(getattr(self, 'call_profile', False)):
+            code_name = str(getattr(fn, '_ml_codegen_name', callee_name) or callee_name)
+            idx_cp = (getattr(self, '_callprof_index', {}) or {}).get(code_name)
+            if idx_cp is not None:
+                a.lea_r11_rip('callprof_counts')
+                a.inc_membase_disp_qword('r11', int(idx_cp) * 8)
 
         inline_body_start = a.pos
 
@@ -5386,7 +5492,7 @@ class CodegenExpr:
                     total = 1 + len(args)  # receiver + normalized explicit args
                     if known_def is not None and len(list(getattr(known_def, 'params', []) or [])) == total:
                         inline_used = int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(known_method, 0) or 0)
-                        if inline_used < 4096 and known_method in (getattr(self, 'inline_functions', {}) or {}):
+                        if inline_used < self._pgo_inline_budget(known_method) and known_method in (getattr(self, 'inline_functions', {}) or {}):
                             inline_call = ml.Call(callee_expr, [tgt] + args)
                             for attr in ('_pos', '_filename'):
                                 if hasattr(e, attr):
@@ -7318,7 +7424,7 @@ class CodegenExpr:
                            if callee_name is not None else 0)
             if (callee_name is not None
                     and callee_name not in getattr(self, 'mutable_user_functions', set())
-                    and inline_used < 4096
+                    and inline_used < self._pgo_inline_budget(callee_name)
                     and not any(bool(getattr(arg, 'stack_variadic', False)) for arg in list(getattr(e, 'args', []) or []))
                     and callee_name in (getattr(self, 'inline_functions', {}) or {})):
                 b = None

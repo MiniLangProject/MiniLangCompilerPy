@@ -23,7 +23,7 @@ from .tools import u32, u64, extern_library_label_token
 from . import packing
 
 
-COMPILER_VERSION = "1.2.24"
+COMPILER_VERSION = "1.2.25"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -1452,6 +1452,7 @@ def compile_to_exe(
     """Compile one MiniLang entry file and its imports to a native x64 image."""
 
     ml = load_minilang_frontend(input_ml)
+    ml._incremental_cache_dir = incremental_cache
     # Keys must identify the text actually parsed, not a later disk read while
     # an editor may already have saved the next revision.
     ml._incremental_source_ids = {} if incremental_cache else None
@@ -2095,6 +2096,7 @@ def main(argv: List[str]) -> int:
 
     # Call profiling (optional)
     parser.add_argument('--profile-calls', action='store_true', help='instrument user functions with call counters; enable callStats() builtin')
+    parser.add_argument('--pgo-profile', metavar='FILE', help='use [call-profile] output to budget inlining by call frequency')
 
     # Debug tracing (optional)
     parser.add_argument('--trace-calls', action='store_true', help='print each entered function name to stderr (runtime trace)')
@@ -2137,7 +2139,7 @@ def main(argv: List[str]) -> int:
         return 2
 
     project_digest = ""
-    project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels and not pack_options.mode)
+    project_cache_enabled = bool(project_build is not None and project_build.incremental and not args.asm and not args.dump_labels and not pack_options.mode and not args.pgo_profile)
     if project_cache_enabled:
         try:
             project_digest = project_fingerprint(project_build, inp, include_dirs)
@@ -2166,6 +2168,22 @@ def main(argv: List[str]) -> int:
 
 
     heap_config: Dict[str, Any] = {}
+    if args.pgo_profile:
+        try:
+            with open(args.pgo_profile, 'r', encoding='utf-8') as profile_file:
+                profile_text = profile_file.read()
+        except OSError as exc:
+            print(f'CompileOptionError: cannot read PGO profile: {exc}')
+            return 2
+        counts: Dict[str, int] = {}
+        for line in profile_text.splitlines():
+            match = re.fullmatch(r'\[call-profile\] name=(\S+) calls=(\d+)\s*', line.strip())
+            if match:
+                counts[match.group(1)] = int(match.group(2))
+        if not counts:
+            print('CompileOptionError: PGO profile contains no [call-profile] records')
+            return 2
+        heap_config['pgo_calls'] = counts
     if args.heap_reserve is not None:
         heap_config['reserve_bytes'] = int(args.heap_reserve)
     if args.heap_commit is not None:

@@ -426,8 +426,45 @@ class CodegenStmt:
     def _emit_stmt_list(self, stmts: list[Any]) -> None:
         """Emit a statement list and stop after an unconditional terminator."""
         ml = self.ml
+        # Tiny basic-block value numbering. Entries are scoped to this list;
+        # calls, branches and writes to operands end the current value epoch.
+        region: list[tuple[Any, str, set[str]]] = []
         for st in stmts:
-            self.emit_stmt(st)
+            candidate = (getattr(self, 'in_function', False)
+                         and type(st) is getattr(ml, 'Assign', object)
+                         and not getattr(self, 'operator_overloads_present', False)
+                         and getattr(st, 'declared_type', None) in (None, '')
+                         and isinstance(getattr(st, 'expr', None), getattr(ml, 'Bin', ()))
+                         and self._opt_same_local_int_expr(st.expr, st.expr))
+            if candidate:
+                original = st.expr
+                name = str(st.name)
+                deps: set[str] = set()
+                def collect(node: Any) -> None:
+                    if isinstance(node, ml.Var):
+                        deps.add(str(node.name))
+                    elif isinstance(node, ml.Bin):
+                        collect(node.left)
+                        collect(node.right)
+                collect(original)
+                source = next((prior_name for prior_expr, prior_name, _ in reversed(region)
+                               if self._opt_same_local_int_expr(original, prior_expr)), None)
+                if source is not None:
+                    st.expr = ml.Var(source)
+                try:
+                    self.emit_stmt(st)
+                finally:
+                    st.expr = original
+                region = [(expr, dest, uses) for expr, dest, uses in region
+                          if dest != name and name not in uses]
+                binding = self.resolve_binding(name)
+                if name not in deps and binding is not None and binding.kind in ('local', 'param') and not binding.boxed:
+                    region.append((original, name, deps))
+                    if len(region) > 16:
+                        region.pop(0)
+            else:
+                self.emit_stmt(st)
+                region = []
             # Dead code elimination in the same block:
             # after return/break/continue nothing is reachable.
             if (hasattr(ml, 'Return') and isinstance(st, ml.Return)) or \
@@ -3854,56 +3891,76 @@ class CodegenStmt:
                 _state_store_qword_rax(step_slot)
                 a.mark(lbl_step_done)
 
+            # Version a bounded byte loop once at entry. For nonempty buffers
+            # 0..len(buf)-1 is in range; the slow copy preserves MiniLang's
+            # descending 0..-1 behavior for empty buffers.
+            versioned = (not const_bounds and len(index_hoists) == 1
+                         and index_hoists[0]['kind'] == 'bytes'
+                         and not index_hoists[0].get('bounds_proven', False)
+                         and len(getattr(s, 'body', []) or []) <= 8)
+            slow_top = f'for_slow_top_{a.pos}'
+            slow_cont = f'for_slow_cont_{a.pos}'
+            if versioned:
+                _state_load_qword_rax(end_slot)
+                a.cmp_r64_imm('rax', enc_int(0))
+                a.jcc('l', slow_top)
+
+            def emit_loop_version(top_label: str, cont_label: str,
+                                  targets: dict[int, dict[str, Any]]) -> None:
+                a.mark(top_label)
+                self._loop_index_fast_stack.append({
+                    'index_id': int(getattr(loop_index_binding, 'id', -1)),
+                    'targets': targets,
+                })
+                self.push_scope()
+                self._emit_stmt_list(s.body)
+                self.pop_scope()
+                self._loop_index_fast_stack.pop()
+
+                a.mark(cont_label)
+                self.emit_gc_safepoint_poll()
+                self.emit_thread_cancellation_poll()
+                self.emit_load_var(s.var)
+                if const_bounds:
+                    encoded_end = enc_int(int(const_end))
+                    if -(1 << 31) <= encoded_end <= (1 << 31) - 1:
+                        a.cmp_r64_imm('rax', encoded_end)
+                    else:
+                        a.mov_r64_imm64('r10', encoded_end)
+                        a.cmp_rax_r10()
+                else:
+                    a.mov_r10_rax()
+                    _state_load_qword_rax(end_slot)
+                    a.cmp_rax_r10()
+                a.jcc('e', end)
+                self.emit_load_var(s.var)
+                if const_step == 1:
+                    a.add_rax_imm8(8)
+                elif const_step == -1:
+                    a.sub_rax_imm8(8)
+                else:
+                    a.mov_r10_rax()
+                    _state_load_qword_rax(step_slot)
+                    a.add_rax_r10()
+                    a.sub_rax_imm8(1)
+                self.emit_store_var(s.var, s)
+                a.jmp(top_label)
+
             # Stabilize the measured ELF hot-loop layout after branch shortening.
             # PE keeps its existing policy: the same padding regressed that
             # layout. Entry padding is skipped by subsequent backedges.
             if self.is_linux_target:
                 a.align_loop()
-            a.mark(top)
-            # body
-            self._loop_index_fast_stack.append({
-                'index_id': int(getattr(loop_index_binding, 'id', -1)),
-                'targets': hoist_targets,
-            })
-            self.push_scope()
-            for st in s.body:
-                self.emit_stmt(st)
-            self.pop_scope()
-            self._loop_index_fast_stack.pop()
-
-            a.mark(cont)
-            self.emit_gc_safepoint_poll()
-            self.emit_thread_cancellation_poll()
-            # if var == end -> end loop
-            self.emit_load_var(s.var)
-            if const_bounds:
-                encoded_end = enc_int(int(const_end))
-                if -(1 << 31) <= encoded_end <= (1 << 31) - 1:
-                    a.cmp_r64_imm("rax", encoded_end)
-                else:
-                    a.mov_r64_imm64("r10", encoded_end)
-                    a.cmp_rax_r10()
+            if versioned:
+                fast_targets = {key: dict(value, bounds_proven=True)
+                                for key, value in hoist_targets.items()}
+                emit_loop_version(top, cont, fast_targets)
+                self.break_stack[-1] = BreakableCtx(
+                    kind='loop', break_label=end, continue_label=slow_cont,
+                    break_depth=depth_outer, continue_depth=loop_depth)
+                emit_loop_version(slow_top, slow_cont, hoist_targets)
             else:
-                a.mov_r10_rax()
-                _state_load_qword_rax(end_slot)
-                a.cmp_rax_r10()
-            a.jcc('e', end)
-
-            # var = var + step. A known direction changes the tagged value by
-            # exactly +/-8 and avoids the second state load.
-            self.emit_load_var(s.var)
-            if const_step == 1:
-                a.add_rax_imm8(8)
-            elif const_step == -1:
-                a.sub_rax_imm8(8)
-            else:
-                a.mov_r10_rax()
-                _state_load_qword_rax(step_slot)
-                a.add_rax_r10()
-                a.sub_rax_imm8(1)
-            self.emit_store_var(s.var, s)
-
-            a.jmp(top)
+                emit_loop_version(top, cont, hoist_targets)
             a.mark(end)
 
             if hoist_targets:
@@ -5176,39 +5233,6 @@ class CodegenStmt:
                 setattr(nf, '_ml_codegen_name', code_name)
                 self.nested_user_functions[code_name] = nf
 
-                # ------------------------------------------------------------
-        # Call profiling (--profile-calls)
-        # ------------------------------------------------------------
-        self._callprof_enabled = bool(getattr(self, 'call_profile', False))
-        self._callprof_entries = []
-        self._callprof_index = {}
-        self._callprof_name_labels = []
-        self._callprof_n = 0
-        if self._callprof_enabled:
-            entries = []
-            for nm in sorted(self.user_functions.keys()):
-                fn = self.user_functions[nm]
-                code_name = getattr(fn, '_ml_codegen_name', nm)
-                entries.append((str(code_name), str(nm)))
-            for nm in sorted(getattr(self, 'nested_user_functions', {}).keys()):
-                fn = (getattr(self, 'nested_user_functions', {}) or {}).get(nm)
-                disp = getattr(fn, 'name', None) if fn is not None else None
-                if not (isinstance(disp, str) and disp):
-                    disp = str(nm)
-                entries.append((str(nm), str(disp)))
-            self._callprof_entries = entries
-            self._callprof_index = {code: i for i, (code, _disp) in enumerate(entries)}
-            self._callprof_n = len(entries)
-            if self._callprof_n > 0:
-                # Writable qword counters (NOT GC roots)
-                if 'callprof_counts' not in getattr(self.data, 'labels', {}):
-                    self.data.add_bytes('callprof_counts', b'\x00' * (8 * self._callprof_n))
-                # Boxed name objects in .rdata (pooled)
-                for i, (_code, disp) in enumerate(entries):
-                    lbl = f'callprof_name_{i}'
-                    self.rdata.add_obj_string(lbl, disp)
-                    self._callprof_name_labels.append(lbl)
-
 # Hoist top-level function identifiers as global bindings (first-class functions).
         # This makes `f = add` legal even if `add` is never written as a variable.
         self.function_global_labels: Dict[str, str] = {}
@@ -5415,6 +5439,36 @@ class CodegenStmt:
             off, _ = self.rdata.labels[obj_lbl]
             self.rdata.add_abs64_patch(int(off) + 16, stub_lbl)
             self.extern_static_obj_labels[qn] = obj_lbl
+
+        # Match the native compiler's section allocation order: profiling
+        # records follow the static callable/type objects.
+        self._callprof_enabled = bool(getattr(self, 'call_profile', False))
+        self._callprof_entries = []
+        self._callprof_index = {}
+        self._callprof_name_labels = []
+        self._callprof_n = 0
+        if self._callprof_enabled:
+            entries = []
+            for nm in sorted(self.user_functions.keys()):
+                fn = self.user_functions[nm]
+                code_name = getattr(fn, '_ml_codegen_name', nm)
+                entries.append((str(code_name), str(nm)))
+            for nm in sorted(getattr(self, 'nested_user_functions', {}).keys()):
+                fn = (getattr(self, 'nested_user_functions', {}) or {}).get(nm)
+                disp = getattr(fn, 'name', None) if fn is not None else None
+                if not (isinstance(disp, str) and disp):
+                    disp = str(nm)
+                entries.append((str(nm), str(disp)))
+            self._callprof_entries = entries
+            self._callprof_index = {code: i for i, (code, _disp) in enumerate(entries)}
+            self._callprof_n = len(entries)
+            if self._callprof_n > 0:
+                if 'callprof_counts' not in getattr(self.data, 'labels', {}):
+                    self.data.add_bytes('callprof_counts', b'\x00' * (8 * self._callprof_n))
+                for i, (_code, disp) in enumerate(entries):
+                    lbl = f'callprof_name_{i}'
+                    self.rdata.add_obj_string(lbl, disp)
+                    self._callprof_name_labels.append(lbl)
 
         # Reset internal-helper usage tracking for this compilation unit
         if hasattr(self, 'reset_helper_tracking'):
