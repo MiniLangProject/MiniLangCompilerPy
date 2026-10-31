@@ -119,3 +119,11 @@ covariant returns, and static methods do not participate in virtual dispatch.
 The compiler currently infers nonpublic access through stable aliases and
 declared parameter types; a value whose class is only known at runtime cannot
 receive compile-time member-access validation.
+
+## Binary parity
+
+Starting with compiler 1.3.2, the Python and self-hosted compilers produce
+byte-identical Windows x64 and Linux x64 images for the OOP regression
+programs. This includes direct and first-class construction, method overrides,
+static methods, and inherited interfaces. The regression compares both build
+pipelines and runs each image.

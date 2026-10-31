@@ -2,8 +2,12 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.3.1**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.3.1.md).
+Current stable release: **1.3.2**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.3.2.md).
+
+Release 1.3.2 restores byte-identical OOP output between the Python and
+self-hosted compilers on Windows and Linux x64. See the
+[release notes](RELEASE_NOTES_1.3.2.md).
 
 Release 1.3.1 adds classes with checked inheritance, virtual overrides,
 access control, parameterized constructors, and inherited interfaces. See the

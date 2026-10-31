@@ -1438,12 +1438,17 @@ class CodegenExpr:
         if not qn:
             return ""
         qn = self._apply_import_alias(str(qn))
-        if qn in (getattr(self, 'user_functions', {}) or {}):
-            return qn
+        functions = getattr(self, 'user_functions', {}) or {}
+        static_methods = getattr(self, 'struct_static_methods', {}) or {}
         for cand in self._qname_with_prefixes_for_native_callback(qn):
             cand = str(cand)
-            if cand in (getattr(self, 'user_functions', {}) or {}):
+            if cand in functions:
                 return cand
+            owner = cand.split('.__ml_hidden$', 1)[0] if '.__ml_hidden$' in cand else cand.rpartition('.')[0]
+            if owner:
+                static_qn = (static_methods.get(owner) or {}).get(cand[len(owner) + 1:])
+                if static_qn in functions:
+                    return str(static_qn)
         return ""
 
     def _emit_native_callback_ret_lresult(self, l_zero: str, l_done: str) -> None:
@@ -7483,11 +7488,21 @@ class CodegenExpr:
                     if full_fn is None:
                         raise self.error(f"Missing constructor for class '{sname}'", e)
                     normalized = self._normalize_declared_call_args(e, full_fn)
-                    constructed = ml.Call(ml.Var(full_name), normalized)
-                    for attr in ('_pos', '_filename'):
-                        if hasattr(e, attr):
-                            setattr(constructed, attr, getattr(e, attr))
-                    self.emit_expr(constructed)
+                    nargs = len(normalized)
+                    base = self.alloc_expr_temps(nargs * 8) if nargs else 0
+                    for i, arg in enumerate(normalized):
+                        self.emit_expr(arg)
+                        a.mov_membase_disp_r64('rsp', base + i * 8, 'rax')
+                    for i, reg in enumerate(('rcx', 'rdx', 'r8', 'r9')[:nargs]):
+                        a.mov_r64_membase_disp(reg, 'rsp', base + i * 8)
+                    for i in range(4, nargs):
+                        a.mov_r64_membase_disp('r10', 'rsp', base + i * 8)
+                        a.mov_membase_disp_r64('rsp', 0x20 + (i - 4) * 8, 'r10')
+                    a.mov_r64_imm64('r10', enc_void())
+                    a.call(f'fn_user_{full_name}')
+                    self._emit_auto_errprop()
+                    if nargs:
+                        self.free_expr_temps(nargs * 8)
                     return
                 fields = self.struct_fields[sname]
                 n = len(fields)

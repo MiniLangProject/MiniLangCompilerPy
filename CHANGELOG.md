@@ -2,6 +2,15 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.2 - 2026-10-31
+
+- Align class factory calls, synthetic source positions, and class-method type
+  inference so the Python and self-hosted compilers emit byte-identical OOP
+  images on Windows and Linux x64.
+- Add a cross-compiler binary parity regression covering eleven OOP programs,
+  both output targets, and both build pipelines, including constructors with
+  five arguments.
+
 ## 1.3.1 - 2026-10-31
 
 - Add classes with single inheritance, virtual overrides, `super`, abstract
