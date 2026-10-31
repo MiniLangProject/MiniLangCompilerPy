@@ -173,6 +173,9 @@ function ctEquals(a, b)
 
   na = len(a)
   nb = len(b)
+  // The native scanner has no content-dependent exit for equal-length inputs.
+  if na == nb then return bytesConstantTimeEquals(a, b) end if
+
   n = na
   if nb > n then
     n = nb
