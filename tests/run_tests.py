@@ -4213,6 +4213,8 @@ def main() -> int:
     ecdsa_p256_ml = find_file_by_name(tests_root, "ecdsa_p256.ml")
     platform_services_ml = find_file_by_name(tests_root, "platform_services.ml")
     object_entry_inline_ml = find_file_by_name(tests_root, "object_entry_inline.ml")
+    inline_asm_ml = find_file_by_name(tests_root, "inline_asm.ml")
+    inline_asm_types_ml = find_file_by_name(tests_root, "inline_asm_types.ml")
     gc_periodic_ml = find_file_by_name(tests_root, "gc_periodic_test.ml")
     gc_reference_write_roots_ml = find_file_by_name(tests_root, "gc_reference_write_roots.ml")
     gc_nested_graph_roots_ml = find_file_by_name(tests_root, "gc_nested_graph_roots.ml")
@@ -4460,6 +4462,8 @@ def main() -> int:
         ("ecdsa_p256.ml (cross-platform signature verification)", ecdsa_p256_ml, "[OK] ECDSA-P256"),
         ("platform_services.ml (portable OS and durable I/O)", platform_services_ml, "=== PLATFORM SERVICES DONE ==="),
         ("object_entry_inline.ml (entry initializer inline)", object_entry_inline_ml, "[OK] object entry inline"),
+        ("inline_asm.ml (typed x64 operations and bytes access)", inline_asm_ml, "[OK] inline asm core"),
+        ("inline_asm_types.ml (managed types and closure roots)", inline_asm_types_ml, "[OK] inline asm types"),
     ]:
         if test_path is not None:
             tests.append(lambda n=test_name, p=test_path, m=marker: test_program_no_fail(
@@ -4467,6 +4471,16 @@ def main() -> int:
                 timeout_compile_s=180, timeout_run_s=180))
         else:
             tests.append(lambda n=test_name: TestResult(name=n, status="SKIP", details="test source not found"))
+
+    for filename, marker in [
+        ("inline_asm_invalid_readonly.ml", "read-only"),
+        ("inline_asm_invalid_type.ml", "matching operand types"),
+        ("inline_asm_invalid_result.ml", "before assigning"),
+        ("inline_asm_invalid_unsafe.ml", "require 'asm unsafe x64'"),
+    ]:
+        fixture = tests_root / filename
+        tests.append(lambda n=filename, p=fixture, m=marker: test_compile_expected_fail(
+            name=n, mlc_runner=mlc_runner, entry_ml=p, must_contain_err=m))
 
     if thread_features_ml is not None:
         tests.append(lambda: test_program_no_fail(

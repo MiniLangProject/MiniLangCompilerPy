@@ -249,6 +249,20 @@ class TypeGuard(Expr):
 
 
 @dataclass
+class AsmExpr(Expr):
+    """Typed x64 inline assembly with symbolic operands."""
+    args: List[Expr]
+    names: List[str]
+    types: List[str]
+    optional: List[bool]
+    modes: List[str]
+    result_type: str
+    result_optional: bool
+    instructions: List[Tuple[str, List[str]]]
+    unsafe: bool = False
+
+
+@dataclass
 class Coalesce(Expr):
     """Return the left operand unless it is void; evaluate the right lazily."""
     left: Expr
@@ -1240,6 +1254,9 @@ class Parser:
     def parse_stmt(self) -> Stmt:
         start_pos = self.peek().pos
         t = self.peek()
+
+        if t.kind == "IDENT" and t.value == "asm" and self.peek2().value in ("x64", "unsafe"):
+            return self._attach_pos(ExprStmt(self.parse_asm_expr()), start_pos)
 
         # package <Name>   (top-level only)
         if t.kind == "KW" and t.value == "package":
@@ -2247,6 +2264,9 @@ class Parser:
         """Parse primary expressions: literals, identifiers, parenthesized expressions, arrays."""
         t = self.peek()
 
+        if t.kind == "IDENT" and t.value == "asm" and self.peek2().value in ("x64", "unsafe"):
+            return self.parse_asm_expr()
+
         if t.kind == "LPAREN":
             start_pos = t.pos
             self.advance()
@@ -2334,6 +2354,73 @@ class Parser:
 
         raise ParseError(f"Unexpected expression: {t.kind}:{t.value}", t.pos)
 
+    def parse_asm_expr(self) -> AsmExpr:
+        """Parse an x64 block without ever treating its body as MiniLang code."""
+        start = self.expect("IDENT", "asm").pos
+        unsafe = self.peek().value == "unsafe" and self.peek().kind in ("KW", "IDENT")
+        if unsafe:
+            self.advance()
+        arch = self.expect("IDENT")
+        if arch.value != "x64":
+            raise ParseError("Inline asm currently supports x64 only", arch.pos)
+        self.expect("LPAREN")
+        args: List[Expr] = []
+        names: List[str] = []
+        types: List[str] = []
+        optional: List[bool] = []
+        modes: List[str] = []
+        self.skip_newlines()
+        if not self.match("RPAREN"):
+            while True:
+                mode = self.advance()
+                if mode.value not in ("in", "inout") or mode.kind not in ("KW", "IDENT"):
+                    raise ParseError("asm operand expects 'in' or 'inout'", mode.pos)
+                name = self.expect("IDENT")
+                if name.value == "result" or name.value in names:
+                    raise ParseError("duplicate or reserved asm operand name", name.pos)
+                self.expect("KW", "as")
+                ty, opt = self.parse_type_ref()
+                names.append(name.value)
+                args.append(self._attach_pos(Var(name.value), name.pos))
+                types.append(ty)
+                optional.append(opt)
+                modes.append(mode.value)
+                self.skip_newlines()
+                if self.match("RPAREN"):
+                    break
+                self.expect("COMMA")
+                self.skip_newlines()
+        result_type = "void"
+        result_optional = False
+        if self.match("KW", "returns"):
+            result_type, result_optional = self.parse_type_ref()
+        if self.peek().kind != "NL":
+            raise ParseError("asm header must end with a newline", self.peek().pos)
+        self.skip_newlines()
+        instructions: List[Tuple[str, List[str]]] = []
+        while not (self.peek().kind == "KW" and self.peek().value == "end"):
+            if self.peek().kind == "EOF":
+                raise ParseError("asm block is missing 'end asm'", start)
+            op = self.expect("IDENT")
+            operands: List[str] = []
+            while self.peek().kind not in ("NL", "EOF"):
+                parts: List[str] = []
+                while self.peek().kind not in ("COMMA", "NL", "EOF"):
+                    parts.append(self.advance().value)
+                if not parts:
+                    raise ParseError("empty asm operand", self.peek().pos)
+                operands.append("".join(parts))
+                if not self.match("COMMA"):
+                    break
+            if len(operands) > 2:
+                raise ParseError("asm instructions support at most two operands", op.pos)
+            instructions.append((op.value, operands))
+            self.skip_newlines()
+        self.expect("KW", "end")
+        self.expect("IDENT", "asm")
+        return self._attach_pos(AsmExpr(args, names, types, optional, modes,
+                                        result_type, result_optional, instructions, unsafe), start)
+
 
 # ============================================================
 # Backward-compatible lowering for high-level language features
@@ -2380,6 +2467,9 @@ class _LanguageLowerer:
                              return_type=expr.return_type, return_optional=expr.return_optional)
             prelude.append(_copy_source_pos(fn, expr))
             return _copy_source_pos(Var(name), expr)
+        if isinstance(expr, AsmExpr):
+            expr.args = [self.lower_expr(x, prelude) for x in expr.args]
+            return expr
         if isinstance(expr, Call):
             expr.callee = self.lower_expr(expr.callee, prelude)
             expr.args = [self.lower_expr(x, prelude) for x in expr.args]

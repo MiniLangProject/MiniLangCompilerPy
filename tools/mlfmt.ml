@@ -325,6 +325,35 @@ end function
 // ------------------------------------------------------------
 // "end <kind>" in same Line-Header? (for inline blocks)
 // ------------------------------------------------------------
+function _hasInlineAsmHeader(code)
+  i = 0
+  inStr = false
+  prev = ""
+  prev2 = ""
+  while i < len(code)
+    ch = code[i]
+    if inStr then
+      if ch == 92 then i = i + 2 continue end if
+      if ch == 34 then inStr = false end if
+      i = i + 1
+      continue
+    end if
+    if ch == 34 then inStr = true i = i + 1 continue end if
+    if _isIdentStart(ch) then
+      st = i
+      i = i + 1
+      while i < len(code) and _isIdentPart(code[i]) i = i + 1 end while
+      word = decode(slice(code, st, i - st))
+      if word == "x64" and (prev == "asm" or (prev == "unsafe" and prev2 == "asm")) then return true end if
+      prev2 = prev
+      prev = word
+      continue
+    end if
+    i = i + 1
+  end while
+  return false
+end function
+
 function _containsEndOf(code, kind)
   i = 0
   inStr = false
@@ -1034,6 +1063,7 @@ function format_source(src, indentSize, maxBlankLines)
         if w0 == "lazy" and w1 == "iterator" then opener = "function" end if
         if w0 == "static" and w1 == "function" then opener = "function" end if
         if w0 == "operator" then opener = "operator" end if
+        if opener == "" and _hasInlineAsmHeader(codeTL) then opener = "asm" end if
         if isLoopFooter then opener = "" end if
 
         // Fine-grained synchronization is a block only in call form;

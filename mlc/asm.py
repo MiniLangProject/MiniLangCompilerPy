@@ -2088,6 +2088,15 @@ class Asm:
         rex_b = 1 if bb >= 8 else 0
         self.emit(self._rex(w=1, r=rex_r, b=rex_b) + b"\x85" + self._modrm(3, aa, bb))
 
+    def cmovcc_r64_r64(self, cc: str, dst: str, src: str) -> None:
+        """Emit CMOVcc for a compiler-owned symbolic inline-asm operand."""
+        conditions = {"e": 0x44, "ne": 0x45}
+        if cc not in conditions:
+            raise ValueError(f"Unsupported CMOV condition: {cc}")
+        d, s = self._rid_any(dst), self._rid_any(src)
+        self.emit(self._rex(w=1, r=d >> 3, b=s >> 3) + b"\x0F" + bytes([conditions[cc]])
+                  + self._modrm(3, d, s))
+
     def test_r32_r32(self, a: str, b: str) -> None:
         """Emit `TEST` instruction helper.
 

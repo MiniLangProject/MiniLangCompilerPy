@@ -25,6 +25,7 @@ class PackingError(ValueError):
 
 @dataclass
 class Options:
+    """Resolved packaging switches for a compiler invocation."""
     args: list[str]
     mode: str = ''
     upx: str = ''

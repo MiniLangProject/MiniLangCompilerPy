@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-10-19T23:20:14.657603Z",
-  "count": 239,
+  "generated_utc": "2026-10-31T00:24:25.821571Z",
+  "count": 240,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -298,6 +298,17 @@
       "kwargs": {},
       "hex": "ff15faffffff",
       "asm": "call qword [rip+L]"
+    },
+    {
+      "name": "cmovcc_r64_r64",
+      "args": [
+        "e",
+        "r11",
+        "r10"
+      ],
+      "kwargs": {},
+      "hex": "4d0f44da",
+      "asm": "; cmovcc_r64_r64(e, r11, r10)"
     },
     {
       "name": "cmp_membase_disp_imm8",

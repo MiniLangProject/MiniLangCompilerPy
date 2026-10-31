@@ -3031,6 +3031,11 @@ class CodegenExpr:
         ml = self.ml
         a = self.asm
 
+        if hasattr(ml, 'AsmExpr') and isinstance(e, ml.AsmExpr):
+            from .codegen_inline_asm import emit_inline_asm
+            emit_inline_asm(self, e)
+            return
+
         # New high-level operators deliberately reuse the existing Value ABI;
         # no runtime object kinds or GC paths are needed.
         if hasattr(ml, 'Coalesce') and isinstance(e, ml.Coalesce):

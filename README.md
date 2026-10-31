@@ -146,6 +146,7 @@ assistance of generative AI.
   - [Modern language extensions](#modern-language-extensions)
   - [Deferred cleanup (`defer`)](#deferred-cleanup-defer)
   - [Inline functions (`inline`)](#inline-functions-inline)
+  - [Typed inline x64 assembly](#typed-inline-x64-assembly)
   - [9.1 Native threads & synchronization](#91-native-threads--synchronization)
   - [9.2 Thread-safe standard-library types](#92-thread-safe-standard-library-types)
   - [9.3 Managed thread pools](#93-managed-thread-pools)
@@ -1567,6 +1568,13 @@ Current behavior / limits:
   trades a small amount of executable size for relocation safety across
   imported aliases, first-class callable values and late budget fallbacks.
 
+
+### Typed inline x64 assembly
+
+`asm x64(...) returns Type ... end asm` embeds typed symbolic x64 instructions
+at the current expression. It accepts every MiniLang value category as an
+operand or result. Direct byte-buffer writes require `asm unsafe x64` and
+caller-side bounds checks. See [syntax, supported instructions, and GC rules](docs/INLINE_ASM.md).
 
 ### Function calls
 

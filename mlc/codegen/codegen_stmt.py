@@ -1570,6 +1570,9 @@ class CodegenStmt:
                 getattr(expr, 'right', None), stats)
         if isinstance(expr, getattr(ml, 'IsType', ())):
             return 3 + self._inline_collect_expr_stats(getattr(expr, 'expr', None), stats)
+        if isinstance(expr, getattr(ml, 'AsmExpr', ())):
+            return 8 + len(getattr(expr, 'instructions', []) or []) * 4 + sum(
+                self._inline_collect_expr_stats(arg, stats) for arg in getattr(expr, 'args', []) or [])
         if isinstance(expr, getattr(ml, 'Call', ())):
             stats['call_count'] += 1
             args = list(getattr(expr, 'args', []) or [])
@@ -1954,6 +1957,10 @@ class CodegenStmt:
                 if isinstance(nm, str):
                     used.add(nm)
                 return
+            if hasattr(ml, 'AsmExpr') and isinstance(e, ml.AsmExpr):
+                for aa in getattr(e, 'args', []) or []:
+                    expr(aa)
+                return
             if hasattr(ml, 'Unary') and isinstance(e, ml.Unary):
                 expr(getattr(e, 'right', None))
                 return
@@ -2123,6 +2130,10 @@ class CodegenStmt:
                 nm = getattr(e, 'name', None)
                 if isinstance(nm, str):
                     out.add(nm)
+                return
+            if hasattr(ml, 'AsmExpr') and isinstance(e, ml.AsmExpr):
+                for aa in getattr(e, 'args', []) or []:
+                    expr_reads(aa, out)
                 return
             if hasattr(ml, 'Unary') and isinstance(e, ml.Unary):
                 expr_reads(getattr(e, 'right', None), out)
