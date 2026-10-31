@@ -107,9 +107,7 @@ function _stateFromArray(values)
   end if
 
   buf = st[0]
-  for i = 0 to(n - 1)
-    buf[i] = values[i]
-  end for
+  copyArray(buf, 0, values, 0, n)
   st[0] = buf
   st[1] = n
   return st
@@ -154,9 +152,7 @@ function _grow(minCap)
   nb = _allocArray(newCap, 0)
   oldBuf = st[0]
   n = st[1]
-  for i = 0 to(n - 1)
-    nb[i] = oldBuf[i]
-  end for
+  if n > 0 then copyArray(nb, 0, oldBuf, 0, n) end if
 
   st[0] = nb
   st[2] = newCap
@@ -291,9 +287,7 @@ function toArray()
   end if
 
   buf = st[0]
-  for i = 0 to(n - 1)
-    vals[i] = buf[i]
-  end for
+  copyArray(vals, 0, buf, 0, n)
   return vals
 end function
 end struct

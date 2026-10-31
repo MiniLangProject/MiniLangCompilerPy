@@ -61,11 +61,16 @@ function compress(input, mode)
     end if
   end if
   if mode == "compact" and n > 0 then
-    candidate = rle.encode(input)
-    if typeof(candidate) == "error" then return candidate end if
-    if len(candidate) < len(payload) then
-      payload = candidate
-      algorithm = RLE
+    // Each RLE token emits at most 130 bytes from at least two encoded bytes.
+    // If even this ideal lower bound cannot beat the current payload, skip it.
+    minimumRleSize = 2 * ((n + 129) / 130)
+    if minimumRleSize < len(payload) then
+      candidate = rle.encode(input)
+      if typeof(candidate) == "error" then return candidate end if
+      if len(candidate) < len(payload) then
+        payload = candidate
+        algorithm = RLE
+      end if
     end if
   end if
   result = bytes(HEADER_SIZE + len(payload), 0)

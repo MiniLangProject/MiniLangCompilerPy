@@ -403,10 +403,13 @@ extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "uslee
 /// Write a nonnegative 64-bit timespec field in native little-endian order.
 /// @internal
 function _putTimespecField(buffer, offset, value)
-  for i = 0 to 7
-    buffer[offset + i] = value & 255
-    value = value >> 8
-  end for
+  upperOffset = offset + 4
+  asm unsafe x64(inout buffer as bytes, in offset as int, in upperOffset as int, in value as int, scratch upper as int)
+    mov dword [buffer.data + offset], value
+    mov upper, value
+    shr upper, 32
+    mov dword [buffer.data + upperOffset], upper
+  end asm
 end function
 
 /// Creates new recursive mutex.

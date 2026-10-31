@@ -252,11 +252,18 @@ function insert(index, value)
   if this.size == this.cap then
     this._grow(this.cap << 1)
   end if
-  i = this.size
-  while i > index
-    this.buf[i] = this.buf[i - 1]
-    i = i - 1
-  end while
+  shifted = this.size - index
+  if shifted >= 64 then
+    temporary = array(shifted)
+    copyArray(temporary, 0, this.buf, index, shifted)
+    copyArray(this.buf, index + 1, temporary, 0, shifted)
+  else
+    i = this.size
+    while i > index
+      this.buf[i] = this.buf[i - 1]
+      i = i - 1
+    end while
+  end if
   this.buf[index] = value
   this.size = this.size + 1
   return true
@@ -272,11 +279,18 @@ function removeAt(index)
     return
   end if
   v = this.buf[index]
-  i = index
-  while i + 1 < this.size
-    this.buf[i] = this.buf[i + 1]
-    i = i + 1
-  end while
+  shifted = this.size - index - 1
+  if shifted >= 64 then
+    temporary = array(shifted)
+    copyArray(temporary, 0, this.buf, index + 1, shifted)
+    copyArray(this.buf, index, temporary, 0, shifted)
+  else
+    i = index
+    while i + 1 < this.size
+      this.buf[i] = this.buf[i + 1]
+      i = i + 1
+    end while
+  end if
   this.buf[this.size - 1] = 0
   this.size = this.size - 1
   return v

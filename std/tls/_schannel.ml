@@ -914,11 +914,7 @@ end function
 /// @internal
 function constantTimeEquals(left, right)
   if typeof(left) != "bytes" or typeof(right) != "bytes" or len(left) != len(right) then return false end if
-  difference = 0
-  for index = 0 to len(left) - 1
-    difference = difference | (left[index] ^ right[index])
-  end for
-  return difference == 0
+  return bytesConstantTimeEquals(left, right)
 end function
 
 /// Encodes an ASCII DNS name as a null-terminated UTF-16LE buffer for CryptoAPI.

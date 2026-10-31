@@ -144,6 +144,8 @@ function test_string_hex_bytes()
   parts = s.split("a,b,c", ",")
   chk(a.assertEq(len(parts), 3, "string: split len"))
   chk(a.assertEq(parts[1], "b", "string: split item"))
+  chk(a.assertEq(s.split("abc", ","), ["abc"], "string: split without separator"))
+  chk(a.assertEq(s.split(",,", ","), ["", "", ""], "string: split consecutive separators"))
   chk(a.assertEq(s.join(["a", "b"], "-"), "a-b", "string: join"))
   chk(a.assertEq(s.replaceAll("aaab", "a", "x"), "xxxb", "string: replaceAll"))
   chk(a.assertEq(s.replaceFirst("aaab", "a", "x"), "xaab", "string: replaceFirst"))
@@ -383,13 +385,17 @@ function test_math_fmt_time()
   chk(a.assertEq(m.gcd(54, 24), 6, "math: gcd"))
   chk(a.assertEq(m.lcm(6, 8), 24, "math: lcm"))
 
-  // trig/exp/log: approx (pure MiniLang approximations)
+  // Trigonometric approximations and native transcendental functions.
   chk(a.assertApprox(m.sin(0.0), 0.0, 0.0001, "math: sin(0)"))
   chk(a.assertApprox(m.cos(0.0), 1.0, 0.0001, "math: cos(0)"))
   chk(a.assertApprox(m.sin(m.pi() / 2.0), 1.0, 0.01, "math: sin(pi/2)"))
   chk(a.assertApprox(m.cos(m.pi()), -1.0, 0.01, "math: cos(pi)"))
 
   chk(a.assertApprox(m.exp(0.0), 1.0, 0.0005, "math: exp(0)"))
+  chk(a.assertApprox(m.sqrt(2.0) * m.sqrt(2.0), 2.0, 0.000000001, "math: sqrt native precision"))
+  chk(a.assertEq(m.sqrt(-4.0), 0.0, "math: sqrt negative contract"))
+  chk(a.assertApprox(m.ln(m.exp(0.75)), 0.75, 0.000000001, "math: ln/exp native precision"))
+  chk(a.assertTrue(typeof(m.ln(-1.0)) == "void", "math: ln negative contract"))
   chk(a.assertApprox(m.ln(m.e()), 1.0, 0.01, "math: ln(e)"))
   chk(a.assertApprox(m.log10(1000.0), 3.0, 0.02, "math: log10"))
 
@@ -398,6 +404,9 @@ function test_math_fmt_time()
   chk(a.assertEq(fmt.center("x", 3, "."), ".x.", "fmt: center"))
   chk(a.assertEq(fmt.quote("a\"b"), "\"a\\\"b\"", "fmt: quote"))
   chk(a.assertEq(fmt.quote("a\\b\n"), "\"a\\\\b\\n\"", "fmt: quote escapes"))
+  longQuoteInput = s.repeat("x", 256) + "\n"
+  chk(a.assertEq(fmt.quote(longQuoteInput), "\"" + s.repeat("x", 256) + "\\n\"", "fmt: quote large escape"))
+  chk(a.assertEq(fmt.quote(s.repeat("ü", 128)), "\"" + s.repeat("ü", 128) + "\"", "fmt: quote large UTF-8"))
   chk(a.assertEq(fmt.repeat("ab", 3), "ababab", "fmt: repeat"))
 
   t1 = t.ticks()
@@ -575,6 +584,12 @@ function test_base64_ds()
 
   inv = b64.fromBase64("!!")
   chk(a.assertTrue(typeof(inv) == "void", "base64: invalid -> void"))
+  largeBase64Data = bytes(193, 65)
+  largeBase64Text = b64.toBase64(largeBase64Data)
+  chk(a.assertTrue(b.equals(b64.fromBase64(largeBase64Text), largeBase64Data), "base64: large padded roundtrip"))
+  largeBase64Invalid = bytes(largeBase64Text)
+  largeBase64Invalid[100] = 33
+  chk(a.assertTrue(typeof(b64.fromBase64(decode(largeBase64Invalid))) == "void", "base64: large invalid input"))
 
   // ds.stack
   st = stack.Stack.new()
@@ -717,6 +732,16 @@ function test_base64_ds()
   lst2 = list.List.fromArray(["a", "b", "c"])
   chk(a.assertEq(lst2.pop(), "c", "list: fromArray pop"))
   chk(a.assertEq(lst2.toArray(), ["a", "b"], "list: fromArray toArray"))
+  largeValues = array(128, "tail")
+  largeValues[0] = ["nested"]
+  largeList = list.List.fromArray(largeValues)
+  chk(a.assertTrue(largeList.insert(0, "head"), "list: large front insert"))
+  chk(a.assertEq(largeList.get(1), ["nested"], "list: large insert preserves reference"))
+  chk(a.assertEq(largeList.removeAt(0), "head", "list: large front remove"))
+  chk(a.assertEq(largeList.get(0), ["nested"], "list: large remove preserves reference"))
+  chk(a.assertTrue(largeList.insert(64, "middle"), "list: large middle insert"))
+  chk(a.assertEq(largeList.removeAt(64), "middle", "list: large middle remove"))
+  chk(a.assertEq(largeList.len(), 128, "list: large shift length"))
 end function
 
 function _tcpListenAny(backlog)

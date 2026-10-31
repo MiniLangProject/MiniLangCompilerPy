@@ -18,6 +18,8 @@ limitations under the License.
 
 package std.string
 
+import std.ds.list as list
+
 import std.string_builder as sb
 
 // ------------------------------------------------------------
@@ -160,32 +162,19 @@ function split(s, sep)
   n = len(s)
   sl = len(sep)
 
-  count = 1
+  parts = list.List.new()
   i = 0
-  while i <= n - sl
-    p = stringIndexOf(s, sep, i)
-    if p < 0 then
-      break
-    end if
-    count = count + 1
-    i = p + sl
-  end while
-
-  val = array(count)
-  i = 0
-  oi = 0
   while true
     p = stringIndexOf(s, sep, i)
     if p < 0 then
-      val[oi] = stringSlice(s, i, n - i)
+      parts.add(stringSlice(s, i, n - i))
       break
     end if
-    val[oi] = stringSlice(s, i, p - i)
-    oi = oi + 1
+    parts.add(stringSlice(s, i, p - i))
     i = p + sl
   end while
 
-  return val
+  return parts.toArray()
 end function
 
 /// Joins string parts with a separator.

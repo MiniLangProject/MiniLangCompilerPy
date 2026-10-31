@@ -91,16 +91,27 @@ function encode(input)
   while tableSize < n * 4 and tableSize < 65536
     tableSize = tableSize << 1
   end while
-  table = array(tableSize, -1)
+  table = bytes(tableSize * 4, 0)
+  tableMask = tableSize - 1
   anchor = 0
   position = 0
   written = 0
   matchLimit = n - 12
   search = 1
   while position <= matchLimit
-    slot = _hash(input, position) & (tableSize - 1)
-    previous = table[slot]
-    table[slot] = position
+    previous = asm unsafe x64(in input as bytes, inout table as bytes, in position as int, in tableMask as int, scratch slot as int, scratch storedPosition as int) returns int
+      mov slot, dword [input.data + position]
+      imul slot, 2654435761
+      shr slot, 16
+      and slot, 65535
+      and slot, tableMask
+      shl slot, 2
+      mov result, dword [table.data + slot]
+      mov storedPosition, position
+      add storedPosition, 1
+      mov dword [table.data + slot], storedPosition
+      sub result, 1
+    end asm
     if previous >= 0 and position - previous <= 65535 and
        input[previous] == input[position] and input[previous + 1] == input[position + 1] and
        input[previous + 2] == input[position + 2] and input[previous + 3] == input[position + 3] then

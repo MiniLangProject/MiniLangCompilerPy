@@ -208,24 +208,25 @@ namespace linux
   /// Provide i64le behavior for this standard-library module.
   /// @internal
   function _i64le(buffer, offset)
-    value = buffer[offset + 7]
-    if value >= 128 then value = value - 256 end if
-    i = 6
-    while i >= 0
-      value = (value << 8) | buffer[offset + i]
-      i = i - 1
-    end while
-    return value
+    upperOffset = offset + 4
+    return asm unsafe x64(in buffer as bytes, in offset as int, in upperOffset as int, scratch upper as int) returns int
+      mov result, dword [buffer.data + offset]
+      mov upper, dword [buffer.data + upperOffset]
+      shl upper, 32
+      or result, upper
+    end asm
   end function
 
   /// Provide put i64 behavior for this standard-library module.
   /// @internal
   function _putI64(buffer, offset, value)
-    i = 0
-    while i < 8
-      buffer[offset + i] = (value >> (i * 8)) & 0xFF
-      i = i + 1
-    end while
+    upperOffset = offset + 4
+    asm unsafe x64(inout buffer as bytes, in offset as int, in upperOffset as int, in value as int, scratch upper as int)
+      mov dword [buffer.data + offset], value
+      mov upper, value
+      shr upper, 32
+      mov dword [buffer.data + upperOffset], upper
+    end asm
   end function
 
   /// Returns decode tm.

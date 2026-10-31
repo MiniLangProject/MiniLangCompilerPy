@@ -222,13 +222,7 @@ end function
 /// @internal
 function _constantTimeEquals(left, right)
   if typeof(left) != "bytes" or typeof(right) != "bytes" or len(left) != len(right) then return false end if
-  difference = 0
-  i = 0
-  while i < len(left)
-    difference = difference | (left[i] ^ right[i])
-    i = i + 1
-  end while
-  return difference == 0
+  return bytesConstantTimeEquals(left, right)
 end function
 
 /// Releases or resets release.

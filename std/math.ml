@@ -18,6 +18,16 @@ limitations under the License.
 
 package std.math
 
+#if TARGET_OS == "windows"
+extern function _nativeSqrt(value as double) from "msvcrt.dll" symbol "sqrt" returns double
+extern function _nativeExp(value as double) from "msvcrt.dll" symbol "exp" returns double
+extern function _nativeLn(value as double) from "msvcrt.dll" symbol "log" returns double
+#else
+extern function _nativeSqrt(value as double) from "libm.so.6" symbol "sqrt" returns double
+extern function _nativeExp(value as double) from "libm.so.6" symbol "exp" returns double
+extern function _nativeLn(value as double) from "libm.so.6" symbol "log" returns double
+#endif
+
 // Numeric predicates, integer helpers and native transcendental functions.
 
 /// Checks whether a value is a numeric type.
@@ -234,24 +244,7 @@ function sqrt(x)
   if x <= 0 then
     return 0.0
   end if
-
-  // Newton iteration. Good compromise between speed and precision.
-  g = x
-  if g < 1.0 then
-    g = 1.0
-  end if
-
-  i = 0
-  while i < 12
-    ng = 0.5 *(g +(x / g))
-    if std.math.abs(ng - g) < 0.000000000001 then
-      g = ng
-      break
-    end if
-    g = ng
-    i = i + 1
-  end while
-  return g
+  return _nativeSqrt(x)
 end function
 
 /// Integer power (exponentiation by squaring).
@@ -507,23 +500,7 @@ end function
 /// Exponential function exp(x).
 /// @param x Value supplied for `x`.
 function exp(x)
-  // Range reduction: x = k*ln2 + r, r in [-ln2/2, ln2/2]
-  ln2v = std.math.ln2()
-  // k = round(x / ln2)
-  k = std.math.round(x / ln2v)
-  r = x -(k * ln2v)
-
-  // Polynomial approximation for exp(r) around 0
-  // 1 + r + r^2/2 + r^3/6 + r^4/24 + r^5/120 + r^6/720
-  r2 = r * r
-  r3 = r2 * r
-  r4 = r2 * r2
-  r5 = r4 * r
-  r6 = r3 * r3
-  er = 1.0 + r +(r2 / 2.0) +(r3 / 6.0) +(r4 / 24.0) +(r5 / 120.0) +(r6 / 720.0)
-
-  // exp(x) = exp(r) * 2^k
-  return er * std.math.powi(2.0, k)
+  return _nativeExp(x)
 end function
 
 /// Expm1(x) = exp(x) - 1, with good accuracy near 0.
@@ -546,32 +523,7 @@ function ln(x)
     return
   end if
 
-  // Reduce to [0.5, 2] using powers of 2
-  ln2v = std.math.ln2()
-  r = 0.0
-  v = x
-
-  while v > 2.0
-    v = v / 2.0
-    r = r + ln2v
-  end while
-
-  while v < 0.5
-    v = v * 2.0
-    r = r - ln2v
-  end while
-
-  // Use atanh series: ln(v) = 2 * (y + y^3/3 + y^5/5 + ...)
-  y =(v - 1.0) /(v + 1.0)
-  y2 = y * y
-
-  y3 = y * y2
-  y5 = y3 * y2
-  y7 = y5 * y2
-  y9 = y7 * y2
-
-  ln_v = 2.0 *(y +(y3 / 3.0) +(y5 / 5.0) +(y7 / 7.0) +(y9 / 9.0))
-  return r + ln_v
+  return _nativeLn(x)
 end function
 
 /// Ln1p(x) = ln(1+x), with good accuracy near 0.

@@ -189,6 +189,69 @@ function fromBase64(text)
   oi = 0
 
   bi = 0
+  // Amortize the lookup table over larger inputs; leave the final padded
+  // block to the validation path below.
+  if n >= 256 then
+    lookup = bytes(256, 255)
+    alphabet = bytes(ALPHABET)
+    for alphabetIndex = 0 to 63
+      lookup[alphabet[alphabetIndex]] = alphabetIndex
+    end for
+    fullBlocks = blocks - 1
+    inputEnd = fullBlocks * 4
+    valid = asm unsafe x64(in t as bytes, in lookup as bytes, inout output as bytes, in inputEnd as int, scratch inputAt as int, scratch outputAt as int, scratch ch as int, scratch value as int, scratch packed as int, scratch tmp as int) returns int
+      mov result, 1
+      mov inputAt, 0
+      mov outputAt, 0
+      label scan
+      cmp inputAt, inputEnd
+      jge done
+      movzx ch, byte [t.data + inputAt]
+      movzx value, byte [lookup.data + ch]
+      cmp value, 255
+      je invalid
+      mov packed, value
+      shl packed, 18
+      add inputAt, 1
+      movzx ch, byte [t.data + inputAt]
+      movzx value, byte [lookup.data + ch]
+      cmp value, 255
+      je invalid
+      shl value, 12
+      or packed, value
+      add inputAt, 1
+      movzx ch, byte [t.data + inputAt]
+      movzx value, byte [lookup.data + ch]
+      cmp value, 255
+      je invalid
+      shl value, 6
+      or packed, value
+      add inputAt, 1
+      movzx ch, byte [t.data + inputAt]
+      movzx value, byte [lookup.data + ch]
+      cmp value, 255
+      je invalid
+      or packed, value
+      add inputAt, 1
+      mov tmp, packed
+      shr tmp, 16
+      mov byte [output.data + outputAt], tmp
+      add outputAt, 1
+      mov tmp, packed
+      shr tmp, 8
+      mov byte [output.data + outputAt], tmp
+      add outputAt, 1
+      mov byte [output.data + outputAt], packed
+      add outputAt, 1
+      jmp scan
+      label invalid
+      mov result, 0
+      label done
+    end asm
+    if valid == 0 then return end if
+    bi = fullBlocks
+    oi = fullBlocks * 3
+  end if
   while bi < blocks
     i = bi * 4
     c0 = t[i]

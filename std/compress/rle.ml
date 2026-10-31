@@ -17,11 +17,38 @@ const RLE_ERR = 251
 /// Count a byte run, stopping at one token's maximum length.
 /// @internal
 function _runLength(input, position, n)
-  count = 1
-  while count < 130 and position + count < n and input[position + count] == input[position]
-    count = count + 1
-  end while
-  return count
+  value = input[position]
+  if position + 1 >= n or input[position + 1] != value then return 1 end if
+  if position + 2 >= n or input[position + 2] != value then return 2 end if
+  maximum = n - position
+  if maximum > 130 then maximum = 130 end if
+  pattern = value * 0x01010101
+  return asm unsafe x64(in input as bytes, in position as int, in maximum as int, in value as int, in pattern as int, scratch at as int, scratch wordLimit as int, scratch current as int) returns int
+    mov result, 3
+    mov at, position
+    add at, 3
+    mov wordLimit, maximum
+    sub wordLimit, 3
+    label words
+    cmp result, wordLimit
+    jge tail
+    mov current, dword [input.data + at]
+    cmp current, pattern
+    jne tail
+    add result, 4
+    add at, 4
+    jmp words
+    label tail
+    cmp result, maximum
+    jge done
+    movzx current, byte [input.data + at]
+    cmp current, value
+    jne done
+    add result, 1
+    add at, 1
+    jmp tail
+    label done
+  end asm
 end function
 
 /// Encode bytes using bounded literal and repeat runs.

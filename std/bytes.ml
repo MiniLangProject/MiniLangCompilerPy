@@ -181,21 +181,29 @@ function ctEquals(a, b)
     n = nb
   end if
 
-  diff = na ^ nb
-  if n > 0 then
-    for i = 0 to(n - 1)
-      va = 0
-      vb = 0
-      if i < na then
-        va = a[i]
-      end if
-      if i < nb then
-        vb = b[i]
-      end if
-      diff = diff |(va ^ vb)
-    end for
-  end if
-
+  diff = asm unsafe x64(in a as bytes, in b as bytes, in na as int, in nb as int, in n as int, scratch i as int, scratch va as int, scratch vb as int) returns int
+    mov result, na
+    xor result, nb
+    mov i, 0
+    label next
+    cmp i, n
+    jge done
+    mov va, 0
+    cmp i, na
+    jge after_a
+    movzx va, byte [a.data + i]
+    label after_a
+    mov vb, 0
+    cmp i, nb
+    jge after_b
+    movzx vb, byte [b.data + i]
+    label after_b
+    xor va, vb
+    or result, va
+    add i, 1
+    jmp next
+    label done
+  end asm
   return diff == 0
 end function
 

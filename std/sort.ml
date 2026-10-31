@@ -37,7 +37,7 @@ package std.sort
 /// Stable in-place sort using the default comparator (ascending).
 /// @param arr Value supplied for `arr`.
 function sort(arr)
-  return sortBy(arr, __defaultLess)
+  return sortBy(arr, void)
 end function
 
 /// Stable in-place sort with a custom comparator and O(n log n) comparisons.
@@ -54,12 +54,13 @@ function sortBy(arr, lessFn)
   end if
 
   // If caller didn't pass a function, fall back to default comparator.
-  if typeof(lessFn) != "function" then
+  defaultMode = typeof(lessFn) != "function"
+  if defaultMode then
     lessFn = __defaultLess
   end if
 
   if n <= 32 then
-    __insertionSortRange(arr, 0, n - 1, lessFn)
+    if defaultMode then __insertionSortDefaultRange(arr, 0, n - 1) else __insertionSortRange(arr, 0, n - 1, lessFn) end if
     return arr
   end if
 
@@ -77,7 +78,10 @@ function sortBy(arr, lessFn)
       finish = middle + width
       if finish > n then finish = n end if
       orderedRuns = middle == finish
-      if not orderedRuns then orderedRuns = not __less(source[middle], source[middle - 1], lessFn) end if
+      if not orderedRuns then
+        if defaultMode then orderedRuns = not (source[middle] < source[middle - 1])
+        else orderedRuns = not __less(source[middle], source[middle - 1], lessFn) end if
+      end if
       if orderedRuns then
         copyArray(destination, base, source, base, finish - base)
         base = finish
@@ -88,7 +92,10 @@ function sortBy(arr, lessFn)
       output = base
       while left < middle and right < finish
         // Taking the left element on equality preserves original order.
-        if __less(source[right], source[left], lessFn) then
+        takeRight = false
+        if defaultMode then takeRight = source[right] < source[left]
+        else takeRight = __less(source[right], source[left], lessFn) end if
+        if takeRight then
           destination[output] = source[right]
           right = right + 1
         else
@@ -123,7 +130,7 @@ end function
 /// Faster in-place sort using the default comparator (ascending) - uses an iterative quicksort with insertion-sort fallback for small ranges - not guaranteed stable.
 /// @param arr Value supplied for `arr`.
 function sortFast(arr)
-  return sortFastBy(arr, __defaultLess)
+  return sortFastBy(arr, void)
 end function
 
 /// Faster in-place sort with a custom comparator - uses an iterative quicksort with insertion-sort fallback for small ranges - not guaranteed stable.
@@ -139,7 +146,8 @@ function sortFastBy(arr, lessFn)
     return arr
   end if
 
-  if typeof(lessFn) != "function" then
+  defaultMode = typeof(lessFn) != "function"
+  if defaultMode then
     lessFn = __defaultLess
   end if
 
@@ -167,10 +175,11 @@ function sortFastBy(arr, lessFn)
 
     // Small segment: insertion sort directly
     if (hi - lo) <= SMALL then
-      __insertionSortRange(arr, lo, hi, lessFn)
+      if defaultMode then __insertionSortDefaultRange(arr, lo, hi) else __insertionSortRange(arr, lo, hi, lessFn) end if
     else
       // Partition
-      p = __partition(arr, lo, hi, lessFn)
+      p = 0
+      if defaultMode then p = __partitionDefault(arr, lo, hi) else p = __partition(arr, lo, hi, lessFn) end if
 
       // Left: [lo, p-1], Right: [p, hi]
       leftLo = lo
@@ -304,6 +313,28 @@ function __partition(arr, lo, hi, lessFn)
   return i
 end function
 
+/// Partition with the built-in ordering and no dynamic comparator call.
+/// @internal
+function __partitionDefault(arr, lo, hi)
+  pivot = arr[lo + ((hi - lo) >> 1)]
+  i = lo
+  j = hi
+  while i <= j
+    while arr[i] < pivot
+      i = i + 1
+    end while
+    while pivot < arr[j]
+      j = j - 1
+    end while
+    if i <= j then
+      __swap(arr, i, j)
+      i = i + 1
+      j = j - 1
+    end if
+  end while
+  return i
+end function
+
 /// Internal helper: insertion sort for a slice [lo..hi].
 /// @internal
 function __insertionSortRange(arr, lo, hi, lessFn)
@@ -317,6 +348,22 @@ function __insertionSortRange(arr, lo, hi, lessFn)
       j = j - 1
     end while
 
+    arr[j + 1] = key
+    i = i + 1
+  end while
+end function
+
+/// Insertion sort with the built-in ordering.
+/// @internal
+function __insertionSortDefaultRange(arr, lo, hi)
+  i = lo + 1
+  while i <= hi
+    key = arr[i]
+    j = i - 1
+    while j >= lo and key < arr[j]
+      arr[j + 1] = arr[j]
+      j = j - 1
+    end while
     arr[j + 1] = key
     i = i + 1
   end while
