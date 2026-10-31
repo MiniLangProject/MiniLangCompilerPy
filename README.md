@@ -2,8 +2,12 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.2.26**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.2.26.md).
+Current stable release: **1.3.0**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.3.0.md).
+
+Release 1.3.0 adds typed inline x64 assembly with local loops and byte access,
+and measured standard-library improvements in codecs, containers and strings.
+See the [release notes](RELEASE_NOTES_1.3.0.md).
 
 Release 1.2.26 caches declaration fingerprints in unchanged incremental builds
 and extends guarded bounds elimination to dynamic array loops. It also includes

@@ -2,6 +2,16 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.0 - 2026-10-31
+
+- Add typed inline x64 assembly with local labels and branches, typed scratch
+  operands, and explicit unsafe byte and 32-bit access to byte buffers.
+- Use inline assembly in selected standard-library and self-hosted compiler
+  paths. Preserve Python/native behavior with runtime and invalid-input tests.
+- Retain measured standard-library improvements in codecs, containers, sort,
+  strings, comparisons, time and math. The two repositories share identical
+  standard-library sources; see the performance report in MiniLangCompilerML.
+
 ## 1.2.26 - 2026-10-30
 
 - Cache validated declaration fingerprints for unchanged incremental builds in
