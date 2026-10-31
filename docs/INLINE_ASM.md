@@ -17,6 +17,8 @@ end function
 
 The header accepts up to 24 operands, each `in name as Type` or
 `inout name as Type`. `returns Type` is optional and defaults to `void`.
+It also accepts zero-initialized `scratch name as int` operands. Scratch values
+exist only inside the block and are not written back to MiniLang variables.
 An expression with a non-`void` result must assign `result` before reading it.
 An `inout` operand may be assigned by assembly and is written back to its
 MiniLang variable after the block. Instruction names and symbolic operands are
@@ -41,10 +43,33 @@ Supported instructions use **symbolic operands**, not physical register names:
 - Integer: `mov`, `add`, `sub`, `xor`, `and`, `or`, `shl`, `shr`, `sar`, `bsf`
 - Comparison/selection: `test`, `cmp`, `cmovz`, `cmovnz`
 - Double: `movsd`, `addsd`, `subsd`, `mulsd`, `divsd`
+- Byte read: `movzx destination, byte [buffer.data + index]` in `asm unsafe x64`
+- Local control flow: `label`, `jmp`, `jz`/`je`, `jnz`/`jne`, `jl`, `jle`,
+  `jg`, `jge`, `jb`, `jbe`, `ja`, `jae`
 
-Every instruction currently takes two operands. Shift counts are immediates
+Arithmetic and comparison instructions take two operands; `label` and jumps
+take one local label name. A conditional jump must immediately follow `cmp` or
+`test`. Blocks with labels or jumps must assign `result` before the first
+control-flow directive. All jump targets must be declared exactly once in the
+same block. Backward jump targets include a cooperative GC poll.
+
+```ml
+return asm x64(in n as int, scratch i as int) returns int
+  mov result, 0
+  mov i, 0
+  label scan
+  cmp i, n
+  jge done
+  add result, i
+  add i, 1
+  jmp scan
+  label done
+end asm
+```
+
+Shift counts are immediates
 from 0 through 63. `mov` and `cmov*` require compatible operand types. Raw
-register names, jumps, calls, stack instructions, arbitrary memory operands,
+register names, external jumps, calls, stack instructions, arbitrary memory operands,
 and new object allocation are not part of this interface. The compiler owns
 register allocation, GC roots, and MiniLang value tagging.
 
@@ -63,6 +88,10 @@ block. `unsafe` does **not** check `index` against `len(buffer)` or `value`
 against `0..255`; the instruction writes the low byte. Check both in MiniLang
 before entering the block. Direct stores into arrays and struct fields are
 excluded because they may require GC write barriers.
+
+`movzx destination, byte [buffer.data + index]` reads an unsigned byte into an
+`int` destination. The buffer may be an `in bytes` operand. The caller must
+ensure `0 <= index < len(buffer)`; `unsafe` does not insert a bounds check.
 
 `--asm` still writes a diagnostic listing of the generated machine code.
 The focused runtime fixtures are `tests/inline_asm.ml` and

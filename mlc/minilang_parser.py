@@ -2373,15 +2373,17 @@ class Parser:
         if not self.match("RPAREN"):
             while True:
                 mode = self.advance()
-                if mode.value not in ("in", "inout") or mode.kind not in ("KW", "IDENT"):
-                    raise ParseError("asm operand expects 'in' or 'inout'", mode.pos)
+                if mode.value not in ("in", "inout", "scratch") or mode.kind not in ("KW", "IDENT"):
+                    raise ParseError("asm operand expects 'in', 'inout' or 'scratch'", mode.pos)
                 name = self.expect("IDENT")
                 if name.value == "result" or name.value in names:
                     raise ParseError("duplicate or reserved asm operand name", name.pos)
                 self.expect("KW", "as")
                 ty, opt = self.parse_type_ref()
+                if mode.value == "scratch" and (ty != "int" or opt):
+                    raise ParseError("asm scratch operands currently require int", name.pos)
                 names.append(name.value)
-                args.append(self._attach_pos(Var(name.value), name.pos))
+                args.append(self._attach_pos(Num(0) if mode.value == "scratch" else Var(name.value), name.pos))
                 types.append(ty)
                 optional.append(opt)
                 modes.append(mode.value)

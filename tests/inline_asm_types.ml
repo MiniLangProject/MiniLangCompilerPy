@@ -1,6 +1,19 @@
 asm x64() returns void
 end asm
 
+function polledLoop(n as int) returns int
+  return asm x64(in n as int, scratch i as int) returns int
+    mov result, 0
+    label scan
+    cmp i, n
+    jge done
+    add result, i
+    add i, 1
+    jmp scan
+    label done
+  end asm
+end function
+
 struct Pair
   value as int
 end struct
@@ -104,6 +117,7 @@ function main(args)
   if passUnknown("text") != "text" then return 7 end if
   if closureCapture() != 19 then return 8 end if
   th = Thread(sample)
+  if polledLoop(1000) != 499500 then return 12 end if
   if typeof(passThread(th)) != "thread" then return 9 end if
   e = try(error(12, "sample"))
   if typeof(try(passError(e))) != "error" then return 10 end if

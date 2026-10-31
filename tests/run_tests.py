@@ -4477,6 +4477,12 @@ def main() -> int:
         ("inline_asm_invalid_type.ml", "matching operand types"),
         ("inline_asm_invalid_result.ml", "before assigning"),
         ("inline_asm_invalid_unsafe.ml", "require 'asm unsafe x64'"),
+        ("inline_asm_invalid_label.ml", "local label"),
+        ("inline_asm_invalid_flow.ml", "before control flow"),
+        ("inline_asm_invalid_scratch.ml", "scratch operands currently require int"),
+        ("inline_asm_invalid_jump_flags.ml", "immediately follow cmp or test"),
+        ("inline_asm_invalid_load_unsafe.ml", "require 'asm unsafe x64'"),
+        ("inline_asm_invalid_load_type.ml", "byte load requires"),
     ]:
         fixture = tests_root / filename
         tests.append(lambda n=filename, p=fixture, m=marker: test_compile_expected_fail(
