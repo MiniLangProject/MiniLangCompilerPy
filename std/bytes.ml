@@ -673,6 +673,20 @@ function xor(a, b)
   n = len(a)
   c = bytes(n)
   i = 0
+  // A word starts only where four bytes remain in every equal-length buffer.
+  wordLimit = n - 3
+  asm unsafe x64(in a as bytes, in b as bytes, inout c as bytes, in wordLimit as int, inout i as int, scratch left as int, scratch right as int)
+    label words
+    cmp i, wordLimit
+    jge done
+    mov left, dword [a.data + i]
+    mov right, dword [b.data + i]
+    xor left, right
+    mov dword [c.data + i], left
+    add i, 4
+    jmp words
+    label done
+  end asm
   while i < n
     c[i] = a[i] ^ b[i]
     i = i + 1
@@ -697,6 +711,20 @@ function xorInPlace(a, b)
 
   n = len(a)
   i = 0
+  // A word starts only where four bytes remain in both buffers.
+  wordLimit = n - 3
+  asm unsafe x64(inout a as bytes, in b as bytes, in wordLimit as int, inout i as int, scratch left as int, scratch right as int)
+    label words
+    cmp i, wordLimit
+    jge done
+    mov left, dword [a.data + i]
+    mov right, dword [b.data + i]
+    xor left, right
+    mov dword [a.data + i], left
+    add i, 4
+    jmp words
+    label done
+  end asm
   while i < n
     a[i] = a[i] ^ b[i]
     i = i + 1

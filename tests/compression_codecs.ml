@@ -65,6 +65,10 @@ function main(args)
   for each size in [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 31, 127, 128, 129, 255, 256, 4096, 65536]
     checkRoundtrip(byteSequence(size), "sequence " + size)
   end for
+  for each size in [13, 14, 15, 16, 17, 18, 19, 20, 21, 31, 32, 33, 63, 64, 65]
+    repeated = bytes(size, 65)
+    checkEq(lz4.decode(lz4.encode(repeated), size), repeated, "LZ4 repeated boundary " + size)
+  end for
   checkRoundtrip(bytes(1024 * 1024, 0), "one MiB zeroes")
   checkRoundtrip(bytes(1024 * 1024, 65), "one MiB repeated")
   checkRoundtrip(randomish(8 * 1024 * 1024), "eight MiB randomish")

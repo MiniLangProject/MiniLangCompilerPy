@@ -222,6 +222,30 @@ function test_string_hex_bytes()
   chk(a.assertEq(hex(x3), "ff11dd33", "bytes: xor"))
   b.xorInPlace(x1, x2)
   chk(a.assertEq(hex(x1), "ff11dd33", "bytes: xorInPlace"))
+  xorWordsOk = true
+  for size = 0 to 33
+    left = bytes(size, 0)
+    right = bytes(size, 0)
+    if size > 0 then
+      for index = 0 to size - 1
+        left[index] = (index * 37 + 11) & 255
+        right[index] = (index * 53 + 29) & 255
+      end for
+    end if
+    result = b.xor(left, right)
+    if len(result) != size then xorWordsOk = false end if
+    if size > 0 then
+      for index = 0 to size - 1
+        if result[index] != (left[index] ^ right[index]) then xorWordsOk = false end if
+      end for
+    end if
+    b.xorInPlace(left, right)
+    if left != result then xorWordsOk = false end if
+  end for
+  chk(a.assertTrue(xorWordsOk, "bytes: xor words and tails"))
+  aliasBytes = fromHex("001122334455667788")
+  b.xorInPlace(aliasBytes, aliasBytes)
+  chk(a.assertEq(hex(aliasBytes), "000000000000000000", "bytes: xorInPlace alias"))
 end function
 
 function test_string_builder()

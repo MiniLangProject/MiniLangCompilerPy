@@ -32,6 +32,46 @@ function _hash(input, position)
   return ((word * 2654435761) >> 16) & 65535
 end function
 
+/// Count matching bytes after an already equal four-byte prefix.
+/// @internal
+function _matchLength(input, previous, position, n)
+  // The caller has matched four bytes and guarantees 0 <= previous < position.
+  // Leave five trailing literals; wordLimit keeps each four-byte read in bounds.
+  limit = n - 5 - position
+  return asm unsafe x64(in input as bytes, in previous as int, in position as int, in limit as int, scratch previousAt as int, scratch currentAt as int, scratch wordLimit as int, scratch left as int, scratch right as int) returns int
+    mov result, 4
+    mov previousAt, previous
+    add previousAt, 4
+    mov currentAt, position
+    add currentAt, 4
+    mov wordLimit, limit
+    sub wordLimit, 3
+    label words
+    cmp result, wordLimit
+    jge tail
+    mov left, dword [input.data + previousAt]
+    mov right, dword [input.data + currentAt]
+    cmp left, right
+    jne tail
+    add result, 4
+    add previousAt, 4
+    add currentAt, 4
+    jmp words
+    label tail
+    cmp result, limit
+    jge done
+    movzx left, byte [input.data + previousAt]
+    movzx right, byte [input.data + currentAt]
+    cmp left, right
+    jne done
+    add result, 1
+    add previousAt, 1
+    add currentAt, 1
+    jmp tail
+    label done
+  end asm
+end function
+
 /// Encode a standard, independently decodable LZ4 block.
 /// The caller must retain the original byte length for decode().
 /// @param input Bytes to compress.
@@ -65,11 +105,8 @@ function encode(input)
        input[previous] == input[position] and input[previous + 1] == input[position + 1] and
        input[previous + 2] == input[position + 2] and input[previous + 3] == input[position + 3] then
       literalLength = position - anchor
-      matched = 4
       // Leave at least five trailing literals, as required by the block format.
-      while position + matched < n - 5 and input[previous + matched] == input[position + matched]
-        matched = matched + 1
-      end while
+      matched = _matchLength(input, previous, position, n)
       matchExtra = matched - 4
       literalNibble = literalLength
       if literalNibble > 15 then literalNibble = 15 end if
