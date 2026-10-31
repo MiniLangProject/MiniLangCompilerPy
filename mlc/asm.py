@@ -1977,6 +1977,12 @@ class Asm:
         """
         self._emit_shift_imm8(4, reg, imm, 1)
 
+    def rol_r64_imm8(self, reg: str, imm: int) -> None:
+        self._emit_shift_imm8(0, reg, imm, 1)
+
+    def ror_r64_imm8(self, reg: str, imm: int) -> None:
+        self._emit_shift_imm8(1, reg, imm, 1)
+
     def shr_r64_imm8(self, reg: str, imm: int) -> None:
         """Emit `SHR` instruction helper.
 

@@ -17,7 +17,7 @@ end function
 
 The header accepts up to 24 operands, each `in name as Type` or
 `inout name as Type`. `returns Type` is optional and defaults to `void`.
-It also accepts zero-initialized `scratch name as int` operands. Scratch values
+It also accepts zero-initialized `scratch name as int`, `bool` or `float` operands. Scratch values
 exist only inside the block and are not written back to MiniLang variables.
 An expression with a non-`void` result must assign `result` before reading it.
 An `inout` operand may be assigned by assembly and is written back to its
@@ -40,18 +40,22 @@ wrap a call in `try(...)` when the error value is intentional.
 
 Supported instructions use **symbolic operands**, not physical register names:
 
-- Integer: `mov`, `add`, `sub`, `xor`, `and`, `or`, `shl`, `shr`, `sar`, `bsf`
-- Comparison/selection: `test`, `cmp`, `cmovz`, `cmovnz`
+- Integer: `mov`, `add`, `sub`, `imul`, `xor`, `and`, `or`, `shl`, `shr`, `sar`, `rol`, `ror`, `bsf`, `popcnt`
+- Comparison/selection: `test`, `cmp`, `cmovz`, `cmovnz`, `setz`/`sete`, `setnz`/`setne`, `setl`, `setle`, `setg`, `setge`, `setb`, `setbe`, `seta`, `setae`
 - Double: `movsd`, `addsd`, `subsd`, `mulsd`, `divsd`
 - Byte read: `movzx destination, byte [buffer.data + index]` in `asm unsafe x64`
+- 32-bit read/write: `mov destination, dword [buffer.data + index]` and
+  `mov dword [buffer.data + index], value` in `asm unsafe x64`
 - Local control flow: `label`, `jmp`, `jz`/`je`, `jnz`/`jne`, `jl`, `jle`,
   `jg`, `jge`, `jb`, `jbe`, `ja`, `jae`
 
-Arithmetic and comparison instructions take two operands; `label` and jumps
-take one local label name. A conditional jump must immediately follow `cmp` or
-`test`. Blocks with labels or jumps must assign `result` before the first
-control-flow directive. All jump targets must be declared exactly once in the
-same block. Backward jump targets include a cooperative GC poll.
+Arithmetic and comparison instructions take two operands; `label`, jumps and
+`setcc` take one operand. Conditional jumps and `setcc` must immediately follow
+`cmp` or `test`. The compiler checks that `result` is initialized on every
+reachable exit, including paths through labels and jumps. All jump targets must
+be declared exactly once in the same block. Backward jump targets include a
+cooperative GC poll. Up to two integer operands are kept in registers within a
+block, with synchronized stack slots for safepoints and output conversion.
 
 ```ml
 return asm x64(in n as int, scratch i as int) returns int
@@ -67,11 +71,13 @@ return asm x64(in n as int, scratch i as int) returns int
 end asm
 ```
 
-Shift counts are immediates
+Shift and rotate counts are immediates
 from 0 through 63. `mov` and `cmov*` require compatible operand types. Raw
 register names, external jumps, calls, stack instructions, arbitrary memory operands,
 and new object allocation are not part of this interface. The compiler owns
 register allocation, GC roots, and MiniLang value tagging.
+`popcnt` counts set bits in the 64-bit integer representation. It currently
+uses a bounded portable lowering, so it does not require the CPU POPCNT feature.
 
 For a direct mutable-byte write, use the explicit `unsafe` form:
 
@@ -92,6 +98,11 @@ excluded because they may require GC write barriers.
 `movzx destination, byte [buffer.data + index]` reads an unsigned byte into an
 `int` destination. The buffer may be an `in bytes` operand. The caller must
 ensure `0 <= index < len(buffer)`; `unsafe` does not insert a bounds check.
+
+`dword` access reads or writes four bytes in little-endian order. A read
+zero-extends to an `int`; a write uses the low 32 bits of an `int`. Stores
+require an `inout bytes` operand. The caller must ensure
+`0 <= index` and `index + 4 <= len(buffer)`.
 
 `--asm` still writes a diagnostic listing of the generated machine code.
 The focused runtime fixtures are `tests/inline_asm.ml` and

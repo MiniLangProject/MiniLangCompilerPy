@@ -13,12 +13,14 @@ from ..tools import enc_void
 
 
 _BYTE_STORE = re.compile(r"byte\[([A-Za-z_]\w*)\.data\+([A-Za-z_]\w*)\]", re.I)
+_DWORD_MEM = re.compile(r"dword\[([A-Za-z_]\w*)\.data\+([A-Za-z_]\w*)\]", re.I)
 _INT = re.compile(r"-?(?:0[xX][0-9A-Fa-f]+|0[bB][01]+|\d+)\Z")
 _SCALAR = {"int", "bool", "float"}
 _LABEL = re.compile(r"[A-Za-z_]\w*\Z")
 _JCC = {"jz": "e", "je": "e", "jnz": "ne", "jne": "ne", "jl": "l", "jle": "le",
         "jg": "g", "jge": "ge", "jb": "b", "jbe": "be", "ja": "a", "jae": "ae"}
 _JUMPS = {"jmp", *_JCC}
+_SETCC = {"set" + op[1:]: cc for op, cc in _JCC.items()}
 
 
 def _immediate(value: str) -> int | None:
@@ -28,6 +30,54 @@ def _immediate(value: str) -> int | None:
     raw = value[1:] if sign < 0 else value
     base = 16 if raw.lower().startswith("0x") else 2 if raw.lower().startswith("0b") else 10
     return sign * int(raw, base)
+
+
+def _validate_result_flow(cg, expr, labels: dict[str, int]) -> None:
+    if str(expr.result_type).lower() == "void":
+        return
+    instructions = expr.instructions
+    pending = [(0, False)]
+    visited: set[tuple[int, bool]] = set()
+    reached_exit = False
+    while pending:
+        pos, written = pending.pop()
+        if (pos, written) in visited:
+            continue
+        visited.add((pos, written))
+        if pos == len(instructions):
+            reached_exit = True
+            if not written:
+                raise cg.error("asm must assign 'result' on every exit", expr)
+            continue
+        op, operands = instructions[pos]
+        reads = writes = False
+        if op in _SETCC:
+            writes = operands[0] == "result"
+        elif len(operands) == 2:
+            dst, src = operands
+            reads = src == "result"
+            mem = (_BYTE_STORE.fullmatch(dst) or _DWORD_MEM.fullmatch(dst)) if op == "mov" else None
+            if mem:
+                reads |= "result" in mem.groups()
+            else:
+                mem = (_BYTE_STORE.fullmatch(src) if op == "movzx" else
+                       _DWORD_MEM.fullmatch(src) if op == "mov" else None)
+                if mem:
+                    reads |= "result" in mem.groups()
+                else:
+                    reads |= dst == "result" and op not in ("mov", "movsd", "bsf", "popcnt")
+                writes = dst == "result" and op not in ("cmp", "test")
+        if reads and not written:
+            raise cg.error("asm reads 'result' before assigning it", expr)
+        written |= writes
+        if op in _JUMPS:
+            pending.append((labels[operands[0]], written))
+            if op != "jmp":
+                pending.append((pos + 1, written))
+        else:
+            pending.append((pos + 1, written))
+    if not reached_exit:
+        raise cg.error("asm result has no reachable exit", expr)
 
 
 def emit_inline_asm(cg, expr) -> None:
@@ -77,11 +127,8 @@ def emit_inline_asm(cg, expr) -> None:
                 raise cg.error(f"duplicate asm label '{operands[0]}'", expr)
             labels[operands[0]] = pos
     backward_targets: set[str] = set()
-    result_written = result_type.lower() == "void"
     for pos, (op, operands) in enumerate(expr.instructions):
         if op == "label" or op in _JUMPS:
-            if not result_written:
-                raise cg.error("asm must assign 'result' before control flow", expr)
             if op != "label":
                 if len(operands) != 1 or operands[0] not in labels:
                     raise cg.error("asm jump requires a local label", expr)
@@ -89,6 +136,13 @@ def emit_inline_asm(cg, expr) -> None:
                     raise cg.error("conditional asm jump must immediately follow cmp or test", expr)
                 if labels[operands[0]] <= pos:
                     backward_targets.add(operands[0])
+            continue
+        if op in _SETCC:
+            if len(operands) != 1 or kind(symbol(operands[0])[1], symbol(operands[0])[2]) != "bool":
+                raise cg.error("asm setcc requires one bool destination", expr)
+            require_writable(operands[0])
+            if pos == 0 or expr.instructions[pos - 1][0] not in ("cmp", "test"):
+                raise cg.error("asm setcc must immediately follow cmp or test", expr)
             continue
         if op == "mov" and len(operands) == 2 and _BYTE_STORE.fullmatch(operands[0]):
             if not expr.unsafe:
@@ -99,6 +153,22 @@ def emit_inline_asm(cg, expr) -> None:
                 raise cg.error("byte store requires an inout bytes operand", expr)
             if kind(symbol(index)[1], symbol(index)[2]) != "int" or kind(symbol(operands[1])[1], symbol(operands[1])[2]) != "int":
                 raise cg.error("byte index and value must be int operands", expr)
+            continue
+        dword_store = _DWORD_MEM.fullmatch(operands[0]) if op == "mov" and len(operands) == 2 else None
+        dword_load = _DWORD_MEM.fullmatch(operands[1]) if op == "mov" and len(operands) == 2 else None
+        if dword_store or dword_load:
+            if not expr.unsafe:
+                raise cg.error("dword memory access requires 'asm unsafe x64'", expr)
+            buf, index = (dword_store or dword_load).groups()
+            if symbol(buf)[1] != "bytes" or symbol(buf)[2] or kind(symbol(index)[1], symbol(index)[2]) != "int":
+                raise cg.error("dword access requires bytes buffer and int index", expr)
+            if dword_store:
+                if symbol(buf)[3] != "inout" or kind(symbol(operands[1])[1], symbol(operands[1])[2]) != "int":
+                    raise cg.error("dword store requires inout bytes and int value", expr)
+            else:
+                require_writable(operands[0])
+                if kind(symbol(operands[0])[1], symbol(operands[0])[2]) != "int":
+                    raise cg.error("dword load requires an int destination", expr)
             continue
         byte_load = _BYTE_STORE.fullmatch(operands[1]) if op == "movzx" and len(operands) == 2 else None
         if byte_load:
@@ -111,21 +181,13 @@ def emit_inline_asm(cg, expr) -> None:
                     or symbol(buf)[1] != "bytes" or symbol(buf)[2]
                     or kind(symbol(index)[1], symbol(index)[2]) != "int"):
                 raise cg.error("byte load requires an int destination, bytes buffer and int index", expr)
-            if index == "result" and not result_written:
-                raise cg.error("asm reads 'result' before assigning it", expr)
-            if dst == "result":
-                result_written = True
             continue
-        if op not in {"mov", "test", "cmp", "cmovz", "cmovnz", "bsf", "add", "sub", "xor", "and", "or",
-                      "shl", "shr", "sar", "movsd", "addsd", "subsd", "mulsd", "divsd"}:
+        if op not in {"mov", "test", "cmp", "cmovz", "cmovnz", "bsf", "popcnt", "add", "sub", "xor", "and", "or", "imul",
+                      "shl", "shr", "sar", "rol", "ror", "movsd", "addsd", "subsd", "mulsd", "divsd"}:
             raise cg.error(f"unsupported inline asm instruction '{op}'", expr)
         if len(operands) != 2:
             raise cg.error(f"asm instruction '{op}' expects two operands", expr)
         dst, src = operands
-        if src == "result" and not result_written:
-            raise cg.error("asm reads 'result' before assigning it", expr)
-        if dst == "result" and op in ("test", "cmp") and not result_written:
-            raise cg.error("asm reads 'result' before assigning it", expr)
         dst_entry = symbol(dst)
         dst_kind = kind(dst_entry[1], dst_entry[2])
         imm_value = _immediate(src)
@@ -133,10 +195,6 @@ def emit_inline_asm(cg, expr) -> None:
         src_kind = "int" if imm else kind(symbol(src)[1], symbol(src)[2])
         if op not in ("test", "cmp"):
             require_writable(dst)
-            if dst == "result":
-                if op not in ("mov", "movsd", "bsf") and not result_written:
-                    raise cg.error("asm reads 'result' before assigning it", expr)
-                result_written = True
         if op in ("movsd", "addsd", "subsd", "mulsd", "divsd"):
             if dst_kind != "float" or src_kind != "float" or imm:
                 raise cg.error(f"asm instruction '{op}' requires float operands", expr)
@@ -144,7 +202,7 @@ def emit_inline_asm(cg, expr) -> None:
             same_value_type = (dst_entry[1] == symbol(src)[1] and dst_entry[2] == symbol(src)[2]) if not imm else False
             if dst_kind != src_kind or (dst_kind == "value" and not same_value_type) or (imm and dst_kind != "int"):
                 raise cg.error(f"asm instruction '{op}' requires matching operand types", expr)
-        elif op in ("shl", "shr", "sar"):
+        elif op in ("shl", "shr", "sar", "rol", "ror"):
             if dst_kind != "int" or not imm:
                 raise cg.error(f"asm instruction '{op}' requires an int destination and immediate count", expr)
             if not 0 <= imm_value <= 63:
@@ -153,12 +211,21 @@ def emit_inline_asm(cg, expr) -> None:
             pass
         elif dst_kind != "int" or src_kind != "int":
             raise cg.error(f"asm instruction '{op}' requires int operands", expr)
-    if not result_written:
-        raise cg.error("asm block must assign 'result'", expr)
+    _validate_result_flow(cg, expr, labels)
 
     n = len(names)
     frame_size = (2 * n + 1) * 8
     base = cg.alloc_expr_temps(frame_size)
+
+    # Keep two frequently updated scalar operands live across straight-line
+    # instructions. Slots stay current for branches, safepoints and writeback.
+    pinned: dict[str, str] = {}
+    if kind(result_type, result_optional) == "int":
+        pinned["result"] = "r8"
+    for mode in ("scratch", "inout", "in"):
+        for i, name in enumerate(names):
+            if modes[i] == mode and kind(types[i], optional[i]) == "int" and len(pinned) < 2:
+                pinned[name] = ("r8", "r9")[len(pinned)]
 
     def raw_off(index: int) -> int:
         return base + (n + index) * 8
@@ -167,11 +234,20 @@ def emit_inline_asm(cg, expr) -> None:
         imm_value = _immediate(operand)
         if imm_value is not None:
             a.mov_r64_imm64(reg, imm_value)
+        elif operand in pinned:
+            if reg != pinned[operand]:
+                a.mov_r64_r64(reg, pinned[operand])
         else:
             a.mov_r64_membase_disp(reg, "rsp", raw_off(symbol(operand)[0]))
 
     def store_gpr(operand: str, reg: str) -> None:
+        if operand in pinned and pinned[operand] != reg:
+            a.mov_r64_r64(pinned[operand], reg)
         a.mov_membase_disp_r64("rsp", raw_off(symbol(operand)[0]), reg)
+
+    def reload_pinned() -> None:
+        for name, reg in pinned.items():
+            a.mov_r64_membase_disp(reg, "rsp", raw_off(symbol(name)[0]))
 
     def emit_value(ty: str, opt: bool, off: int) -> None:
         k = kind(ty, opt)
@@ -192,8 +268,8 @@ def emit_inline_asm(cg, expr) -> None:
 
     for i, arg in enumerate(expr.args):
         if modes[i] == "scratch":
-            if types[i] != "int" or optional[i]:
-                raise cg.error("asm scratch operands currently require int", expr)
+            if types[i] not in _SCALAR or optional[i]:
+                raise cg.error("asm scratch operands require int, bool or float", expr)
             a.mov_rax_imm64(enc_void())
             a.mov_membase_disp_r64("rsp", base + i * 8, "rax")
             a.mov_r64_imm64("rax", 0)
@@ -217,12 +293,18 @@ def emit_inline_asm(cg, expr) -> None:
             continue
         a.mov_membase_disp_r64("rsp", raw_off(i), "rax")
 
+    if "result" in pinned:
+        a.mov_r64_imm64("rax", 0)
+        a.mov_membase_disp_r64("rsp", raw_off(n), "rax")
+    reload_pinned()
+
     label_prefix = f"inline_asm_{cg.new_label_id()}_" if labels else ""
     for op, operands in expr.instructions:
         if op == "label":
             a.mark(label_prefix + operands[0])
-            if operands[0] in backward_targets:
+            if operands[0] in backward_targets and cg.native_threads_possible:
                 cg.emit_gc_safepoint_poll()
+                reload_pinned()
             continue
         if op in _JUMPS:
             target = label_prefix + operands[0]
@@ -230,6 +312,11 @@ def emit_inline_asm(cg, expr) -> None:
                 a.jmp(target)
             else:
                 a.jcc(_JCC[op], target)
+            continue
+        if op in _SETCC:
+            a.mov_r64_imm64("r10", 0)
+            a.setcc_r8("r10b", _SETCC[op])
+            store_gpr(operands[0], "r10")
             continue
         dst, src = operands
         mem = _BYTE_STORE.fullmatch(dst) if op == "mov" else None
@@ -241,6 +328,20 @@ def emit_inline_asm(cg, expr) -> None:
             load_gpr(src, "rax")
             a.mov_membase_disp_r8("r10", 0, "al")
             continue
+        dword_store = _DWORD_MEM.fullmatch(dst) if op == "mov" else None
+        dword_load = _DWORD_MEM.fullmatch(src) if op == "mov" else None
+        if dword_store or dword_load:
+            buf, index = (dword_store or dword_load).groups()
+            a.mov_r64_membase_disp("r10", "rsp", base + symbol(buf)[0] * 8)
+            load_gpr(index, "r11")
+            a.lea_r64_mem_bis("r10", "r10", "r11", 1, 8)
+            if dword_store:
+                load_gpr(src, "rax")
+                a.mov_membase_disp_r32("r10", 0, "eax")
+            else:
+                a.mov_r32_membase_disp("r10d", "r10", 0)
+                store_gpr(dst, "r10")
+            continue
         byte_load = _BYTE_STORE.fullmatch(src) if op == "movzx" else None
         if byte_load:
             buf, index = byte_load.groups()
@@ -248,6 +349,22 @@ def emit_inline_asm(cg, expr) -> None:
             load_gpr(index, "r11")
             a.lea_r64_mem_bis("r10", "r10", "r11", 1, 8)
             a.movzx_r32_membase_disp("r10d", "r10", 0)
+            store_gpr(dst, "r10")
+            continue
+        if op == "popcnt":
+            load_gpr(src, "r11")
+            a.mov_r64_imm64("r10", 0)
+            lid = cg.new_label_id()
+            loop, done = f"inline_asm_popcnt_{lid}", f"inline_asm_popcnt_done_{lid}"
+            a.mark(loop)
+            a.test_r64_r64("r11", "r11")
+            a.jcc("e", done)
+            a.mov_r64_r64("rax", "r11")
+            a.sub_r64_imm8("rax", 1)
+            a.and_r64_r64("r11", "rax")
+            a.add_r64_imm8("r10", 1)
+            a.jmp(loop)
+            a.mark(done)
             store_gpr(dst, "r10")
             continue
         k = kind(symbol(dst)[1], symbol(dst)[2])
@@ -261,7 +378,7 @@ def emit_inline_asm(cg, expr) -> None:
             a.movsd_membase_disp_xmm("rsp", raw_off(symbol(dst)[0]), "xmm0")
             continue
         load_gpr(dst, "r10")
-        if op in ("shl", "shr", "sar"):
+        if op in ("shl", "shr", "sar", "rol", "ror"):
             getattr(a, op + "_r64_imm8")("r10", _immediate(src))
             store_gpr(dst, "r10")
             continue

@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generated_utc": "2026-10-31T00:24:25.821571Z",
-  "count": 240,
+  "generated_utc": "2026-10-31T01:30:42.047652Z",
+  "count": 242,
   "vectors": [
     {
       "name": "add_r32_imm",
@@ -1782,6 +1782,26 @@
       "kwargs": {},
       "hex": "c3",
       "asm": "ret"
+    },
+    {
+      "name": "rol_r64_imm8",
+      "args": [
+        "r11",
+        127
+      ],
+      "kwargs": {},
+      "hex": "49c1c37f",
+      "asm": "; rol_r64_imm8(r11, 127)"
+    },
+    {
+      "name": "ror_r64_imm8",
+      "args": [
+        "r11",
+        127
+      ],
+      "kwargs": {},
+      "hex": "49c1cb7f",
+      "asm": "; ror_r64_imm8(r11, 127)"
     },
     {
       "name": "roundsd_xmm_xmm_imm8",

@@ -1,3 +1,61 @@
+function countBits(value as int) returns int
+  return asm x64(in value as int) returns int
+    popcnt result, value
+  end asm
+end function
+
+function storeDword(buffer as bytes) returns void
+  index = 0
+  value = 0x12345678
+  asm unsafe x64(inout buffer as bytes, in index as int, in value as int)
+    mov dword [buffer.data + index], value
+  end asm
+end function
+
+function readDword(buffer as bytes) returns int
+  index = 0
+  return asm unsafe x64(in buffer as bytes, in index as int) returns int
+    mov result, dword [buffer.data + index]
+  end asm
+end function
+
+function branchResult(flag as int) returns int
+  return asm x64(in flag as int) returns int
+    cmp flag, 0
+    je zero
+    mov result, 7
+    jmp done
+    label zero
+    mov result, 9
+    label done
+  end asm
+end function
+
+function zeroFlag(value as int) returns bool
+  return asm x64(in value as int, scratch saved as bool) returns bool
+    test value, value
+    setz saved
+    mov result, saved
+  end asm
+end function
+
+function rotateMultiply(value as int) returns int
+  return asm x64(in value as int) returns int
+    mov result, value
+    rol result, 8
+    ror result, 8
+    imul result, 3
+  end asm
+end function
+
+function addFloats(a as float, b as float) returns float
+  return asm x64(in a as float, in b as float, scratch tmp as float) returns float
+    movsd tmp, a
+    addsd tmp, b
+    movsd result, tmp
+  end asm
+end function
+
 function sumBytes(buffer as bytes) returns int
   length = len(buffer)
   return asm unsafe x64(in buffer as bytes, in length as int, scratch index as int, scratch current as int) returns int
@@ -81,6 +139,14 @@ function setByte(buffer as bytes, index as int, value as int) returns void
 end function
 
 function main(args)
+  if countBits(0) != 0 or countBits(0xF0F0) != 8 or countBits(-1) != 64 then return 18 end if
+  wide = bytes(4, 0)
+  storeDword(wide)
+  if readDword(wide) != 0x12345678 or wide[0] != 0x78 or wide[3] != 0x12 then return 17 end if
+  if branchResult(0) != 9 or branchResult(1) != 7 then return 13 end if
+  if zeroFlag(0) != true or zeroFlag(1) != false then return 14 end if
+  if rotateMultiply(21) != 63 then return 15 end if
+  if addFloats(1.5, 2.5) != 4.0 then return 16 end if
   data = bytes(4, 0)
   data[0] = 1
   data[1] = 2
