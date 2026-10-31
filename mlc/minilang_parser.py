@@ -2401,7 +2401,9 @@ class Parser:
         while not (self.peek().kind == "KW" and self.peek().value == "end"):
             if self.peek().kind == "EOF":
                 raise ParseError("asm block is missing 'end asm'", start)
-            op = self.expect("IDENT")
+            op = self.advance()
+            if op.kind not in ("IDENT", "KW"):
+                raise ParseError("Expected asm instruction", op.pos)
             operands: List[str] = []
             while self.peek().kind not in ("NL", "EOF"):
                 parts: List[str] = []

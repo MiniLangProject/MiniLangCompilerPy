@@ -1,3 +1,11 @@
+function mask(x as int) returns int
+  return asm x64(in x as int) returns int
+    mov result, x
+    and result, 15
+    or result, 16
+  end asm
+end function
+
 function one() returns int
   return asm x64() returns int
     mov result, 1
@@ -33,6 +41,7 @@ function setByte(buffer as bytes, index as int, value as int) returns void
 end function
 
 function main(args)
+  if mask(35) != 19 then return 7 end if
   if one() != 1 then return 6 end if
   if trailingZeros(8) != 3 then return 1 end if
   if choose(true, "left", "right") != "right" then return 2 end if
