@@ -1048,7 +1048,7 @@ function format_source(src, indentSize, maxBlankLines)
       else
         // openers
         opener = ""
-        if w0 == "function" or w0 == "struct" or w0 == "enum" or w0 == "namespace" or w0 == "interface" or w0 == "switch" or w0 == "match" or w0 == "if" or w0 == "while" or w0 == "for" or w0 == "loop" then
+        if w0 == "function" or w0 == "struct" or w0 == "class" or w0 == "enum" or w0 == "namespace" or w0 == "interface" or w0 == "switch" or w0 == "match" or w0 == "if" or w0 == "while" or w0 == "for" or w0 == "loop" then
           opener = w0
         end if
 
@@ -1062,6 +1062,11 @@ function format_source(src, indentSize, maxBlankLines)
         end if
         if w0 == "lazy" and w1 == "iterator" then opener = "function" end if
         if w0 == "static" and w1 == "function" then opener = "function" end if
+        if w0 == "override" and w1 == "function" then opener = "function" end if
+        if (w0 == "abstract" or w0 == "final") and w1 == "class" then opener = "class" end if
+        if w0 == "final" and w1 == "function" then opener = "function" end if
+        if w0 == "override" and w1 == "final" then opener = "function" end if
+        if (w0 == "private" or w0 == "protected" or w0 == "public") and (w1 == "function" or w1 == "static" or w1 == "override" or w1 == "final") then opener = "function" end if
         if w0 == "operator" then opener = "operator" end if
         if opener == "" and _hasInlineAsmHeader(codeTL) then opener = "asm" end if
         if isLoopFooter then opener = "" end if

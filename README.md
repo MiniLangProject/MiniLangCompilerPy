@@ -2,8 +2,12 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-Current stable release: **1.3.0**. See the [changelog](CHANGELOG.md) and
-[release notes](RELEASE_NOTES_1.3.0.md).
+Current stable release: **1.3.1**. See the [changelog](CHANGELOG.md) and
+[release notes](RELEASE_NOTES_1.3.1.md).
+
+Release 1.3.1 adds classes with checked inheritance, virtual overrides,
+access control, parameterized constructors, and inherited interfaces. See the
+[release notes](RELEASE_NOTES_1.3.1.md).
 
 Release 1.3.0 adds typed inline x64 assembly with local loops and byte access,
 and measured standard-library improvements in codecs, containers and strings.
@@ -1466,10 +1470,10 @@ escape the callee. Read-only, call-scoped tails use an immutable stack array
 view; returned, captured, mutated or forwarded tails keep the normal managed
 heap array. This optimization does not change source semantics.
 
-Interfaces are compile-time structural contracts. `implements` verifies every
-required instance method and its complete parameter/variadic/optional/return
-signature. Interfaces do not allocate runtime objects, provide default methods
-or add a separate dynamic-dispatch mechanism.
+Interfaces declare method contracts. `implements` checks every required
+instance method, including its parameter, variadic, optional and return types.
+Objects implementing an interface can be tested with `is Interface` and held in
+variables typed as that interface. Interfaces have no fields or default methods.
 
 ```ml
 interface Named
@@ -1482,6 +1486,58 @@ struct Person implements Named
     return this.value
   end function
 end struct
+```
+
+Classes provide single inheritance with `extends`. A subclass inherits fields,
+field defaults, methods and implemented interfaces. An overriding method must
+use `override function` and keep the inherited signature. Inside an override,
+`super.method(...)` calls the nearest inherited implementation. Calls through a
+base-typed variable dispatch to the concrete object's override; `is Base` also
+recognizes descendants. Classes share the existing struct object representation,
+so `typeof(instance)` remains `"struct"`. `super` calls accept positional and
+named arguments, including inherited defaults.
+
+`function init(...)` defines the constructor parameters. Every class field must
+have a default when `init` is present; the constructor fills the fields, then
+calls the most-derived `init` method. An inherited `init` is used when no
+override exists, and an override can call `super.init(...)`. Initializers return
+`void`. Without `init`, the constructor accepts only public fields, in inherited
+field order followed by own fields. Nonpublic fields must have defaults. Direct
+calls support named arguments and defaults; a class value accepts positional
+arguments in the constructor's supported arity range. Omitted positional
+arguments require trailing defaults.
+
+`abstract class` cannot be constructed and may declare signature-only
+`abstract function` methods. A concrete subclass must implement all of them.
+`final class` cannot be extended; `final function` cannot be overridden.
+Members are `public` by default. Prefix a field or method with `private` to
+expose it only in its declaring class, or `protected` to expose it there and in
+subclasses. Overrides preserve visibility. Access checks cover `this`, stable
+instance aliases, typed parameters and qualified static calls. Interfaces
+require public methods and may inherit other interfaces with `extends`.
+
+```ml
+interface Speakable
+  function speak() returns string
+end interface
+
+class Animal
+  name as string
+  function speak() returns string
+    return this.name
+  end function
+end class
+
+class Dog extends Animal implements Speakable
+  override function speak() returns string
+    return super.speak() + "!"
+  end function
+end class
+
+dog = Dog(name = "Bello")
+print dog.speak()          // Bello!
+print dog is Animal       // true
+print dog is Speakable    // true
 ```
 
 Async functions use one compiler-managed four-worker `ThreadPool` per program
@@ -3339,6 +3395,9 @@ Statements are separated by newlines or `;`.
 - `function name(a as int, b as string? = void, rest...) returns int ... end function`
 - `async function name(...) ... end function` / `[lazy] iterator function name(...) ... end function`
 - `interface Name ... end interface`; `struct Name implements Interface ... end struct`
+- `interface Name [extends BaseInterface, ...] ... end interface`
+- `class Name [extends Base] [implements Interface] ... end class` (`override function` for overrides)
+- `abstract class` / `final class`; `abstract function` / `final function`; `public` / `protected` / `private` members; `function init(...)`
 - `operator [inline] <symbol>(typed operands) returns <type> ... end operator` (inside a struct)
 - `function synchronized name(a,b) ... end function` (process-wide recursive monitor)
 - optional entrypoint: `function main(args) ... end function`

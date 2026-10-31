@@ -2,6 +2,17 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.1 - 2026-10-31
+
+- Add classes with single inheritance, virtual overrides, `super`, abstract
+  and final declarations, and public, protected, and private members.
+- Add parameterized `init(...)` constructors with direct and indirect call
+  parity; exclude nonpublic fields from implicit constructors.
+- Add interface inheritance, including multiple bases and runtime `is`
+  identity for inherited contracts.
+- Index dynamic method candidates and use balanced fallback dispatch after
+  the two-entry inline cache misses.
+
 ## 1.3.0 - 2026-10-31
 
 - Add typed inline x64 assembly with local labels and branches, typed scratch

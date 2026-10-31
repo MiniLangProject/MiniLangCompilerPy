@@ -136,8 +136,16 @@ class CodegenCore:
         self.struct_field_types: Dict[str, List[tuple[Optional[str], bool]]] = {}
         self.struct_field_defaults: Dict[str, List[Any]] = {}
         self.struct_id: Dict[str, int] = {}
+        self.class_ancestors: Dict[str, List[str]] = {}
+        self.class_names: set[str] = set()
+        self.abstract_classes: set[str] = set()
+        self.class_constructor_arities: Dict[str, tuple[int, int]] = {}
+        self.polymorphic_class_names: set[str] = set()
+        self.interface_names: set[str] = set(getattr(self.ml, "LANGUAGE_INTERFACE_NAMES", set()))
+        self.interface_implementers: Dict[str, List[str]] = {}
         # struct_qname -> {method_name -> function_qname}
         self.struct_methods: Dict[str, Dict[str, str]] = {}
+        self.method_candidates: Dict[tuple[str, int], List[tuple[int, str]]] = {}
         # struct_qname -> {static_method_name -> function_qname}
         self.struct_static_methods: Dict[str, Dict[str, str]] = {}
         # Whole-program fast gate: ordinary programs must not pay for operator

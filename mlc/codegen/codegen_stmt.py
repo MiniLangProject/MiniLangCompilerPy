@@ -4891,6 +4891,18 @@ class CodegenStmt:
                          bool(source_optional[i]) if i < len(source_optional) else False)
                         for i in range(len(fields))
                     ]
+                    if bool(getattr(st, "is_class", False)):
+                        self.class_names.add(qname)
+                        if bool(getattr(st, "is_abstract", False)):
+                            self.abstract_classes.add(qname)
+                        else:
+                            self.class_constructor_arities[qname] = (
+                                int(getattr(st, "_constructor_min", 0)),
+                                int(getattr(st, "_constructor_max", 0)),
+                            )
+                        self.class_ancestors[qname] = list(getattr(st, "_class_ancestors", []) or [])
+                    for iface in list(getattr(st, "interfaces", []) or []):
+                        self.interface_implementers.setdefault(str(iface), []).append(qname)
                     if qname not in self.struct_id:
                         self.struct_id[qname] = next_sid
                         next_sid += 1
@@ -4916,6 +4928,9 @@ class CodegenStmt:
                                 raise self.error(f"method name '{mbase}' conflicts with field in struct {qname}", mfn)
 
                             seen_names.add(mbase)
+
+                            if bool(getattr(mfn, "is_abstract", False)):
+                                continue
 
                             is_static = bool(getattr(mfn, "is_static", False))
                             if is_static:
@@ -5069,6 +5084,37 @@ class CodegenStmt:
         file_prefix_map: Dict[str, str] = {}
         file_seen_nonpackage: Dict[str, bool] = {}
         _collect_decls(program, file_prefix=file_prefix_map, file_seen_nonpackage=file_seen_nonpackage)
+        self.polymorphic_class_names = {parent for ancestors in self.class_ancestors.values()
+                                        for parent in ancestors}
+        # Inherited calls share the original method body; only the dispatch map
+        # changes for a derived concrete type.
+        for qname, ancestors in self.class_ancestors.items():
+            own = dict(self.struct_methods.get(qname, {}))
+            merged: Dict[str, str] = {}
+            for parent in reversed(ancestors):
+                merged.update(self.struct_methods.get(parent, {}))
+            merged.update(own)
+            if merged:
+                self.struct_methods[qname] = merged
+            own_static = dict(self.struct_static_methods.get(qname, {}))
+            inherited_static: Dict[str, str] = {}
+            for parent in reversed(ancestors):
+                inherited_static.update(self.struct_static_methods.get(parent, {}))
+            inherited_static.update(own_static)
+            if inherited_static:
+                self.struct_static_methods[qname] = inherited_static
+        self.method_candidates = {}
+        for qname, methods in self.struct_methods.items():
+            sid = self.struct_id.get(qname)
+            if sid is None:
+                continue
+            for method_name, function_name in methods.items():
+                function = self.user_functions.get(function_name)
+                if function is not None:
+                    key = (method_name, len(function.params))
+                    self.method_candidates.setdefault(key, []).append((int(sid), function_name))
+        for candidates in self.method_candidates.values():
+            candidates.sort(key=lambda candidate: candidate[0])
         self.file_prefix_map = file_prefix_map
         # Keep CodegenCore package-resolution helpers in sync.
         self._file_prefix_map = file_prefix_map
@@ -5395,14 +5441,30 @@ class CodegenStmt:
             obj_lbl = f"obj_structtype_static_{len(self.rdata.labels)}"
             sid = int(self.struct_id.get(nm, 0) or 0)
             nfields = len(fields)
+            ctor_arity = self.class_constructor_arities.get(nm)
+            init_method = (self.struct_methods.get(nm, {}) or {}).get("init") if nm in self.class_names and ctor_arity is None else None
+            flags = (1 if nm in self.abstract_classes else 0) | (2 if init_method else 0) | (4 if ctor_arity is not None else 0)
+            ctor_bytes = b""
+            if ctor_arity is not None:
+                minimum, maximum = ctor_arity
+                ctor_bytes = (b"\x00" * 8 + minimum.to_bytes(4, "little") + maximum.to_bytes(4, "little")
+                              + b"\x00" * (8 * (maximum + 1)))
             self.rdata.pad_align(8)
             self.rdata.add_bytes_unique(
                 obj_lbl,
                 int(OBJ_STRUCTTYPE).to_bytes(4, "little", signed=False)
                 + int(nfields).to_bytes(4, "little", signed=False)
                 + sid.to_bytes(4, "little", signed=False)
-                + b"\x00" * 4,
+                + int(flags).to_bytes(4, "little", signed=False)
+                + (b"\x00" * 8 if init_method else b"") + ctor_bytes,
             )
+            if init_method:
+                self.rdata.add_abs64_patch(self.rdata.labels[obj_lbl][0] + 16, f"fn_user_{init_method}")
+            if ctor_arity is not None:
+                minimum, maximum = ctor_arity
+                for arity in range(minimum, maximum + 1):
+                    self.rdata.add_abs64_patch(self.rdata.labels[obj_lbl][0] + 32 + arity * 8,
+                                               f"fn_user___ml_ctor${nm}${arity}")
             self.struct_static_obj_labels[nm] = obj_lbl
 
         self.builtin_static_obj_labels: Dict[str, str] = {}

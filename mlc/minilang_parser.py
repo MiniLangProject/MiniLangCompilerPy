@@ -11,7 +11,8 @@ attribute. For convenience, AST base classes expose a `.pos` property.
 """
 
 import re
-from dataclasses import dataclass, field
+import copy
+from dataclasses import dataclass, field, fields as dataclass_fields, is_dataclass
 from typing import Any, Callable, List, Optional, Tuple
 
 from .tools import wrap_i61
@@ -95,7 +96,7 @@ class Token:
 
 KEYWORDS = {"print", "if", "then", "else", "end", "while", "loop", "true", "false", "and", "or", "not", "function",
             "return", "global", "const", "for", "to", "each", "in", "break", "continue", "switch", "case", "default",
-            "struct", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
+            "struct", "class", "extends", "override", "abstract", "final", "private", "protected", "public", "enum", "are", "namespace", "import", "as", "package", "extern", "from", "returns", "symbol",
             "out", "static", "inline", "synchronized", "void", "is", "defer", "interface", "implements",
             "iterator", "yield", "async", "await", "operator", "div",}
 
@@ -549,6 +550,11 @@ class StructDef(Stmt):
     field_optional: List[bool] = field(default_factory=list)
     interfaces: List[str] = field(default_factory=list)
     field_defaults: List[Optional[Expr]] = field(default_factory=list)
+    base: Optional[str] = None
+    is_class: bool = False
+    is_abstract: bool = False
+    is_final: bool = False
+    field_visibility: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -556,6 +562,7 @@ class InterfaceDef(Stmt):
     """Compile-time structural contract; it has no runtime representation."""
     name: str
     methods: List[FunctionDef] = field(default_factory=list)
+    bases: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -1186,7 +1193,7 @@ class Parser:
                         raise ParseError("'import' is not allowed inside a namespace", t.pos)
 
                     # Allowed at namespace top-level: declarations + const + simple global assignments.
-                    if t.kind == "KW" and t.value in ("function", "struct", "interface", "enum", "namespace", "extern", "const"):
+                    if t.kind == "KW" and t.value in ("function", "struct", "class", "abstract", "final", "interface", "enum", "namespace", "extern", "const"):
                         st2 = self.parse_stmt() if not self.collect_errors else self._parse_stmt_recover(end_type="namespace")
                         if st2 is not None:
                             body.append(st2)
@@ -1529,6 +1536,16 @@ class Parser:
                 raise ParseError("'interface' is only allowed at declaration scope", t.pos)
             self.advance()
             name = self.expect("IDENT").value
+            bases: List[str] = []
+            if self.peek().kind == "KW" and self.peek().value == "extends":
+                self.advance()
+                while True:
+                    base, optional = self.parse_type_ref()
+                    if optional:
+                        raise ParseError("A base interface cannot be optional", self.peek().pos)
+                    bases.append(base)
+                    if not self.match("COMMA"):
+                        break
             self.expect_block_nl()
             methods: List[FunctionDef] = []
             while not self.is_end_of("interface"):
@@ -1552,12 +1569,26 @@ class Parser:
                                                              return_type=rty, return_optional=ropt), mpos))
                 self.expect_block_nl()
             self.expect_end_of("interface")
-            return self._attach_pos(InterfaceDef(name, methods), start_pos)
+            return self._attach_pos(InterfaceDef(name, methods, bases), start_pos)
 
-        # struct
-        if t.kind == "KW" and t.value == "struct":
+        # struct / class
+        if t.kind == "KW" and t.value in ("struct", "class", "abstract", "final"):
+            class_modifier = t.value if t.value in ("abstract", "final") else None
+            if class_modifier:
+                self.advance()
+                t = self.peek()
+                if t.kind != "KW" or t.value != "class":
+                    raise ParseError(f"'{class_modifier}' must precede a class", t.pos)
+            is_class = t.value == "class"
+            end_kind = "class" if is_class else "struct"
             self.advance()
             name = self.expect("IDENT").value
+            base: Optional[str] = None
+            if is_class and self.peek().kind == "KW" and self.peek().value == "extends":
+                self.advance()
+                base, optional = self.parse_type_ref()
+                if optional:
+                    raise ParseError("A base class cannot be optional", self.peek().pos)
             interfaces: List[str] = []
             if self.peek().kind == "KW" and self.peek().value == "implements":
                 self.advance()
@@ -1577,19 +1608,28 @@ class Parser:
             field_types: List[Optional[str]] = []
             field_optional: List[bool] = []
             field_defaults: List[Optional[Expr]] = []
+            field_visibility: List[str] = []
             methods: List[FunctionDef] = []
 
-            while not self.is_end_of("struct"):
+            while not self.is_end_of(end_kind):
                 # allow blank lines / semicolons inside the block
                 self.skip_stmt_seps()
-                if self.is_end_of("struct"):
+                if self.is_end_of(end_kind):
                     break
                 if self.peek().kind == "EOF":
-                    raise ParseError(f"struct ended unexpectedly (missing 'end struct'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
+                    raise ParseError(f"{end_kind} ended unexpectedly (missing 'end {end_kind}'?) (block started at {self._fmt_pos(start_pos)})", self.peek().pos)
+
+                visibility = "public"
+                if self.peek().kind == "KW" and self.peek().value in ("private", "protected", "public"):
+                    visibility = self.advance().value
+                    if not is_class:
+                        raise ParseError("Visibility modifiers require a class", self.peek().pos)
 
                 # Statically dispatched operator overload.  The owning value is
                 # always the first explicit operand; no implicit `this` exists.
                 if self.peek().kind == "KW" and self.peek().value == "operator":
+                    if visibility != "public":
+                        raise ParseError("Operator methods must be public", self.peek().pos)
                     op_start = self.advance().pos
                     op_inline = False
                     if self.peek().kind == "KW" and self.peek().value == "inline":
@@ -1649,10 +1689,28 @@ class Parser:
                     continue
 
                 # method inside struct (instance or static)
-                if self.peek().kind == "KW" and self.peek().value in ("function", "static"):
+                if self.peek().kind == "KW" and self.peek().value in ("function", "static", "override", "abstract", "final"):
                     m_start = self.peek().pos
                     is_static = False
+                    is_override = False
+                    is_abstract_method = False
+                    is_final_method = False
+                    while self.peek().kind == "KW" and self.peek().value in ("override", "abstract", "final"):
+                        modifier = self.advance().value
+                        if not is_class:
+                            raise ParseError(f"'{modifier}' is only valid in a class", m_start)
+                        if modifier == "override":
+                            is_override = True
+                        elif modifier == "abstract":
+                            is_abstract_method = True
+                        else:
+                            is_final_method = True
+                        self.skip_newlines()
+                    if is_abstract_method and (is_final_method or is_override):
+                        raise ParseError("An abstract method cannot be final or override", m_start)
                     if self.peek().value == "static":
+                        if is_override or is_abstract_method:
+                            raise ParseError("A static method cannot be abstract or override an instance method", m_start)
                         is_static = True
                         self.advance()
                         self.skip_newlines()
@@ -1685,12 +1743,15 @@ class Parser:
                         m_return_type, m_return_optional = self.parse_type_ref()
 
                     self.expect_block_nl()
-                    self._func_depth += 1
-                    try:
-                        m_body = self.parse_block_until_end("function", m_start)
-                    finally:
-                        self._func_depth -= 1
-                    self.expect_end_of("function")
+                    if is_abstract_method:
+                        m_body = []
+                    else:
+                        self._func_depth += 1
+                        try:
+                            m_body = self.parse_block_until_end("function", m_start)
+                        finally:
+                            self._func_depth -= 1
+                        self.expect_end_of("function")
 
                     method = self._attach_pos(FunctionDef(m_name_tok.value, m_params, m_body, is_static=is_static,
                                                            is_inline=is_inline, is_synchronized=is_synchronized,
@@ -1698,11 +1759,16 @@ class Parser:
                                                            param_defaults=m_defaults, variadic_index=m_variadic,
                                                            return_type=m_return_type,
                                                            return_optional=m_return_optional), m_start)
+                    setattr(method, "is_override", is_override)
+                    setattr(method, "is_abstract", is_abstract_method)
+                    setattr(method, "is_final", is_final_method)
+                    setattr(method, "visibility", visibility)
                     methods.append(self._apply_function_contracts(method))
                     continue
 
                 # field (allow comma-separated lists + trailing commas)
                 fields.append(self.expect("IDENT").value)
+                field_visibility.append(visibility)
                 fty: Optional[str] = None
                 fopt = False
                 if self.peek().kind == "KW" and self.peek().value == "as":
@@ -1726,6 +1792,7 @@ class Parser:
                     if self.peek().kind != "IDENT":
                         break
                     fields.append(self.expect("IDENT").value)
+                    field_visibility.append(visibility)
                     fty = None
                     fopt = False
                     if self.peek().kind == "KW" and self.peek().value == "as":
@@ -1740,10 +1807,12 @@ class Parser:
                     field_defaults.append(fdefault)
                 self.expect_block_nl()
 
-            self.expect_end_of("struct")
+            self.expect_end_of(end_kind)
             return self._attach_pos(StructDef(
                 name, fields, methods, field_types, field_optional, interfaces,
-                field_defaults=field_defaults), start_pos)
+                field_defaults=field_defaults, base=base, is_class=is_class,
+                is_abstract=class_modifier == "abstract", is_final=class_modifier == "final",
+                field_visibility=field_visibility), start_pos)
 
         # enum
         if t.kind == "KW" and t.value == "enum":
@@ -2929,7 +2998,325 @@ class _LanguageLowerer:
         ])
 
 
+def _expand_classes(program: List[Stmt]) -> None:
+    """Resolve single inheritance before ordinary struct lowering and codegen."""
+    declarations: dict[str, StructDef] = {}
+
+    def collect(body: List[Stmt], prefix: str = "") -> None:
+        for st in body:
+            if isinstance(st, NamespaceDef):
+                collect(st.body, prefix + st.name + ".")
+            elif isinstance(st, StructDef):
+                declarations[prefix + st.name] = st
+
+    collect(program)
+    visiting: set[str] = set()
+    finished: set[str] = set()
+
+    def normalize_super_args(call: Call, method: FunctionDef) -> List[Expr]:
+        supplied = list(call.args)
+        names = list(call.arg_names or []) + [None] * max(0, len(supplied) - len(call.arg_names or []))
+        params = list(method.params)
+        variadic = method.variadic_index
+        fixed = variadic if variadic >= 0 else len(params)
+        slots: List[Optional[Expr]] = [None] * fixed
+        extras: List[Expr] = []
+        next_pos = 0
+        for value, name in zip(supplied, names):
+            if name is None:
+                while next_pos < fixed and slots[next_pos] is not None:
+                    next_pos += 1
+                if next_pos < fixed:
+                    slots[next_pos] = value
+                    next_pos += 1
+                elif variadic >= 0:
+                    extras.append(value)
+                else:
+                    raise ParseError(f"Too many arguments for super.{method.name}", getattr(call, "_pos", 0))
+            else:
+                if name not in params:
+                    raise ParseError(f"Unknown named argument '{name}' for super.{method.name}", getattr(call, "_pos", 0))
+                index = params.index(name)
+                if index == variadic:
+                    raise ParseError(f"Variadic parameter '{name}' cannot be supplied by name", getattr(call, "_pos", 0))
+                if slots[index] is not None:
+                    raise ParseError(f"Argument '{name}' was supplied more than once", getattr(call, "_pos", 0))
+                slots[index] = value
+        defaults = list(method.param_defaults or [])
+        for index in range(fixed):
+            if slots[index] is None:
+                default = defaults[index] if index < len(defaults) else None
+                if default is None:
+                    raise ParseError(f"Missing required argument '{params[index]}' for super.{method.name}", getattr(call, "_pos", 0))
+                slots[index] = copy.deepcopy(default)
+        result = [value for value in slots if value is not None]
+        if variadic >= 0:
+            result.append(ArrayLit(extras))
+        return result
+
+    def rewrite_super(node: Any, parent_owners: dict[str, str], parent_methods: dict[str, FunctionDef]) -> Any:
+        if isinstance(node, Call) and isinstance(node.callee, Member) and isinstance(node.callee.target, Var) and node.callee.target.name == "super":
+            owner = parent_owners.get(node.callee.name)
+            if owner is None:
+                raise ParseError(f"No inherited method '{node.callee.name}' for 'super'", getattr(node, "_pos", 0))
+            if getattr(parent_methods[node.callee.name], "visibility", "public") == "private":
+                raise ParseError(f"Method '{node.callee.name}' is private in the base class", getattr(node, "_pos", 0))
+            normalized = normalize_super_args(node, parent_methods[node.callee.name])
+            replacement = Call(Member(Var(owner), node.callee.name),
+                               [Var("this")] + [rewrite_super(arg, parent_owners, parent_methods) for arg in normalized],
+                               [None] * (len(normalized) + 1))
+            for attr in ("_pos", "_filename"):
+                if hasattr(node, attr):
+                    setattr(replacement, attr, getattr(node, attr))
+            replacement._is_super = True
+            return replacement
+        if isinstance(node, Var) and node.name == "super":
+            raise ParseError("'super' must be followed by a method call", getattr(node, "_pos", 0))
+        if isinstance(node, list):
+            return [rewrite_super(item, parent_owners, parent_methods) for item in node]
+        if isinstance(node, tuple):
+            return tuple(rewrite_super(item, parent_owners, parent_methods) for item in node)
+        if is_dataclass(node):
+            for item in dataclass_fields(node):
+                value = getattr(node, item.name)
+                if isinstance(value, (Expr, Stmt, list, tuple)):
+                    setattr(node, item.name, rewrite_super(value, parent_owners, parent_methods))
+        return node
+
+    def resolve_base(raw: str, qname: str) -> str:
+        prefix = qname.rsplit(".", 1)[0] + "." if "." in qname else ""
+        for candidate in (prefix + raw, raw):
+            if candidate in declarations:
+                return candidate
+        matches = [name for name in declarations if name.endswith("." + raw)]
+        if len(matches) == 1:
+            return matches[0]
+        raise ParseError(f"Unknown or ambiguous base class '{raw}' for {qname}", getattr(declarations[qname], "_pos", 0))
+
+    def signature(method: FunctionDef) -> tuple[Any, ...]:
+        return (len(method.params), tuple(method.param_types or []), tuple(method.param_optional or []),
+                method.variadic_index, method.return_type, method.return_optional)
+
+    def expand(qname: str) -> None:
+        if qname in finished:
+            return
+        if qname in visiting:
+            raise ParseError(f"Cyclic class inheritance involving {qname}", getattr(declarations[qname], "_pos", 0))
+        visiting.add(qname)
+        st = declarations[qname]
+        if st.is_abstract and st.is_final:
+            raise ParseError("A class cannot be both abstract and final", getattr(st, "_pos", 0))
+        base_name: Optional[str] = None
+        parent_owners: dict[str, str] = {}
+        parent_methods: dict[str, FunctionDef] = {}
+        if st.base:
+            if not st.is_class:
+                raise ParseError("Only a class can extend another class", getattr(st, "_pos", 0))
+            base_name = resolve_base(st.base, qname)
+            base = declarations[base_name]
+            if not base.is_class:
+                raise ParseError(f"'{base_name}' is not a class", getattr(st, "_pos", 0))
+            if base.is_final:
+                raise ParseError(f"Cannot extend final class '{base_name}'", getattr(st, "_pos", 0))
+            expand(base_name)
+            st.base = base_name
+            st._class_ancestors = [base_name] + list(getattr(base, "_class_ancestors", []))
+            own_fields = list(st.fields)
+            for name in own_fields:
+                if name in base.fields:
+                    raise ParseError(f"Field '{name}' already exists in base class {base_name}", getattr(st, "_pos", 0))
+            st.fields = list(base.fields) + own_fields
+            st.field_types = list(base.field_types) + list(st.field_types)
+            st.field_optional = list(base.field_optional) + list(st.field_optional)
+            st.field_defaults = list(base.field_defaults) + list(st.field_defaults)
+            st.field_visibility = list(base.field_visibility) + list(st.field_visibility)
+            st._field_owners = list(getattr(base, "_field_owners", [])) + [qname] * len(own_fields)
+            st.interfaces = list(dict.fromkeys(list(base.interfaces) + list(st.interfaces)))
+            parent_methods = dict(getattr(base, "_effective_methods", {}))
+            parent_owners = dict(getattr(base, "_effective_method_owners", {}))
+            own_methods = {method.name: method for method in st.methods}
+            for method in st.methods:
+                inherited = parent_methods.get(method.name)
+                if inherited is not None:
+                    if getattr(inherited, "visibility", "public") == "private":
+                        raise ParseError(f"Cannot override private method '{method.name}'", getattr(method, "_pos", 0))
+                    if getattr(inherited, "is_final", False):
+                        raise ParseError(f"Cannot override final method '{method.name}'", getattr(method, "_pos", 0))
+                    if not getattr(method, "is_override", False):
+                        raise ParseError(f"Method '{method.name}' overrides a base method; add 'override'", getattr(method, "_pos", 0))
+                    if inherited.is_static or method.is_static or signature(inherited) != signature(method):
+                        raise ParseError(f"Incompatible override of '{method.name}'", getattr(method, "_pos", 0))
+                    if getattr(method, "visibility", "public") != getattr(inherited, "visibility", "public"):
+                        raise ParseError(f"Override of '{method.name}' must preserve visibility", getattr(method, "_pos", 0))
+                elif getattr(method, "is_override", False):
+                    raise ParseError(f"Method '{method.name}' has no base method to override", getattr(method, "_pos", 0))
+                method._hidden_name = (getattr(inherited, "_hidden_name", method.name) if inherited is not None else
+                                       (method.name if getattr(method, "visibility", "public") == "public"
+                                        else f"__ml_hidden${qname}${method.name}"))
+            st._effective_methods = {**parent_methods, **own_methods}
+            st._effective_method_owners = {**parent_owners, **{name: qname for name in own_methods}}
+        else:
+            st._class_ancestors = []
+            st._field_owners = [qname] * len(st.fields)
+            st._effective_methods = {method.name: method for method in st.methods}
+            st._effective_method_owners = {method.name: qname for method in st.methods}
+            for method in st.methods:
+                if getattr(method, "is_override", False):
+                    raise ParseError(f"Method '{method.name}' has no base method to override", getattr(method, "_pos", 0))
+                method._hidden_name = (method.name if getattr(method, "visibility", "public") == "public"
+                                       else f"__ml_hidden${qname}${method.name}")
+        if st.is_class:
+            for method in st.methods:
+                if getattr(method, "is_abstract", False) and not st.is_abstract:
+                    raise ParseError(f"Abstract method '{method.name}' requires an abstract class", getattr(method, "_pos", 0))
+                if method.name == "init" and (method.variadic_index >= 0 or
+                                               method.return_type not in (None, "void") or
+                                               getattr(method, "is_abstract", False) or
+                                               getattr(method, "visibility", "public") != "public"):
+                    raise ParseError("Class initializer init must be public, nonvariadic and return void", getattr(method, "_pos", 0))
+                method.body = rewrite_super(method.body, parent_owners, parent_methods)
+            if not st.is_abstract:
+                for method in st._effective_methods.values():
+                    if getattr(method, "is_abstract", False):
+                        raise ParseError(f"Class {qname} must implement abstract method '{method.name}'", getattr(st, "_pos", 0))
+        visiting.remove(qname)
+        finished.add(qname)
+
+    for qname, st in declarations.items():
+        if st.is_class:
+            expand(qname)
+
+    def member_qname(node: Any) -> Optional[str]:
+        if isinstance(node, Var):
+            return node.name
+        if isinstance(node, Member):
+            prefix = member_qname(node.target)
+            return prefix + "." + node.name if prefix is not None else None
+        return None
+
+    def resolve_class_type(raw: Optional[str], current: str) -> Optional[str]:
+        if not raw:
+            return None
+        prefix = current.rsplit(".", 1)[0] + "." if "." in current else ""
+        for candidate in (prefix + raw, raw):
+            if candidate in declarations and declarations[candidate].is_class:
+                return candidate
+        matches = [name for name, item in declarations.items()
+                   if item.is_class and name.endswith("." + raw)]
+        return matches[0] if len(matches) == 1 else None
+
+    def physical_member(receiver: str, raw: str, current: str, pos: int) -> Optional[str]:
+        target = declarations[receiver]
+        for field_name, vis, owner in zip(target.fields, target.field_visibility, target._field_owners):
+            source_name = field_name.rsplit("$", 1)[-1] if field_name.startswith("__ml_hidden$") else field_name
+            if source_name == raw:
+                if vis == "private" and owner != current:
+                    raise ParseError(f"Field '{raw}' is private in {owner}", pos)
+                if vis == "protected" and owner != current and owner not in getattr(declarations[current], "_class_ancestors", []):
+                    raise ParseError(f"Field '{raw}' is protected in {owner}", pos)
+                return source_name if vis == "public" else f"__ml_hidden${owner}${source_name}"
+        method = getattr(target, "_effective_methods", {}).get(raw)
+        if method is not None:
+            owner = target._effective_method_owners[raw]
+            vis = getattr(method, "visibility", "public")
+            if vis == "private" and owner != current:
+                raise ParseError(f"Method '{raw}' is private in {owner}", pos)
+            if vis == "protected" and owner != current and owner not in getattr(declarations[current], "_class_ancestors", []):
+                raise ParseError(f"Method '{raw}' is protected in {owner}", pos)
+            return getattr(method, "_hidden_name", raw)
+        return None
+
+    def receiver_types(method: FunctionDef, current: str) -> dict[str, str]:
+        known: dict[str, str] = {"this": current}
+        writes: dict[str, List[Expr]] = {}
+        write_types: dict[str, Optional[str]] = {}
+        for param, declared in zip(method.params, method.param_types):
+            resolved = resolve_class_type(declared, current)
+            if resolved is not None:
+                known[param] = resolved
+
+        def collect_writes(node: Any) -> None:
+            if isinstance(node, FunctionDef):
+                return
+            if isinstance(node, Assign):
+                writes.setdefault(node.name, []).append(node.expr)
+                write_types[node.name] = node.declared_type
+            if isinstance(node, (list, tuple)):
+                for child in node:
+                    collect_writes(child)
+            elif is_dataclass(node):
+                for field_item in dataclass_fields(node):
+                    value = getattr(node, field_item.name)
+                    if isinstance(value, (Expr, Stmt, list, tuple)):
+                        collect_writes(value)
+
+        collect_writes(method.body)
+        for name in list(known):
+            if name != "this" and name in writes:
+                known.pop(name)
+        changed = True
+        while changed:
+            changed = False
+            for name, values in writes.items():
+                if name in known or len(values) != 1:
+                    continue
+                value = values[0]
+                inferred = resolve_class_type(write_types.get(name), current)
+                if inferred is None and isinstance(value, Var):
+                    inferred = known.get(value.name)
+                if inferred is None and isinstance(value, Call):
+                    inferred = resolve_class_type(member_qname(value.callee), current)
+                if inferred is not None:
+                    known[name] = inferred
+                    changed = True
+        return known
+
+    def rewrite_access(node: Any, method_map: dict[str, str], class_name: str,
+                       known: dict[str, str]) -> Any:
+        if isinstance(node, Call) and getattr(node, "_is_super", False):
+            node.callee.name = method_map.get(node.callee.target.name + "." + node.callee.name, node.callee.name)
+        if isinstance(node, (Member, SafeMember)):
+            receiver = known.get(node.target.name) if isinstance(node.target, Var) else None
+            if receiver is not None:
+                node.name = physical_member(receiver, node.name, class_name, getattr(node, "_pos", 0)) or node.name
+            else:
+                static_target = resolve_class_type(member_qname(node.target), class_name)
+                if static_target is not None:
+                    method = getattr(declarations[static_target], "_effective_methods", {}).get(node.name)
+                    if method is not None and method.is_static:
+                        node.name = physical_member(static_target, node.name, class_name, getattr(node, "_pos", 0)) or node.name
+        if isinstance(node, SetMember) and isinstance(node.obj, Var):
+            receiver = known.get(node.obj.name)
+            if receiver is not None:
+                node.field = physical_member(receiver, node.field, class_name, getattr(node, "_pos", 0)) or node.field
+        if isinstance(node, list):
+            return [rewrite_access(item, method_map, class_name, known) for item in node]
+        if isinstance(node, tuple):
+            return tuple(rewrite_access(item, method_map, class_name, known) for item in node)
+        if is_dataclass(node):
+            for item in dataclass_fields(node):
+                value = getattr(node, item.name)
+                if isinstance(value, (Expr, Stmt, list, tuple)):
+                    setattr(node, item.name, rewrite_access(value, method_map, class_name, known))
+        return node
+
+    super_names = {(owner + "." + raw): getattr(method, "_hidden_name", raw)
+                   for st in declarations.values() if st.is_class
+                   for raw, method in getattr(st, "_effective_methods", {}).items()
+                   for owner in [getattr(st, "_effective_method_owners", {}).get(raw, "")]}
+    for qname, st in declarations.items():
+        if not st.is_class:
+            continue
+        for method in st.methods:
+            method.body = rewrite_access(method.body, super_names, qname, receiver_types(method, qname))
+        st.fields = [raw if vis == "public" else f"__ml_hidden${owner}${raw}"
+                     for raw, vis, owner in zip(st.fields, st.field_visibility, st._field_owners)]
+        for method in st.methods:
+            method.name = getattr(method, "_hidden_name", method.name)
+
+
 def _validate_interfaces(program: List[Stmt]) -> None:
+    global LANGUAGE_INTERFACE_NAMES
     interfaces: dict[str, InterfaceDef] = {}
     structs: List[tuple[str, StructDef]] = []
 
@@ -2943,10 +3330,11 @@ def _validate_interfaces(program: List[Stmt]) -> None:
                 structs.append((prefix + st.name, st))
 
     collect(program)
+    LANGUAGE_INTERFACE_NAMES = set(interfaces)
 
     def signature_matches(requirement: FunctionDef, actual: FunctionDef) -> bool:
         """Compare the callable contract exposed by an interface method."""
-        if actual.is_static:
+        if actual.is_static or getattr(actual, "visibility", "public") != "public":
             return False
         if len(actual.params) != len(requirement.params) or actual.variadic_index != requirement.variadic_index:
             return False
@@ -2963,26 +3351,142 @@ def _validate_interfaces(program: List[Stmt]) -> None:
     simple: dict[str, List[str]] = {}
     for qname in interfaces:
         simple.setdefault(qname.rsplit(".", 1)[-1], []).append(qname)
+
+    def resolve_interface(raw: str, prefix: str) -> str:
+        for candidate in (prefix + raw, raw):
+            if candidate in interfaces:
+                return candidate
+        matches = simple.get(raw, [])
+        if len(matches) == 1:
+            return matches[0]
+        raise ParseError(f"Unknown or ambiguous interface '{raw}'", 0)
+
+    visiting: set[str] = set()
+    expanded: set[str] = set()
+
+    def expand_interface(qname: str) -> None:
+        if qname in expanded:
+            return
+        if qname in visiting:
+            raise ParseError(f"Cyclic interface inheritance involving {qname}", getattr(interfaces[qname], "_pos", 0))
+        visiting.add(qname)
+        iface = interfaces[qname]
+        prefix = qname.rsplit(".", 1)[0] + "." if "." in qname else ""
+        own_methods = list(iface.methods)
+        merged: dict[str, FunctionDef] = {}
+        ancestors: List[str] = []
+        for raw_base in iface.bases:
+            base = resolve_interface(raw_base, prefix)
+            expand_interface(base)
+            ancestors.extend([base] + list(getattr(interfaces[base], "_interface_ancestors", [])))
+            for method in interfaces[base].methods:
+                old = merged.get(method.name)
+                if old is not None and not signature_matches(old, method):
+                    raise ParseError(f"Conflicting inherited interface method '{method.name}'", getattr(iface, "_pos", 0))
+                merged[method.name] = method
+        for method in own_methods:
+            old = merged.get(method.name)
+            if old is not None and not signature_matches(old, method):
+                raise ParseError(f"Interface method '{method.name}' conflicts with its base signature", getattr(method, "_pos", 0))
+            merged[method.name] = method
+        iface.methods = list(merged.values())
+        iface.bases = list(dict.fromkeys(ancestors))
+        iface._interface_ancestors = list(iface.bases)
+        visiting.remove(qname)
+        expanded.add(qname)
+
+    for iface_name in interfaces:
+        expand_interface(iface_name)
+
     for struct_qname, struct in structs:
         prefix = struct_qname.rsplit(".", 1)[0] + "." if "." in struct_qname else ""
-        methods = {m.name: m for m in struct.methods}
+        methods = dict(getattr(struct, "_effective_methods", {m.name: m for m in struct.methods}))
+        resolved_interfaces: List[str] = []
         for raw_name in struct.interfaces:
-            candidates = [prefix + raw_name, raw_name]
-            candidates.extend(simple.get(raw_name, []))
-            iface_name = next((x for x in candidates if x in interfaces), None)
-            if iface_name is None:
-                raise ParseError(f"Unknown interface '{raw_name}' implemented by {struct_qname}", getattr(struct, "_pos", 0))
+            iface_name = resolve_interface(raw_name, prefix)
+            resolved_interfaces.extend([iface_name] + interfaces[iface_name].bases)
             for requirement in interfaces[iface_name].methods:
                 actual = methods.get(requirement.name)
                 if actual is None:
                     raise ParseError(f"Struct {struct_qname} does not implement {raw_name}.{requirement.name}", getattr(struct, "_pos", 0))
                 if not signature_matches(requirement, actual):
                     raise ParseError(f"Method {struct_qname}.{actual.name} has an incompatible interface signature", getattr(actual, "_pos", 0))
+        struct.interfaces = list(dict.fromkeys(resolved_interfaces))
+
+
+def _make_class_factories(program: List[Stmt]) -> None:
+    """Give direct and first-class class construction one callable contract."""
+    classes: List[tuple[str, StructDef]] = []
+
+    def collect(body: List[Stmt], prefix: str = "") -> None:
+        for st in body:
+            if isinstance(st, NamespaceDef):
+                collect(st.body, prefix + st.name + ".")
+            elif isinstance(st, StructDef) and st.is_class:
+                classes.append((prefix + st.name, st))
+
+    collect(program)
+    generated: List[Stmt] = []
+    for qname, st in classes:
+        if st.is_abstract:
+            continue
+        initializer = getattr(st, "_effective_methods", {}).get("init")
+        if initializer is not None:
+            params = list(initializer.params)
+            types = list(initializer.param_types)
+            optionals = list(initializer.param_optional)
+            defaults = list(initializer.param_defaults)
+            if initializer.variadic_index >= 0:
+                raise ParseError("Class initializer init cannot be variadic", getattr(initializer, "_pos", 0))
+        else:
+            public_indices = [i for i, vis in enumerate(st.field_visibility) if vis == "public"]
+            params = [st.fields[i] for i in public_indices]
+            types = [st.field_types[i] for i in public_indices]
+            optionals = [st.field_optional[i] for i in public_indices]
+            defaults = [st.field_defaults[i] for i in public_indices]
+        defaults += [None] * (len(params) - len(defaults))
+        minimum = next((i + 1 for i in range(len(params) - 1, -1, -1) if defaults[i] is None), 0)
+        maximum = len(params)
+        st._constructor_min = minimum
+        st._constructor_max = maximum
+
+        field_values: List[Expr] = []
+        for i, field_name in enumerate(st.fields):
+            if initializer is None and st.field_visibility[i] == "public":
+                field_values.append(Var(field_name))
+            else:
+                default = st.field_defaults[i] if i < len(st.field_defaults) else None
+                if default is None:
+                    raise ParseError(f"Field '{field_name}' needs a default for class construction", getattr(st, "_pos", 0))
+                field_values.append(copy.deepcopy(default))
+
+        full_name = f"__ml_ctor${qname}${maximum}"
+        raw_call = Call(Var(qname), field_values, ["__ml_raw_ctor"])
+        full_body: List[Stmt] = [Assign("__ml_instance", raw_call)]
+        if initializer is not None:
+            owner = getattr(st, "_effective_method_owners", {}).get("init", qname)
+            full_body.append(ExprStmt(Call(Member(Var(owner), "init"),
+                                           [Var("__ml_instance")] + [Var(name) for name in params])))
+        full_body.append(Return(Var("__ml_instance")))
+        full_fn = FunctionDef(full_name, params, full_body, param_types=types,
+                              param_optional=optionals, param_defaults=defaults)
+        generated.append(_copy_source_pos(full_fn, st))
+        for arity in range(minimum, maximum):
+            name = f"__ml_ctor${qname}${arity}"
+            supplied = [Var(param) for param in params[:arity]]
+            missing = [copy.deepcopy(defaults[i]) for i in range(arity, maximum)]
+            body = [Return(Call(Var(full_name), supplied + missing))]
+            variant = FunctionDef(name, params[:arity], body,
+                                  param_types=types[:arity], param_optional=optionals[:arity])
+            generated.append(_copy_source_pos(variant, st))
+    program.extend(generated)
 
 
 def prepare_language_features(program: List[Stmt]) -> List[Stmt]:
     """Validate contracts and lower new syntax before semantic analysis/codegen."""
+    _expand_classes(program)
     _validate_interfaces(program)
+    _make_class_factories(program)
     lowerer = _LanguageLowerer()
     lowered = lowerer.lower_block(program)
 
@@ -3025,7 +3529,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.3.0",
+    "MINILANG_VERSION": "1.3.1",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

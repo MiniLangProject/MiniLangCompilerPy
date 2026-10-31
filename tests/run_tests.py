@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.0"
+    expected = "MiniLang Compiler 1.3.1"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4202,6 +4202,16 @@ def main() -> int:
     language_async_variadic_ml = find_file_by_name(tests_root, "language_async_variadic.ml")
     language_default_lambda_ml = find_file_by_name(tests_root, "language_default_lambda.ml")
     language_imported_interface_ml = find_file_by_name(tests_root, "language_imported_interface.ml")
+    language_imported_class_ml = find_file_by_name(tests_root, "language_imported_class.ml")
+    language_class_ml = find_file_by_name(tests_root, "language_class.ml")
+    language_class_features_ml = find_file_by_name(tests_root, "language_class_features.ml")
+    language_class_qualified_static_ml = find_file_by_name(tests_root, "language_class_qualified_static.ml")
+    language_class_constructors_ml = find_file_by_name(tests_root, "language_class_constructors.ml")
+    language_class_dispatch_ml = find_file_by_name(tests_root, "language_class_dispatch.ml")
+    language_class_access_alias_ml = find_file_by_name(tests_root, "language_class_access_alias.ml")
+    language_class_static_inheritance_ml = find_file_by_name(tests_root, "language_class_static_inheritance.ml")
+    language_interface_inheritance_ml = find_file_by_name(tests_root, "language_interface_inheritance.ml")
+    language_class_named_super_ml = find_file_by_name(tests_root, "language_class_named_super.ml")
     aes_ml = (find_file_by_name(tests_root, "aes128_ecb_nist_kat.ml") or find_ml_containing(tests_root, "AES-128"))
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
@@ -4254,7 +4264,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.0", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.1", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4362,6 +4372,13 @@ def main() -> int:
             name="language extensions: types, calls, lambdas, match, iterators, interfaces and async",
             status="SKIP", details="language_extensions.ml not found"))
 
+    if language_class_ml is not None:
+        tests.append(lambda: test_program_no_fail(
+            name="classes: inheritance, super, overrides and runtime interfaces",
+            mlc_runner=mlc_runner, ml_path=language_class_ml,
+            must_contain=["[OK] classes, inheritance, overrides and runtime interfaces"],
+            timeout_compile_s=180, timeout_run_s=120))
+
     if operator_overloading_ml is not None:
         tests.append(lambda: test_program_no_fail(
             name="operator overloads: exact static dispatch, inline calls and compound assignment",
@@ -4399,6 +4416,24 @@ def main() -> int:
          "[OK] lowered lambda default arguments"),
         ("interfaces are accepted in imported declaration modules", language_imported_interface_ml,
          "[OK] imported interface declarations"),
+        ("classes inherit across imported declaration modules", language_imported_class_ml,
+         "[OK] imported class inheritance"),
+        ("super calls normalize named and default arguments", language_class_named_super_ml,
+         "[OK] named super arguments"),
+        ("class initializers, visibility and abstract/final declarations", language_class_features_ml,
+         "[OK] class initialization, visibility, abstract and final"),
+        ("private static methods resolve from a qualified class body", language_class_qualified_static_ml,
+         "[OK] qualified private static call"),
+        ("class constructors agree for direct and indirect calls", language_class_constructors_ml,
+         "[OK] class constructor parity and private fields"),
+        ("polymorphic class dispatch covers cache hits and misses", language_class_dispatch_ml,
+         "[OK] polymorphic class dispatch"),
+        ("nonpublic members resolve through typed aliases", language_class_access_alias_ml,
+         "[OK] lexical class access through aliases"),
+        ("protected static methods inherit", language_class_static_inheritance_ml,
+         "[OK] inherited protected static method"),
+        ("interfaces inherit contracts and runtime identity", language_interface_inheritance_ml,
+         "[OK] interface inheritance"),
     ]:
         if test_path is not None:
             tests.append(lambda n=test_name, p=test_path, m=marker: test_program_no_fail(
@@ -4411,6 +4446,22 @@ def main() -> int:
     for negative_name, negative_file, marker in [
         ("language interface requires every method", "language_interface_missing.ml", "does not implement"),
         ("language interface validates typed signatures", "language_interface_signature.ml", "incompatible interface signature"),
+        ("class inheritance rejects cycles", "language_class_cycle.ml", "Cyclic class inheritance"),
+        ("class overrides require an explicit marker", "language_class_missing_override.ml", "add 'override'"),
+        ("class overrides preserve method signatures", "language_class_bad_override.ml", "Incompatible override"),
+        ("classes cannot extend structs", "language_class_extends_struct.ml", "is not a class"),
+        ("super calls require an inherited method", "language_class_bad_super.ml", "No inherited method"),
+        ("final classes cannot be extended", "language_class_final_base.ml", "Cannot extend final class"),
+        ("final methods cannot be overridden", "language_class_final_method.ml", "Cannot override final method"),
+        ("concrete classes implement abstract methods", "language_class_missing_abstract.ml", "must implement abstract method"),
+        ("abstract classes cannot be instantiated", "language_class_abstract_new.ml", "Cannot instantiate abstract class"),
+        ("private fields reject external access", "language_class_private_access.ml", "has no member"),
+        ("class initializers require a valid signature", "language_class_bad_init.ml", "Class initializer init"),
+        ("private base methods reject super calls", "language_class_private_super.ml", "private in the base class"),
+        ("interface inheritance rejects cycles", "language_interface_cycle.ml", "Cyclic interface inheritance"),
+        ("interface inheritance rejects conflicting signatures", "language_interface_conflict.ml", "Conflicting inherited interface method"),
+        ("private fields reject subclass access", "language_class_private_subclass.ml", "is private in"),
+        ("private fields are excluded from constructor parameters", "language_class_private_ctor.ml", "Unknown named argument"),
         ("language iterator rejects value returns", "language_iterator_return.ml", "use yield"),
         ("language lazy iterator rejects suspended synchronization", "language_lazy_iterator_invalid.ml", "yield inside match/switch or synchronized"),
         ("language named arguments reject duplicates", "language_named_argument_error.ml", "supplied more than once"),

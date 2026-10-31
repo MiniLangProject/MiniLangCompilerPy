@@ -524,6 +524,9 @@ class CodegenExpr:
         if binding is not None and getattr(binding, 'kind', None) != 'global':
             return None
         fields = (getattr(self, 'struct_fields', {}) or {}).get(name)
+        if name in (getattr(self, 'class_names', set()) or set()) and (
+                (getattr(self, 'struct_methods', {}) or {}).get(name, {}).get('init')):
+            return None
         args = list(call.args)
         if (name == 'error' or not fields or not 1 <= len(fields) <= 8
                 or len(args) != len(fields)
@@ -3206,9 +3209,22 @@ class CodegenExpr:
             except Exception:
                 pass
 
-            # Struct check
-            if ty_q in getattr(self, 'struct_id', {}):
-                sid = int(getattr(self, 'struct_id', {}).get(ty_q, 0) or 0)
+            # Concrete struct, class ancestor, or declared interface check.
+            interface_names = getattr(self, 'interface_names', set()) or set()
+            if ty_q not in interface_names and ty_raw in interface_names:
+                ty_q = ty_raw
+            if ty_q not in interface_names and '.' not in ty_raw:
+                matches = [name for name in interface_names if name.endswith('.' + ty_raw)]
+                if len(matches) == 1:
+                    ty_q = matches[0]
+            if ty_q in getattr(self, 'struct_id', {}) or ty_q in interface_names:
+                if ty_q in interface_names:
+                    accepted = list((getattr(self, 'interface_implementers', {}) or {}).get(ty_q, []))
+                else:
+                    accepted = [ty_q]
+                    accepted.extend(name for name, ancestors in (getattr(self, 'class_ancestors', {}) or {}).items()
+                                    if ty_q in ancestors)
+                accepted_ids = [int(self.struct_id[name]) for name in accepted if name in self.struct_id]
                 self.emit_expr(getattr(e, 'expr'))
 
                 fid = self.new_label_id()
@@ -3240,8 +3256,9 @@ class CodegenExpr:
                 a.mov_r32_membase_disp('edx', 'r11', 4)  # struct.struct_id
 
                 a.mark(l_struct_sid)
-                a.cmp_r32_imm('edx', sid)
-                a.jcc('e', l_true)
+                for sid in accepted_ids:
+                    a.cmp_r32_imm('edx', sid)
+                    a.jcc('e', l_true)
                 a.jmp(l_false)
 
                 a.mark(l_true)
@@ -5495,7 +5512,9 @@ class CodegenExpr:
                     elif any(name is not None for name in list(getattr(e, 'arg_names', []) or [])):
                         raise self.error("Named method arguments require a statically known struct receiver", e)
                     total = 1 + len(args)  # receiver + normalized explicit args
-                    if known_def is not None and len(list(getattr(known_def, 'params', []) or [])) == total:
+                    polymorphic_known = known_qname in (getattr(self, 'polymorphic_class_names', set()) or set())
+                    if (known_def is not None and not polymorphic_known
+                            and len(list(getattr(known_def, 'params', []) or [])) == total):
                         inline_used = int((getattr(self, '_inline_emitted_bytes', {}) or {}).get(known_method, 0) or 0)
                         if inline_used < self._pgo_inline_budget(known_method) and known_method in (getattr(self, 'inline_functions', {}) or {}):
                             inline_call = ml.Call(callee_expr, [tgt] + args)
@@ -5529,21 +5548,7 @@ class CodegenExpr:
                         return
 
                     # Candidates: structs that implement this method with matching arity.
-                    candidates = []
-                    for s_qn, md in (getattr(self, 'struct_methods', {}) or {}).items():
-                        fn_qn = (md or {}).get(mname)
-                        if not fn_qn:
-                            continue
-                        fn_def = (getattr(self, 'user_functions', {}) or {}).get(fn_qn)
-                        if fn_def is None:
-                            continue
-                        exp = len(getattr(fn_def, 'params', []) or [])
-                        if exp != total:
-                            continue
-                        sid = (getattr(self, 'struct_id', {}) or {}).get(s_qn)
-                        if sid is None:
-                            continue
-                        candidates.append((int(sid), str(fn_qn)))
+                    candidates = (getattr(self, 'method_candidates', {}) or {}).get((mname, total), [])
 
                     if candidates:
                         a = self.asm
@@ -5626,12 +5631,26 @@ class CodegenExpr:
                         a.jmp(l_done)
 
                         a.mark(l_ic_miss)
-                        # Dispatch by struct_id.
-                        for sid, fn_qn in candidates:
-                            l_case = f"mcall_case_{fid}_{sid}"
+                        # Keep the two hot receiver types in the inline cache;
+                        # use a balanced search for all remaining class IDs.
+                        def emit_candidate_search(entries):
+                            if not entries:
+                                a.jmp(l_fail)
+                                return
+                            middle = len(entries) // 2
+                            sid = entries[middle][0]
                             a.cmp_r32_imm("r10d", sid)
-                            a.jcc("e", l_case)
-                        a.jmp(l_fail)
+                            a.jcc("e", f"mcall_case_{fid}_{sid}")
+                            left = entries[:middle]
+                            right = entries[middle + 1:]
+                            left_label = f"mcall_left_{fid}_{sid}" if left else l_fail
+                            a.jcc("l", left_label)
+                            emit_candidate_search(right)
+                            if left:
+                                a.mark(left_label)
+                                emit_candidate_search(left)
+
+                        emit_candidate_search(candidates)
 
                         for sid, fn_qn in candidates:
                             l_case = f"mcall_case_{fid}_{sid}"
@@ -5681,6 +5700,9 @@ class CodegenExpr:
             # We use `void` (not a null pointer) so that if a `this` access slips through,
             # runtime errors are safer than a null dereference.
             call_args = list(getattr(e, 'args', []) or [])
+            raw_class_constructor = (list(getattr(e, 'arg_names', []) or [])[:1] == ['__ml_raw_ctor'])
+            if raw_class_constructor:
+                e.arg_names = [None] * len(call_args)
 
             # Normalize the extended call syntax before any direct-call fast
             # path sees it. The physical ABI remains fixed-arity; a variadic
@@ -5702,7 +5724,9 @@ class CodegenExpr:
             elif any(name is not None for name in list(getattr(e, 'arg_names', []) or [])):
                 # Struct constructors can use field names directly. Dynamic
                 # functions and native builtins have no stable parameter names.
-                if callee_name is not None and callee_name in (getattr(self, 'struct_fields', {}) or {}):
+                if callee_name in (getattr(self, 'class_constructor_arities', {}) or {}):
+                    pass  # The class constructor signature is normalized below.
+                elif callee_name is not None and callee_name in (getattr(self, 'struct_fields', {}) or {}):
                     fields = list(self.struct_fields.get(callee_name) or [])
                     values = [None] * len(fields)
                     names = list(getattr(e, 'arg_names', []) or [])
@@ -7450,6 +7474,21 @@ class CodegenExpr:
             # Struct constructor call: StructName(arg0, arg1, ...)
             if callee_name is not None and callee_name in self.struct_fields:
                 sname = callee_name
+                if sname in (getattr(self, 'abstract_classes', set()) or set()) and not raw_class_constructor:
+                    raise self.error(f"Cannot instantiate abstract class '{sname}'", e)
+                ctor_arity = (getattr(self, 'class_constructor_arities', {}) or {}).get(sname)
+                if ctor_arity is not None and not raw_class_constructor:
+                    full_name = f'__ml_ctor${sname}${ctor_arity[1]}'
+                    full_fn = (getattr(self, 'user_functions', {}) or {}).get(full_name)
+                    if full_fn is None:
+                        raise self.error(f"Missing constructor for class '{sname}'", e)
+                    normalized = self._normalize_declared_call_args(e, full_fn)
+                    constructed = ml.Call(ml.Var(full_name), normalized)
+                    for attr in ('_pos', '_filename'):
+                        if hasattr(e, attr):
+                            setattr(constructed, attr, getattr(e, attr))
+                    self.emit_expr(constructed)
+                    return
                 fields = self.struct_fields[sname]
                 n = len(fields)
 
@@ -7515,6 +7554,12 @@ class CodegenExpr:
                     a.mov_membase_disp_r64('r11', 8 + 4 * 8, 'rax')
 
                 # return ptr in rax
+                init_method = ((getattr(self, 'struct_methods', {}) or {}).get(sname, {}) or {}).get('init') if sname in (getattr(self, 'class_names', set()) or set()) and not raw_class_constructor else None
+                if init_method:
+                    a.mov_r64_membase_disp('rcx', 'rsp', base_off)
+                    a.mov_r64_imm64('r10', enc_void())
+                    a.call(f'fn_user_{init_method}')
+                    self._emit_auto_errprop()
                 a.mov_rax_rsp_disp32(base_off)
                 self.free_expr_temps(8)
                 return
@@ -7813,7 +7858,32 @@ class CodegenExpr:
             a.jmp(l_done)
 
             a.mark(l_stt)
-            # Arity check (nfields)
+            # Structtype flags: bit 0 forbids abstract construction; bit 1
+            # points to a legacy initializer; bit 2 selects class factories.
+            lid_class = self.new_label_id()
+            l_stt_concrete = f"icall_stt_concrete_{lid_class}"
+            l_stt_fields = f"icall_stt_fields_{lid_class}"
+            a.mov_r32_membase_disp("r10d", "r11", 12)
+            a.and_r32_imm("r10d", 1)
+            a.test_r32_r32("r10d", "r10d")
+            a.jcc("e", l_stt_concrete)
+            self._emit_make_error_const(ERR_CALL_NOT_CALLABLE, "Cannot instantiate abstract class")
+            a.jmp(l_done)
+            a.mark(l_stt_concrete)
+            a.mov_r32_membase_disp("r10d", "r11", 12)
+            a.and_r32_imm("r10d", 4)
+            a.test_r32_r32("r10d", "r10d")
+            a.jcc("e", l_stt_fields)
+            a.mov_r32_membase_disp("r10d", "r11", 24)
+            a.cmp_r32_imm("r10d", nargs)
+            a.jcc("g", l_fail)
+            a.mov_r32_membase_disp("r10d", "r11", 28)
+            a.cmp_r32_imm("r10d", nargs)
+            a.jcc("l", l_fail)
+            a.mov_r64_imm64("r10", enc_void())
+            a.call_membase_disp("r11", 32 + nargs * 8)
+            a.jmp(l_done)
+            a.mark(l_stt_fields)
             a.mov_r32_membase_disp("r10d", "r11", 4)
             a.cmp_r32_imm("r10d", nargs)
             a.jcc("ne", l_fail)
@@ -7880,6 +7950,20 @@ class CodegenExpr:
             for i in range(nargs):
                 a.mov_r64_membase_disp("r10", "rsp", base + (i + 1) * 8)
                 a.mov_membase_disp_r64("rax", 8 + i * 8, "r10")
+
+            l_stt_no_init = f"icall_stt_no_init_{lid_class}"
+            a.mov_r64_membase_disp("r11", "rsp", base)
+            a.mov_r32_membase_disp("r10d", "r11", 12)
+            a.and_r32_imm("r10d", 2)
+            a.test_r32_r32("r10d", "r10d")
+            a.jcc("e", l_stt_no_init)
+            a.mov_rsp_disp32_rax(base)
+            a.mov_r64_r64("rcx", "rax")
+            a.mov_r64_imm64("r10", enc_void())
+            a.call_membase_disp("r11", 16)
+            self._emit_auto_errprop()
+            a.mov_rax_rsp_disp32(base)
+            a.mark(l_stt_no_init)
 
             a.jmp(l_done)
             a.mark(l_fail)
