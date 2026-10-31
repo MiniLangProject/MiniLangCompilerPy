@@ -29,16 +29,4 @@ Track the channel error value used by this standard-library module.
 
 Source: `std/concurrent/channel.ml:14`
 
-<a id="constant-constant-std-concurrent-channel-channel-poll-milliseconds-const-channel-poll-milliseconds-1-std-concurrent-channel-ml-827773867"></a>
-### CHANNEL_POLL_MILLISECONDS
-
-```ml
-const CHANNEL_POLL_MILLISECONDS = 1
-```
-
-Track the channel poll milliseconds value used by this standard-library module.
-
-
-Source: `std/concurrent/channel.ml:16`
-
 - [std.concurrent.channel.ChannelReceive](Type-std-concurrent-channel-channelreceive-74555874.md) — struct

@@ -29,7 +29,7 @@ Provide the change extension operation for this standard-library module.
 | `newExtension` | `dynamic` | — | Value supplied for `newExtension`. |
 
 
-Source: `std/path.ml:121`
+Source: `std/path.ml:136`
 
 <a id="function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025"></a>
 ### directoryName
@@ -45,7 +45,7 @@ Provide the directory name operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/path.ml:89`
+Source: `std/path.ml:114`
 
 <a id="function-function-std-path-extension-function-extension-path-std-path-ml-598017679"></a>
 ### extension
@@ -61,7 +61,7 @@ Provide the extension operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/path.ml:106`
+Source: `std/path.ml:125`
 
 <a id="function-function-std-path-filename-function-filename-path-std-path-ml-8033517"></a>
 ### fileName
@@ -77,7 +77,7 @@ Provide the file name operation for this standard-library module.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/path.ml:72`
+Source: `std/path.ml:103`
 
 <a id="function-function-std-path-isabsolute-function-isabsolute-path-std-path-ml-2109808033"></a>
 ### isAbsolute
@@ -93,7 +93,7 @@ Reports whether is absolute.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/path.ml:41`
+Source: `std/path.ml:73`
 
 <a id="function-function-std-path-join-function-join-left-right-std-path-ml-2015239089"></a>
 ### join
@@ -110,7 +110,7 @@ Provide the join operation for this standard-library module.
 | `right` | `dynamic` | — | Right input value. |
 
 
-Source: `std/path.ml:56`
+Source: `std/path.ml:89`
 
 <a id="constant-constant-std-path-path-err-const-path-err-260-std-path-ml-35148953"></a>
 ### PATH_ERR

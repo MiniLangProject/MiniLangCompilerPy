@@ -12,7 +12,7 @@ struct Stream
 Represents stream.
 
 
-Source: `std/tls.ml:68`
+Source: `std/tls.ml:70`
 
 ## Members
 
@@ -26,7 +26,7 @@ closed
 Closed associated with `Stream`.
 
 
-Source: `std/tls.ml:76`
+Source: `std/tls.ml:78`
 
 <a id="field-field-std-tls-stream-provider-provider-std-tls-ml-1222590419"></a>
 ### provider
@@ -38,7 +38,7 @@ provider
 Provider associated with `Stream`.
 
 
-Source: `std/tls.ml:70`
+Source: `std/tls.ml:72`
 
 <a id="field-field-std-tls-stream-serverside-serverside-std-tls-ml-873928809"></a>
 ### serverSide
@@ -50,7 +50,7 @@ serverSide
 Server side associated with `Stream`.
 
 
-Source: `std/tls.ml:74`
+Source: `std/tls.ml:76`
 
 <a id="field-field-std-tls-stream-state-state-std-tls-ml-427289269"></a>
 ### state
@@ -62,4 +62,4 @@ state
 State associated with `Stream`.
 
 
-Source: `std/tls.ml:72`
+Source: `std/tls.ml:74`

@@ -12,7 +12,7 @@ struct Stack
 LIFO stack with geometric backing-array growth.
 
 
-Source: `std/ds/stack.ml:119`
+Source: `std/ds/stack.ml:117`
 
 ## Members
 
@@ -26,7 +26,7 @@ function clear()
 Removes all elements.
 
 
-Source: `std/ds/stack.ml:179`
+Source: `std/ds/stack.ml:175`
 
 <a id="field-field-std-ds-stack-stack-data-data-std-ds-stack-ml-1702932382"></a>
 ### data
@@ -38,7 +38,7 @@ data
 Backing data owned by `Stack`.
 
 
-Source: `std/ds/stack.ml:121`
+Source: `std/ds/stack.ml:119`
 
 <a id="static_method-static-method-std-ds-stack-stack-fromarray-static-function-fromarray-values-std-ds-stack-ml-1532778091"></a>
 ### fromArray
@@ -54,7 +54,7 @@ Creates a stack from an array (copies the array).
 | `values` | `dynamic` | — | Values to process. |
 
 
-Source: `std/ds/stack.ml:130`
+Source: `std/ds/stack.ml:128`
 
 <a id="method-method-std-ds-stack-stack-isempty-function-isempty-std-ds-stack-ml-879125514"></a>
 ### isEmpty
@@ -66,7 +66,7 @@ function isEmpty()
 Checks whether the stack is empty.
 
 
-Source: `std/ds/stack.ml:173`
+Source: `std/ds/stack.ml:169`
 
 <a id="method-method-std-ds-stack-stack-len-function-len-std-ds-stack-ml-1431646790"></a>
 ### len
@@ -78,7 +78,7 @@ function len()
 Gets the number of elements.
 
 
-Source: `std/ds/stack.ml:167`
+Source: `std/ds/stack.ml:163`
 
 <a id="static_method-static-method-std-ds-stack-stack-new-static-function-new-std-ds-stack-ml-1244206485"></a>
 ### new
@@ -90,7 +90,7 @@ static function new()
 Creates a new empty stack.
 
 
-Source: `std/ds/stack.ml:124`
+Source: `std/ds/stack.ml:122`
 
 <a id="method-method-std-ds-stack-stack-peek-function-peek-std-ds-stack-ml-520126940"></a>
 ### peek
@@ -102,7 +102,7 @@ function peek()
 Peeks the top element without removing it.
 
 
-Source: `std/ds/stack.ml:236`
+Source: `std/ds/stack.ml:232`
 
 <a id="method-method-std-ds-stack-stack-peekor-function-peekor-fallbackvalue-std-ds-stack-ml-938237637"></a>
 ### peekOr
@@ -118,7 +118,7 @@ Peeks the top element or returns a fallback.
 | `fallbackValue` | `dynamic` | — | Value supplied for `fallbackValue`. |
 
 
-Source: `std/ds/stack.ml:248`
+Source: `std/ds/stack.ml:244`
 
 <a id="method-method-std-ds-stack-stack-pop-function-pop-std-ds-stack-ml-337641410"></a>
 ### pop
@@ -130,7 +130,7 @@ function pop()
 Pops the top element and returns it.
 
 
-Source: `std/ds/stack.ml:257`
+Source: `std/ds/stack.ml:253`
 
 <a id="method-method-std-ds-stack-stack-popor-function-popor-fallbackvalue-std-ds-stack-ml-1004619701"></a>
 ### popOr
@@ -146,7 +146,7 @@ Pops the top element or returns a fallback.
 | `fallbackValue` | `dynamic` | — | Value supplied for `fallbackValue`. |
 
 
-Source: `std/ds/stack.ml:276`
+Source: `std/ds/stack.ml:272`
 
 <a id="method-method-std-ds-stack-stack-push-function-push-value-std-ds-stack-ml-1856663047"></a>
 ### push
@@ -162,7 +162,7 @@ Pushes a value onto the stack.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/stack.ml:189`
+Source: `std/ds/stack.ml:185`
 
 <a id="method-method-std-ds-stack-stack-pushall-function-pushall-values-std-ds-stack-ml-2011042572"></a>
 ### pushAll
@@ -178,7 +178,7 @@ Pushes all values from an array onto the stack (in order).
 | `values` | `dynamic` | — | Values to process. |
 
 
-Source: `std/ds/stack.ml:207`
+Source: `std/ds/stack.ml:203`
 
 <a id="method-method-std-ds-stack-stack-toarray-function-toarray-std-ds-stack-ml-1503124416"></a>
 ### toArray
@@ -190,4 +190,4 @@ function toArray()
 Returns a shallow copy of the backing array.
 
 
-Source: `std/ds/stack.ml:285`
+Source: `std/ds/stack.ml:281`

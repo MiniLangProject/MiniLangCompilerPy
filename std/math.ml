@@ -19,12 +19,24 @@ limitations under the License.
 package std.math
 
 #if TARGET_OS == "windows"
+/// Native square-root entry point used by this package.
+/// @internal
 extern function _nativeSqrt(value as double) from "msvcrt.dll" symbol "sqrt" returns double
+/// Native exponential entry point used by this package.
+/// @internal
 extern function _nativeExp(value as double) from "msvcrt.dll" symbol "exp" returns double
+/// Native natural-logarithm entry point used by this package.
+/// @internal
 extern function _nativeLn(value as double) from "msvcrt.dll" symbol "log" returns double
 #else
+/// Native square-root entry point used by this package.
+/// @internal
 extern function _nativeSqrt(value as double) from "libm.so.6" symbol "sqrt" returns double
+/// Native exponential entry point used by this package.
+/// @internal
 extern function _nativeExp(value as double) from "libm.so.6" symbol "exp" returns double
+/// Native natural-logarithm entry point used by this package.
+/// @internal
 extern function _nativeLn(value as double) from "libm.so.6" symbol "log" returns double
 #endif
 

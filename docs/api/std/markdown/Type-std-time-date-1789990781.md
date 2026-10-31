@@ -12,7 +12,7 @@ struct Date
 Calendar date/time (proleptic Gregorian, year 1..9999).
 
 
-Source: `std/time.ml:336`
+Source: `std/time.ml:337`
 
 ## Members
 
@@ -26,7 +26,7 @@ day
 Day associated with `Date`.
 
 
-Source: `std/time.ml:342`
+Source: `std/time.ml:343`
 
 <a id="field-field-std-time-date-month-month-std-time-ml-1190643639"></a>
 ### month
@@ -38,7 +38,7 @@ month
 Month associated with `Date`.
 
 
-Source: `std/time.ml:340`
+Source: `std/time.ml:341`
 
 <a id="field-field-std-time-date-year-year-std-time-ml-392193281"></a>
 ### year
@@ -50,4 +50,4 @@ year
 Year associated with `Date`.
 
 
-Source: `std/time.ml:338`
+Source: `std/time.ml:339`

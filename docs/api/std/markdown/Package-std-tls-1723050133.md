@@ -21,6 +21,7 @@
 - [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) — function
 - [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) — function
 - [`std.tls.Provider`](Type-std-tls-provider-1415630088.md) — struct
+- [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) — function
 - [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) — function
 - [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) — function
 - [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) — function

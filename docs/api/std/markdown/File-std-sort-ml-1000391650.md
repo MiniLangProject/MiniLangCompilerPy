@@ -25,7 +25,7 @@ Checks whether an array is sorted according to the given comparator.
 | `lessFn` | `dynamic` | — | Value supplied for `lessFn`. |
 
 
-Source: `std/sort.ml:212`
+Source: `std/sort.ml:226`
 
 <a id="function-function-std-sort-sort-function-sort-arr-std-sort-ml-333187585"></a>
 ### sort
@@ -74,7 +74,7 @@ Faster in-place sort using the default comparator (ascending) - uses an iterativ
 | `arr` | `dynamic` | — | Value supplied for `arr`. |
 
 
-Source: `std/sort.ml:120`
+Source: `std/sort.ml:132`
 
 <a id="function-function-std-sort-sortfastby-function-sortfastby-arr-lessfn-std-sort-ml-1761662250"></a>
 ### sortFastBy
@@ -91,4 +91,4 @@ Faster in-place sort with a custom comparator - uses an iterative quicksort with
 | `lessFn` | `dynamic` | — | Value supplied for `lessFn`. |
 
 
-Source: `std/sort.ml:127`
+Source: `std/sort.ml:139`

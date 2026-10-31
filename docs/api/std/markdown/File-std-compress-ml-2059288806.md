@@ -30,7 +30,7 @@ Select the smallest of LZ4, RLE, and raw encoding.
 | `input` | `dynamic` | — | Bytes to compress. |
 
 
-Source: `std/compress.ml:91`
+Source: `std/compress.ml:96`
 
 <a id="function-function-std-compress-compress-function-compress-input-mode-std-compress-ml-2059640593"></a>
 ### compress
@@ -75,7 +75,7 @@ Return the advertised decoded size without allocating the payload. Always enforc
 | `container` | `dynamic` | — | MLC1 container bytes. |
 
 
-Source: `std/compress.ml:98`
+Source: `std/compress.ml:103`
 
 <a id="function-function-std-compress-decompress-function-decompress-container-maxoutputbytes-std-compress-ml-2025164771"></a>
 ### decompress
@@ -92,7 +92,7 @@ Decompress with an explicit output cap and verify the CRC-32C checksum. The limi
 | `maxOutputBytes` | `dynamic` | — | Maximum accepted decoded byte length. |
 
 
-Source: `std/compress.ml:120`
+Source: `std/compress.ml:125`
 
 <a id="function-function-std-compress-fast-function-fast-input-std-compress-ml-1661306628"></a>
 ### fast
@@ -108,7 +108,7 @@ Fast general-purpose compression with raw fallback.
 | `input` | `dynamic` | — | Bytes to compress. |
 
 
-Source: `std/compress.ml:85`
+Source: `std/compress.ml:90`
 
 <a id="constant-constant-std-compress-header-size-const-header-size-16-std-compress-ml-965599368"></a>
 ### HEADER_SIZE

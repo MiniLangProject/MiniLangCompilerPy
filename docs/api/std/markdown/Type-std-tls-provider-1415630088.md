@@ -88,6 +88,18 @@ Send callback; treat its input bytes as read-only and return the consumed count.
 
 Source: `std/tls.ml:58`
 
+<a id="field-field-std-tls-provider-sendrange-sendrange-std-tls-ml-233751482"></a>
+### sendRange
+
+```ml
+sendRange
+```
+
+Optional ranged send callback: (state, bytes, offset, count) -> consumed count.
+
+
+Source: `std/tls.ml:66`
+
 <a id="field-field-std-tls-provider-shutdownstream-shutdownstream-std-tls-ml-1938407858"></a>
 ### shutdownStream
 

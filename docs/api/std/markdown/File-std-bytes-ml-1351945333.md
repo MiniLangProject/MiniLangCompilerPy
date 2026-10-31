@@ -74,7 +74,7 @@ Return a lexicographic three-way comparison result.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:329`
+Source: `std/bytes.ml:340`
 
 <a id="function-function-std-bytes-concat-function-concat-a-b-std-bytes-ml-1927135267"></a>
 ### concat
@@ -140,7 +140,7 @@ Decode little-endian UTF-16 bytes up to the first zero code unit.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:394`
+Source: `std/bytes.ml:405`
 
 <a id="function-function-std-bytes-decodeutf8-function-decodeutf8-b-std-bytes-ml-1587911928"></a>
 ### decodeUtf8
@@ -156,7 +156,7 @@ Decode UTF-8 bytes, returning void on invalid input.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:367`
+Source: `std/bytes.ml:378`
 
 <a id="function-function-std-bytes-decodeutf8orerror-function-decodeutf8orerror-b-std-bytes-ml-396718180"></a>
 ### decodeUtf8OrError
@@ -172,7 +172,7 @@ Decode UTF-8 bytes, preserving validation failures as errors.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:373`
+Source: `std/bytes.ml:384`
 
 <a id="function-function-std-bytes-decodeutf8z-function-decodeutf8z-b-std-bytes-ml-913051038"></a>
 ### decodeUtf8Z
@@ -188,7 +188,7 @@ Decode UTF-8 bytes up to the first zero terminator.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:387`
+Source: `std/bytes.ml:398`
 
 <a id="function-function-std-bytes-endswith-function-endswith-b-suffix-std-bytes-ml-1215280649"></a>
 ### endsWith
@@ -205,7 +205,7 @@ Report whether b ends with suffix.
 | `suffix` | `dynamic` | — | Value supplied for `suffix`. |
 
 
-Source: `std/bytes.ml:234`
+Source: `std/bytes.ml:245`
 
 <a id="function-function-std-bytes-equals-function-equals-a-b-std-bytes-ml-1472927903"></a>
 ### equals
@@ -239,7 +239,7 @@ Replace every byte in b with the low eight bits of value.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:202`
+Source: `std/bytes.ml:213`
 
 <a id="function-function-std-bytes-fromhex-function-fromhex-s-std-bytes-ml-510091409"></a>
 ### fromHex
@@ -255,7 +255,7 @@ Decode hexadecimal text, returning void on invalid input.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/bytes.ml:347`
+Source: `std/bytes.ml:358`
 
 <a id="function-function-std-bytes-fromhexorerror-function-fromhexorerror-s-std-bytes-ml-2035014311"></a>
 ### fromHexOrError
@@ -271,7 +271,7 @@ Decode hexadecimal text, preserving validation failures as errors.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/bytes.ml:353`
+Source: `std/bytes.ml:364`
 
 <a id="function-function-std-bytes-indexof-function-indexof-hay-needle-start-std-bytes-ml-154105993"></a>
 ### indexOf
@@ -289,7 +289,7 @@ Find the first needle occurrence at or after start, or return -1.
 | `start` | `dynamic` | — | Value supplied for `start`. |
 
 
-Source: `std/bytes.ml:300`
+Source: `std/bytes.ml:311`
 
 <a id="function-function-std-bytes-lastindexof-function-lastindexof-hay-needle-std-bytes-ml-26887577"></a>
 ### lastIndexOf
@@ -306,7 +306,7 @@ Find the final needle occurrence, or return -1.
 | `needle` | `dynamic` | — | Value supplied for `needle`. |
 
 
-Source: `std/bytes.ml:316`
+Source: `std/bytes.ml:327`
 
 <a id="function-function-std-bytes-readu16be-function-readu16be-b-off-std-bytes-ml-388570013"></a>
 ### readU16BE
@@ -323,7 +323,7 @@ Read an unsigned big-endian 16-bit integer.
 | `off` | `dynamic` | — | Value supplied for `off`. |
 
 
-Source: `std/bytes.ml:542`
+Source: `std/bytes.ml:553`
 
 <a id="function-function-std-bytes-readu16le-function-readu16le-b-off-std-bytes-ml-827175377"></a>
 ### readU16LE
@@ -340,7 +340,7 @@ Read an unsigned little-endian 16-bit integer.
 | `off` | `dynamic` | — | Value supplied for `off`. |
 
 
-Source: `std/bytes.ml:523`
+Source: `std/bytes.ml:534`
 
 <a id="function-function-std-bytes-readu32be-function-readu32be-b-off-std-bytes-ml-157086745"></a>
 ### readU32BE
@@ -357,7 +357,7 @@ Read an unsigned big-endian 32-bit integer.
 | `off` | `dynamic` | — | Value supplied for `off`. |
 
 
-Source: `std/bytes.ml:638`
+Source: `std/bytes.ml:649`
 
 <a id="function-function-std-bytes-readu32le-function-readu32le-b-off-std-bytes-ml-1814407613"></a>
 ### readU32LE
@@ -374,7 +374,7 @@ Read an unsigned little-endian 32-bit integer.
 | `off` | `dynamic` | — | Value supplied for `off`. |
 
 
-Source: `std/bytes.ml:617`
+Source: `std/bytes.ml:628`
 
 <a id="function-function-std-bytes-readu8-function-readu8-b-off-std-bytes-ml-1101136119"></a>
 ### readU8
@@ -391,7 +391,7 @@ Read one unsigned byte or return a range/type error.
 | `off` | `dynamic` | — | Value supplied for `off`. |
 
 
-Source: `std/bytes.ml:454`
+Source: `std/bytes.ml:465`
 
 <a id="function-function-std-bytes-startswith-function-startswith-b-prefix-std-bytes-ml-913248740"></a>
 ### startsWith
@@ -408,7 +408,7 @@ Report whether b begins with prefix.
 | `prefix` | `dynamic` | — | Value supplied for `prefix`. |
 
 
-Source: `std/bytes.ml:221`
+Source: `std/bytes.ml:232`
 
 <a id="function-function-std-bytes-sub-function-sub-b-offset-length-std-bytes-ml-46179299"></a>
 ### sub
@@ -460,7 +460,7 @@ Encode bytes as lowercase hexadecimal text.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:341`
+Source: `std/bytes.ml:352`
 
 <a id="function-function-std-bytes-writeu16be-function-writeu16be-b-off-value-std-bytes-ml-1415343010"></a>
 ### writeU16BE
@@ -478,7 +478,7 @@ Write an unsigned 16-bit integer in big-endian order.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:498`
+Source: `std/bytes.ml:509`
 
 <a id="function-function-std-bytes-writeu16le-function-writeu16le-b-off-value-std-bytes-ml-623641502"></a>
 ### writeU16LE
@@ -496,7 +496,7 @@ Write an unsigned 16-bit integer in little-endian order.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:472`
+Source: `std/bytes.ml:483`
 
 <a id="function-function-std-bytes-writeu32be-function-writeu32be-b-off-value-std-bytes-ml-560161774"></a>
 ### writeU32BE
@@ -514,7 +514,7 @@ Write an unsigned 32-bit integer in big-endian order.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:590`
+Source: `std/bytes.ml:601`
 
 <a id="function-function-std-bytes-writeu32le-function-writeu32le-b-off-value-std-bytes-ml-720189578"></a>
 ### writeU32LE
@@ -532,7 +532,7 @@ Write an unsigned 32-bit integer in little-endian order.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:562`
+Source: `std/bytes.ml:573`
 
 <a id="function-function-std-bytes-writeu8-function-writeu8-b-off-value-std-bytes-ml-1748622230"></a>
 ### writeU8
@@ -550,7 +550,7 @@ Write one unsigned byte and return the next offset.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/bytes.ml:430`
+Source: `std/bytes.ml:441`
 
 <a id="function-function-std-bytes-xor-function-xor-a-b-std-bytes-ml-2027129921"></a>
 ### xor
@@ -567,7 +567,7 @@ Return the bytewise XOR of two equal-length sequences.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:659`
+Source: `std/bytes.ml:670`
 
 <a id="function-function-std-bytes-xorinplace-function-xorinplace-a-b-std-bytes-ml-1831427983"></a>
 ### xorInPlace
@@ -584,4 +584,4 @@ XOR b into a in place; both sequences must have equal length.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/bytes.ml:684`
+Source: `std/bytes.ml:709`

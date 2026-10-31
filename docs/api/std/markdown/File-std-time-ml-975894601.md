@@ -25,7 +25,7 @@ namespace clock
 Time-of-day construction, formatting and arithmetic.
 
 
-Source: `std/time.ml:668`
+Source: `std/time.ml:669`
 
 <a id="function-function-std-time-clock-addmillis-function-addmillis-t-delta-std-time-ml-1733200724"></a>
 ### addMillis
@@ -42,7 +42,7 @@ Add milliseconds to a time (wraps within 24h).
 | `delta` | `dynamic` | — | Value supplied for `delta`. |
 
 
-Source: `std/time.ml:738`
+Source: `std/time.ml:739`
 
 <a id="function-function-std-time-clock-compare-function-compare-a-b-std-time-ml-1662221955"></a>
 ### compare
@@ -59,7 +59,7 @@ Compare two times.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/time.ml:694`
+Source: `std/time.ml:695`
 
 <a id="function-function-std-time-clock-frommillis-function-frommillis-ms-std-time-ml-576832168"></a>
 ### fromMillis
@@ -75,7 +75,7 @@ Convert milliseconds since 00:00 into a Time.
 | `ms` | `dynamic` | — | Value supplied for `ms`. |
 
 
-Source: `std/time.ml:717`
+Source: `std/time.ml:718`
 
 <a id="function-function-std-time-clock-isvalid-function-isvalid-t-std-time-ml-358966926"></a>
 ### isValid
@@ -91,7 +91,7 @@ Validate a Time struct.
 | `t` | `dynamic` | — | Value supplied for `t`. |
 
 
-Source: `std/time.ml:687`
+Source: `std/time.ml:688`
 
 <a id="function-function-std-time-clock-isvalidhmsm-function-isvalidhmsm-h-m-s0-ms-std-time-ml-348818806"></a>
 ### isValidHMSM
@@ -110,7 +110,7 @@ Validate a time quadruple (hour, minute, second, millisecond).
 | `ms` | `dynamic` | — | Value supplied for `ms`. |
 
 
-Source: `std/time.ml:674`
+Source: `std/time.ml:675`
 
 <a id="function-function-std-time-clock-parse-function-parse-text-std-time-ml-549001107"></a>
 ### parse
@@ -126,7 +126,7 @@ Parse time in the form HH:MM or HH:MM:SS[.mmm].
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/time.ml:767`
+Source: `std/time.ml:768`
 
 <a id="function-function-std-time-clock-tomillis-function-tomillis-t-std-time-ml-2034526210"></a>
 ### toMillis
@@ -142,7 +142,7 @@ Convert a Time into milliseconds since 00:00:00.000.
 | `t` | `dynamic` | — | Value supplied for `t`. |
 
 
-Source: `std/time.ml:708`
+Source: `std/time.ml:709`
 
 <a id="function-function-std-time-clock-tostring-function-tostring-t-std-time-ml-68025454"></a>
 ### toString
@@ -158,7 +158,7 @@ Format time as HH:MM:SS.mmm.
 | `t` | `dynamic` | — | Value supplied for `t`. |
 
 
-Source: `std/time.ml:758`
+Source: `std/time.ml:759`
 
 <a id="function-function-std-time-clocktostring-function-clocktostring-t-std-time-ml-904167438"></a>
 ### clockToString
@@ -174,7 +174,7 @@ Format a Time as a string (HH:MM:SS.mmm).
 | `t` | `dynamic` | — | Value supplied for `t`. |
 
 
-Source: `std/time.ml:1086`
+Source: `std/time.ml:1087`
 
 <a id="namespace-namespace-std-time-date-namespace-date-std-time-ml-498128071"></a>
 ### date
@@ -186,7 +186,7 @@ namespace date
 Calendar-date construction, validation and arithmetic.
 
 
-Source: `std/time.ml:426`
+Source: `std/time.ml:427`
 
 - [std.time.Date](Type-std-time-date-1789990781.md) — struct
 <a id="function-function-std-time-date-adddays-function-adddays-d-delta-std-time-ml-164994134"></a>
@@ -204,7 +204,7 @@ Add days to a date.
 | `delta` | `dynamic` | — | Value supplied for `delta`. |
 
 
-Source: `std/time.ml:593`
+Source: `std/time.ml:594`
 
 <a id="function-function-std-time-date-compare-function-compare-a-b-std-time-ml-265951007"></a>
 ### compare
@@ -221,7 +221,7 @@ Compare two dates.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/time.ml:580`
+Source: `std/time.ml:581`
 
 <a id="function-function-std-time-date-dayofweek-function-dayofweek-d-std-time-ml-1357661304"></a>
 ### dayOfWeek
@@ -237,7 +237,7 @@ Compute day of week for a date.
 | `d` | `dynamic` | — | Value supplied for `d`. |
 
 
-Source: `std/time.ml:618`
+Source: `std/time.ml:619`
 
 <a id="function-function-std-time-date-daysinmonth-function-daysinmonth-year-month-std-time-ml-483008705"></a>
 ### daysInMonth
@@ -254,7 +254,7 @@ Number of days in a month for a given year.
 | `month` | `dynamic` | — | Value supplied for `month`. |
 
 
-Source: `std/time.ml:445`
+Source: `std/time.ml:446`
 
 <a id="function-function-std-time-date-diffdays-function-diffdays-a-b-std-time-ml-1684126225"></a>
 ### diffDays
@@ -271,7 +271,7 @@ Difference in days between two dates.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/time.ml:607`
+Source: `std/time.ml:608`
 
 <a id="function-function-std-time-date-fromordinal-function-fromordinal-days-std-time-ml-1450309647"></a>
 ### fromOrdinal
@@ -287,7 +287,7 @@ Inverse of toOrdinal.
 | `days` | `dynamic` | — | Value supplied for `days`. |
 
 
-Source: `std/time.ml:525`
+Source: `std/time.ml:526`
 
 <a id="function-function-std-time-date-isleapyear-function-isleapyear-year-std-time-ml-576789919"></a>
 ### isLeapYear
@@ -303,7 +303,7 @@ Check if a year is a leap year (Gregorian rules).
 | `year` | `dynamic` | — | Value supplied for `year`. |
 
 
-Source: `std/time.ml:429`
+Source: `std/time.ml:430`
 
 <a id="function-function-std-time-date-isvalid-function-isvalid-d-std-time-ml-398313186"></a>
 ### isValid
@@ -319,7 +319,7 @@ Validate a Date struct.
 | `d` | `dynamic` | — | Value supplied for `d`. |
 
 
-Source: `std/time.ml:492`
+Source: `std/time.ml:493`
 
 <a id="function-function-std-time-date-isvalidymd-function-isvalidymd-year-month-day-std-time-ml-1097498691"></a>
 ### isValidYMD
@@ -337,7 +337,7 @@ Validate a date triple (year, month, day).
 | `day` | `dynamic` | — | Value supplied for `day`. |
 
 
-Source: `std/time.ml:474`
+Source: `std/time.ml:475`
 
 <a id="function-function-std-time-date-parse-function-parse-text-std-time-ml-1488842447"></a>
 ### parse
@@ -353,7 +353,7 @@ Parse a date in the form YYYY-MM-DD.
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/time.ml:639`
+Source: `std/time.ml:640`
 
 <a id="function-function-std-time-date-toordinal-function-toordinal-d-std-time-ml-2117441882"></a>
 ### toOrdinal
@@ -369,7 +369,7 @@ Convert a Date to an ordinal day count.
 | `d` | `dynamic` | — | Value supplied for `d`. |
 
 
-Source: `std/time.ml:498`
+Source: `std/time.ml:499`
 
 <a id="function-function-std-time-date-tostring-function-tostring-d-std-time-ml-1073583202"></a>
 ### toString
@@ -385,7 +385,7 @@ Format date as YYYY-MM-DD.
 | `d` | `dynamic` | — | Value supplied for `d`. |
 
 
-Source: `std/time.ml:630`
+Source: `std/time.ml:631`
 
 <a id="namespace-namespace-std-time-datetime-namespace-datetime-std-time-ml-253586669"></a>
 ### datetime
@@ -397,7 +397,7 @@ namespace datetime
 Combined local/UTC date-time conversion and arithmetic.
 
 
-Source: `std/time.ml:820`
+Source: `std/time.ml:821`
 
 - [std.time.DateTime](Type-std-time-datetime-1990581564.md) — struct
 <a id="function-function-std-time-datetime-adddays-function-adddays-dt-deltadays-std-time-ml-203304236"></a>
@@ -415,7 +415,7 @@ Add whole days to a DateTime (keeps clock time).
 | `deltaDays` | `dynamic` | — | Value supplied for `deltaDays`. |
 
 
-Source: `std/time.ml:893`
+Source: `std/time.ml:894`
 
 <a id="function-function-std-time-datetime-addmillis-function-addmillis-dt-delta-std-time-ml-1561373415"></a>
 ### addMillis
@@ -432,7 +432,7 @@ Add milliseconds to a DateTime.
 | `delta` | `dynamic` | — | Value supplied for `delta`. |
 
 
-Source: `std/time.ml:859`
+Source: `std/time.ml:860`
 
 <a id="function-function-std-time-datetime-compare-function-compare-a-b-std-time-ml-1157888456"></a>
 ### compare
@@ -449,7 +449,7 @@ Compare two date-times.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/time.ml:830`
+Source: `std/time.ml:831`
 
 <a id="function-function-std-time-datetime-fromsystemtime-function-fromsystemtime-st-std-time-ml-1983396154"></a>
 ### fromSystemTime
@@ -465,7 +465,7 @@ Convert a native SystemTime value to a DateTime.
 | `st` | `dynamic` | — | Value supplied for `st`. |
 
 
-Source: `std/time.ml:952`
+Source: `std/time.ml:953`
 
 <a id="function-function-std-time-datetime-fromunixmillis-function-fromunixmillis-unixms-std-time-ml-399158673"></a>
 ### fromUnixMillis
@@ -481,7 +481,7 @@ Convert Unix milliseconds since 1970-01-01T00:00:00Z to a DateTime.
 | `unixMs` | `dynamic` | — | Value supplied for `unixMs`. |
 
 
-Source: `std/time.ml:1007`
+Source: `std/time.ml:1008`
 
 <a id="function-function-std-time-datetime-isvalid-function-isvalid-dt-std-time-ml-101864515"></a>
 ### isValid
@@ -497,7 +497,7 @@ Validate a DateTime struct.
 | `dt` | `dynamic` | — | Value supplied for `dt`. |
 
 
-Source: `std/time.ml:823`
+Source: `std/time.ml:824`
 
 <a id="function-function-std-time-datetime-nowlocal-function-nowlocal-std-time-ml-1503210091"></a>
 ### nowLocal
@@ -509,7 +509,7 @@ function nowLocal()
 Current local wall-clock DateTime.
 
 
-Source: `std/time.ml:984`
+Source: `std/time.ml:985`
 
 <a id="function-function-std-time-datetime-nowunixmillisutc-function-nowunixmillisutc-std-time-ml-1128288483"></a>
 ### nowUnixMillisUtc
@@ -521,7 +521,7 @@ function nowUnixMillisUtc()
 Current Unix milliseconds based on UTC time.
 
 
-Source: `std/time.ml:1034`
+Source: `std/time.ml:1035`
 
 <a id="function-function-std-time-datetime-nowutc-function-nowutc-std-time-ml-120915363"></a>
 ### nowUtc
@@ -533,7 +533,7 @@ function nowUtc()
 Current UTC wall-clock DateTime.
 
 
-Source: `std/time.ml:990`
+Source: `std/time.ml:991`
 
 <a id="function-function-std-time-datetime-parse-function-parse-text-std-time-ml-1598500980"></a>
 ### parse
@@ -549,7 +549,7 @@ Parse a DateTime in the form "YYYY-MM-DD HH:MM:SS[.mmm]" (also accepts 'T').
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/time.ml:918`
+Source: `std/time.ml:919`
 
 <a id="function-function-std-time-datetime-tomillis-function-tomillis-dt-std-time-ml-874033111"></a>
 ### toMillis
@@ -565,7 +565,7 @@ Convert a DateTime to milliseconds since 0001-01-01 00:00:00.000.
 | `dt` | `dynamic` | — | Value supplied for `dt`. |
 
 
-Source: `std/time.ml:840`
+Source: `std/time.ml:841`
 
 <a id="function-function-std-time-datetime-tostring-function-tostring-dt-std-time-ml-1324149955"></a>
 ### toString
@@ -581,7 +581,7 @@ Format a DateTime as "YYYY-MM-DD HH:MM:SS.mmm".
 | `dt` | `dynamic` | — | Value supplied for `dt`. |
 
 
-Source: `std/time.ml:909`
+Source: `std/time.ml:910`
 
 <a id="function-function-std-time-datetime-tounixmillis-function-tounixmillis-dt-std-time-ml-894528563"></a>
 ### toUnixMillis
@@ -597,7 +597,7 @@ Convert a DateTime to Unix milliseconds since 1970-01-01T00:00:00Z.
 | `dt` | `dynamic` | — | Value supplied for `dt`. |
 
 
-Source: `std/time.ml:997`
+Source: `std/time.ml:998`
 
 <a id="function-function-std-time-datetimetostring-function-datetimetostring-dt-std-time-ml-1282710884"></a>
 ### datetimeToString
@@ -613,7 +613,7 @@ Format a DateTime as a string (YYYY-MM-DD HH:MM:SS.mmm).
 | `dt` | `dynamic` | — | Value supplied for `dt`. |
 
 
-Source: `std/time.ml:1092`
+Source: `std/time.ml:1093`
 
 <a id="function-function-std-time-datetostring-function-datetostring-d-std-time-ml-1682286890"></a>
 ### dateToString
@@ -629,7 +629,7 @@ Format a Date as a string (YYYY-MM-DD).
 | `d` | `dynamic` | — | Value supplied for `d`. |
 
 
-Source: `std/time.ml:1080`
+Source: `std/time.ml:1081`
 
 <a id="function-function-std-time-elapsed-function-elapsed-start-time-end-time-std-time-ml-1524773121"></a>
 ### elapsed
@@ -646,7 +646,7 @@ Compute elapsed milliseconds between two tick readings.
 | `end_time` | `dynamic` | — | Value supplied for `end_time`. |
 
 
-Source: `std/time.ml:323`
+Source: `std/time.ml:324`
 
 <a id="function-function-std-time-formatduration-function-formatduration-ms-std-time-ml-951102696"></a>
 ### formatDuration
@@ -662,7 +662,7 @@ Format a duration in milliseconds into a readable string.
 | `ms` | `dynamic` | — | Value supplied for `ms`. |
 
 
-Source: `std/time.ml:1045`
+Source: `std/time.ml:1046`
 
 <a id="constant-constant-std-time-max-portable-sleep-ms-const-max-portable-sleep-ms-2147483647-std-time-ml-175303927"></a>
 ### MAX_PORTABLE_SLEEP_MS
@@ -690,7 +690,7 @@ Sleep for a number of milliseconds.
 | `ms` | `dynamic` | — | Value supplied for `ms`. |
 
 
-Source: `std/time.ml:295`
+Source: `std/time.ml:296`
 
 - [std.time.SystemTime](Type-std-time-systemtime-224467961.md) — struct
 <a id="constant-constant-std-time-systemtime-size-const-systemtime-size-16-std-time-ml-2026073104"></a>
@@ -715,7 +715,7 @@ function ticks()
 Read monotonic milliseconds since system start (no wall-clock).
 
 
-Source: `std/time.ml:288`
+Source: `std/time.ml:289`
 
 - [std.time.Time](Type-std-time-time-366461368.md) — struct
 <a id="constant-constant-std-time-time-err-const-time-err-300-std-time-ml-448941524"></a>
@@ -740,7 +740,7 @@ const UNIX_EPOCH_ORDINAL = 719162
 Ordinal day count for 1970-01-01, with 0001-01-01 as day 0.
 
 
-Source: `std/time.ml:366`
+Source: `std/time.ml:367`
 
 <a id="namespace-namespace-std-time-win32-namespace-win32-std-time-ml-2147453897"></a>
 ### win32

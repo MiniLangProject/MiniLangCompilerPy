@@ -30,7 +30,7 @@ Returns true if all elements satisfy the predicate.
 | `pred` | `dynamic` | — | Predicate applied to each candidate value. |
 
 
-Source: `std/array.ml:339`
+Source: `std/array.ml:335`
 
 <a id="function-function-std-array-any-function-any-a-pred-std-array-ml-130273110"></a>
 ### any
@@ -47,7 +47,7 @@ Returns true if any element satisfies the predicate.
 | `pred` | `dynamic` | — | Predicate applied to each candidate value. |
 
 
-Source: `std/array.ml:319`
+Source: `std/array.ml:315`
 
 <a id="function-function-std-array-append-function-append-a-value-std-array-ml-1844937612"></a>
 ### append
@@ -64,7 +64,7 @@ Appends a value to an array and returns a new array.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/array.ml:416`
+Source: `std/array.ml:412`
 
 <a id="function-function-std-array-concat-function-concat-a-b-std-array-ml-2041570823"></a>
 ### concat
@@ -81,7 +81,7 @@ Concatenates two arrays and returns a new array.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/array.ml:435`
+Source: `std/array.ml:429`
 
 <a id="function-function-std-array-contains-function-contains-a-value-std-array-ml-1539166352"></a>
 ### contains
@@ -98,7 +98,7 @@ Checks whether an array contains a value.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/array.ml:230`
+Source: `std/array.ml:226`
 
 <a id="function-function-std-array-copy-function-copy-a-std-array-ml-1680176529"></a>
 ### copy
@@ -131,7 +131,7 @@ Filters elements by predicate and returns a new array.
 | `pred` | `dynamic` | — | Predicate applied to each candidate value. |
 
 
-Source: `std/array.ml:265`
+Source: `std/array.ml:261`
 
 <a id="function-function-std-array-first-function-first-a-std-array-ml-2054141141"></a>
 ### first
@@ -147,7 +147,7 @@ Returns the first element of an array.
 | `a` | `dynamic` | — | First input value. |
 
 
-Source: `std/array.ml:390`
+Source: `std/array.ml:386`
 
 <a id="function-function-std-array-getoption-function-getoption-a-index-std-array-ml-1404034711"></a>
 ### getOption
@@ -217,7 +217,7 @@ Finds the first index of a value in an array starting at 'start'.
 | `start` | `dynamic` | — | Value supplied for `start`. |
 
 
-Source: `std/array.ml:179`
+Source: `std/array.ml:175`
 
 <a id="function-function-std-array-isarray-function-isarray-x-std-array-ml-605013932"></a>
 ### isArray
@@ -249,7 +249,7 @@ Returns true if an array is empty.
 | `a` | `dynamic` | — | First input value. |
 
 
-Source: `std/array.ml:381`
+Source: `std/array.ml:377`
 
 <a id="function-function-std-array-joinstrings-function-joinstrings-a-sep-std-array-ml-426039153"></a>
 ### joinStrings
@@ -266,7 +266,7 @@ Joins an array of strings using a separator.
 | `sep` | `dynamic` | — | Value supplied for `sep`. |
 
 
-Source: `std/array.ml:359`
+Source: `std/array.ml:355`
 
 <a id="function-function-std-array-last-function-last-a-std-array-ml-1230645617"></a>
 ### last
@@ -282,7 +282,7 @@ Returns the last element of an array.
 | `a` | `dynamic` | — | First input value. |
 
 
-Source: `std/array.ml:402`
+Source: `std/array.ml:398`
 
 <a id="function-function-std-array-lastindexof-function-lastindexof-a-value-std-array-ml-787503178"></a>
 ### lastIndexOf
@@ -299,7 +299,7 @@ Finds the last index of a value in an array.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/array.ml:207`
+Source: `std/array.ml:203`
 
 <a id="function-function-std-array-length-function-length-a-std-array-ml-1052681365"></a>
 ### length
@@ -315,7 +315,7 @@ Returns the number of elements in the array.
 | `a` | `dynamic` | — | First input value. |
 
 
-Source: `std/array.ml:372`
+Source: `std/array.ml:368`
 
 <a id="function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657"></a>
 ### map
@@ -332,7 +332,7 @@ Applies a function to every element and returns a new array.
 | `fn` | `dynamic` | — | Function invoked by the operation. |
 
 
-Source: `std/array.ml:242`
+Source: `std/array.ml:238`
 
 <a id="function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997"></a>
 ### reduce
@@ -350,7 +350,7 @@ Reduces an array to a single value using an accumulator function.
 | `init` | `dynamic` | — | Value supplied for `init`. |
 
 
-Source: `std/array.ml:301`
+Source: `std/array.ml:297`
 
 <a id="function-function-std-array-setifpresent-function-setifpresent-a-index-value-std-array-ml-566540004"></a>
 ### setIfPresent
@@ -386,4 +386,4 @@ Returns a slice of an array with strict bounds - supports negative offsets (like
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/array.ml:133`
+Source: `std/array.ml:131`

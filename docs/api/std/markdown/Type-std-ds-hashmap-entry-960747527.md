@@ -12,7 +12,7 @@ struct Entry
 Detached key/value pair returned by entry-oriented operations.
 
 
-Source: `std/ds/hashmap.ml:140`
+Source: `std/ds/hashmap.ml:142`
 
 ## Members
 
@@ -26,7 +26,7 @@ key
 Key associated with `Entry`.
 
 
-Source: `std/ds/hashmap.ml:142`
+Source: `std/ds/hashmap.ml:144`
 
 <a id="field-field-std-ds-hashmap-entry-value-value-std-ds-hashmap-ml-73334274"></a>
 ### value
@@ -38,4 +38,4 @@ value
 Value associated with `Entry`.
 
 
-Source: `std/ds/hashmap.ml:144`
+Source: `std/ds/hashmap.ml:146`

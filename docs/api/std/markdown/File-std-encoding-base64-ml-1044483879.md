@@ -36,7 +36,7 @@ Decoding: base64 string -> bytes (or void on error).
 | `text` | `dynamic` | — | Text to process. |
 
 
-Source: `std/encoding/base64.ml:158`
+Source: `std/encoding/base64.ml:157`
 
 <a id="function-function-std-encoding-base64-tobase64-function-tobase64-b-std-encoding-base64-ml-696343249"></a>
 ### toBase64
@@ -52,4 +52,4 @@ Encoding: bytes -> base64 string (with '=' padding).
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/encoding/base64.ml:101`
+Source: `std/encoding/base64.ml:105`

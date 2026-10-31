@@ -62,7 +62,7 @@ function dequeue()
 Removes and returns the front element.
 
 
-Source: `std/ds/queue.ml:140`
+Source: `std/ds/queue.ml:148`
 
 <a id="method-method-std-ds-queue-queue-enqueue-function-enqueue-v-std-ds-queue-ml-1746933747"></a>
 ### enqueue
@@ -78,7 +78,7 @@ Adds an element to the back of the queue.
 | `v` | `dynamic` | — | Value supplied for `v`. |
 
 
-Source: `std/ds/queue.ml:121`
+Source: `std/ds/queue.ml:129`
 
 <a id="field-field-std-ds-queue-queue-head-head-std-ds-queue-ml-1879688931"></a>
 ### head
@@ -138,7 +138,7 @@ function peek()
 Returns the front element without removing it.
 
 
-Source: `std/ds/queue.ml:132`
+Source: `std/ds/queue.ml:140`
 
 <a id="field-field-std-ds-queue-queue-size-size-std-ds-queue-ml-2115094365"></a>
 ### size
@@ -174,7 +174,7 @@ function toArray()
 Returns a snapshot of the queue contents (front -> back).
 
 
-Source: `std/ds/queue.ml:155`
+Source: `std/ds/queue.ml:163`
 
 <a id="static_method-static-method-std-ds-queue-queue-withcapacity-static-function-withcapacity-mincap-std-ds-queue-ml-438691928"></a>
 ### withCapacity

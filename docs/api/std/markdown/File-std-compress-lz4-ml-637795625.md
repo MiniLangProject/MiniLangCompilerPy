@@ -25,7 +25,7 @@ Decode one LZ4 block into exactly expectedSize bytes. The caller-provided size i
 | `expectedSize` | `dynamic` | — | Exact decoded byte count. |
 
 
-Source: `std/compress/lz4.ml:112`
+Source: `std/compress/lz4.ml:166`
 
 <a id="function-function-std-compress-lz4-encode-function-encode-input-std-compress-lz4-ml-1350653011"></a>
 ### encode
@@ -41,7 +41,7 @@ Encode a standard, independently decodable LZ4 block. The caller must retain the
 | `input` | `dynamic` | — | Bytes to compress. |
 
 
-Source: `std/compress/lz4.ml:38`
+Source: `std/compress/lz4.ml:78`
 
 <a id="constant-constant-std-compress-lz4-lz4-err-const-lz4-err-250-std-compress-lz4-ml-1926203895"></a>
 ### LZ4_ERR

@@ -12,7 +12,7 @@ struct Channel
 Bounded multi-producer/multi-consumer FIFO. Waiting always happens outside the short queue lock, so a full producer cannot prevent a consumer from freeing space and close remains observable by blocked operations.
 
 
-Source: `std/concurrent/channel.ml:146`
+Source: `std/concurrent/channel.ml:159`
 
 ## Members
 
@@ -26,7 +26,7 @@ function close()
 Closes the channel to new sends.
 
 
-Source: `std/concurrent/channel.ml:208`
+Source: `std/concurrent/channel.ml:231`
 
 <a id="method-method-std-concurrent-channel-channel-count-function-count-std-concurrent-channel-ml-1978801295"></a>
 ### Count
@@ -38,7 +38,7 @@ function Count()
 Provide count behavior for this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:239`
+Source: `std/concurrent/channel.ml:262`
 
 <a id="method-method-std-concurrent-channel-channel-countvalue-function-countvalue-std-concurrent-channel-ml-423376045"></a>
 ### countValue
@@ -50,7 +50,7 @@ function countValue()
 Provide count value behavior for this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:203`
+Source: `std/concurrent/channel.ml:226`
 
 <a id="method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-894779547"></a>
 ### Dispose
@@ -62,7 +62,7 @@ function Dispose()
 PascalCase Close is reserved by the native Thread API.
 
 
-Source: `std/concurrent/channel.ml:241`
+Source: `std/concurrent/channel.ml:264`
 
 <a id="method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-738798171"></a>
 ### dispose
@@ -74,7 +74,7 @@ function dispose()
 Dispose only after every blocked caller has returned and the queue drained.
 
 
-Source: `std/concurrent/channel.ml:214`
+Source: `std/concurrent/channel.ml:237`
 
 <a id="field-field-std-concurrent-channel-channel-disposed-disposed-std-concurrent-channel-ml-1766816297"></a>
 ### disposed
@@ -86,7 +86,7 @@ disposed
 Disposed associated with `Channel`.
 
 
-Source: `std/concurrent/channel.ml:150`
+Source: `std/concurrent/channel.ml:163`
 
 <a id="static_method-static-method-std-concurrent-channel-channel-new-static-function-new-capacity-std-concurrent-channel-ml-477572384"></a>
 ### new
@@ -102,7 +102,7 @@ Creates a channel with bounded capacity.
 | `capacity` | `dynamic` | — | Value supplied for `capacity`. |
 
 
-Source: `std/concurrent/channel.ml:154`
+Source: `std/concurrent/channel.ml:167`
 
 <a id="field-field-std-concurrent-channel-channel-queue-queue-std-concurrent-channel-ml-878553291"></a>
 ### queue
@@ -114,7 +114,7 @@ queue
 Queue associated with `Channel`.
 
 
-Source: `std/concurrent/channel.ml:148`
+Source: `std/concurrent/channel.ml:161`
 
 <a id="method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-234908883"></a>
 ### Receive
@@ -126,7 +126,7 @@ function Receive()
 Exposes blocking receive through a PascalCase alias.
 
 
-Source: `std/concurrent/channel.ml:232`
+Source: `std/concurrent/channel.ml:255`
 
 <a id="method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-1619698643"></a>
 ### receive
@@ -138,7 +138,7 @@ function receive()
 Receives the next channel value, waiting when necessary.
 
 
-Source: `std/concurrent/channel.ml:199`
+Source: `std/concurrent/channel.ml:222`
 
 <a id="method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-141724103"></a>
 ### ReceiveFor
@@ -154,7 +154,7 @@ Exposes timed receive through a PascalCase alias.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/channel.ml:235`
+Source: `std/concurrent/channel.ml:258`
 
 <a id="method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-983386375"></a>
 ### receiveFor
@@ -170,7 +170,7 @@ Waits up to a bounded duration to receive a channel value.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/channel.ml:185`
+Source: `std/concurrent/channel.ml:203`
 
 <a id="method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-867878686"></a>
 ### Send
@@ -186,7 +186,7 @@ Provide send behavior for this standard-library module.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/channel.ml:223`
+Source: `std/concurrent/channel.ml:246`
 
 <a id="method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-1435514270"></a>
 ### send
@@ -202,7 +202,7 @@ Provide send behavior for this standard-library module.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/channel.ml:178`
+Source: `std/concurrent/channel.ml:196`
 
 <a id="method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-564623202"></a>
 ### SendFor
@@ -219,7 +219,7 @@ Provide send for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/channel.ml:227`
+Source: `std/concurrent/channel.ml:250`
 
 <a id="method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-388594722"></a>
 ### sendFor
@@ -236,7 +236,7 @@ Provide send for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/channel.ml:164`
+Source: `std/concurrent/channel.ml:177`
 
 <a id="method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-1599168617"></a>
 ### TryReceive
@@ -248,7 +248,7 @@ function TryReceive()
 Provide try receive behavior for this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:237`
+Source: `std/concurrent/channel.ml:260`
 
 <a id="method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-2005260969"></a>
 ### tryReceive
@@ -260,7 +260,7 @@ function tryReceive()
 Provide try receive behavior for this standard-library module.
 
 
-Source: `std/concurrent/channel.ml:201`
+Source: `std/concurrent/channel.ml:224`
 
 <a id="method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-121058408"></a>
 ### TrySend
@@ -276,7 +276,7 @@ Provide try send behavior for this standard-library module.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/channel.ml:230`
+Source: `std/concurrent/channel.ml:253`
 
 <a id="method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-416491496"></a>
 ### trySend
@@ -292,4 +292,4 @@ Provide try send behavior for this standard-library module.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/channel.ml:181`
+Source: `std/concurrent/channel.ml:199`

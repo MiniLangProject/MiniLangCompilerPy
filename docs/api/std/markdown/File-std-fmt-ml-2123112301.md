@@ -47,7 +47,7 @@ Creates a horizontal line.
 | `width` | `dynamic` | — | Value supplied for `width`. |
 
 
-Source: `std/fmt.ml:130`
+Source: `std/fmt.ml:197`
 
 <a id="function-function-std-fmt-padleft-function-padleft-s-width-ch-std-fmt-ml-1234037328"></a>
 ### padLeft

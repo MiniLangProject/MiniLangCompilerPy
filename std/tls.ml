@@ -146,6 +146,14 @@ function provider(name, openClient, openServer, sendBytes, receiveBytes, shutdow
 end function
 
 /// Create a provider that can retry short sends without copying the remaining bytes.
+/// @param name Provider name.
+/// @param openClient Callback that opens a client connection.
+/// @param openServer Callback that opens a server connection.
+/// @param sendBytes Callback that sends bytes.
+/// @param receiveBytes Callback that receives bytes.
+/// @param shutdownStream Callback that shuts down a stream.
+/// @param closeStream Callback that closes a stream.
+/// @param sendRange Callback that sends a byte range without copying it.
 function providerWithRange(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream, sendRange)
   active = provider(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream)
   if typeof(active) == "error" then return active end if

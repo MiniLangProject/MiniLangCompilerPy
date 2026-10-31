@@ -25,7 +25,7 @@ Decode RLE into an exactly bounded output buffer.
 | `expectedSize` | `dynamic` | — | Exact decoded byte count. |
 
 
-Source: `std/compress/rle.ml:64`
+Source: `std/compress/rle.ml:91`
 
 <a id="function-function-std-compress-rle-encode-function-encode-input-std-compress-rle-ml-834631269"></a>
 ### encode
@@ -41,7 +41,7 @@ Encode bytes using bounded literal and repeat runs.
 | `input` | `dynamic` | — | Bytes to compress. |
 
 
-Source: `std/compress/rle.ml:29`
+Source: `std/compress/rle.ml:56`
 
 <a id="constant-constant-std-compress-rle-rle-err-const-rle-err-251-std-compress-rle-ml-517447994"></a>
 ### RLE_ERR

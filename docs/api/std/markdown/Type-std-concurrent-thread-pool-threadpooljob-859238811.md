@@ -38,7 +38,7 @@ function Cancel()
 PascalCase aliases mirror the native Thread API naming style.
 
 
-Source: `std/concurrent/thread_pool.ml:181`
+Source: `std/concurrent/thread_pool.ml:221`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1078125767"></a>
 ### cancel
@@ -50,7 +50,7 @@ function cancel()
 Cancel a job only while it is still queued.
 
 
-Source: `std/concurrent/thread_pool.ml:105`
+Source: `std/concurrent/thread_pool.ml:144`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-close-function-close-std-concurrent-thread-pool-ml-957207643"></a>
 ### close
@@ -62,7 +62,7 @@ function close()
 Release synchronization handles after the job has finished.
 
 
-Source: `std/concurrent/thread_pool.ml:160`
+Source: `std/concurrent/thread_pool.ml:199`
 
 <a id="field-field-std-concurrent-thread-pool-threadpooljob-closed-closed-std-concurrent-thread-pool-ml-1318207521"></a>
 ### closed
@@ -98,7 +98,7 @@ function Dispose()
 Provide dispose behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:196`
+Source: `std/concurrent/thread_pool.ml:236`
 
 <a id="field-field-std-concurrent-thread-pool-threadpooljob-done-done-std-concurrent-thread-pool-ml-1526394129"></a>
 ### done
@@ -122,7 +122,7 @@ function GetResult()
 Returns get result.
 
 
-Source: `std/concurrent/thread_pool.ml:190`
+Source: `std/concurrent/thread_pool.ml:230`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-getresult-function-getresult-std-concurrent-thread-pool-ml-1087002137"></a>
 ### getResult
@@ -134,7 +134,7 @@ function getResult()
 Return the callback result; failures are represented as error values.
 
 
-Source: `std/concurrent/thread_pool.ml:141`
+Source: `std/concurrent/thread_pool.ml:180`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-1285725111"></a>
 ### GetStatus
@@ -146,7 +146,7 @@ function GetStatus()
 Returns get status.
 
 
-Source: `std/concurrent/thread_pool.ml:188`
+Source: `std/concurrent/thread_pool.ml:228`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-223169015"></a>
 ### getStatus
@@ -158,7 +158,7 @@ function getStatus()
 Return a stable JOB_* status snapshot under the job lock.
 
 
-Source: `std/concurrent/thread_pool.ml:133`
+Source: `std/concurrent/thread_pool.ml:172`
 
 <a id="field-field-std-concurrent-thread-pool-threadpooljob-guard-guard-std-concurrent-thread-pool-ml-435468325"></a>
 ### guard
@@ -182,7 +182,7 @@ function IsCancelled()
 Reports whether is cancelled.
 
 
-Source: `std/concurrent/thread_pool.ml:194`
+Source: `std/concurrent/thread_pool.ml:234`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-iscancelled-function-iscancelled-std-concurrent-thread-pool-ml-502201925"></a>
 ### isCancelled
@@ -194,7 +194,7 @@ function isCancelled()
 Report whether cancellation won before execution started.
 
 
-Source: `std/concurrent/thread_pool.ml:155`
+Source: `std/concurrent/thread_pool.ml:194`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-666330559"></a>
 ### IsDone
@@ -206,7 +206,7 @@ function IsDone()
 Reports whether is done.
 
 
-Source: `std/concurrent/thread_pool.ml:192`
+Source: `std/concurrent/thread_pool.ml:232`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-1101974527"></a>
 ### isDone
@@ -218,7 +218,19 @@ function isDone()
 Report whether the job reached any terminal state.
 
 
-Source: `std/concurrent/thread_pool.ml:149`
+Source: `std/concurrent/thread_pool.ml:188`
+
+<a id="field-field-std-concurrent-thread-pool-threadpooljob-listeners-listeners-std-concurrent-thread-pool-ml-1225351241"></a>
+### listeners
+
+```ml
+listeners
+```
+
+Completion events registered by concurrent whenAny callers.
+
+
+Source: `std/concurrent/thread_pool.ml:50`
 
 <a id="static_method-static-method-std-concurrent-thread-pool-threadpooljob-new-static-function-new-callback-data-std-concurrent-thread-pool-ml-1751013359"></a>
 ### new
@@ -235,7 +247,7 @@ Create a queued job owned by the pool until it reaches a terminal state.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/concurrent/thread_pool.ml:53`
+Source: `std/concurrent/thread_pool.ml:55`
 
 <a id="field-field-std-concurrent-thread-pool-threadpooljob-result-result-std-concurrent-thread-pool-ml-215005431"></a>
 ### result
@@ -271,7 +283,7 @@ function Wait()
 Provide wait behavior for this standard-library module.
 
 
-Source: `std/concurrent/thread_pool.ml:183`
+Source: `std/concurrent/thread_pool.ml:223`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-60910587"></a>
 ### wait
@@ -283,7 +295,7 @@ function wait()
 Wait indefinitely for a terminal job state.
 
 
-Source: `std/concurrent/thread_pool.ml:120`
+Source: `std/concurrent/thread_pool.ml:159`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-1383667777"></a>
 ### WaitFor
@@ -299,7 +311,7 @@ Provide wait for behavior for this standard-library module.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/thread_pool.ml:186`
+Source: `std/concurrent/thread_pool.ml:226`
 
 <a id="method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-378084097"></a>
 ### waitFor
@@ -315,4 +327,4 @@ Wait up to the requested number of milliseconds.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/thread_pool.ml:127`
+Source: `std/concurrent/thread_pool.ml:166`

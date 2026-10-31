@@ -29,7 +29,7 @@ Accept a native TLS server stream over an already-accepted std.net socket.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:192`
+Source: `std/tls.ml:211`
 
 <a id="function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682"></a>
 ### acceptServer
@@ -47,7 +47,7 @@ Provide the accept server operation for this standard-library module.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:173`
+Source: `std/tls.ml:192`
 
 <a id="function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414"></a>
 ### clientOptions
@@ -63,7 +63,7 @@ Provide the client options operation for this standard-library module.
 | `serverName` | `dynamic` | — | Value supplied for `serverName`. |
 
 
-Source: `std/tls.ml:87`
+Source: `std/tls.ml:89`
 
 - [std.tls.ClientOptions](Type-std-tls-clientoptions-1357397796.md) — struct
 <a id="function-function-std-tls-close-function-close-stream-std-tls-ml-845826000"></a>
@@ -80,7 +80,7 @@ Releases or resets close.
 | `stream` | `dynamic` | — | Value supplied for `stream`. |
 
 
-Source: `std/tls.ml:247`
+Source: `std/tls.ml:271`
 
 <a id="function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555"></a>
 ### connect
@@ -97,7 +97,7 @@ Establish a native TLS client stream over an already-connected std.net socket.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:185`
+Source: `std/tls.ml:204`
 
 <a id="function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724"></a>
 ### connectClient
@@ -115,7 +115,7 @@ Provide the connect client operation for this standard-library module.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:160`
+Source: `std/tls.ml:179`
 
 <a id="function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795"></a>
 ### isStream
@@ -131,7 +131,7 @@ Reports whether is stream.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/tls.ml:198`
+Source: `std/tls.ml:217`
 
 <a id="function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456"></a>
 ### nativeProvider
@@ -143,7 +143,7 @@ function nativeProvider()
 Return the target-native provider: Schannel on Windows or OpenSSL 3 on Linux.
 
 
-Source: `std/tls.ml:147`
+Source: `std/tls.ml:166`
 
 <a id="function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896"></a>
 ### nativeProviderName
@@ -155,7 +155,7 @@ function nativeProviderName()
 Provide the native provider name operation for this standard-library module.
 
 
-Source: `std/tls.ml:152`
+Source: `std/tls.ml:171`
 
 <a id="function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458"></a>
 ### pinnedClientOptions
@@ -172,7 +172,7 @@ Provide the pinned client options operation for this standard-library module.
 | `sha256Pin` | `dynamic` | — | Value supplied for `sha256Pin`. |
 
 
-Source: `std/tls.ml:94`
+Source: `std/tls.ml:96`
 
 <a id="function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410"></a>
 ### provider
@@ -194,9 +194,32 @@ Provide the provider operation for this standard-library module.
 | `closeStream` | `dynamic` | — | Value supplied for `closeStream`. |
 
 
-Source: `std/tls.ml:137`
+Source: `std/tls.ml:139`
 
 - [std.tls.Provider](Type-std-tls-provider-1415630088.md) — struct
+<a id="function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383"></a>
+### providerWithRange
+
+```ml
+function providerWithRange(name, openClient, openServer, sendBytes, receiveBytes, shutdownStream, closeStream, sendRange)
+```
+
+Create a provider that can retry short sends without copying the remaining bytes.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `name` | `dynamic` | — | Provider name. |
+| `openClient` | `dynamic` | — | Callback that opens a client connection. |
+| `openServer` | `dynamic` | — | Callback that opens a server connection. |
+| `sendBytes` | `dynamic` | — | Callback that sends bytes. |
+| `receiveBytes` | `dynamic` | — | Callback that receives bytes. |
+| `shutdownStream` | `dynamic` | — | Callback that shuts down a stream. |
+| `closeStream` | `dynamic` | — | Callback that closes a stream. |
+| `sendRange` | `dynamic` | — | Callback that sends a byte range without copying it. |
+
+
+Source: `std/tls.ml:157`
+
 <a id="function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327"></a>
 ### receive
 
@@ -212,7 +235,7 @@ Provide the receive operation for this standard-library module.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/tls.ml:229`
+Source: `std/tls.ml:253`
 
 <a id="function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506"></a>
 ### sendAll
@@ -229,7 +252,7 @@ Send all bytes through the provider, retrying a partially consumed tail. The pro
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/tls.ml:207`
+Source: `std/tls.ml:226`
 
 <a id="function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559"></a>
 ### serverOptions
@@ -246,7 +269,7 @@ Provide the server options operation for this standard-library module.
 | `privateKeyReference` | `dynamic` | — | Value supplied for `privateKeyReference`. |
 
 
-Source: `std/tls.ml:101`
+Source: `std/tls.ml:103`
 
 - [std.tls.ServerOptions](Type-std-tls-serveroptions-1817688456.md) — struct
 <a id="function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672"></a>
@@ -263,7 +286,7 @@ Provide the shutdown operation for this standard-library module.
 | `stream` | `dynamic` | — | Value supplied for `stream`. |
 
 
-Source: `std/tls.ml:240`
+Source: `std/tls.ml:264`
 
 - [std.tls.Stream](Type-std-tls-stream-775546137.md) — struct
 <a id="constant-constant-std-tls-tls-err-const-tls-err-267-std-tls-ml-486488596"></a>
@@ -292,7 +315,7 @@ Provide the validate client options operation for this standard-library module.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:107`
+Source: `std/tls.ml:109`
 
 <a id="function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250"></a>
 ### validateServerOptions
@@ -308,4 +331,4 @@ Provide the validate server options operation for this standard-library module.
 | `options` | `dynamic` | — | Value supplied for `options`. |
 
 
-Source: `std/tls.ml:120`
+Source: `std/tls.ml:122`

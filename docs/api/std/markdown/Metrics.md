@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2828 |
-| Clone groups | 169 |
-| Cognitive complexity | 3518 (maximum per function: 116) |
-| Comment lines | 4481 |
-| Cyclomatic complexity | 3900 (average: 3.75, maximum: 33) |
-| Documentation coverage | 98.03% (1989 of 2029 documentation items) |
-| Duplicated lines | 1048 (9.27%) |
+| Blank lines | 2888 |
+| Clone groups | 161 |
+| Cognitive complexity | 3589 (maximum per function: 116) |
+| Comment lines | 4514 |
+| Cyclomatic complexity | 3957 (average: 3.78, maximum: 34) |
+| Documentation coverage | 98.04% (2001 of 2041 documentation items) |
+| Duplicated lines | 1014 (8.84%) |
 | Files | 53 |
-| Functions | 1041 |
-| Maintainability index | 7.77 / 100 |
-| Physical lines | 18613 |
-| Source lines | 11307 |
-| Statements | 8107 |
+| Functions | 1048 |
+| Maintainability index | 7.86 / 100 |
+| Physical lines | 18874 |
+| Source lines | 11475 |
+| Statements | 8125 |
 
 ## Documentation coverage
 
@@ -28,39 +28,39 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 793 | 793 | 100% |
-| Constants | 137 | 137 | 100% |
+| API declarations | 794 | 794 | 100% |
+| Constants | 136 | 136 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
-| Fields | 208 | 208 | 100% |
+| Fields | 212 | 212 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 1989 | 2029 | 98.03% |
-| Parameters | 828 | 828 | 100% |
+| Overall | 2001 | 2041 | 98.04% |
+| Parameters | 836 | 836 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 56 | 3408 | 46589 | 31861 | 3464 | 78450 | 922432.6 | 261.77 | 241464056.82 | 307.48 |
+| 57 | 3472 | 47439 | 33011 | 3529 | 80450 | 948106.77 | 270.97 | 256910036.2 | 316.04 |
 
 ## Files
 
 | File | SLOC | Functions | Cyclomatic total / avg / max | Cognitive total / max | Duplication | Halstead volume | MI |
 | --- | ---: | ---: | --- | --- | --- | ---: | ---: |
-| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 306 | 24 | 127 / 5.29 / 33 | 132 / 47 | 9 (2.94%) | 20302.36 | 0 |
-| [`std/array.ml`](File-std-array-ml-1258125823.md) | 310 | 23 | 95 / 4.13 / 11 | 78 / 10 | 27 (8.71%) | 9574.93 | 5 |
+| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 305 | 24 | 126 / 5.25 / 33 | 130 / 47 | 9 (2.95%) | 20272.81 | 0 |
+| [`std/array.ml`](File-std-array-ml-1258125823.md) | 300 | 23 | 92 / 4 / 10 | 74 / 9 | 27 (9%) | 9359.66 | 5.78 |
 | [`std/assert.ml`](File-std-assert-ml-1772521196.md) | 92 | 8 | 17 / 2.13 / 3 | 9 / 2 | 0 (0%) | 1751.75 | 32.16 |
 | [`std/audio.ml`](File-std-audio-ml-1379868758.md) | 250 | 27 | 105 / 3.89 / 15 | 78 / 14 | 22 (8.8%) | 12906.72 | 4.78 |
-| [`std/bytes.ml`](File-std-bytes-ml-1351945333.md) | 501 | 38 | 153 / 4.03 / 13 | 124 / 16 | 215 (42.91%) | 16996.47 | 0 |
+| [`std/bytes.ml`](File-std-bytes-ml-1351945333.md) | 537 | 38 | 155 / 4.08 / 13 | 121 / 16 | 221 (41.15%) | 19611.72 | 0 |
 | [`std/checksum/crc32.ml`](File-std-checksum-crc32-ml-1964480723.md) | 23 | 5 | 12 / 2.4 / 3 | 7 / 2 | 0 (0%) | 974.56 | 47.75 |
 | [`std/checksum/crc32c.ml`](File-std-checksum-crc32c-ml-144026660.md) | 23 | 5 | 12 / 2.4 / 3 | 7 / 2 | 0 (0%) | 974.56 | 47.75 |
-| [`std/compress.ml`](File-std-compress-ml-2059288806.md) | 102 | 7 | 41 / 5.86 / 14 | 41 / 16 | 0 (0%) | 5313.02 | 24.58 |
-| [`std/compress/lz4.ml`](File-std-compress-lz4-ml-637795625.md) | 144 | 4 | 50 / 12.5 / 25 | 89 / 53 | 12 (8.33%) | 7269.03 | 19.15 |
-| [`std/compress/rle.ml`](File-std-compress-rle-ml-92459872.md) | 75 | 3 | 25 / 8.33 / 12 | 33 / 16 | 0 (0%) | 3067.47 | 31.32 |
+| [`std/compress.ml`](File-std-compress-ml-2059288806.md) | 104 | 7 | 42 / 6 / 14 | 45 / 20 | 0 (0%) | 5507.31 | 24.16 |
+| [`std/compress/lz4.ml`](File-std-compress-lz4-ml-637795625.md) | 198 | 6 | 63 / 10.5 / 31 | 98 / 59 | 12 (6.06%) | 10554.08 | 13.25 |
+| [`std/compress/rle.ml`](File-std-compress-rle-ml-92459872.md) | 109 | 4 | 39 / 9.75 / 18 | 46 / 22 | 0 (0%) | 5130.28 | 24.33 |
 | [`std/concurrent/cancellation.ml`](File-std-concurrent-cancellation-ml-1392694543.md) | 86 | 19 | 31 / 1.63 / 4 | 12 / 3 | 0 (0%) | 2987.09 | 29.3 |
-| [`std/concurrent/channel.ml`](File-std-concurrent-channel-ml-2137315633.md) | 157 | 25 | 66 / 2.64 / 10 | 45 / 11 | 0 (0%) | 7900.28 | 15.93 |
-| [`std/concurrent/shared_value.ml`](File-std-concurrent-shared-value-ml-2112657235.md) | 133 | 15 | 49 / 3.27 / 9 | 37 / 11 | 15 (11.28%) | 6847.36 | 20.22 |
-| [`std/concurrent/task.ml`](File-std-concurrent-task-ml-139288457.md) | 114 | 18 | 49 / 2.72 / 11 | 39 / 16 | 0 (0%) | 5401.01 | 22.41 |
-| [`std/concurrent/thread_pool.ml`](File-std-concurrent-thread-pool-ml-72857761.md) | 374 | 43 | 117 / 2.72 / 9 | 89 / 11 | 40 (10.7%) | 16573.38 | 0 |
+| [`std/concurrent/channel.ml`](File-std-concurrent-channel-ml-2137315633.md) | 179 | 25 | 73 / 2.92 / 12 | 58 / 16 | 0 (0%) | 9353.51 | 13.23 |
+| [`std/concurrent/shared_value.ml`](File-std-concurrent-shared-value-ml-2112657235.md) | 133 | 15 | 49 / 3.27 / 9 | 37 / 11 | 15 (11.28%) | 6847.37 | 20.22 |
+| [`std/concurrent/task.ml`](File-std-concurrent-task-ml-139288457.md) | 133 | 18 | 55 / 3.06 / 17 | 43 / 20 | 0 (0%) | 6616.22 | 19.52 |
+| [`std/concurrent/thread_pool.ml`](File-std-concurrent-thread-pool-ml-72857761.md) | 404 | 46 | 129 / 2.8 / 9 | 100 / 11 | 40 (9.9%) | 18488.27 | 0 |
 | [`std/console.ml`](File-std-console-ml-1875579671.md) | 101 | 9 | 44 / 4.89 / 24 | 36 / 24 | 0 (0%) | 7093.64 | 23.4 |
 | [`std/core.ml`](File-std-core-ml-750389783.md) | 82 | 16 | 28 / 1.75 / 4 | 12 / 3 | 29 (35.37%) | 1907.85 | 31.52 |
 | [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 19 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 372.23 | 53.7 |
@@ -69,34 +69,34 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/crypto/_openssl.ml`](File-std-crypto-openssl-ml-882852629.md) | 228 | 12 | 77 / 6.42 / 21 | 83 / 32 | 0 (0%) | 19690.73 | 8.14 |
 | [`std/crypto/aes_gcm.ml`](File-std-crypto-aes-gcm-ml-264581731.md) | 48 | 6 | 26 / 4.33 / 10 | 20 / 9 | 0 (0%) | 2739.36 | 35.76 |
 | [`std/crypto/ecdsa_p256.ml`](File-std-crypto-ecdsa-p256-ml-1815373426.md) | 14 | 1 | 7 / 7 / 7 | 6 / 6 | 0 (0%) | 660.68 | 54.31 |
-| [`std/ds/concurrent_hashmap.ml`](File-std-ds-concurrent-hashmap-ml-1798836270.md) | 333 | 25 | 97 / 3.88 / 11 | 88 / 17 | 88 (26.43%) | 14548.18 | 2.78 |
-| [`std/ds/concurrent_list.ml`](File-std-ds-concurrent-list-ml-291130726.md) | 242 | 25 | 82 / 3.28 / 7 | 57 / 6 | 45 (18.6%) | 9342.33 | 9.17 |
-| [`std/ds/hashmap.ml`](File-std-ds-hashmap-ml-1269372918.md) | 249 | 21 | 70 / 3.33 / 12 | 65 / 22 | 29 (11.65%) | 9275.44 | 10.53 |
-| [`std/ds/list.ml`](File-std-ds-list-ml-2070188142.md) | 202 | 22 | 59 / 2.68 / 7 | 38 / 6 | 48 (23.76%) | 6259.19 | 15.19 |
-| [`std/ds/queue.ml`](File-std-ds-queue-ml-1555253413.md) | 98 | 12 | 24 / 2 / 4 | 13 / 3 | 22 (22.45%) | 3057.31 | 28.93 |
+| [`std/ds/concurrent_hashmap.ml`](File-std-ds-concurrent-hashmap-ml-1798836270.md) | 333 | 25 | 97 / 3.88 / 11 | 88 / 17 | 88 (26.43%) | 14628.15 | 2.76 |
+| [`std/ds/concurrent_list.ml`](File-std-ds-concurrent-list-ml-291130726.md) | 229 | 25 | 82 / 3.28 / 7 | 57 / 6 | 38 (16.59%) | 9370.4 | 9.68 |
+| [`std/ds/hashmap.ml`](File-std-ds-hashmap-ml-1269372918.md) | 249 | 21 | 70 / 3.33 / 12 | 65 / 22 | 29 (11.65%) | 9347.39 | 10.51 |
+| [`std/ds/list.ml`](File-std-ds-list-ml-2070188142.md) | 216 | 22 | 61 / 2.77 / 8 | 42 / 8 | 41 (18.98%) | 6999.78 | 13.95 |
+| [`std/ds/queue.ml`](File-std-ds-queue-ml-1555253413.md) | 105 | 12 | 28 / 2.33 / 4 | 19 / 5 | 22 (20.95%) | 3720.09 | 27.14 |
 | [`std/ds/set.ml`](File-std-ds-set-ml-1393232564.md) | 32 | 9 | 9 / 1 / 1 | 0 / 0 | 0 (0%) | 786.93 | 45.68 |
-| [`std/ds/stack.ml`](File-std-ds-stack-ml-117945432.md) | 215 | 19 | 51 / 2.68 / 11 | 32 / 10 | 28 (13.02%) | 6679.05 | 15.48 |
-| [`std/encoding/base64.ml`](File-std-encoding-base64-ml-1044483879.md) | 195 | 7 | 53 / 7.57 / 26 | 67 / 43 | 9 (4.62%) | 7756.64 | 15.68 |
+| [`std/ds/stack.ml`](File-std-ds-stack-ml-117945432.md) | 209 | 19 | 49 / 2.58 / 11 | 30 / 10 | 28 (13.4%) | 6566.39 | 16.07 |
+| [`std/encoding/base64.ml`](File-std-encoding-base64-ml-1044483879.md) | 254 | 7 | 63 / 9 / 34 | 84 / 58 | 12 (4.72%) | 11196.02 | 10.72 |
 | [`std/encoding/hex.ml`](File-std-encoding-hex-ml-900742095.md) | 40 | 7 | 11 / 1.57 / 3 | 4 / 2 | 0 (0%) | 965.22 | 42.67 |
-| [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 88 | 6 | 35 / 5.83 / 11 | 37 / 18 | 21 (23.86%) | 3174.13 | 28.36 |
-| [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 564 | 26 | 131 / 5.04 / 13 | 128 / 18 | 32 (5.67%) | 25926.45 | 0 |
+| [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 155 | 6 | 49 / 8.17 / 25 | 63 / 44 | 39 (25.16%) | 5643.77 | 19.36 |
+| [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 560 | 26 | 129 / 4.96 / 13 | 125 / 18 | 32 (5.71%) | 25763.05 | 0 |
 | [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 303 | 37 | 144 / 3.89 / 11 | 115 / 13 | 9 (2.97%) | 22951.06 | 0 |
-| [`std/math.ml`](File-std-math-ml-790065500.md) | 463 | 50 | 125 / 2.5 / 9 | 83 / 10 | 29 (6.26%) | 18689.33 | 0 |
+| [`std/math.ml`](File-std-math-ml-790065500.md) | 425 | 50 | 120 / 2.4 / 9 | 77 / 10 | 29 (6.82%) | 16831.11 | 0 |
 | [`std/net.ml`](File-std-net-ml-1989130045.md) | 464 | 38 | 143 / 3.76 / 10 | 109 / 12 | 12 (2.59%) | 27648.49 | 0 |
-| [`std/path.ml`](File-std-path-ml-701536411.md) | 80 | 9 | 49 / 5.44 / 13 | 47 / 12 | 0 (0%) | 4532.65 | 26.29 |
+| [`std/path.ml`](File-std-path-ml-701536411.md) | 77 | 12 | 53 / 4.42 / 14 | 41 / 13 | 0 (0%) | 4599.11 | 26.07 |
 | [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
 | [`std/process.ml`](File-std-process-ml-507069519.md) | 42 | 6 | 19 / 3.17 / 7 | 13 / 6 | 0 (0%) | 2210.57 | 38.62 |
 | [`std/random.ml`](File-std-random-ml-66683891.md) | 96 | 12 | 27 / 2.25 / 4 | 18 / 5 | 0 (0%) | 3585.36 | 28.24 |
 | [`std/result.ml`](File-std-result-ml-986518417.md) | 88 | 17 | 26 / 1.53 / 2 | 9 / 1 | 0 (0%) | 1976.31 | 31.01 |
-| [`std/sort.ml`](File-std-sort-ml-1000391650.md) | 209 | 11 | 54 / 4.91 / 17 | 79 / 32 | 8 (3.83%) | 6770.89 | 15.3 |
-| [`std/string.ml`](File-std-string-ml-1276545685.md) | 394 | 33 | 121 / 3.67 / 20 | 109 / 27 | 107 (27.16%) | 13558.13 | 0 |
+| [`std/sort.ml`](File-std-sort-ml-1000391650.md) | 255 | 13 | 69 / 5.31 / 21 | 110 / 46 | 20 (7.84%) | 9047.81 | 10.52 |
+| [`std/string.ml`](File-std-string-ml-1276545685.md) | 231 | 25 | 66 / 2.64 / 11 | 49 / 15 | 48 (20.78%) | 7814.55 | 12.3 |
 | [`std/string_builder.ml`](File-std-string-builder-ml-412876577.md) | 125 | 11 | 34 / 3.09 / 10 | 23 / 9 | 21 (16.8%) | 3425.41 | 24.93 |
 | [`std/test.ml`](File-std-test-ml-828131286.md) | 529 | 45 | 221 / 4.91 / 32 | 352 / 116 | 12 (2.27%) | 36322.78 | 0 |
 | [`std/threading.ml`](File-std-threading-ml-508437988.md) | 176 | 41 | 80 / 1.95 / 8 | 39 / 7 | 39 (22.16%) | 7850.03 | 12.98 |
 | [`std/time.ml`](File-std-time-ml-975894601.md) | 619 | 53 | 203 / 3.83 / 17 | 159 / 19 | 0 (0%) | 32686.86 | 0 |
-| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 136 | 18 | 70 / 3.89 / 14 | 56 / 13 | 0 (0%) | 7676.15 | 16.84 |
-| [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 225 | 15 | 86 / 5.73 / 18 | 78 / 19 | 0 (0%) | 18932.6 | 7.17 |
-| [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1160 | 81 | 454 / 5.6 / 24 | 503 / 51 | 66 (5.69%) | 105732.03 | 0 |
+| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 150 | 19 | 74 / 3.89 / 14 | 61 / 15 | 0 (0%) | 8578.32 | 15.04 |
+| [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 224 | 16 | 94 / 5.88 / 18 | 85 / 19 | 0 (0%) | 19505.96 | 6.05 |
+| [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1163 | 83 | 463 / 5.58 / 24 | 510 / 51 | 66 (5.67%) | 106601.21 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
 | [`std/video.ml`](File-std-video-ml-900169693.md) | 267 | 28 | 123 / 4.39 / 15 | 96 / 14 | 22 (8.24%) | 17397.14 | 0.83 |
 
@@ -104,28 +104,28 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Function | Location | LOC | Statements | Cyclomatic | Cognitive | Max nesting | Halstead volume | MI |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [`std.array.all`](File-std-array-ml-1258125823.md#function-function-std-array-all-function-all-a-pred-std-array-ml-1158565640) | `std/array.ml:339` | 15 | 9 | 5 | 5 | 2 | 325.48 | 56.08 |
-| [`std.array.any`](File-std-array-ml-1258125823.md#function-function-std-array-any-function-any-a-pred-std-array-ml-130273110) | `std/array.ml:319` | 15 | 9 | 5 | 5 | 2 | 317.29 | 56.16 |
-| [`std.array.append`](File-std-array-ml-1258125823.md#function-function-std-array-append-function-append-a-value-std-array-ml-1844937612) | `std/array.ml:416` | 14 | 9 | 4 | 4 | 2 | 340.06 | 56.73 |
-| [`std.array.concat`](File-std-array-ml-1258125823.md#function-function-std-array-concat-function-concat-a-b-std-array-ml-2041570823) | `std/array.ml:435` | 18 | 12 | 5 | 4 | 1 | 471.22 | 53.23 |
-| [`std.array.contains`](File-std-array-ml-1258125823.md#function-function-std-array-contains-function-contains-a-value-std-array-ml-1539166352) | `std/array.ml:230` | 6 | 3 | 2 | 1 | 1 | 158.12 | 67.36 |
-| [`std.array.copy`](File-std-array-ml-1258125823.md#function-function-std-array-copy-function-copy-a-std-array-ml-1680176529) | `std/array.ml:112` | 14 | 9 | 4 | 3 | 1 | 291.43 | 57.2 |
-| [`std.array.filter`](File-std-array-ml-1258125823.md#function-function-std-array-filter-function-filter-a-pred-std-array-ml-27472074) | `std/array.ml:265` | 28 | 19 | 8 | 8 | 2 | 646.24 | 47.68 |
-| [`std.array.first`](File-std-array-ml-1258125823.md#function-function-std-array-first-function-first-a-std-array-ml-2054141141) | `std/array.ml:390` | 9 | 5 | 3 | 2 | 1 | 138.97 | 63.78 |
+| [`std.array.all`](File-std-array-ml-1258125823.md#function-function-std-array-all-function-all-a-pred-std-array-ml-1158565640) | `std/array.ml:335` | 15 | 9 | 5 | 5 | 2 | 325.48 | 56.08 |
+| [`std.array.any`](File-std-array-ml-1258125823.md#function-function-std-array-any-function-any-a-pred-std-array-ml-130273110) | `std/array.ml:315` | 15 | 9 | 5 | 5 | 2 | 317.29 | 56.16 |
+| [`std.array.append`](File-std-array-ml-1258125823.md#function-function-std-array-append-function-append-a-value-std-array-ml-1844937612) | `std/array.ml:412` | 12 | 8 | 3 | 2 | 1 | 286.73 | 58.85 |
+| [`std.array.concat`](File-std-array-ml-1258125823.md#function-function-std-array-concat-function-concat-a-b-std-array-ml-2041570823) | `std/array.ml:429` | 14 | 12 | 5 | 4 | 1 | 417.23 | 55.98 |
+| [`std.array.contains`](File-std-array-ml-1258125823.md#function-function-std-array-contains-function-contains-a-value-std-array-ml-1539166352) | `std/array.ml:226` | 6 | 3 | 2 | 1 | 1 | 158.12 | 67.36 |
+| [`std.array.copy`](File-std-array-ml-1258125823.md#function-function-std-array-copy-function-copy-a-std-array-ml-1680176529) | `std/array.ml:112` | 12 | 8 | 3 | 2 | 1 | 232.79 | 59.48 |
+| [`std.array.filter`](File-std-array-ml-1258125823.md#function-function-std-array-filter-function-filter-a-pred-std-array-ml-27472074) | `std/array.ml:261` | 28 | 19 | 8 | 8 | 2 | 646.24 | 47.68 |
+| [`std.array.first`](File-std-array-ml-1258125823.md#function-function-std-array-first-function-first-a-std-array-ml-2054141141) | `std/array.ml:386` | 9 | 5 | 3 | 2 | 1 | 138.97 | 63.78 |
 | [`std.array.getOption`](File-std-array-ml-1258125823.md#function-function-std-array-getoption-function-getoption-a-index-std-array-ml-1404034711) | `std/array.ml:71` | 7 | 4 | 2 | 1 | 1 | 222.91 | 64.85 |
 | [`std.array.getOr`](File-std-array-ml-1258125823.md#function-function-std-array-getor-function-getor-a-index-fallback-std-array-ml-109661577) | `std/array.ml:59` | 7 | 4 | 2 | 1 | 1 | 165 | 65.77 |
 | [`std.array.getOrError`](File-std-array-ml-1258125823.md#function-function-std-array-getorerror-function-getorerror-a-index-std-array-ml-608041017) | `std/array.ml:96` | 13 | 8 | 4 | 3 | 1 | 451.38 | 56.58 |
-| [`std.array.indexOf`](File-std-array-ml-1258125823.md#function-function-std-array-indexof-function-indexof-a-value-start-std-array-ml-148871920) | `std/array.ml:179` | 22 | 14 | 7 | 7 | 2 | 440.92 | 51.26 |
+| [`std.array.indexOf`](File-std-array-ml-1258125823.md#function-function-std-array-indexof-function-indexof-a-value-start-std-array-ml-148871920) | `std/array.ml:175` | 22 | 14 | 7 | 7 | 2 | 440.92 | 51.26 |
 | [`std.array.isArray`](File-std-array-ml-1258125823.md#function-function-std-array-isarray-function-isarray-x-std-array-ml-605013932) | `std/array.ml:32` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.array.isEmpty`](File-std-array-ml-1258125823.md#function-function-std-array-isempty-function-isempty-a-std-array-ml-946252559) | `std/array.ml:381` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
-| [`std.array.joinStrings`](File-std-array-ml-1258125823.md#function-function-std-array-joinstrings-function-joinstrings-a-sep-std-array-ml-426039153) | `std/array.ml:359` | 9 | 5 | 3 | 2 | 1 | 152 | 63.5 |
-| [`std.array.last`](File-std-array-ml-1258125823.md#function-function-std-array-last-function-last-a-std-array-ml-1230645617) | `std/array.ml:402` | 10 | 6 | 3 | 2 | 1 | 171.3 | 62.14 |
-| [`std.array.lastIndexOf`](File-std-array-ml-1258125823.md#function-function-std-array-lastindexof-function-lastindexof-a-value-std-array-ml-787503178) | `std/array.ml:207` | 17 | 11 | 5 | 5 | 2 | 318.58 | 54.96 |
-| [`std.array.length`](File-std-array-ml-1258125823.md#function-function-std-array-length-function-length-a-std-array-ml-1052681365) | `std/array.ml:372` | 6 | 3 | 2 | 1 | 1 | 85.11 | 69.24 |
-| [`std.array.map`](File-std-array-ml-1258125823.md#function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657) | `std/array.ml:242` | 17 | 11 | 5 | 4 | 1 | 378.92 | 54.43 |
-| [`std.array.reduce`](File-std-array-ml-1258125823.md#function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997) | `std/array.ml:301` | 13 | 8 | 4 | 3 | 1 | 304.31 | 57.77 |
+| [`std.array.isEmpty`](File-std-array-ml-1258125823.md#function-function-std-array-isempty-function-isempty-a-std-array-ml-946252559) | `std/array.ml:377` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
+| [`std.array.joinStrings`](File-std-array-ml-1258125823.md#function-function-std-array-joinstrings-function-joinstrings-a-sep-std-array-ml-426039153) | `std/array.ml:355` | 9 | 5 | 3 | 2 | 1 | 152 | 63.5 |
+| [`std.array.last`](File-std-array-ml-1258125823.md#function-function-std-array-last-function-last-a-std-array-ml-1230645617) | `std/array.ml:398` | 10 | 6 | 3 | 2 | 1 | 171.3 | 62.14 |
+| [`std.array.lastIndexOf`](File-std-array-ml-1258125823.md#function-function-std-array-lastindexof-function-lastindexof-a-value-std-array-ml-787503178) | `std/array.ml:203` | 17 | 11 | 5 | 5 | 2 | 318.58 | 54.96 |
+| [`std.array.length`](File-std-array-ml-1258125823.md#function-function-std-array-length-function-length-a-std-array-ml-1052681365) | `std/array.ml:368` | 6 | 3 | 2 | 1 | 1 | 85.11 | 69.24 |
+| [`std.array.map`](File-std-array-ml-1258125823.md#function-function-std-array-map-function-map-a-fn-std-array-ml-1628791657) | `std/array.ml:238` | 17 | 11 | 5 | 4 | 1 | 378.92 | 54.43 |
+| [`std.array.reduce`](File-std-array-ml-1258125823.md#function-function-std-array-reduce-function-reduce-arr-f-init-std-array-ml-1955820997) | `std/array.ml:297` | 13 | 8 | 4 | 3 | 1 | 304.31 | 57.77 |
 | [`std.array.setIfPresent`](File-std-array-ml-1258125823.md#function-function-std-array-setifpresent-function-setifpresent-a-index-value-std-array-ml-566540004) | `std/array.ml:84` | 8 | 5 | 2 | 1 | 1 | 183.4 | 64.18 |
-| [`std.array.slice`](File-std-array-ml-1258125823.md#function-function-std-array-slice-function-slice-a-offset-length-std-array-ml-1271445914) | `std/array.ml:133` | 36 | 24 | 11 | 10 | 1 | 707.16 | 44.62 |
+| [`std.array.slice`](File-std-array-ml-1258125823.md#function-function-std-array-slice-function-slice-a-offset-length-std-array-ml-1271445914) | `std/array.ml:131` | 34 | 23 | 10 | 9 | 1 | 615.34 | 45.72 |
 | [`std.assert.assertApprox`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertapprox-function-assertapprox-actual-expected-eps-label-std-assert-ml-916027518) | `std/assert.ml:130` | 18 | 14 | 3 | 2 | 1 | 293.25 | 54.94 |
 | [`std.assert.assertEq`](File-std-assert-ml-1772521196.md#function-function-std-assert-asserteq-function-asserteq-actual-expected-label-std-assert-ml-808850792) | `std/assert.ml:59` | 12 | 9 | 2 | 1 | 1 | 166.91 | 60.63 |
 | [`std.assert.assertFalse`](File-std-assert-ml-1772521196.md#function-function-std-assert-assertfalse-function-assertfalse-cond-label-std-assert-ml-1917626464) | `std/assert.ml:44` | 9 | 6 | 2 | 1 | 1 | 123.19 | 64.28 |
@@ -159,37 +159,37 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.audio.PlayerOptions.defaults`](Type-std-audio-playeroptions-1251061429.md#static_method-static-method-std-audio-playeroptions-defaults-static-function-defaults-std-audio-ml-294074605) | `std/audio.ml:70` | 3 | 1 | 1 | 0 | 0 | 91.38 | 75.73 |
 | [`std.bytes.alloc`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-alloc-function-alloc-size-std-bytes-ml-1457681591) | `std/bytes.ml:38` | 9 | 5 | 3 | 2 | 1 | 121.11 | 64.19 |
 | [`std.bytes.allocFill`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-allocfill-function-allocfill-size-fill-std-bytes-ml-871437864) | `std/bytes.ml:51` | 12 | 7 | 4 | 3 | 1 | 188.02 | 60 |
-| [`std.bytes.compare`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-compare-function-compare-a-b-std-bytes-ml-1567382625) | `std/bytes.ml:329` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
+| [`std.bytes.compare`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-compare-function-compare-a-b-std-bytes-ml-1567382625) | `std/bytes.ml:340` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
 | [`std.bytes.concat`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-concat-function-concat-a-b-std-bytes-ml-1927135267) | `std/bytes.ml:133` | 9 | 5 | 3 | 2 | 1 | 136.74 | 63.83 |
 | [`std.bytes.copy`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-copy-function-copy-b-std-bytes-ml-1693844616) | `std/bytes.ml:66` | 6 | 3 | 2 | 1 | 1 | 120 | 68.2 |
-| [`std.bytes.ctEquals`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-ctequals-function-ctequals-a-b-std-bytes-ml-959200415) | `std/bytes.ml:159` | 29 | 20 | 8 | 12 | 3 | 656.58 | 47.3 |
-| [`std.bytes.decodeUtf16Z`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf16z-function-decodeutf16z-b-std-bytes-ml-1507867896) | `std/bytes.ml:394` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.bytes.decodeUtf8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8-function-decodeutf8-b-std-bytes-ml-1587911928) | `std/bytes.ml:367` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.bytes.decodeUtf8OrError`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8orerror-function-decodeutf8orerror-b-std-bytes-ml-396718180) | `std/bytes.ml:373` | 10 | 6 | 3 | 2 | 1 | 194.49 | 61.76 |
-| [`std.bytes.decodeUtf8Z`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8z-function-decodeutf8z-b-std-bytes-ml-913051038) | `std/bytes.ml:387` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.bytes.endsWith`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-endswith-function-endswith-b-suffix-std-bytes-ml-1215280649) | `std/bytes.ml:234` | 9 | 5 | 3 | 2 | 1 | 160 | 63.35 |
+| [`std.bytes.ctEquals`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-ctequals-function-ctequals-a-b-std-bytes-ml-959200415) | `std/bytes.ml:159` | 39 | 13 | 8 | 7 | 1 | 1218.46 | 42.61 |
+| [`std.bytes.decodeUtf16Z`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf16z-function-decodeutf16z-b-std-bytes-ml-1507867896) | `std/bytes.ml:405` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.bytes.decodeUtf8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8-function-decodeutf8-b-std-bytes-ml-1587911928) | `std/bytes.ml:378` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.bytes.decodeUtf8OrError`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8orerror-function-decodeutf8orerror-b-std-bytes-ml-396718180) | `std/bytes.ml:384` | 10 | 6 | 3 | 2 | 1 | 194.49 | 61.76 |
+| [`std.bytes.decodeUtf8Z`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-decodeutf8z-function-decodeutf8z-b-std-bytes-ml-913051038) | `std/bytes.ml:398` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.bytes.endsWith`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-endswith-function-endswith-b-suffix-std-bytes-ml-1215280649) | `std/bytes.ml:245` | 9 | 5 | 3 | 2 | 1 | 160 | 63.35 |
 | [`std.bytes.equals`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-equals-function-equals-a-b-std-bytes-ml-1472927903) | `std/bytes.ml:146` | 9 | 5 | 3 | 2 | 1 | 148 | 63.58 |
-| [`std.bytes.fill`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fill-function-fill-b-value-std-bytes-ml-1020966655) | `std/bytes.ml:202` | 13 | 8 | 4 | 3 | 1 | 241.58 | 58.48 |
-| [`std.bytes.fromHex`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fromhex-function-fromhex-s-std-bytes-ml-510091409) | `std/bytes.ml:347` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.bytes.fromHexOrError`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fromhexorerror-function-fromhexorerror-s-std-bytes-ml-2035014311) | `std/bytes.ml:353` | 10 | 6 | 3 | 2 | 1 | 209.59 | 61.53 |
-| [`std.bytes.indexOf`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-indexof-function-indexof-hay-needle-start-std-bytes-ml-154105993) | `std/bytes.ml:300` | 12 | 7 | 4 | 3 | 1 | 216.64 | 59.57 |
-| [`std.bytes.lastIndexOf`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-lastindexof-function-lastindexof-hay-needle-std-bytes-ml-26887577) | `std/bytes.ml:316` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
-| [`std.bytes.readU16BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu16be-function-readu16be-b-off-std-bytes-ml-388570013) | `std/bytes.ml:542` | 15 | 10 | 4 | 3 | 1 | 368.02 | 55.84 |
-| [`std.bytes.readU16LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu16le-function-readu16le-b-off-std-bytes-ml-827175377) | `std/bytes.ml:523` | 15 | 10 | 4 | 3 | 1 | 368.02 | 55.84 |
-| [`std.bytes.readU32BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu32be-function-readu32be-b-off-std-bytes-ml-157086745) | `std/bytes.ml:638` | 17 | 12 | 4 | 3 | 1 | 553.18 | 53.42 |
-| [`std.bytes.readU32LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu32le-function-readu32le-b-off-std-bytes-ml-1814407613) | `std/bytes.ml:617` | 17 | 12 | 4 | 3 | 1 | 553.18 | 53.42 |
-| [`std.bytes.readU8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu8-function-readu8-b-off-std-bytes-ml-1101136119) | `std/bytes.ml:454` | 13 | 8 | 4 | 3 | 1 | 253.32 | 58.33 |
-| [`std.bytes.startsWith`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-startswith-function-startswith-b-prefix-std-bytes-ml-913248740) | `std/bytes.ml:221` | 9 | 5 | 3 | 2 | 1 | 160 | 63.35 |
+| [`std.bytes.fill`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fill-function-fill-b-value-std-bytes-ml-1020966655) | `std/bytes.ml:213` | 13 | 8 | 4 | 3 | 1 | 241.58 | 58.48 |
+| [`std.bytes.fromHex`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fromhex-function-fromhex-s-std-bytes-ml-510091409) | `std/bytes.ml:358` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.bytes.fromHexOrError`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-fromhexorerror-function-fromhexorerror-s-std-bytes-ml-2035014311) | `std/bytes.ml:364` | 10 | 6 | 3 | 2 | 1 | 209.59 | 61.53 |
+| [`std.bytes.indexOf`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-indexof-function-indexof-hay-needle-start-std-bytes-ml-154105993) | `std/bytes.ml:311` | 12 | 7 | 4 | 3 | 1 | 216.64 | 59.57 |
+| [`std.bytes.lastIndexOf`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-lastindexof-function-lastindexof-hay-needle-std-bytes-ml-26887577) | `std/bytes.ml:327` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
+| [`std.bytes.readU16BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu16be-function-readu16be-b-off-std-bytes-ml-388570013) | `std/bytes.ml:553` | 15 | 10 | 4 | 3 | 1 | 368.02 | 55.84 |
+| [`std.bytes.readU16LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu16le-function-readu16le-b-off-std-bytes-ml-827175377) | `std/bytes.ml:534` | 15 | 10 | 4 | 3 | 1 | 368.02 | 55.84 |
+| [`std.bytes.readU32BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu32be-function-readu32be-b-off-std-bytes-ml-157086745) | `std/bytes.ml:649` | 17 | 12 | 4 | 3 | 1 | 553.18 | 53.42 |
+| [`std.bytes.readU32LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu32le-function-readu32le-b-off-std-bytes-ml-1814407613) | `std/bytes.ml:628` | 17 | 12 | 4 | 3 | 1 | 553.18 | 53.42 |
+| [`std.bytes.readU8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-readu8-function-readu8-b-off-std-bytes-ml-1101136119) | `std/bytes.ml:465` | 13 | 8 | 4 | 3 | 1 | 253.32 | 58.33 |
+| [`std.bytes.startsWith`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-startswith-function-startswith-b-prefix-std-bytes-ml-913248740) | `std/bytes.ml:232` | 9 | 5 | 3 | 2 | 1 | 160 | 63.35 |
 | [`std.bytes.sub`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-sub-function-sub-b-offset-length-std-bytes-ml-46179299) | `std/bytes.ml:77` | 12 | 7 | 4 | 3 | 1 | 216.64 | 59.57 |
 | [`std.bytes.subOrError`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-suborerror-function-suborerror-b-offset-length-std-bytes-ml-710702291) | `std/bytes.ml:95` | 30 | 20 | 10 | 9 | 1 | 754.81 | 46.28 |
-| [`std.bytes.toHex`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-tohex-function-tohex-b-std-bytes-ml-835666772) | `std/bytes.ml:341` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.bytes.writeU16BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu16be-function-writeu16be-b-off-value-std-bytes-ml-1415343010) | `std/bytes.ml:498` | 21 | 14 | 7 | 6 | 1 | 523.19 | 51.18 |
-| [`std.bytes.writeU16LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu16le-function-writeu16le-b-off-value-std-bytes-ml-623641502) | `std/bytes.ml:472` | 21 | 14 | 7 | 6 | 1 | 523.19 | 51.18 |
-| [`std.bytes.writeU32BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu32be-function-writeu32be-b-off-value-std-bytes-ml-560161774) | `std/bytes.ml:590` | 23 | 16 | 7 | 6 | 1 | 687.1 | 49.49 |
-| [`std.bytes.writeU32LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu32le-function-writeu32le-b-off-value-std-bytes-ml-720189578) | `std/bytes.ml:562` | 23 | 16 | 7 | 6 | 1 | 687.1 | 49.49 |
-| [`std.bytes.writeU8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu8-function-writeu8-b-off-value-std-bytes-ml-1748622230) | `std/bytes.ml:430` | 20 | 13 | 7 | 6 | 1 | 435.97 | 52.2 |
-| [`std.bytes.xor`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-xor-function-xor-a-b-std-bytes-ml-2027129921) | `std/bytes.ml:659` | 19 | 13 | 5 | 4 | 1 | 418.24 | 53.08 |
-| [`std.bytes.xorInPlace`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-xorinplace-function-xorinplace-a-b-std-bytes-ml-1831427983) | `std/bytes.ml:684` | 18 | 12 | 5 | 4 | 1 | 380.74 | 53.88 |
+| [`std.bytes.toHex`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-tohex-function-tohex-b-std-bytes-ml-835666772) | `std/bytes.ml:352` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.bytes.writeU16BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu16be-function-writeu16be-b-off-value-std-bytes-ml-1415343010) | `std/bytes.ml:509` | 21 | 14 | 7 | 6 | 1 | 523.19 | 51.18 |
+| [`std.bytes.writeU16LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu16le-function-writeu16le-b-off-value-std-bytes-ml-623641502) | `std/bytes.ml:483` | 21 | 14 | 7 | 6 | 1 | 523.19 | 51.18 |
+| [`std.bytes.writeU32BE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu32be-function-writeu32be-b-off-value-std-bytes-ml-560161774) | `std/bytes.ml:601` | 23 | 16 | 7 | 6 | 1 | 687.1 | 49.49 |
+| [`std.bytes.writeU32LE`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu32le-function-writeu32le-b-off-value-std-bytes-ml-720189578) | `std/bytes.ml:573` | 23 | 16 | 7 | 6 | 1 | 687.1 | 49.49 |
+| [`std.bytes.writeU8`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-writeu8-function-writeu8-b-off-value-std-bytes-ml-1748622230) | `std/bytes.ml:441` | 20 | 13 | 7 | 6 | 1 | 435.97 | 52.2 |
+| [`std.bytes.xor`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-xor-function-xor-a-b-std-bytes-ml-2027129921) | `std/bytes.ml:670` | 32 | 15 | 6 | 5 | 1 | 1065.39 | 45.16 |
+| [`std.bytes.xorInPlace`](File-std-bytes-ml-1351945333.md#function-function-std-bytes-xorinplace-function-xorinplace-a-b-std-bytes-ml-1831427983) | `std/bytes.ml:709` | 31 | 14 | 6 | 5 | 1 | 1002.39 | 45.65 |
 | [`std.checksum.crc32.compute`](File-std-checksum-crc32-ml-1964480723.md#function-function-std-checksum-crc32-compute-function-compute-buffer-std-checksum-crc32-ml-1928954823) | `std/checksum/crc32.ml:28` | 4 | 3 | 2 | 1 | 1 | 128 | 71.84 |
 | [`std.checksum.crc32.computeRange`](File-std-checksum-crc32-ml-1964480723.md#function-function-std-checksum-crc32-computerange-function-computerange-buffer-offset-length-std-checksum-crc32-ml-443299340) | `std/checksum/crc32.ml:37` | 4 | 3 | 2 | 1 | 1 | 134.89 | 71.68 |
 | [`std.checksum.crc32.update`](File-std-checksum-crc32-ml-1964480723.md#function-function-std-checksum-crc32-update-function-update-previous-buffer-offset-length-std-checksum-crc32-ml-1170152687) | `std/checksum/crc32.ml:47` | 4 | 3 | 2 | 1 | 1 | 143.06 | 71.5 |
@@ -200,15 +200,15 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.checksum.crc32c.update`](File-std-checksum-crc32c-ml-144026660.md#function-function-std-checksum-crc32c-update-function-update-previous-buffer-offset-length-std-checksum-crc32c-ml-1039557397) | `std/checksum/crc32c.ml:47` | 4 | 3 | 2 | 1 | 1 | 143.06 | 71.5 |
 | [`std.checksum.crc32c.verify`](File-std-checksum-crc32c-ml-144026660.md#function-function-std-checksum-crc32c-verify-function-verify-buffer-expected-std-checksum-crc32c-ml-766353659) | `std/checksum/crc32c.ml:55` | 5 | 4 | 3 | 2 | 1 | 164.23 | 68.84 |
 | [`std.checksum.crc32c.verifyRange`](File-std-checksum-crc32c-ml-144026660.md#function-function-std-checksum-crc32c-verifyrange-function-verifyrange-buffer-offset-length-expected-std-checksum-crc32c-ml-434060604) | `std/checksum/crc32c.ml:66` | 5 | 4 | 3 | 2 | 1 | 205.13 | 68.16 |
-| [`std.compress.compact`](File-std-compress-ml-2059288806.md#function-function-std-compress-compact-function-compact-input-std-compress-ml-2062070970) | `std/compress.ml:91` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.compress.compress`](File-std-compress-ml-2059288806.md#function-function-std-compress-compress-function-compress-input-mode-std-compress-ml-2059640593) | `std/compress.ml:48` | 34 | 34 | 13 | 16 | 2 | 1559.79 | 42.49 |
-| [`std.compress.decodedSize`](File-std-compress-ml-2059288806.md#function-function-std-compress-decodedsize-function-decodedsize-container-std-compress-ml-1171283667) | `std/compress.ml:98` | 17 | 12 | 14 | 13 | 1 | 865.67 | 50.71 |
-| [`std.compress.decompress`](File-std-compress-ml-2059288806.md#function-function-std-compress-decompress-function-decompress-container-maxoutputbytes-std-compress-ml-2025164771) | `std/compress.ml:120` | 27 | 23 | 10 | 12 | 2 | 1065.98 | 46.23 |
-| [`std.compress.fast`](File-std-compress-ml-2059288806.md#function-function-std-compress-fast-function-fast-input-std-compress-ml-1661306628) | `std/compress.ml:85` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.compress.lz4.decode`](File-std-compress-lz4-ml-637795625.md#function-function-std-compress-lz4-decode-function-decode-block-expectedsize-std-compress-lz4-ml-2051485663) | `std/compress/lz4.ml:112` | 64 | 60 | 25 | 53 | 4 | 2646 | 33.27 |
-| [`std.compress.lz4.encode`](File-std-compress-lz4-ml-637795625.md#function-function-std-compress-lz4-encode-function-encode-input-std-compress-lz4-ml-1350653011) | `std/compress/lz4.ml:38` | 65 | 63 | 22 | 35 | 3 | 3228.92 | 32.92 |
-| [`std.compress.rle.decode`](File-std-compress-rle-ml-92459872.md#function-function-std-compress-rle-decode-function-decode-block-expectedsize-std-compress-rle-ml-706272421) | `std/compress/rle.ml:64` | 35 | 27 | 12 | 16 | 3 | 1202.14 | 43.14 |
-| [`std.compress.rle.encode`](File-std-compress-rle-ml-92459872.md#function-function-std-compress-rle-encode-function-encode-input-std-compress-rle-ml-834631269) | `std/compress/rle.ml:29` | 31 | 28 | 9 | 14 | 4 | 1281.97 | 44.5 |
+| [`std.compress.compact`](File-std-compress-ml-2059288806.md#function-function-std-compress-compact-function-compact-input-std-compress-ml-2062070970) | `std/compress.ml:96` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.compress.compress`](File-std-compress-ml-2059288806.md#function-function-std-compress-compress-function-compress-input-mode-std-compress-ml-2059640593) | `std/compress.ml:48` | 37 | 36 | 14 | 20 | 3 | 1728.46 | 41.24 |
+| [`std.compress.decodedSize`](File-std-compress-ml-2059288806.md#function-function-std-compress-decodedsize-function-decodedsize-container-std-compress-ml-1171283667) | `std/compress.ml:103` | 17 | 12 | 14 | 13 | 1 | 865.67 | 50.71 |
+| [`std.compress.decompress`](File-std-compress-ml-2059288806.md#function-function-std-compress-decompress-function-decompress-container-maxoutputbytes-std-compress-ml-2025164771) | `std/compress.ml:125` | 26 | 22 | 10 | 12 | 2 | 1049.4 | 46.64 |
+| [`std.compress.fast`](File-std-compress-ml-2059288806.md#function-function-std-compress-fast-function-fast-input-std-compress-ml-1661306628) | `std/compress.ml:90` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.compress.lz4.decode`](File-std-compress-lz4-ml-637795625.md#function-function-std-compress-lz4-decode-function-decode-block-expectedsize-std-compress-lz4-ml-2051485663) | `std/compress/lz4.ml:166` | 4 | 3 | 2 | 1 | 1 | 172.88 | 70.93 |
+| [`std.compress.lz4.encode`](File-std-compress-lz4-ml-637795625.md#function-function-std-compress-lz4-encode-function-encode-input-std-compress-lz4-ml-1350653011) | `std/compress/lz4.ml:78` | 77 | 63 | 22 | 33 | 3 | 4041.59 | 30.64 |
+| [`std.compress.rle.decode`](File-std-compress-rle-ml-92459872.md#function-function-std-compress-rle-decode-function-decode-block-expectedsize-std-compress-rle-ml-706272421) | `std/compress/rle.ml:91` | 4 | 3 | 2 | 1 | 1 | 172.88 | 70.93 |
+| [`std.compress.rle.encode`](File-std-compress-rle-ml-92459872.md#function-function-std-compress-rle-encode-function-encode-input-std-compress-rle-ml-834631269) | `std/compress/rle.ml:56` | 31 | 28 | 9 | 14 | 4 | 1281.97 | 44.5 |
 | [`std.concurrent.cancellation.CancellationToken.check`](Type-std-concurrent-cancellation-cancellationtoken-2126484772.md#method-method-std-concurrent-cancellation-cancellationtoken-check-function-check-std-concurrent-cancellation-ml-163271096) | `std/concurrent/cancellation.ml:40` | 6 | 3 | 2 | 1 | 1 | 96 | 68.88 |
 | [`std.concurrent.cancellation.CancellationToken.Check`](Type-std-concurrent-cancellation-cancellationtoken-2126484772.md#method-method-std-concurrent-cancellation-cancellationtoken-check-function-check-std-concurrent-cancellation-ml-459292792) | `std/concurrent/cancellation.ml:55` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.cancellation.CancellationToken.isCancellationRequested`](Type-std-concurrent-cancellation-cancellationtoken-2126484772.md#method-method-std-concurrent-cancellation-cancellationtoken-iscancellationrequested-function-iscancellationrequested-std-concurrent-cancellation-ml-1369244462) | `std/concurrent/cancellation.ml:21` | 4 | 3 | 2 | 1 | 1 | 109.39 | 72.32 |
@@ -228,31 +228,31 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.concurrent.cancellation.CancellationTokenSource.token`](Type-std-concurrent-cancellation-cancellationtokensource-1458442689.md#method-method-std-concurrent-cancellation-cancellationtokensource-token-function-token-std-concurrent-cancellation-ml-198279739) | `std/concurrent/cancellation.ml:80` | 3 | 1 | 1 | 0 | 0 | 33 | 78.82 |
 | [`std.concurrent.cancellation.CancellationTokenSource.wait`](Type-std-concurrent-cancellation-cancellationtokensource-1458442689.md#method-method-std-concurrent-cancellation-cancellationtokensource-wait-function-wait-std-concurrent-cancellation-ml-1133919633) | `std/concurrent/cancellation.ml:108` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
 | [`std.concurrent.cancellation.CancellationTokenSource.waitFor`](Type-std-concurrent-cancellation-cancellationtokensource-1458442689.md#method-method-std-concurrent-cancellation-cancellationtokensource-waitfor-function-waitfor-milliseconds-std-concurrent-cancellation-ml-427995255) | `std/concurrent/cancellation.ml:115` | 4 | 3 | 2 | 1 | 1 | 95.18 | 72.74 |
-| [`std.concurrent.channel.BoundedQueue.countValue`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-countvalue-function-countvalue-std-concurrent-channel-ml-503180078) | `std/concurrent/channel.ml:112` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
-| [`std.concurrent.channel.BoundedQueue.dispose`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-dispose-function-dispose-std-concurrent-channel-ml-1470048932) | `std/concurrent/channel.ml:134` | 9 | 8 | 4 | 3 | 1 | 387.64 | 60.52 |
-| [`std.concurrent.channel.BoundedQueue.isSealed`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-issealed-function-issealed-std-concurrent-channel-ml-1579367774) | `std/concurrent/channel.ml:120` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.concurrent.channel.BoundedQueue.new`](Type-std-concurrent-channel-boundedqueue-1937801506.md#static_method-static-method-std-concurrent-channel-boundedqueue-new-static-function-new-capacity-std-concurrent-channel-ml-1067955915) | `std/concurrent/channel.ml:53` | 15 | 1 | 1 | 0 | 0 | 322.84 | 56.64 |
-| [`std.concurrent.channel.BoundedQueue.seal`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-seal-function-seal-std-concurrent-channel-ml-1060330214) | `std/concurrent/channel.ml:125` | 7 | 8 | 4 | 3 | 1 | 284.98 | 63.84 |
-| [`std.concurrent.channel.BoundedQueue.tryPut`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-tryput-function-tryput-value-std-concurrent-channel-ml-1780235547) | `std/concurrent/channel.ml:71` | 21 | 20 | 7 | 6 | 1 | 940.8 | 49.4 |
-| [`std.concurrent.channel.BoundedQueue.tryTake`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-trytake-function-trytake-std-concurrent-channel-ml-1966288618) | `std/concurrent/channel.ml:94` | 15 | 18 | 5 | 4 | 1 | 834.42 | 53.22 |
-| [`std.concurrent.channel.Channel.close`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-close-function-close-std-concurrent-channel-ml-113930469) | `std/concurrent/channel.ml:208` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
-| [`std.concurrent.channel.Channel.Count`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-count-function-count-std-concurrent-channel-ml-1978801295) | `std/concurrent/channel.ml:239` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.channel.Channel.countValue`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-countvalue-function-countvalue-std-concurrent-channel-ml-423376045) | `std/concurrent/channel.ml:203` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
-| [`std.concurrent.channel.Channel.dispose`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-738798171) | `std/concurrent/channel.ml:214` | 6 | 6 | 3 | 2 | 1 | 144 | 67.51 |
-| [`std.concurrent.channel.Channel.Dispose`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-894779547) | `std/concurrent/channel.ml:241` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.channel.Channel.new`](Type-std-concurrent-channel-channel-21011237.md#static_method-static-method-std-concurrent-channel-channel-new-static-function-new-capacity-std-concurrent-channel-ml-477572384) | `std/concurrent/channel.ml:154` | 6 | 3 | 3 | 2 | 1 | 187.98 | 66.7 |
-| [`std.concurrent.channel.Channel.receive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-1619698643) | `std/concurrent/channel.ml:199` | 1 | 1 | 1 | 0 | 0 | 48.43 | 88.07 |
-| [`std.concurrent.channel.Channel.Receive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-234908883) | `std/concurrent/channel.ml:232` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.channel.Channel.receiveFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-983386375) | `std/concurrent/channel.ml:185` | 12 | 14 | 10 | 11 | 2 | 612.02 | 55.6 |
-| [`std.concurrent.channel.Channel.ReceiveFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-141724103) | `std/concurrent/channel.ml:235` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.channel.Channel.send`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-1435514270) | `std/concurrent/channel.ml:178` | 1 | 1 | 1 | 0 | 0 | 62.91 | 87.27 |
-| [`std.concurrent.channel.Channel.Send`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-867878686) | `std/concurrent/channel.ml:223` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.channel.Channel.sendFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-388594722) | `std/concurrent/channel.ml:164` | 11 | 13 | 10 | 11 | 2 | 536.57 | 56.83 |
-| [`std.concurrent.channel.Channel.SendFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-564623202) | `std/concurrent/channel.ml:227` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
-| [`std.concurrent.channel.Channel.tryReceive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-2005260969) | `std/concurrent/channel.ml:201` | 1 | 1 | 1 | 0 | 0 | 43.19 | 88.41 |
-| [`std.concurrent.channel.Channel.TryReceive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-1599168617) | `std/concurrent/channel.ml:237` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.channel.Channel.trySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-416491496) | `std/concurrent/channel.ml:181` | 1 | 1 | 1 | 0 | 0 | 57.36 | 87.55 |
-| [`std.concurrent.channel.Channel.TrySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-121058408) | `std/concurrent/channel.ml:230` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.channel.BoundedQueue.countValue`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-countvalue-function-countvalue-std-concurrent-channel-ml-503180078) | `std/concurrent/channel.ml:121` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
+| [`std.concurrent.channel.BoundedQueue.dispose`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-dispose-function-dispose-std-concurrent-channel-ml-1470048932) | `std/concurrent/channel.ml:145` | 11 | 10 | 4 | 3 | 1 | 513.83 | 57.76 |
+| [`std.concurrent.channel.BoundedQueue.isSealed`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-issealed-function-issealed-std-concurrent-channel-ml-1579367774) | `std/concurrent/channel.ml:129` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.concurrent.channel.BoundedQueue.new`](Type-std-concurrent-channel-boundedqueue-1937801506.md#static_method-static-method-std-concurrent-channel-boundedqueue-new-static-function-new-capacity-std-concurrent-channel-ml-1067955915) | `std/concurrent/channel.ml:55` | 17 | 1 | 1 | 0 | 0 | 416.3 | 54.68 |
+| [`std.concurrent.channel.BoundedQueue.seal`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-seal-function-seal-std-concurrent-channel-ml-1060330214) | `std/concurrent/channel.ml:134` | 9 | 10 | 4 | 3 | 1 | 357.58 | 60.77 |
+| [`std.concurrent.channel.BoundedQueue.tryPut`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-tryput-function-tryput-value-std-concurrent-channel-ml-1780235547) | `std/concurrent/channel.ml:75` | 24 | 24 | 8 | 7 | 1 | 1124.64 | 47.45 |
+| [`std.concurrent.channel.BoundedQueue.tryTake`](Type-std-concurrent-channel-boundedqueue-1937801506.md#method-method-std-concurrent-channel-boundedqueue-trytake-function-trytake-std-concurrent-channel-ml-1966288618) | `std/concurrent/channel.ml:101` | 17 | 21 | 7 | 6 | 1 | 1048.94 | 51.07 |
+| [`std.concurrent.channel.Channel.close`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-close-function-close-std-concurrent-channel-ml-113930469) | `std/concurrent/channel.ml:231` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.concurrent.channel.Channel.Count`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-count-function-count-std-concurrent-channel-ml-1978801295) | `std/concurrent/channel.ml:262` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.channel.Channel.countValue`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-countvalue-function-countvalue-std-concurrent-channel-ml-423376045) | `std/concurrent/channel.ml:226` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
+| [`std.concurrent.channel.Channel.dispose`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-738798171) | `std/concurrent/channel.ml:237` | 6 | 6 | 3 | 2 | 1 | 144 | 67.51 |
+| [`std.concurrent.channel.Channel.Dispose`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-dispose-function-dispose-std-concurrent-channel-ml-894779547) | `std/concurrent/channel.ml:264` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.channel.Channel.new`](Type-std-concurrent-channel-channel-21011237.md#static_method-static-method-std-concurrent-channel-channel-new-static-function-new-capacity-std-concurrent-channel-ml-477572384) | `std/concurrent/channel.ml:167` | 6 | 3 | 3 | 2 | 1 | 187.98 | 66.7 |
+| [`std.concurrent.channel.Channel.receive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-1619698643) | `std/concurrent/channel.ml:222` | 1 | 1 | 1 | 0 | 0 | 48.43 | 88.07 |
+| [`std.concurrent.channel.Channel.Receive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receive-function-receive-std-concurrent-channel-ml-234908883) | `std/concurrent/channel.ml:255` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.channel.Channel.receiveFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-983386375) | `std/concurrent/channel.ml:203` | 17 | 18 | 12 | 16 | 3 | 840.75 | 51.07 |
+| [`std.concurrent.channel.Channel.ReceiveFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-receivefor-function-receivefor-milliseconds-std-concurrent-channel-ml-141724103) | `std/concurrent/channel.ml:258` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.channel.Channel.send`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-1435514270) | `std/concurrent/channel.ml:196` | 1 | 1 | 1 | 0 | 0 | 62.91 | 87.27 |
+| [`std.concurrent.channel.Channel.Send`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-send-function-send-value-std-concurrent-channel-ml-867878686) | `std/concurrent/channel.ml:246` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.channel.Channel.sendFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-388594722) | `std/concurrent/channel.ml:177` | 16 | 17 | 12 | 16 | 3 | 760.77 | 51.94 |
+| [`std.concurrent.channel.Channel.SendFor`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-sendfor-function-sendfor-value-milliseconds-std-concurrent-channel-ml-564623202) | `std/concurrent/channel.ml:250` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
+| [`std.concurrent.channel.Channel.tryReceive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-2005260969) | `std/concurrent/channel.ml:224` | 1 | 1 | 1 | 0 | 0 | 43.19 | 88.41 |
+| [`std.concurrent.channel.Channel.TryReceive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-1599168617) | `std/concurrent/channel.ml:260` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.channel.Channel.trySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-416491496) | `std/concurrent/channel.ml:199` | 1 | 1 | 1 | 0 | 0 | 57.36 | 87.55 |
+| [`std.concurrent.channel.Channel.TrySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-121058408) | `std/concurrent/channel.ml:253` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
 | [`std.concurrent.shared_value.allocate`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-allocate-function-allocate-size-std-concurrent-shared-value-ml-634200546) | `std/concurrent/shared_value.ml:60` | 4 | 3 | 3 | 2 | 1 | 146.95 | 71.29 |
 | [`std.concurrent.shared_value.clearRecordAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-clearrecordat-function-clearrecordat-address-std-concurrent-shared-value-ml-353588477) | `std/concurrent/shared_value.ml:198` | 4 | 2 | 1 | 0 | 0 | 85.11 | 73.22 |
 | [`std.concurrent.shared_value.destroyAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-destroyat-function-destroyat-address-std-concurrent-shared-value-ml-875610501) | `std/concurrent/shared_value.ml:231` | 8 | 5 | 4 | 3 | 1 | 229.25 | 63.24 |
@@ -265,60 +265,60 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.concurrent.shared_value.releaseEncoded`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-releaseencoded-function-releaseencoded-encoded-std-concurrent-shared-value-ml-645091353) | `std/concurrent/shared_value.ml:172` | 8 | 6 | 6 | 5 | 1 | 304.23 | 62.11 |
 | [`std.concurrent.shared_value.writeEncodedAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writeencodedat-function-writeencodedat-address-encoded-std-concurrent-shared-value-ml-1480224945) | `std/concurrent/shared_value.ml:184` | 11 | 8 | 4 | 3 | 1 | 435.99 | 58.26 |
 | [`std.concurrent.shared_value.writeI64At`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writei64at-function-writei64at-address-value-std-concurrent-shared-value-ml-1649928982) | `std/concurrent/shared_value.ml:119` | 5 | 3 | 1 | 0 | 0 | 128.93 | 69.84 |
-| [`std.concurrent.task.Future.Cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-1703225909) | `std/concurrent/task.ml:108` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.task.Future.cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-175448501) | `std/concurrent/task.ml:78` | 9 | 8 | 4 | 3 | 1 | 241.58 | 61.96 |
-| [`std.concurrent.task.Future.close`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-close-function-close-std-concurrent-task-ml-615943313) | `std/concurrent/task.ml:89` | 10 | 9 | 6 | 5 | 1 | 343.13 | 59.63 |
-| [`std.concurrent.task.Future.Dispose`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-dispose-function-dispose-std-concurrent-task-ml-667536055) | `std/concurrent/task.ml:110` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.task.Future.IsDone`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-isdone-function-isdone-std-concurrent-task-ml-1810562205) | `std/concurrent/task.ml:106` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.task.Future.isDone`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-isdone-function-isdone-std-concurrent-task-ml-1624872349) | `std/concurrent/task.ml:65` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
-| [`std.concurrent.task.Future.result`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-result-function-result-std-concurrent-task-ml-716603753) | `std/concurrent/task.ml:71` | 5 | 5 | 3 | 2 | 1 | 203.13 | 68.19 |
-| [`std.concurrent.task.Future.status`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-status-function-status-std-concurrent-task-ml-1165235189) | `std/concurrent/task.ml:59` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
-| [`std.concurrent.task.Future.Wait`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-wait-function-wait-std-concurrent-task-ml-850498977) | `std/concurrent/task.ml:101` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.task.Future.wait`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-wait-function-wait-std-concurrent-task-ml-1188844321) | `std/concurrent/task.ml:46` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
-| [`std.concurrent.task.Future.WaitFor`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-waitfor-function-waitfor-milliseconds-std-concurrent-task-ml-1086060791) | `std/concurrent/task.ml:104` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.task.Future.waitFor`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-waitfor-function-waitfor-milliseconds-std-concurrent-task-ml-1176137015) | `std/concurrent/task.ml:53` | 4 | 3 | 2 | 1 | 1 | 97.67 | 72.67 |
-| [`std.concurrent.task.run`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-run-function-run-pool-callback-data-std-concurrent-task-ml-576679120) | `std/concurrent/task.ml:117` | 5 | 4 | 2 | 1 | 1 | 218.26 | 68.11 |
-| [`std.concurrent.task.runCancellable`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-runcancellable-function-runcancellable-pool-callback-data-std-concurrent-task-ml-86407698) | `std/concurrent/task.ml:127` | 10 | 7 | 2 | 1 | 1 | 378.33 | 59.87 |
-| [`std.concurrent.task.whenAll`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenall-function-whenall-futures-std-concurrent-task-ml-504238549) | `std/concurrent/task.ml:140` | 13 | 13 | 5 | 6 | 2 | 520.95 | 56 |
-| [`std.concurrent.task.whenAny`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenany-function-whenany-futures-std-concurrent-task-ml-1373291439) | `std/concurrent/task.ml:177` | 3 | 1 | 1 | 0 | 0 | 51.89 | 77.45 |
-| [`std.concurrent.task.whenAnyFor`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenanyfor-function-whenanyfor-futures-milliseconds-std-concurrent-task-ml-1029684509) | `std/concurrent/task.ml:157` | 17 | 19 | 11 | 16 | 3 | 795.39 | 51.37 |
-| [`std.concurrent.thread_pool.ThreadPool.AwaitTermination`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaittermination-function-awaittermination-std-concurrent-thread-pool-ml-6637564) | `std/concurrent/thread_pool.ml:509` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.AwaitTerminationFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaitterminationfor-function-awaitterminationfor-milliseconds-std-concurrent-thread-pool-ml-1960742116) | `std/concurrent/thread_pool.ml:512` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.thread_pool.ThreadPool.close`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-close-function-close-std-concurrent-thread-pool-ml-1182797580) | `std/concurrent/thread_pool.ml:477` | 16 | 17 | 6 | 6 | 2 | 600.13 | 53.47 |
-| [`std.concurrent.thread_pool.ThreadPool.Dispose`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-dispose-function-dispose-std-concurrent-thread-pool-ml-1118298946) | `std/concurrent/thread_pool.ml:514` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.isShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-811388460) | `std/concurrent/thread_pool.ml:399` | 6 | 5 | 2 | 1 | 1 | 145.95 | 67.6 |
-| [`std.concurrent.thread_pool.ThreadPool.IsShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-1713408876) | `std/concurrent/thread_pool.ml:503` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.join`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-join-function-join-std-concurrent-thread-pool-ml-1493137732) | `std/concurrent/thread_pool.ml:447` | 12 | 12 | 5 | 5 | 2 | 402.36 | 57.55 |
-| [`std.concurrent.thread_pool.ThreadPool.joinFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-joinfor-function-joinfor-milliseconds-std-concurrent-thread-pool-ml-663703616) | `std/concurrent/thread_pool.ml:462` | 13 | 14 | 8 | 8 | 2 | 541.78 | 55.48 |
-| [`std.concurrent.thread_pool.ThreadPool.new`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-new-static-function-new-workercount-std-concurrent-thread-pool-ml-1759983018) | `std/concurrent/thread_pool.ml:297` | 3 | 1 | 1 | 0 | 0 | 62.91 | 76.86 |
-| [`std.concurrent.thread_pool.ThreadPool.pendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-78633876) | `std/concurrent/thread_pool.ml:386` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
-| [`std.concurrent.thread_pool.ThreadPool.PendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-1884661524) | `std/concurrent/thread_pool.ml:499` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-586367372) | `std/concurrent/thread_pool.ml:407` | 12 | 10 | 4 | 3 | 1 | 347.83 | 58.13 |
-| [`std.concurrent.thread_pool.ThreadPool.Shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-648357004) | `std/concurrent/thread_pool.ml:505` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.ShutdownNow`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdownnow-function-shutdownnow-std-concurrent-thread-pool-ml-1083023640) | `std/concurrent/thread_pool.ml:507` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPool.stop`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-stop-function-stop-std-concurrent-thread-pool-ml-1402724008) | `std/concurrent/thread_pool.ml:421` | 24 | 22 | 6 | 6 | 2 | 856.15 | 48.55 |
-| [`std.concurrent.thread_pool.ThreadPool.submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-704351741) | `std/concurrent/thread_pool.ml:353` | 31 | 26 | 8 | 7 | 1 | 1013.76 | 45.34 |
-| [`std.concurrent.thread_pool.ThreadPool.Submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-1887013117) | `std/concurrent/thread_pool.ml:497` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
-| [`std.concurrent.thread_pool.ThreadPool.withQueueCapacity`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-withqueuecapacity-static-function-withqueuecapacity-workercount-queuecapacity-std-concurrent-thread-pool-ml-10704545) | `std/concurrent/thread_pool.ml:304` | 43 | 23 | 9 | 11 | 3 | 1381.86 | 41.17 |
-| [`std.concurrent.thread_pool.ThreadPool.workerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-724788614) | `std/concurrent/thread_pool.ml:394` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
-| [`std.concurrent.thread_pool.ThreadPool.WorkerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-609593798) | `std/concurrent/thread_pool.ml:501` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1078125767) | `std/concurrent/thread_pool.ml:105` | 13 | 11 | 4 | 3 | 1 | 350.94 | 57.34 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.Cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1381498503) | `std/concurrent/thread_pool.ml:181` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.close`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-close-function-close-std-concurrent-thread-pool-ml-957207643) | `std/concurrent/thread_pool.ml:160` | 16 | 14 | 4 | 3 | 1 | 539.75 | 54.06 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.Dispose`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-dispose-function-dispose-std-concurrent-thread-pool-ml-689250869) | `std/concurrent/thread_pool.ml:196` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.getResult`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getresult-function-getresult-std-concurrent-thread-pool-ml-1087002137) | `std/concurrent/thread_pool.ml:141` | 6 | 5 | 2 | 1 | 1 | 134.89 | 67.84 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.GetResult`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getresult-function-getresult-std-concurrent-thread-pool-ml-1209365721) | `std/concurrent/thread_pool.ml:190` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.getStatus`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-223169015) | `std/concurrent/thread_pool.ml:133` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.GetStatus`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-1285725111) | `std/concurrent/thread_pool.ml:188` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.isCancelled`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-iscancelled-function-iscancelled-std-concurrent-thread-pool-ml-502201925) | `std/concurrent/thread_pool.ml:155` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.IsCancelled`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-iscancelled-function-iscancelled-std-concurrent-thread-pool-ml-1595104197) | `std/concurrent/thread_pool.ml:194` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.isDone`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-1101974527) | `std/concurrent/thread_pool.ml:149` | 4 | 2 | 1 | 0 | 0 | 100 | 72.73 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.IsDone`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-666330559) | `std/concurrent/thread_pool.ml:192` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.new`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#static_method-static-method-std-concurrent-thread-pool-threadpooljob-new-static-function-new-callback-data-std-concurrent-thread-pool-ml-1751013359) | `std/concurrent/thread_pool.ml:53` | 13 | 3 | 1 | 0 | 0 | 214.05 | 59.25 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.wait`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-60910587) | `std/concurrent/thread_pool.ml:120` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.Wait`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-1518778939) | `std/concurrent/thread_pool.ml:183` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.waitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-378084097) | `std/concurrent/thread_pool.ml:127` | 4 | 3 | 2 | 1 | 1 | 95.18 | 72.74 |
-| [`std.concurrent.thread_pool.ThreadPoolJob.WaitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-1383667777) | `std/concurrent/thread_pool.ml:186` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.task.Future.Cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-1703225909) | `std/concurrent/task.ml:109` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.task.Future.cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-175448501) | `std/concurrent/task.ml:79` | 9 | 8 | 4 | 3 | 1 | 241.58 | 61.96 |
+| [`std.concurrent.task.Future.close`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-close-function-close-std-concurrent-task-ml-615943313) | `std/concurrent/task.ml:90` | 10 | 9 | 6 | 5 | 1 | 343.13 | 59.63 |
+| [`std.concurrent.task.Future.Dispose`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-dispose-function-dispose-std-concurrent-task-ml-667536055) | `std/concurrent/task.ml:111` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.task.Future.IsDone`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-isdone-function-isdone-std-concurrent-task-ml-1810562205) | `std/concurrent/task.ml:107` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.task.Future.isDone`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-isdone-function-isdone-std-concurrent-task-ml-1624872349) | `std/concurrent/task.ml:66` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.concurrent.task.Future.result`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-result-function-result-std-concurrent-task-ml-716603753) | `std/concurrent/task.ml:72` | 5 | 5 | 3 | 2 | 1 | 203.13 | 68.19 |
+| [`std.concurrent.task.Future.status`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-status-function-status-std-concurrent-task-ml-1165235189) | `std/concurrent/task.ml:60` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.concurrent.task.Future.Wait`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-wait-function-wait-std-concurrent-task-ml-850498977) | `std/concurrent/task.ml:102` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.task.Future.wait`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-wait-function-wait-std-concurrent-task-ml-1188844321) | `std/concurrent/task.ml:47` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.concurrent.task.Future.WaitFor`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-waitfor-function-waitfor-milliseconds-std-concurrent-task-ml-1086060791) | `std/concurrent/task.ml:105` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.task.Future.waitFor`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-waitfor-function-waitfor-milliseconds-std-concurrent-task-ml-1176137015) | `std/concurrent/task.ml:54` | 4 | 3 | 2 | 1 | 1 | 97.67 | 72.67 |
+| [`std.concurrent.task.run`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-run-function-run-pool-callback-data-std-concurrent-task-ml-576679120) | `std/concurrent/task.ml:118` | 5 | 4 | 2 | 1 | 1 | 218.26 | 68.11 |
+| [`std.concurrent.task.runCancellable`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-runcancellable-function-runcancellable-pool-callback-data-std-concurrent-task-ml-86407698) | `std/concurrent/task.ml:128` | 10 | 7 | 2 | 1 | 1 | 378.33 | 59.87 |
+| [`std.concurrent.task.whenAll`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenall-function-whenall-futures-std-concurrent-task-ml-504238549) | `std/concurrent/task.ml:141` | 13 | 13 | 5 | 6 | 2 | 520.95 | 56 |
+| [`std.concurrent.task.whenAny`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenany-function-whenany-futures-std-concurrent-task-ml-1373291439) | `std/concurrent/task.ml:197` | 3 | 1 | 1 | 0 | 0 | 51.89 | 77.45 |
+| [`std.concurrent.task.whenAnyFor`](File-std-concurrent-task-ml-139288457.md#function-function-std-concurrent-task-whenanyfor-function-whenanyfor-futures-milliseconds-std-concurrent-task-ml-1029684509) | `std/concurrent/task.ml:158` | 35 | 36 | 17 | 20 | 2 | 1764.55 | 41.3 |
+| [`std.concurrent.thread_pool.ThreadPool.AwaitTermination`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaittermination-function-awaittermination-std-concurrent-thread-pool-ml-6637564) | `std/concurrent/thread_pool.ml:549` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.AwaitTerminationFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-awaitterminationfor-function-awaitterminationfor-milliseconds-std-concurrent-thread-pool-ml-1960742116) | `std/concurrent/thread_pool.ml:552` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
+| [`std.concurrent.thread_pool.ThreadPool.close`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-close-function-close-std-concurrent-thread-pool-ml-1182797580) | `std/concurrent/thread_pool.ml:517` | 16 | 17 | 6 | 6 | 2 | 600.13 | 53.47 |
+| [`std.concurrent.thread_pool.ThreadPool.Dispose`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-dispose-function-dispose-std-concurrent-thread-pool-ml-1118298946) | `std/concurrent/thread_pool.ml:554` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.isShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-811388460) | `std/concurrent/thread_pool.ml:439` | 6 | 5 | 2 | 1 | 1 | 145.95 | 67.6 |
+| [`std.concurrent.thread_pool.ThreadPool.IsShutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-isshutdown-function-isshutdown-std-concurrent-thread-pool-ml-1713408876) | `std/concurrent/thread_pool.ml:543` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.join`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-join-function-join-std-concurrent-thread-pool-ml-1493137732) | `std/concurrent/thread_pool.ml:487` | 12 | 12 | 5 | 5 | 2 | 402.37 | 57.55 |
+| [`std.concurrent.thread_pool.ThreadPool.joinFor`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-joinfor-function-joinfor-milliseconds-std-concurrent-thread-pool-ml-663703616) | `std/concurrent/thread_pool.ml:502` | 13 | 14 | 8 | 8 | 2 | 541.78 | 55.48 |
+| [`std.concurrent.thread_pool.ThreadPool.new`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-new-static-function-new-workercount-std-concurrent-thread-pool-ml-1759983018) | `std/concurrent/thread_pool.ml:337` | 3 | 1 | 1 | 0 | 0 | 62.91 | 76.86 |
+| [`std.concurrent.thread_pool.ThreadPool.pendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-78633876) | `std/concurrent/thread_pool.ml:426` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
+| [`std.concurrent.thread_pool.ThreadPool.PendingCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-pendingcount-function-pendingcount-std-concurrent-thread-pool-ml-1884661524) | `std/concurrent/thread_pool.ml:539` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-586367372) | `std/concurrent/thread_pool.ml:447` | 12 | 10 | 4 | 3 | 1 | 347.83 | 58.13 |
+| [`std.concurrent.thread_pool.ThreadPool.Shutdown`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdown-function-shutdown-std-concurrent-thread-pool-ml-648357004) | `std/concurrent/thread_pool.ml:545` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.ShutdownNow`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-shutdownnow-function-shutdownnow-std-concurrent-thread-pool-ml-1083023640) | `std/concurrent/thread_pool.ml:547` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPool.stop`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-stop-function-stop-std-concurrent-thread-pool-ml-1402724008) | `std/concurrent/thread_pool.ml:461` | 24 | 22 | 6 | 6 | 2 | 856.15 | 48.55 |
+| [`std.concurrent.thread_pool.ThreadPool.submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-704351741) | `std/concurrent/thread_pool.ml:393` | 31 | 26 | 8 | 7 | 1 | 1013.76 | 45.34 |
+| [`std.concurrent.thread_pool.ThreadPool.Submit`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-submit-function-submit-callback-data-std-concurrent-thread-pool-ml-1887013117) | `std/concurrent/thread_pool.ml:537` | 1 | 1 | 1 | 0 | 0 | 64.53 | 87.19 |
+| [`std.concurrent.thread_pool.ThreadPool.withQueueCapacity`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#static_method-static-method-std-concurrent-thread-pool-threadpool-withqueuecapacity-static-function-withqueuecapacity-workercount-queuecapacity-std-concurrent-thread-pool-ml-10704545) | `std/concurrent/thread_pool.ml:344` | 43 | 23 | 9 | 11 | 3 | 1381.86 | 41.17 |
+| [`std.concurrent.thread_pool.ThreadPool.workerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-724788614) | `std/concurrent/thread_pool.ml:434` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
+| [`std.concurrent.thread_pool.ThreadPool.WorkerCount`](Type-std-concurrent-thread-pool-threadpool-1892282200.md#method-method-std-concurrent-thread-pool-threadpool-workercount-function-workercount-std-concurrent-thread-pool-ml-609593798) | `std/concurrent/thread_pool.ml:541` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1078125767) | `std/concurrent/thread_pool.ml:144` | 13 | 11 | 4 | 3 | 1 | 337.6 | 57.46 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.Cancel`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-cancel-function-cancel-std-concurrent-thread-pool-ml-1381498503) | `std/concurrent/thread_pool.ml:221` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.close`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-close-function-close-std-concurrent-thread-pool-ml-957207643) | `std/concurrent/thread_pool.ml:199` | 17 | 15 | 4 | 3 | 1 | 584.2 | 53.25 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.Dispose`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-dispose-function-dispose-std-concurrent-thread-pool-ml-689250869) | `std/concurrent/thread_pool.ml:236` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.getResult`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getresult-function-getresult-std-concurrent-thread-pool-ml-1087002137) | `std/concurrent/thread_pool.ml:180` | 6 | 5 | 2 | 1 | 1 | 134.89 | 67.84 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.GetResult`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getresult-function-getresult-std-concurrent-thread-pool-ml-1209365721) | `std/concurrent/thread_pool.ml:230` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.getStatus`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-223169015) | `std/concurrent/thread_pool.ml:172` | 6 | 5 | 2 | 1 | 1 | 141.78 | 67.69 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.GetStatus`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-getstatus-function-getstatus-std-concurrent-thread-pool-ml-1285725111) | `std/concurrent/thread_pool.ml:228` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.isCancelled`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-iscancelled-function-iscancelled-std-concurrent-thread-pool-ml-502201925) | `std/concurrent/thread_pool.ml:194` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.IsCancelled`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-iscancelled-function-iscancelled-std-concurrent-thread-pool-ml-1595104197) | `std/concurrent/thread_pool.ml:234` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.isDone`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-1101974527) | `std/concurrent/thread_pool.ml:188` | 4 | 2 | 1 | 0 | 0 | 100 | 72.73 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.IsDone`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-isdone-function-isdone-std-concurrent-thread-pool-ml-666330559) | `std/concurrent/thread_pool.ml:232` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.new`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#static_method-static-method-std-concurrent-thread-pool-threadpooljob-new-static-function-new-callback-data-std-concurrent-thread-pool-ml-1751013359) | `std/concurrent/thread_pool.ml:55` | 14 | 3 | 1 | 0 | 0 | 233.83 | 58.28 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.wait`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-60910587) | `std/concurrent/thread_pool.ml:159` | 4 | 3 | 2 | 1 | 1 | 85.11 | 73.08 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.Wait`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-1518778939) | `std/concurrent/thread_pool.ml:223` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.waitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-378084097) | `std/concurrent/thread_pool.ml:166` | 4 | 3 | 2 | 1 | 1 | 95.18 | 72.74 |
+| [`std.concurrent.thread_pool.ThreadPoolJob.WaitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-1383667777) | `std/concurrent/thread_pool.ml:226` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
 | [`std.console.disableQuickEdit`](File-std-console-ml-1875579671.md#function-function-std-console-disablequickedit-function-disablequickedit-std-console-ml-1305818672) | `std/console.ml:109` | 10 | 11 | 6 | 5 | 1 | 442.8 | 58.85 |
 | [`std.console.isInteractive`](File-std-console-ml-1875579671.md#function-function-std-console-isinteractive-function-isinteractive-std-console-ml-470243024) | `std/console.ml:97` | 6 | 5 | 3 | 2 | 1 | 185.47 | 66.74 |
 | [`std.console.readPassword`](File-std-console-ml-1875579671.md#function-function-std-console-readpassword-function-readpassword-prompt-std-console-ml-1668045086) | `std/console.ml:181` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
@@ -380,49 +380,49 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.set`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#method-method-std-ds-concurrent-hashmap-threadsafehashmap-set-function-set-key-value-std-ds-concurrent-hashmap-ml-2134634419) | `std/ds/concurrent_hashmap.ml:176` | 37 | 30 | 11 | 11 | 2 | 1619.64 | 41.84 |
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.valuesArray`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#method-method-std-ds-concurrent-hashmap-threadsafehashmap-valuesarray-function-valuesarray-std-ds-concurrent-hashmap-ml-1895275761) | `std/ds/concurrent_hashmap.ml:370` | 19 | 15 | 5 | 5 | 2 | 510 | 52.47 |
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.withCapacity`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#static_method-static-method-std-ds-concurrent-hashmap-threadsafehashmap-withcapacity-static-function-withcapacity-minimumbuckets-std-ds-concurrent-hashmap-ml-1092752747) | `std/ds/concurrent_hashmap.ml:116` | 8 | 5 | 3 | 2 | 1 | 356.7 | 62.03 |
-| [`std.ds.concurrent_list.ThreadSafeList.add`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-add-function-add-value-std-ds-concurrent-list-ml-1193809212) | `std/ds/concurrent_list.ml:129` | 12 | 10 | 3 | 2 | 1 | 352.53 | 58.22 |
-| [`std.ds.concurrent_list.ThreadSafeList.addAll`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-addall-function-addall-values-std-ds-concurrent-list-ml-1924274557) | `std/ds/concurrent_list.ml:150` | 17 | 15 | 5 | 4 | 1 | 559.62 | 53.25 |
-| [`std.ds.concurrent_list.ThreadSafeList.clear`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-clear-function-clear-std-ds-concurrent-list-ml-2030947113) | `std/ds/concurrent_list.ml:281` | 15 | 12 | 4 | 3 | 1 | 355.74 | 55.94 |
-| [`std.ds.concurrent_list.ThreadSafeList.close`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-close-function-close-std-ds-concurrent-list-ml-1917022135) | `std/ds/concurrent_list.ml:315` | 10 | 9 | 3 | 2 | 1 | 283.28 | 60.61 |
-| [`std.ds.concurrent_list.ThreadSafeList.count`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-count-function-count-std-ds-concurrent-list-ml-174601541) | `std/ds/concurrent_list.ml:102` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.ds.concurrent_list.ThreadSafeList.first`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-first-function-first-std-ds-concurrent-list-ml-1203419835) | `std/ds/concurrent_list.ml:198` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
-| [`std.ds.concurrent_list.ThreadSafeList.fromArray`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#static_method-static-method-std-ds-concurrent-list-threadsafelist-fromarray-static-function-fromarray-values-std-ds-concurrent-list-ml-1166086536) | `std/ds/concurrent_list.ml:63` | 12 | 8 | 3 | 2 | 1 | 320 | 58.51 |
-| [`std.ds.concurrent_list.ThreadSafeList.get`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-get-function-get-index-std-ds-concurrent-list-ml-1342810797) | `std/ds/concurrent_list.ml:170` | 11 | 10 | 6 | 5 | 1 | 354.63 | 58.62 |
-| [`std.ds.concurrent_list.ThreadSafeList.insert`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-insert-function-insert-index-value-std-ds-concurrent-list-ml-1673287280) | `std/ds/concurrent_list.ml:217` | 18 | 16 | 7 | 6 | 1 | 671.73 | 51.88 |
-| [`std.ds.concurrent_list.ThreadSafeList.isClosed`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-isclosed-function-isclosed-std-ds-concurrent-list-ml-1449244539) | `std/ds/concurrent_list.ml:112` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.ds.concurrent_list.ThreadSafeList.isEmpty`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-isempty-function-isempty-std-ds-concurrent-list-ml-964418993) | `std/ds/concurrent_list.ml:107` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
-| [`std.ds.concurrent_list.ThreadSafeList.last`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-last-function-last-std-ds-concurrent-list-ml-1508902143) | `std/ds/concurrent_list.ml:203` | 10 | 8 | 4 | 3 | 1 | 286.73 | 60.44 |
-| [`std.ds.concurrent_list.ThreadSafeList.len`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-len-function-len-std-ds-concurrent-list-ml-2066822621) | `std/ds/concurrent_list.ml:93` | 7 | 7 | 3 | 2 | 1 | 191.16 | 65.19 |
+| [`std.ds.concurrent_list.ThreadSafeList.add`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-add-function-add-value-std-ds-concurrent-list-ml-1193809212) | `std/ds/concurrent_list.ml:123` | 12 | 10 | 3 | 2 | 1 | 352.53 | 58.22 |
+| [`std.ds.concurrent_list.ThreadSafeList.addAll`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-addall-function-addall-values-std-ds-concurrent-list-ml-1924274557) | `std/ds/concurrent_list.ml:144` | 14 | 14 | 5 | 4 | 1 | 545 | 55.17 |
+| [`std.ds.concurrent_list.ThreadSafeList.clear`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-clear-function-clear-std-ds-concurrent-list-ml-2030947113) | `std/ds/concurrent_list.ml:272` | 15 | 12 | 4 | 3 | 1 | 355.74 | 55.94 |
+| [`std.ds.concurrent_list.ThreadSafeList.close`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-close-function-close-std-ds-concurrent-list-ml-1917022135) | `std/ds/concurrent_list.ml:302` | 10 | 9 | 3 | 2 | 1 | 283.28 | 60.61 |
+| [`std.ds.concurrent_list.ThreadSafeList.count`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-count-function-count-std-ds-concurrent-list-ml-174601541) | `std/ds/concurrent_list.ml:96` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.ds.concurrent_list.ThreadSafeList.first`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-first-function-first-std-ds-concurrent-list-ml-1203419835) | `std/ds/concurrent_list.ml:189` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
+| [`std.ds.concurrent_list.ThreadSafeList.fromArray`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#static_method-static-method-std-ds-concurrent-list-threadsafelist-fromarray-static-function-fromarray-values-std-ds-concurrent-list-ml-1166086536) | `std/ds/concurrent_list.ml:63` | 10 | 8 | 3 | 2 | 1 | 340.06 | 60.06 |
+| [`std.ds.concurrent_list.ThreadSafeList.get`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-get-function-get-index-std-ds-concurrent-list-ml-1342810797) | `std/ds/concurrent_list.ml:161` | 11 | 10 | 6 | 5 | 1 | 354.63 | 58.62 |
+| [`std.ds.concurrent_list.ThreadSafeList.insert`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-insert-function-insert-index-value-std-ds-concurrent-list-ml-1673287280) | `std/ds/concurrent_list.ml:208` | 18 | 16 | 7 | 6 | 1 | 671.73 | 51.88 |
+| [`std.ds.concurrent_list.ThreadSafeList.isClosed`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-isclosed-function-isclosed-std-ds-concurrent-list-ml-1449244539) | `std/ds/concurrent_list.ml:106` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.ds.concurrent_list.ThreadSafeList.isEmpty`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-isempty-function-isempty-std-ds-concurrent-list-ml-964418993) | `std/ds/concurrent_list.ml:101` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
+| [`std.ds.concurrent_list.ThreadSafeList.last`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-last-function-last-std-ds-concurrent-list-ml-1508902143) | `std/ds/concurrent_list.ml:194` | 10 | 8 | 4 | 3 | 1 | 286.73 | 60.44 |
+| [`std.ds.concurrent_list.ThreadSafeList.len`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-len-function-len-std-ds-concurrent-list-ml-2066822621) | `std/ds/concurrent_list.ml:87` | 7 | 7 | 3 | 2 | 1 | 191.16 | 65.19 |
 | [`std.ds.concurrent_list.ThreadSafeList.new`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#static_method-static-method-std-ds-concurrent-list-threadsafelist-new-static-function-new-std-ds-concurrent-list-ml-1011596306) | `std/ds/concurrent_list.ml:46` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
-| [`std.ds.concurrent_list.ThreadSafeList.pop`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-pop-function-pop-std-ds-concurrent-list-ml-632107569) | `std/ds/concurrent_list.ml:258` | 13 | 11 | 4 | 3 | 1 | 366.13 | 57.21 |
-| [`std.ds.concurrent_list.ThreadSafeList.popOr`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-popor-function-popor-fallback-std-ds-concurrent-list-ml-960393249) | `std/ds/concurrent_list.ml:274` | 5 | 4 | 2 | 1 | 1 | 114.45 | 70.07 |
-| [`std.ds.concurrent_list.ThreadSafeList.push`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-push-function-push-value-std-ds-concurrent-list-ml-57487206) | `std/ds/concurrent_list.ml:144` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.ds.concurrent_list.ThreadSafeList.removeAt`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-removeat-function-removeat-index-std-ds-concurrent-list-ml-149304045) | `std/ds/concurrent_list.ml:238` | 18 | 16 | 7 | 6 | 1 | 635.93 | 52.05 |
-| [`std.ds.concurrent_list.ThreadSafeList.reserve`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-reserve-function-reserve-minimumcapacity-std-ds-concurrent-list-ml-1098250973) | `std/ds/concurrent_list.ml:118` | 8 | 9 | 5 | 4 | 1 | 305.53 | 62.23 |
-| [`std.ds.concurrent_list.ThreadSafeList.set`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-set-function-set-index-value-std-ds-concurrent-list-ml-564599672) | `std/ds/concurrent_list.ml:185` | 11 | 10 | 6 | 5 | 1 | 390 | 58.33 |
-| [`std.ds.concurrent_list.ThreadSafeList.toArray`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-toarray-function-toarray-std-ds-concurrent-list-ml-1032101379) | `std/ds/concurrent_list.ml:298` | 15 | 12 | 4 | 3 | 1 | 394.2 | 55.63 |
+| [`std.ds.concurrent_list.ThreadSafeList.pop`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-pop-function-pop-std-ds-concurrent-list-ml-632107569) | `std/ds/concurrent_list.ml:249` | 13 | 11 | 4 | 3 | 1 | 366.13 | 57.21 |
+| [`std.ds.concurrent_list.ThreadSafeList.popOr`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-popor-function-popor-fallback-std-ds-concurrent-list-ml-960393249) | `std/ds/concurrent_list.ml:265` | 5 | 4 | 2 | 1 | 1 | 114.45 | 70.07 |
+| [`std.ds.concurrent_list.ThreadSafeList.push`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-push-function-push-value-std-ds-concurrent-list-ml-57487206) | `std/ds/concurrent_list.ml:138` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.ds.concurrent_list.ThreadSafeList.removeAt`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-removeat-function-removeat-index-std-ds-concurrent-list-ml-149304045) | `std/ds/concurrent_list.ml:229` | 18 | 16 | 7 | 6 | 1 | 635.93 | 52.05 |
+| [`std.ds.concurrent_list.ThreadSafeList.reserve`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-reserve-function-reserve-minimumcapacity-std-ds-concurrent-list-ml-1098250973) | `std/ds/concurrent_list.ml:112` | 8 | 9 | 5 | 4 | 1 | 305.53 | 62.23 |
+| [`std.ds.concurrent_list.ThreadSafeList.set`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-set-function-set-index-value-std-ds-concurrent-list-ml-564599672) | `std/ds/concurrent_list.ml:176` | 11 | 10 | 6 | 5 | 1 | 390 | 58.33 |
+| [`std.ds.concurrent_list.ThreadSafeList.toArray`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#method-method-std-ds-concurrent-list-threadsafelist-toarray-function-toarray-std-ds-concurrent-list-ml-1032101379) | `std/ds/concurrent_list.ml:289` | 11 | 10 | 4 | 3 | 1 | 376.04 | 58.71 |
 | [`std.ds.concurrent_list.ThreadSafeList.withCapacity`](Type-std-ds-concurrent-list-threadsafelist-78742376.md#static_method-static-method-std-ds-concurrent-list-threadsafelist-withcapacity-static-function-withcapacity-minimumcapacity-std-ds-concurrent-list-ml-2053089166) | `std/ds/concurrent_list.ml:52` | 8 | 5 | 3 | 2 | 1 | 297.25 | 62.58 |
-| [`std.ds.hashmap.HashMap.clear`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-clear-function-clear-std-ds-hashmap-ml-1700032960) | `std/ds/hashmap.ml:188` | 7 | 5 | 1 | 0 | 0 | 212.55 | 65.13 |
-| [`std.ds.hashmap.HashMap.count`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-count-function-count-std-ds-hashmap-ml-806853896) | `std/ds/hashmap.ml:178` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.ds.hashmap.HashMap.delete`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-delete-function-delete-key-std-ds-hashmap-ml-1951284107) | `std/ds/hashmap.ml:326` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.ds.hashmap.HashMap.entriesArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-entriesarray-function-entriesarray-std-ds-hashmap-ml-1475560178) | `std/ds/hashmap.ml:357` | 11 | 7 | 3 | 3 | 2 | 351.75 | 59.05 |
-| [`std.ds.hashmap.HashMap.get`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-get-function-get-key-std-ds-hashmap-ml-1962985435) | `std/ds/hashmap.ml:281` | 11 | 7 | 5 | 4 | 1 | 317.07 | 59.1 |
-| [`std.ds.hashmap.HashMap.getOr`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-getor-function-getor-key-fallback-std-ds-hashmap-ml-923925195) | `std/ds/hashmap.ml:296` | 7 | 4 | 2 | 1 | 1 | 131.69 | 66.45 |
-| [`std.ds.hashmap.HashMap.has`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-has-function-has-key-std-ds-hashmap-ml-1870741851) | `std/ds/hashmap.ml:270` | 8 | 5 | 4 | 3 | 1 | 259.6 | 62.86 |
-| [`std.ds.hashmap.HashMap.isEmpty`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-isempty-function-isempty-std-ds-hashmap-ml-364699036) | `std/ds/hashmap.ml:183` | 3 | 1 | 1 | 0 | 0 | 41.51 | 78.13 |
-| [`std.ds.hashmap.HashMap.keysArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-keysarray-function-keysarray-std-ds-hashmap-ml-1663031904) | `std/ds/hashmap.ml:331` | 11 | 7 | 3 | 3 | 2 | 293.25 | 59.6 |
-| [`std.ds.hashmap.HashMap.new`](Type-std-ds-hashmap-hashmap-1326830721.md#static_method-static-method-std-ds-hashmap-hashmap-new-static-function-new-std-ds-hashmap-ml-111281271) | `std/ds/hashmap.ml:163` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
-| [`std.ds.hashmap.HashMap.remove`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-remove-function-remove-key-std-ds-hashmap-ml-1942441951) | `std/ds/hashmap.ml:306` | 16 | 12 | 5 | 4 | 1 | 540.54 | 53.93 |
-| [`std.ds.hashmap.HashMap.set`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-set-function-set-key-value-std-ds-hashmap-ml-1174901958) | `std/ds/hashmap.ml:233` | 30 | 24 | 11 | 11 | 2 | 1320.13 | 44.45 |
-| [`std.ds.hashmap.HashMap.valuesArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-valuesarray-function-valuesarray-std-ds-hashmap-ml-1708150460) | `std/ds/hashmap.ml:344` | 11 | 7 | 3 | 3 | 2 | 293.25 | 59.6 |
-| [`std.ds.hashmap.HashMap.withCapacity`](Type-std-ds-hashmap-hashmap-1326830721.md#static_method-static-method-std-ds-hashmap-hashmap-withcapacity-static-function-withcapacity-mincap-std-ds-hashmap-ml-1784250823) | `std/ds/hashmap.ml:169` | 7 | 5 | 1 | 0 | 0 | 221.01 | 65.01 |
+| [`std.ds.hashmap.HashMap.clear`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-clear-function-clear-std-ds-hashmap-ml-1700032960) | `std/ds/hashmap.ml:190` | 7 | 5 | 1 | 0 | 0 | 212.55 | 65.13 |
+| [`std.ds.hashmap.HashMap.count`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-count-function-count-std-ds-hashmap-ml-806853896) | `std/ds/hashmap.ml:180` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.ds.hashmap.HashMap.delete`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-delete-function-delete-key-std-ds-hashmap-ml-1951284107) | `std/ds/hashmap.ml:328` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.ds.hashmap.HashMap.entriesArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-entriesarray-function-entriesarray-std-ds-hashmap-ml-1475560178) | `std/ds/hashmap.ml:359` | 11 | 7 | 3 | 3 | 2 | 351.75 | 59.05 |
+| [`std.ds.hashmap.HashMap.get`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-get-function-get-key-std-ds-hashmap-ml-1962985435) | `std/ds/hashmap.ml:283` | 11 | 7 | 5 | 4 | 1 | 317.07 | 59.1 |
+| [`std.ds.hashmap.HashMap.getOr`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-getor-function-getor-key-fallback-std-ds-hashmap-ml-923925195) | `std/ds/hashmap.ml:298` | 7 | 4 | 2 | 1 | 1 | 131.69 | 66.45 |
+| [`std.ds.hashmap.HashMap.has`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-has-function-has-key-std-ds-hashmap-ml-1870741851) | `std/ds/hashmap.ml:272` | 8 | 5 | 4 | 3 | 1 | 259.6 | 62.86 |
+| [`std.ds.hashmap.HashMap.isEmpty`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-isempty-function-isempty-std-ds-hashmap-ml-364699036) | `std/ds/hashmap.ml:185` | 3 | 1 | 1 | 0 | 0 | 41.51 | 78.13 |
+| [`std.ds.hashmap.HashMap.keysArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-keysarray-function-keysarray-std-ds-hashmap-ml-1663031904) | `std/ds/hashmap.ml:333` | 11 | 7 | 3 | 3 | 2 | 293.25 | 59.6 |
+| [`std.ds.hashmap.HashMap.new`](Type-std-ds-hashmap-hashmap-1326830721.md#static_method-static-method-std-ds-hashmap-hashmap-new-static-function-new-std-ds-hashmap-ml-111281271) | `std/ds/hashmap.ml:165` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
+| [`std.ds.hashmap.HashMap.remove`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-remove-function-remove-key-std-ds-hashmap-ml-1942441951) | `std/ds/hashmap.ml:308` | 16 | 12 | 5 | 4 | 1 | 540.54 | 53.93 |
+| [`std.ds.hashmap.HashMap.set`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-set-function-set-key-value-std-ds-hashmap-ml-1174901958) | `std/ds/hashmap.ml:235` | 30 | 24 | 11 | 11 | 2 | 1320.13 | 44.45 |
+| [`std.ds.hashmap.HashMap.valuesArray`](Type-std-ds-hashmap-hashmap-1326830721.md#method-method-std-ds-hashmap-hashmap-valuesarray-function-valuesarray-std-ds-hashmap-ml-1708150460) | `std/ds/hashmap.ml:346` | 11 | 7 | 3 | 3 | 2 | 293.25 | 59.6 |
+| [`std.ds.hashmap.HashMap.withCapacity`](Type-std-ds-hashmap-hashmap-1326830721.md#static_method-static-method-std-ds-hashmap-hashmap-withcapacity-static-function-withcapacity-mincap-std-ds-hashmap-ml-1784250823) | `std/ds/hashmap.ml:171` | 7 | 5 | 1 | 0 | 0 | 221.01 | 65.01 |
 | [`std.ds.list.List.add`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-add-function-add-value-std-ds-list-ml-436826465) | `std/ds/list.ml:141` | 7 | 4 | 2 | 1 | 1 | 206.44 | 65.09 |
 | [`std.ds.list.List.addAll`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-addall-function-addall-values-std-ds-list-ml-274680188) | `std/ds/list.ml:157` | 16 | 11 | 4 | 3 | 1 | 378.92 | 55.14 |
 | [`std.ds.list.List.clear`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-clear-function-clear-std-ds-list-ml-956239204) | `std/ds/list.ml:106` | 8 | 4 | 3 | 3 | 2 | 184.48 | 64.03 |
 | [`std.ds.list.List.first`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-first-function-first-std-ds-list-ml-2140847354) | `std/ds/list.ml:201` | 6 | 3 | 2 | 1 | 1 | 92 | 69.01 |
 | [`std.ds.list.List.fromArray`](Type-std-ds-list-list-472810057.md#static_method-static-method-std-ds-list-list-fromarray-static-function-fromarray-values-std-ds-list-ml-902518015) | `std/ds/list.ml:82` | 12 | 8 | 3 | 2 | 1 | 313.82 | 58.57 |
 | [`std.ds.list.List.get`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-get-function-get-index-std-ds-list-ml-1268966370) | `std/ds/list.ml:176` | 9 | 5 | 4 | 3 | 1 | 173.92 | 62.96 |
-| [`std.ds.list.List.insert`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-insert-function-insert-index-value-std-ds-list-ml-1400622307) | `std/ds/list.ml:241` | 23 | 16 | 7 | 6 | 1 | 645.97 | 49.68 |
+| [`std.ds.list.List.insert`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-insert-function-insert-index-value-std-ds-list-ml-1400622307) | `std/ds/list.ml:241` | 30 | 21 | 8 | 8 | 2 | 955.4 | 45.83 |
 | [`std.ds.list.List.isEmpty`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-isempty-function-isempty-std-ds-list-ml-958491744) | `std/ds/list.ml:101` | 3 | 1 | 1 | 0 | 0 | 41.51 | 78.13 |
 | [`std.ds.list.List.last`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-last-function-last-std-ds-list-ml-614101394) | `std/ds/list.ml:209` | 6 | 3 | 2 | 1 | 1 | 112.59 | 68.39 |
 | [`std.ds.list.List.len`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-len-function-len-std-ds-list-ml-1370223244) | `std/ds/list.ml:96` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
@@ -430,19 +430,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.ds.list.List.pop`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-pop-function-pop-std-ds-list-ml-183093544) | `std/ds/list.ml:217` | 10 | 7 | 2 | 1 | 1 | 202.05 | 61.77 |
 | [`std.ds.list.List.popOr`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-popor-function-popor-fallbackvalue-std-ds-list-ml-1510696565) | `std/ds/list.ml:230` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
 | [`std.ds.list.List.push`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-push-function-push-value-std-ds-list-ml-1846460339) | `std/ds/list.ml:151` | 3 | 1 | 1 | 0 | 0 | 41.21 | 78.15 |
-| [`std.ds.list.List.removeAt`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-removeat-function-removeat-index-std-ds-list-ml-140564318) | `std/ds/list.ml:267` | 17 | 12 | 5 | 4 | 1 | 466.37 | 53.8 |
+| [`std.ds.list.List.removeAt`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-removeat-function-removeat-index-std-ds-list-ml-140564318) | `std/ds/list.ml:274` | 24 | 17 | 6 | 6 | 2 | 770.32 | 48.87 |
 | [`std.ds.list.List.reserve`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-reserve-function-reserve-mincap-std-ds-list-ml-1425645590) | `std/ds/list.ml:117` | 9 | 5 | 3 | 2 | 1 | 138.97 | 63.78 |
 | [`std.ds.list.List.set`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-set-function-set-index-value-std-ds-list-ml-1817091431) | `std/ds/list.ml:189` | 10 | 6 | 4 | 3 | 1 | 218.72 | 61.26 |
-| [`std.ds.list.List.toArray`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-toarray-function-toarray-std-ds-list-ml-679354234) | `std/ds/list.ml:286` | 8 | 5 | 2 | 1 | 1 | 182.66 | 64.19 |
+| [`std.ds.list.List.toArray`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-toarray-function-toarray-std-ds-list-ml-679354234) | `std/ds/list.ml:300` | 8 | 5 | 2 | 1 | 1 | 182.66 | 64.19 |
 | [`std.ds.list.List.withCapacity`](Type-std-ds-list-list-472810057.md#static_method-static-method-std-ds-list-list-withcapacity-static-function-withcapacity-mincap-std-ds-list-ml-1912842597) | `std/ds/list.ml:74` | 5 | 3 | 1 | 0 | 0 | 124 | 69.96 |
-| [`std.ds.queue.Queue.clear`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-clear-function-clear-std-ds-queue-ml-519280311) | `std/ds/queue.ml:94` | 5 | 3 | 1 | 0 | 0 | 75.28 | 71.48 |
-| [`std.ds.queue.Queue.dequeue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-dequeue-function-dequeue-std-ds-queue-ml-517233613) | `std/ds/queue.ml:140` | 10 | 7 | 2 | 1 | 1 | 302.61 | 60.55 |
-| [`std.ds.queue.Queue.enqueue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-enqueue-function-enqueue-v-std-ds-queue-ml-1746933747) | `std/ds/queue.ml:121` | 8 | 5 | 2 | 1 | 1 | 302.61 | 62.66 |
+| [`std.ds.queue.Queue.clear`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-clear-function-clear-std-ds-queue-ml-519280311) | `std/ds/queue.ml:94` | 11 | 7 | 3 | 3 | 2 | 318.58 | 59.35 |
+| [`std.ds.queue.Queue.dequeue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-dequeue-function-dequeue-std-ds-queue-ml-517233613) | `std/ds/queue.ml:148` | 10 | 7 | 2 | 1 | 1 | 302.61 | 60.55 |
+| [`std.ds.queue.Queue.enqueue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-enqueue-function-enqueue-v-std-ds-queue-ml-1746933747) | `std/ds/queue.ml:129` | 8 | 5 | 2 | 1 | 1 | 302.61 | 62.66 |
 | [`std.ds.queue.Queue.isEmpty`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-isempty-function-isempty-std-ds-queue-ml-350459979) | `std/ds/queue.ml:89` | 3 | 1 | 1 | 0 | 0 | 41.51 | 78.13 |
 | [`std.ds.queue.Queue.len`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-len-function-len-std-ds-queue-ml-62408447) | `std/ds/queue.ml:84` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
 | [`std.ds.queue.Queue.new`](Type-std-ds-queue-queue-1012616181.md#static_method-static-method-std-ds-queue-queue-new-static-function-new-std-ds-queue-ml-2141908760) | `std/ds/queue.ml:71` | 3 | 1 | 1 | 0 | 0 | 48.43 | 77.66 |
-| [`std.ds.queue.Queue.peek`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-peek-function-peek-std-ds-queue-ml-1238278161) | `std/ds/queue.ml:132` | 6 | 3 | 2 | 1 | 1 | 102.19 | 68.69 |
-| [`std.ds.queue.Queue.toArray`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-toarray-function-toarray-std-ds-queue-ml-260125405) | `std/ds/queue.ml:155` | 11 | 7 | 3 | 2 | 1 | 325.48 | 59.29 |
+| [`std.ds.queue.Queue.peek`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-peek-function-peek-std-ds-queue-ml-1238278161) | `std/ds/queue.ml:140` | 6 | 3 | 2 | 1 | 1 | 102.19 | 68.69 |
+| [`std.ds.queue.Queue.toArray`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-toarray-function-toarray-std-ds-queue-ml-260125405) | `std/ds/queue.ml:163` | 11 | 10 | 4 | 3 | 1 | 431.88 | 58.29 |
 | [`std.ds.queue.Queue.withCapacity`](Type-std-ds-queue-queue-1012616181.md#static_method-static-method-std-ds-queue-queue-withcapacity-static-function-withcapacity-mincap-std-ds-queue-ml-438691928) | `std/ds/queue.ml:77` | 5 | 3 | 1 | 0 | 0 | 140 | 69.59 |
 | [`std.ds.set.HashSet.add`](Type-std-ds-set-hashset-1613617709.md#method-method-std-ds-set-hashset-add-function-add-key-std-ds-set-ml-1838512067) | `std/ds/set.ml:50` | 3 | 1 | 1 | 0 | 0 | 66.61 | 76.69 |
 | [`std.ds.set.HashSet.clear`](Type-std-ds-set-hashset-1613617709.md#method-method-std-ds-set-hashset-clear-function-clear-std-ds-set-ml-1453333662) | `std/ds/set.ml:44` | 3 | 1 | 1 | 0 | 0 | 39 | 78.32 |
@@ -453,20 +453,20 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.ds.set.HashSet.len`](Type-std-ds-set-hashset-1613617709.md#method-method-std-ds-set-hashset-len-function-len-std-ds-set-ml-1244644214) | `std/ds/set.ml:34` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
 | [`std.ds.set.HashSet.new`](Type-std-ds-set-hashset-1613617709.md#static_method-static-method-std-ds-set-hashset-new-static-function-new-std-ds-set-ml-1006408109) | `std/ds/set.ml:29` | 3 | 1 | 1 | 0 | 0 | 62.27 | 76.89 |
 | [`std.ds.set.HashSet.remove`](Type-std-ds-set-hashset-1613617709.md#method-method-std-ds-set-hashset-remove-function-remove-key-std-ds-set-ml-1015320057) | `std/ds/set.ml:62` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.ds.stack.Stack.clear`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-clear-function-clear-std-ds-stack-ml-244409422) | `std/ds/stack.ml:179` | 7 | 5 | 1 | 0 | 0 | 174.17 | 65.74 |
-| [`std.ds.stack.Stack.fromArray`](Type-std-ds-stack-stack-2051682853.md#static_method-static-method-std-ds-stack-stack-fromarray-static-function-fromarray-values-std-ds-stack-ml-1532778091) | `std/ds/stack.ml:130` | 3 | 1 | 1 | 0 | 0 | 83.76 | 75.99 |
-| [`std.ds.stack.Stack.isEmpty`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-isempty-function-isempty-std-ds-stack-ml-879125514) | `std/ds/stack.ml:173` | 4 | 2 | 1 | 0 | 0 | 80 | 73.41 |
-| [`std.ds.stack.Stack.len`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-len-function-len-std-ds-stack-ml-1431646790) | `std/ds/stack.ml:167` | 4 | 2 | 1 | 0 | 0 | 68.53 | 73.88 |
-| [`std.ds.stack.Stack.new`](Type-std-ds-stack-stack-2051682853.md#static_method-static-method-std-ds-stack-stack-new-static-function-new-std-ds-stack-ml-1244206485) | `std/ds/stack.ml:124` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.ds.stack.Stack.peek`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-peek-function-peek-std-ds-stack-ml-520126940) | `std/ds/stack.ml:236` | 9 | 6 | 2 | 1 | 1 | 175.69 | 63.2 |
-| [`std.ds.stack.Stack.peekOr`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-peekor-function-peekor-fallbackvalue-std-ds-stack-ml-938237637) | `std/ds/stack.ml:248` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
-| [`std.ds.stack.Stack.pop`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-pop-function-pop-std-ds-stack-ml-337641410) | `std/ds/stack.ml:257` | 15 | 12 | 2 | 1 | 1 | 316.36 | 56.57 |
-| [`std.ds.stack.Stack.popOr`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-popor-function-popor-fallbackvalue-std-ds-stack-ml-1004619701) | `std/ds/stack.ml:276` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
-| [`std.ds.stack.Stack.push`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-push-function-push-value-std-ds-stack-ml-1856663047) | `std/ds/stack.ml:189` | 14 | 11 | 2 | 1 | 1 | 366.8 | 56.77 |
-| [`std.ds.stack.Stack.pushAll`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-pushall-function-pushall-values-std-ds-stack-ml-2011042572) | `std/ds/stack.ml:207` | 24 | 18 | 5 | 4 | 1 | 646.24 | 49.54 |
-| [`std.ds.stack.Stack.toArray`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-toarray-function-toarray-std-ds-stack-ml-1503124416) | `std/ds/stack.ml:285` | 13 | 9 | 3 | 2 | 1 | 296.13 | 57.99 |
-| [`std.encoding.base64.fromBase64`](File-std-encoding-base64-ml-1044483879.md#function-function-std-encoding-base64-frombase64-function-frombase64-text-std-encoding-base64-ml-1409232600) | `std/encoding/base64.ml:158` | 90 | 69 | 26 | 43 | 3 | 3202.01 | 29.33 |
-| [`std.encoding.base64.toBase64`](File-std-encoding-base64-ml-1044483879.md#function-function-std-encoding-base64-tobase64-function-tobase64-b-std-encoding-base64-ml-696343249) | `std/encoding/base64.ml:101` | 46 | 38 | 7 | 8 | 2 | 1815.18 | 39.97 |
+| [`std.ds.stack.Stack.clear`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-clear-function-clear-std-ds-stack-ml-244409422) | `std/ds/stack.ml:175` | 7 | 5 | 1 | 0 | 0 | 174.17 | 65.74 |
+| [`std.ds.stack.Stack.fromArray`](Type-std-ds-stack-stack-2051682853.md#static_method-static-method-std-ds-stack-stack-fromarray-static-function-fromarray-values-std-ds-stack-ml-1532778091) | `std/ds/stack.ml:128` | 3 | 1 | 1 | 0 | 0 | 83.76 | 75.99 |
+| [`std.ds.stack.Stack.isEmpty`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-isempty-function-isempty-std-ds-stack-ml-879125514) | `std/ds/stack.ml:169` | 4 | 2 | 1 | 0 | 0 | 80 | 73.41 |
+| [`std.ds.stack.Stack.len`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-len-function-len-std-ds-stack-ml-1431646790) | `std/ds/stack.ml:163` | 4 | 2 | 1 | 0 | 0 | 68.53 | 73.88 |
+| [`std.ds.stack.Stack.new`](Type-std-ds-stack-stack-2051682853.md#static_method-static-method-std-ds-stack-stack-new-static-function-new-std-ds-stack-ml-1244206485) | `std/ds/stack.ml:122` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.ds.stack.Stack.peek`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-peek-function-peek-std-ds-stack-ml-520126940) | `std/ds/stack.ml:232` | 9 | 6 | 2 | 1 | 1 | 175.69 | 63.2 |
+| [`std.ds.stack.Stack.peekOr`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-peekor-function-peekor-fallbackvalue-std-ds-stack-ml-938237637) | `std/ds/stack.ml:244` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
+| [`std.ds.stack.Stack.pop`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-pop-function-pop-std-ds-stack-ml-337641410) | `std/ds/stack.ml:253` | 15 | 12 | 2 | 1 | 1 | 316.36 | 56.57 |
+| [`std.ds.stack.Stack.popOr`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-popor-function-popor-fallbackvalue-std-ds-stack-ml-1004619701) | `std/ds/stack.ml:272` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
+| [`std.ds.stack.Stack.push`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-push-function-push-value-std-ds-stack-ml-1856663047) | `std/ds/stack.ml:185` | 14 | 11 | 2 | 1 | 1 | 366.8 | 56.77 |
+| [`std.ds.stack.Stack.pushAll`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-pushall-function-pushall-values-std-ds-stack-ml-2011042572) | `std/ds/stack.ml:203` | 24 | 18 | 5 | 4 | 1 | 646.24 | 49.54 |
+| [`std.ds.stack.Stack.toArray`](Type-std-ds-stack-stack-2051682853.md#method-method-std-ds-stack-stack-toarray-function-toarray-std-ds-stack-ml-1503124416) | `std/ds/stack.ml:281` | 11 | 8 | 2 | 1 | 1 | 247.59 | 60.25 |
+| [`std.encoding.base64.fromBase64`](File-std-encoding-base64-ml-1044483879.md#function-function-std-encoding-base64-frombase64-function-frombase64-text-std-encoding-base64-ml-1409232600) | `std/encoding/base64.ml:157` | 151 | 81 | 34 | 58 | 3 | 6106.2 | 21.39 |
+| [`std.encoding.base64.toBase64`](File-std-encoding-base64-ml-1044483879.md#function-function-std-encoding-base64-tobase64-function-tobase64-b-std-encoding-base64-ml-696343249) | `std/encoding/base64.ml:105` | 41 | 34 | 6 | 7 | 2 | 1750.03 | 41.3 |
 | [`std.encoding.hex.decode`](File-std-encoding-hex-ml-900742095.md#function-function-std-encoding-hex-decode-function-decode-s-std-encoding-hex-ml-994210004) | `std/encoding/hex.ml:58` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
 | [`std.encoding.hex.decodeOr`](File-std-encoding-hex-ml-900742095.md#function-function-std-encoding-hex-decodeor-function-decodeor-s-fallbackbytes-std-encoding-hex-ml-1574510785) | `std/encoding/hex.ml:72` | 7 | 4 | 2 | 1 | 1 | 118.54 | 66.77 |
 | [`std.encoding.hex.decodeOrError`](File-std-encoding-hex-ml-900742095.md#function-function-std-encoding-hex-decodeorerror-function-decodeorerror-s-std-encoding-hex-ml-1933310858) | `std/encoding/hex.ml:83` | 10 | 6 | 3 | 2 | 1 | 194.49 | 61.76 |
@@ -474,27 +474,27 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.encoding.hex.encodeUpper`](File-std-encoding-hex-ml-900742095.md#function-function-std-encoding-hex-encodeupper-function-encodeupper-b-std-encoding-hex-ml-1884024969) | `std/encoding/hex.ml:48` | 7 | 4 | 2 | 1 | 1 | 129.27 | 66.51 |
 | [`std.encoding.hex.isValid`](File-std-encoding-hex-ml-900742095.md#function-function-std-encoding-hex-isvalid-function-isvalid-s-std-encoding-hex-ml-1745609812) | `std/encoding/hex.ml:64` | 4 | 2 | 1 | 0 | 0 | 74.01 | 73.64 |
 | [`std.fmt.center`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-center-function-center-s-width-ch-std-fmt-ml-887357416) | `std/fmt.ml:66` | 12 | 8 | 6 | 5 | 1 | 465.69 | 56.97 |
-| [`std.fmt.line`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-line-function-line-ch-width-std-fmt-ml-1807299147) | `std/fmt.ml:130` | 12 | 7 | 5 | 4 | 1 | 256.76 | 58.91 |
+| [`std.fmt.line`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-line-function-line-ch-width-std-fmt-ml-1807299147) | `std/fmt.ml:197` | 12 | 7 | 5 | 4 | 1 | 256.76 | 58.91 |
 | [`std.fmt.padLeft`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-padleft-function-padleft-s-width-ch-std-fmt-ml-1234037328) | `std/fmt.ml:36` | 10 | 6 | 6 | 5 | 1 | 324.33 | 59.8 |
 | [`std.fmt.padRight`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-padright-function-padright-s-width-ch-std-fmt-ml-842685836) | `std/fmt.ml:51` | 10 | 6 | 6 | 5 | 1 | 324.33 | 59.8 |
-| [`std.fmt.quote`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-quote-function-quote-s-std-fmt-ml-1511859179) | `std/fmt.ml:84` | 39 | 27 | 11 | 18 | 3 | 1099.18 | 42.52 |
+| [`std.fmt.quote`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-quote-function-quote-s-std-fmt-ml-1511859179) | `std/fmt.ml:84` | 106 | 34 | 25 | 44 | 3 | 3347.04 | 27.78 |
 | [`std.fmt.repeat`](File-std-fmt-ml-2123112301.md#function-function-std-fmt-repeat-function-repeat-ch-count-std-fmt-ml-28025468) | `std/fmt.ml:28` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.fs.appendAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendallbytes-function-appendallbytes-path-data-std-fs-ml-372563649) | `std/fs.ml:859` | 10 | 8 | 4 | 3 | 1 | 309.07 | 60.21 |
-| [`std.fs.appendAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032) | `std/fs.ml:874` | 6 | 3 | 3 | 2 | 1 | 174.17 | 66.93 |
-| [`std.fs.copyFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000) | `std/fs.ml:787` | 16 | 10 | 6 | 5 | 1 | 418.24 | 54.57 |
-| [`std.fs.delete`](File-std-fs-ml-1285967051.md#function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521) | `std/fs.ml:465` | 21 | 14 | 6 | 7 | 2 | 426.06 | 51.94 |
+| [`std.fs.appendAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendallbytes-function-appendallbytes-path-data-std-fs-ml-372563649) | `std/fs.ml:855` | 10 | 8 | 4 | 3 | 1 | 309.07 | 60.21 |
+| [`std.fs.appendAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-appendalltext-function-appendalltext-path-text-std-fs-ml-1086283032) | `std/fs.ml:870` | 6 | 3 | 3 | 2 | 1 | 174.17 | 66.93 |
+| [`std.fs.copyFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-copyfile-function-copyfile-sourcepath-destpath-overwrite-std-fs-ml-1522240000) | `std/fs.ml:783` | 16 | 10 | 6 | 5 | 1 | 418.24 | 54.57 |
+| [`std.fs.delete`](File-std-fs-ml-1285967051.md#function-function-std-fs-delete-function-delete-path-std-fs-ml-1227233521) | `std/fs.ml:461` | 21 | 14 | 6 | 7 | 2 | 426.06 | 51.94 |
 | [`std.fs.exists`](File-std-fs-ml-1285967051.md#function-function-std-fs-exists-function-exists-path-std-fs-ml-72849833) | `std/fs.ml:306` | 7 | 4 | 2 | 1 | 1 | 118.94 | 66.76 |
-| [`std.fs.fileSize`](File-std-fs-ml-1285967051.md#function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189) | `std/fs.ml:836` | 16 | 11 | 4 | 3 | 1 | 620.12 | 53.64 |
+| [`std.fs.fileSize`](File-std-fs-ml-1285967051.md#function-function-std-fs-filesize-function-filesize-path-std-fs-ml-274199189) | `std/fs.ml:832` | 16 | 11 | 4 | 3 | 1 | 620.12 | 53.64 |
 | [`std.fs.isDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-isdir-function-isdir-path-std-fs-ml-1982632259) | `std/fs.ml:316` | 10 | 6 | 3 | 2 | 1 | 241.48 | 61.1 |
 | [`std.fs.isFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-isfile-function-isfile-path-std-fs-ml-137584197) | `std/fs.ml:329` | 6 | 3 | 2 | 1 | 1 | 96.21 | 68.87 |
 | [`std.fs.joinPath`](File-std-fs-ml-1285967051.md#function-function-std-fs-joinpath-function-joinpath-base-name-std-fs-ml-1871291558) | `std/fs.ml:339` | 12 | 7 | 6 | 5 | 1 | 303.08 | 58.28 |
-| [`std.fs.listDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-listdir-function-listdir-path-std-fs-ml-1461247751) | `std/fs.ml:418` | 39 | 27 | 12 | 18 | 4 | 1298.01 | 41.88 |
-| [`std.fs.moveFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-movefile-function-movefile-sourcepath-destpath-overwrite-std-fs-ml-190963024) | `std/fs.ml:810` | 21 | 13 | 9 | 9 | 2 | 535.05 | 50.84 |
-| [`std.fs.readAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245) | `std/fs.ml:583` | 54 | 35 | 11 | 13 | 2 | 2042.42 | 37.55 |
-| [`std.fs.readAllLines`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293) | `std/fs.ml:884` | 19 | 13 | 6 | 6 | 2 | 587.77 | 51.91 |
-| [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:701` | 62 | 41 | 13 | 15 | 2 | 2288.45 | 35.63 |
-| [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:566` | 12 | 8 | 4 | 3 | 1 | 356.7 | 58.05 |
-| [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:659` | 33 | 25 | 8 | 7 | 1 | 1038.47 | 44.68 |
+| [`std.fs.listDir`](File-std-fs-ml-1285967051.md#function-function-std-fs-listdir-function-listdir-path-std-fs-ml-1461247751) | `std/fs.ml:414` | 39 | 27 | 12 | 18 | 4 | 1298.01 | 41.88 |
+| [`std.fs.moveFile`](File-std-fs-ml-1285967051.md#function-function-std-fs-movefile-function-movefile-sourcepath-destpath-overwrite-std-fs-ml-190963024) | `std/fs.ml:806` | 21 | 13 | 9 | 9 | 2 | 535.05 | 50.84 |
+| [`std.fs.readAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-readallbytes-function-readallbytes-path-std-fs-ml-290559245) | `std/fs.ml:579` | 54 | 35 | 11 | 13 | 2 | 2042.42 | 37.55 |
+| [`std.fs.readAllLines`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalllines-function-readalllines-path-std-fs-ml-1313468293) | `std/fs.ml:880` | 19 | 13 | 6 | 6 | 2 | 587.77 | 51.91 |
+| [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:697` | 62 | 41 | 13 | 15 | 2 | 2288.45 | 35.63 |
+| [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:562` | 12 | 8 | 4 | 3 | 1 | 356.7 | 58.05 |
+| [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:655` | 33 | 25 | 8 | 7 | 1 | 1038.47 | 44.68 |
 | [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:436` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
 | [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:651` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
 | [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:540` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
@@ -524,55 +524,55 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:462` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
 | [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:524` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
 | [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:405` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
-| [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:32` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
-| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:652` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:645` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:424` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
-| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:449` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
-| [`std.math.ceil`](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `std/math.ml:113` | 10 | 6 | 3 | 2 | 1 | 181.52 | 61.97 |
-| [`std.math.ceilInt`](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `std/math.ml:181` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.clamp`](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `std/math.ml:61` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
-| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:382` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
-| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:667` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:221` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:481` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:509` | 12 | 10 | 1 | 0 | 0 | 559.62 | 57.08 |
-| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:531` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
-| [`std.math.floor`](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `std/math.ml:93` | 13 | 8 | 4 | 3 | 1 | 220.89 | 58.75 |
-| [`std.math.floorInt`](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `std/math.ml:171` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:683` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:300` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
-| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:476` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
-| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:635` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
-| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:497` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
-| [`std.math.isNumber`](File-std-math-ml-790065500.md#function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864) | `std/math.ml:25` | 4 | 2 | 1 | 0 | 0 | 79.95 | 73.41 |
-| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:319` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
-| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:691` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
-| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:544` | 24 | 19 | 4 | 3 | 1 | 723.27 | 49.33 |
-| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:491` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:579` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
-| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:486` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:592` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
-| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:598` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
-| [`std.math.max`](File-std-math-ml-790065500.md#function-function-std-math-max-function-max-a-b-std-math-ml-1771960409) | `std/math.ml:84` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.min`](File-std-math-ml-790065500.md#function-function-std-math-min-function-min-a-b-std-math-ml-1964626413) | `std/math.ml:74` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:210` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:605` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
-| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:260` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
-| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:227` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.math.round`](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `std/math.ml:139` | 9 | 5 | 3 | 2 | 1 | 214.05 | 62.46 |
-| [`std.math.roundInt`](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `std/math.ml:201` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.sign`](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `std/math.ml:44` | 12 | 7 | 4 | 3 | 1 | 178.41 | 60.16 |
-| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:353` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
-| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:659` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:699` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
-| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:233` | 20 | 14 | 5 | 5 | 2 | 405 | 52.69 |
-| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:410` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
-| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:675` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
-| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:215` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
-| [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:152` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
-| [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:126` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
-| [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:191` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:54` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
+| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:616` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:609` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:429` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
+| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:454` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
+| [`std.math.ceil`](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `std/math.ml:135` | 10 | 6 | 3 | 2 | 1 | 181.52 | 61.97 |
+| [`std.math.ceilInt`](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `std/math.ml:203` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.clamp`](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `std/math.ml:83` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
+| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:387` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
+| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:631` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:243` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:486` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:514` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:520` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.floor`](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `std/math.ml:115` | 13 | 8 | 4 | 3 | 1 | 220.89 | 58.75 |
+| [`std.math.floorInt`](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `std/math.ml:193` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:647` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:305` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
+| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:481` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
+| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:599` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
+| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:502` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
+| [`std.math.isNumber`](File-std-math-ml-790065500.md#function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864) | `std/math.ml:47` | 4 | 2 | 1 | 0 | 0 | 79.95 | 73.41 |
+| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:324` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
+| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:655` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
+| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:533` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:496` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:543` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:491` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:556` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:562` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.max`](File-std-math-ml-790065500.md#function-function-std-math-max-function-max-a-b-std-math-ml-1771960409) | `std/math.ml:106` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.min`](File-std-math-ml-790065500.md#function-function-std-math-min-function-min-a-b-std-math-ml-1964626413) | `std/math.ml:96` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:232` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:569` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
+| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:265` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
+| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:249` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.round`](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `std/math.ml:161` | 9 | 5 | 3 | 2 | 1 | 214.05 | 62.46 |
+| [`std.math.roundInt`](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `std/math.ml:223` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.sign`](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `std/math.ml:66` | 12 | 7 | 4 | 3 | 1 | 178.41 | 60.16 |
+| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:358` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
+| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:623` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:663` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
+| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:255` | 6 | 3 | 2 | 1 | 1 | 77.71 | 69.52 |
+| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:415` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
+| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:639` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
+| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:237` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
+| [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:174` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
+| [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:148` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
+| [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:213` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
 | [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:285` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
 | [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:793` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
 | [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:260` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
@@ -596,12 +596,12 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:899` | 21 | 19 | 7 | 6 | 1 | 905.86 | 49.51 |
 | [`std.net.udpRecvFromInto`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `std/net.ml:883` | 12 | 14 | 5 | 4 | 1 | 765.1 | 55.59 |
 | [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:847` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
-| [`std.path.changeExtension`](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `std/path.ml:121` | 9 | 11 | 6 | 5 | 1 | 543.7 | 59.22 |
-| [`std.path.directoryName`](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `std/path.ml:89` | 14 | 13 | 6 | 8 | 3 | 479.22 | 55.42 |
-| [`std.path.extension`](File-std-path-ml-701536411.md#function-function-std-path-extension-function-extension-path-std-path-ml-598017679) | `std/path.ml:106` | 11 | 10 | 5 | 5 | 2 | 430 | 58.17 |
-| [`std.path.fileName`](File-std-path-ml-701536411.md#function-function-std-path-filename-function-filename-path-std-path-ml-8033517) | `std/path.ml:72` | 14 | 13 | 6 | 8 | 3 | 539.75 | 55.06 |
-| [`std.path.isAbsolute`](File-std-path-ml-701536411.md#function-function-std-path-isabsolute-function-isabsolute-path-std-path-ml-2109808033) | `std/path.ml:41` | 7 | 8 | 13 | 12 | 1 | 630.9 | 60.21 |
-| [`std.path.join`](File-std-path-ml-701536411.md#function-function-std-path-join-function-join-left-right-std-path-ml-2015239089) | `std/path.ml:56` | 13 | 17 | 10 | 9 | 1 | 729.46 | 54.31 |
+| [`std.path.changeExtension`](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `std/path.ml:136` | 9 | 11 | 6 | 5 | 1 | 480.56 | 59.6 |
+| [`std.path.directoryName`](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `std/path.ml:114` | 8 | 10 | 5 | 4 | 1 | 320.43 | 62.08 |
+| [`std.path.extension`](File-std-path-ml-701536411.md#function-function-std-path-extension-function-extension-path-std-path-ml-598017679) | `std/path.ml:125` | 7 | 7 | 4 | 3 | 1 | 296.13 | 63.72 |
+| [`std.path.fileName`](File-std-path-ml-701536411.md#function-function-std-path-filename-function-filename-path-std-path-ml-8033517) | `std/path.ml:103` | 8 | 10 | 5 | 4 | 1 | 385.15 | 61.52 |
+| [`std.path.isAbsolute`](File-std-path-ml-701536411.md#function-function-std-path-isabsolute-function-isabsolute-path-std-path-ml-2109808033) | `std/path.ml:73` | 8 | 10 | 14 | 13 | 1 | 759.68 | 58.25 |
+| [`std.path.join`](File-std-path-ml-701536411.md#function-function-std-path-join-function-join-left-right-std-path-ml-2015239089) | `std/path.ml:89` | 11 | 15 | 10 | 9 | 1 | 565 | 56.67 |
 | [`std.path.separator`](File-std-path-ml-701536411.md#function-function-std-path-separator-function-separator-std-path-ml-1502985602) | `std/path.ml:25` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
 | [`std.platform.architecture`](File-std-platform-ml-201801091.md#function-function-std-platform-architecture-function-architecture-std-platform-ml-585994492) | `std/platform.ml:24` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
 | [`std.platform.dynamicLibraryExtension`](File-std-platform-ml-201801091.md#function-function-std-platform-dynamiclibraryextension-function-dynamiclibraryextension-std-platform-ml-724141498) | `std/platform.ml:74` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
@@ -644,36 +644,36 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.result.Result.Ok`](Type-std-result-result-654473432.md#static_method-static-method-std-result-result-ok-static-function-ok-v-std-result-ml-455002863) | `std/result.ml:105` | 3 | 1 | 1 | 0 | 0 | 82.04 | 76.06 |
 | [`std.result.Result.unwrap`](Type-std-result-result-654473432.md#method-method-std-result-result-unwrap-function-unwrap-std-result-ml-271790180) | `std/result.ml:135` | 6 | 3 | 2 | 1 | 1 | 64.53 | 70.08 |
 | [`std.result.Result.unwrapOr`](Type-std-result-result-654473432.md#method-method-std-result-result-unwrapor-function-unwrapor-fallback-std-result-ml-1349488118) | `std/result.ml:127` | 6 | 3 | 2 | 1 | 1 | 74.01 | 69.67 |
-| [`std.sort.isSorted`](File-std-sort-ml-1000391650.md#function-function-std-sort-issorted-function-issorted-arr-lessfn-std-sort-ml-1072433950) | `std/sort.ml:212` | 18 | 11 | 6 | 6 | 2 | 417.09 | 53.46 |
+| [`std.sort.isSorted`](File-std-sort-ml-1000391650.md#function-function-std-sort-issorted-function-issorted-arr-lessfn-std-sort-ml-1072433950) | `std/sort.ml:226` | 18 | 11 | 6 | 6 | 2 | 417.09 | 53.46 |
 | [`std.sort.sort`](File-std-sort-ml-1000391650.md#function-function-std-sort-sort-function-sort-arr-std-sort-ml-333187585) | `std/sort.ml:39` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.sort.sortBy`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortby-function-sortby-arr-lessfn-std-sort-ml-529537194) | `std/sort.ml:46` | 64 | 53 | 17 | 32 | 4 | 1758.47 | 35.59 |
-| [`std.sort.sortFast`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortfast-function-sortfast-arr-std-sort-ml-1925522137) | `std/sort.ml:120` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.sort.sortFastBy`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortfastby-function-sortfastby-arr-lessfn-std-sort-ml-1761662250) | `std/sort.ml:127` | 61 | 48 | 12 | 26 | 4 | 1622.65 | 36.96 |
-| [`std.string.contains`](File-std-string-ml-1276545685.md#function-function-std-string-contains-function-contains-s-needle-std-string-ml-890712776) | `std/string.ml:301` | 7 | 4 | 2 | 1 | 1 | 151.27 | 66.03 |
-| [`std.string.countOf`](File-std-string-ml-1276545685.md#function-function-std-string-countof-function-countof-s-needle-std-string-ml-1466834176) | `std/string.ml:489` | 24 | 17 | 6 | 6 | 2 | 490.47 | 50.25 |
-| [`std.string.endsWith`](File-std-string-ml-1276545685.md#function-function-std-string-endswith-function-endswith-s-suffix-std-string-ml-1833247770) | `std/string.ml:264` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.string.equalsIgnoreCaseAscii`](File-std-string-ml-1276545685.md#function-function-std-string-equalsignorecaseascii-function-equalsignorecaseascii-a-b-std-string-ml-2118708601) | `std/string.ml:579` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.string.indexOf`](File-std-string-ml-1276545685.md#function-function-std-string-indexof-function-indexof-s-needle-start-std-string-ml-1830793656) | `std/string.ml:272` | 12 | 7 | 4 | 3 | 1 | 216.64 | 59.57 |
-| [`std.string.isAlnumAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isalnumascii-function-isalnumascii-ch-std-string-ml-991856061) | `std/string.ml:560` | 3 | 1 | 1 | 0 | 0 | 92.51 | 75.69 |
-| [`std.string.isAlphaAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isalphaascii-function-isalphaascii-ch-std-string-ml-69464141) | `std/string.ml:548` | 9 | 5 | 3 | 2 | 1 | 230.7 | 62.23 |
-| [`std.string.isBlank`](File-std-string-ml-1276545685.md#function-function-std-string-isblank-function-isblank-s-std-string-ml-1002423985) | `std/string.ml:329` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.isDigitAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isdigitascii-function-isdigitascii-ch-std-string-ml-1642095953) | `std/string.ml:536` | 9 | 5 | 3 | 2 | 1 | 168.56 | 63.19 |
-| [`std.string.isEmpty`](File-std-string-ml-1276545685.md#function-function-std-string-isempty-function-isempty-s-std-string-ml-464897055) | `std/string.ml:232` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
-| [`std.string.join`](File-std-string-ml-1276545685.md#function-function-std-string-join-function-join-parts-sep-std-string-ml-1383969706) | `std/string.ml:388` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.string.lastIndexOf`](File-std-string-ml-1276545685.md#function-function-std-string-lastindexof-function-lastindexof-s-needle-std-string-ml-183528886) | `std/string.ml:288` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
-| [`std.string.ltrim`](File-std-string-ml-1276545685.md#function-function-std-string-ltrim-function-ltrim-s-std-string-ml-1358329729) | `std/string.ml:311` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.removeAll`](File-std-string-ml-1276545685.md#function-function-std-string-removeall-function-removeall-s-needle-std-string-ml-1652900222) | `std/string.ml:520` | 3 | 1 | 1 | 0 | 0 | 83.76 | 75.99 |
-| [`std.string.repeat`](File-std-string-ml-1276545685.md#function-function-std-string-repeat-function-repeat-s-count-std-string-ml-194349680) | `std/string.ml:242` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.string.replaceAll`](File-std-string-ml-1276545685.md#function-function-std-string-replaceall-function-replaceall-s-needle-repl-std-string-ml-840926615) | `std/string.ml:396` | 41 | 29 | 11 | 15 | 3 | 1040.72 | 42.21 |
-| [`std.string.replaceFirst`](File-std-string-ml-1276545685.md#function-function-std-string-replacefirst-function-replacefirst-s-needle-repl-std-string-ml-1457517015) | `std/string.ml:446` | 36 | 25 | 10 | 9 | 1 | 913.14 | 43.98 |
-| [`std.string.reverse`](File-std-string-ml-1276545685.md#function-function-std-string-reverse-function-reverse-s-std-string-ml-478686905) | `std/string.ml:526` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.rtrim`](File-std-string-ml-1276545685.md#function-function-std-string-rtrim-function-rtrim-s-std-string-ml-2074447113) | `std/string.ml:317` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.split`](File-std-string-ml-1276545685.md#function-function-std-string-split-function-split-s-sep-std-string-ml-439300297) | `std/string.ml:336` | 42 | 32 | 9 | 11 | 2 | 1096.32 | 42.09 |
-| [`std.string.startsWith`](File-std-string-ml-1276545685.md#function-function-std-string-startswith-function-startswith-s-prefix-std-string-ml-864273261) | `std/string.ml:257` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
-| [`std.string.substr`](File-std-string-ml-1276545685.md#function-function-std-string-substr-function-substr-s-start-length-std-string-ml-1364948665) | `std/string.ml:250` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.string.toLowerAscii`](File-std-string-ml-1276545685.md#function-function-std-string-tolowerascii-function-tolowerascii-s-std-string-ml-2007062345) | `std/string.ml:566` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.toUpperAscii`](File-std-string-ml-1276545685.md#function-function-std-string-toupperascii-function-toupperascii-s-std-string-ml-994049617) | `std/string.ml:572` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.string.trim`](File-std-string-ml-1276545685.md#function-function-std-string-trim-function-trim-s-std-string-ml-2004823441) | `std/string.ml:323` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.sort.sortBy`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortby-function-sortby-arr-lessfn-std-sort-ml-529537194) | `std/sort.ml:46` | 76 | 68 | 21 | 46 | 4 | 2500.12 | 32.35 |
+| [`std.sort.sortFast`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortfast-function-sortfast-arr-std-sort-ml-1925522137) | `std/sort.ml:132` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.sort.sortFastBy`](File-std-sort-ml-1000391650.md#function-function-std-sort-sortfastby-function-sortfastby-arr-lessfn-std-sort-ml-1761662250) | `std/sort.ml:139` | 63 | 54 | 14 | 32 | 4 | 1852.64 | 35.99 |
+| [`std.string.contains`](File-std-string-ml-1276545685.md#function-function-std-string-contains-function-contains-s-needle-std-string-ml-890712776) | `std/string.ml:109` | 7 | 4 | 2 | 1 | 1 | 151.27 | 66.03 |
+| [`std.string.countOf`](File-std-string-ml-1276545685.md#function-function-std-string-countof-function-countof-s-needle-std-string-ml-1466834176) | `std/string.ml:284` | 24 | 17 | 6 | 6 | 2 | 490.47 | 50.25 |
+| [`std.string.endsWith`](File-std-string-ml-1276545685.md#function-function-std-string-endswith-function-endswith-s-suffix-std-string-ml-1833247770) | `std/string.ml:72` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
+| [`std.string.equalsIgnoreCaseAscii`](File-std-string-ml-1276545685.md#function-function-std-string-equalsignorecaseascii-function-equalsignorecaseascii-a-b-std-string-ml-2118708601) | `std/string.ml:374` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
+| [`std.string.indexOf`](File-std-string-ml-1276545685.md#function-function-std-string-indexof-function-indexof-s-needle-start-std-string-ml-1830793656) | `std/string.ml:80` | 12 | 7 | 4 | 3 | 1 | 216.64 | 59.57 |
+| [`std.string.isAlnumAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isalnumascii-function-isalnumascii-ch-std-string-ml-991856061) | `std/string.ml:355` | 3 | 1 | 1 | 0 | 0 | 92.51 | 75.69 |
+| [`std.string.isAlphaAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isalphaascii-function-isalphaascii-ch-std-string-ml-69464141) | `std/string.ml:343` | 9 | 5 | 3 | 2 | 1 | 230.7 | 62.23 |
+| [`std.string.isBlank`](File-std-string-ml-1276545685.md#function-function-std-string-isblank-function-isblank-s-std-string-ml-1002423985) | `std/string.ml:137` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.isDigitAscii`](File-std-string-ml-1276545685.md#function-function-std-string-isdigitascii-function-isdigitascii-ch-std-string-ml-1642095953) | `std/string.ml:331` | 9 | 5 | 3 | 2 | 1 | 168.56 | 63.19 |
+| [`std.string.isEmpty`](File-std-string-ml-1276545685.md#function-function-std-string-isempty-function-isempty-s-std-string-ml-464897055) | `std/string.ml:40` | 6 | 3 | 2 | 1 | 1 | 104 | 68.63 |
+| [`std.string.join`](File-std-string-ml-1276545685.md#function-function-std-string-join-function-join-parts-sep-std-string-ml-1383969706) | `std/string.ml:183` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
+| [`std.string.lastIndexOf`](File-std-string-ml-1276545685.md#function-function-std-string-lastindexof-function-lastindexof-s-needle-std-string-ml-183528886) | `std/string.ml:96` | 9 | 5 | 3 | 2 | 1 | 148.46 | 63.58 |
+| [`std.string.ltrim`](File-std-string-ml-1276545685.md#function-function-std-string-ltrim-function-ltrim-s-std-string-ml-1358329729) | `std/string.ml:119` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.removeAll`](File-std-string-ml-1276545685.md#function-function-std-string-removeall-function-removeall-s-needle-std-string-ml-1652900222) | `std/string.ml:315` | 3 | 1 | 1 | 0 | 0 | 83.76 | 75.99 |
+| [`std.string.repeat`](File-std-string-ml-1276545685.md#function-function-std-string-repeat-function-repeat-s-count-std-string-ml-194349680) | `std/string.ml:50` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
+| [`std.string.replaceAll`](File-std-string-ml-1276545685.md#function-function-std-string-replaceall-function-replaceall-s-needle-repl-std-string-ml-840926615) | `std/string.ml:191` | 41 | 29 | 11 | 15 | 3 | 1040.72 | 42.21 |
+| [`std.string.replaceFirst`](File-std-string-ml-1276545685.md#function-function-std-string-replacefirst-function-replacefirst-s-needle-repl-std-string-ml-1457517015) | `std/string.ml:241` | 36 | 25 | 10 | 9 | 1 | 913.14 | 43.98 |
+| [`std.string.reverse`](File-std-string-ml-1276545685.md#function-function-std-string-reverse-function-reverse-s-std-string-ml-478686905) | `std/string.ml:321` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.rtrim`](File-std-string-ml-1276545685.md#function-function-std-string-rtrim-function-rtrim-s-std-string-ml-2074447113) | `std/string.ml:125` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.split`](File-std-string-ml-1276545685.md#function-function-std-string-split-function-split-s-sep-std-string-ml-439300297) | `std/string.ml:144` | 30 | 22 | 7 | 8 | 2 | 889.89 | 46.19 |
+| [`std.string.startsWith`](File-std-string-ml-1276545685.md#function-function-std-string-startswith-function-startswith-s-prefix-std-string-ml-864273261) | `std/string.ml:65` | 3 | 1 | 1 | 0 | 0 | 53.15 | 77.38 |
+| [`std.string.substr`](File-std-string-ml-1276545685.md#function-function-std-string-substr-function-substr-s-start-length-std-string-ml-1364948665) | `std/string.ml:58` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.string.toLowerAscii`](File-std-string-ml-1276545685.md#function-function-std-string-tolowerascii-function-tolowerascii-s-std-string-ml-2007062345) | `std/string.ml:361` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.toUpperAscii`](File-std-string-ml-1276545685.md#function-function-std-string-toupperascii-function-toupperascii-s-std-string-ml-994049617) | `std/string.ml:367` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.string.trim`](File-std-string-ml-1276545685.md#function-function-std-string-trim-function-trim-s-std-string-ml-2004823441) | `std/string.ml:131` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
 | [`std.string_builder.StringBuilder.append`](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-append-function-append-value-std-string-builder-ml-1611521868) | `std/string_builder.ml:161` | 7 | 4 | 2 | 1 | 1 | 125.1 | 66.61 |
 | [`std.string_builder.StringBuilder.appendLine`](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-appendline-function-appendline-value-std-string-builder-ml-1228486276) | `std/string_builder.ml:171` | 4 | 2 | 1 | 0 | 0 | 65.73 | 74 |
 | [`std.string_builder.StringBuilder.appendSlice`](Type-std-string-builder-stringbuilder-567404247.md#method-method-std-string-builder-stringbuilder-appendslice-function-appendslice-s-offset-length-std-string-builder-ml-924904113) | `std/string_builder.ml:119` | 36 | 25 | 10 | 9 | 1 | 763.12 | 44.52 |
@@ -754,65 +754,66 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.threading.Semaphore.ReleaseMany`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-releasemany-function-releasemany-count-std-threading-ml-1835952538) | `std/threading.ml:227` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
 | [`std.threading.Semaphore.tryAcquire`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-2104513587) | `std/threading.ml:182` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
 | [`std.threading.Semaphore.TryAcquire`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-599040883) | `std/threading.ml:222` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.time.clock.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-addmillis-function-addmillis-t-delta-std-time-ml-1733200724) | `std/time.ml:738` | 15 | 10 | 4 | 3 | 1 | 372.92 | 55.8 |
-| [`std.time.clock.compare`](File-std-time-ml-975894601.md#function-function-std-time-clock-compare-function-compare-a-b-std-time-ml-1662221955) | `std/time.ml:694` | 11 | 17 | 9 | 8 | 1 | 522.69 | 57.04 |
-| [`std.time.clock.fromMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-frommillis-function-frommillis-ms-std-time-ml-576832168) | `std/time.ml:717` | 15 | 11 | 4 | 3 | 1 | 488.4 | 54.98 |
-| [`std.time.clock.isValid`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalid-function-isvalid-t-std-time-ml-358966926) | `std/time.ml:687` | 3 | 1 | 1 | 0 | 0 | 130.8 | 74.64 |
-| [`std.time.clock.isValidHMSM`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalidhmsm-function-isvalidhmsm-h-m-s0-ms-std-time-ml-348818806) | `std/time.ml:674` | 10 | 11 | 13 | 12 | 1 | 464.39 | 57.76 |
-| [`std.time.clock.parse`](File-std-time-ml-975894601.md#function-function-std-time-clock-parse-function-parse-text-std-time-ml-549001107) | `std/time.ml:767` | 42 | 30 | 14 | 19 | 3 | 1884.3 | 39.77 |
-| [`std.time.clock.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-tomillis-function-tomillis-t-std-time-ml-2034526210) | `std/time.ml:708` | 6 | 3 | 2 | 1 | 1 | 230.7 | 66.21 |
-| [`std.time.clock.toString`](File-std-time-ml-975894601.md#function-function-std-time-clock-tostring-function-tostring-t-std-time-ml-68025454) | `std/time.ml:758` | 6 | 3 | 2 | 1 | 1 | 334.7 | 65.08 |
-| [`std.time.clockToString`](File-std-time-ml-975894601.md#function-function-std-time-clocktostring-function-clocktostring-t-std-time-ml-904167438) | `std/time.ml:1086` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.date.addDays`](File-std-time-ml-975894601.md#function-function-std-time-date-adddays-function-adddays-d-delta-std-time-ml-164994134) | `std/time.ml:593` | 10 | 6 | 3 | 2 | 1 | 260.06 | 60.87 |
-| [`std.time.date.compare`](File-std-time-ml-975894601.md#function-function-std-time-date-compare-function-compare-a-b-std-time-ml-265951007) | `std/time.ml:580` | 9 | 13 | 7 | 6 | 1 | 397.62 | 60.04 |
-| [`std.time.date.dayOfWeek`](File-std-time-ml-975894601.md#function-function-std-time-date-dayofweek-function-dayofweek-d-std-time-ml-1357661304) | `std/time.ml:618` | 7 | 4 | 2 | 1 | 1 | 180.94 | 65.49 |
-| [`std.time.date.daysInMonth`](File-std-time-ml-975894601.md#function-function-std-time-date-daysinmonth-function-daysinmonth-year-month-std-time-ml-483008705) | `std/time.ml:445` | 23 | 29 | 17 | 17 | 2 | 824.52 | 47.59 |
-| [`std.time.date.diffDays`](File-std-time-ml-975894601.md#function-function-std-time-date-diffdays-function-diffdays-a-b-std-time-ml-1684126225) | `std/time.ml:607` | 8 | 5 | 3 | 2 | 1 | 252.17 | 63.08 |
-| [`std.time.date.fromOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-fromordinal-function-fromordinal-days-std-time-ml-1450309647) | `std/time.ml:525` | 38 | 33 | 9 | 9 | 2 | 1362.41 | 42.38 |
-| [`std.time.date.isLeapYear`](File-std-time-ml-975894601.md#function-function-std-time-date-isleapyear-function-isleapyear-year-std-time-ml-576789919) | `std/time.ml:429` | 12 | 7 | 4 | 3 | 1 | 229.06 | 59.4 |
-| [`std.time.date.isValid`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalid-function-isvalid-d-std-time-ml-398313186) | `std/time.ml:492` | 3 | 1 | 1 | 0 | 0 | 112 | 75.11 |
-| [`std.time.date.isValidYMD`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalidymd-function-isvalidymd-year-month-day-std-time-ml-1097498691) | `std/time.ml:474` | 13 | 8 | 7 | 6 | 1 | 423.73 | 56.36 |
-| [`std.time.date.parse`](File-std-time-ml-975894601.md#function-function-std-time-date-parse-function-parse-text-std-time-ml-1488842447) | `std/time.ml:639` | 20 | 14 | 8 | 7 | 1 | 922.43 | 49.78 |
-| [`std.time.date.toOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-toordinal-function-toordinal-d-std-time-ml-2117441882) | `std/time.ml:498` | 17 | 13 | 4 | 3 | 1 | 874.74 | 52.02 |
-| [`std.time.date.toString`](File-std-time-ml-975894601.md#function-function-std-time-date-tostring-function-tostring-d-std-time-ml-1073583202) | `std/time.ml:630` | 6 | 3 | 2 | 1 | 1 | 267.57 | 65.76 |
-| [`std.time.datetime.addDays`](File-std-time-ml-975894601.md#function-function-std-time-datetime-adddays-function-adddays-dt-deltadays-std-time-ml-203304236) | `std/time.ml:893` | 13 | 8 | 4 | 3 | 1 | 357.23 | 57.29 |
-| [`std.time.datetime.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-addmillis-function-addmillis-dt-delta-std-time-ml-1561373415) | `std/time.ml:859` | 26 | 19 | 6 | 5 | 1 | 835.29 | 47.87 |
-| [`std.time.datetime.compare`](File-std-time-ml-975894601.md#function-function-std-time-datetime-compare-function-compare-a-b-std-time-ml-1157888456) | `std/time.ml:830` | 7 | 4 | 2 | 1 | 1 | 229.06 | 64.77 |
-| [`std.time.datetime.fromSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromsystemtime-function-fromsystemtime-st-std-time-ml-1983396154) | `std/time.ml:952` | 25 | 19 | 10 | 9 | 1 | 922.47 | 47.4 |
-| [`std.time.datetime.fromUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromunixmillis-function-fromunixmillis-unixms-std-time-ml-399158673) | `std/time.ml:1007` | 22 | 16 | 6 | 5 | 1 | 707.2 | 49.96 |
-| [`std.time.datetime.isValid`](File-std-time-ml-975894601.md#function-function-std-time-datetime-isvalid-function-isvalid-dt-std-time-ml-101864515) | `std/time.ml:823` | 3 | 1 | 1 | 0 | 0 | 122.11 | 74.85 |
-| [`std.time.datetime.nowLocal`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowlocal-function-nowlocal-std-time-ml-1503210091) | `std/time.ml:984` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
-| [`std.time.datetime.nowUnixMillisUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowunixmillisutc-function-nowunixmillisutc-std-time-ml-1128288483) | `std/time.ml:1034` | 7 | 4 | 2 | 1 | 1 | 165.67 | 65.76 |
-| [`std.time.datetime.nowUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowutc-function-nowutc-std-time-ml-120915363) | `std/time.ml:990` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
-| [`std.time.datetime.parse`](File-std-time-ml-975894601.md#function-function-std-time-datetime-parse-function-parse-text-std-time-ml-1598500980) | `std/time.ml:918` | 23 | 16 | 7 | 6 | 1 | 883.18 | 48.73 |
-| [`std.time.datetime.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tomillis-function-tomillis-dt-std-time-ml-874033111) | `std/time.ml:840` | 12 | 8 | 4 | 3 | 1 | 388.64 | 57.79 |
-| [`std.time.datetime.toString`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tostring-function-tostring-dt-std-time-ml-1324149955) | `std/time.ml:909` | 6 | 3 | 2 | 1 | 1 | 216.64 | 66.4 |
-| [`std.time.datetime.toUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tounixmillis-function-tounixmillis-dt-std-time-ml-894528563) | `std/time.ml:997` | 7 | 4 | 2 | 1 | 1 | 189.99 | 65.34 |
-| [`std.time.datetimeToString`](File-std-time-ml-975894601.md#function-function-std-time-datetimetostring-function-datetimetostring-dt-std-time-ml-1282710884) | `std/time.ml:1092` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.dateToString`](File-std-time-ml-975894601.md#function-function-std-time-datetostring-function-datetostring-d-std-time-ml-1682286890) | `std/time.ml:1080` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.elapsed`](File-std-time-ml-975894601.md#function-function-std-time-elapsed-function-elapsed-start-time-end-time-std-time-ml-1524773121) | `std/time.ml:323` | 9 | 5 | 4 | 3 | 1 | 159.41 | 63.22 |
-| [`std.time.formatDuration`](File-std-time-ml-975894601.md#function-function-std-time-formatduration-function-formatduration-ms-std-time-ml-951102696) | `std/time.ml:1045` | 27 | 20 | 6 | 5 | 1 | 1023.29 | 46.89 |
-| [`std.time.sleep`](File-std-time-ml-975894601.md#function-function-std-time-sleep-function-sleep-ms-std-time-ml-2137114338) | `std/time.ml:295` | 9 | 5 | 4 | 3 | 1 | 178.38 | 62.88 |
-| [`std.time.ticks`](File-std-time-ml-975894601.md#function-function-std-time-ticks-function-ticks-std-time-ml-23716212) | `std/time.ml:288` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.time.clock.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-addmillis-function-addmillis-t-delta-std-time-ml-1733200724) | `std/time.ml:739` | 15 | 10 | 4 | 3 | 1 | 372.92 | 55.8 |
+| [`std.time.clock.compare`](File-std-time-ml-975894601.md#function-function-std-time-clock-compare-function-compare-a-b-std-time-ml-1662221955) | `std/time.ml:695` | 11 | 17 | 9 | 8 | 1 | 522.69 | 57.04 |
+| [`std.time.clock.fromMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-frommillis-function-frommillis-ms-std-time-ml-576832168) | `std/time.ml:718` | 15 | 11 | 4 | 3 | 1 | 488.4 | 54.98 |
+| [`std.time.clock.isValid`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalid-function-isvalid-t-std-time-ml-358966926) | `std/time.ml:688` | 3 | 1 | 1 | 0 | 0 | 130.8 | 74.64 |
+| [`std.time.clock.isValidHMSM`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalidhmsm-function-isvalidhmsm-h-m-s0-ms-std-time-ml-348818806) | `std/time.ml:675` | 10 | 11 | 13 | 12 | 1 | 464.39 | 57.76 |
+| [`std.time.clock.parse`](File-std-time-ml-975894601.md#function-function-std-time-clock-parse-function-parse-text-std-time-ml-549001107) | `std/time.ml:768` | 42 | 30 | 14 | 19 | 3 | 1884.3 | 39.77 |
+| [`std.time.clock.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-tomillis-function-tomillis-t-std-time-ml-2034526210) | `std/time.ml:709` | 6 | 3 | 2 | 1 | 1 | 230.7 | 66.21 |
+| [`std.time.clock.toString`](File-std-time-ml-975894601.md#function-function-std-time-clock-tostring-function-tostring-t-std-time-ml-68025454) | `std/time.ml:759` | 6 | 3 | 2 | 1 | 1 | 334.7 | 65.08 |
+| [`std.time.clockToString`](File-std-time-ml-975894601.md#function-function-std-time-clocktostring-function-clocktostring-t-std-time-ml-904167438) | `std/time.ml:1087` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.date.addDays`](File-std-time-ml-975894601.md#function-function-std-time-date-adddays-function-adddays-d-delta-std-time-ml-164994134) | `std/time.ml:594` | 10 | 6 | 3 | 2 | 1 | 260.06 | 60.87 |
+| [`std.time.date.compare`](File-std-time-ml-975894601.md#function-function-std-time-date-compare-function-compare-a-b-std-time-ml-265951007) | `std/time.ml:581` | 9 | 13 | 7 | 6 | 1 | 397.62 | 60.04 |
+| [`std.time.date.dayOfWeek`](File-std-time-ml-975894601.md#function-function-std-time-date-dayofweek-function-dayofweek-d-std-time-ml-1357661304) | `std/time.ml:619` | 7 | 4 | 2 | 1 | 1 | 180.94 | 65.49 |
+| [`std.time.date.daysInMonth`](File-std-time-ml-975894601.md#function-function-std-time-date-daysinmonth-function-daysinmonth-year-month-std-time-ml-483008705) | `std/time.ml:446` | 23 | 29 | 17 | 17 | 2 | 824.52 | 47.59 |
+| [`std.time.date.diffDays`](File-std-time-ml-975894601.md#function-function-std-time-date-diffdays-function-diffdays-a-b-std-time-ml-1684126225) | `std/time.ml:608` | 8 | 5 | 3 | 2 | 1 | 252.17 | 63.08 |
+| [`std.time.date.fromOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-fromordinal-function-fromordinal-days-std-time-ml-1450309647) | `std/time.ml:526` | 38 | 33 | 9 | 9 | 2 | 1362.41 | 42.38 |
+| [`std.time.date.isLeapYear`](File-std-time-ml-975894601.md#function-function-std-time-date-isleapyear-function-isleapyear-year-std-time-ml-576789919) | `std/time.ml:430` | 12 | 7 | 4 | 3 | 1 | 229.06 | 59.4 |
+| [`std.time.date.isValid`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalid-function-isvalid-d-std-time-ml-398313186) | `std/time.ml:493` | 3 | 1 | 1 | 0 | 0 | 112 | 75.11 |
+| [`std.time.date.isValidYMD`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalidymd-function-isvalidymd-year-month-day-std-time-ml-1097498691) | `std/time.ml:475` | 13 | 8 | 7 | 6 | 1 | 423.73 | 56.36 |
+| [`std.time.date.parse`](File-std-time-ml-975894601.md#function-function-std-time-date-parse-function-parse-text-std-time-ml-1488842447) | `std/time.ml:640` | 20 | 14 | 8 | 7 | 1 | 922.43 | 49.78 |
+| [`std.time.date.toOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-toordinal-function-toordinal-d-std-time-ml-2117441882) | `std/time.ml:499` | 17 | 13 | 4 | 3 | 1 | 874.74 | 52.02 |
+| [`std.time.date.toString`](File-std-time-ml-975894601.md#function-function-std-time-date-tostring-function-tostring-d-std-time-ml-1073583202) | `std/time.ml:631` | 6 | 3 | 2 | 1 | 1 | 267.57 | 65.76 |
+| [`std.time.datetime.addDays`](File-std-time-ml-975894601.md#function-function-std-time-datetime-adddays-function-adddays-dt-deltadays-std-time-ml-203304236) | `std/time.ml:894` | 13 | 8 | 4 | 3 | 1 | 357.23 | 57.29 |
+| [`std.time.datetime.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-addmillis-function-addmillis-dt-delta-std-time-ml-1561373415) | `std/time.ml:860` | 26 | 19 | 6 | 5 | 1 | 835.29 | 47.87 |
+| [`std.time.datetime.compare`](File-std-time-ml-975894601.md#function-function-std-time-datetime-compare-function-compare-a-b-std-time-ml-1157888456) | `std/time.ml:831` | 7 | 4 | 2 | 1 | 1 | 229.06 | 64.77 |
+| [`std.time.datetime.fromSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromsystemtime-function-fromsystemtime-st-std-time-ml-1983396154) | `std/time.ml:953` | 25 | 19 | 10 | 9 | 1 | 922.47 | 47.4 |
+| [`std.time.datetime.fromUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromunixmillis-function-fromunixmillis-unixms-std-time-ml-399158673) | `std/time.ml:1008` | 22 | 16 | 6 | 5 | 1 | 707.2 | 49.96 |
+| [`std.time.datetime.isValid`](File-std-time-ml-975894601.md#function-function-std-time-datetime-isvalid-function-isvalid-dt-std-time-ml-101864515) | `std/time.ml:824` | 3 | 1 | 1 | 0 | 0 | 122.11 | 74.85 |
+| [`std.time.datetime.nowLocal`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowlocal-function-nowlocal-std-time-ml-1503210091) | `std/time.ml:985` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
+| [`std.time.datetime.nowUnixMillisUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowunixmillisutc-function-nowunixmillisutc-std-time-ml-1128288483) | `std/time.ml:1035` | 7 | 4 | 2 | 1 | 1 | 165.67 | 65.76 |
+| [`std.time.datetime.nowUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowutc-function-nowutc-std-time-ml-120915363) | `std/time.ml:991` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
+| [`std.time.datetime.parse`](File-std-time-ml-975894601.md#function-function-std-time-datetime-parse-function-parse-text-std-time-ml-1598500980) | `std/time.ml:919` | 23 | 16 | 7 | 6 | 1 | 883.18 | 48.73 |
+| [`std.time.datetime.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tomillis-function-tomillis-dt-std-time-ml-874033111) | `std/time.ml:841` | 12 | 8 | 4 | 3 | 1 | 388.64 | 57.79 |
+| [`std.time.datetime.toString`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tostring-function-tostring-dt-std-time-ml-1324149955) | `std/time.ml:910` | 6 | 3 | 2 | 1 | 1 | 216.64 | 66.4 |
+| [`std.time.datetime.toUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tounixmillis-function-tounixmillis-dt-std-time-ml-894528563) | `std/time.ml:998` | 7 | 4 | 2 | 1 | 1 | 189.99 | 65.34 |
+| [`std.time.datetimeToString`](File-std-time-ml-975894601.md#function-function-std-time-datetimetostring-function-datetimetostring-dt-std-time-ml-1282710884) | `std/time.ml:1093` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.dateToString`](File-std-time-ml-975894601.md#function-function-std-time-datetostring-function-datetostring-d-std-time-ml-1682286890) | `std/time.ml:1081` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.elapsed`](File-std-time-ml-975894601.md#function-function-std-time-elapsed-function-elapsed-start-time-end-time-std-time-ml-1524773121) | `std/time.ml:324` | 9 | 5 | 4 | 3 | 1 | 159.41 | 63.22 |
+| [`std.time.formatDuration`](File-std-time-ml-975894601.md#function-function-std-time-formatduration-function-formatduration-ms-std-time-ml-951102696) | `std/time.ml:1046` | 27 | 20 | 6 | 5 | 1 | 1023.29 | 46.89 |
+| [`std.time.sleep`](File-std-time-ml-975894601.md#function-function-std-time-sleep-function-sleep-ms-std-time-ml-2137114338) | `std/time.ml:296` | 9 | 5 | 4 | 3 | 1 | 178.38 | 62.88 |
+| [`std.time.ticks`](File-std-time-ml-975894601.md#function-function-std-time-ticks-function-ticks-std-time-ml-23716212) | `std/time.ml:289` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
 | [`std.time.win32.GetLocalTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getlocaltime-function-getlocaltime-std-time-ml-2017549839) | `std/time.ml:145` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
 | [`std.time.win32.GetSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getsystemtime-function-getsystemtime-std-time-ml-1514521483) | `std/time.ml:152` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
-| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:192` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:173` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
-| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:87` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:247` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
-| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:185` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:160` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
-| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:198` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
-| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:147` | 3 | 1 | 1 | 0 | 0 | 159.41 | 74.04 |
-| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:152` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:94` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:137` | 8 | 7 | 5 | 5 | 2 | 491.14 | 60.78 |
-| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:229` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
-| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:207` | 16 | 16 | 10 | 12 | 2 | 775.24 | 52.16 |
-| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:101` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:240` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
-| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:107` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
-| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:120` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
+| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:211` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:192` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
+| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:89` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:271` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
+| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:204` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:179` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
+| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:217` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
+| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:166` | 3 | 1 | 1 | 0 | 0 | 179.31 | 73.68 |
+| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:171` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:96` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:139` | 8 | 7 | 5 | 5 | 2 | 505.32 | 60.7 |
+| [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) | `std/tls.ml:157` | 7 | 7 | 3 | 2 | 1 | 350.94 | 63.34 |
+| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:253` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
+| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:226` | 22 | 20 | 11 | 15 | 3 | 1005.03 | 48.22 |
+| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:103` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:264` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
+| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:109` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
+| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:122` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
 | [`std.uuid.format`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-format-function-format-raw-std-uuid-ml-2051708080) | `std/uuid.ml:27` | 5 | 4 | 3 | 2 | 1 | 500 | 65.45 |
 | [`std.uuid.isValid`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-isvalid-function-isvalid-text-std-uuid-ml-2002706769) | `std/uuid.ml:64` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
 | [`std.uuid.parse`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-parse-function-parse-text-std-uuid-ml-99981495) | `std/uuid.ml:53` | 8 | 9 | 9 | 8 | 1 | 966.32 | 58.19 |
@@ -846,7 +847,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 A clone group is an exact sequence of 6 normalized, contiguous code lines found more than once. Comments and formatting whitespace are ignored. Duplicated-line totals count overlapping windows only once.
 
-Found 169 clone group(s). At most 169 groups are shown.
+Found 161 clone group(s). At most 161 groups are shown.
 
 <details>
 <summary>Clone 1 — 3 occurrences</summary>
@@ -922,7 +923,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     if typeof ( length ) != "int" then
 
-- [`std/array.ml:135`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:133`](File-std-array-ml-1258125823.md)
 - [`std/bytes.ml:80`](File-std-bytes-ml-1351945333.md)
 - [`std/string_builder.ml:121`](File-std-string-builder-ml-412876577.md)
 
@@ -938,7 +939,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     if typeof ( length ) != "int" then
     return
 
-- [`std/array.ml:136`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:134`](File-std-array-ml-1258125823.md)
 - [`std/bytes.ml:81`](File-std-bytes-ml-1351945333.md)
 - [`std/string_builder.ml:122`](File-std-string-builder-ml-412876577.md)
 
@@ -954,7 +955,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/array.ml:137`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:135`](File-std-array-ml-1258125823.md)
 - [`std/bytes.ml:82`](File-std-bytes-ml-1351945333.md)
 - [`std/string_builder.ml:123`](File-std-string-builder-ml-412876577.md)
 
@@ -970,13 +971,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     if i0 > n then
     i0 = n
 
-- [`std/array.ml:188`](File-std-array-ml-1258125823.md)
-- [`std/bytes.ml:260`](File-std-bytes-ml-1351945333.md)
+- [`std/array.ml:184`](File-std-array-ml-1258125823.md)
+- [`std/bytes.ml:271`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 9 — 4 occurrences</summary>
+<summary>Clone 9 — 2 occurrences</summary>
 
     if i0 < 0 then
     i0 = 0
@@ -985,10 +986,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     i0 = n
     end if
 
-- [`std/array.ml:189`](File-std-array-ml-1258125823.md)
-- [`std/bytes.ml:261`](File-std-bytes-ml-1351945333.md)
-- [`std/string.ml:139`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:92`](File-std-string-ml-1276545685.md)
+- [`std/array.ml:185`](File-std-array-ml-1258125823.md)
+- [`std/bytes.ml:272`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1002,8 +1001,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     return false
     end if
 
-- [`std/array.ml:320`](File-std-array-ml-1258125823.md)
-- [`std/array.ml:340`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:316`](File-std-array-ml-1258125823.md)
+- [`std/array.ml:336`](File-std-array-ml-1258125823.md)
 
 </details>
 
@@ -1198,9 +1197,9 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/bytes.ml:134`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:330`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:660`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:685`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:341`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:671`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:710`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1229,9 +1228,9 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/bytes.ml:247`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:301`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:317`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:258`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:312`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:328`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1245,8 +1244,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     if typeof ( start ) != "int" then
 
-- [`std/bytes.ml:248`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:302`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:259`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:313`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1260,8 +1259,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     if typeof ( start ) != "int" then
     return
 
-- [`std/bytes.ml:249`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:303`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:260`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:314`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1275,101 +1274,85 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/bytes.ml:250`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:304`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:261`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:315`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 29 — 3 occurrences</summary>
+<summary>Clone 29 — 5 occurrences</summary>
 
-    if m == 0 then
-    return i0
+    if not _bytes_ok ( b ) then
+    return false
     end if
-    if m > n then
-    return - 1
+    if not _int_ok ( off ) then
+    return false
     end if
 
-- [`std/bytes.ml:268`](File-std-bytes-ml-1351945333.md)
-- [`std/string.ml:146`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:99`](File-std-string-ml-1276545685.md)
+- [`std/bytes.ml:442`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:484`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:510`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:574`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:602`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 30 — 5 occurrences</summary>
 
-    if not _bytes_ok ( b ) then
     return false
     end if
     if not _int_ok ( off ) then
     return false
     end if
+    if not _int_ok ( value ) then
 
-- [`std/bytes.ml:431`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:473`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:499`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:563`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:591`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:443`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:485`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:511`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:575`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:603`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 31 — 5 occurrences</summary>
 
-    return false
     end if
     if not _int_ok ( off ) then
     return false
     end if
     if not _int_ok ( value ) then
+    return false
 
-- [`std/bytes.ml:432`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:474`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:500`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:564`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:592`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:444`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:486`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:512`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:576`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:604`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 32 — 5 occurrences</summary>
 
-    end if
     if not _int_ok ( off ) then
     return false
     end if
     if not _int_ok ( value ) then
     return false
+    end if
 
-- [`std/bytes.ml:433`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:475`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:501`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:565`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:593`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:445`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:487`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:513`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:577`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:605`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 33 — 5 occurrences</summary>
-
-    if not _int_ok ( off ) then
-    return false
-    end if
-    if not _int_ok ( value ) then
-    return false
-    end if
-
-- [`std/bytes.ml:434`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:476`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:502`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:566`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:594`](File-std-bytes-ml-1351945333.md)
-
-</details>
-
-<details>
-<summary>Clone 34 — 5 occurrences</summary>
 
     if not _bytes_ok ( b ) then
     return
@@ -1378,16 +1361,16 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/bytes.ml:455`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:524`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:543`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:618`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:639`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:466`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:535`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:554`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:629`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:650`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 35 — 5 occurrences</summary>
+<summary>Clone 34 — 5 occurrences</summary>
 
     return
     end if
@@ -1396,316 +1379,316 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     n = len ( b )
 
-- [`std/bytes.ml:456`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:525`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:544`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:619`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:640`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:467`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:536`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:555`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:630`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:651`](File-std-bytes-ml-1351945333.md)
+
+</details>
+
+<details>
+<summary>Clone 35 — 2 occurrences</summary>
+
+    return false
+    end if
+    if not _int_ok ( value ) then
+    return false
+    end if
+    if value < 0 or value > 0xFFFF then
+
+- [`std/bytes.ml:488`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:514`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 36 — 2 occurrences</summary>
 
-    return false
     end if
     if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFF then
+    return false
 
-- [`std/bytes.ml:477`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:503`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:489`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:515`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 37 — 2 occurrences</summary>
 
-    end if
     if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFF then
     return false
+    end if
 
-- [`std/bytes.ml:478`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:504`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:490`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:516`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 38 — 2 occurrences</summary>
 
-    if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFF then
     return false
     end if
+    n = len ( b )
 
-- [`std/bytes.ml:479`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:505`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:491`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:517`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 39 — 2 occurrences</summary>
 
-    return false
     end if
     if value < 0 or value > 0xFFFF then
     return false
     end if
     n = len ( b )
+    if not _check_range ( off , 2 , n ) then
 
-- [`std/bytes.ml:480`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:506`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:492`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:518`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 40 — 2 occurrences</summary>
 
-    end if
     if value < 0 or value > 0xFFFF then
     return false
     end if
     n = len ( b )
     if not _check_range ( off , 2 , n ) then
+    return false
 
-- [`std/bytes.ml:481`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:507`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:493`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:519`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 41 — 2 occurrences</summary>
 
-    if value < 0 or value > 0xFFFF then
     return false
     end if
     n = len ( b )
     if not _check_range ( off , 2 , n ) then
     return false
+    end if
 
-- [`std/bytes.ml:482`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:508`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:494`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:520`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 42 — 2 occurrences</summary>
 
-    return false
+    end if
+    if not _int_ok ( off ) then
+    return
     end if
     n = len ( b )
     if not _check_range ( off , 2 , n ) then
-    return false
-    end if
 
-- [`std/bytes.ml:483`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:509`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:537`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:556`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 43 — 2 occurrences</summary>
 
-    end if
     if not _int_ok ( off ) then
     return
     end if
     n = len ( b )
     if not _check_range ( off , 2 , n ) then
+    return
 
-- [`std/bytes.ml:526`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:545`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:538`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:557`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 44 — 2 occurrences</summary>
 
-    if not _int_ok ( off ) then
     return
     end if
     n = len ( b )
     if not _check_range ( off , 2 , n ) then
     return
+    end if
 
-- [`std/bytes.ml:527`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:546`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:539`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:558`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 45 — 2 occurrences</summary>
 
-    return
+    return false
     end if
-    n = len ( b )
-    if not _check_range ( off , 2 , n ) then
-    return
+    if not _int_ok ( value ) then
+    return false
     end if
+    if value < 0 or value > 0xFFFFFFFF then
 
-- [`std/bytes.ml:528`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:547`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:578`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:606`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 46 — 2 occurrences</summary>
 
-    return false
     end if
     if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFFFFFF then
+    return false
 
-- [`std/bytes.ml:567`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:595`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:579`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:607`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 47 — 2 occurrences</summary>
 
-    end if
     if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFFFFFF then
     return false
+    end if
 
-- [`std/bytes.ml:568`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:596`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:580`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:608`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 48 — 2 occurrences</summary>
 
-    if not _int_ok ( value ) then
     return false
     end if
     if value < 0 or value > 0xFFFFFFFF then
     return false
     end if
+    n = len ( b )
 
-- [`std/bytes.ml:569`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:597`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:581`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:609`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 49 — 2 occurrences</summary>
 
-    return false
     end if
     if value < 0 or value > 0xFFFFFFFF then
     return false
     end if
     n = len ( b )
+    if not _check_range ( off , 4 , n ) then
 
-- [`std/bytes.ml:570`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:598`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:582`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:610`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 50 — 2 occurrences</summary>
 
-    end if
     if value < 0 or value > 0xFFFFFFFF then
     return false
     end if
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
+    return false
 
-- [`std/bytes.ml:571`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:599`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:583`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:611`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 51 — 2 occurrences</summary>
 
-    if value < 0 or value > 0xFFFFFFFF then
     return false
     end if
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
     return false
+    end if
 
-- [`std/bytes.ml:572`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:600`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:584`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:612`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 52 — 2 occurrences</summary>
 
-    return false
+    end if
+    if not _int_ok ( off ) then
+    return
     end if
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
-    return false
-    end if
 
-- [`std/bytes.ml:573`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:601`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:631`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:652`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 53 — 2 occurrences</summary>
 
-    end if
     if not _int_ok ( off ) then
     return
     end if
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
+    return
 
-- [`std/bytes.ml:620`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:641`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:632`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:653`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 54 — 2 occurrences</summary>
 
-    if not _int_ok ( off ) then
     return
     end if
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
     return
+    end if
 
-- [`std/bytes.ml:621`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:642`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:633`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:654`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 55 — 2 occurrences</summary>
-
-    return
-    end if
-    n = len ( b )
-    if not _check_range ( off , 4 , n ) then
-    return
-    end if
-
-- [`std/bytes.ml:622`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:643`](File-std-bytes-ml-1351945333.md)
-
-</details>
-
-<details>
-<summary>Clone 56 — 2 occurrences</summary>
 
     end if
     n = len ( b )
@@ -1714,13 +1697,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     b0 = b [ off ] & 0xFF
 
-- [`std/bytes.ml:623`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:644`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:634`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:655`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 57 — 2 occurrences</summary>
+<summary>Clone 56 — 2 occurrences</summary>
 
     n = len ( b )
     if not _check_range ( off , 4 , n ) then
@@ -1729,13 +1712,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     b0 = b [ off ] & 0xFF
     b1 = b [ off + 1 ] & 0xFF
 
-- [`std/bytes.ml:624`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:645`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:635`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:656`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 58 — 2 occurrences</summary>
+<summary>Clone 57 — 2 occurrences</summary>
 
     if not _check_range ( off , 4 , n ) then
     return
@@ -1744,13 +1727,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     b1 = b [ off + 1 ] & 0xFF
     b2 = b [ off + 2 ] & 0xFF
 
-- [`std/bytes.ml:625`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:646`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:636`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:657`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
-<summary>Clone 59 — 2 occurrences</summary>
+<summary>Clone 58 — 2 occurrences</summary>
 
     return
     end if
@@ -1759,53 +1742,68 @@ Found 169 clone group(s). At most 169 groups are shown.
     b2 = b [ off + 2 ] & 0xFF
     b3 = b [ off + 3 ] & 0xFF
 
-- [`std/bytes.ml:626`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:647`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:637`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:658`](File-std-bytes-ml-1351945333.md)
+
+</details>
+
+<details>
+<summary>Clone 59 — 2 occurrences</summary>
+
+    return
+    end if
+    if typeof ( b ) != "bytes" then
+    return
+    end if
+    if len ( a ) != len ( b ) then
+
+- [`std/bytes.ml:672`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:711`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 60 — 2 occurrences</summary>
 
-    return
     end if
     if typeof ( b ) != "bytes" then
     return
     end if
     if len ( a ) != len ( b ) then
+    return
 
-- [`std/bytes.ml:661`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:686`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:673`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:712`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 61 — 2 occurrences</summary>
 
-    end if
     if typeof ( b ) != "bytes" then
     return
     end if
     if len ( a ) != len ( b ) then
     return
+    end if
 
-- [`std/bytes.ml:662`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:687`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:674`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:713`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
 <details>
 <summary>Clone 62 — 2 occurrences</summary>
 
-    if typeof ( b ) != "bytes" then
-    return
-    end if
-    if len ( a ) != len ( b ) then
-    return
-    end if
+    label words
+    cmp i , wordLimit
+    jge done
+    mov left , dword [ a . data + i ]
+    mov right , dword [ b . data + i ]
+    xor left , right
 
-- [`std/bytes.ml:663`](File-std-bytes-ml-1351945333.md)
-- [`std/bytes.ml:688`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:687`](File-std-bytes-ml-1351945333.md)
+- [`std/bytes.ml:725`](File-std-bytes-ml-1351945333.md)
 
 </details>
 
@@ -1819,8 +1817,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     written = written + literalLength
     end if
 
-- [`std/compress/lz4.ml:73`](File-std-compress-lz4-ml-637795625.md)
-- [`std/compress/lz4.ml:98`](File-std-compress-lz4-ml-637795625.md)
+- [`std/compress/lz4.ml:127`](File-std-compress-lz4-ml-637795625.md)
+- [`std/compress/lz4.ml:152`](File-std-compress-lz4-ml-637795625.md)
 
 </details>
 
@@ -1844,13 +1842,13 @@ Found 169 clone group(s). At most 169 groups are shown.
 
     this . callback = void
     this . data = void
+    this . _signalCompletionLocked ( )
     this . guard . release ( )
-    this . done . set ( )
     return true
     end function
 
-- [`std/concurrent/thread_pool.ml:112`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:97`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:136`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:151`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1864,8 +1862,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     this . accepting = false
 
-- [`std/concurrent/thread_pool.ml:408`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:422`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:448`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:462`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1879,8 +1877,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     this . accepting = false
     this . stopping = true
 
-- [`std/concurrent/thread_pool.ml:409`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:423`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:449`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:463`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1894,8 +1892,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     this . guard . release ( )
     return true
 
-- [`std/concurrent/thread_pool.ml:452`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:468`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:492`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:508`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1909,8 +1907,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     return true
     end function
 
-- [`std/concurrent/thread_pool.ml:453`](File-std-concurrent-thread-pool-ml-72857761.md)
-- [`std/concurrent/thread_pool.ml:469`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:493`](File-std-concurrent-thread-pool-ml-72857761.md)
+- [`std/concurrent/thread_pool.ml:509`](File-std-concurrent-thread-pool-ml-72857761.md)
 
 </details>
 
@@ -1925,7 +1923,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/core.ml:102`](File-std-core-ml-750389783.md)
-- [`std/math.ml:84`](File-std-math-ml-790065500.md)
+- [`std/math.ml:106`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -1940,7 +1938,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     return hi
 
 - [`std/core.ml:113`](File-std-core-ml-750389783.md)
-- [`std/math.ml:61`](File-std-math-ml-790065500.md)
+- [`std/math.ml:83`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -1955,7 +1953,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/core.ml:114`](File-std-core-ml-750389783.md)
-- [`std/math.ml:62`](File-std-math-ml-790065500.md)
+- [`std/math.ml:84`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -1970,7 +1968,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     return x
 
 - [`std/core.ml:115`](File-std-core-ml-750389783.md)
-- [`std/math.ml:63`](File-std-math-ml-790065500.md)
+- [`std/math.ml:85`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -1985,7 +1983,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/core.ml:116`](File-std-core-ml-750389783.md)
-- [`std/math.ml:64`](File-std-math-ml-790065500.md)
+- [`std/math.ml:86`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2000,7 +1998,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/core.ml:135`](File-std-core-ml-750389783.md)
-- [`std/math.ml:48`](File-std-math-ml-790065500.md)
+- [`std/math.ml:70`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2015,7 +2013,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     return 0
 
 - [`std/core.ml:136`](File-std-core-ml-750389783.md)
-- [`std/math.ml:49`](File-std-math-ml-790065500.md)
+- [`std/math.ml:71`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2030,7 +2028,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/core.ml:137`](File-std-core-ml-750389783.md)
-- [`std/math.ml:50`](File-std-math-ml-790065500.md)
+- [`std/math.ml:72`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2045,7 +2043,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/core.ml:92`](File-std-core-ml-750389783.md)
-- [`std/math.ml:74`](File-std-math-ml-790065500.md)
+- [`std/math.ml:96`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2120,7 +2118,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/ds/concurrent_hashmap.ml:151`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/concurrent_list.ml:94`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:88`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
@@ -2150,7 +2148,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/ds/concurrent_hashmap.ml:333`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/concurrent_list.ml:281`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:272`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
@@ -2167,7 +2165,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 - [`std/ds/concurrent_hashmap.ml:350`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
 - [`std/ds/concurrent_hashmap.ml:371`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
 - [`std/ds/concurrent_hashmap.ml:392`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/concurrent_list.ml:299`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:290`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
@@ -2246,7 +2244,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     return h & 0xFFFFFFFF
 
 - [`std/ds/concurrent_hashmap.ml:36`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/hashmap.ml:68`](File-std-ds-hashmap-ml-1269372918.md)
+- [`std/ds/hashmap.ml:70`](File-std-ds-hashmap-ml-1269372918.md)
 
 </details>
 
@@ -2293,7 +2291,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/ds/concurrent_hashmap.ml:37`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/hashmap.ml:69`](File-std-ds-hashmap-ml-1269372918.md)
+- [`std/ds/hashmap.ml:71`](File-std-ds-hashmap-ml-1269372918.md)
 
 </details>
 
@@ -2308,7 +2306,7 @@ Found 169 clone group(s). At most 169 groups are shown.
     end struct
 
 - [`std/ds/concurrent_hashmap.ml:420`](File-std-ds-concurrent-hashmap-ml-1798836270.md)
-- [`std/ds/concurrent_list.ml:320`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:307`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
@@ -2322,8 +2320,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/ds/concurrent_list.ml:171`](File-std-ds-concurrent-list-ml-291130726.md)
-- [`std/ds/concurrent_list.ml:239`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:162`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:230`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
@@ -2337,43 +2335,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     result = this . buf [ index ]
 
-- [`std/ds/concurrent_list.ml:172`](File-std-ds-concurrent-list-ml-291130726.md)
-- [`std/ds/concurrent_list.ml:240`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:163`](File-std-ds-concurrent-list-ml-291130726.md)
+- [`std/ds/concurrent_list.ml:231`](File-std-ds-concurrent-list-ml-291130726.md)
 
 </details>
 
 <details>
-<summary>Clone 98 — 2 occurrences</summary>
-
-    i = this . size
-    while i > index
-    this . buf [ i ] = this . buf [ i - 1 ]
-    i = i - 1
-    end while
-    this . buf [ index ] = value
-
-- [`std/ds/concurrent_list.ml:225`](File-std-ds-concurrent-list-ml-291130726.md)
-- [`std/ds/list.ml:255`](File-std-ds-list-ml-2070188142.md)
-
-</details>
-
-<details>
-<summary>Clone 99 — 2 occurrences</summary>
-
-    while i > index
-    this . buf [ i ] = this . buf [ i - 1 ]
-    i = i - 1
-    end while
-    this . buf [ index ] = value
-    this . size = this . size + 1
-
-- [`std/ds/concurrent_list.ml:226`](File-std-ds-concurrent-list-ml-291130726.md)
-- [`std/ds/list.ml:256`](File-std-ds-list-ml-2070188142.md)
-
-</details>
-
-<details>
-<summary>Clone 100 — 3 occurrences</summary>
+<summary>Clone 98 — 3 occurrences</summary>
 
     function _allocArray ( n , fill )
     if typeof ( n ) != "int" then
@@ -2389,7 +2357,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 101 — 3 occurrences</summary>
+<summary>Clone 99 — 3 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return
@@ -2405,7 +2373,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 102 — 3 occurrences</summary>
+<summary>Clone 100 — 3 occurrences</summary>
 
     return
     end if
@@ -2421,7 +2389,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 103 — 3 occurrences</summary>
+<summary>Clone 101 — 3 occurrences</summary>
 
     end if
     if n <= 0 then
@@ -2437,7 +2405,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 104 — 2 occurrences</summary>
+<summary>Clone 102 — 2 occurrences</summary>
 
     function _nextPow2 ( n )
     if typeof ( n ) != "int" then
@@ -2452,7 +2420,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 105 — 2 occurrences</summary>
+<summary>Clone 103 — 2 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return 16
@@ -2467,7 +2435,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 106 — 2 occurrences</summary>
+<summary>Clone 104 — 2 occurrences</summary>
 
     return 16
     end if
@@ -2482,7 +2450,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 107 — 2 occurrences</summary>
+<summary>Clone 105 — 2 occurrences</summary>
 
     end if
     if n <= 16 then
@@ -2497,7 +2465,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 108 — 2 occurrences</summary>
+<summary>Clone 106 — 2 occurrences</summary>
 
     if n <= 16 then
     return 16
@@ -2512,7 +2480,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 109 — 2 occurrences</summary>
+<summary>Clone 107 — 2 occurrences</summary>
 
     return 16
     end if
@@ -2527,7 +2495,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 110 — 2 occurrences</summary>
+<summary>Clone 108 — 2 occurrences</summary>
 
     end if
     c = 16
@@ -2542,7 +2510,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 111 — 2 occurrences</summary>
+<summary>Clone 109 — 2 occurrences</summary>
 
     c = 16
     while c < n
@@ -2557,7 +2525,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 112 — 2 occurrences</summary>
+<summary>Clone 110 — 2 occurrences</summary>
 
     if typeof ( index ) != "int" then
     return
@@ -2567,12 +2535,12 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/ds/list.ml:177`](File-std-ds-list-ml-2070188142.md)
-- [`std/ds/list.ml:268`](File-std-ds-list-ml-2070188142.md)
+- [`std/ds/list.ml:275`](File-std-ds-list-ml-2070188142.md)
 
 </details>
 
 <details>
-<summary>Clone 113 — 2 occurrences</summary>
+<summary>Clone 111 — 2 occurrences</summary>
 
     function popOr ( fallbackValue )
     v = this . pop ( )
@@ -2582,12 +2550,12 @@ Found 169 clone group(s). At most 169 groups are shown.
     return v
 
 - [`std/ds/list.ml:230`](File-std-ds-list-ml-2070188142.md)
-- [`std/ds/stack.ml:276`](File-std-ds-stack-ml-117945432.md)
+- [`std/ds/stack.ml:272`](File-std-ds-stack-ml-117945432.md)
 
 </details>
 
 <details>
-<summary>Clone 114 — 2 occurrences</summary>
+<summary>Clone 112 — 2 occurrences</summary>
 
     v = this . pop ( )
     if typeof ( v ) == "void" then
@@ -2597,12 +2565,12 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/ds/list.ml:231`](File-std-ds-list-ml-2070188142.md)
-- [`std/ds/stack.ml:277`](File-std-ds-stack-ml-117945432.md)
+- [`std/ds/stack.ml:273`](File-std-ds-stack-ml-117945432.md)
 
 </details>
 
 <details>
-<summary>Clone 115 — 3 occurrences</summary>
+<summary>Clone 113 — 3 occurrences</summary>
 
     function _nextPow2 ( n )
     if typeof ( n ) != "int" then
@@ -2618,7 +2586,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 116 — 3 occurrences</summary>
+<summary>Clone 114 — 3 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return 8
@@ -2634,7 +2602,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 117 — 3 occurrences</summary>
+<summary>Clone 115 — 3 occurrences</summary>
 
     return 8
     end if
@@ -2650,7 +2618,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 118 — 3 occurrences</summary>
+<summary>Clone 116 — 3 occurrences</summary>
 
     end if
     if n <= 8 then
@@ -2666,7 +2634,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 119 — 3 occurrences</summary>
+<summary>Clone 117 — 3 occurrences</summary>
 
     if n <= 8 then
     return 8
@@ -2682,7 +2650,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 120 — 3 occurrences</summary>
+<summary>Clone 118 — 3 occurrences</summary>
 
     return 8
     end if
@@ -2698,7 +2666,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 121 — 3 occurrences</summary>
+<summary>Clone 119 — 3 occurrences</summary>
 
     end if
     c = 8
@@ -2714,7 +2682,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 122 — 3 occurrences</summary>
+<summary>Clone 120 — 3 occurrences</summary>
 
     c = 8
     while c < n
@@ -2730,7 +2698,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 123 — 2 occurrences</summary>
+<summary>Clone 121 — 2 occurrences</summary>
 
     if typeof ( n ) != "int" then
     return
@@ -2740,12 +2708,12 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
 
 - [`std/ds/stack.ml:28`](File-std-ds-stack-ml-117945432.md)
-- [`std/sort.ml:257`](File-std-sort-ml-1000391650.md)
+- [`std/sort.ml:271`](File-std-sort-ml-1000391650.md)
 
 </details>
 
 <details>
-<summary>Clone 124 — 2 occurrences</summary>
+<summary>Clone 122 — 2 occurrences</summary>
 
     return
     end if
@@ -2755,12 +2723,12 @@ Found 169 clone group(s). At most 169 groups are shown.
     return array ( n , fill )
 
 - [`std/ds/stack.ml:29`](File-std-ds-stack-ml-117945432.md)
-- [`std/sort.ml:258`](File-std-sort-ml-1000391650.md)
+- [`std/sort.ml:272`](File-std-sort-ml-1000391650.md)
 
 </details>
 
 <details>
-<summary>Clone 125 — 2 occurrences</summary>
+<summary>Clone 123 — 2 occurrences</summary>
 
     end if
     if n < 0 then
@@ -2770,72 +2738,87 @@ Found 169 clone group(s). At most 169 groups are shown.
     end function
 
 - [`std/ds/stack.ml:30`](File-std-ds-stack-ml-117945432.md)
-- [`std/sort.ml:259`](File-std-sort-ml-1000391650.md)
+- [`std/sort.ml:273`](File-std-sort-ml-1000391650.md)
+
+</details>
+
+<details>
+<summary>Clone 124 — 2 occurrences</summary>
+
+    or packed , value
+    add inputAt , 1
+    movzx ch , byte [ t . data + inputAt ]
+    movzx value , byte [ lookup . data + ch ]
+    cmp value , 255
+    je invalid
+
+- [`std/encoding/base64.ml:221`](File-std-encoding-base64-ml-1044483879.md)
+- [`std/encoding/base64.ml:228`](File-std-encoding-base64-ml-1044483879.md)
+
+</details>
+
+<details>
+<summary>Clone 125 — 2 occurrences</summary>
+
+    label next
+    cmp i , n
+    jge done
+    movzx ch , byte [ src . data + i ]
+    cmp ch , 92
+    je escaped
+
+- [`std/fmt.ml:123`](File-std-fmt-ml-2123112301.md)
+- [`std/fmt.ml:96`](File-std-fmt-ml-2123112301.md)
 
 </details>
 
 <details>
 <summary>Clone 126 — 2 occurrences</summary>
 
-    function _decodeOrEmpty ( b )
-    if typeof ( b ) != "bytes" then
-    return
-    end if
-    if len ( b ) == 0 then
-    return ""
+    cmp i , n
+    jge done
+    movzx ch , byte [ src . data + i ]
+    cmp ch , 92
+    je escaped
+    cmp ch , 34
 
-- [`std/encoding/base64.ml:68`](File-std-encoding-base64-ml-1044483879.md)
-- [`std/string.ml:69`](File-std-string-ml-1276545685.md)
+- [`std/fmt.ml:124`](File-std-fmt-ml-2123112301.md)
+- [`std/fmt.ml:97`](File-std-fmt-ml-2123112301.md)
 
 </details>
 
 <details>
 <summary>Clone 127 — 2 occurrences</summary>
 
-    if typeof ( b ) != "bytes" then
-    return
-    end if
-    if len ( b ) == 0 then
-    return ""
-    end if
+    jge done
+    movzx ch , byte [ src . data + i ]
+    cmp ch , 92
+    je escaped
+    cmp ch , 34
+    je escaped
 
-- [`std/encoding/base64.ml:69`](File-std-encoding-base64-ml-1044483879.md)
-- [`std/string.ml:70`](File-std-string-ml-1276545685.md)
+- [`std/fmt.ml:125`](File-std-fmt-ml-2123112301.md)
+- [`std/fmt.ml:98`](File-std-fmt-ml-2123112301.md)
 
 </details>
 
 <details>
 <summary>Clone 128 — 2 occurrences</summary>
 
-    return
-    end if
-    if len ( b ) == 0 then
-    return ""
-    end if
-    return decode ( b )
+    movzx ch , byte [ src . data + i ]
+    cmp ch , 92
+    je escaped
+    cmp ch , 34
+    je escaped
+    cmp ch , 10
 
-- [`std/encoding/base64.ml:70`](File-std-encoding-base64-ml-1044483879.md)
-- [`std/string.ml:71`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 129 — 2 occurrences</summary>
-
-    end if
-    if len ( b ) == 0 then
-    return ""
-    end if
-    return decode ( b )
-    end function
-
-- [`std/encoding/base64.ml:71`](File-std-encoding-base64-ml-1044483879.md)
-- [`std/string.ml:72`](File-std-string-ml-1276545685.md)
+- [`std/fmt.ml:126`](File-std-fmt-ml-2123112301.md)
+- [`std/fmt.ml:99`](File-std-fmt-ml-2123112301.md)
 
 </details>
 
 <details>
-<summary>Clone 130 — 3 occurrences</summary>
+<summary>Clone 129 — 3 occurrences</summary>
 
     if typeof ( s ) != "string" or typeof ( width ) != "int" or typeof ( ch ) != "string" then
     return
@@ -2851,7 +2834,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 131 — 3 occurrences</summary>
+<summary>Clone 130 — 3 occurrences</summary>
 
     return
     end if
@@ -2867,7 +2850,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 132 — 2 occurrences</summary>
+<summary>Clone 131 — 2 occurrences</summary>
 
     h = CreateFileW (
     path ,
@@ -2876,13 +2859,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     0 ,
     std . fs . Creation . OPEN_EXISTING ,
 
-- [`std/fs.ml:588`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:706`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:584`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:702`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 133 — 2 occurrences</summary>
+<summary>Clone 132 — 2 occurrences</summary>
 
     path ,
     std . fs . Access . GENERIC_READ ,
@@ -2891,13 +2874,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     std . fs . Creation . OPEN_EXISTING ,
     std . fs . FileAttr . FILE_ATTRIBUTE_NORMAL ,
 
-- [`std/fs.ml:589`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:707`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:585`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:703`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 134 — 2 occurrences</summary>
+<summary>Clone 133 — 2 occurrences</summary>
 
     std . fs . Access . GENERIC_READ ,
     std . fs . Share . FILE_SHARE_READ ,
@@ -2906,13 +2889,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     std . fs . FileAttr . FILE_ATTRIBUTE_NORMAL ,
     0
 
-- [`std/fs.ml:590`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:708`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:586`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:704`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 135 — 2 occurrences</summary>
+<summary>Clone 134 — 2 occurrences</summary>
 
     std . fs . Share . FILE_SHARE_READ ,
     0 ,
@@ -2921,13 +2904,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     0
     )
 
-- [`std/fs.ml:591`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:709`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:587`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:705`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 136 — 2 occurrences</summary>
+<summary>Clone 135 — 2 occurrences</summary>
 
     0 ,
     std . fs . Creation . OPEN_EXISTING ,
@@ -2936,13 +2919,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     )
     if h == std . fs . INVALID_HANDLE_VALUE then
 
-- [`std/fs.ml:592`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:710`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:588`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:706`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 137 — 2 occurrences</summary>
+<summary>Clone 136 — 2 occurrences</summary>
 
     pos = 0
     while pos < size
@@ -2951,133 +2934,28 @@ Found 169 clone group(s). At most 169 groups are shown.
     toRead = std . fs . READ_CHUNK_SIZE
     end if
 
-- [`std/fs.ml:626`](File-std-fs-ml-1285967051.md)
-- [`std/fs.ml:749`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:622`](File-std-fs-ml-1285967051.md)
+- [`std/fs.ml:745`](File-std-fs-ml-1285967051.md)
 
 </details>
 
 <details>
-<summary>Clone 138 — 2 occurrences</summary>
+<summary>Clone 137 — 2 occurrences</summary>
 
-    j = 0
-    while j < m and hay [ i + j ] == needle [ j ]
-    j = j + 1
+    if i <= j then
+    __swap ( arr , i , j )
+    i = i + 1
+    j = j - 1
+    end if
     end while
-    if j == m then
-    return i
 
-- [`std/string.ml:113`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:217`](File-std-string-ml-1276545685.md)
+- [`std/sort.ml:305`](File-std-sort-ml-1000391650.md)
+- [`std/sort.ml:329`](File-std-sort-ml-1000391650.md)
 
 </details>
 
 <details>
-<summary>Clone 139 — 2 occurrences</summary>
-
-    while j < m and hay [ i + j ] == needle [ j ]
-    j = j + 1
-    end while
-    if j == m then
-    return i
-    end if
-
-- [`std/string.ml:114`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:218`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 140 — 2 occurrences</summary>
-
-    n = len ( hay )
-    m = len ( needle )
-    i0 = start
-    if typeof ( i0 ) != "int" then
-    i0 = 0
-    end if
-
-- [`std/string.ml:133`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:86`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 141 — 2 occurrences</summary>
-
-    m = len ( needle )
-    i0 = start
-    if typeof ( i0 ) != "int" then
-    i0 = 0
-    end if
-    if i0 < 0 then
-
-- [`std/string.ml:134`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:87`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 142 — 2 occurrences</summary>
-
-    i0 = start
-    if typeof ( i0 ) != "int" then
-    i0 = 0
-    end if
-    if i0 < 0 then
-    i0 = 0
-
-- [`std/string.ml:135`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:88`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 143 — 2 occurrences</summary>
-
-    if typeof ( i0 ) != "int" then
-    i0 = 0
-    end if
-    if i0 < 0 then
-    i0 = 0
-    end if
-
-- [`std/string.ml:136`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:89`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 144 — 2 occurrences</summary>
-
-    i0 = 0
-    end if
-    if i0 < 0 then
-    i0 = 0
-    end if
-    if i0 > n then
-
-- [`std/string.ml:137`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:90`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 145 — 2 occurrences</summary>
-
-    end if
-    if i0 < 0 then
-    i0 = 0
-    end if
-    if i0 > n then
-    i0 = n
-
-- [`std/string.ml:138`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:91`](File-std-string-ml-1276545685.md)
-
-</details>
-
-<details>
-<summary>Clone 146 — 5 occurrences</summary>
+<summary>Clone 138 — 5 occurrences</summary>
 
     if typeof ( s ) != "string" then
     return
@@ -3086,16 +2964,16 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/string.ml:273`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:289`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:397`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:447`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:490`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:192`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:242`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:285`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:81`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:97`](File-std-string-ml-1276545685.md)
 
 </details>
 
 <details>
-<summary>Clone 147 — 2 occurrences</summary>
+<summary>Clone 139 — 2 occurrences</summary>
 
     return
     end if
@@ -3104,13 +2982,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     if typeof ( repl ) != "string" then
 
-- [`std/string.ml:398`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:448`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:193`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:243`](File-std-string-ml-1276545685.md)
 
 </details>
 
 <details>
-<summary>Clone 148 — 2 occurrences</summary>
+<summary>Clone 140 — 2 occurrences</summary>
 
     end if
     if typeof ( needle ) != "string" then
@@ -3119,13 +2997,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     if typeof ( repl ) != "string" then
     return
 
-- [`std/string.ml:399`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:449`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:194`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:244`](File-std-string-ml-1276545685.md)
 
 </details>
 
 <details>
-<summary>Clone 149 — 2 occurrences</summary>
+<summary>Clone 141 — 2 occurrences</summary>
 
     if typeof ( needle ) != "string" then
     return
@@ -3134,13 +3012,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     return
     end if
 
-- [`std/string.ml:400`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:450`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:195`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:245`](File-std-string-ml-1276545685.md)
 
 </details>
 
 <details>
-<summary>Clone 150 — 2 occurrences</summary>
+<summary>Clone 142 — 2 occurrences</summary>
 
     if typeof ( ch ) != "string" then
     return false
@@ -3149,13 +3027,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     return false
     end if
 
-- [`std/string.ml:537`](File-std-string-ml-1276545685.md)
-- [`std/string.ml:549`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:332`](File-std-string-ml-1276545685.md)
+- [`std/string.ml:344`](File-std-string-ml-1276545685.md)
 
 </details>
 
 <details>
-<summary>Clone 151 — 2 occurrences</summary>
+<summary>Clone 143 — 2 occurrences</summary>
 
     else result . appendString ( ch )
     end if
@@ -3170,7 +3048,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 152 — 3 occurrences</summary>
+<summary>Clone 144 — 3 occurrences</summary>
 
     function close ( )
     if this . closed then return false end if
@@ -3186,7 +3064,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 153 — 3 occurrences</summary>
+<summary>Clone 145 — 3 occurrences</summary>
 
     if this . closed then return false end if
     ok = CloseHandle ( this . handle )
@@ -3202,7 +3080,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 154 — 3 occurrences</summary>
+<summary>Clone 146 — 3 occurrences</summary>
 
     ok = CloseHandle ( this . handle )
     if ok then
@@ -3218,7 +3096,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 155 — 3 occurrences</summary>
+<summary>Clone 147 — 3 occurrences</summary>
 
     if ok then
     this . closed = true
@@ -3234,7 +3112,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 156 — 2 occurrences</summary>
+<summary>Clone 148 — 2 occurrences</summary>
 
     function acquireFor ( milliseconds )
     if this . closed or typeof ( milliseconds ) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then
@@ -3249,7 +3127,7 @@ Found 169 clone group(s). At most 169 groups are shown.
 </details>
 
 <details>
-<summary>Clone 157 — 2 occurrences</summary>
+<summary>Clone 149 — 2 occurrences</summary>
 
     if secBufferType ( buffers , index ) == SECBUFFER_EXTRA then
     extraLength = secBufferLength ( buffers , index )
@@ -3258,13 +3136,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end if
     index = index + 1
 
-- [`std/tls/_schannel.ml:1144`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1306`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1140`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1302`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 158 — 2 occurrences</summary>
+<summary>Clone 150 — 2 occurrences</summary>
 
     extraLength = secBufferLength ( buffers , index )
     pointerResult = try ( secBufferPointer ( buffers , index ) )
@@ -3273,13 +3151,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     index = index + 1
     end while
 
-- [`std/tls/_schannel.ml:1145`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1307`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1141`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1303`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 159 — 2 occurrences</summary>
+<summary>Clone 151 — 2 occurrences</summary>
 
     pointerResult = try ( secBufferPointer ( buffers , index ) )
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
@@ -3288,13 +3166,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end while
     if extraLength <= 0 then return bytes ( 0 ) end if
 
-- [`std/tls/_schannel.ml:1146`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1308`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1142`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1304`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 160 — 2 occurrences</summary>
+<summary>Clone 152 — 2 occurrences</summary>
 
     if typeof ( pointerResult ) != "error" then extraPointer = pointerResult end if
     end if
@@ -3303,13 +3181,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     if extraLength <= 0 then return bytes ( 0 ) end if
     basePointer = nativeBytesPtr ( inputBytes )
 
-- [`std/tls/_schannel.ml:1147`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1309`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1143`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1305`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 161 — 2 occurrences</summary>
+<summary>Clone 153 — 2 occurrences</summary>
 
     inbound = try ( appendBytes ( inbound , received ) )
     if typeof ( inbound ) == "error" then closeContext ( context ) ; return inbound end if
@@ -3318,13 +3196,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     outputBuffer = createSecBuffer ( SECBUFFER_TOKEN , token )
     outputDesc = createSecBufferDesc ( outputBuffer )
 
-- [`std/tls/_schannel.ml:1182`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1222`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1178`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1218`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 162 — 2 occurrences</summary>
+<summary>Clone 154 — 2 occurrences</summary>
 
     sent = try ( network . tcpSendAll ( socketHandle , outputToken ) )
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
@@ -3333,13 +3211,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
     inbound = extra
 
-- [`std/tls/_schannel.ml:1195`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1242`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1191`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1238`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 163 — 2 occurrences</summary>
+<summary>Clone 155 — 2 occurrences</summary>
 
     if typeof ( sent ) == "error" then closeContext ( context ) ; return sent end if
     end if
@@ -3348,13 +3226,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     inbound = extra
     end while
 
-- [`std/tls/_schannel.ml:1196`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1243`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1192`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1239`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 164 — 2 occurrences</summary>
+<summary>Clone 156 — 2 occurrences</summary>
 
     end if
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
@@ -3363,13 +3241,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     end while
     context . encryptedInput = inbound
 
-- [`std/tls/_schannel.ml:1197`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1244`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1193`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1240`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 165 — 2 occurrences</summary>
+<summary>Clone 157 — 2 occurrences</summary>
 
     extra = try ( handshakeExtra ( inbound , input [ 0 ] ) )
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
@@ -3378,13 +3256,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     context . encryptedInput = inbound
     finished = try ( finishContext ( context ) )
 
-- [`std/tls/_schannel.ml:1198`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1245`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1194`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1241`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 166 — 2 occurrences</summary>
+<summary>Clone 158 — 2 occurrences</summary>
 
     if typeof ( extra ) == "error" then closeContext ( context ) ; return extra end if
     inbound = extra
@@ -3393,13 +3271,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     finished = try ( finishContext ( context ) )
     if typeof ( finished ) == "error" then closeContext ( context ) ; return finished end if
 
-- [`std/tls/_schannel.ml:1199`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1246`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1195`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1242`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 167 — 2 occurrences</summary>
+<summary>Clone 159 — 2 occurrences</summary>
 
     inbound = extra
     end while
@@ -3408,13 +3286,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     if typeof ( finished ) == "error" then closeContext ( context ) ; return finished end if
     return finished
 
-- [`std/tls/_schannel.ml:1200`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1247`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1196`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1243`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 168 — 2 occurrences</summary>
+<summary>Clone 160 — 2 occurrences</summary>
 
     end while
     context . encryptedInput = inbound
@@ -3423,13 +3301,13 @@ Found 169 clone group(s). At most 169 groups are shown.
     return finished
     end function
 
-- [`std/tls/_schannel.ml:1201`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1248`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1197`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1244`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 
 <details>
-<summary>Clone 169 — 2 occurrences</summary>
+<summary>Clone 161 — 2 occurrences</summary>
 
     writeSecBuffer ( buffers , 1 , SECBUFFER_EMPTY , 0 , 0 )
     writeSecBuffer ( buffers , 2 , SECBUFFER_EMPTY , 0 , 0 )
@@ -3438,8 +3316,8 @@ Found 169 clone group(s). At most 169 groups are shown.
     quality = bytes ( 4 , 0 )
     status = DecryptMessage ( context . handle , desc , 0 , quality )
 
-- [`std/tls/_schannel.ml:1388`](File-std-tls-schannel-ml-805501109.md)
-- [`std/tls/_schannel.ml:1436`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1384`](File-std-tls-schannel-ml-805501109.md)
+- [`std/tls/_schannel.ml:1432`](File-std-tls-schannel-ml-805501109.md)
 
 </details>
 

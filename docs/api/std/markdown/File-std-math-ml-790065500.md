@@ -24,7 +24,7 @@ Absolute value.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:32`
+Source: `std/math.ml:54`
 
 <a id="function-function-std-math-acos-function-acos-x-std-math-ml-1386598144"></a>
 ### acos
@@ -40,7 +40,7 @@ Arccosine acos(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:652`
+Source: `std/math.ml:616`
 
 <a id="function-function-std-math-asin-function-asin-x-std-math-ml-224541764"></a>
 ### asin
@@ -56,7 +56,7 @@ Arcsine asin(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:645`
+Source: `std/math.ml:609`
 
 <a id="function-function-std-math-atan-function-atan-x-std-math-ml-2132826072"></a>
 ### atan
@@ -72,7 +72,7 @@ Arctangent (fast approximation).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:424`
+Source: `std/math.ml:429`
 
 <a id="function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175"></a>
 ### atan2
@@ -89,7 +89,7 @@ Arctangent with quadrant handling.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:449`
+Source: `std/math.ml:454`
 
 <a id="function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484"></a>
 ### ceil
@@ -105,7 +105,7 @@ Ceil(x) -> integer-valued number.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:113`
+Source: `std/math.ml:135`
 
 <a id="function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320"></a>
 ### ceilInt
@@ -121,7 +121,7 @@ Ceils a numeric value and requires an int result.
 | `x` | `dynamic` | — | Numeric value to convert. |
 
 
-Source: `std/math.ml:181`
+Source: `std/math.ml:203`
 
 <a id="function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544"></a>
 ### clamp
@@ -139,7 +139,7 @@ Clamp a number to [lo, hi].
 | `hi` | `dynamic` | — | Value supplied for `hi`. |
 
 
-Source: `std/math.ml:61`
+Source: `std/math.ml:83`
 
 <a id="function-function-std-math-cos-function-cos-x-std-math-ml-638965610"></a>
 ### cos
@@ -155,7 +155,7 @@ Cosine (fast approximation).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:382`
+Source: `std/math.ml:387`
 
 <a id="function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312"></a>
 ### cosh
@@ -171,7 +171,7 @@ Hyperbolic cosine cosh(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:667`
+Source: `std/math.ml:631`
 
 <a id="function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704"></a>
 ### degToRad
@@ -187,7 +187,7 @@ Converts degrees to radians.
 | `deg` | `dynamic` | — | Value supplied for `deg`. |
 
 
-Source: `std/math.ml:221`
+Source: `std/math.ml:243`
 
 <a id="function-function-std-math-e-function-e-std-math-ml-1291905090"></a>
 ### e
@@ -199,7 +199,7 @@ function e()
 Mathematical constant e.
 
 
-Source: `std/math.ml:481`
+Source: `std/math.ml:486`
 
 <a id="function-function-std-math-exp-function-exp-x-std-math-ml-847392178"></a>
 ### exp
@@ -215,7 +215,7 @@ Exponential function exp(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:509`
+Source: `std/math.ml:514`
 
 <a id="function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542"></a>
 ### expm1
@@ -231,7 +231,7 @@ Expm1(x) = exp(x) - 1, with good accuracy near 0.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:531`
+Source: `std/math.ml:520`
 
 <a id="function-function-std-math-floor-function-floor-x-std-math-ml-1858376096"></a>
 ### floor
@@ -247,7 +247,7 @@ Floor(x) -> integer-valued number.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:93`
+Source: `std/math.ml:115`
 
 <a id="function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900"></a>
 ### floorInt
@@ -263,7 +263,7 @@ Floors a numeric value and requires an int result.
 | `x` | `dynamic` | — | Numeric value to convert. |
 
 
-Source: `std/math.ml:171`
+Source: `std/math.ml:193`
 
 <a id="function-function-std-math-fract-function-fract-x-std-math-ml-123616796"></a>
 ### fract
@@ -279,7 +279,7 @@ Fractional part of x.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:683`
+Source: `std/math.ml:647`
 
 <a id="function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697"></a>
 ### gcd
@@ -296,7 +296,7 @@ Greatest common divisor (Euclidean algorithm).
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/math.ml:300`
+Source: `std/math.ml:305`
 
 <a id="function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453"></a>
 ### hypot
@@ -313,7 +313,7 @@ Hypotenuse: sqrt(x*x + y*y).
 | `y` | `dynamic` | — | Value supplied for `y`. |
 
 
-Source: `std/math.ml:476`
+Source: `std/math.ml:481`
 
 <a id="function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274"></a>
 ### invSqrt
@@ -329,7 +329,7 @@ Inverse square root 1/sqrt(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:635`
+Source: `std/math.ml:599`
 
 <a id="function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032"></a>
 ### isIntValue
@@ -345,7 +345,7 @@ Checks whether a numeric value is an integer value.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:497`
+Source: `std/math.ml:502`
 
 <a id="function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864"></a>
 ### isNumber
@@ -361,7 +361,7 @@ Checks whether a value is a numeric type.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:25`
+Source: `std/math.ml:47`
 
 <a id="function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213"></a>
 ### lcm
@@ -378,7 +378,7 @@ Least common multiple.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/math.ml:319`
+Source: `std/math.ml:324`
 
 <a id="function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275"></a>
 ### lerp
@@ -396,7 +396,7 @@ Linear interpolation.
 | `t` | `dynamic` | — | Value supplied for `t`. |
 
 
-Source: `std/math.ml:691`
+Source: `std/math.ml:655`
 
 <a id="function-function-std-math-ln-function-ln-x-std-math-ml-120611688"></a>
 ### ln
@@ -412,7 +412,7 @@ Natural logarithm ln(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:544`
+Source: `std/math.ml:533`
 
 <a id="function-function-std-math-ln10-function-ln10-std-math-ml-177958864"></a>
 ### ln10
@@ -424,7 +424,7 @@ function ln10()
 Natural logarithm of 10.
 
 
-Source: `std/math.ml:491`
+Source: `std/math.ml:496`
 
 <a id="function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300"></a>
 ### ln1p
@@ -440,7 +440,7 @@ Ln1p(x) = ln(1+x), with good accuracy near 0.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:579`
+Source: `std/math.ml:543`
 
 <a id="function-function-std-math-ln2-function-ln2-std-math-ml-236134708"></a>
 ### ln2
@@ -452,7 +452,7 @@ function ln2()
 Natural logarithm of 2.
 
 
-Source: `std/math.ml:486`
+Source: `std/math.ml:491`
 
 <a id="function-function-std-math-log10-function-log10-x-std-math-ml-1652022478"></a>
 ### log10
@@ -468,7 +468,7 @@ Base-10 logarithm log10(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:592`
+Source: `std/math.ml:556`
 
 <a id="function-function-std-math-log2-function-log2-x-std-math-ml-559981656"></a>
 ### log2
@@ -484,7 +484,7 @@ Base-2 logarithm log2(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:598`
+Source: `std/math.ml:562`
 
 <a id="function-function-std-math-max-function-max-a-b-std-math-ml-1771960409"></a>
 ### max
@@ -501,7 +501,7 @@ Maximum of two values.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/math.ml:84`
+Source: `std/math.ml:106`
 
 <a id="function-function-std-math-min-function-min-a-b-std-math-ml-1964626413"></a>
 ### min
@@ -518,7 +518,7 @@ Minimum of two values.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/math.ml:74`
+Source: `std/math.ml:96`
 
 <a id="function-function-std-math-pi-function-pi-std-math-ml-108227704"></a>
 ### pi
@@ -530,7 +530,7 @@ function pi()
 Mathematical constant pi.
 
 
-Source: `std/math.ml:210`
+Source: `std/math.ml:232`
 
 <a id="function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006"></a>
 ### pow
@@ -547,7 +547,7 @@ Pow(base, exponent).
 | `exponent` | `dynamic` | — | Value supplied for `exponent`. |
 
 
-Source: `std/math.ml:605`
+Source: `std/math.ml:569`
 
 <a id="function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076"></a>
 ### powi
@@ -564,7 +564,7 @@ Integer power (exponentiation by squaring).
 | `exp` | `dynamic` | — | Value supplied for `exp`. |
 
 
-Source: `std/math.ml:260`
+Source: `std/math.ml:265`
 
 <a id="function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857"></a>
 ### radToDeg
@@ -580,7 +580,7 @@ Converts radians to degrees.
 | `rad` | `dynamic` | — | Value supplied for `rad`. |
 
 
-Source: `std/math.ml:227`
+Source: `std/math.ml:249`
 
 <a id="function-function-std-math-round-function-round-x-std-math-ml-891501820"></a>
 ### round
@@ -596,7 +596,7 @@ Rounds to the nearest integer (half away from zero).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:139`
+Source: `std/math.ml:161`
 
 <a id="function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596"></a>
 ### roundInt
@@ -612,7 +612,7 @@ Rounds a numeric value and requires an int result.
 | `x` | `dynamic` | — | Numeric value to convert. |
 
 
-Source: `std/math.ml:201`
+Source: `std/math.ml:223`
 
 <a id="function-function-std-math-sign-function-sign-x-std-math-ml-1470077816"></a>
 ### sign
@@ -628,7 +628,7 @@ Sign of a number.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:44`
+Source: `std/math.ml:66`
 
 <a id="function-function-std-math-sin-function-sin-x-std-math-ml-77784832"></a>
 ### sin
@@ -644,7 +644,7 @@ Sine (fast approximation).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:353`
+Source: `std/math.ml:358`
 
 <a id="function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824"></a>
 ### sinh
@@ -660,7 +660,7 @@ Hyperbolic sine sinh(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:659`
+Source: `std/math.ml:623`
 
 <a id="function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641"></a>
 ### smoothstep
@@ -678,7 +678,7 @@ Smoothstep interpolation (Hermite).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:699`
+Source: `std/math.ml:663`
 
 <a id="function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576"></a>
 ### sqrt
@@ -694,7 +694,7 @@ Square root (Newton iteration).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:233`
+Source: `std/math.ml:255`
 
 <a id="function-function-std-math-tan-function-tan-x-std-math-ml-1295707230"></a>
 ### tan
@@ -710,7 +710,7 @@ Tangent (sin/cos).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:410`
+Source: `std/math.ml:415`
 
 <a id="function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836"></a>
 ### tanh
@@ -726,7 +726,7 @@ Hyperbolic tangent tanh(x).
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:675`
+Source: `std/math.ml:639`
 
 <a id="function-function-std-math-tau-function-tau-std-math-ml-722341156"></a>
 ### tau
@@ -738,7 +738,7 @@ function tau()
 Mathematical constant tau (2*pi).
 
 
-Source: `std/math.ml:215`
+Source: `std/math.ml:237`
 
 <a id="function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060"></a>
 ### toIntExact
@@ -754,7 +754,7 @@ Converts a numeric value to int only when it has no fractional part. Returns a c
 | `x` | `dynamic` | — | Numeric value to convert. |
 
 
-Source: `std/math.ml:152`
+Source: `std/math.ml:174`
 
 <a id="function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096"></a>
 ### trunc
@@ -770,7 +770,7 @@ Truncates towards 0.
 | `x` | `dynamic` | — | Value supplied for `x`. |
 
 
-Source: `std/math.ml:126`
+Source: `std/math.ml:148`
 
 <a id="function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684"></a>
 ### truncInt
@@ -786,4 +786,4 @@ Truncates a numeric value toward zero and requires an int result.
 | `x` | `dynamic` | — | Numeric value to convert. |
 
 
-Source: `std/math.ml:191`
+Source: `std/math.ml:213`

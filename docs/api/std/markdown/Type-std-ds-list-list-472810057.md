@@ -251,7 +251,7 @@ Removes and returns the value at `index`
 | `index` | `dynamic` | — | Zero-based item index. |
 
 
-Source: `std/ds/list.ml:267`
+Source: `std/ds/list.ml:274`
 
 <a id="method-method-std-ds-list-list-reserve-function-reserve-mincap-std-ds-list-ml-1425645590"></a>
 ### reserve
@@ -308,7 +308,7 @@ function toArray()
 Returns a snapshot array of all elements.
 
 
-Source: `std/ds/list.ml:286`
+Source: `std/ds/list.ml:300`
 
 <a id="static_method-static-method-std-ds-list-list-withcapacity-static-function-withcapacity-mincap-std-ds-list-ml-1912842597"></a>
 ### withCapacity

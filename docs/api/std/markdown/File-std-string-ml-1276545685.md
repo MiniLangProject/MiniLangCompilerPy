@@ -10,6 +10,7 @@ Reachable from entry: **no**
 
 ## Imports
 
+- `std/ds/list.ml` as `list` → [std/ds/list.ml](File-std-ds-list-ml-2070188142.md)
 - `std/string_builder.ml` as `sb` → [std/string_builder.ml](File-std-string-builder-ml-412876577.md)
 
 ## Declarations
@@ -29,7 +30,7 @@ Checks whether s contains needle.
 | `needle` | `dynamic` | — | Value supplied for `needle`. |
 
 
-Source: `std/string.ml:301`
+Source: `std/string.ml:109`
 
 <a id="function-function-std-string-countof-function-countof-s-needle-std-string-ml-1466834176"></a>
 ### countOf
@@ -46,7 +47,7 @@ Counts non-overlapping occurrences of needle in s.
 | `needle` | `dynamic` | — | Value supplied for `needle`. |
 
 
-Source: `std/string.ml:489`
+Source: `std/string.ml:284`
 
 <a id="function-function-std-string-endswith-function-endswith-s-suffix-std-string-ml-1833247770"></a>
 ### endsWith
@@ -63,7 +64,7 @@ Checks whether s ends with suffix.
 | `suffix` | `dynamic` | — | Value supplied for `suffix`. |
 
 
-Source: `std/string.ml:264`
+Source: `std/string.ml:72`
 
 <a id="function-function-std-string-equalsignorecaseascii-function-equalsignorecaseascii-a-b-std-string-ml-2118708601"></a>
 ### equalsIgnoreCaseAscii
@@ -80,7 +81,7 @@ Compares two strings case-insensitively (ASCII).
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/string.ml:579`
+Source: `std/string.ml:374`
 
 <a id="function-function-std-string-indexof-function-indexof-s-needle-start-std-string-ml-1830793656"></a>
 ### indexOf
@@ -98,7 +99,7 @@ Finds needle in s starting from start.
 | `start` | `dynamic` | — | Value supplied for `start`. |
 
 
-Source: `std/string.ml:272`
+Source: `std/string.ml:80`
 
 <a id="function-function-std-string-isalnumascii-function-isalnumascii-ch-std-string-ml-991856061"></a>
 ### isAlnumAscii
@@ -114,7 +115,7 @@ Checks whether a character is ASCII alphanumeric.
 | `ch` | `dynamic` | — | Value supplied for `ch`. |
 
 
-Source: `std/string.ml:560`
+Source: `std/string.ml:355`
 
 <a id="function-function-std-string-isalphaascii-function-isalphaascii-ch-std-string-ml-69464141"></a>
 ### isAlphaAscii
@@ -130,7 +131,7 @@ Checks whether a character is an ASCII letter (A-Z or a-z).
 | `ch` | `dynamic` | — | Value supplied for `ch`. |
 
 
-Source: `std/string.ml:548`
+Source: `std/string.ml:343`
 
 <a id="function-function-std-string-isblank-function-isblank-s-std-string-ml-1002423985"></a>
 ### isBlank
@@ -146,7 +147,7 @@ Checks whether a string is blank (empty after trim).
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:329`
+Source: `std/string.ml:137`
 
 <a id="function-function-std-string-isdigitascii-function-isdigitascii-ch-std-string-ml-1642095953"></a>
 ### isDigitAscii
@@ -162,7 +163,7 @@ Checks whether a character is an ASCII digit.
 | `ch` | `dynamic` | — | Value supplied for `ch`. |
 
 
-Source: `std/string.ml:536`
+Source: `std/string.ml:331`
 
 <a id="function-function-std-string-isempty-function-isempty-s-std-string-ml-464897055"></a>
 ### isEmpty
@@ -178,7 +179,7 @@ Checks whether a string is empty.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:232`
+Source: `std/string.ml:40`
 
 <a id="function-function-std-string-join-function-join-parts-sep-std-string-ml-1383969706"></a>
 ### join
@@ -195,7 +196,7 @@ Joins string parts with a separator.
 | `sep` | `dynamic` | — | Value supplied for `sep`. |
 
 
-Source: `std/string.ml:388`
+Source: `std/string.ml:183`
 
 <a id="function-function-std-string-lastindexof-function-lastindexof-s-needle-std-string-ml-183528886"></a>
 ### lastIndexOf
@@ -212,7 +213,7 @@ Finds the last occurrence of needle in s.
 | `needle` | `dynamic` | — | Value supplied for `needle`. |
 
 
-Source: `std/string.ml:288`
+Source: `std/string.ml:96`
 
 <a id="function-function-std-string-ltrim-function-ltrim-s-std-string-ml-1358329729"></a>
 ### ltrim
@@ -228,7 +229,7 @@ Trims ASCII whitespace on the left.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:311`
+Source: `std/string.ml:119`
 
 <a id="function-function-std-string-removeall-function-removeall-s-needle-std-string-ml-1652900222"></a>
 ### removeAll
@@ -245,7 +246,7 @@ Removes all occurrences of needle from s.
 | `needle` | `dynamic` | — | Value supplied for `needle`. |
 
 
-Source: `std/string.ml:520`
+Source: `std/string.ml:315`
 
 <a id="function-function-std-string-repeat-function-repeat-s-count-std-string-ml-194349680"></a>
 ### repeat
@@ -262,7 +263,7 @@ Repeats a string count times.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/string.ml:242`
+Source: `std/string.ml:50`
 
 <a id="function-function-std-string-replaceall-function-replaceall-s-needle-repl-std-string-ml-840926615"></a>
 ### replaceAll
@@ -280,7 +281,7 @@ Replaces all occurrences of needle with repl.
 | `repl` | `dynamic` | — | Value supplied for `repl`. |
 
 
-Source: `std/string.ml:396`
+Source: `std/string.ml:191`
 
 <a id="function-function-std-string-replacefirst-function-replacefirst-s-needle-repl-std-string-ml-1457517015"></a>
 ### replaceFirst
@@ -298,7 +299,7 @@ Replaces the first occurrence of needle with repl.
 | `repl` | `dynamic` | — | Value supplied for `repl`. |
 
 
-Source: `std/string.ml:446`
+Source: `std/string.ml:241`
 
 <a id="function-function-std-string-reverse-function-reverse-s-std-string-ml-478686905"></a>
 ### reverse
@@ -314,7 +315,7 @@ Reverses a string.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:526`
+Source: `std/string.ml:321`
 
 <a id="function-function-std-string-rtrim-function-rtrim-s-std-string-ml-2074447113"></a>
 ### rtrim
@@ -330,7 +331,7 @@ Trims ASCII whitespace on the right.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:317`
+Source: `std/string.ml:125`
 
 <a id="function-function-std-string-split-function-split-s-sep-std-string-ml-439300297"></a>
 ### split
@@ -347,7 +348,7 @@ Splits a string by a separator.
 | `sep` | `dynamic` | — | Value supplied for `sep`. |
 
 
-Source: `std/string.ml:336`
+Source: `std/string.ml:144`
 
 <a id="function-function-std-string-startswith-function-startswith-s-prefix-std-string-ml-864273261"></a>
 ### startsWith
@@ -364,7 +365,7 @@ Checks whether s starts with prefix.
 | `prefix` | `dynamic` | — | Value supplied for `prefix`. |
 
 
-Source: `std/string.ml:257`
+Source: `std/string.ml:65`
 
 <a id="function-function-std-string-substr-function-substr-s-start-length-std-string-ml-1364948665"></a>
 ### substr
@@ -382,7 +383,7 @@ Returns a substring of s.
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/string.ml:250`
+Source: `std/string.ml:58`
 
 <a id="function-function-std-string-tolowerascii-function-tolowerascii-s-std-string-ml-2007062345"></a>
 ### toLowerAscii
@@ -398,7 +399,7 @@ Converts a string to lowercase (ASCII).
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:566`
+Source: `std/string.ml:361`
 
 <a id="function-function-std-string-toupperascii-function-toupperascii-s-std-string-ml-994049617"></a>
 ### toUpperAscii
@@ -414,7 +415,7 @@ Converts a string to uppercase (ASCII).
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:572`
+Source: `std/string.ml:367`
 
 <a id="function-function-std-string-trim-function-trim-s-std-string-ml-2004823441"></a>
 ### trim
@@ -430,4 +431,4 @@ Trims ASCII whitespace on both sides.
 | `s` | `dynamic` | — | Value supplied for `s`. |
 
 
-Source: `std/string.ml:323`
+Source: `std/string.ml:131`

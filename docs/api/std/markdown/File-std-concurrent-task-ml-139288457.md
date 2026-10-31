@@ -12,6 +12,7 @@ Reachable from entry: **no**
 
 - `std/concurrent/cancellation.ml` as `cancellation` → [std/concurrent/cancellation.ml](File-std-concurrent-cancellation-ml-1392694543.md)
 - `std/concurrent/thread_pool.ml` as `threadPool` → [std/concurrent/thread_pool.ml](File-std-concurrent-thread-pool-ml-72857761.md)
+- `std/threading.ml` as `threading` → [std/threading.ml](File-std-threading-ml-508437988.md)
 - `std/time.ml` as `time` → [std/time.ml](File-std-time-ml-975894601.md)
 
 ## Declarations
@@ -34,7 +35,7 @@ Schedule a conventional one-argument callback on an existing pool.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/concurrent/task.ml:117`
+Source: `std/concurrent/task.ml:118`
 
 <a id="function-function-std-concurrent-task-runcancellable-function-runcancellable-pool-callback-data-std-concurrent-task-ml-86407698"></a>
 ### runCancellable
@@ -52,7 +53,7 @@ Schedule callback(data, token) and return a future which can request cancel.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/concurrent/task.ml:127`
+Source: `std/concurrent/task.ml:128`
 
 <a id="constant-constant-std-concurrent-task-task-error-const-task-error-1651-std-concurrent-task-ml-1115029395"></a>
 ### TASK_ERROR
@@ -64,7 +65,7 @@ const TASK_ERROR = 1651
 Track the task error value used by this standard-library module.
 
 
-Source: `std/concurrent/task.ml:15`
+Source: `std/concurrent/task.ml:16`
 
 <a id="function-function-std-concurrent-task-whenall-function-whenall-futures-std-concurrent-task-ml-504238549"></a>
 ### whenAll
@@ -80,7 +81,7 @@ Wait for every future in input order and return the equally ordered results.
 | `futures` | `dynamic` | — | Value supplied for `futures`. |
 
 
-Source: `std/concurrent/task.ml:140`
+Source: `std/concurrent/task.ml:141`
 
 <a id="function-function-std-concurrent-task-whenany-function-whenany-futures-std-concurrent-task-ml-1373291439"></a>
 ### whenAny
@@ -96,7 +97,7 @@ Provide the when any operation for this standard-library module.
 | `futures` | `dynamic` | — | Value supplied for `futures`. |
 
 
-Source: `std/concurrent/task.ml:177`
+Source: `std/concurrent/task.ml:197`
 
 <a id="function-function-std-concurrent-task-whenanyfor-function-whenanyfor-futures-milliseconds-std-concurrent-task-ml-1029684509"></a>
 ### whenAnyFor
@@ -113,4 +114,4 @@ Return the first completed future index, or -1 after the timeout. A negative tim
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/concurrent/task.ml:157`
+Source: `std/concurrent/task.ml:158`

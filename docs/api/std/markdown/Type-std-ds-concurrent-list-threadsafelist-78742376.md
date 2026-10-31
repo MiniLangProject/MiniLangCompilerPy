@@ -30,7 +30,7 @@ Append one managed value under the list lock.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/concurrent_list.ml:129`
+Source: `std/ds/concurrent_list.ml:123`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-addall-function-addall-values-std-ds-concurrent-list-ml-1924274557"></a>
 ### addAll
@@ -46,7 +46,7 @@ Append all values atomically with respect to other list operations.
 | `values` | `dynamic` | — | Values to process. |
 
 
-Source: `std/ds/concurrent_list.ml:150`
+Source: `std/ds/concurrent_list.ml:144`
 
 <a id="field-field-std-ds-concurrent-list-threadsafelist-buf-buf-std-ds-concurrent-list-ml-183394141"></a>
 ### buf
@@ -82,7 +82,7 @@ function clear()
 Drop references to all values while retaining the backing capacity.
 
 
-Source: `std/ds/concurrent_list.ml:281`
+Source: `std/ds/concurrent_list.ml:272`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-close-function-close-std-ds-concurrent-list-ml-1917022135"></a>
 ### close
@@ -94,7 +94,7 @@ function close()
 Clear storage and release the native lock after all users have stopped.
 
 
-Source: `std/ds/concurrent_list.ml:315`
+Source: `std/ds/concurrent_list.ml:302`
 
 <a id="field-field-std-ds-concurrent-list-threadsafelist-closed-closed-std-ds-concurrent-list-ml-1048168757"></a>
 ### closed
@@ -118,7 +118,7 @@ function count()
 Alias for len().
 
 
-Source: `std/ds/concurrent_list.ml:102`
+Source: `std/ds/concurrent_list.ml:96`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-first-function-first-std-ds-concurrent-list-ml-1203419835"></a>
 ### first
@@ -130,7 +130,7 @@ function first()
 Return the first value, or void when empty.
 
 
-Source: `std/ds/concurrent_list.ml:198`
+Source: `std/ds/concurrent_list.ml:189`
 
 <a id="static_method-static-method-std-ds-concurrent-list-threadsafelist-fromarray-static-function-fromarray-values-std-ds-concurrent-list-ml-1166086536"></a>
 ### fromArray
@@ -162,7 +162,7 @@ Return the value at index, or void for invalid/closed access.
 | `index` | `dynamic` | — | Zero-based item index. |
 
 
-Source: `std/ds/concurrent_list.ml:170`
+Source: `std/ds/concurrent_list.ml:161`
 
 <a id="field-field-std-ds-concurrent-list-threadsafelist-guard-guard-std-ds-concurrent-list-ml-1295046217"></a>
 ### guard
@@ -191,7 +191,7 @@ Insert before index while preserving the order of following values.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/concurrent_list.ml:217`
+Source: `std/ds/concurrent_list.ml:208`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-isclosed-function-isclosed-std-ds-concurrent-list-ml-1449244539"></a>
 ### isClosed
@@ -203,7 +203,7 @@ function isClosed()
 Report whether the collection has released its native lock.
 
 
-Source: `std/ds/concurrent_list.ml:112`
+Source: `std/ds/concurrent_list.ml:106`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-isempty-function-isempty-std-ds-concurrent-list-ml-964418993"></a>
 ### isEmpty
@@ -215,7 +215,7 @@ function isEmpty()
 Report whether the synchronized item count is zero.
 
 
-Source: `std/ds/concurrent_list.ml:107`
+Source: `std/ds/concurrent_list.ml:101`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-last-function-last-std-ds-concurrent-list-ml-1508902143"></a>
 ### last
@@ -227,7 +227,7 @@ function last()
 Return the last value, or void when empty.
 
 
-Source: `std/ds/concurrent_list.ml:203`
+Source: `std/ds/concurrent_list.ml:194`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-len-function-len-std-ds-concurrent-list-ml-2066822621"></a>
 ### len
@@ -239,7 +239,7 @@ function len()
 Return a synchronized snapshot of the current item count.
 
 
-Source: `std/ds/concurrent_list.ml:93`
+Source: `std/ds/concurrent_list.ml:87`
 
 <a id="static_method-static-method-std-ds-concurrent-list-threadsafelist-new-static-function-new-std-ds-concurrent-list-ml-1011596306"></a>
 ### new
@@ -263,7 +263,7 @@ function pop()
 Remove and return the last value, or void when empty.
 
 
-Source: `std/ds/concurrent_list.ml:258`
+Source: `std/ds/concurrent_list.ml:249`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-popor-function-popor-fallback-std-ds-concurrent-list-ml-960393249"></a>
 ### popOr
@@ -279,7 +279,7 @@ Pop the last value or return fallback when no value is available.
 | `fallback` | `dynamic` | — | Value supplied for `fallback`. |
 
 
-Source: `std/ds/concurrent_list.ml:274`
+Source: `std/ds/concurrent_list.ml:265`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-push-function-push-value-std-ds-concurrent-list-ml-57487206"></a>
 ### push
@@ -295,7 +295,7 @@ Stack-style alias for add().
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/concurrent_list.ml:144`
+Source: `std/ds/concurrent_list.ml:138`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-removeat-function-removeat-index-std-ds-concurrent-list-ml-149304045"></a>
 ### removeAt
@@ -311,7 +311,7 @@ Remove and return one indexed value, shifting the tail left.
 | `index` | `dynamic` | — | Zero-based item index. |
 
 
-Source: `std/ds/concurrent_list.ml:238`
+Source: `std/ds/concurrent_list.ml:229`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-reserve-function-reserve-minimumcapacity-std-ds-concurrent-list-ml-1098250973"></a>
 ### reserve
@@ -327,7 +327,7 @@ Preallocate space without changing the logical length.
 | `minimumCapacity` | `dynamic` | — | Value supplied for `minimumCapacity`. |
 
 
-Source: `std/ds/concurrent_list.ml:118`
+Source: `std/ds/concurrent_list.ml:112`
 
 <a id="method-method-std-ds-concurrent-list-threadsafelist-set-function-set-index-value-std-ds-concurrent-list-ml-564599672"></a>
 ### set
@@ -344,7 +344,7 @@ Replace an existing slot and report whether the write succeeded.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/ds/concurrent_list.ml:185`
+Source: `std/ds/concurrent_list.ml:176`
 
 <a id="field-field-std-ds-concurrent-list-threadsafelist-size-size-std-ds-concurrent-list-ml-915365791"></a>
 ### size
@@ -368,7 +368,7 @@ function toArray()
 Copy a consistent snapshot into an ordinary managed array.
 
 
-Source: `std/ds/concurrent_list.ml:298`
+Source: `std/ds/concurrent_list.ml:289`
 
 <a id="static_method-static-method-std-ds-concurrent-list-threadsafelist-withcapacity-static-function-withcapacity-minimumcapacity-std-ds-concurrent-list-ml-2053089166"></a>
 ### withCapacity
