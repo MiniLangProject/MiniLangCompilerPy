@@ -5,6 +5,9 @@ compile-time `MINILANG_VERSION` constant.
 
 ## Object-oriented language support
 
+The [classes and interfaces guide](docs/OOP.md) documents the complete syntax
+and constructor and access rules.
+
 - `class` adds single inheritance with `extends`, virtual instance methods,
   mandatory `override`, and `super.method(...)`. Overrides must preserve the
   inherited parameter and return types and visibility. `final` methods and
