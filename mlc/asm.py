@@ -13,12 +13,13 @@ Design goals
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cache
 from typing import Dict, List, Optional, Tuple
 
 from .tools import u32, u64
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GPR:
     """A parsed general-purpose register."""
     id: int  # 0..15 (rax..r15)
@@ -26,7 +27,7 @@ class GPR:
     force_rex: bool  # needed for spl/bpl/sil/dil
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TraceEntry:
     """One emitted instruction/span for the optional .asm listing."""
     start: int
@@ -161,54 +162,19 @@ class Asm:
         self._listing_show_addr = bool(show_addr)
         self._listing_show_bytes = bool(show_bytes)
         self._listing_show_text = bool(show_text)
+        # Keep ordinary emission on Python's native attribute lookup. Only a
+        # listing-enabled instance needs interception; its state and GC spill
+        # callbacks stay on the same object when the implementation changes.
+        if '_untraced_type' not in type(self).__dict__:
+            self.__class__ = _listing_type(type(self))
         self._trace_enabled = True
 
     def disable_listing(self) -> None:
         """Disable the optional instruction listing/tracing.
         """
         self._trace_enabled = False
-
-    def __getattribute__(self, name: str):
-        """Internal encoder/helper used by instruction emitters.
-
-        Args:
-            name: Label name.
-        """
-        # Wrap public instruction helpers so we can reconstruct a readable
-        # listing (addr + bytes + pseudo-asm) for debugging.
-        attr = object.__getattribute__(self, name)
-
-        # Fast path: no tracing
-        try:
-            enabled = object.__getattribute__(self, '_trace_enabled')
-        except Exception:
-            enabled = False
-        if not enabled:
-            return attr
-
-        # Never wrap internals / low level emitters / listing helpers
-        if name.startswith('_') or name in ('emit', 'emit8', 'emit32', 'emit64', 'pos', 'labels', 'patches', 'buf',
-                                            'mark', 'finalize', 'enable_listing', 'disable_listing', 'write_listing',):
-            return attr
-
-        if not callable(attr):
-            return attr
-
-        def wrapped(*args, **kwargs):
-            trace = object.__getattribute__(self, '_trace')
-            before_n = len(trace)
-            start = object.__getattribute__(self, 'pos')
-            res = attr(*args, **kwargs)
-            end = object.__getattribute__(self, 'pos')
-
-            # Skip outer wrappers when nested calls already produced entries.
-            if end > start and len(trace) == before_n:
-                fmt = object.__getattribute__(self, '_format_call')
-                text, refs = fmt(name, args, kwargs)
-                trace.append(TraceEntry(start, end, text, refs))
-            return res
-
-        return wrapped
+        if '_untraced_type' in type(self).__dict__:
+            self.__class__ = self._untraced_type
 
     # ---------------------------------------------------------------------
     # basic output
@@ -476,6 +442,41 @@ class Asm:
         if scale not in m:
             raise ValueError(f"Invalid SIB scale: {scale} (must be 1,2,4,8)")
         return m[scale]
+
+    def _emit_mem_instruction(self, opcode: bytes, reg: int, base: int, disp: int = 0,
+                              *, w: int = 0, index_id: Optional[int] = None,
+                              scale: int = 1, force: bool = False,
+                              prefix: bytes = b"", immediate: bytes = b"") -> None:
+        """Append one memory instruction without operand tuples or tiny buffers.
+
+        Validate indexed addressing before changing the stream. The reference
+        encoder remains available for tests and callers needing standalone bytes.
+        """
+        base_lo = base & 7
+        sib = -1
+        rex_x = 0
+        if index_id is not None:
+            if (index_id & 7) == 4:
+                raise ValueError("SIB index cannot be rsp/r12")
+            sib = (self._scale_bits(scale) << 6) | ((index_id & 7) << 3) | base_lo
+            rex_x = (index_id >> 3) & 1
+        elif base_lo == 4:
+            sib = 0x24
+        mod = 0 if disp == 0 and base_lo != 5 else (1 if -128 <= disp <= 127 else 2)
+        rex = 0x40 | ((w & 1) << 3) | (((reg >> 3) & 1) << 2) | (rex_x << 1) | ((base >> 3) & 1)
+        buf = self.buf
+        buf.extend(prefix)
+        if rex != 0x40 or force:
+            buf.append(rex)
+        buf.extend(opcode)
+        buf.append((mod << 6) | ((reg & 7) << 3) | (4 if sib >= 0 else base_lo))
+        if sib >= 0:
+            buf.append(sib)
+        if mod == 1:
+            buf.append(disp & 255)
+        elif mod == 2:
+            buf.extend(u32(disp))
+        buf.extend(immediate)
 
     def _encode_mem(self, reg_field: int, base_id: int, disp: int = 0, *, index_id: Optional[int] = None,
                     scale: int = 1, ) -> Tuple[int, int, bytes]:
@@ -755,8 +756,7 @@ class Asm:
             except Exception:
                 pass
         b = self.gpr(base)
-        rex_x, rex_b, tail = self._encode_mem(2, b.id, int(disp))
-        self.emit(self._rex(x=rex_x, b=rex_b) + b"\xFF" + tail)
+        self._emit_mem_instruction(b'\xff', 2, b.id, int(disp), w=0)
 
     def call_rip_qword(self, label: str) -> None:
         """Emit `call qword [rip+label]`."""
@@ -1282,9 +1282,7 @@ class Asm:
         """
         d = self._rid_any(dst)
         b = self._rid_any(base)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x8B" + tail)
+        self._emit_mem_instruction(b'\x8b', d, b, disp, w=1)
 
     def mov_membase_disp_r64(self, base: str, disp: int, src: str) -> None:
         """Emit `MOV` instruction helper.
@@ -1296,9 +1294,7 @@ class Asm:
         """
         s = self._rid_any(src)
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x89" + tail)
+        self._emit_mem_instruction(b'\x89', s, b, disp, w=1)
 
     def mov_r32_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.
@@ -1310,9 +1306,7 @@ class Asm:
         """
         d = self._rid_any(dst)
         b = self._rid_any(base)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x8B" + tail)
+        self._emit_mem_instruction(b'\x8b', d, b, disp, w=0)
 
     def mov_membase_disp_r32(self, base: str, disp: int, src: str) -> None:
         """Emit `MOV` instruction helper.
@@ -1324,25 +1318,19 @@ class Asm:
         """
         s = self._rid_any(src)
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x89" + tail)
+        self._emit_mem_instruction(b'\x89', s, b, disp, w=0)
 
     def lock_cmpxchg_membase_disp_r32(self, base: str, disp: int, src: str) -> None:
         """Atomically compare EAX with dword [base+disp] and exchange from src."""
         s = self._rid_any(src)
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(b"\xF0" + self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB1" + tail)
+        self._emit_mem_instruction(b'\x0f\xb1', s, b, disp, w=0, prefix=b'\xf0')
 
     def lock_cmpxchg_membase_disp_r64(self, base: str, disp: int, src: str) -> None:
         """Atomically compare RAX with qword [base+disp] and exchange from src."""
         s = self._rid_any(src)
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(b"\xF0" + self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB1" + tail)
+        self._emit_mem_instruction(b'\x0f\xb1', s, b, disp, w=1, prefix=b'\xf0')
 
     def mov_r8_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.
@@ -1356,10 +1344,8 @@ class Asm:
         if d.size != 8:
             raise ValueError("mov_r8_membase_disp requires an 8-bit dst register")
         b = self._rid_any(base)
-        rex_r = 1 if d.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
         force = d.force_rex
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b, force=force) + b"\x8A" + tail)
+        self._emit_mem_instruction(b'\x8a', d.id, b, disp, w=0, force=force)
 
     def mov_membase_disp_r8(self, base: str, disp: int, src: str) -> None:
         """Emit `MOV` instruction helper.
@@ -1373,10 +1359,8 @@ class Asm:
         if s.size != 8:
             raise ValueError("mov_membase_disp_r8 requires an 8-bit src register")
         b = self._rid_any(base)
-        rex_r = 1 if s.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s.id, b, disp)
         force = s.force_rex
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b, force=force) + b"\x88" + tail)
+        self._emit_mem_instruction(b'\x88', s.id, b, disp, w=0, force=force)
 
     def mov_membase_disp_imm32(self, base: str, disp: int, imm: int, *, qword: bool = False) -> None:
         """
@@ -1385,8 +1369,7 @@ class Asm:
         """
         b = self._rid_any(base)
         rex_w = 1 if qword else 0
-        rex_x, rex_b, tail = self._encode_mem(0, b, disp)  # /0
-        self.emit(self._rex(w=rex_w, x=rex_x, b=rex_b) + b"\xC7" + tail + u32(imm))
+        self._emit_mem_instruction(b'\xc7', 0, b, disp, w=rex_w, immediate=u32(imm))
 
     def mov_membase_disp_imm8(self, base: str, disp: int, imm: int) -> None:
         """Emit `MOV` instruction helper.
@@ -1398,8 +1381,7 @@ class Asm:
         """
         # mov byte [base+disp], imm8
         b = self._rid_any(base)
-        rex_x, rex_b, tail = self._encode_mem(0, b, disp)  # /0
-        self.emit(self._rex(w=0, x=rex_x, b=rex_b) + b"\xC6" + tail + bytes([imm & 0xFF]))
+        self._emit_mem_instruction(b'\xc6', 0, b, disp, w=0, immediate=bytes([imm & 255]))
 
     def mov_r64_mem_bis(self, dst: str, base: str, index: str, scale: int = 8, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.
@@ -1414,9 +1396,7 @@ class Asm:
         d = self._rid_any(dst)
         b = self._rid_any(base)
         i = self._rid_any(index)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp, index_id=i, scale=scale)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x8B" + tail)
+        self._emit_mem_instruction(b'\x8b', d, b, disp, w=1, index_id=i, scale=scale)
 
     def mov_mem_bis_r64(self, base: str, index: str, scale: int, disp: int, src: str) -> None:
         """Emit `MOV` instruction helper.
@@ -1431,9 +1411,7 @@ class Asm:
         s = self._rid_any(src)
         b = self._rid_any(base)
         i = self._rid_any(index)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp, index_id=i, scale=scale)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x89" + tail)
+        self._emit_mem_instruction(b'\x89', s, b, disp, w=1, index_id=i, scale=scale)
 
     def mov_r32_mem_bis(self, dst: str, base: str, index: str, scale: int = 8, disp: int = 0) -> None:
         """Emit `MOV` instruction helper.
@@ -1448,9 +1426,7 @@ class Asm:
         d = self._rid_any(dst)
         b = self._rid_any(base)
         i = self._rid_any(index)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp, index_id=i, scale=scale)
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x8B" + tail)
+        self._emit_mem_instruction(b'\x8b', d, b, disp, w=0, index_id=i, scale=scale)
 
     def mov_mem_bis_r32(self, base: str, index: str, scale: int, disp: int, src: str) -> None:
         """Emit `MOV` instruction helper.
@@ -1465,9 +1441,7 @@ class Asm:
         s = self._rid_any(src)
         b = self._rid_any(base)
         i = self._rid_any(index)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp, index_id=i, scale=scale)
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x89" + tail)
+        self._emit_mem_instruction(b'\x89', s, b, disp, w=0, index_id=i, scale=scale)
 
     def lea_r64_membase_disp(self, dst: str, base: str, disp: int = 0) -> None:
         """Emit `LEA` instruction helper.
@@ -1479,9 +1453,7 @@ class Asm:
         """
         d = self._rid_any(dst)
         b = self._rid_any(base)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x8D" + tail)
+        self._emit_mem_instruction(b'\x8d', d, b, disp, w=1)
 
     def lea_r64_mem_bis(self, dst: str, base: str, index: str, scale: int = 8, disp: int = 0) -> None:
         """Emit `LEA` instruction helper.
@@ -1496,9 +1468,7 @@ class Asm:
         d = self._rid_any(dst)
         b = self._rid_any(base)
         i = self._rid_any(index)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp, index_id=i, scale=scale)
-        self.emit(self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x8D" + tail)
+        self._emit_mem_instruction(b'\x8d', d, b, disp, w=1, index_id=i, scale=scale)
 
     # ---------------------------------------------------------------------
     # Generic arithmetic / logic (regs + imm, 8/32/64)
@@ -2155,10 +2125,8 @@ class Asm:
         if rr.size != 8:
             raise ValueError("cmp_r8_membase_disp requires an 8-bit reg")
         b = self._rid_any(base)
-        rex_r = 1 if rr.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(rr.id, b, disp)
         force = rr.force_rex
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b, force=force) + b"\x3A" + tail)
+        self._emit_mem_instruction(b':', rr.id, b, disp, w=0, force=force)
 
     def cmp_membase_disp_imm8(self, base: str, disp: int, imm: int) -> None:
         """Emit `CMP` instruction helper.
@@ -2170,8 +2138,7 @@ class Asm:
         """
         # cmp byte [base+disp], imm8  => 80 /7 imm8
         b = self._rid_any(base)
-        rex_x, rex_b, tail = self._encode_mem(7, b, disp)  # /7
-        self.emit(self._rex(w=0, x=rex_x, b=rex_b) + b"\x80" + tail + bytes([imm & 0xFF]))
+        self._emit_mem_instruction(b'\x80', 7, b, disp, w=0, immediate=bytes([imm & 255]))
 
     def test_r8_r8(self, a8: str, b8: str) -> None:
         """Emit `TEST` instruction helper.
@@ -2238,9 +2205,7 @@ class Asm:
         if d.size != 32:
             raise ValueError("movzx_r32_membase_disp requires 32-bit dst")
         b = self._rid_any(base)
-        rex_r = 1 if d.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
-        self.emit(self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\xB6" + tail)
+        self._emit_mem_instruction(b'\x0f\xb6', d.id, b, disp, w=0)
 
     def bsf_r32_r32(self, dst32: str, src32: str) -> None:
         """Emit `BSF` instruction helper.
@@ -2318,9 +2283,7 @@ class Asm:
         if d.size != 64:
             raise ValueError("crc32_r64_membase_disp requires a 64-bit destination")
         b = self._rid_any(base)
-        rex_r = 1 if d.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
-        self.emit(b"\xF2" + self._rex(w=1, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x38\xF1" + tail)
+        self._emit_mem_instruction(b'\x0f8\xf1', d.id, b, disp, w=1, prefix=b'\xf2')
 
     def crc32_r32_membase_disp8(self, dst32: str, base: str, disp: int = 0) -> None:
         """Emit SSE4.2 ``CRC32 r32, byte [base+disp]``."""
@@ -2328,9 +2291,7 @@ class Asm:
         if d.size != 32:
             raise ValueError("crc32_r32_membase_disp8 requires a 32-bit destination")
         b = self._rid_any(base)
-        rex_r = 1 if d.id >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d.id, b, disp)
-        self.emit(b"\xF2" + self._rex(w=0, r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x38\xF0" + tail)
+        self._emit_mem_instruction(b'\x0f8\xf0', d.id, b, disp, w=0, prefix=b'\xf2')
 
     # ---------------------------------------------------------------------
     # inc/dec/neg, mul/div
@@ -2384,8 +2345,7 @@ class Asm:
             disp: Displacement/offset in bytes.
         """
         b = self._rid_any(base)
-        rex_x, rex_b, tail = self._encode_mem(0, b, disp)  # /0
-        self.emit(self._rex(w=1, x=rex_x, b=rex_b) + b"\xFF" + tail)
+        self._emit_mem_instruction(b'\xff', 0, b, disp, w=1)
 
     def dec_membase_disp_qword(self, base: str, disp: int) -> None:
         """Emit `DEC` instruction helper.
@@ -2395,8 +2355,7 @@ class Asm:
             disp: Displacement/offset in bytes.
         """
         b = self._rid_any(base)
-        rex_x, rex_b, tail = self._encode_mem(1, b, disp)  # /1
-        self.emit(self._rex(w=1, x=rex_x, b=rex_b) + b"\xFF" + tail)
+        self._emit_mem_instruction(b'\xff', 1, b, disp, w=1)
 
     def neg_r64(self, reg: str) -> None:
         """Emit `NEG` instruction helper.
@@ -2546,9 +2505,7 @@ class Asm:
         """
         d = self.XMM[dst]
         b = self._rid_any(base)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
-        self.emit(b"\xF2" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x10" + tail)
+        self._emit_mem_instruction(b'\x0f\x10', d, b, disp, w=0, prefix=b'\xf2')
 
     def movsd_membase_disp_xmm(self, base: str, disp: int, src: str) -> None:
         """Emit `MOVSD` instruction helper.
@@ -2560,9 +2517,7 @@ class Asm:
         """
         s = self.XMM[src]
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(b"\xF2" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x11" + tail)
+        self._emit_mem_instruction(b'\x0f\x11', s, b, disp, w=0, prefix=b'\xf2')
 
     def addsd_xmm_xmm(self, dst: str, src: str) -> None:
         """Emit `ADDSD` instruction helper.
@@ -2761,9 +2716,7 @@ class Asm:
         """
         d = self.XMM[dst]
         b = self._rid_any(base)
-        rex_r = 1 if d >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(d, b, disp)
-        self.emit(b"\xF3" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x6F" + tail)
+        self._emit_mem_instruction(b'\x0fo', d, b, disp, w=0, prefix=b'\xf3')
 
     def movdqu_membase_disp_xmm(self, base: str, disp: int, src: str) -> None:
         """Emit `MOVDQU [base+disp], xmm`.
@@ -2775,9 +2728,7 @@ class Asm:
         """
         s = self.XMM[src]
         b = self._rid_any(base)
-        rex_r = 1 if s >= 8 else 0
-        rex_x, rex_b, tail = self._encode_mem(s, b, disp)
-        self.emit(b"\xF3" + self._rex(r=rex_r, x=rex_x, b=rex_b) + b"\x0F\x7F" + tail)
+        self._emit_mem_instruction(b'\x0f\x7f', s, b, disp, w=0, prefix=b'\xf3')
 
     def pxor_xmm_xmm(self, dst: str, src: str) -> None:
         """Emit `PXOR` instruction helper.
@@ -3422,3 +3373,55 @@ class Asm:
         """Emit `XOR` instruction helper.
         """
         self.xor_r32_r32("eax", "eax")
+
+
+class _ListingMixin:
+    """Intercept instruction helpers only while a listing is requested."""
+
+    __slots__ = ()
+
+    def __getattribute__(self, name: str):
+        """Record public instruction spans while preserving nested-call traces."""
+        # Wrap public instruction helpers so we can reconstruct a readable
+        # listing (addr + bytes + pseudo-asm) for debugging.
+        attr = object.__getattribute__(self, name)
+
+        # Fast path: no tracing
+        try:
+            enabled = object.__getattribute__(self, '_trace_enabled')
+        except Exception:
+            enabled = False
+        if not enabled:
+            return attr
+
+        # Never wrap internals / low level emitters / listing helpers
+        if name.startswith('_') or name in ('emit', 'emit8', 'emit32', 'emit64', 'pos', 'labels', 'patches', 'buf',
+                                            'mark', 'finalize', 'enable_listing', 'disable_listing', 'write_listing',):
+            return attr
+
+        if not callable(attr):
+            return attr
+
+        def wrapped(*args, **kwargs):
+            trace = object.__getattribute__(self, '_trace')
+            before_n = len(trace)
+            start = object.__getattribute__(self, 'pos')
+            res = attr(*args, **kwargs)
+            end = object.__getattribute__(self, 'pos')
+
+            # Skip outer wrappers when nested calls already produced entries.
+            if end > start and len(trace) == before_n:
+                fmt = object.__getattribute__(self, '_format_call')
+                text, refs = fmt(name, args, kwargs)
+                trace.append(TraceEntry(start, end, text, refs))
+            return res
+
+        return wrapped
+
+
+@cache
+def _listing_type(base: type) -> type:
+    """Preserve subclasses and instance hooks without taxing normal emission."""
+    return type('_Listing' + base.__name__, (base,),
+                {'__slots__': (), '_untraced_type': base,
+                 '__getattribute__': _ListingMixin.__getattribute__})

@@ -183,6 +183,8 @@ struct StringBuilder
     if this.lenBytes == len(this.buf) then
       return decode(this.buf)
     end if
+    // The native compiler fuses this pair into one checked string allocation;
+    // the mutable backing buffer remains independent of the returned string.
     return decode(slice(this.buf, 0, this.lenBytes))
   end function
 end struct

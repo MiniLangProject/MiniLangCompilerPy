@@ -2916,13 +2916,22 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.Assign):
-            for declaration, _binding, _fields, offsets in getattr(self, '_scalar_structs', []):
+            for declaration, _binding, _fields, offsets, contracts in getattr(self, '_scalar_structs', []):
                 if s is declaration:
                     # Publish the ordinary binding as void; only its field slots
                     # carry values. All slots are already in the precise root frame.
                     a.mov_rax_imm64(enc_void())
                     self.emit_store_var(s.name, s)
-                    for arg, offset in zip(s.expr.args, offsets):
+                    for index, (arg, offset) in enumerate(zip(s.expr.args, offsets)):
+                        # Removing the object must not remove its constructor's
+                        # field contracts, their order, or their source position.
+                        if index < len(contracts) and contracts[index][0]:
+                            field_ty, optional = contracts[index][:2]
+                            guarded = ml.TypeGuard(arg, str(field_ty), bool(optional))
+                            for key in ('_pos', '_filename'):
+                                if hasattr(arg, key):
+                                    setattr(guarded, key, getattr(arg, key))
+                            arg = guarded
                         self.emit_expr(arg)
                         a.mov_rsp_disp32_rax(offset)
                     return

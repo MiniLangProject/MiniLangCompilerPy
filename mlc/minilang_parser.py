@@ -80,7 +80,7 @@ def format_error(source: str, filename: str, pos: int, message: str, kind: str) 
 # Tokenizer
 # ============================================================
 
-@dataclass
+@dataclass(slots=True)
 class Token:
     """A single token produced by the tokenizer.
 
@@ -89,6 +89,8 @@ class Token:
         value: Raw token text.
         pos: Absolute character offset in the source.
     """
+    # Tokens have a fixed schema; AST nodes still permit dynamic pass metadata.
+    # Slots avoid a per-token dictionary without changing cache serialization.
     kind: str
     value: str
     pos: int
@@ -3529,7 +3531,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.3.2",
+    "MINILANG_VERSION": "1.3.3",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

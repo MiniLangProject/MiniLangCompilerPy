@@ -3227,7 +3227,15 @@ Returns:
         a.ret()
 
     def emit_slice_function(self) -> None:
-        """Emit builtin fn_slice(bytes, off, len) -> bytes.
+        """Emit the copying bytes slice builtin."""
+        self._emit_slice_function(False)
+
+    def emit_decode_slice_function(self) -> None:
+        """Fuse decode(slice(...)), preserving strict slice validation and roots."""
+        self._emit_slice_function(True)
+
+    def _emit_slice_function(self, decode_result: bool) -> None:
+        """Emit a checked bytes-range copy, optionally as a decoded string.
 
         Semantics (strict):
         - Only supports bytes for now.
@@ -3239,14 +3247,14 @@ Returns:
           RCX = src value
           RDX = off (Value)
           R8  = len (Value)
-          RAX = OBJ_BYTES* (TAG_PTR) or VOID
+          RAX = OBJ_BYTES* or OBJ_STRING* (TAG_PTR), or VOID
 
 Returns:
-    Emits or overwrites the `fn_slice` helper.
+    Emits `fn_slice` or the internal fused `fn_decode_slice` helper.
 """
         self.ensure_gc_data()
         a = self.asm
-        a.mark('fn_slice')
+        a.mark('fn_decode_slice' if decode_result else 'fn_slice')
 
         # Preserve nonvolatile regs we use (Win64 ABI)
         a.push_reg('rsi')
@@ -3330,10 +3338,22 @@ Returns:
         # spill normalized off back
         a.mov_membase_disp_r64('rsp', 0x28, 'rax')
 
-        # --- allocate dest bytes(len, fill=0) ---
+        # Allocate only the final result: a bytes buffer or a decoded string.
         a.mov_r32_membase_disp('ecx', 'rsp', 0x30)  # len u32
-        a.xor_r32_r32('edx', 'edx')  # fill = 0
-        a.call('fn_bytes_alloc')
+        if decode_result:
+            a.test_r32_r32('ecx', 'ecx')
+            a.jcc('ne', l_done + '_allocate')
+            a.lea_r11_rip('obj_empty_string')
+            a.jmp(l_done + '_return')
+            a.mark(l_done + '_allocate')
+            a.add_r32_imm('ecx', 9)
+            a.call('fn_alloc')
+            a.mov_r32_membase_disp('r9d', 'rsp', 0x30)
+            a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
+            a.mov_membase_disp_r32('rax', 4, 'r9d')
+        else:
+            a.xor_r32_r32('edx', 'edx')  # fill = 0
+            a.call('fn_bytes_alloc')
 
         # dest in r11
         a.mov_r11_rax()
@@ -3355,6 +3375,13 @@ Returns:
         a.mov_r64_membase_disp('r11', 'rsp', 0x38)
 
         a.mark(l_done)
+        if decode_result:
+            a.mov_r32_membase_disp('r9d', 'rsp', 0x30)
+            a.lea_r64_mem_bis('rax', 'r11', 'r9', 1, 8)
+            a.mov_membase_disp_imm8('rax', 0, 0)
+            a.mark(l_done + '_return')
+            a.mov_rax_imm64(enc_void())
+            a.mov_rip_qword_rax('gc_tmp2')
         a.mov_rax_r11()
         a.add_rsp_imm8(0x48)
         a.pop_reg('rdi')
@@ -3363,6 +3390,8 @@ Returns:
 
         a.mark(l_fail)
         a.mov_rax_imm64(enc_void())
+        if decode_result:
+            a.mov_rip_qword_rax('gc_tmp2')
         a.add_rsp_imm8(0x48)
         a.pop_reg('rdi')
         a.pop_reg('rsi')

@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.2"
+    expected = "MiniLang Compiler 1.3.3"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -764,6 +764,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "linux_float_format.ml", ["[OK] Linux float rounding carry"], []),
         (tests_root / "mixed_concat_overloads.ml", ["[OK] mixed concat with operator overloads"], []),
         (tests_root / "runtime_codegen.ml", ["RUNTIME CODEGEN [OK]"], []),
+        (tests_root / "decode_slice_fusion.ml", ["[OK] decode/slice fusion"], []),
+        (tests_root / "decode_slice_threads.ml", ["[OK] decode/slice worker GC roots"], []),
         (tests_root / "ordered_comparison.ml", ["[OK] dynamic ordered comparisons"], []),
         (tests_root / "memory_management.ml", ["MEMORY MANAGEMENT [OK]"], []),
         (tests_root / "memory_heap_ceiling.ml", ["MEMORY CEILING [OK]"], [],
@@ -4264,7 +4266,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.2", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.3", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4319,6 +4321,14 @@ def main() -> int:
         name="mixed concat with operator overloads",
         mlc_runner=mlc_runner, ml_path=tests_root / "mixed_concat_overloads.ml",
         must_contain=["[OK] mixed concat with operator overloads"], timeout_compile_s=20))
+    tests.append(lambda: test_program_no_fail(
+        name="decode/slice fusion, strict bounds and GC roots",
+        mlc_runner=mlc_runner, ml_path=tests_root / "decode_slice_fusion.ml",
+        must_contain=["[OK] decode/slice fusion"]))
+    tests.append(lambda: test_program_no_fail(
+        name="decode/slice worker GC roots",
+        mlc_runner=mlc_runner, ml_path=tests_root / "decode_slice_threads.ml",
+        must_contain=["[OK] decode/slice worker GC roots"]))
     tests.append(lambda: test_program_no_fail(
         name="runtime codegen identities and floor division",
         mlc_runner=mlc_runner, ml_path=tests_root / "runtime_codegen.ml",
@@ -4388,6 +4398,12 @@ def main() -> int:
         tests.append(lambda: TestResult(
             name="operator overloads: exact static dispatch, inline calls and compound assignment",
             status="SKIP", details="operator_overloading.ml not found"))
+
+    tests.append(lambda: test_program_no_fail(
+        name="bounded concat and typed scalar replacement",
+        mlc_runner=mlc_runner, ml_path=tests_root / "codegen_bounded_fusion.ml",
+        must_contain=["[OK] bounded concat and typed scalar replacement"],
+        timeout_compile_s=120, timeout_run_s=120))
 
     if language_type_guard_object_ml is not None:
         tests.append(lambda: test_program_no_fail(

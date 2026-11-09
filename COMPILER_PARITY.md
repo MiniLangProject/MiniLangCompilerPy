@@ -1,5 +1,59 @@
 # Compiler parity and self-hosting
 
+## 1.3.3 release verification — 9 November 2026
+
+Both compilers include the measured November allocation and generated-code
+optimizations. The [release matrix](docs/reports/release-1.3.3-version-matrix.json)
+records the version-stamped builds and checks; performance measurements remain
+in the linked [evaluation](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md).
+
+Windows Python bootstrap, native MLO stage 2, monolithic stage 3 and
+Linux-host crossbuild are byte-identical (65,892,864 bytes):
+
+    SHA-256: 67bcef26e3f96dead3c4a7ed49eb582a035b245a213f20c68dc4c6c0303b3a3a
+
+Linux Python bootstrap, Windows-host crossbuild and Linux-native selfbuild
+are byte-identical (65,910,960 bytes):
+
+    SHA-256: b9f36f2277b8bf2680fc8c92233f6af958d342c337ebcc34e7bd1d02e6e0bb65
+
+Both CLI version flags and the conditional-compilation constant report 1.3.3.
+Release checks passed: 222 Python integration tests, 45 Python unit tests
+(one optional NASM comparison skipped), 138 native harness tests and 249
+outer steps; 84 focused runtime/parity images, 132 OOP parity images and
+192 incremental-build checks across both targets. All 53 standard-library
+sources and 351 generated standard-library documentation files are identical
+between repositories. Compiler and standard-library MiniDoc generation
+completed without warnings.
+
+The development hashes below remain historical and differ from the
+version-stamped release images.
+
+## Development optimization verification — 6 November 2026
+
+The 1.3.2 development worktrees evaluated on 6 November retained byte parity
+after direct operand emission, bounded string-concatenation fusion,
+typed-field scalar replacement and native MLO serialization improvements.
+See the [evaluation](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md)
+and [measurement manifest](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.json)
+for exact inputs, test results, timings and limitations.
+
+Windows Python bootstrap, native MLO stage 2, native monolithic stage 3
+and Linux-host Windows crossbuild produce the same 65,892,864-byte image:
+
+    SHA-256: acd5f0144d82c37db1a695bdea37a9e02d13239423dbc0b17c74fbd3c293482b
+
+Linux Python bootstrap, Windows-host Linux crossbuild and Linux-native
+self-build produce the same 65,910,960-byte image:
+
+    SHA-256: 91e639476492811ac62d7458167b0ecbf31fbe29f6e3d492a6ab0bb546d4ac9b
+
+Validation includes 132 OOP parity images, 48 focused runtime/parity images,
+192 incremental-build checks across both targets, and matching bytes in all
+53 standard-library sources. These hashes describe development artifacts,
+not replacement release downloads; historical release checksums below remain
+unchanged.
+
 ## 1.2.24 incremental-build verification — 29 October 2026
 
 Both compilers now cache native function fragments after source edits while

@@ -8,7 +8,13 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.2.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.3.md) and [changelog](CHANGELOG.md).
+
+Version 1.3.3 reduces temporary compiler allocations and improves generated
+code for bounded string concatenations, nonescaping local structs with typed
+fields, and decoded byte slices. Recompile applications to use these automatic
+optimizations. The [measured results](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md)
+describe eligible code, benchmark gains and their limits.
 
 ## Quick start
 
@@ -121,7 +127,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.2 verification matrix](https://github.com/MiniLangProject/MiniLangCompilerML/blob/v1.3.2/docs/reports/release-1.3.2-version-matrix.json).
+[1.3.3 verification matrix](docs/reports/release-1.3.3-version-matrix.json).
 
 ## Documentation and development
 
@@ -130,6 +136,7 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Classes and interfaces | [OOP guide](docs/OOP.md) |
 | Language syntax, standard library and FFI | [Language reference](docs/LANGUAGE_REFERENCE.md) |
 | Incremental builds | [Guide](docs/INCREMENTAL_BUILDS.md) |
+| Compiler optimization measurements | [Allocation and emission](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md), [bounded concat, typed scalar replacement, and metadata](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md) |
 | Typed inline assembly | [Guide](docs/INLINE_ASM.md) |
 | Native crypto, checksums and CPU features | [Native primitives](docs/NATIVE_PRIMITIVES.md) |
 | Compression and platform services | [Platform services](docs/PLATFORM_SERVICES.md) |

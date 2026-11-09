@@ -271,6 +271,8 @@ end function
 /// Preserve captures, argument effects, allocation roots and error provenance.
 function checkAdvancedCodegen()
   global visits
+  checkEq(typedLocal(7), 17, "typed local scalar replacement")
+  checkEq(boundedEight("a", "b", "c", "d", "e", "f", "g"), "pabcdefg", "bounded fused concat")
   checkEq(projectedPair(4, 7), 21, "temporary struct projection")
   visits = 0
   checkEq(effectfulPair(), 9, "effectful struct projection")
@@ -318,4 +320,17 @@ function checkAdvancedCodegen()
   projectionBytes = heap_bytes_used() - beforeProjection
   checkEq(result, 14850, "projection checksum")
   checkEq(projectionBytes, 0, "projected structs allocate no heap")
+end function
+
+/// A local typed aggregate retains constructor contracts without a heap object.
+function typedLocal(n)
+  pair = CodegenPair(n, n + 1)
+  pair.second = pair.second + 2
+  return pair.first + pair.second
+end function
+
+/// Eight pure leaves allocate the final string once; dynamic cases stay checked.
+function boundedEight(a, b, c, d, e, f, g)
+  prefix = "p"
+  return prefix + a + b + c + d + e + f + g
 end function

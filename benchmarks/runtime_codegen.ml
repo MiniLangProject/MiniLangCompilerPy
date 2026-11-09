@@ -54,9 +54,22 @@ function main(args)
   // Isolate projection allocation volume from periodic collection/reuse.
   // This bounded case allocates at most 16 MB in the unoptimized build.
   if mode == "struct-projection" or mode == "struct-local" then gc_set_limit(0) end if
+  if mode == "typed-struct-local" or mode == "concat-eight" or mode == "concat-eight-small" then gc_set_limit(0) end if
+  piece = stringRepeat("a", 64)
+  if mode == "concat-eight-small" then piece = "a" end if
   before = heap_bytes_used()
   started = ticks(timer)
   checksum = 0
+  if mode == "typed-struct-local" then
+    for i = 0 to 499999
+      checksum += localTypedPair(i)
+    end for
+  end if
+  if mode == "concat-eight" or mode == "concat-eight-small" then
+    for i = 0 to 99999
+      checksum += len(eightStrings(piece, piece, piece, piece, piece, piece, piece))
+    end for
+  end if
   if mode == "struct-local" then
     for i = 0 to 499999
       checksum += localPair(i)
@@ -272,4 +285,17 @@ end function
 
 function outside(values as array, index as int)
   return values[index]
+end function
+
+/// The object stays local; typed constructor guards must survive scalarization.
+function localTypedPair(i as int)
+  pair = BenchPair(i, i + 1)
+  pair.second = pair.second + 2
+  return pair.first + pair.second
+end function
+
+/// Runtime inputs prevent constant folding of the bounded concat workload.
+function eightStrings(a, b, c, d, e, f, g)
+  prefix = "p"
+  return prefix + a + b + c + d + e + f + g
 end function

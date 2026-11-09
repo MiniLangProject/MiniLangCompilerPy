@@ -1656,7 +1656,7 @@ class CodegenExpr:
         finally:
             self.free_expr_temps((len(parts) + 1) * 8)
 
-    def _concat_three_leaf_is_pure(self, expr: Any) -> bool:
+    def _concat_leaf_is_pure(self, expr: Any) -> bool:
         """Allow only immutable literals and ordinary stack reads in the fused path."""
         if isinstance(expr, self.ml.Str):
             return True
@@ -1673,10 +1673,12 @@ class CodegenExpr:
             return 4096
         return 32768 if int(counts.get(name, 0)) >= 1000 else 1024
 
-    def _emit_concat_three_strings(self, operands: List[Any]) -> None:
-        """Fuse three already evaluated strings; retain the ordinary path on a guard miss."""
+    def _emit_concat_strings(self, operands: List[Any]) -> None:
+        """Fuse 3-8 pure string leaves, retaining sequential additions on a guard miss."""
         a = self.asm
-        base = self.alloc_expr_temps(32)
+        count = len(operands)
+        temp_bytes = (count + 1) * 8
+        base = self.alloc_expr_temps(temp_bytes)
         lid = self.new_label_id()
         slow = f'concat_three_slow_{lid}'
         done = f'concat_three_done_{lid}'
@@ -1686,7 +1688,7 @@ class CodegenExpr:
                 a.mov_rsp_disp32_rax(base + i * 8)
 
             a.xor_r32_r32('r10d', 'r10d')
-            for i in range(3):
+            for i in range(count):
                 a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
                 a.mov_r64_r64('rax', 'r11')
                 a.and_r64_imm('rax', 7)
@@ -1705,18 +1707,18 @@ class CodegenExpr:
             a.mov_r32_r32('ecx', 'r10d')
             a.add_r32_imm('ecx', 9)
             a.call('fn_alloc')
-            a.mov_rsp_disp32_rax(base + 24)
+            a.mov_rsp_disp32_rax(base + count * 8)
             a.mov_membase_disp_imm32('rax', 0, OBJ_STRING, qword=False)
             a.xor_r32_r32('r10d', 'r10d')
-            for i in range(3):
+            for i in range(count):
                 a.mov_r64_membase_disp('r11', 'rsp', base + i * 8)
                 a.mov_r32_membase_disp('edx', 'r11', 4)
                 a.add_r32_r32('r10d', 'edx')
-            a.mov_r64_membase_disp('rax', 'rsp', base + 24)
+            a.mov_r64_membase_disp('rax', 'rsp', base + count * 8)
             a.mov_membase_disp_r32('rax', 4, 'r10d')
 
-            for i in range(3):
-                a.mov_r64_membase_disp('r11', 'rsp', base + 24)
+            for i in range(count):
+                a.mov_r64_membase_disp('r11', 'rsp', base + count * 8)
                 a.lea_r64_membase_disp('rcx', 'r11', 8)
                 for earlier in range(i):
                     a.mov_r64_membase_disp('r11', 'rsp', base + earlier * 8)
@@ -1727,7 +1729,7 @@ class CodegenExpr:
                 a.mov_r32_membase_disp('r8d', 'r11', 4)
                 a.call('fn_copy_bytes')
 
-            a.mov_r64_membase_disp('r11', 'rsp', base + 24)
+            a.mov_r64_membase_disp('r11', 'rsp', base + count * 8)
             a.mov_r32_membase_disp('r10d', 'r11', 4)
             a.lea_r64_membase_disp('rax', 'r11', 8)
             a.add_r64_r64('rax', 'r10')
@@ -1736,18 +1738,16 @@ class CodegenExpr:
             a.jmp(done)
 
             a.mark(slow)
-            a.mov_r64_membase_disp('rcx', 'rsp', base)
-            a.mov_r64_membase_disp('rdx', 'rsp', base + 8)
-            a.call('fn_add_string')
-            self._emit_auto_errprop()
-            a.mov_rsp_disp32_rax(base + 24)
-            a.mov_r64_membase_disp('rcx', 'rsp', base + 24)
-            a.mov_r64_membase_disp('rdx', 'rsp', base + 16)
-            a.call('fn_add_string')
-            self._emit_auto_errprop()
+            for i in range(1, count):
+                a.mov_r64_membase_disp('rcx', 'rsp', base if i == 1 else base + count * 8)
+                a.mov_r64_membase_disp('rdx', 'rsp', base + i * 8)
+                a.call('fn_add_string')
+                self._emit_auto_errprop()
+                if i < count - 1:
+                    a.mov_rsp_disp32_rax(base + count * 8)
             a.mark(done)
         finally:
-            self.free_expr_temps(32)
+            self.free_expr_temps(temp_bytes)
 
     def _try_emit_left_string_concat_chain(self, expr: Any) -> bool:
         """Lower a left-associated string concat without recursive tree walk.
@@ -1768,10 +1768,16 @@ class CodegenExpr:
         if len(rights) < 2 or self._opt_value_type_base(self._opt_expr_known_type(current)) != 'string':
             return False
 
+        # Keep the common three-leaf case as cheap to analyze as before.
         if len(rights) == 2:
             operands = [current, rights[1], rights[0]]
-            if all(self._concat_three_leaf_is_pure(part) for part in operands):
-                self._emit_concat_three_strings(operands)
+            if all(self._concat_leaf_is_pure(part) for part in operands):
+                self._emit_concat_strings(operands)
+                return True
+        elif len(rights) <= 7 and self._concat_leaf_is_pure(current):
+            # Bound code growth; reject effects before assembling a new operand list.
+            if all(self._concat_leaf_is_pure(part) for part in rights):
+                self._emit_concat_strings([current, *reversed(rights)])
                 return True
 
         a = self.asm
@@ -6081,6 +6087,26 @@ class CodegenExpr:
 
             # Builtin decode(bytes[, encoding]) -> string
             if callee_name == 'decode':
+                inner = call_args[0] if len(call_args) == 1 else None
+                if (type(inner).__name__ == 'Call'
+                        and type(inner.callee).__name__ == 'Var' and inner.callee.name == 'slice'
+                        and len(inner.args) == 3
+                        and not any(getattr(inner, 'arg_names', []) or [])
+                        and (self.resolve_binding('slice') is None or
+                             (self.resolve_binding('slice').kind == 'global' and
+                              self.resolve_binding('slice').label ==
+                              self.builtin_global_labels.get('slice', '')))
+                        and 'slice' not in self.user_functions):
+                    tmp_slice = self.alloc_expr_temps(24)
+                    for i, arg in enumerate(inner.args):
+                        self.emit_expr(arg)
+                        a.mov_membase_disp_r64('rsp', tmp_slice + i * 8, 'rax')
+                    a.mov_r64_membase_disp('rcx', 'rsp', tmp_slice)
+                    a.mov_r64_membase_disp('rdx', 'rsp', tmp_slice + 8)
+                    a.mov_r64_membase_disp('r8', 'rsp', tmp_slice + 16)
+                    a.call('fn_decode_slice')
+                    self.free_expr_temps(24)
+                    return
                 if len(e.args) not in (1, 2):
                     raise self.error('decode() expects 1 or 2 arguments', e)
 

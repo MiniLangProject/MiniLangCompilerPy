@@ -11,14 +11,14 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 | Blank lines | 2888 |
 | Clone groups | 161 |
 | Cognitive complexity | 3589 (maximum per function: 116) |
-| Comment lines | 4514 |
+| Comment lines | 4516 |
 | Cyclomatic complexity | 3957 (average: 3.78, maximum: 34) |
 | Documentation coverage | 98.04% (2001 of 2041 documentation items) |
 | Duplicated lines | 1014 (8.84%) |
 | Files | 53 |
 | Functions | 1048 |
 | Maintainability index | 7.86 / 100 |
-| Physical lines | 18874 |
+| Physical lines | 18876 |
 | Source lines | 11475 |
 | Statements | 8125 |
 

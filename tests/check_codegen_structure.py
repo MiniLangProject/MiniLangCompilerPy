@@ -58,6 +58,10 @@ def main():
 
         assert "call fn_alloc" not in function("projectedPair"), "temporary allocation remains"
         assert "call fn_alloc" in function("effectfulPair"), "effectful constructor was eliminated"
+        assert "call fn_alloc" not in function("typedLocal"), "typed local still allocates an object"
+        assert "call fn_make_error_const" in function("typedLocal"), "typed constructor contracts disappeared"
+        assert function("boundedEight").count("call fn_alloc") == 1, "bounded concat lacks its single-allocation path"
+        assert "call fn_add_string" in function("boundedEight"), "bounded concat lost dynamic fallbacks"
         dynamic = function("dynamicSum")
         assert "loop_invariant_base_array_" in dynamic, "dynamic array root was not hoisted"
         assert "idx_fast_bounds_elided_" in dynamic and "seti_fast_bounds_elided_" in dynamic, "fast array version retains bounds checks"

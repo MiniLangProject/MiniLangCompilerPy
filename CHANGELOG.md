@@ -2,6 +2,31 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.3 - 2026-11-09
+
+- Extend guarded string-concatenation fusion from three to eight pure operands
+  in both backends, preserving ordered fallbacks and precise GC roots.
+- Scalar-replace nonescaping local structs with typed fields while preserving
+  constructor contracts, optional fields, errors, and lexical binding identity.
+- Complete direct memory-operand emission in Python and the native indexed
+  emitters; reject invalid indexed operands before writing instruction bytes.
+- Speed up native MLO metadata writes with direct normalized-record access and
+  a single x64 store for integers contained within one metadata page.
+- Add encoding-boundary, typed-field, GC, allocation-structure, and runtime
+  performance coverage. See the [follow-up evaluation](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md)
+  for measurements and the rejected compact-relocation prototypes.
+
+- Emit native memory operands without temporary encoding objects and byte
+  concatenations; avoid optional listing interception in the Python compiler.
+- Use fixed-schema Python token records and smaller initial native AST arenas.
+- Keep output parity with the native compiler's reduced-copy MLO writer.
+- Fuse direct `decode(slice(bytes, offset, length))` calls into one string
+  allocation, preserving strict bounds, argument order, and GC roots. This
+  also removes the temporary bytes copy from partial StringBuilder buffers.
+- Extend opcode, helper-dispatch, allocation, and cross-compiler coverage.
+- See the [measurement report](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md)
+  for retained and rejected experiments, memory definitions, and limitations.
+
 ## 1.3.2 - 2026-10-31
 
 - Align class factory calls, synthetic source positions, and class-method type

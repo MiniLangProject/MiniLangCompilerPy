@@ -117,6 +117,45 @@ def _assemble_with_nasm(lines: list[str]) -> bytes:
 
 
 class TestAsmOpcodeVectors(unittest.TestCase):
+    def test_listing_toggle_preserves_state_and_spill_hooks(self):
+        """Listing changes only observation, including for encoder subclasses."""
+        import sys
+        sys.path.insert(0, str(_project_root()))
+        from mlc.asm import Asm
+
+        class ExtendedAsm(Asm):
+            __slots__ = ('custom',)
+
+        for cls in (Asm, ExtendedAsm):
+            a = cls()
+            if cls is ExtendedAsm:
+                a.custom = 'subclass state'
+            spills = []
+            a._before_call = lambda: spills.append(a.pos)
+            a.mark('target')
+            a.enable_listing('unused.asm')
+            a.enable_listing('unused.asm')
+            a.call('target')
+            traced = len(a._trace)
+            self.assertGreater(traced, 0)
+            a.disable_listing()
+            self.assertIs(type(a), cls)
+            if cls is ExtendedAsm:
+                self.assertEqual(a.custom, 'subclass state')
+            a.disable_listing()
+            a.call('target')
+            self.assertEqual(len(a._trace), traced)
+            a.enable_listing('unused.asm')
+            a.call('target')
+            self.assertGreater(len(a._trace), traced)
+            self.assertEqual(len(spills), 3)
+            a.disable_listing()
+            plain = cls()
+            plain.mark('target')
+            for _ in range(3):
+                plain.call('target')
+            self.assertEqual(a.finalize(), plain.finalize())
+
     def test_loop_alignment_survives_forward_and_backward_branches(self):
         import sys
         sys.path.insert(0, str(_project_root()))
@@ -141,6 +180,34 @@ class TestAsmOpcodeVectors(unittest.TestCase):
         """Make tests independently runnable instead of depending on test order."""
         import sys
         sys.path.insert(0, str(_project_root()))
+
+    def test_memory_emission_matches_standalone_operand_encoder(self):
+        """Exercise SIB/REX and signed displacement edges against the old encoder."""
+        from mlc.asm import Asm
+        for reg in (0, 7, 8, 15):
+            for base in range(16):
+                for index in (None, 1, 7, 9, 15):
+                    for scale in ((1,) if index is None else (1, 2, 4, 8)):
+                        for disp in (-2147483648, -129, -128, -1, 0, 127, 128, 2147483647):
+                            a = Asm()
+                            rx, rb, tail = a._encode_mem(reg, base, disp, index_id=index, scale=scale)
+                            for width in (0, 1):
+                                for force in (False, True):
+                                    a.buf.clear()
+                                    a._emit_mem_instruction(b"\x0f\xb1", reg, base, disp,
+                                        w=width, index_id=index, scale=scale, force=force,
+                                        prefix=b"\xf0", immediate=b"\x7f")
+                                    expected = b"\xf0" + a._rex(width, reg >> 3, rx, rb, force=force) + b"\x0f\xb1" + tail + b"\x7f"
+                                    self.assertEqual(bytes(a.buf), expected, (reg, base, index, scale, disp, width, force))
+
+    def test_invalid_memory_operand_keeps_stream_intact(self):
+        from mlc.asm import Asm
+        for index, scale in ((4, 1), (12, 1), (1, 3)):
+            a = Asm()
+            a.emit(b"\x90")
+            with self.assertRaises(ValueError):
+                a._emit_mem_instruction(b"\x8b", 0, 0, index_id=index, scale=scale)
+            self.assertEqual(bytes(a.buf), b"\x90")
 
     def test_compact_immediate_boundaries(self) -> None:
         """Independent opcode expectations cover accumulator, mask and REX edges."""

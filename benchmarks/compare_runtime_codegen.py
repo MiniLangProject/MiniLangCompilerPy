@@ -57,7 +57,7 @@ def run_measured(path, case):
             raise RuntimeError("Peak RSS measurement supports Windows and Linux only")
         return stdout, peak
 
-CASES = ("struct-local", "many-registers", "register-dependent", "struct-projection", "dynamic-index", "local-register", "inline-literal", "cold-errors",
+CASES = ("typed-struct-local", "concat-eight", "concat-eight-small", "struct-local", "many-registers", "register-dependent", "struct-projection", "dynamic-index", "local-register", "inline-literal", "cold-errors",
          "division", "division-constants", "division-wide", "local-cse",
          "integer-format", "integer-format-small", "repeat", "repeat-one", "concat-empty", "join-one",
          "concat-control", "concat-small-control", "repeat-two-control",

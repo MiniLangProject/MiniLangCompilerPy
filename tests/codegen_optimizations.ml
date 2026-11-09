@@ -151,7 +151,6 @@ struct Slot
 end struct
 
 struct FlowPoint
-  // Keep the heap-field fast path covered independently of scalar replacement.
   x as int,
   y as int,
 end struct
@@ -189,7 +188,9 @@ end function
 function extended_type_flow()
   values = [1, 2, 3, 4, 5, 6, 7, 8]
   data = bytes(8, 0)
-  point = FlowPoint(40, 0)
+  // An annotated object binding retains the heap-field path independently of
+  // typed-field scalar replacement, which has separate structural coverage.
+  point as FlowPoint = FlowPoint(40, 0)
   gate = true
   left = 1.5
   right = 2.5

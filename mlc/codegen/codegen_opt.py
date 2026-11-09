@@ -105,7 +105,7 @@ def intervals(body):
 
 
 def scalar_candidates(cg, fn):
-    """Plan rooted scalar slots for unaliased, untyped local struct fields.
+    """Plan rooted scalar slots for unaliased local struct fields with constructor contracts.
 
     Only an unconditional top-level constructor assignment may establish the
     object. Every use must be a known field read/write after that assignment.
@@ -138,8 +138,6 @@ def scalar_candidates(cg, fn):
         if any(n not in (None, '') for n in (getattr(call, 'arg_names', []) or [])):
             continue
         contracts = getattr(cg, 'struct_field_types', {}).get(qname, [])
-        if any(c[0] not in (None, '') for c in contracts):
-            continue
         valid = True
         for node, parent, at in records:
             kind = type(node).__name__
@@ -154,7 +152,7 @@ def scalar_candidates(cg, fn):
                 if field not in fields or at <= index:
                     valid = False
         if valid:
-            plans.append([stmt, local[0], list(fields), []])
+            plans.append([stmt, local[0], list(fields), [], contracts])
     return plans
 
 
@@ -163,7 +161,7 @@ def scalar_slot(cg, target, field):
     if type(target).__name__ != 'Var' or getattr(cg, '_inline_call_stack', []):
         return None
     binding = cg.resolve_binding(target.name)
-    for _, original, fields, offsets in getattr(cg, '_scalar_structs', []):
+    for _, original, fields, offsets, _contracts in getattr(cg, '_scalar_structs', []):
         if binding is original and field in fields:
             return offsets[fields.index(field)]
     return None
