@@ -1,0 +1,87 @@
+{
+  "compiler": "<build/mlc_win64.exe built from the repository HEAD>",
+  "source": "<temporary copy of mlc/, std/ and mlc_win64.ml>",
+  "summary_seconds": {
+    "cached": 38.73600820009597,
+    "recomputed": 37.742703399970196,
+    "edited": 38.85754450003151
+  },
+  "samples": [
+    {
+      "mode": "prime",
+      "run": -1,
+      "seconds": 80.06640090001747,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=0 compiled=2166 invalid=0"
+    },
+    {
+      "mode": "cached",
+      "run": 0,
+      "seconds": 38.65818299993407,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "recomputed",
+      "run": 0,
+      "seconds": 37.630265600048006,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "cached",
+      "run": 1,
+      "seconds": 38.827937999973074,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "recomputed",
+      "run": 1,
+      "seconds": 40.102365499944426,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "cached",
+      "run": 2,
+      "seconds": 38.73600820009597,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "recomputed",
+      "run": 2,
+      "seconds": 37.742703399970196,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "edited",
+      "run": 0,
+      "seconds": 36.433142699999735,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2164 compiled=2 invalid=0"
+    },
+    {
+      "mode": "edited",
+      "run": 1,
+      "seconds": 38.85754450003151,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    },
+    {
+      "mode": "edited",
+      "run": 2,
+      "seconds": 39.065748899942264,
+      "image_sha256": "00b6b3c290b86ea1e7e9e3ad7409b8fd30606e608ca7912dccf7a8a928dfe42e",
+      "counts": "[incremental] reused=2166 compiled=0 invalid=0"
+    }
+  ],
+  "notes": [
+    "Pipelines: object pipeline with the build.ps1 heap flags and the incremental fragment cache.",
+    "Modes: prime (cold cache), cached (full .mif hit), recomputed (.mif record deleted before the run), edited (one comment line appended to the entry file).",
+    "Three measured runs per mode; the table medians are over these three runs. All ten images are byte-identical.",
+    "counts is the last [incremental] line of each compiler run (fragment reuse statistics)."
+  ]
+}
