@@ -3595,6 +3595,15 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
             return TestResult(name=name, status="FAIL",
                               details="proven fixed-length loop retained bounds checks")
 
+        single_use_asm = function_block("single_use_dynamic_loop")
+        if not single_use_asm or "for_slow_top_" in single_use_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="single-use dynamic loop was versioned")
+        multi_use_asm = function_block("multi_use_dynamic_loop")
+        if not multi_use_asm or "for_slow_top_" not in multi_use_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="multi-use dynamic loop was not versioned")
+
         negative_index_asm = function_block("fixed_negative_index")
         if ("idx_fast_array_" not in negative_index_asm
                 or "idx_fast_nonnegative_" not in negative_index_asm

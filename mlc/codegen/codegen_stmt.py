@@ -1338,6 +1338,7 @@ class CodegenStmt:
             return out
 
         target_exprs: dict[str, Any] = {}
+        use_counts: dict[str, int] = {}
         mutated: set[str] = set()
 
         def scan_expr(expr: Any) -> None:
@@ -1349,7 +1350,9 @@ class CodegenStmt:
                 if (isinstance(target, getattr(ml, 'Var', ())) and
                         isinstance(index, getattr(ml, 'Var', ())) and
                         str(getattr(index, 'name', '') or '') == index_name):
-                    target_exprs.setdefault(str(getattr(target, 'name', '') or ''), target)
+                    target_name = str(getattr(target, 'name', '') or '')
+                    target_exprs.setdefault(target_name, target)
+                    use_counts[target_name] = use_counts.get(target_name, 0) + 1
             for child in expr_children(expr):
                 scan_expr(child)
 
@@ -1367,7 +1370,9 @@ class CodegenStmt:
                     if (isinstance(target, getattr(ml, 'Var', ())) and
                             isinstance(index, getattr(ml, 'Var', ())) and
                             str(getattr(index, 'name', '') or '') == index_name):
-                        target_exprs.setdefault(str(getattr(target, 'name', '') or ''), target)
+                        target_name = str(getattr(target, 'name', '') or '')
+                        target_exprs.setdefault(target_name, target)
+                        use_counts[target_name] = use_counts.get(target_name, 0) + 1
                 for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
                     scan_expr(getattr(st, attr, None))
                 if isinstance(st, getattr(ml, 'If', ())):
@@ -1438,6 +1443,7 @@ class CodegenStmt:
                 'target_expr': target_exprs[target_name],
                 'kind': kind,
                 'bounds_proven': isinstance(exact_len, int) and exact_len > 0,
+                'use_count': int(use_counts.get(target_name, 0)),
             })
         return plans
 
@@ -3914,9 +3920,15 @@ class CodegenStmt:
             # Version a bounded array or byte loop once at entry. Container
             # lengths are fixed, so 0..len(buf)-1 is in range when nonempty.
             # The slow copy preserves the descending 0..-1 empty case.
+            # Versioning duplicates the whole loop body (fast + slow copy). It
+            # only pays off when the fast copy elides bounds checks for several
+            # indexed accesses of the hoisted container; single-use loops keep
+            # the ordinary checked loop. See the repository's optimization
+            # experiment report of 30 October 2026.
             versioned = (not const_bounds and len(index_hoists) == 1
                          and index_hoists[0]['kind'] in ('array', 'bytes')
                          and not index_hoists[0].get('bounds_proven', False)
+                         and int(index_hoists[0].get('use_count', 0)) >= 2
                          and len(getattr(s, 'body', []) or []) <= 8)
             slow_top = f'for_slow_top_{a.pos}'
             slow_cont = f'for_slow_cont_{a.pos}'

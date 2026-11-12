@@ -211,6 +211,25 @@ function extended_type_flow()
   return total + point.y + (left + right)
 end function
 
+// A single indexed use of a dynamic-length container does not justify
+// duplicating the loop body: the ordinary checked loop stays.
+function single_use_dynamic_loop(values as array) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total = total + values[i]
+  end for
+  return total
+end function
+
+// Several indexed uses of the same dynamic-length container do justify the
+// guarded fast/slow loop versions.
+function multi_use_dynamic_loop(values as array) returns int
+  for i = 0 to len(values) - 1
+    values[i] = values[i] + 1
+  end for
+  return values[0]
+end function
+
 function fixed_negative_index()
   values = [11, 22]
   return values[-1]
@@ -335,6 +354,8 @@ function main(args)
   t.assertEq(known_wide_method_call(), 25, "known method wide-call rooting")
   t.assertEq(float_fallback(), 3.0, "non-integer arithmetic fallback")
   t.assertEq(extended_type_flow(), 124, "extended local type flow and loop BCE")
+  t.assertEq(single_use_dynamic_loop([1, 2, 3]), 6, "single-use dynamic loop keeps the checked path")
+  t.assertEq(multi_use_dynamic_loop([1, 2, 3]), 2, "multi-use dynamic loop versioning")
   t.assertEq(fixed_negative_index(), 22, "negative fixed index keeps normalization")
   t.assertEq(checked_bytes_roundtrip("A"), 66, "checked bytes type flow read and write")
   t.assertEq(checked_bytes_value_flow("A"), 66, "checked bytes result type flows through locals")
