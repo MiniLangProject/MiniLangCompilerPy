@@ -1,0 +1,290 @@
+{
+  "config": [
+    {
+      "name": "before",
+      "command": [
+        "<baseline mlc_win64.exe built from the repository HEAD at commit efb7c59>",
+        "mlc_win64.ml",
+        "build\\bench_before.exe",
+        "-I",
+        ".",
+        "--heap-reserve",
+        "8g",
+        "--heap-commit",
+        "512m",
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "16m",
+        "--gc-limit",
+        "1536m",
+        "--object-pipeline",
+        "--profile-compiler-batches"
+      ],
+      "cwd": "<MiniLangCompilerML repository root>",
+      "artifact": "build\\bench_before.exe",
+      "timeout": 600
+    },
+    {
+      "name": "after",
+      "command": [
+        "build\\mlc_win64.exe",
+        "mlc_win64.ml",
+        "build\\bench_after.exe",
+        "-I",
+        ".",
+        "--heap-reserve",
+        "8g",
+        "--heap-commit",
+        "512m",
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "16m",
+        "--gc-limit",
+        "1536m",
+        "--object-pipeline",
+        "--profile-compiler-batches"
+      ],
+      "cwd": "<MiniLangCompilerML repository root>",
+      "artifact": "build\\bench_after.exe",
+      "timeout": 600
+    }
+  ],
+  "rows": [
+    {
+      "seconds": 51.28631920006592,
+      "returncode": 0,
+      "peak_working_set": 454037504,
+      "peak_private": 547643392,
+      "peak_tree_private": 1362223104,
+      "peak_child_private": 1343770624,
+      "cpu_seconds": 51.015625,
+      "processes": 2,
+      "name": "before",
+      "round": 0,
+      "warmup": true,
+      "setup_ms": 32,
+      "codegen_ms": 36870,
+      "serialize_ms": 8005,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 49.900023900088854,
+      "returncode": 0,
+      "peak_working_set": 453357568,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364172800,
+      "peak_child_private": 1345822720,
+      "cpu_seconds": 49.625,
+      "processes": 2,
+      "name": "after",
+      "round": 0,
+      "warmup": true,
+      "setup_ms": 16,
+      "codegen_ms": 35194,
+      "serialize_ms": 8368,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 50.7567582000047,
+      "returncode": 0,
+      "peak_working_set": 453361664,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364430848,
+      "peak_child_private": 1346088960,
+      "cpu_seconds": 50.703125,
+      "processes": 2,
+      "name": "after",
+      "round": 1,
+      "warmup": false,
+      "setup_ms": 15,
+      "codegen_ms": 35881,
+      "serialize_ms": 8276,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 51.73356840002816,
+      "returncode": 0,
+      "peak_working_set": 453312512,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "cpu_seconds": 51.59375,
+      "processes": 2,
+      "name": "before",
+      "round": 1,
+      "warmup": false,
+      "setup_ms": 0,
+      "codegen_ms": 37218,
+      "serialize_ms": 8139,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 51.98921099992003,
+      "returncode": 0,
+      "peak_working_set": 453312512,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364434944,
+      "peak_child_private": 1346084864,
+      "cpu_seconds": 51.78125,
+      "processes": 2,
+      "name": "before",
+      "round": 2,
+      "warmup": false,
+      "setup_ms": 16,
+      "codegen_ms": 37400,
+      "serialize_ms": 8209,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 50.88692019996233,
+      "returncode": 0,
+      "peak_working_set": 453357568,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "cpu_seconds": 50.765625,
+      "processes": 2,
+      "name": "after",
+      "round": 2,
+      "warmup": false,
+      "setup_ms": 16,
+      "codegen_ms": 35892,
+      "serialize_ms": 8341,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 50.578100199927576,
+      "returncode": 0,
+      "peak_working_set": 453357568,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "cpu_seconds": 50.421875,
+      "processes": 2,
+      "name": "after",
+      "round": 3,
+      "warmup": false,
+      "setup_ms": 32,
+      "codegen_ms": 35847,
+      "serialize_ms": 8233,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    },
+    {
+      "seconds": 52.73139009997249,
+      "returncode": 0,
+      "peak_working_set": 453312512,
+      "peak_private": 547586048,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "cpu_seconds": 52.0,
+      "processes": 2,
+      "name": "before",
+      "round": 3,
+      "warmup": false,
+      "setup_ms": 77,
+      "codegen_ms": 37174,
+      "serialize_ms": 8434,
+      "size": 65861120,
+      "sha256": "ec4a8ed7c160d57ce0604472490576efcae964d2af7c165115f22904ff59e1e3"
+    }
+  ],
+  "medians": {
+    "before": {
+      "seconds": 51.98921099992003,
+      "cpu_seconds": 51.78125,
+      "peak_working_set": 453312512,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "size": 65861120,
+      "setup_ms": 16,
+      "codegen_ms": 37218,
+      "serialize_ms": 8209
+    },
+    "after": {
+      "seconds": 50.7567582000047,
+      "cpu_seconds": 50.703125,
+      "peak_working_set": 453357568,
+      "peak_private": 547590144,
+      "peak_tree_private": 1364439040,
+      "peak_child_private": 1346088960,
+      "size": 65861120,
+      "setup_ms": 16,
+      "codegen_ms": 35881,
+      "serialize_ms": 8276
+    }
+  },
+  "microbenchmark": {
+    "harness": "<build/rid_bench.ml, untracked measurement artifact; identical harness before and after>",
+    "ns_per_call": {
+      "call_overhead_modrm": {
+        "before": [
+          20,
+          21,
+          21
+        ],
+        "after": [
+          15,
+          16,
+          15
+        ]
+      },
+      "early_rax": {
+        "before": [
+          56,
+          52,
+          53
+        ],
+        "after": [
+          26,
+          28,
+          26
+        ]
+      },
+      "late_sil": {
+        "before": [
+          71,
+          70,
+          71
+        ],
+        "after": [
+          87,
+          89,
+          86
+        ]
+      },
+      "late_r15": {
+        "before": [
+          174,
+          174,
+          233
+        ],
+        "after": [
+          53,
+          53,
+          52
+        ]
+      },
+      "mixed": {
+        "before": [
+          111,
+          112,
+          127
+        ],
+        "after": [
+          78,
+          77,
+          82
+        ]
+      }
+    }
+  },
+  "notes": "Before = repository HEAD efb7c59 (string-ladder _rid_any, no inline markers); after = length-dispatch _rid_any plus inline markers on _rid_any, _is_r8_name, _is_r32_name, _is_force_rex_8 and _is_r64_name. Image hashes are identical between both variants; the Python twin is unchanged (dict-based _RID/_R32/_R8)."
+}
