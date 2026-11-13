@@ -6428,6 +6428,15 @@ class CodegenStmt:
             if e is None:
                 return
 
+            # Type identifiers have no runtime namespace object to read. Share
+            # the builtin's qualified-name/shadowing rules even when an unused
+            # constructor has been pruned but its type metadata is retained.
+            if allow_func_ident and isinstance(e, (ml.Var, ml.Member)):
+                type_qname = self._type_query_qname(e)
+                if (type_qname in allowed_struct_names
+                        or type_qname in (getattr(self, 'enum_id', {}) or {})):
+                    return
+
             if isinstance(e, ml.Var):
 
                 # Apply compile-time import aliases for qualified names.

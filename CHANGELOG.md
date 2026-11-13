@@ -2,6 +2,27 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.5 - 2026-11-13
+
+- Lower direct `typeof(expression)` comparisons with primitive string literals
+  to tag/header tests in both backends, including `!=` and reversed operands.
+  Preserve expression evaluation, error propagation, nominal type queries and
+  diagnostics for invalid named builtin arguments.
+- Share qualified-name lookup between builtin type queries and their optimized
+  comparisons; handle nested namespaces, imports, enum types and variants.
+- Preserve declared calls with builtin spellings, including default/named
+  arguments, and keep native indirect-call arguments rooted during callee evaluation.
+- Keep member reads dynamic when a local or parameter shadows a namespace,
+  struct or enum; validate type-only references without reading namespace objects.
+- Give inline functions independent error-propagation, synchronization and
+  deferred-error-block contexts so a caller's `try(...)` cannot suppress the
+  callee's parameter, body or return-contract failure.
+- Retain the 1.3.4 conditional-loop use-count parity fix. Add a 1,012-case type
+  truth table plus side-effect, namespace, shadowing and inline-error regressions.
+- Publish Windows/Linux bootstrap, self-host, object/monolithic parity and
+  alternating before/after measurements in the
+  [evaluation](docs/reports/TYPEOF_FOLDING_2026-11-13.md).
+
 ## 1.3.4 - 2026-11-13
 
 - Restore cross-compiler byte parity when indexed uses occur in else-if

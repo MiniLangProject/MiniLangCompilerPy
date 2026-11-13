@@ -2807,6 +2807,8 @@ class CodegenExpr:
         l_end = f"inline_end_{lid}"
 
         # Save compiler/codegen state we temporarily override.
+        saved_errprop = int(getattr(self, '_errprop_suppression', 0) or 0)
+        saved_sync_depth = getattr(self, "_errprop_sync_depth", 0)
         saved_in_fn = bool(getattr(self, 'in_function', False))
         saved_ret = getattr(self, 'func_ret_label', None)
         saved_param_off = dict(getattr(self, 'func_param_offsets', {}) or {})
@@ -2829,7 +2831,12 @@ class CodegenExpr:
         saved_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
         saved_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
+        # Inline callees own their error continuation and cold-block scope.
+        # Arguments above still use the caller's try/synchronization context.
+        self.push_cold_block_scope()
         try:
+            self._errprop_suppression = 0
+            self._errprop_sync_depth = 0
             # Isolate scope stack: globals + fresh inline root scope.
             base_globals = {}
             try:
@@ -2925,6 +2932,8 @@ class CodegenExpr:
 
             # Default fallthrough return value: void.
             a.mov_rax_imm64(enc_void())
+            a.jmp(l_end)
+            self.emit_deferred_cold_blocks()
             a.mark(l_end)
 
             emitted = max(0, int(a.pos) - int(inline_body_start))
@@ -2935,6 +2944,9 @@ class CodegenExpr:
             totals[callee_name] = int(totals.get(callee_name, 0) or 0) + emitted
 
         finally:
+            self.pop_cold_block_scope()
+            self._errprop_suppression = saved_errprop
+            self._errprop_sync_depth = saved_sync_depth
             # Restore compiler state.
             self._inline_alloc_enabled = saved_inline_alloc
             self.in_function = saved_in_fn
@@ -3039,6 +3051,316 @@ class CodegenExpr:
         a.mov_rax_imm64(enc_void())
         a.mark(l_done)
         return True
+
+    # Support qualified-name calls like fubar.a() and fubar.Point(...).
+    # The frontend may encode these either as Var('fubar.a') or as a Member-chain
+    # (Member(Var('fubar'), 'a')). We flatten Member-chains here.
+    def _qname_exists(self, qn: str) -> bool:
+        """Recognize callable/type declarations and compile-time enum variants."""
+        if not isinstance(qn, str) or not qn:
+            return False
+        try:
+            if qn in (getattr(self, 'user_functions', {}) or {}):
+                return True
+            if qn in (getattr(self, 'extern_sigs', {}) or {}):
+                return True
+            if qn in (getattr(self, 'struct_fields', {}) or {}):
+                return True
+            if qn in (getattr(self, 'enum_id', {}) or {}):
+                return True
+            # Both compilers recognize variants here, so type queries never
+            # need a fallback that could mistake a shadowing value for a type.
+            if '.' in qn:
+                enum_base, enum_variant = qn.rsplit('.', 1)
+                enum_base = self._apply_import_alias(enum_base)
+                if (enum_base in (getattr(self, 'enum_id', {}) or {})
+                        and enum_variant in (getattr(self, 'enum_variants', {}) or {}).get(enum_base, [])):
+                    return True
+            if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+                return self.resolve_binding(qn) is not None
+        except Exception:
+            return False
+        return False
+
+    def _qname_with_prefixes(self, qn: str) -> List[str]:
+        """Try exact, function-namespace and source-package names in that order."""
+        cands: List[str] = [qn]
+        try:
+            qpref = str(getattr(self, 'current_qname_prefix', '') or '')
+        except Exception:
+            qpref = ''
+        try:
+            fpref = str(getattr(self, 'current_file_prefix', '') or '')
+        except Exception:
+            fpref = ''
+        if qpref and not qpref.endswith('.'):
+            qpref += '.'
+        if fpref and not fpref.endswith('.'):
+            fpref += '.'
+        if qpref and not qn.startswith(qpref):
+            cands.append(qpref + qn)
+        if fpref and not qn.startswith(fpref):
+            cands.append(fpref + qn)
+        return cands
+
+    def _qname_of(self, expr: Any) -> Optional[str]:
+        """Resolve compile-time qualified-name calls (Var or Member-chain).
+
+        Returns a qualified name only when it can be resolved to a known
+        callable/decl (function/extern/struct/const binding). This avoids
+        misclassifying real runtime member calls as namespace calls when
+        an identifier collides with an import alias.
+        """
+        ml = self.ml
+        if expr is None:
+            return None
+
+        if isinstance(expr, ml.Var):
+            return self._qualify_identifier(str(expr.name), expr)
+
+        if not (hasattr(ml, 'Member') and isinstance(expr, ml.Member)):
+            return None
+
+        def _qname_parts(expr2: Any) -> Optional[List[str]]:
+            if isinstance(expr2, ml.Var):
+                nm2 = str(getattr(expr2, 'name', ''))
+                return nm2.split('.') if '.' in nm2 else [nm2]
+            if hasattr(ml, 'Member') and isinstance(expr2, ml.Member):
+                tgt2 = getattr(expr2, 'target', None)
+                if tgt2 is None:
+                    tgt2 = getattr(expr2, 'obj', None)
+                base2 = _qname_parts(tgt2)
+                if base2 is None:
+                    return None
+                nm2 = getattr(expr2, 'name', None)
+                if nm2 is None:
+                    nm2 = getattr(expr2, 'field', None)
+                if nm2 is None:
+                    return None
+                return base2 + [str(nm2)]
+            return None
+
+        parts2 = _qname_parts(expr)
+        if not parts2:
+            return None
+
+        full = ".".join(parts2)
+        full_m = self._apply_import_alias(full)
+
+        # Binding/shadowing check on the left-most identifier.
+        base0 = parts2[0]
+        b0 = None
+        if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+            try:
+                b0 = self.resolve_binding(base0)
+            except Exception:
+                b0 = None
+        kind0 = getattr(b0, 'kind', None)
+        base_localish = (b0 is not None) and (kind0 is not None) and (kind0 != 'global')
+        if base_localish:
+            return None
+
+        # Static struct method reference: StructName.method -> hoisted static function
+        struct_qn = ".".join(parts2[:-1])
+        meth = parts2[-1]
+        struct_qn_m = self._apply_import_alias(struct_qn)
+        smap = getattr(self, 'struct_static_methods', {}) or {}
+        for sq in self._qname_with_prefixes(struct_qn_m):
+            md = smap.get(sq) or {}
+            fn_qn = md.get(meth)
+            if fn_qn:
+                return str(fn_qn)
+
+        # If this Member-chain denotes a compile-time struct type ref (StructName.method),
+        # allow it even if `StructName` is a visible *global* binding. But if it is shadowed
+        # by a local/param, treat it as a runtime value.
+        is_struct_type_ref = False
+        try:
+            for sq in self._qname_with_prefixes(struct_qn_m):
+                if sq in (getattr(self, 'struct_fields', {}) or {}):
+                    if not base_localish:
+                        is_struct_type_ref = True
+                    break
+        except Exception:
+            is_struct_type_ref = False
+
+        # Import-alias base: treat as namespace unless shadowed by local/param.
+        aliases0 = getattr(self, 'import_aliases', None) or {}
+        if base0 in aliases0 and not base_localish:
+            for cand in self._qname_with_prefixes(full_m):
+                if self._qname_exists(cand):
+                    return cand
+            return None
+
+        # Struct type ref: only if it resolves.
+        if is_struct_type_ref:
+            for cand in self._qname_with_prefixes(full_m):
+                if self._qname_exists(cand):
+                    return cand
+            return None
+
+        # Otherwise: if base is a visible runtime binding, keep it dynamic.
+        if b0 is not None:
+            return None
+
+        # Unbound base: treat as qualified only if it resolves.
+        for cand in self._qname_with_prefixes(full_m):
+            if self._qname_exists(cand):
+                return cand
+
+        return None
+
+    def _type_query_qname(self, expr: Any) -> Optional[str]:
+        """Resolve a type identifier without treating a shadowing value as a type."""
+        if isinstance(expr, self.ml.Var):
+            name = self._qualify_identifier(str(expr.name), expr)
+            binding = self.resolve_binding(name)
+            if binding is not None and binding.kind != 'global':
+                return None
+        return self._qname_of(expr)
+
+    def _typeof_fold_arg(self, e: Any) -> Any:
+        """Return the arg of a direct typeof(x) call that lowers to the generic fn_typeof path, else None."""
+        ml = self.ml
+        if not isinstance(e, ml.Call):
+            return None
+        callee = getattr(e, 'callee', None)
+        if not isinstance(callee, ml.Var):
+            return None
+        if str(getattr(callee, 'name', '')) != 'typeof':
+            return None
+        args = getattr(e, 'args', None)
+        if not isinstance(args, (list, tuple)) or len(args) != 1:
+            return None
+        # Leave invalid named builtin calls on the normal diagnostic path.
+        if any(name is not None for name in (getattr(e, 'arg_names', []) or [])):
+            return None
+        # A declaration may normalize defaults or resolve inside a namespace;
+        # it must retain the ordinary call path rather than builtin semantics.
+        call_name = self._qname_of(callee)
+        if call_name != 'typeof' or call_name in (getattr(self, 'user_functions', {}) or {}):
+            return None
+        arg = args[0]
+        known = self._opt_try_known_type_label(arg, detailed=False)
+        if isinstance(known, str) and known:
+            return None
+        arg_name = self._type_query_qname(arg)
+        if arg_name is not None:
+            if arg_name in self.struct_fields:
+                return None
+            if hasattr(self, 'enum_id') and arg_name in getattr(self, 'enum_id', {}):
+                return None
+            if '.' in arg_name:
+                parts = arg_name.split('.')
+                base = self._apply_import_alias('.'.join(parts[:-1]))
+                if (base in getattr(self, 'enum_id', {})
+                        and parts[-1] in getattr(self, 'enum_variants', {}).get(base, [])):
+                    return None
+        return arg
+
+    def _typeof_fold_literal(self, e: Any) -> str:
+        """Return the primitive type name when an expression is a string literal that runtime typeof can return through tag or object-type checks."""
+        ml = self.ml
+        if not isinstance(e, ml.Str):
+            return ''
+        lit = getattr(e, 'value', None)
+        if not isinstance(lit, str):
+            return ''
+        if lit in ('int', 'bool', 'float', 'string', 'array', 'bytes', 'function', 'thread', 'struct', 'enum', 'void'):
+            return lit
+        return ''
+
+    def _emit_typeof_literal_check(self, arg: Any, lit: str) -> None:
+        """Emit a direct `typeof(<arg>) == "<lit>"` check: value tag and, for pointer types, object-type checks replace the fn_typeof call and the generic equality cascade."""
+        a = self.asm
+        eid = self.new_label_id()
+        l_false = f"tolf_false_{eid}"
+        l_true = f"tolf_true_{eid}"
+        l_done = f"tolf_done_{eid}"
+
+        self.emit_expr(arg)
+        a.mov_r64_r64('r10', 'rax')
+        a.and_r64_imm('r10', 7)
+
+        if lit in ('int', 'bool', 'void', 'enum'):
+            tag = TAG_INT
+            if lit == 'bool':
+                tag = TAG_BOOL
+            elif lit == 'void':
+                tag = TAG_VOID
+            elif lit == 'enum':
+                tag = TAG_ENUM
+            a.cmp_r64_imm('r10', tag)
+            a.setcc_al('e')
+            a.movzx_eax_al()
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_BOOL)
+            return
+
+        if lit == 'float':
+            a.cmp_r64_imm('r10', TAG_FLOAT)
+            a.jcc('e', l_true)
+            a.cmp_r64_imm('r10', TAG_PTR)
+            a.jcc('ne', l_false)
+            a.mov_r32_membase_disp('edx', 'rax', 0)
+            a.cmp_r32_imm('edx', OBJ_FLOAT)
+            a.jcc('e', l_true)
+        else:
+            a.cmp_r64_imm('r10', TAG_PTR)
+            a.jcc('ne', l_false)
+            a.mov_r32_membase_disp('edx', 'rax', 0)
+            if lit == 'string':
+                a.cmp_r32_imm('edx', OBJ_STRING)
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+            elif lit == 'bytes':
+                a.cmp_r32_imm('edx', OBJ_BYTES)
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+            elif lit == 'thread':
+                a.cmp_r32_imm('edx', OBJ_THREAD)
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+            elif lit == 'array':
+                a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
+                a.jcc('e', l_true)
+                a.cmp_r32_imm('edx', OBJ_ARRAY)
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+            elif lit == 'function':
+                a.cmp_r32_imm('edx', OBJ_FUNCTION)
+                a.jcc('e', l_true)
+                a.cmp_r32_imm('edx', OBJ_CLOSURE)
+                a.jcc('e', l_true)
+                a.cmp_r32_imm('edx', OBJ_BUILTIN)
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+            else:
+                a.cmp_r32_imm('edx', OBJ_STRUCTTYPE)
+                a.jcc('e', l_true)
+                a.cmp_r32_imm('edx', OBJ_STRUCT)
+                a.jcc('ne', l_false)
+                a.mov_r32_membase_disp('edx', 'rax', 4)
+                a.cmp_r32_imm('edx', ERROR_STRUCT_ID)
+                a.setcc_al('ne')
+                a.movzx_eax_al()
+                a.jmp(l_done)
+
+        a.mark(l_false)
+        a.xor_r32_r32('eax', 'eax')
+        if lit in ('float', 'array', 'function', 'struct'):
+            a.jmp(l_done)
+            a.mark(l_true)
+            a.xor_r32_r32('eax', 'eax')
+            a.inc_r32('eax')
+        a.mark(l_done)
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_BOOL)
 
     def emit_expr(self, e: Any) -> None:
         """Emit code so that RAX contains the Value."""
@@ -3495,6 +3817,13 @@ class CodegenExpr:
                 return None
 
             parts = _qname_parts(e)
+            # A local/parameter can shadow a namespace, enum or struct name.
+            # Preserve the runtime field read before considering any static
+            # enum, method or qualified-declaration fast path.
+            if parts:
+                base_binding = self.resolve_binding(parts[0])
+                if base_binding is not None and base_binding.kind != 'global':
+                    parts = None
             if parts is not None and len(parts) >= 2:
                 enum_qname = ".".join(parts[:-1])
                 variant = parts[-1]
@@ -3997,6 +4326,24 @@ class CodegenExpr:
                     a.mark(lbl_rfalse)
                     a.mov_rax_imm64(enc_bool(False))
                     a.mark(lbl_end)
+                    return
+
+            # Fold `typeof(<expr>) == "<primitive>"` (either side) into direct
+            # tag and object-type checks, skipping the fn_typeof call and the
+            # generic equality cascade.
+            if e.op in ('==', '!='):
+                ty_arg = self._typeof_fold_arg(e.left)
+                ty_lit = ''
+                if ty_arg is not None:
+                    ty_lit = self._typeof_fold_literal(e.right)
+                else:
+                    ty_arg = self._typeof_fold_arg(e.right)
+                    if ty_arg is not None:
+                        ty_lit = self._typeof_fold_literal(e.left)
+                if ty_arg is not None and ty_lit != '':
+                    self._emit_typeof_literal_check(ty_arg, ty_lit)
+                    if e.op == '!=':
+                        a.xor_r64_imm('rax', 8)
                     return
 
             # Normal binary expressions may nest calls, indexing, and helper paths
@@ -5228,184 +5575,13 @@ class CodegenExpr:
                 except Exception:
                     pass
 
-            def _has_global_prefix(base: str) -> bool:
-                # Returns True if any known global symbol starts with "<base>."
-                try:
-                    pref = str(base) + "."
-                except Exception:
-                    return False
-                for pool_name in ("user_functions", "extern_sigs", "struct_fields", "enum_id"):
-                    pool = getattr(self, pool_name, None) or {}
-                    try:
-                        for k in pool.keys():
-                            if isinstance(k, str) and k.startswith(pref):
-                                return True
-                    except Exception:
-                        continue
-                return False
-
-            # Support qualified-name calls like fubar.a() and fubar.Point(...).
-            # The frontend may encode these either as Var('fubar.a') or as a Member-chain
-            # (Member(Var('fubar'), 'a')). We flatten Member-chains here.
-            def _qname_exists(qn: str) -> bool:
-                if not isinstance(qn, str) or not qn:
-                    return False
-                try:
-                    if qn in (getattr(self, 'user_functions', {}) or {}):
-                        return True
-                    if qn in (getattr(self, 'extern_sigs', {}) or {}):
-                        return True
-                    if qn in (getattr(self, 'struct_fields', {}) or {}):
-                        return True
-                    # Enum variants are compile-time qualified values too. The
-                    # self-hosted resolver can reach them through its member
-                    # fallback; recognizing them here keeps the stricter Python
-                    # shadowing checks while selecting the same type-query fast
-                    # path for namespaced Enum.Variant expressions.
-                    if '.' in qn:
-                        enum_base, enum_variant = qn.rsplit('.', 1)
-                        enum_base = self._apply_import_alias(enum_base)
-                        if (enum_base in (getattr(self, 'enum_id', {}) or {})
-                                and enum_variant in (getattr(self, 'enum_variants', {}) or {}).get(enum_base, [])):
-                            return True
-                    if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
-                        return self.resolve_binding(qn) is not None
-                except Exception:
-                    return False
-                return False
-
-            def _qname_with_prefixes(qn: str) -> List[str]:
-                # Try exact, then current function prefix, then current file package prefix.
-                cands: List[str] = [qn]
-                try:
-                    qpref = str(getattr(self, 'current_qname_prefix', '') or '')
-                except Exception:
-                    qpref = ''
-                try:
-                    fpref = str(getattr(self, 'current_file_prefix', '') or '')
-                except Exception:
-                    fpref = ''
-                if qpref and not qpref.endswith('.'):
-                    qpref += '.'
-                if fpref and not fpref.endswith('.'):
-                    fpref += '.'
-                if qpref and not qn.startswith(qpref):
-                    cands.append(qpref + qn)
-                if fpref and not qn.startswith(fpref):
-                    cands.append(fpref + qn)
-                return cands
-
-            def _qname_of(expr: Any) -> Optional[str]:
-                """Resolve compile-time qualified-name calls (Var or Member-chain).
-
-                Returns a qualified name only when it can be resolved to a known
-                callable/decl (function/extern/struct/const binding). This avoids
-                misclassifying real runtime member calls as namespace calls when
-                an identifier collides with an import alias.
-                """
-                if expr is None:
-                    return None
-
-                if isinstance(expr, ml.Var):
-                    return self._qualify_identifier(str(expr.name), expr)
-
-                if not (hasattr(ml, 'Member') and isinstance(expr, ml.Member)):
-                    return None
-
-                def _qname_parts(expr2: Any) -> Optional[List[str]]:
-                    if isinstance(expr2, ml.Var):
-                        nm2 = str(getattr(expr2, 'name', ''))
-                        return nm2.split('.') if '.' in nm2 else [nm2]
-                    if hasattr(ml, 'Member') and isinstance(expr2, ml.Member):
-                        tgt2 = getattr(expr2, 'target', None)
-                        if tgt2 is None:
-                            tgt2 = getattr(expr2, 'obj', None)
-                        base2 = _qname_parts(tgt2)
-                        if base2 is None:
-                            return None
-                        nm2 = getattr(expr2, 'name', None)
-                        if nm2 is None:
-                            nm2 = getattr(expr2, 'field', None)
-                        if nm2 is None:
-                            return None
-                        return base2 + [str(nm2)]
-                    return None
-
-                parts2 = _qname_parts(expr)
-                if not parts2:
-                    return None
-
-                full = ".".join(parts2)
-                full_m = self._apply_import_alias(full)
-
-                # Binding/shadowing check on the left-most identifier.
-                base0 = parts2[0]
-                b0 = None
-                if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
-                    try:
-                        b0 = self.resolve_binding(base0)
-                    except Exception:
-                        b0 = None
-                kind0 = getattr(b0, 'kind', None)
-                base_localish = (b0 is not None) and (kind0 is not None) and (kind0 != 'global')
-
-                # Static struct method reference: StructName.method -> hoisted static function
-                struct_qn = ".".join(parts2[:-1])
-                meth = parts2[-1]
-                struct_qn_m = self._apply_import_alias(struct_qn)
-                smap = getattr(self, 'struct_static_methods', {}) or {}
-                for sq in _qname_with_prefixes(struct_qn_m):
-                    md = smap.get(sq) or {}
-                    fn_qn = md.get(meth)
-                    if fn_qn:
-                        return str(fn_qn)
-
-                # If this Member-chain denotes a compile-time struct type ref (StructName.method),
-                # allow it even if `StructName` is a visible *global* binding. But if it is shadowed
-                # by a local/param, treat it as a runtime value.
-                is_struct_type_ref = False
-                try:
-                    for sq in _qname_with_prefixes(struct_qn_m):
-                        if sq in (getattr(self, 'struct_fields', {}) or {}):
-                            if not base_localish:
-                                is_struct_type_ref = True
-                            break
-                except Exception:
-                    is_struct_type_ref = False
-
-                # Import-alias base: treat as namespace unless shadowed by local/param.
-                aliases0 = getattr(self, 'import_aliases', None) or {}
-                if base0 in aliases0 and not base_localish:
-                    for cand in _qname_with_prefixes(full_m):
-                        if _qname_exists(cand):
-                            return cand
-                    return None
-
-                # Struct type ref: only if it resolves.
-                if is_struct_type_ref:
-                    for cand in _qname_with_prefixes(full_m):
-                        if _qname_exists(cand):
-                            return cand
-                    return None
-
-                # Otherwise: if base is a visible runtime binding, keep it dynamic.
-                if b0 is not None:
-                    return None
-
-                # Unbound base: treat as qualified only if it resolves.
-                for cand in _qname_with_prefixes(full_m):
-                    if _qname_exists(cand):
-                        return cand
-
-                return None
-
             callee_expr = getattr(e, 'callee', None)
             if callee_expr is None:
                 callee_expr = getattr(e, 'func', None)
 
             # Native Thread object methods. They intentionally share the member-call
             # spelling with user structs but dispatch by the reserved OBJ_THREAD id.
-            if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
+            if isinstance(callee_expr, ml.Member) and self._qname_of(callee_expr) is None:
                 mname = str(getattr(callee_expr, 'name', getattr(callee_expr, 'field', '')) or '')
                 thread_methods = {
                     'Start': ((0, 1), 'fn_thread_start'),
@@ -5490,7 +5666,7 @@ class CodegenExpr:
 
             # --- OOP-style struct methods: obj.method(args...)  (implicit `this`) ---
             # Compiled as dynamic dispatch on receiver.struct_id -> direct call of the hoisted method function.
-            if isinstance(callee_expr, ml.Member) and _qname_of(callee_expr) is None:
+            if isinstance(callee_expr, ml.Member) and self._qname_of(callee_expr) is None:
                 mname = getattr(callee_expr, 'name', None)
                 if mname is None:
                     mname = getattr(callee_expr, 'field', None)
@@ -5696,7 +5872,7 @@ class CodegenExpr:
 
                         return
 
-            callee_name = _qname_of(callee_expr) if callee_expr is not None else None
+            callee_name = self._qname_of(callee_expr) if callee_expr is not None else None
             if callee_name is not None:
                 callee_name = self._apply_import_alias(str(callee_name))
 
@@ -5775,7 +5951,7 @@ class CodegenExpr:
             if callee_name == 'Thread':
                 if len(call_args) not in (1, 2):
                     raise self.error(f"Thread expects 1 function and an optional logical id, got {len(call_args)} arguments", e)
-                fn_qn = _qname_of(call_args[0])
+                fn_qn = self._qname_of(call_args[0])
                 fn_def = (getattr(self, 'user_functions', {}) or {}).get(str(fn_qn)) if fn_qn else None
                 if fn_def is None:
                     raise self.error('Thread expects a top-level function name', call_args[0])
@@ -7330,7 +7506,7 @@ class CodegenExpr:
                     a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return
-                arg_name = _qname_of(arg)
+                arg_name = self._type_query_qname(arg)
                 if arg_name is not None:
                     arg_name = self._apply_import_alias(str(arg_name))
                 # Special case: typeof(<struct_name>) should be "struct".
@@ -7364,7 +7540,7 @@ class CodegenExpr:
                     a.mark(f'known_type_label_fast_{self.new_label_id()}')
                     a.lea_rax_rip(known_lbl)
                     return
-                arg_name = _qname_of(arg)
+                arg_name = self._type_query_qname(arg)
                 if arg_name is not None:
                     arg_name = self._apply_import_alias(str(arg_name))
 

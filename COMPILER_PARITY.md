@@ -1,5 +1,27 @@
 # Compiler parity and self-hosting
 
+## 1.3.5 release verification — 13 November 2026
+
+The [type-query optimization and repairs](docs/reports/TYPEOF_FOLDING_2026-11-13.md)
+retain the 1.3.4 loop fix and add inline-error and namespace-shadowing regressions.
+See the [release matrix](docs/reports/release-1.3.5-version-matrix.json).
+
+Windows Python bootstrap, native MLO stage 2, monolithic stage 3 and Linux-host
+crossbuild are byte-identical (63,586,816 bytes):
+
+    SHA-256: 99d76b807a91d2b15fff2a564174dd7a43bbf475c04283d89e42bee304997f31
+
+Linux Python bootstrap, Windows-host crossbuild and Linux-native selfbuild
+are byte-identical (63,609,040 bytes):
+
+    SHA-256: d58bf7cf2a6f5f50be062aaf45f54f768967744fa151e215b9774de518cf6539
+
+Both version flags and MINILANG_VERSION report 1.3.5. Passed: 227 Python
+integration checks, 45 unit tests (one optional NASM skip), 143 native harness
+tests, 257 outer steps, 156 focused images, 132 OOP images and 192 incremental
+checks. All 53 std sources and 351 generated std documents agree. MiniDoc
+reports no warnings. Final Python rebootstrap checks reproduce both hashes.
+
 ## 1.3.4 release verification — 13 November 2026
 
 The [conditional-loop repair and evaluation](docs/reports/LOOP_PARITY_2026-11-13.md)

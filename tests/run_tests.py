@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.4"
+    expected = "MiniLang Compiler 1.3.5"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4286,7 +4286,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.4", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.5", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4391,6 +4391,16 @@ def main() -> int:
         name="static struct member diagnostics",
         mlc_runner=mlc_runner, entry_ml=tests_root / "static_struct_member_invalid.ml",
         must_contain_err="Struct 'Player' has no member 'missing'"))
+
+    for fixture, marker in (
+        ("typeof_literal_checks.ml", "[OK] 1012 direct typeof"),
+        ("type_query_resolution.ml", "[OK] qualified and shadowed type queries"),
+        ("typeof_declared_call.ml", "[OK] declared typeof calls"),
+        ("inline_error_boundaries.ml", "[OK] inline error boundaries"),
+    ):
+        tests.append(lambda fixture=fixture, marker=marker: test_program_no_fail(
+            name=fixture, mlc_runner=mlc_runner, ml_path=tests_root / fixture,
+            must_contain=[marker], timeout_compile_s=180, timeout_run_s=30))
 
     if language_extensions_ml is not None:
         tests.append(lambda: test_program_no_fail(
@@ -4501,6 +4511,7 @@ def main() -> int:
         ("language iterator rejects value returns", "language_iterator_return.ml", "use yield"),
         ("language lazy iterator rejects suspended synchronization", "language_lazy_iterator_invalid.ml", "yield inside match/switch or synchronized"),
         ("language named arguments reject duplicates", "language_named_argument_error.ml", "supplied more than once"),
+        ("typeof comparisons reject named builtin arguments", "typeof_named_argument_error.ml", "Named arguments require"),
         ("language lambda rejects unresolved call-shape metadata", "language_lambda_parameter_error.ml", "Lambda parameters do not support"),
         ("operator declarations reject logical short-circuit operators", "operator_invalid_and.ml", "Expected a supported operator"),
         ("operator declarations require the owning struct as their first operand", "operator_invalid_owner.ml", "first operator operand"),
