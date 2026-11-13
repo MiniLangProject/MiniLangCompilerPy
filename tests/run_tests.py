@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.3"
+    expected = "MiniLang Compiler 1.3.4"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -3604,6 +3604,17 @@ def test_codegen_optimization_bundle(*, name: str, mlc_runner: Path) -> TestResu
             return TestResult(name=name, status="FAIL",
                               details="multi-use dynamic loop was not versioned")
 
+        for loop_name in ("elif_index_loop", "byte_elif_index_loop", "case_value_index_loop",
+                          "case_lower_index_loop", "case_upper_index_loop", "nested_index_loop"):
+            loop_asm = function_block(loop_name)
+            if not loop_asm or "for_slow_top_" not in loop_asm:
+                return TestResult(name=name, status="FAIL",
+                                  details="conditional indexed uses were missed: " + loop_name)
+        rebound_asm = function_block("rebound_index_loop")
+        if not rebound_asm or "for_slow_top_" in rebound_asm:
+            return TestResult(name=name, status="FAIL",
+                              details="rebound container was incorrectly versioned")
+
         negative_index_asm = function_block("fixed_negative_index")
         if ("idx_fast_array_" not in negative_index_asm
                 or "idx_fast_nonnegative_" not in negative_index_asm
@@ -4275,7 +4286,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.3", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.4", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(

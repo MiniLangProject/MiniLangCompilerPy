@@ -1,5 +1,13 @@
 # Array loop versioning use-count gate — 12 November 2026
 
+Follow-up, 13 November: a wider audit found a cross-compiler byte-parity
+regression for indexed reads in else-if conditions and switch case expressions.
+The original fixtures below did not cover those locations. Release 1.3.4
+corrects that traversal and replaces the per-use native records with one
+counter per container; see the [follow-up evaluation](LOOP_PARITY_2026-11-13.md).
+The measurements and implementation description below refer to the earlier
+development commits.
+
 The 30 October experiments report left the dynamic array loop profitability
 heuristic as worth improving: the guarded fast/empty split for dynamically
 sized arrays duplicated loop bodies whose cost slowed the full compiler

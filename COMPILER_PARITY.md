@@ -1,5 +1,28 @@
 # Compiler parity and self-hosting
 
+## 1.3.4 release verification — 13 November 2026
+
+The [conditional-loop repair and evaluation](docs/reports/LOOP_PARITY_2026-11-13.md)
+restores the byte-parity failure introduced in the post-1.3.3 use-count gate.
+The [release matrix](docs/reports/release-1.3.4-version-matrix.json) records
+seven full compiler builds and the regression evidence.
+
+Windows Python bootstrap, native MLO stage 2, monolithic stage 3 and
+Linux-host crossbuild are byte-identical (65,873,408 bytes):
+
+    SHA-256: f531d4aee1d2361ee45e92f016f6ed016dc39567969c847f680980b96bc2b9d0
+
+Linux Python bootstrap, Windows-host crossbuild and Linux-native selfbuild
+are byte-identical (65,890,480 bytes):
+
+    SHA-256: c28bceee3c5d8d5730c133d7d0ab789848e7dd975cf20d88285e12d464b775c1
+
+Both version flags and MINILANG_VERSION report 1.3.4. Validation passed:
+222 Python integration tests, 45 unit tests (one optional NASM skip),
+138 native harness tests, 249 outer steps, 84 focused runtime/parity images,
+132 OOP images and 192 incremental checks. All 53 std sources and 351
+generated std documentation files agree. MiniDoc produced no warnings.
+
 ## 1.3.3 release verification — 9 November 2026
 
 Both compilers include the measured November allocation and generated-code

@@ -8,13 +8,14 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.3.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.4.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.3 reduces temporary compiler allocations and improves generated
-code for bounded string concatenations, nonescaping local structs with typed
-fields, and decoded byte slices. Recompile applications to use these automatic
-optimizations. The [measured results](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md)
-describe eligible code, benchmark gains and their limits.
+Version 1.3.4 aligns conditional array/byte-loop optimization between the
+Python and native compilers, keeps small single-use loops compact, and
+reduces temporary allocation in the native loop analysis. Native register
+lookup also uses length-based dispatch. See the [compatibility and performance
+evaluation](docs/reports/LOOP_PARITY_2026-11-13.md) for measurements, regression
+coverage, and the limits of the results.
 
 ## Quick start
 
@@ -127,7 +128,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.3 verification matrix](docs/reports/release-1.3.3-version-matrix.json).
+[1.3.4 verification matrix](docs/reports/release-1.3.4-version-matrix.json).
 
 ## Documentation and development
 

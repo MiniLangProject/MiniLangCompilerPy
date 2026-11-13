@@ -230,6 +230,120 @@ function multi_use_dynamic_loop(values as array) returns int
   return values[0]
 end function
 
+// Control-flow expressions participate in the same indexed-use count as
+// ordinary statements. Each fast path must retain an empty-input fallback.
+function elif_index_loop(values as array, mode as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    if mode < 0 then
+      total += 10
+    else if values[i] > 1 then
+      total += 1
+    end if
+  end for
+  return total
+end function
+
+function byte_elif_index_loop(values as bytes, mode as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    if mode < 0 then
+      total += 10
+    else if values[i] > 1 then
+      total += 1
+    end if
+  end for
+  return total
+end function
+
+function case_value_index_loop(values as array, key as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    switch key
+      case values[i]
+        total += 1
+        break
+      end case
+      case default
+        total += 2
+        break
+      end case
+    end switch
+  end for
+  return total
+end function
+
+function case_lower_index_loop(values as array, key as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    switch key
+      case values[i] to 3
+        total += 1
+        break
+      end case
+      case default
+        total += 2
+        break
+      end case
+    end switch
+  end for
+  return total
+end function
+
+function case_upper_index_loop(values as array, key as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    switch key
+      case 1 to values[i]
+        total += 1
+        break
+      end case
+      case default
+        total += 2
+        break
+      end case
+    end switch
+  end for
+  return total
+end function
+
+// The first use can be in a nested body rather than an ordinary expression.
+function nested_index_loop(values as array, mode as int) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    if mode == 0 then
+      total += values[i]
+    else if values[i] > 1 then
+      switch mode
+        case values[i]
+          total += values[i]
+          break
+        end case
+      end switch
+    end if
+  end for
+  return total
+end function
+
+// Rebinding the container must disable hoisting even with several uses.
+function rebound_index_loop(values as array) returns int
+  total = 0
+  for i = 0 to len(values) - 1
+    total += values[i]
+    if i == 0 then
+      values = [4, 5, 6]
+    else if values[i] > 1 then
+      total += 1
+    end if
+  end for
+  return total
+end function
+
 function fixed_negative_index()
   values = [11, 22]
   return values[-1]
@@ -356,6 +470,20 @@ function main(args)
   t.assertEq(extended_type_flow(), 124, "extended local type flow and loop BCE")
   t.assertEq(single_use_dynamic_loop([1, 2, 3]), 6, "single-use dynamic loop keeps the checked path")
   t.assertEq(multi_use_dynamic_loop([1, 2, 3]), 2, "multi-use dynamic loop versioning")
+  t.assertEq(elif_index_loop([1, 2, 3], 0), 8, "else-if index use count")
+  t.assertEq(byte_elif_index_loop(bytes(3, 2), 0), 9, "byte else-if index use count")
+  t.assertEq(case_value_index_loop([1, 2, 3], 2), 11, "case value index use count")
+  t.assertEq(case_lower_index_loop([1, 2, 3], 2), 10, "case lower bound index use count")
+  t.assertEq(case_upper_index_loop([1, 2, 3], 2), 10, "case upper bound index use count")
+  t.assertEq(nested_index_loop([1, 2, 3], 0), 6, "nested indexed body")
+  t.assertEq(nested_index_loop([1, 2, 3], 2), 2, "nested indexed case")
+  t.assertEq(rebound_index_loop([1, 2, 3]), 14, "rebinding disables loop hoisting")
+  t.assertEq(typeof(try(elif_index_loop([], 0))), "error", "empty else-if retains bounds checks")
+  t.assertEq(typeof(try(byte_elif_index_loop(bytes(0), 0))), "error", "empty bytes retain bounds checks")
+  t.assertEq(typeof(try(case_value_index_loop([], 2))), "error", "empty case value retains bounds checks")
+  t.assertEq(typeof(try(case_lower_index_loop([], 2))), "error", "empty case lower retains bounds checks")
+  t.assertEq(typeof(try(case_upper_index_loop([], 2))), "error", "empty case upper retains bounds checks")
+  t.assertEq(typeof(try(nested_index_loop([], 0))), "error", "empty nested body retains bounds checks")
   t.assertEq(fixed_negative_index(), 22, "negative fixed index keeps normalization")
   t.assertEq(checked_bytes_roundtrip("A"), 66, "checked bytes type flow read and write")
   t.assertEq(checked_bytes_value_flow("A"), 66, "checked bytes result type flows through locals")

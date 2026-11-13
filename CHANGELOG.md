@@ -2,6 +2,22 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.4 - 2026-11-13
+
+- Restore cross-compiler byte parity when indexed uses occur in else-if
+  conditions, switch case values, or either bound of a case range.
+- Count each container's indexed uses in one native analysis record instead
+  of allocating and copying a separate entry for every access.
+- Retain checked single-use dynamic loops; guard fast/slow loop versions
+  only when repeated indexed uses justify the duplicated code.
+- Dispatch native x64 register-name lookups by name length and inline the
+  small classification helpers; generated register encodings are unchanged.
+- Add runtime and structural regressions for conditional reads, nested
+  control flow, container rebinding, and empty array/byte fallbacks.
+- Rebuild and qualify both targets, refresh MiniDoc references and release
+  manifests, and document alternating before/after measurements in the
+  [evaluation](docs/reports/LOOP_PARITY_2026-11-13.md).
+
 ## 1.3.3 - 2026-11-09
 
 - Extend guarded string-concatenation fusion from three to eight pure operands
