@@ -1,0 +1,91 @@
+{
+  "version": "1.3.6",
+  "date": "2026-11-14",
+  "compilerImages": [
+    {
+      "file": "python-windows.exe",
+      "target": "windows-x64",
+      "method": "Python bootstrap, monolithic",
+      "bytes": 63625216,
+      "sha256": "d12b9dacc63a2affc9e4fb6a4bef61af16022789659531e0c048e2e2e4a9380b"
+    },
+    {
+      "file": "native-windows.exe",
+      "target": "windows-x64",
+      "method": "Windows self-hosted MLO",
+      "bytes": 63625216,
+      "sha256": "d12b9dacc63a2affc9e4fb6a4bef61af16022789659531e0c048e2e2e4a9380b"
+    },
+    {
+      "file": "native-windows-monolithic.exe",
+      "target": "windows-x64",
+      "method": "Windows self-hosted monolithic",
+      "bytes": 63625216,
+      "sha256": "d12b9dacc63a2affc9e4fb6a4bef61af16022789659531e0c048e2e2e4a9380b"
+    },
+    {
+      "file": "python-linux",
+      "target": "linux-x64",
+      "method": "Python bootstrap, monolithic",
+      "bytes": 63647824,
+      "sha256": "8b1abb5375e315e49fd5e1bdb292e1293930106e334194806f76229e2b33fd64"
+    },
+    {
+      "file": "windows-cross-linux",
+      "target": "linux-x64",
+      "method": "Windows self-hosted crossbuild MLO",
+      "bytes": 63647824,
+      "sha256": "8b1abb5375e315e49fd5e1bdb292e1293930106e334194806f76229e2b33fd64"
+    },
+    {
+      "file": "native-linux",
+      "target": "linux-x64",
+      "method": "Linux self-hosted MLO",
+      "bytes": 63647824,
+      "sha256": "8b1abb5375e315e49fd5e1bdb292e1293930106e334194806f76229e2b33fd64"
+    }
+  ],
+  "checks": {
+    "pythonIntegration": {
+      "passed": 228,
+      "failed": 0
+    },
+    "pythonUnit": {
+      "passed": 45,
+      "skipped": 1,
+      "failed": 0
+    },
+    "nativeHarness": {
+      "passed": 144,
+      "failed": 0
+    },
+    "nativeAdditionalSteps": {
+      "passed": 382,
+      "failed": 0
+    },
+    "oopParityImages": 144,
+    "minidocWarnings": 0
+  },
+  "sourceFingerprints": {
+    "MiniLangCompilerML": {
+      "files": 31,
+      "sha256": "774f6597a69766c7df63c8b0f213d01c26d3b4b2383ee5ba45a7fc27818ef3d5"
+    },
+    "MiniLangCompilerPy": {
+      "files": 30,
+      "sha256": "ed22ff3bae7dde162bb05f7b362944c52ec12951a383b76e92e47366537f4a53"
+    },
+    "sharedStd": {
+      "files": 53,
+      "sha256": "3e9faaa0b69fbbb93d3fae356fa46c2ba9cc70b6ceea4c586d41eeaf207efcfa"
+    }
+  },
+  "keySourceSha256": {
+    "ML_codegen_expr": "005967b62bd124e582bbbd0f6d9684f7ce6cd017704f87c83232f08479441088",
+    "ML_codegen_stmt": "f188e21940a70a844ffe6ba2c2152ba8f71d66364a034f73857bc4a3bd6037f1",
+    "PY_codegen_expr": "28233ffdba2da92d9be86f669705e525cc6222d4042a737513327970ce30f884",
+    "PY_codegen_stmt": "d0af5ba5e296b9338fb1ef83195a2cbf4a8150d5ccb55d04ce822dd95b837c57"
+  },
+  "sourceHashEncoding": "UTF-8 source bytes normalized to LF; aggregate includes sorted relative paths and NUL delimiters",
+  "performanceEvidence": "OOP_DISPATCH_2026-11-14.md"
+}

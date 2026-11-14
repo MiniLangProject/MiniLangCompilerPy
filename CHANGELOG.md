@@ -2,6 +2,17 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.6 - 2026-11-14
+
+- Generate checked direct method calls for one or two possible receiver classes,
+  retaining the inline cache for larger polymorphic sets.
+- Use guarded, exact class parameter types for direct calls when the class has
+  no descendants. Preserve virtual dispatch for polymorphic bases.
+- Preserve outgoing stack arguments during Python-backend dynamic method calls
+  with more than eight total arguments, restoring native compiler byte parity.
+- Add OOP regressions, Windows/Linux parity checks, and compiler/runtime
+  measurements in the [evaluation](docs/reports/OOP_DISPATCH_2026-11-14.md).
+
 ## 1.3.5 - 2026-11-13
 
 - Lower direct `typeof(expression)` comparisons with primitive string literals

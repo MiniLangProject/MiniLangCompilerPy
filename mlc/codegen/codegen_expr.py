@@ -5750,13 +5750,16 @@ class CodegenExpr:
                         cache_sid1_lbl = f"mcall_ic_sid1_{fid}"
                         cache_pad1_lbl = f"mcall_ic_sid1pad_{fid}"
                         cache_code1_lbl = f"mcall_ic_code1_{fid}"
-                        self.data.pad_align(8)
-                        self.data.add_u32(cache_sid0_lbl, 0xFFFFFFFF)
-                        self.data.add_u32(cache_pad0_lbl, 0)
-                        self.data.add_u64(cache_code0_lbl, 0)
-                        self.data.add_u32(cache_sid1_lbl, 0xFFFFFFFF)
-                        self.data.add_u32(cache_pad1_lbl, 0)
-                        self.data.add_u64(cache_code1_lbl, 0)
+                        # Small closed method sets use direct calls without a
+                        # writable cache; larger sets retain the two-entry PIC.
+                        if len(candidates) > 2:
+                            self.data.pad_align(8)
+                            self.data.add_u32(cache_sid0_lbl, 0xFFFFFFFF)
+                            self.data.add_u32(cache_pad0_lbl, 0)
+                            self.data.add_u64(cache_code0_lbl, 0)
+                            self.data.add_u32(cache_sid1_lbl, 0xFFFFFFFF)
+                            self.data.add_u32(cache_pad1_lbl, 0)
+                            self.data.add_u64(cache_code1_lbl, 0)
 
                         base = self.alloc_expr_temps(total * 8)
 
@@ -5776,6 +5779,21 @@ class CodegenExpr:
                             a.mov_r64_membase_disp("r8", "rsp", base + 2 * 8)
                         if total >= 4:
                             a.mov_r64_membase_disp("r9", "rsp", base + 3 * 8)
+                        # Arguments beyond the preallocated outgoing slots may
+                        # overlap a caller's live stack arguments. Match the
+                        # native backend's save/restore before using that space.
+                        dyn_stack_save_count = max(0, total - 8)
+                        dyn_stack_save_off = 0
+                        dyn_stack_save_alloc = False
+                        if dyn_stack_save_count:
+                            dyn_stack_save_off = self.alloc_expr_temps(dyn_stack_save_count * 8)
+                            if isinstance(dyn_stack_save_off, int) and dyn_stack_save_off > 0:
+                                dyn_stack_save_alloc = True
+                                for i in range(dyn_stack_save_count):
+                                    a.mov_r64_membase_disp("r10", "rsp", 0x40 + i * 8)
+                                    a.mov_membase_disp_r64("rsp", dyn_stack_save_off + i * 8, "r10")
+                            else:
+                                dyn_stack_save_count = 0
                         if total > 4:
                             for i in range(4, total):
                                 a.mov_r64_membase_disp("r10", "rsp", base + i * 8)
@@ -5795,64 +5813,76 @@ class CodegenExpr:
 
                         a.mov_r32_membase_disp("r10d", "r11", 4)  # struct_id
 
-                        # Small polymorphic inline cache: primary + secondary struct_id/code pair.
-                        a.mov_eax_rip_dword(cache_sid0_lbl)
-                        a.cmp_r32_r32("r10d", "eax")
-                        a.jcc("ne", l_ic_try1)
-                        a.mov_rax_rip_qword(cache_code0_lbl)
-                        a.test_r64_r64("rax", "rax")
-                        a.jcc("e", l_ic_try1)
-                        a.mov_r64_imm64("r10", enc_void())
-                        a.call_rax()
-                        a.jmp(l_done)
-
-                        a.mark(l_ic_try1)
-                        a.mov_eax_rip_dword(cache_sid1_lbl)
-                        a.cmp_r32_r32("r10d", "eax")
-                        a.jcc("ne", l_ic_miss)
-                        a.mov_rax_rip_qword(cache_code1_lbl)
-                        a.test_r64_r64("rax", "rax")
-                        a.jcc("e", l_ic_miss)
-                        a.mov_r64_imm64("r10", enc_void())
-                        a.call_rax()
-                        a.jmp(l_done)
-
-                        a.mark(l_ic_miss)
-                        # Keep the two hot receiver types in the inline cache;
-                        # use a balanced search for all remaining class IDs.
-                        def emit_candidate_search(entries):
-                            if not entries:
-                                a.jmp(l_fail)
-                                return
-                            middle = len(entries) // 2
-                            sid = entries[middle][0]
-                            a.cmp_r32_imm("r10d", sid)
-                            a.jcc("e", f"mcall_case_{fid}_{sid}")
-                            left = entries[:middle]
-                            right = entries[middle + 1:]
-                            left_label = f"mcall_left_{fid}_{sid}" if left else l_fail
-                            a.jcc("l", left_label)
-                            emit_candidate_search(right)
-                            if left:
-                                a.mark(left_label)
-                                emit_candidate_search(left)
-
-                        emit_candidate_search(candidates)
-
-                        for sid, fn_qn in candidates:
-                            l_case = f"mcall_case_{fid}_{sid}"
-                            a.mark(l_case)
+                        if len(candidates) <= 2:
+                            for index, (sid, fn_qn) in enumerate(candidates):
+                                last = index == len(candidates) - 1
+                                next_label = (l_fail if last else f"mcall_small_next_{fid}_{index}")
+                                a.cmp_r32_imm("r10d", sid)
+                                a.jcc("ne", next_label)
+                                a.mov_r64_imm64("r10", enc_void())
+                                a.call(f"fn_user_{fn_qn}")
+                                a.jmp(l_done)
+                                if not last:
+                                    a.mark(next_label)
+                        else:
+                            # Small polymorphic inline cache: primary + secondary struct_id/code pair.
                             a.mov_eax_rip_dword(cache_sid0_lbl)
-                            a.mov_rip_dword_eax(cache_sid1_lbl)
+                            a.cmp_r32_r32("r10d", "eax")
+                            a.jcc("ne", l_ic_try1)
                             a.mov_rax_rip_qword(cache_code0_lbl)
-                            a.mov_rip_qword_rax(cache_code1_lbl)
-                            a.mov_r32_r32("eax", "r10d")
-                            a.mov_rip_dword_eax(cache_sid0_lbl)
-                            a.lea_rax_rip(f"fn_user_{fn_qn}")
-                            a.mov_rip_qword_rax(cache_code0_lbl)
-                            a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
-                            a.call(f"fn_user_{fn_qn}")
+                            a.test_r64_r64("rax", "rax")
+                            a.jcc("e", l_ic_try1)
+                            a.mov_r64_imm64("r10", enc_void())
+                            a.call_rax()
                             a.jmp(l_done)
+
+                            a.mark(l_ic_try1)
+                            a.mov_eax_rip_dword(cache_sid1_lbl)
+                            a.cmp_r32_r32("r10d", "eax")
+                            a.jcc("ne", l_ic_miss)
+                            a.mov_rax_rip_qword(cache_code1_lbl)
+                            a.test_r64_r64("rax", "rax")
+                            a.jcc("e", l_ic_miss)
+                            a.mov_r64_imm64("r10", enc_void())
+                            a.call_rax()
+                            a.jmp(l_done)
+
+                            a.mark(l_ic_miss)
+                            # Keep the two hot receiver types in the inline cache;
+                            # use a balanced search for all remaining class IDs.
+                            def emit_candidate_search(entries):
+                                if not entries:
+                                    a.jmp(l_fail)
+                                    return
+                                middle = len(entries) // 2
+                                sid = entries[middle][0]
+                                a.cmp_r32_imm("r10d", sid)
+                                a.jcc("e", f"mcall_case_{fid}_{sid}")
+                                left = entries[:middle]
+                                right = entries[middle + 1:]
+                                left_label = f"mcall_left_{fid}_{sid}" if left else l_fail
+                                a.jcc("l", left_label)
+                                emit_candidate_search(right)
+                                if left:
+                                    a.mark(left_label)
+                                    emit_candidate_search(left)
+
+                            emit_candidate_search(candidates)
+
+                            for sid, fn_qn in candidates:
+                                l_case = f"mcall_case_{fid}_{sid}"
+                                a.mark(l_case)
+                                a.mov_eax_rip_dword(cache_sid0_lbl)
+                                a.mov_rip_dword_eax(cache_sid1_lbl)
+                                a.mov_rax_rip_qword(cache_code0_lbl)
+                                a.mov_rip_qword_rax(cache_code1_lbl)
+                                a.mov_r32_r32("eax", "r10d")
+                                a.mov_rip_dword_eax(cache_sid0_lbl)
+                                a.lea_rax_rip(f"fn_user_{fn_qn}")
+                                a.mov_rip_qword_rax(cache_code0_lbl)
+                                a.mov_r64_imm64("r10", enc_void())  # closure env (top-level methods)
+                                a.call(f"fn_user_{fn_qn}")
+                                a.jmp(l_done)
 
                         a.mark(l_fail)
                         self._emit_make_error_const(ERR_METHOD_NOT_FOUND,
@@ -5862,6 +5892,12 @@ class CodegenExpr:
                         self._emit_auto_errprop()
 
                         # --- GC safety: clear temps + outgoing stack args ---
+                        if dyn_stack_save_count:
+                            for i in range(dyn_stack_save_count):
+                                a.mov_r64_membase_disp("r10", "rsp", dyn_stack_save_off + i * 8)
+                                a.mov_membase_disp_r64("rsp", 0x40 + i * 8, "r10")
+                            if dyn_stack_save_alloc:
+                                self.free_expr_temps(dyn_stack_save_count * 8)
                         self.free_expr_temps(total * 8)
 
                         void_imm = enc_void()

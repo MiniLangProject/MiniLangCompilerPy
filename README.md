@@ -8,14 +8,13 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.5.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.6.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.5 emits direct tag/header checks for comparisons such as
-`typeof(value) == "int"`, avoiding temporary type-name comparisons. It also
-fixes qualified type lookup, shadowed namespace/enum members and error
-propagation inside inline functions. The conditional-loop parity repair from
-1.3.4 is retained. See the [correctness and performance evaluation](docs/reports/TYPEOF_FOLDING_2026-11-13.md)
-for measurements, regression coverage and limitations.
+Version 1.3.6 emits checked direct calls for one- and two-candidate OOP method
+sets and for exact class parameters. It also fixes dynamic calls with more than
+eight total arguments in the Python backend. See the
+[OOP evaluation](docs/reports/OOP_DISPATCH_2026-11-14.md) for parity,
+measurements and limitations. The 1.3.5 type-query optimization remains.
 
 ## Quick start
 
@@ -128,7 +127,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.5 verification matrix](docs/reports/release-1.3.5-version-matrix.json).
+[1.3.6 verification matrix](docs/reports/release-1.3.6-version-matrix.json).
 
 ## Documentation and development
 

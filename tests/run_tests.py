@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.5"
+    expected = "MiniLang Compiler 1.3.6"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4286,7 +4286,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.5", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.6", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4397,6 +4397,7 @@ def main() -> int:
         ("type_query_resolution.ml", "[OK] qualified and shadowed type queries"),
         ("typeof_declared_call.ml", "[OK] declared typeof calls"),
         ("inline_error_boundaries.ml", "[OK] inline error boundaries"),
+        ("oop_monomorphic_dispatch.ml", "[OK] monomorphic dispatch"),
     ):
         tests.append(lambda fixture=fixture, marker=marker: test_program_no_fail(
             name=fixture, mlc_runner=mlc_runner, ml_path=tests_root / fixture,

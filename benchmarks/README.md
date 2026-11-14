@@ -10,6 +10,21 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 # Native primitive benchmarks
 
+## OOP method dispatch
+
+`oop_dispatch.ml` measures one- and two-implementation method calls, a typed
+final-class parameter and an integer control on Windows and Linux. Compile the
+same source with preserved before/after compilers, then run on the target OS:
+
+```text
+python benchmarks/compare_oop_dispatch.py BEFORE AFTER --runs 15 --cpu 4 --output oop.json
+python benchmarks/generate_oop_call_sites.py build/oop_400_calls.ml
+```
+
+The generator creates 400 dynamic method-call sites for compiler-time and image
+size comparisons. Use `tests/bench_compiler_optimization.py` for alternating
+compiler builds. See the [measurement report](../docs/reports/OOP_DISPATCH_2026-11-14.md).
+
 ## Memory management
 
 `memory_management.ml` isolates small allocation churn, retained live graphs,

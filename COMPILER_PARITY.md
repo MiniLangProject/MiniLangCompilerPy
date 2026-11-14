@@ -1,5 +1,28 @@
 # Compiler parity and self-hosting
 
+## 1.3.6 release verification — 14 November 2026
+
+The [OOP dispatch evaluation](docs/reports/OOP_DISPATCH_2026-11-14.md)
+covers checked direct calls, argument preservation and runtime measurements.
+The [release matrix](docs/reports/release-1.3.6-version-matrix.json) records
+the final compiler images and their source fingerprints.
+
+Windows Python bootstrap and native MLO self-build are byte-identical
+(63,625,216 bytes):
+
+    SHA-256: d12b9dacc63a2affc9e4fb6a4bef61af16022789659531e0c048e2e2e4a9380b
+
+Linux Python bootstrap, Windows-host crossbuild and Linux-native MLO self-build
+are byte-identical (63,647,824 bytes):
+
+    SHA-256: 8b1abb5375e315e49fd5e1bdb292e1293930106e334194806f76229e2b33fd64
+
+Both version flags and `MINILANG_VERSION` report 1.3.6. The 228 Python
+integration checks pass; 45 unit tests pass with one optional skip.
+The native harness passes 144/144 tests with 382 additional successful steps;
+the final OOP matrix contains 144 byte-identical images. Results are recorded
+in the release matrix.
+
 ## 1.3.5 release verification — 13 November 2026
 
 The [type-query optimization and repairs](docs/reports/TYPEOF_FOLDING_2026-11-13.md)

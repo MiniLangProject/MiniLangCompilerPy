@@ -23,7 +23,7 @@ from .tools import u32, u64, extern_library_label_token
 from . import packing
 
 
-COMPILER_VERSION = "1.3.5"
+COMPILER_VERSION = "1.3.6"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 

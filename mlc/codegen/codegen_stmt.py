@@ -895,9 +895,21 @@ class CodegenStmt:
             if not ty or optional:
                 excluded.add(str(param))
                 continue
+            # A closed class/struct type is exact at the guarded function
+            # boundary. Seed it for direct method dispatch; descendants of a
+            # base class must retain virtual dispatch. The validation below
+            # still removes facts after incompatible local writes.
+            closed_struct = False
+            if isinstance(ty, str) and ty.lower() not in (
+                    'int', 'integer', 'float', 'bool', 'boolean', 'string', 'str',
+                    'array', 'bytes', 'function', 'thread', 'error', 'void'):
+                candidate = self._operator_declared_type_fact(ty, '', fn)
+                if isinstance(candidate, str) and candidate.startswith('struct:'):
+                    closed_struct = candidate[7:] not in (
+                        getattr(self, 'polymorphic_class_names', set()) or set())
             # Container contracts also seed loop layout facts without operator
             # overloads. The validation pass below still rejects later writes.
-            if operator_types_enabled or ty in ('array', 'bytes'):
+            if operator_types_enabled or ty in ('array', 'bytes') or closed_struct:
                 fact = self._operator_declared_type_fact(ty, '', fn)
                 if fact:
                     typed_param_facts[str(param)] = fact

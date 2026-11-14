@@ -120,10 +120,26 @@ The compiler currently infers nonpublic access through stable aliases and
 declared parameter types; a value whose class is only known at runtime cannot
 receive compile-time member-access validation.
 
+## Method dispatch and generated code
+
+When a method name and arity have one or two implementations in the complete
+program, the compiler checks the receiver's struct ID and calls the matching
+method directly. Larger method sets retain the two-entry polymorphic inline
+cache. A required typed parameter whose class has no descendants can also
+select a direct method call; a base class with descendants stays virtual.
+Arguments are evaluated in source order, and an invalid receiver still produces
+the ordinary catchable method error. Dynamic calls with more than eight total
+arguments preserve the caller's outgoing stack arguments in both compilers.
+
+See the [OOP dispatch evaluation](reports/OOP_DISPATCH_2026-11-14.md) for
+Windows/Linux runtime samples, compiler time, code size, memory and byte parity.
+
 ## Binary parity
 
 Starting with compiler 1.3.2, the Python and self-hosted compilers produce
 byte-identical Windows x64 and Linux x64 images for the OOP regression
 programs. This includes direct and first-class construction, method overrides,
 static methods, and inherited interfaces. The regression compares both build
-pipelines and runs each image.
+pipelines and runs a canonical image for each fixture and target. The current
+matrix includes single- and two-implementation dispatch, a nine-argument call,
+wrong-receiver errors and guarded typed parameters.
