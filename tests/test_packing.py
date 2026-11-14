@@ -55,11 +55,14 @@ class PackingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {'MINILANG_UPX': ''}):
             upx = Path(tmp) / 'trusted tool'
             upx.touch()
-            for args in (['--pack'], ['--pack=unknown'], ['--upx'], ['--upx', str(upx)],
+            for args in (['--pack=unknown'], ['--pack=upx'], ['--upx'], ['--upx', str(upx)],
                          ['--pack', '--unpack-exe'], ['--pack-exe', 'one', '--upx', str(upx)],
                          ['--pack', '--upx', str(upx), '--upx', str(upx)]):
                 with self.assertRaises(p.PackingError):
                     p.parse_options(args)
+            builtin = p.parse_options(['source.ml', 'app.exe', '--pack'])
+            self.assertEqual((builtin.mode, builtin.upx, builtin.method),
+                             ('compile', '', 'native'))
             with patch.dict(os.environ, {'MINILANG_UPX': str(upx)}):
                 parsed = p.parse_options(['source.ml', 'app.exe', '--pack=upx'])
                 self.assertEqual(parsed.mode, 'compile')

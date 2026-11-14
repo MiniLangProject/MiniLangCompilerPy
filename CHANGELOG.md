@@ -2,6 +2,14 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.7 - 2026-11-14
+
+- Add a dependency-free LZ4 executable packer for Windows x64 PE and Linux x64
+  ELF, with in-memory startup decompression and byte-exact restoration.
+- Keep UPX packing available explicitly via `--pack=upx`; ordinary `--pack`
+  requires no external executable. Verify Python/self-host byte parity and
+  Windows/Linux execution in the [evaluation](docs/reports/NATIVE_PACKING_2026-11-14.md).
+
 ## 1.3.6 - 2026-11-14
 
 - Generate checked direct method calls for one or two possible receiver classes,

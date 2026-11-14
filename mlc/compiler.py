@@ -23,7 +23,7 @@ from .tools import u32, u64, extern_library_label_token
 from . import packing
 
 
-COMPILER_VERSION = "1.3.6"
+COMPILER_VERSION = "1.3.7"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -2041,9 +2041,9 @@ def main(argv: List[str]) -> int:
     parser.add_argument('-version', '--version', action='version', version=COMPILER_VERSION_TEXT)
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output native image path')
-    parser.add_argument('--pack', action='store_true', help='pack the compiled image with UPX and exact-restoration metadata')
-    parser.add_argument('--upx', metavar='PATH', help='trusted UPX executable (or MINILANG_UPX)')
-    parser.epilog = 'Standalone: --pack-exe INPUT OUTPUT --upx PATH; --unpack-exe INPUT OUTPUT --upx PATH. Outputs must not exist.'
+    parser.add_argument('--pack', action='store_true', help='pack the compiled image without external tools')
+    parser.add_argument('--upx', metavar='PATH', help='optional legacy UPX executable')
+    parser.epilog = 'Standalone: --pack-exe INPUT OUTPUT; --unpack-exe INPUT OUTPUT. Use --pack=upx --upx PATH for legacy UPX packing.'
     object_pipeline_group = parser.add_mutually_exclusive_group()
     object_pipeline_group.add_argument('--object-pipeline', action='store_true',
                                        help='accepted for project parity; Python emits the equivalent monolithic image')

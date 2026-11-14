@@ -1,4 +1,4 @@
-"""Optional UPX packing with deterministic, byte-exact MiniLang restoration.
+"""Built-in packing plus optional legacy UPX with byte-exact restoration.
 
 UPX can normalize PE headers/import tables. A small checked overlay records
 changed 4-KiB blocks so --unpack-exe restores the original file, not merely an
@@ -12,6 +12,8 @@ import struct
 import subprocess
 import tempfile
 import zlib
+
+from . import native_packing
 
 MAGIC = b'MLPACK01'
 LIMIT = 1 << 30
@@ -29,6 +31,7 @@ class Options:
     args: list[str]
     mode: str = ''
     upx: str = ''
+    method: str = 'native'
 
 
 def parse_options(args):
@@ -41,11 +44,14 @@ def parse_options(args):
             if out.mode:
                 raise PackingError('packing modes are mutually exclusive')
             out.mode = {'--pack-exe': 'pack', '--unpack-exe': 'unpack'}.get(arg, 'compile')
+            if arg == '--pack=upx':
+                out.method = 'upx'
         elif arg == '--upx':
             i += 1
             if i >= len(args) or not args[i] or args[i].startswith('--') or out.upx:
                 raise PackingError('--upx requires one executable path')
             out.upx = args[i]
+            out.method = 'upx'
         elif arg.startswith('--pack='):
             raise PackingError('only --pack=upx is supported')
         else:
@@ -54,10 +60,11 @@ def parse_options(args):
     if out.upx and not out.mode:
         raise PackingError('--upx requires a packing mode')
     if out.mode:
-        out.upx = out.upx or os.environ.get('MINILANG_UPX', '')
-        if not out.upx or not Path(out.upx).is_file():
-            raise PackingError('set --upx PATH or MINILANG_UPX to a trusted UPX executable')
-        out.upx = str(Path(out.upx).resolve())
+        if out.method == 'upx':
+            out.upx = out.upx or os.environ.get('MINILANG_UPX', '')
+            if not out.upx or not Path(out.upx).is_file():
+                raise PackingError('set --upx PATH or MINILANG_UPX to a trusted UPX executable')
+            out.upx = str(Path(out.upx).resolve())
         if out.mode != 'compile' and len(out.args) != 2:
             raise PackingError('--pack-exe/--unpack-exe require INPUT OUTPUT')
     return out
@@ -147,7 +154,10 @@ def transform(source, destination, upx, *, unpack=False, replace=False):
         raise PackingError('only PE/ELF executables can be packed')
     if not unpack and original[-16:-8] == MAGIC:
         raise PackingError('input is already MiniLang-packed')
-    info = parse_overlay(original) if unpack else None
+    internal = not upx
+    if internal and unpack and original[-16:-8] == MAGIC:
+        raise PackingError('legacy UPX image requires --upx PATH')
+    info = parse_overlay(original) if unpack and not internal else None
     with tempfile.TemporaryDirectory(prefix=destination.name + '.mlpack-', dir=destination.parent) as folder:
         folder = Path(folder)
         payload, packed, roundtrip, result = (folder / n for n in ('payload.bin', 'packed.bin', 'roundtrip.bin', 'result.bin'))
@@ -161,7 +171,13 @@ def transform(source, destination, upx, *, unpack=False, replace=False):
             if process.returncode:
                 raise PackingError(f'UPX failed (exit {process.returncode}); destination unchanged')
 
-        if unpack:
+        if internal:
+            try:
+                output = (native_packing.unpack_image(original) if unpack
+                          else native_packing.pack_image(original))
+            except native_packing.NativePackingError as exc:
+                raise PackingError(str(exc)) from exc
+        elif unpack:
             payload.write_bytes(info[0])
             run('-d', '-o', roundtrip, payload)
             output = restore_image(read_image(roundtrip), info)

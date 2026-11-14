@@ -324,7 +324,8 @@ class CodegenCore:
                                    'SetConsoleOutputCP', 'FreeConsole', 'ExitProcess', 'VirtualAlloc', 'VirtualFree',
                                    'GetCommandLineW', 'LocalFree', 'WideCharToMultiByte',
                                    'CreateThread', 'WaitForSingleObject', 'CloseHandle', 'Sleep',
-                                   'InitializeCriticalSection', 'EnterCriticalSection', 'LeaveCriticalSection'],
+                                   'InitializeCriticalSection', 'EnterCriticalSection', 'LeaveCriticalSection',
+                                   'VirtualProtect'],
             MSVCRT: ['_gcvt', 'fmod'],
             'shell32.dll': ['CommandLineToArgvW'],
 

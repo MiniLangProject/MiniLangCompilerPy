@@ -8,13 +8,12 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.6.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.7.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.6 emits checked direct calls for one- and two-candidate OOP method
-sets and for exact class parameters. It also fixes dynamic calls with more than
-eight total arguments in the Python backend. See the
-[OOP evaluation](docs/reports/OOP_DISPATCH_2026-11-14.md) for parity,
-measurements and limitations. The 1.3.5 type-query optimization remains.
+Version 1.3.7 adds optional dependency-free Windows/Linux executable packing.
+Use `--pack` to enable it; see the [packing evaluation](docs/reports/NATIVE_PACKING_2026-11-14.md)
+for size, startup and byte-parity measurements. The 1.3.6 OOP improvements
+remain available.
 
 ## Quick start
 
@@ -127,7 +126,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.6 verification matrix](docs/reports/release-1.3.6-version-matrix.json).
+[1.3.7 verification matrix](docs/reports/release-1.3.7-version-matrix.json).
 
 ## Documentation and development
 
@@ -141,6 +140,10 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Native crypto, checksums and CPU features | [Native primitives](docs/NATIVE_PRIMITIVES.md) |
 | Compression and platform services | [Platform services](docs/PLATFORM_SERVICES.md) |
 | Executable packing | [Packing guide](docs/EXECUTABLE_PACKING.md) |
+
+Use `--pack` for optional dependency-free PE/ELF packing. Packed programs
+decompress their code in memory at startup; the measured size and startup
+tradeoff is in the [evaluation](docs/reports/NATIVE_PACKING_2026-11-14.md).
 | Generated `std` API | [MiniDoc output](docs/api/std/markdown/README.md) |
 | Changes and releases | [Changelog](CHANGELOG.md) · [Releases](https://github.com/MiniLangProject/MiniLangCompilerPy/releases) |
 
