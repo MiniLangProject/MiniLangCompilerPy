@@ -2,6 +2,14 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.8 - 2026-11-14
+
+- Add method facades to `std.io.file.FileHandle` and `std.tls.Stream`, plus
+  optional owned `std.net.TcpConnection`, `TcpListener` and `UdpSocket` wrappers.
+  Existing functional APIs remain available in both identical standard libraries.
+- Qualify the Linux file-close import to avoid collisions with user callbacks;
+  cover ownership, closed-state errors, Windows/Linux behavior and performance.
+
 ## 1.3.7 - 2026-11-14
 
 - Add a dependency-free LZ4 executable packer for Windows x64 PE and Linux x64

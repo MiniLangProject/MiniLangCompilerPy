@@ -1,0 +1,45 @@
+{
+  "version": "1.3.8",
+  "date": "2026-11-14",
+  "buildOptions": "--heap-reserve 8g --heap-commit 512m --heap-shrink --heap-shrink-min 16m --gc-limit 1536m --object-pipeline",
+  "compilerImages": [
+    {
+      "target": "windows-x64",
+      "method": "Python compiler",
+      "bytes": 64356352,
+      "sha256": "5684b8c01d0c3574fddfe3c0e8bcd0cd1bb9b089323f949f12defe7a37030f33"
+    },
+    {
+      "target": "windows-x64",
+      "method": "Windows self-hosted compiler",
+      "bytes": 64356352,
+      "sha256": "5684b8c01d0c3574fddfe3c0e8bcd0cd1bb9b089323f949f12defe7a37030f33"
+    },
+    {
+      "target": "linux-x64",
+      "method": "Python compiler",
+      "bytes": 64381424,
+      "sha256": "e11386c7f1c6209da33c07f6ff54d3e28f736b8a7fd6874625811642000d3a2e"
+    },
+    {
+      "target": "linux-x64",
+      "method": "Linux self-hosted compiler",
+      "bytes": 64381424,
+      "sha256": "e11386c7f1c6209da33c07f6ff54d3e28f736b8a7fd6874625811642000d3a2e"
+    }
+  ],
+  "checks": {
+    "pythonIntegration": {"passed": 230, "failed": 0, "skipped": 0},
+    "nativeHarness": {"passed": 146, "failed": 0},
+    "nativeSuiteSeconds": 295.987,
+    "sharedStdSources": 53,
+    "sharedStdSourceMismatches": 0,
+    "sharedGeneratedStdDocs": 357,
+    "sharedGeneratedStdDocMismatches": 0,
+    "stdMinidocWarnings": 0,
+    "compilerMinidocWarnings": 0,
+    "windowsSelfHostingFixedPoint": true,
+    "linuxSelfHostingFixedPoint": true
+  },
+  "performanceEvidence": "STDLIB_OOP_2026-11-14.md"
+}

@@ -76,6 +76,33 @@ struct Stream
   serverSide
   /// Closed associated with `Stream`.
   closed
+
+  /// Send all bytes, including partially accepted provider writes.
+  /// @param data Bytes to send.
+  function sendAll(data)
+    return std.tls.sendAll(this, data)
+  end function
+
+  /// Receive up to the requested number of bytes.
+  /// @param maximumBytes Maximum payload size.
+  function receive(maximumBytes)
+    return std.tls.receive(this, maximumBytes)
+  end function
+
+  /// Send a TLS shutdown notification when supported by the provider.
+  function shutdown()
+    return std.tls.shutdown(this)
+  end function
+
+  /// Release TLS state without closing the underlying TCP socket.
+  function close()
+    return std.tls.close(this)
+  end function
+
+  /// Report whether this TLS state has been closed.
+  function isClosed()
+    return this.closed
+  end function
 end struct
 
 /// Provide the error operation for this standard-library module.

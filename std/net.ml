@@ -918,3 +918,247 @@ function udpRecvFrom(sock, maxBytes)
   if got != maxBytes then payload = slice(buf, 0, got) end if
   return [payload, _ipv4ToStringFromSockaddr(addr), _portFromSockaddr(addr)]
 end function
+
+// The resource-owning API below delegates to the established socket helpers.
+// Raw handles remain available for FFI and existing callers. A wrapper owns
+// its handle; rawHandle() only lends it until close().
+
+/// Owned TCP connection with explicit, idempotent close.
+struct TcpConnection
+  /// Native socket owned by this connection.
+  handle
+  /// Whether the socket was closed through this wrapper.
+  closed
+
+  /// Connect to an IPv4 host and take ownership of the returned socket.
+  /// @param host Dotted IPv4 address or localhost.
+  /// @param port Remote TCP port.
+  static function connect(host, port)
+    socket = try(std.net.tcpConnect(host, port))
+    if typeof(socket) == "error" then return socket end if
+    return TcpConnection(socket, false)
+  end function
+
+  /// Borrow the native handle for a call such as tls.connect().
+  /// The caller must not close this borrowed handle separately.
+  function rawHandle()
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return this.handle
+  end function
+
+  /// Send the complete byte buffer or return an error.
+  /// @param data Bytes or UTF-8 text to send.
+  function sendAll(data)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.tcpSendAll(this.handle, data)
+  end function
+
+  /// Receive at most maxBytes into a newly allocated buffer.
+  /// @param maxBytes Maximum bytes to receive.
+  function receive(maxBytes)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.tcpRecv(this.handle, maxBytes)
+  end function
+
+  /// Receive into a caller-owned buffer without copying.
+  /// @param destination Destination byte buffer.
+  /// @param destinationOffset First byte to overwrite.
+  /// @param count Maximum bytes to receive.
+  function receiveInto(destination, destinationOffset, count)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.tcpRecvInto(this.handle, destination, destinationOffset, count)
+  end function
+
+  /// Set the receive timeout in milliseconds.
+  /// @param milliseconds Maximum wait time.
+  function setReceiveTimeout(milliseconds)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.setReceiveTimeout(this.handle, milliseconds)
+  end function
+
+  /// Set the send timeout in milliseconds.
+  /// @param milliseconds Maximum wait time.
+  function setSendTimeout(milliseconds)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.setSendTimeout(this.handle, milliseconds)
+  end function
+
+  /// Enable or disable Nagle's algorithm bypass.
+  /// @param enabled Whether TCP_NODELAY is active.
+  function setNoDelay(enabled)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.setNoDelay(this.handle, enabled)
+  end function
+
+  /// Enable or disable TCP keepalive.
+  /// @param enabled Whether keepalive is active.
+  function setKeepAlive(enabled)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.setKeepAlive(this.handle, enabled)
+  end function
+
+  /// Shut down the selected connection direction.
+  /// @param how One of SD_RECEIVE, SD_SEND or SD_BOTH.
+  function shutdown(how)
+    if this.closed then return _netErr("TcpConnection is closed") end if
+    return std.net.tcpShutdown(this.handle, how)
+  end function
+
+  /// Close the socket once; repeat calls return true.
+  function close()
+    if this.closed then return true end if
+    if not std.net.close(this.handle) then return _netErr("TcpConnection close failed") end if
+    this.handle = INVALID_SOCKET
+    this.closed = true
+    return true
+  end function
+
+  /// Report the TCP connection's closed state.
+  function isClosed()
+    return this.closed
+  end function
+end struct
+
+/// Owned TCP listener that creates owned accepted connections.
+struct TcpListener
+  /// Native listening socket.
+  handle
+  /// Whether the listening socket was closed.
+  closed
+
+  /// Listen on all IPv4 addresses.
+  /// @param port Local port; zero asks the OS to choose one.
+  /// @param backlog Pending connection limit.
+  static function listen(port, backlog)
+    socket = try(std.net.tcpListen(port, backlog))
+    if typeof(socket) == "error" then return socket end if
+    return TcpListener(socket, false)
+  end function
+
+  /// Listen on a specific IPv4 address.
+  /// @param host Dotted local IPv4 address.
+  /// @param port Local port.
+  /// @param backlog Pending connection limit.
+  static function listenAddress(host, port, backlog)
+    socket = try(std.net.tcpListenAddress(host, port, backlog))
+    if typeof(socket) == "error" then return socket end if
+    return TcpListener(socket, false)
+  end function
+
+  /// Borrow the listening handle without transferring ownership.
+  function rawHandle()
+    if this.closed then return _netErr("TcpListener is closed") end if
+    return this.handle
+  end function
+
+  /// Accept one connection and transfer ownership to its wrapper.
+  function accept()
+    if this.closed then return _netErr("TcpListener is closed") end if
+    socket = try(std.net.tcpAccept(this.handle))
+    if typeof(socket) == "error" then return socket end if
+    return TcpConnection(socket, false)
+  end function
+
+  /// Return [connection, peerIp, peerPort].
+  function acceptPeer()
+    if this.closed then return _netErr("TcpListener is closed") end if
+    peer = try(std.net.tcpAcceptPeer(this.handle))
+    if typeof(peer) == "error" then return peer end if
+    return [TcpConnection(peer[0], false), peer[1], peer[2]]
+  end function
+
+  /// Close the listening socket once; repeat calls return true.
+  function close()
+    if this.closed then return true end if
+    if not std.net.close(this.handle) then return _netErr("TcpListener close failed") end if
+    this.handle = INVALID_SOCKET
+    this.closed = true
+    return true
+  end function
+
+  /// Report the listening socket's closed state.
+  function isClosed()
+    return this.closed
+  end function
+end struct
+
+/// Owned UDP socket for datagram sends and receives.
+struct UdpSocket
+  /// Native datagram socket.
+  handle
+  /// Whether the socket was closed.
+  closed
+
+  /// Create an unbound IPv4 datagram socket.
+  static function open()
+    socket = try(std.net.udpOpen())
+    if typeof(socket) == "error" then return socket end if
+    return UdpSocket(socket, false)
+  end function
+
+  /// Bind to all local IPv4 addresses on the selected port.
+  /// @param port Local UDP port; zero asks the OS to choose one.
+  function bind(port)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.udpBind(this.handle, port)
+  end function
+
+  /// Set the datagram receive timeout in milliseconds.
+  /// @param milliseconds Maximum wait time.
+  function setReceiveTimeout(milliseconds)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.setReceiveTimeout(this.handle, milliseconds)
+  end function
+
+  /// Set the datagram send timeout in milliseconds.
+  /// @param milliseconds Maximum wait time.
+  function setSendTimeout(milliseconds)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.setSendTimeout(this.handle, milliseconds)
+  end function
+
+  /// Send one datagram to an IPv4 peer.
+  /// @param host Dotted IPv4 address or localhost.
+  /// @param port Destination port.
+  /// @param data Bytes or UTF-8 text to send.
+  function sendTo(host, port, data)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.udpSendTo(this.handle, host, port, data)
+  end function
+
+  /// Receive [bytes, peerIp, peerPort].
+  /// @param maxBytes Maximum datagram size.
+  function receiveFrom(maxBytes)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.udpRecvFrom(this.handle, maxBytes)
+  end function
+
+  /// Receive into an existing buffer and return [count, peerIp, peerPort].
+  /// @param destination Destination byte buffer.
+  /// @param destinationOffset First byte to overwrite.
+  /// @param count Maximum bytes to receive.
+  function receiveFromInto(destination, destinationOffset, count)
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return std.net.udpRecvFromInto(this.handle, destination, destinationOffset, count)
+  end function
+
+  /// Borrow the native handle without transferring ownership.
+  function rawHandle()
+    if this.closed then return _netErr("UdpSocket is closed") end if
+    return this.handle
+  end function
+
+  /// Close the datagram socket once; repeat calls return true.
+  function close()
+    if this.closed then return true end if
+    if not std.net.close(this.handle) then return _netErr("UdpSocket close failed") end if
+    this.handle = INVALID_SOCKET
+    this.closed = true
+    return true
+  end function
+
+  /// Report the datagram socket's closed state.
+  function isClosed()
+    return this.closed
+  end function
+end struct

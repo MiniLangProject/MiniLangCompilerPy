@@ -148,6 +148,9 @@ type-std-fs-creation-832674482.html
 type-std-fs-fileattr-1509238666.html
 type-std-fs-share-399483706.html
 type-std-io-file-filehandle-736043342.html
+type-std-net-tcpconnection-1977985074.html
+type-std-net-tcplistener-75137386.html
+type-std-net-udpsocket-848686759.html
 type-std-random-rng-1201142756.html
 type-std-result-option-1652402760.html
 type-std-result-result-654473432.html

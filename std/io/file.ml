@@ -39,6 +39,124 @@ struct FileHandle
   closed
   /// Lock mode associated with `FileHandle`.
   lockMode
+
+  /// Open an existing file for positional reads.
+  /// @param path File path to open.
+  static function openRead(path)
+    return std.io.file.openRead(path)
+  end function
+
+  /// Open a file for positional reads and writes.
+  /// @param path File path to open.
+  /// @param createIfMissing Create the file when it does not exist.
+  static function openReadWrite(path, createIfMissing)
+    return std.io.file.openReadWrite(path, createIfMissing)
+  end function
+
+  /// Open a read/write file with durable write-through behavior.
+  /// @param path File path to open.
+  /// @param createIfMissing Create the file when it does not exist.
+  static function openReadWriteDurable(path, createIfMissing)
+    return std.io.file.openReadWriteDurable(path, createIfMissing)
+  end function
+
+  /// Create or replace a writable file.
+  /// @param path File path to create.
+  static function create(path)
+    return std.io.file.create(path)
+  end function
+
+  /// Create a file only when the path does not yet exist.
+  /// @param path File path to create.
+  static function createNew(path)
+    return std.io.file.createNew(path)
+  end function
+
+  /// Create or replace a file with durable write-through behavior.
+  /// @param path File path to create.
+  static function createDurable(path)
+    return std.io.file.createDurable(path)
+  end function
+
+  /// Create a new durable file without replacing an existing path.
+  /// @param path File path to create.
+  static function createNewDurable(path)
+    return std.io.file.createNewDurable(path)
+  end function
+
+  /// Read into an existing byte buffer without an intermediate allocation.
+  /// @param fileOffset Absolute offset in the file.
+  /// @param destination Destination byte buffer.
+  /// @param destinationOffset First destination byte to overwrite.
+  /// @param count Maximum bytes to read.
+  function readAt(fileOffset, destination, destinationOffset, count)
+    return std.io.file.readAt(this, fileOffset, destination, destinationOffset, count)
+  end function
+
+  /// Read exactly count bytes or return an end-of-file error.
+  /// @param fileOffset Absolute offset in the file.
+  /// @param destination Destination byte buffer.
+  /// @param destinationOffset First destination byte to overwrite.
+  /// @param count Required byte count.
+  function readExactAt(fileOffset, destination, destinationOffset, count)
+    return std.io.file.readExactAt(this, fileOffset, destination, destinationOffset, count)
+  end function
+
+  /// Write bytes at an absolute offset.
+  /// @param fileOffset Absolute offset in the file.
+  /// @param source Source byte buffer.
+  /// @param sourceOffset First source byte to write.
+  /// @param count Number of bytes to write.
+  function writeAt(fileOffset, source, sourceOffset, count)
+    return std.io.file.writeAt(this, fileOffset, source, sourceOffset, count)
+  end function
+
+  /// Append a byte range and return its starting file offset.
+  /// @param source Source byte buffer.
+  /// @param sourceOffset First source byte to write.
+  /// @param count Number of bytes to write.
+  function append(source, sourceOffset, count)
+    return std.io.file.append(this, source, sourceOffset, count)
+  end function
+
+  /// Return the current file size.
+  function size()
+    return std.io.file.size(this)
+  end function
+
+  /// Change the file size.
+  /// @param newSize New length in bytes.
+  function truncate(newSize)
+    return std.io.file.truncate(this, newSize)
+  end function
+
+  /// Flush writable contents to the operating system.
+  function flush()
+    return std.io.file.flush(this)
+  end function
+
+  /// Acquire an advisory whole-file lock.
+  /// @param mode Either "shared" or "exclusive".
+  /// @param wait Whether to wait for an existing lock.
+  function lock(mode, wait)
+    return std.io.file.lock(this, mode, wait)
+  end function
+
+  /// Release this handle's advisory lock.
+  function unlock()
+    return std.io.file.unlock(this)
+  end function
+
+  /// Report whether the native handle has been closed.
+  function isClosed()
+    return this.closed
+  end function
+
+  /// Close the native handle; a second method call is harmless.
+  function close()
+    if this.closed then return true end if
+    return std.io.file.close(this)
+  end function
 end struct
 
 /// Provide the error operation for this standard-library module.
@@ -547,7 +665,7 @@ function close(file)
 #if TARGET_OS == "windows"
   if not CloseHandle(file.nativeHandle) then return _nativeFailure("close") end if
 #else
-  if _close(file.nativeHandle) != 0 then return _nativeFailure("close") end if
+  if std.io.file._close(file.nativeHandle) != 0 then return _nativeFailure("close") end if
 #endif
   file.nativeHandle = -1
   file.closed = true
@@ -678,7 +796,7 @@ function syncDirectory(path)
   handle = _open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0)
   if handle < 0 then return _nativeFailure("syncDirectory.open") end if
   result = _fsync(handle)
-  closeResult = _close(handle)
+  closeResult = std.io.file._close(handle)
   if result != 0 or closeResult != 0 then return _nativeFailure("syncDirectory") end if
 #endif
   return true

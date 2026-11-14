@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.7"
+    expected = "MiniLang Compiler 1.3.8"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -788,6 +788,7 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "ecdsa_p256.ml", ["[OK] ECDSA-P256"], []),
         (tests_root / "shared_value.ml", ["[OK] portable native shared-value snapshots"], []),
         (tests_root / "platform_services.ml", ["=== PLATFORM SERVICES DONE ==="], []),
+        (tests_root / "stdlib_oop_services.ml", ["STD OOP SERVICES [OK]"], []),
         (tests_root / "thread_features.ml",
          ["[OK] synchronized worker output", "[OK] native threads, global GC heap and synchronization"], []),
         (tests_root / "thread_concurrent_start.ml", ["[OK] atomic same-object Thread.Start"], []),
@@ -4287,7 +4288,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.7", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.8", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -5112,6 +5113,11 @@ def main() -> int:
                                                            mlc_runner=mlc_runner))
     tests.append(lambda: test_compaction_unit_modules(
         name="codegen: compaction, assembler and packing unit modules", tests_root=tests_root))
+    tests.append(lambda: test_program_no_fail(
+        name="stdlib: resource-owning OOP services",
+        mlc_runner=mlc_runner, ml_path=tests_root / "stdlib_oop_services.ml",
+        must_contain=["STD OOP SERVICES [OK]"],
+        timeout_compile_s=120, timeout_run_s=120))
     tests.append(lambda: test_program_no_fail(
         name="packing: OOP and imported library workload",
         mlc_runner=mlc_runner, ml_path=tests_root / "native_packing_workload.ml",

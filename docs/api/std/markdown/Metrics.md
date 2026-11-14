@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2888 |
+| Blank lines | 2944 |
 | Clone groups | 161 |
-| Cognitive complexity | 3589 (maximum per function: 116) |
-| Comment lines | 4516 |
-| Cyclomatic complexity | 3957 (average: 3.78, maximum: 34) |
-| Documentation coverage | 98.04% (2001 of 2041 documentation items) |
-| Duplicated lines | 1014 (8.84%) |
+| Cognitive complexity | 3621 (maximum per function: 116) |
+| Comment lines | 4637 |
+| Cyclomatic complexity | 4041 (average: 3.67, maximum: 34) |
+| Documentation coverage | 98.15% (2118 of 2158 documentation items) |
+| Duplicated lines | 1014 (8.68%) |
 | Files | 53 |
-| Functions | 1048 |
-| Maintainability index | 7.86 / 100 |
-| Physical lines | 18876 |
-| Source lines | 11475 |
-| Statements | 8125 |
+| Functions | 1100 |
+| Maintainability index | 7.71 / 100 |
+| Physical lines | 19265 |
+| Source lines | 11687 |
+| Statements | 8253 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 794 | 794 | 100% |
+| API declarations | 849 | 849 | 100% |
 | Constants | 136 | 136 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
-| Fields | 212 | 212 | 100% |
+| Fields | 218 | 218 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 2001 | 2041 | 98.04% |
-| Parameters | 836 | 836 | 100% |
+| Overall | 2118 | 2158 | 98.15% |
+| Parameters | 892 | 892 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 57 | 3472 | 47439 | 33011 | 3529 | 80450 | 948106.77 | 270.97 | 256910036.2 | 316.04 |
+| 57 | 3488 | 48367 | 33575 | 3545 | 81942 | 966224.82 | 274.34 | 265071231.11 | 322.07 |
 
 ## Files
 
@@ -80,9 +80,9 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/encoding/hex.ml`](File-std-encoding-hex-ml-900742095.md) | 40 | 7 | 11 / 1.57 / 3 | 4 / 2 | 0 (0%) | 965.22 | 42.67 |
 | [`std/fmt.ml`](File-std-fmt-ml-2123112301.md) | 155 | 6 | 49 / 8.17 / 25 | 63 / 44 | 39 (25.16%) | 5643.77 | 19.36 |
 | [`std/fs.ml`](File-std-fs-ml-1285967051.md) | 560 | 26 | 129 / 4.96 / 13 | 125 / 18 | 32 (5.71%) | 25763.05 | 0 |
-| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 303 | 37 | 144 / 3.89 / 11 | 115 / 13 | 9 (2.97%) | 22951.06 | 0 |
+| [`std/io/file.ml`](File-std-io-file-ml-2074692665.md) | 358 | 55 | 163 / 2.96 / 11 | 116 / 13 | 9 (2.51%) | 26206.75 | 0 |
 | [`std/math.ml`](File-std-math-ml-790065500.md) | 425 | 50 | 120 / 2.4 / 9 | 77 / 10 | 29 (6.82%) | 16831.11 | 0 |
-| [`std/net.ml`](File-std-net-ml-1989130045.md) | 464 | 38 | 143 / 3.76 / 10 | 109 / 12 | 12 (2.59%) | 27648.49 | 0 |
+| [`std/net.ml`](File-std-net-ml-1989130045.md) | 606 | 67 | 203 / 3.03 / 10 | 140 / 12 | 12 (1.98%) | 36589.36 | 0 |
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 77 | 12 | 53 / 4.42 / 14 | 41 / 13 | 0 (0%) | 4599.11 | 26.07 |
 | [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
 | [`std/process.ml`](File-std-process-ml-507069519.md) | 42 | 6 | 19 / 3.17 / 7 | 13 / 6 | 0 (0%) | 2210.57 | 38.62 |
@@ -94,7 +94,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/test.ml`](File-std-test-ml-828131286.md) | 529 | 45 | 221 / 4.91 / 32 | 352 / 116 | 12 (2.27%) | 36322.78 | 0 |
 | [`std/threading.ml`](File-std-threading-ml-508437988.md) | 176 | 41 | 80 / 1.95 / 8 | 39 / 7 | 39 (22.16%) | 7850.03 | 12.98 |
 | [`std/time.ml`](File-std-time-ml-975894601.md) | 619 | 53 | 203 / 3.83 / 17 | 159 / 19 | 0 (0%) | 32686.86 | 0 |
-| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 150 | 19 | 74 / 3.89 / 14 | 61 / 15 | 0 (0%) | 8578.32 | 15.04 |
+| [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 165 | 24 | 79 / 3.29 / 14 | 61 / 15 | 0 (0%) | 9145.77 | 13.27 |
 | [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 224 | 16 | 94 / 5.88 / 18 | 85 / 19 | 0 (0%) | 19505.96 | 6.05 |
 | [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1163 | 83 | 463 / 5.58 / 24 | 510 / 51 | 66 (5.67%) | 106601.21 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
@@ -495,35 +495,53 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:697` | 62 | 41 | 13 | 15 | 2 | 2288.45 | 35.63 |
 | [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:562` | 12 | 8 | 4 | 3 | 1 | 356.7 | 58.05 |
 | [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:655` | 33 | 25 | 8 | 7 | 1 | 1038.47 | 44.68 |
-| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:436` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
-| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:651` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
-| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:540` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
-| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:332` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:559` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
-| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:344` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:338` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:350` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:602` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
-| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:596` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:590` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:476` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
-| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:612` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:492` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
-| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:669` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:306` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:313` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
-| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:323` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
-| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:584` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:619` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
-| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:639` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
-| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:360` | 14 | 19 | 9 | 8 | 1 | 993.8 | 52.8 |
-| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:388` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
-| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:572` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
-| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:446` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
-| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:675` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
-| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:462` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
-| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:524` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
-| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:405` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
+| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:554` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
+| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:769` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
+| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:658` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
+| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:450` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:677` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
+| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:462` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:456` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:468` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:720` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
+| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:714` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:708` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.FileHandle.append`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-append-function-append-source-sourceoffset-count-std-io-file-ml-1706463078) | `std/io/file.ml:118` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
+| [`std.io.file.FileHandle.close`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-close-function-close-std-io-file-ml-1593295218) | `std/io/file.ml:156` | 4 | 3 | 2 | 1 | 1 | 101.58 | 72.55 |
+| [`std.io.file.FileHandle.create`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-create-static-function-create-path-std-io-file-ml-1622967168) | `std/io/file.ml:65` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
+| [`std.io.file.FileHandle.createDurable`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createdurable-static-function-createdurable-path-std-io-file-ml-1941964896) | `std/io/file.ml:77` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
+| [`std.io.file.FileHandle.createNew`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createnew-static-function-createnew-path-std-io-file-ml-891589276) | `std/io/file.ml:71` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
+| [`std.io.file.FileHandle.createNewDurable`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createnewdurable-static-function-createnewdurable-path-std-io-file-ml-1936737546) | `std/io/file.ml:83` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
+| [`std.io.file.FileHandle.flush`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-flush-function-flush-std-io-file-ml-1576395282) | `std/io/file.ml:134` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
+| [`std.io.file.FileHandle.isClosed`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-isclosed-function-isclosed-std-io-file-ml-1324571678) | `std/io/file.ml:151` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.io.file.FileHandle.lock`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-lock-function-lock-mode-wait-std-io-file-ml-1859906828) | `std/io/file.ml:141` | 3 | 1 | 1 | 0 | 0 | 91.38 | 75.73 |
+| [`std.io.file.FileHandle.openRead`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openread-static-function-openread-path-std-io-file-ml-1325159872) | `std/io/file.ml:45` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
+| [`std.io.file.FileHandle.openReadWrite`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openreadwrite-static-function-openreadwrite-path-createifmissing-std-io-file-ml-1919434595) | `std/io/file.ml:52` | 3 | 1 | 1 | 0 | 0 | 87.57 | 75.86 |
+| [`std.io.file.FileHandle.openReadWriteDurable`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openreadwritedurable-static-function-openreadwritedurable-path-createifmissing-std-io-file-ml-2146529015) | `std/io/file.ml:59` | 3 | 1 | 1 | 0 | 0 | 87.57 | 75.86 |
+| [`std.io.file.FileHandle.readAt`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-readat-function-readat-fileoffset-destination-destinationoffset-count-std-io-file-ml-435346217) | `std/io/file.ml:92` | 3 | 1 | 1 | 0 | 0 | 128 | 74.7 |
+| [`std.io.file.FileHandle.readExactAt`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-readexactat-function-readexactat-fileoffset-destination-destinationoffset-count-std-io-file-ml-549780093) | `std/io/file.ml:101` | 3 | 1 | 1 | 0 | 0 | 128 | 74.7 |
+| [`std.io.file.FileHandle.size`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-size-function-size-std-io-file-ml-654964302) | `std/io/file.ml:123` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
+| [`std.io.file.FileHandle.truncate`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-truncate-function-truncate-newsize-std-io-file-ml-1422349835) | `std/io/file.ml:129` | 3 | 1 | 1 | 0 | 0 | 74.01 | 76.37 |
+| [`std.io.file.FileHandle.unlock`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-unlock-function-unlock-std-io-file-ml-1568670926) | `std/io/file.ml:146` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
+| [`std.io.file.FileHandle.writeAt`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-writeat-function-writeat-fileoffset-source-sourceoffset-count-std-io-file-ml-2075982205) | `std/io/file.ml:110` | 3 | 1 | 1 | 0 | 0 | 128 | 74.7 |
+| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:594` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
+| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:730` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:610` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
+| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:787` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:424` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:431` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
+| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:441` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
+| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:702` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:737` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
+| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:757` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
+| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:478` | 14 | 19 | 9 | 8 | 1 | 993.8 | 52.8 |
+| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:506` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
+| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:690` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
+| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:564` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
+| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:793` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
+| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:580` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
+| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:642` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
+| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:523` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
 | [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:54` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
 | [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:616` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
 | [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:609` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
@@ -585,8 +603,27 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.net.tcpAccept`](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `std/net.ml:642` | 10 | 6 | 3 | 2 | 1 | 233.83 | 61.2 |
 | [`std.net.tcpAcceptPeer`](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `std/net.ml:658` | 18 | 14 | 3 | 2 | 1 | 572.02 | 52.91 |
 | [`std.net.tcpConnect`](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `std/net.ml:543` | 24 | 17 | 6 | 5 | 1 | 735.91 | 49.01 |
+| [`std.net.TcpConnection.close`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-close-function-close-std-net-ml-687259312) | `std/net.ml:1008` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.TcpConnection.connect`](Type-std-net-tcpconnection-1977985074.md#static_method-static-method-std-net-tcpconnection-connect-static-function-connect-host-port-std-net-ml-1609802726) | `std/net.ml:936` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
+| [`std.net.TcpConnection.isClosed`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-isclosed-function-isclosed-std-net-ml-76686828) | `std/net.ml:1017` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.TcpConnection.rawHandle`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-rawhandle-function-rawhandle-std-net-ml-728838824) | `std/net.ml:944` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.net.TcpConnection.receive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receive-function-receive-maxbytes-std-net-ml-379140399) | `std/net.ml:958` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.TcpConnection.receiveInto`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receiveinto-function-receiveinto-destination-destinationoffset-count-std-net-ml-1783320186) | `std/net.ml:967` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.TcpConnection.sendAll`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-sendall-function-sendall-data-std-net-ml-640793894) | `std/net.ml:951` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.TcpConnection.setKeepAlive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setkeepalive-function-setkeepalive-enabled-std-net-ml-376425303) | `std/net.ml:995` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setNoDelay`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setnodelay-function-setnodelay-enabled-std-net-ml-962907511) | `std/net.ml:988` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setReceiveTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-141272550) | `std/net.ml:974` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setSendTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-978638174) | `std/net.ml:981` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.shutdown`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-shutdown-function-shutdown-how-std-net-ml-120922612) | `std/net.ml:1002` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
 | [`std.net.tcpListen`](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `std/net.ml:575` | 31 | 25 | 8 | 7 | 1 | 1038.47 | 45.27 |
 | [`std.net.tcpListenAddress`](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `std/net.ml:616` | 23 | 26 | 9 | 8 | 1 | 1156.73 | 47.64 |
+| [`std.net.TcpListener.accept`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-accept-function-accept-std-net-ml-1420514100) | `std/net.ml:1055` | 6 | 6 | 3 | 2 | 1 | 244.42 | 65.9 |
+| [`std.net.TcpListener.acceptPeer`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-acceptpeer-function-acceptpeer-std-net-ml-1895220488) | `std/net.ml:1063` | 6 | 6 | 3 | 2 | 1 | 331.93 | 64.97 |
+| [`std.net.TcpListener.close`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-close-function-close-std-net-ml-111048440) | `std/net.ml:1071` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.TcpListener.isClosed`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-isclosed-function-isclosed-std-net-ml-1652573844) | `std/net.ml:1080` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.TcpListener.listen`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listen-static-function-listen-port-backlog-std-net-ml-307585415) | `std/net.ml:1032` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
+| [`std.net.TcpListener.listenAddress`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listenaddress-static-function-listenaddress-host-port-backlog-std-net-ml-383965123) | `std/net.ml:1042` | 5 | 4 | 2 | 1 | 1 | 222.91 | 68.04 |
+| [`std.net.TcpListener.rawHandle`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-rawhandle-function-rawhandle-std-net-ml-1151365744) | `std/net.ml:1049` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
 | [`std.net.tcpRecv`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `std/net.ml:748` | 22 | 17 | 8 | 7 | 1 | 661.75 | 49.89 |
 | [`std.net.tcpRecvInto`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `std/net.ml:725` | 9 | 11 | 5 | 4 | 1 | 489.31 | 59.68 |
 | [`std.net.tcpSendAll`](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `std/net.ml:685` | 27 | 21 | 10 | 12 | 2 | 824.37 | 47.01 |
@@ -596,6 +633,16 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:899` | 21 | 19 | 7 | 6 | 1 | 905.86 | 49.51 |
 | [`std.net.udpRecvFromInto`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `std/net.ml:883` | 12 | 14 | 5 | 4 | 1 | 765.1 | 55.59 |
 | [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:847` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
+| [`std.net.UdpSocket.bind`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-bind-function-bind-port-std-net-ml-16149974) | `std/net.ml:1101` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.UdpSocket.close`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-close-function-close-std-net-ml-573356093) | `std/net.ml:1152` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.UdpSocket.isClosed`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-isclosed-function-isclosed-std-net-ml-913489813) | `std/net.ml:1161` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.UdpSocket.open`](Type-std-net-udpsocket-848686759.md#static_method-static-method-std-net-udpsocket-open-static-function-open-std-net-ml-1892000052) | `std/net.ml:1093` | 5 | 4 | 2 | 1 | 1 | 169.46 | 68.88 |
+| [`std.net.UdpSocket.rawHandle`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-rawhandle-function-rawhandle-std-net-ml-786980077) | `std/net.ml:1146` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.net.UdpSocket.receiveFrom`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrom-function-receivefrom-maxbytes-std-net-ml-1219401990) | `std/net.ml:1131` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.UdpSocket.receiveFromInto`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrominto-function-receivefrominto-destination-destinationoffset-count-std-net-ml-1258266449) | `std/net.ml:1140` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.UdpSocket.sendTo`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-sendto-function-sendto-host-port-data-std-net-ml-1361609212) | `std/net.ml:1124` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.UdpSocket.setReceiveTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-1810795555) | `std/net.ml:1108` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.UdpSocket.setSendTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-708661663) | `std/net.ml:1115` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
 | [`std.path.changeExtension`](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `std/path.ml:136` | 9 | 11 | 6 | 5 | 1 | 480.56 | 59.6 |
 | [`std.path.directoryName`](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `std/path.ml:114` | 8 | 10 | 5 | 4 | 1 | 320.43 | 62.08 |
 | [`std.path.extension`](File-std-path-ml-701536411.md#function-function-std-path-extension-function-extension-path-std-path-ml-598017679) | `std/path.ml:125` | 7 | 7 | 4 | 3 | 1 | 296.13 | 63.72 |
@@ -796,24 +843,29 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.time.ticks`](File-std-time-ml-975894601.md#function-function-std-time-ticks-function-ticks-std-time-ml-23716212) | `std/time.ml:289` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
 | [`std.time.win32.GetLocalTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getlocaltime-function-getlocaltime-std-time-ml-2017549839) | `std/time.ml:145` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
 | [`std.time.win32.GetSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getsystemtime-function-getsystemtime-std-time-ml-1514521483) | `std/time.ml:152` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
-| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:211` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:192` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
-| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:89` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:271` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
-| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:204` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:179` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
-| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:217` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
-| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:166` | 3 | 1 | 1 | 0 | 0 | 179.31 | 73.68 |
-| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:171` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:96` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:139` | 8 | 7 | 5 | 5 | 2 | 505.32 | 60.7 |
-| [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) | `std/tls.ml:157` | 7 | 7 | 3 | 2 | 1 | 350.94 | 63.34 |
-| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:253` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
-| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:226` | 22 | 20 | 11 | 15 | 3 | 1005.03 | 48.22 |
-| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:103` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:264` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
-| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:109` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
-| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:122` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
+| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:238` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:219` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
+| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:116` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:298` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
+| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:231` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:206` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
+| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:244` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
+| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:193` | 3 | 1 | 1 | 0 | 0 | 179.31 | 73.68 |
+| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:198` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:123` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:166` | 8 | 7 | 5 | 5 | 2 | 505.32 | 60.7 |
+| [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) | `std/tls.ml:184` | 7 | 7 | 3 | 2 | 1 | 350.94 | 63.34 |
+| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:280` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
+| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:253` | 22 | 20 | 11 | 15 | 3 | 1005.03 | 48.22 |
+| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:130` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:291` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
+| [`std.tls.Stream.close`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-close-function-close-std-tls-ml-1823044671) | `std/tls.ml:98` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
+| [`std.tls.Stream.isClosed`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-isclosed-function-isclosed-std-tls-ml-1435791159) | `std/tls.ml:103` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.tls.Stream.receive`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-receive-function-receive-maximumbytes-std-tls-ml-1572700364) | `std/tls.ml:88` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.tls.Stream.sendAll`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-sendall-function-sendall-data-std-tls-ml-310327501) | `std/tls.ml:82` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.tls.Stream.shutdown`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-shutdown-function-shutdown-std-tls-ml-1156232355) | `std/tls.ml:93` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
+| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:136` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
+| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:149` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
 | [`std.uuid.format`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-format-function-format-raw-std-uuid-ml-2051708080) | `std/uuid.ml:27` | 5 | 4 | 3 | 2 | 1 | 500 | 65.45 |
 | [`std.uuid.isValid`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-isvalid-function-isvalid-text-std-uuid-ml-2002706769) | `std/uuid.ml:64` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
 | [`std.uuid.parse`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-parse-function-parse-text-std-uuid-ml-99981495) | `std/uuid.ml:53` | 8 | 9 | 9 | 8 | 1 | 966.32 | 58.19 |
@@ -861,7 +913,7 @@ Found 161 clone group(s). At most 161 groups are shown.
 
 - [`std/_linux_fs.ml:155`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:106`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/io/file.ml:59`](File-std-io-file-ml-2074692665.md)
+- [`std/io/file.ml:177`](File-std-io-file-ml-2074692665.md)
 
 </details>
 
@@ -877,7 +929,7 @@ Found 161 clone group(s). At most 161 groups are shown.
 
 - [`std/_linux_fs.ml:156`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:107`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/io/file.ml:60`](File-std-io-file-ml-2074692665.md)
+- [`std/io/file.ml:178`](File-std-io-file-ml-2074692665.md)
 
 </details>
 
@@ -893,7 +945,7 @@ Found 161 clone group(s). At most 161 groups are shown.
 
 - [`std/_linux_fs.ml:157`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:108`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/io/file.ml:61`](File-std-io-file-ml-2074692665.md)
+- [`std/io/file.ml:179`](File-std-io-file-ml-2074692665.md)
 
 </details>
 
@@ -909,7 +961,7 @@ Found 161 clone group(s). At most 161 groups are shown.
 
 - [`std/_linux_fs.ml:158`](File-std-linux-fs-ml-2121665983.md)
 - [`std/concurrent/shared_value.ml:109`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/io/file.ml:62`](File-std-io-file-ml-2074692665.md)
+- [`std/io/file.ml:180`](File-std-io-file-ml-2074692665.md)
 
 </details>
 

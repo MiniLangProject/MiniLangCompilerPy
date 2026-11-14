@@ -448,6 +448,7 @@ Creates a TCP connection to an IPv4 address (dotted) or "localhost".
 
 Source: `std/net.ml:543`
 
+- [std.net.TcpConnection](Type-std-net-tcpconnection-1977985074.md) — struct
 <a id="function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236"></a>
 ### tcpListen
 
@@ -483,6 +484,7 @@ Create an IPv4 listener bound to an explicit dotted address.
 
 Source: `std/net.ml:616`
 
+- [std.net.TcpListener](Type-std-net-tcplistener-75137386.md) — struct
 <a id="function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791"></a>
 ### tcpRecv
 
@@ -637,6 +639,7 @@ Sends a UDP datagram to an IPv4 host.
 
 Source: `std/net.ml:847`
 
+- [std.net.UdpSocket](Type-std-net-udpsocket-848686759.md) — struct
 <a id="constant-constant-std-net-wsa-version-2-2-const-wsa-version-2-2-514-std-net-ml-1910707017"></a>
 ### WSA_VERSION_2_2
 

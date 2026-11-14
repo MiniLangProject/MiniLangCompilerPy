@@ -39,6 +39,29 @@ write-through semantics. Windows uses `CreateFileW`, `FlushFileBuffers`,
 `LockFileEx` and `MoveFileExW`; Linux uses `open`, `pread`, `pwrite`, `fsync`,
 `flock` and `rename`.
 
+The existing `FileHandle` also has object methods for those operations, plus
+`lock`, `unlock` and `isClosed`. `FileHandle.openRead(path)`,
+`FileHandle.openReadWrite(path, createIfMissing)` and
+`FileHandle.create(path)` construct the same handle type as the module
+functions. The durable and create-new variants are also static methods.
+Method calls delegate to the existing implementation and add no
+second handle allocation. `handle.close()` is idempotent; the older module
+functions retain their established behavior. Close handles explicitly rather
+than relying on garbage collection.
+
+```ml
+import std.io.file as file
+
+function main(args)
+  handle = file.FileHandle.create("sample.bin")
+  payload = bytes([1, 2, 3])
+  handle.writeAt(0, payload, 0, len(payload))
+  handle.flush()
+  handle.close()
+  return 0
+end function
+```
+
 `readAt` and `writeAt` pass validated ranges of caller-owned byte buffers
 directly to the native file APIs, including nonzero buffer offsets and
 short-write retries. The requested `count` may be smaller than the buffer;
@@ -89,6 +112,19 @@ byte count (zero on orderly TCP shutdown), or
 leave bytes outside the received range unchanged. The older `tcpRecv` and
 `udpRecvFrom` APIs remain available and return newly allocated payloads.
 
+For explicit resource ownership, `std.net.TcpConnection.connect`,
+`TcpListener.listen`/`listenAddress`, and `UdpSocket.open` return optional
+object-oriented wrappers around the same native sockets. Connection methods
+cover send, receive, receive-into, timeouts and TCP options. Listener `accept`
+returns an owned connection; `acceptPeer` returns
+`[connection, peerIp, peerPort]`. UDP methods cover bind, send and both receive
+forms. Each wrapper owns exactly one socket, adds one small struct allocation,
+and has an idempotent `close()` and `isClosed()`. `rawHandle()` lends the socket
+for legacy helpers or TLS without transferring ownership; do not close a
+borrowed handle separately. Existing raw-handle functions remain available.
+These wrappers do not serialize concurrent use or a concurrent `close()`;
+coordinate shared access with `synchronized` or a lock.
+
 `std.tls` includes a native provider selected at compile time: Windows uses
 Schannel and the system certificate stores; Linux uses OpenSSL 3
 (`libssl.so.3` and `libcrypto.so.3`). `nativeProviderName()` reports the active
@@ -123,6 +159,13 @@ shutdown. The native Schannel provider grows incomplete-record buffers
 geometrically and encrypts each outgoing record in one contiguous buffer;
 the Linux OpenSSL provider avoids copying exact-size receive results.
 
+The same operations are now methods on the existing `tls.Stream` struct:
+`stream.sendAll(data)`, `stream.receive(limit)`, `stream.shutdown()`,
+`stream.close()` and `stream.isClosed()`. Closing a stream remains idempotent
+and still does not close its borrowed TCP socket. A `TcpConnection` wrapper
+can provide that socket through `connection.rawHandle()`; close the stream
+before closing the connection.
+
 ## Identifiers and password derivation
 
 `std.uuid` creates RFC 4122 version-4 UUIDs with `std.crypto.secureRandom` and
@@ -149,11 +192,18 @@ memory; split very large files into application-level chunks. Raw
 `std.compress.lz4.encode/decode` blocks interoperate with liblz4 when the
 caller supplies the exact uncompressed size.
 
+The crypto and compression backends currently expose one-shot native calls.
+An object that merely accumulates chunks before calling these functions would
+retain all input and increase copying, so no buffered pseudo-stream is added.
+Incremental hash or compression objects require genuinely incremental backend
+state and a separate format/lifecycle contract.
+
 ## Target diagnostics and testing
 
 An unguarded Windows `.dll` import is a compile error for `--target linux-x64`.
 Use conditional compilation around platform-specific providers. The shared
 `tests/platform_services.ml` acceptance fixture exercises both native targets,
+`tests/stdlib_oop_services.ml` covers the resource-owning methods and wrappers,
 including PBKDF2 vectors, UUIDs, socket options, durable file operations,
 advisory lock conflicts and the TLS provider lifecycle. Run
 `tests/run_tls_native.ps1 -Compiler <compiler>` with WSL/OpenSSL installed for

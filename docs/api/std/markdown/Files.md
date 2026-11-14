@@ -38,9 +38,9 @@
 | [std/encoding/hex.ml](File-std-encoding-hex-ml-900742095.md) | `std.encoding.hex` | no | 8 |
 | [std/fmt.ml](File-std-fmt-ml-2123112301.md) | `std.fmt` | no | 6 |
 | [std/fs.ml](File-std-fs-ml-1285967051.md) | `std.fs` | no | 82 |
-| [std/io/file.ml](File-std-io-file-ml-2074692665.md) | `std.io.file` | no | 81 |
+| [std/io/file.ml](File-std-io-file-ml-2074692665.md) | `std.io.file` | no | 99 |
 | [std/math.ml](File-std-math-ml-790065500.md) | `std.math` | no | 53 |
-| [std/net.ml](File-std-net-ml-1989130045.md) | `std.net` | no | 82 |
+| [std/net.ml](File-std-net-ml-1989130045.md) | `std.net` | no | 120 |
 | [std/path.ml](File-std-path-ml-701536411.md) | `std.path` | no | 13 |
 | [std/platform.ml](File-std-platform-ml-201801091.md) | `std.platform` | no | 8 |
 | [std/process.ml](File-std-process-ml-507069519.md) | `std.process` | no | 14 |
@@ -52,7 +52,7 @@
 | [std/test.ml](File-std-test-ml-828131286.md) | `std.test` | no | 98 |
 | [std/threading.ml](File-std-threading-ml-508437988.md) | `std.threading` | no | 67 |
 | [std/time.ml](File-std-time-ml-975894601.md) | `std.time` | no | 95 |
-| [std/tls.ml](File-std-tls-ml-2076630303.md) | `std.tls` | no | 45 |
+| [std/tls.ml](File-std-tls-ml-2076630303.md) | `std.tls` | no | 50 |
 | [std/tls/_openssl.ml](File-std-tls-openssl-ml-961424543.md) | `std.tls._openssl` | no | 70 |
 | [std/tls/_schannel.ml](File-std-tls-schannel-ml-805501109.md) | `std.tls._schannel` | no | 226 |
 | [std/uuid.ml](File-std-uuid-ml-1903850359.md) | `std.uuid` | no | 7 |

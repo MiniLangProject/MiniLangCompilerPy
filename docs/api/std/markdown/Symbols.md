@@ -650,13 +650,31 @@
 | [std.io.file.FILE_SHARE_ALL](File-std-io-file-ml-2074692665.md#constant-constant-std-io-file-file-share-all-const-file-share-all-7-std-io-file-ml-1906549635) | `constant` | `const FILE_SHARE_ALL = 7` |
 | [std.io.file.fileExists](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `function` | `function fileExists(path)` |
 | [std.io.file.FileHandle](Type-std-io-file-filehandle-736043342.md) | `struct` | `struct FileHandle` |
+| [std.io.file.FileHandle.append](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-append-function-append-source-sourceoffset-count-std-io-file-ml-1706463078) | `method` | `function append(source, sourceOffset, count)` |
+| [std.io.file.FileHandle.close](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-close-function-close-std-io-file-ml-1593295218) | `method` | `function close()` |
 | [std.io.file.FileHandle.closed](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-closed-closed-std-io-file-ml-2031826438) | `field` | `closed` |
+| [std.io.file.FileHandle.create](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-create-static-function-create-path-std-io-file-ml-1622967168) | `static_method` | `static function create(path)` |
+| [std.io.file.FileHandle.createDurable](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createdurable-static-function-createdurable-path-std-io-file-ml-1941964896) | `static_method` | `static function createDurable(path)` |
+| [std.io.file.FileHandle.createNew](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createnew-static-function-createnew-path-std-io-file-ml-891589276) | `static_method` | `static function createNew(path)` |
+| [std.io.file.FileHandle.createNewDurable](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-createnewdurable-static-function-createnewdurable-path-std-io-file-ml-1936737546) | `static_method` | `static function createNewDurable(path)` |
 | [std.io.file.FileHandle.durable](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-durable-durable-std-io-file-ml-116176266) | `field` | `durable` |
+| [std.io.file.FileHandle.flush](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-flush-function-flush-std-io-file-ml-1576395282) | `method` | `function flush()` |
+| [std.io.file.FileHandle.isClosed](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-isclosed-function-isclosed-std-io-file-ml-1324571678) | `method` | `function isClosed()` |
+| [std.io.file.FileHandle.lock](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-lock-function-lock-mode-wait-std-io-file-ml-1859906828) | `method` | `function lock(mode, wait)` |
 | [std.io.file.FileHandle.lockMode](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-lockmode-lockmode-std-io-file-ml-598704922) | `field` | `lockMode` |
 | [std.io.file.FileHandle.nativeHandle](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-nativehandle-nativehandle-std-io-file-ml-1461736816) | `field` | `nativeHandle` |
+| [std.io.file.FileHandle.openRead](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openread-static-function-openread-path-std-io-file-ml-1325159872) | `static_method` | `static function openRead(path)` |
+| [std.io.file.FileHandle.openReadWrite](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openreadwrite-static-function-openreadwrite-path-createifmissing-std-io-file-ml-1919434595) | `static_method` | `static function openReadWrite(path, createIfMissing)` |
+| [std.io.file.FileHandle.openReadWriteDurable](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-openreadwritedurable-static-function-openreadwritedurable-path-createifmissing-std-io-file-ml-2146529015) | `static_method` | `static function openReadWriteDurable(path, createIfMissing)` |
 | [std.io.file.FileHandle.path](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-path-path-std-io-file-ml-678813428) | `field` | `path` |
 | [std.io.file.FileHandle.readable](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-readable-readable-std-io-file-ml-1675808450) | `field` | `readable` |
+| [std.io.file.FileHandle.readAt](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-readat-function-readat-fileoffset-destination-destinationoffset-count-std-io-file-ml-435346217) | `method` | `function readAt(fileOffset, destination, destinationOffset, count)` |
+| [std.io.file.FileHandle.readExactAt](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-readexactat-function-readexactat-fileoffset-destination-destinationoffset-count-std-io-file-ml-549780093) | `method` | `function readExactAt(fileOffset, destination, destinationOffset, count)` |
+| [std.io.file.FileHandle.size](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-size-function-size-std-io-file-ml-654964302) | `method` | `function size()` |
+| [std.io.file.FileHandle.truncate](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-truncate-function-truncate-newsize-std-io-file-ml-1422349835) | `method` | `function truncate(newSize)` |
+| [std.io.file.FileHandle.unlock](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-unlock-function-unlock-std-io-file-ml-1568670926) | `method` | `function unlock()` |
 | [std.io.file.FileHandle.writable](Type-std-io-file-filehandle-736043342.md#field-field-std-io-file-filehandle-writable-writable-std-io-file-ml-254181134) | `field` | `writable` |
+| [std.io.file.FileHandle.writeAt](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-writeat-function-writeat-fileoffset-source-sourceoffset-count-std-io-file-ml-2075982205) | `method` | `function writeAt(fileOffset, source, sourceOffset, count)` |
 | [std.io.file.flush](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `function` | `function flush(file)` |
 | [std.io.file.GENERIC_READ](File-std-io-file-ml-2074692665.md#constant-constant-std-io-file-generic-read-const-generic-read-2147483648-std-io-file-ml-519446067) | `constant` | `const GENERIC_READ = 2147483648` |
 | [std.io.file.GENERIC_WRITE](File-std-io-file-ml-2074692665.md#constant-constant-std-io-file-generic-write-const-generic-write-1073741824-std-io-file-ml-1810060875) | `constant` | `const GENERIC_WRITE = 1073741824` |
@@ -767,8 +785,33 @@
 | [std.net.tcpAccept](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `function` | `function tcpAccept(serverSocket)` |
 | [std.net.tcpAcceptPeer](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `function` | `function tcpAcceptPeer(serverSocket)` |
 | [std.net.tcpConnect](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `function` | `function tcpConnect(host, port)` |
+| [std.net.TcpConnection](Type-std-net-tcpconnection-1977985074.md) | `struct` | `struct TcpConnection` |
+| [std.net.TcpConnection.close](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-close-function-close-std-net-ml-687259312) | `method` | `function close()` |
+| [std.net.TcpConnection.closed](Type-std-net-tcpconnection-1977985074.md#field-field-std-net-tcpconnection-closed-closed-std-net-ml-1477213050) | `field` | `closed` |
+| [std.net.TcpConnection.connect](Type-std-net-tcpconnection-1977985074.md#static_method-static-method-std-net-tcpconnection-connect-static-function-connect-host-port-std-net-ml-1609802726) | `static_method` | `static function connect(host, port)` |
+| [std.net.TcpConnection.handle](Type-std-net-tcpconnection-1977985074.md#field-field-std-net-tcpconnection-handle-handle-std-net-ml-819703386) | `field` | `handle` |
+| [std.net.TcpConnection.isClosed](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-isclosed-function-isclosed-std-net-ml-76686828) | `method` | `function isClosed()` |
+| [std.net.TcpConnection.rawHandle](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-rawhandle-function-rawhandle-std-net-ml-728838824) | `method` | `function rawHandle()` |
+| [std.net.TcpConnection.receive](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receive-function-receive-maxbytes-std-net-ml-379140399) | `method` | `function receive(maxBytes)` |
+| [std.net.TcpConnection.receiveInto](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receiveinto-function-receiveinto-destination-destinationoffset-count-std-net-ml-1783320186) | `method` | `function receiveInto(destination, destinationOffset, count)` |
+| [std.net.TcpConnection.sendAll](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-sendall-function-sendall-data-std-net-ml-640793894) | `method` | `function sendAll(data)` |
+| [std.net.TcpConnection.setKeepAlive](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setkeepalive-function-setkeepalive-enabled-std-net-ml-376425303) | `method` | `function setKeepAlive(enabled)` |
+| [std.net.TcpConnection.setNoDelay](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setnodelay-function-setnodelay-enabled-std-net-ml-962907511) | `method` | `function setNoDelay(enabled)` |
+| [std.net.TcpConnection.setReceiveTimeout](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-141272550) | `method` | `function setReceiveTimeout(milliseconds)` |
+| [std.net.TcpConnection.setSendTimeout](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-978638174) | `method` | `function setSendTimeout(milliseconds)` |
+| [std.net.TcpConnection.shutdown](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-shutdown-function-shutdown-how-std-net-ml-120922612) | `method` | `function shutdown(how)` |
 | [std.net.tcpListen](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `function` | `function tcpListen(port, backlog)` |
 | [std.net.tcpListenAddress](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `function` | `function tcpListenAddress(host, port, backlog)` |
+| [std.net.TcpListener](Type-std-net-tcplistener-75137386.md) | `struct` | `struct TcpListener` |
+| [std.net.TcpListener.accept](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-accept-function-accept-std-net-ml-1420514100) | `method` | `function accept()` |
+| [std.net.TcpListener.acceptPeer](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-acceptpeer-function-acceptpeer-std-net-ml-1895220488) | `method` | `function acceptPeer()` |
+| [std.net.TcpListener.close](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-close-function-close-std-net-ml-111048440) | `method` | `function close()` |
+| [std.net.TcpListener.closed](Type-std-net-tcplistener-75137386.md#field-field-std-net-tcplistener-closed-closed-std-net-ml-1621450730) | `field` | `closed` |
+| [std.net.TcpListener.handle](Type-std-net-tcplistener-75137386.md#field-field-std-net-tcplistener-handle-handle-std-net-ml-1888570442) | `field` | `handle` |
+| [std.net.TcpListener.isClosed](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-isclosed-function-isclosed-std-net-ml-1652573844) | `method` | `function isClosed()` |
+| [std.net.TcpListener.listen](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listen-static-function-listen-port-backlog-std-net-ml-307585415) | `static_method` | `static function listen(port, backlog)` |
+| [std.net.TcpListener.listenAddress](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listenaddress-static-function-listenaddress-host-port-backlog-std-net-ml-383965123) | `static_method` | `static function listenAddress(host, port, backlog)` |
+| [std.net.TcpListener.rawHandle](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-rawhandle-function-rawhandle-std-net-ml-1151365744) | `method` | `function rawHandle()` |
 | [std.net.tcpRecv](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `function` | `function tcpRecv(sock, maxBytes)` |
 | [std.net.tcpRecvInto](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `function` | `function tcpRecvInto(sock, destination, destinationOffset, count)` |
 | [std.net.tcpSendAll](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `function` | `function tcpSendAll(sock, data)` |
@@ -778,6 +821,19 @@
 | [std.net.udpRecvFrom](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `function` | `function udpRecvFrom(sock, maxBytes)` |
 | [std.net.udpRecvFromInto](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `function` | `function udpRecvFromInto(sock, destination, destinationOffset, count)` |
 | [std.net.udpSendTo](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `function` | `function udpSendTo(sock, host, port, data)` |
+| [std.net.UdpSocket](Type-std-net-udpsocket-848686759.md) | `struct` | `struct UdpSocket` |
+| [std.net.UdpSocket.bind](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-bind-function-bind-port-std-net-ml-16149974) | `method` | `function bind(port)` |
+| [std.net.UdpSocket.close](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-close-function-close-std-net-ml-573356093) | `method` | `function close()` |
+| [std.net.UdpSocket.closed](Type-std-net-udpsocket-848686759.md#field-field-std-net-udpsocket-closed-closed-std-net-ml-1054460201) | `field` | `closed` |
+| [std.net.UdpSocket.handle](Type-std-net-udpsocket-848686759.md#field-field-std-net-udpsocket-handle-handle-std-net-ml-1387425801) | `field` | `handle` |
+| [std.net.UdpSocket.isClosed](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-isclosed-function-isclosed-std-net-ml-913489813) | `method` | `function isClosed()` |
+| [std.net.UdpSocket.open](Type-std-net-udpsocket-848686759.md#static_method-static-method-std-net-udpsocket-open-static-function-open-std-net-ml-1892000052) | `static_method` | `static function open()` |
+| [std.net.UdpSocket.rawHandle](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-rawhandle-function-rawhandle-std-net-ml-786980077) | `method` | `function rawHandle()` |
+| [std.net.UdpSocket.receiveFrom](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrom-function-receivefrom-maxbytes-std-net-ml-1219401990) | `method` | `function receiveFrom(maxBytes)` |
+| [std.net.UdpSocket.receiveFromInto](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrominto-function-receivefrominto-destination-destinationoffset-count-std-net-ml-1258266449) | `method` | `function receiveFromInto(destination, destinationOffset, count)` |
+| [std.net.UdpSocket.sendTo](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-sendto-function-sendto-host-port-data-std-net-ml-1361609212) | `method` | `function sendTo(host, port, data)` |
+| [std.net.UdpSocket.setReceiveTimeout](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-1810795555) | `method` | `function setReceiveTimeout(milliseconds)` |
+| [std.net.UdpSocket.setSendTimeout](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-708661663) | `method` | `function setSendTimeout(milliseconds)` |
 | [std.net.WSA_VERSION_2_2](File-std-net-ml-1989130045.md#constant-constant-std-net-wsa-version-2-2-const-wsa-version-2-2-514-std-net-ml-1910707017) | `constant` | `const WSA_VERSION_2_2 = 514` |
 | [std.path.changeExtension](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `function` | `function changeExtension(path, newExtension)` |
 | [std.path.directoryName](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `function` | `function directoryName(path)` |
@@ -1141,9 +1197,14 @@
 | [std.tls.ServerOptions.requireClientCertificate](Type-std-tls-serveroptions-1817688456.md#field-field-std-tls-serveroptions-requireclientcertificate-requireclientcertificate-std-tls-ml-612987952) | `field` | `requireClientCertificate` |
 | [std.tls.shutdown](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `function` | `function shutdown(stream)` |
 | [std.tls.Stream](Type-std-tls-stream-775546137.md) | `struct` | `struct Stream` |
+| [std.tls.Stream.close](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-close-function-close-std-tls-ml-1823044671) | `method` | `function close()` |
 | [std.tls.Stream.closed](Type-std-tls-stream-775546137.md#field-field-std-tls-stream-closed-closed-std-tls-ml-883062905) | `field` | `closed` |
+| [std.tls.Stream.isClosed](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-isclosed-function-isclosed-std-tls-ml-1435791159) | `method` | `function isClosed()` |
 | [std.tls.Stream.provider](Type-std-tls-stream-775546137.md#field-field-std-tls-stream-provider-provider-std-tls-ml-1222590419) | `field` | `provider` |
+| [std.tls.Stream.receive](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-receive-function-receive-maximumbytes-std-tls-ml-1572700364) | `method` | `function receive(maximumBytes)` |
+| [std.tls.Stream.sendAll](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-sendall-function-sendall-data-std-tls-ml-310327501) | `method` | `function sendAll(data)` |
 | [std.tls.Stream.serverSide](Type-std-tls-stream-775546137.md#field-field-std-tls-stream-serverside-serverside-std-tls-ml-873928809) | `field` | `serverSide` |
+| [std.tls.Stream.shutdown](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-shutdown-function-shutdown-std-tls-ml-1156232355) | `method` | `function shutdown()` |
 | [std.tls.Stream.state](Type-std-tls-stream-775546137.md#field-field-std-tls-stream-state-state-std-tls-ml-427289269) | `field` | `state` |
 | [std.tls.TLS_ERR](File-std-tls-ml-2076630303.md#constant-constant-std-tls-tls-err-const-tls-err-267-std-tls-ml-486488596) | `constant` | `const TLS_ERR = 267` |
 | [std.tls.validateClientOptions](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `function` | `function validateClientOptions(options)` |

@@ -1762,6 +1762,10 @@ advisory locks, atomic replacement and directory synchronization. `std.tls`
 provides a built-in target-native Schannel/OpenSSL transport through
 `connect(socket, options)` and `accept(socket, options)`. The original
 provider-neutral callback contract remains available for custom transports.
+The existing `FileHandle` and `tls.Stream` types also expose these operations
+as methods. Optional `std.net.TcpConnection`, `TcpListener` and `UdpSocket`
+wrappers own their sockets and provide explicit idempotent `close()` methods;
+the original module functions remain available.
 See [Platform services](PLATFORM_SERVICES.md) for certificate references,
 trust behavior, socket ownership and the native integration test.
 Portable native sleep, socket and synchronization timeouts use the common
