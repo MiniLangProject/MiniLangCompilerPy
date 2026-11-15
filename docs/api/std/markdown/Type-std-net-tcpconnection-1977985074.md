@@ -12,7 +12,7 @@ struct TcpConnection
 Owned TCP connection with explicit, idempotent close.
 
 
-Source: `std/net.ml:927`
+Source: `std/net.ml:1013`
 
 ## Members
 
@@ -26,7 +26,7 @@ function close()
 Close the socket once; repeat calls return true.
 
 
-Source: `std/net.ml:1008`
+Source: `std/net.ml:1094`
 
 <a id="field-field-std-net-tcpconnection-closed-closed-std-net-ml-1477213050"></a>
 ### closed
@@ -38,7 +38,7 @@ closed
 Whether the socket was closed through this wrapper.
 
 
-Source: `std/net.ml:931`
+Source: `std/net.ml:1017`
 
 <a id="static_method-static-method-std-net-tcpconnection-connect-static-function-connect-host-port-std-net-ml-1609802726"></a>
 ### connect
@@ -55,7 +55,7 @@ Connect to an IPv4 host and take ownership of the returned socket.
 | `port` | `dynamic` | — | Remote TCP port. |
 
 
-Source: `std/net.ml:936`
+Source: `std/net.ml:1022`
 
 <a id="field-field-std-net-tcpconnection-handle-handle-std-net-ml-819703386"></a>
 ### handle
@@ -67,7 +67,7 @@ handle
 Native socket owned by this connection.
 
 
-Source: `std/net.ml:929`
+Source: `std/net.ml:1015`
 
 <a id="method-method-std-net-tcpconnection-isclosed-function-isclosed-std-net-ml-76686828"></a>
 ### isClosed
@@ -79,7 +79,7 @@ function isClosed()
 Report the TCP connection's closed state.
 
 
-Source: `std/net.ml:1017`
+Source: `std/net.ml:1103`
 
 <a id="method-method-std-net-tcpconnection-rawhandle-function-rawhandle-std-net-ml-728838824"></a>
 ### rawHandle
@@ -91,7 +91,7 @@ function rawHandle()
 Borrow the native handle for a call such as tls.connect(). The caller must not close this borrowed handle separately.
 
 
-Source: `std/net.ml:944`
+Source: `std/net.ml:1030`
 
 <a id="method-method-std-net-tcpconnection-receive-function-receive-maxbytes-std-net-ml-379140399"></a>
 ### receive
@@ -107,7 +107,7 @@ Receive at most maxBytes into a newly allocated buffer.
 | `maxBytes` | `dynamic` | — | Maximum bytes to receive. |
 
 
-Source: `std/net.ml:958`
+Source: `std/net.ml:1044`
 
 <a id="method-method-std-net-tcpconnection-receiveinto-function-receiveinto-destination-destinationoffset-count-std-net-ml-1783320186"></a>
 ### receiveInto
@@ -125,7 +125,7 @@ Receive into a caller-owned buffer without copying.
 | `count` | `dynamic` | — | Maximum bytes to receive. |
 
 
-Source: `std/net.ml:967`
+Source: `std/net.ml:1053`
 
 <a id="method-method-std-net-tcpconnection-sendall-function-sendall-data-std-net-ml-640793894"></a>
 ### sendAll
@@ -141,7 +141,7 @@ Send the complete byte buffer or return an error.
 | `data` | `dynamic` | — | Bytes or UTF-8 text to send. |
 
 
-Source: `std/net.ml:951`
+Source: `std/net.ml:1037`
 
 <a id="method-method-std-net-tcpconnection-setkeepalive-function-setkeepalive-enabled-std-net-ml-376425303"></a>
 ### setKeepAlive
@@ -157,7 +157,7 @@ Enable or disable TCP keepalive.
 | `enabled` | `dynamic` | — | Whether keepalive is active. |
 
 
-Source: `std/net.ml:995`
+Source: `std/net.ml:1081`
 
 <a id="method-method-std-net-tcpconnection-setnodelay-function-setnodelay-enabled-std-net-ml-962907511"></a>
 ### setNoDelay
@@ -173,7 +173,7 @@ Enable or disable Nagle's algorithm bypass.
 | `enabled` | `dynamic` | — | Whether TCP_NODELAY is active. |
 
 
-Source: `std/net.ml:988`
+Source: `std/net.ml:1074`
 
 <a id="method-method-std-net-tcpconnection-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-141272550"></a>
 ### setReceiveTimeout
@@ -189,7 +189,7 @@ Set the receive timeout in milliseconds.
 | `milliseconds` | `dynamic` | — | Maximum wait time. |
 
 
-Source: `std/net.ml:974`
+Source: `std/net.ml:1060`
 
 <a id="method-method-std-net-tcpconnection-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-978638174"></a>
 ### setSendTimeout
@@ -205,7 +205,7 @@ Set the send timeout in milliseconds.
 | `milliseconds` | `dynamic` | — | Maximum wait time. |
 
 
-Source: `std/net.ml:981`
+Source: `std/net.ml:1067`
 
 <a id="method-method-std-net-tcpconnection-shutdown-function-shutdown-how-std-net-ml-120922612"></a>
 ### shutdown
@@ -221,4 +221,4 @@ Shut down the selected connection direction.
 | `how` | `dynamic` | — | One of SD_RECEIVE, SD_SEND or SD_BOTH. |
 
 
-Source: `std/net.ml:1002`
+Source: `std/net.ml:1088`

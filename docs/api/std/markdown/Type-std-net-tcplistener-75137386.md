@@ -12,7 +12,7 @@ struct TcpListener
 Owned TCP listener that creates owned accepted connections.
 
 
-Source: `std/net.ml:1023`
+Source: `std/net.ml:1109`
 
 ## Members
 
@@ -26,7 +26,7 @@ function accept()
 Accept one connection and transfer ownership to its wrapper.
 
 
-Source: `std/net.ml:1055`
+Source: `std/net.ml:1141`
 
 <a id="method-method-std-net-tcplistener-acceptpeer-function-acceptpeer-std-net-ml-1895220488"></a>
 ### acceptPeer
@@ -38,7 +38,7 @@ function acceptPeer()
 Return [connection, peerIp, peerPort].
 
 
-Source: `std/net.ml:1063`
+Source: `std/net.ml:1149`
 
 <a id="method-method-std-net-tcplistener-close-function-close-std-net-ml-111048440"></a>
 ### close
@@ -50,7 +50,7 @@ function close()
 Close the listening socket once; repeat calls return true.
 
 
-Source: `std/net.ml:1071`
+Source: `std/net.ml:1157`
 
 <a id="field-field-std-net-tcplistener-closed-closed-std-net-ml-1621450730"></a>
 ### closed
@@ -62,7 +62,7 @@ closed
 Whether the listening socket was closed.
 
 
-Source: `std/net.ml:1027`
+Source: `std/net.ml:1113`
 
 <a id="field-field-std-net-tcplistener-handle-handle-std-net-ml-1888570442"></a>
 ### handle
@@ -74,7 +74,7 @@ handle
 Native listening socket.
 
 
-Source: `std/net.ml:1025`
+Source: `std/net.ml:1111`
 
 <a id="method-method-std-net-tcplistener-isclosed-function-isclosed-std-net-ml-1652573844"></a>
 ### isClosed
@@ -86,7 +86,7 @@ function isClosed()
 Report the listening socket's closed state.
 
 
-Source: `std/net.ml:1080`
+Source: `std/net.ml:1166`
 
 <a id="static_method-static-method-std-net-tcplistener-listen-static-function-listen-port-backlog-std-net-ml-307585415"></a>
 ### listen
@@ -103,7 +103,7 @@ Listen on all IPv4 addresses.
 | `backlog` | `dynamic` | — | Pending connection limit. |
 
 
-Source: `std/net.ml:1032`
+Source: `std/net.ml:1118`
 
 <a id="static_method-static-method-std-net-tcplistener-listenaddress-static-function-listenaddress-host-port-backlog-std-net-ml-383965123"></a>
 ### listenAddress
@@ -121,7 +121,7 @@ Listen on a specific IPv4 address.
 | `backlog` | `dynamic` | — | Pending connection limit. |
 
 
-Source: `std/net.ml:1042`
+Source: `std/net.ml:1128`
 
 <a id="method-method-std-net-tcplistener-rawhandle-function-rawhandle-std-net-ml-1151365744"></a>
 ### rawHandle
@@ -133,4 +133,4 @@ function rawHandle()
 Borrow the listening handle without transferring ownership.
 
 
-Source: `std/net.ml:1049`
+Source: `std/net.ml:1135`

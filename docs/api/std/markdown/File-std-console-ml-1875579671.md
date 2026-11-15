@@ -44,7 +44,7 @@ function disableQuickEdit()
 Prevent Windows QuickEdit from suspending a server process. Other targets have no equivalent mode and report success without changing terminal state.
 
 
-Source: `std/console.ml:109`
+Source: `std/console.ml:129`
 
 <a id="constant-constant-std-console-enable-echo-input-const-enable-echo-input-4-std-console-ml-1340769603"></a>
 ### ENABLE_ECHO_INPUT
@@ -92,7 +92,7 @@ function isInteractive()
 Reports whether is interactive.
 
 
-Source: `std/console.ml:97`
+Source: `std/console.ml:117`
 
 <a id="constant-constant-std-console-max-secret-utf16-units-const-max-secret-utf16-units-4096-std-console-ml-517793938"></a>
 ### MAX_SECRET_UTF16_UNITS
@@ -120,7 +120,7 @@ Returns read password.
 | `prompt` | `dynamic` | — | Value supplied for `prompt`. |
 
 
-Source: `std/console.ml:181`
+Source: `std/console.ml:211`
 
 <a id="function-function-std-console-readsecret-function-readsecret-prompt-maximumbytes-std-console-ml-989090479"></a>
 ### readSecret
@@ -137,7 +137,7 @@ Returns read secret.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/console.ml:125`
+Source: `std/console.ml:145`
 
 <a id="function-function-std-console-readsecretconfirmed-function-readsecretconfirmed-prompt-confirmationprompt-maximumbytes-std-console-ml-500058034"></a>
 ### readSecretConfirmed
@@ -155,7 +155,7 @@ Returns read secret confirmed.
 | `maximumBytes` | `dynamic` | — | Value supplied for `maximumBytes`. |
 
 
-Source: `std/console.ml:189`
+Source: `std/console.ml:219`
 
 <a id="constant-constant-std-console-std-input-handle-const-std-input-handle-10-std-console-ml-1383706861"></a>
 ### STD_INPUT_HANDLE

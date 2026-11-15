@@ -18,6 +18,7 @@ class NativePackingError(ValueError):
     """Reject unsupported, corrupt, or non-shrinking packed images."""
 
 def align(value, n=4096):
+    """Round an image offset up to the requested alignment."""
     return (value+n-1) & -n
 
 
@@ -29,6 +30,7 @@ def fnv32(data):
     return value
 
 def lz4_encode(data):
+    """Encode a deterministic raw LZ4 block for the startup loader."""
     n=len(data)
     out=bytearray()
     if n<13:
@@ -115,6 +117,7 @@ def lz4_decode(block, expected_size):
     raise NativePackingError('empty LZ4 block')
 
 def pack_elf(original,stub):
+    """Pack a compiler-generated ELF image with its target's loader stub."""
     if (len(original)<4096 or original[:4]!=b'\x7fELF' or original[4:6]!=b'\x02\x01'):
         raise NativePackingError('only compiler-generated ELF64 images are supported')
     eh=list(struct.unpack_from('<HHIQQQIHHHHHH',original,16))
@@ -171,6 +174,7 @@ def pack_elf(original,stub):
     return bytes(result), text[2], len(original_text), packed_off, len(packed)
 
 def pe_imports(original,sections,import_rva):
+    """Locate the Windows loader functions needed by the startup stub."""
     def file_offset(rva):
         for section in sections:
             _,virtual_size,virtual_addr,raw_size,raw_addr,*_=section
@@ -197,6 +201,7 @@ def pe_imports(original,sections,import_rva):
     return found
 
 def pack_pe(original,stub):
+    """Pack a compiler-generated PE image and patch its startup loader."""
     if len(original)<4096 or original[:2]!=b'MZ':
         raise NativePackingError('only compiler-generated PE images are supported')
     pe=struct.unpack_from('<I',original,0x3c)[0]
@@ -339,6 +344,17 @@ def unpack_image(image):
     return bytes(result)
 
 
+def is_minux_elf(image):
+    """Identify the fixed MinUX header mapping without scanning user strings."""
+    if len(image)<64 or image[:4]!=b'\x7fELF':return False
+    try:
+        phoff=struct.unpack_from('<Q',image,32)[0]
+        count=struct.unpack_from('<H',image,56)[0]
+        return any(row[0]==1 and row[2]==0 and row[3]==0x100000000 for row in
+            (struct.unpack_from('<IIQQQQQQ',image,phoff+i*56) for i in range(count)))
+    except struct.error:return False
+
+
 def pack_image(original):
     """Pack compiler-generated PE/ELF code, then prove exact restoration."""
     if not 0<len(original)<=IMAGE_LIMIT:raise NativePackingError('invalid input size')
@@ -347,7 +363,9 @@ def pack_image(original):
         if original[:2]==b'MZ':
             base,text_off,text_size,packed_off,packed_size=pack_pe(original,pack_loader_bytes.WINDOWS)
         elif original[:4]==b'\x7fELF':
-            base,text_off,text_size,packed_off,packed_size=pack_elf(original,pack_loader_bytes.LINUX)
+            is_minux=is_minux_elf(original)
+            stub = pack_loader_bytes.MINUX if is_minux else pack_loader_bytes.LINUX
+            base,text_off,text_size,packed_off,packed_size=pack_elf(original,stub)
         else:
             raise NativePackingError('only MiniLang PE/ELF images are supported')
     except (IndexError, KeyError, StopIteration, UnicodeError, struct.error, ValueError) as exc:
@@ -359,6 +377,8 @@ def pack_image(original):
                        len(base),len(prefix),zlib.crc32(original),zlib.crc32(base),
                        zlib.crc32(prefix),MAGIC)
     packed=base+prefix+footer
+    if original[:4]==b'\x7fELF' and is_minux and len(packed)>16*1024*1024:
+        raise NativePackingError('packed MinUX image exceeds the loader limit of 16 MiB')
     if unpack_image(packed)!=original:
         raise NativePackingError('packed image did not roundtrip')
     return packed

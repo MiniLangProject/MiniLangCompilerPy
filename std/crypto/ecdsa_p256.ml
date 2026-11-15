@@ -22,7 +22,11 @@ import std.crypto as crypto
 #if TARGET_OS == "windows"
 import std.crypto._cng as backend
 #else
+#if TARGET_OS == "minux"
+import std.crypto._minux as backend
+#else
 import std.crypto._openssl as backend
+#endif
 #endif
 
 /// Error code returned for invalid ECDSA-P256 arguments or backend failures.

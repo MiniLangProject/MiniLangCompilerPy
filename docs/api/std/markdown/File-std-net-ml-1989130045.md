@@ -20,7 +20,7 @@ _wsaReady
 init() and cleanup() serialize this process-wide Winsock ownership flag on the same recursive monitor. Ordinary socket operations may call init() concurrently, but applications must not call cleanup() while sockets remain in use.
 
 
-Source: `std/net.ml:250`
+Source: `std/net.ml:326`
 
 <a id="constant-constant-std-net-af-inet-const-af-inet-2-std-net-ml-2055161241"></a>
 ### AF_INET
@@ -44,7 +44,7 @@ synchronized function cleanup()
 Cleans up the platform socket layer.
 
 
-Source: `std/net.ml:285`
+Source: `std/net.ml:361`
 
 <a id="function-function-std-net-close-function-close-sock-std-net-ml-2027943708"></a>
 ### close
@@ -60,7 +60,7 @@ Closes a socket handle.
 | `sock` | `dynamic` | — | Value supplied for `sock`. |
 
 
-Source: `std/net.ml:793`
+Source: `std/net.ml:879`
 
 <a id="function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128"></a>
 ### init
@@ -72,7 +72,7 @@ synchronized function init()
 Initializes the platform socket layer. Safe to call multiple times.
 
 
-Source: `std/net.ml:260`
+Source: `std/net.ml:336`
 
 <a id="constant-constant-std-net-invalid-socket-const-invalid-socket-1-std-net-ml-28841423"></a>
 ### INVALID_SOCKET
@@ -120,7 +120,7 @@ function lastError()
 Returns the last platform socket error code.
 
 
-Source: `std/net.ml:305`
+Source: `std/net.ml:381`
 
 <a id="constant-constant-std-net-max-portable-socket-timeout-ms-const-max-portable-socket-timeout-ms-2147483647-std-net-ml-1169126477"></a>
 ### MAX_PORTABLE_SOCKET_TIMEOUT_MS
@@ -197,7 +197,7 @@ Enable or disable TCP keepalive probes.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:495`
+Source: `std/net.ml:577`
 
 <a id="function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439"></a>
 ### setNoDelay
@@ -214,7 +214,7 @@ Disable or enable Nagle's algorithm for latency-sensitive protocols.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:502`
+Source: `std/net.ml:584`
 
 <a id="function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622"></a>
 ### setReceiveTimeout
@@ -231,7 +231,7 @@ Configure the maximum blocking receive duration. Zero restores no timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/net.ml:525`
+Source: `std/net.ml:611`
 
 <a id="function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191"></a>
 ### setReuseAddress
@@ -248,7 +248,7 @@ Enable or disable address reuse on an existing socket.
 | `enabled` | `dynamic` | — | Value supplied for `enabled`. |
 
 
-Source: `std/net.ml:450`
+Source: `std/net.ml:526`
 
 <a id="function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534"></a>
 ### setSendTimeout
@@ -265,7 +265,7 @@ Configure the maximum blocking send duration. Zero restores no timeout.
 | `milliseconds` | `dynamic` | — | Maximum duration in milliseconds. |
 
 
-Source: `std/net.ml:532`
+Source: `std/net.ml:618`
 
 <a id="constant-constant-std-net-so-exclusiveaddruse-const-so-exclusiveaddruse-5-std-net-ml-281044779"></a>
 ### SO_EXCLUSIVEADDRUSE
@@ -413,7 +413,7 @@ Accepts a client connection on a listening socket.
 | `serverSocket` | `dynamic` | — | Value supplied for `serverSocket`. |
 
 
-Source: `std/net.ml:642`
+Source: `std/net.ml:728`
 
 <a id="function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640"></a>
 ### tcpAcceptPeer
@@ -429,7 +429,7 @@ Accepts a client connection and returns peer info.
 | `serverSocket` | `dynamic` | — | Value supplied for `serverSocket`. |
 
 
-Source: `std/net.ml:658`
+Source: `std/net.ml:744`
 
 <a id="function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633"></a>
 ### tcpConnect
@@ -446,7 +446,7 @@ Creates a TCP connection to an IPv4 address (dotted) or "localhost".
 | `port` | `dynamic` | — | Value supplied for `port`. |
 
 
-Source: `std/net.ml:543`
+Source: `std/net.ml:629`
 
 - [std.net.TcpConnection](Type-std-net-tcpconnection-1977985074.md) — struct
 <a id="function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236"></a>
@@ -464,7 +464,7 @@ Creates a TCP listening socket on 0.0.0.0:port.
 | `backlog` | `dynamic` | — | Value supplied for `backlog`. |
 
 
-Source: `std/net.ml:575`
+Source: `std/net.ml:661`
 
 <a id="function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138"></a>
 ### tcpListenAddress
@@ -482,7 +482,7 @@ Create an IPv4 listener bound to an explicit dotted address.
 | `backlog` | `dynamic` | — | Value supplied for `backlog`. |
 
 
-Source: `std/net.ml:616`
+Source: `std/net.ml:702`
 
 - [std.net.TcpListener](Type-std-net-tcplistener-75137386.md) — struct
 <a id="function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791"></a>
@@ -500,7 +500,7 @@ Receives up to maxBytes from a TCP socket.
 | `maxBytes` | `dynamic` | — | Value supplied for `maxBytes`. |
 
 
-Source: `std/net.ml:748`
+Source: `std/net.ml:834`
 
 <a id="function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470"></a>
 ### tcpRecvInto
@@ -519,7 +519,7 @@ Receive into a caller-owned byte buffer without allocating or copying.
 | `count` | `dynamic` | — | Maximum bytes to receive; zero returns immediately. |
 
 
-Source: `std/net.ml:725`
+Source: `std/net.ml:811`
 
 <a id="function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120"></a>
 ### tcpSendAll
@@ -536,7 +536,7 @@ Sends all bytes on a TCP socket (loops until everything is sent).
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/net.ml:685`
+Source: `std/net.ml:771`
 
 <a id="function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342"></a>
 ### tcpShutdown
@@ -553,7 +553,7 @@ Shuts down a TCP socket (best-effort).
 | `how` | `dynamic` | — | Value supplied for `how`. |
 
 
-Source: `std/net.ml:779`
+Source: `std/net.ml:865`
 
 <a id="function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451"></a>
 ### udpBind
@@ -570,7 +570,7 @@ Binds a UDP socket to 0.0.0.0:port.
 | `port` | `dynamic` | — | Value supplied for `port`. |
 
 
-Source: `std/net.ml:822`
+Source: `std/net.ml:908`
 
 <a id="function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978"></a>
 ### udpOpen
@@ -582,7 +582,7 @@ function udpOpen()
 Opens a UDP socket.
 
 
-Source: `std/net.ml:806`
+Source: `std/net.ml:892`
 
 <a id="function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939"></a>
 ### udpRecvFrom
@@ -599,7 +599,7 @@ Receives a UDP datagram.
 | `maxBytes` | `dynamic` | — | Value supplied for `maxBytes`. |
 
 
-Source: `std/net.ml:899`
+Source: `std/net.ml:985`
 
 <a id="function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466"></a>
 ### udpRecvFromInto
@@ -618,7 +618,7 @@ Receive a UDP datagram into a caller-owned byte buffer. Returns [receivedCount, 
 | `count` | `dynamic` | — | Maximum datagram bytes to receive. |
 
 
-Source: `std/net.ml:883`
+Source: `std/net.ml:969`
 
 <a id="function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505"></a>
 ### udpSendTo
@@ -637,7 +637,7 @@ Sends a UDP datagram to an IPv4 host.
 | `data` | `dynamic` | — | Data to process. |
 
 
-Source: `std/net.ml:847`
+Source: `std/net.ml:933`
 
 - [std.net.UdpSocket](Type-std-net-udpsocket-848686759.md) — struct
 <a id="constant-constant-std-net-wsa-version-2-2-const-wsa-version-2-2-514-std-net-ml-1910707017"></a>

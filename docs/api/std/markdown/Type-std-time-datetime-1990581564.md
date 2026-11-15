@@ -12,7 +12,7 @@ struct DateTime
 Calendar date plus time-of-day with millisecond precision.
 
 
-Source: `std/time.ml:359`
+Source: `std/time.ml:375`
 
 ## Members
 
@@ -26,7 +26,7 @@ date
 Date associated with `DateTime`.
 
 
-Source: `std/time.ml:361`
+Source: `std/time.ml:377`
 
 <a id="field-field-std-time-datetime-time-time-std-time-ml-2006693380"></a>
 ### time
@@ -38,4 +38,4 @@ time
 Time associated with `DateTime`.
 
 
-Source: `std/time.ml:363`
+Source: `std/time.ml:379`

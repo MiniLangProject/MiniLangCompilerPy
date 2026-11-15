@@ -1850,7 +1850,7 @@ class CodegenExpr:
     
     def _extern_dll_base(self, dll: str) -> str:
         # Must match compiler._dll_base() used for IAT label generation.
-        identity = str(dll) if self.is_linux_target else str(dll).strip().lower()
+        identity = str(dll) if self.is_elf_target else str(dll).strip().lower()
         return extern_library_label_token(identity)
 
     def _extern_iat_label(self, dll: str, symbol: str) -> str:
@@ -2474,7 +2474,7 @@ class CodegenExpr:
 
         # Call through the imported function pointer.
         a.call_rip_qword(self._extern_iat_label(dll, symbol))
-        if self.is_linux_target:
+        if self.is_elf_target:
             extern_resolved = f"L_extern_resolved_{self.new_label_id()}"
             a.jcc('ae', extern_resolved)
             if threaded_native:
@@ -2666,13 +2666,13 @@ class CodegenExpr:
             dll_n = str(dll or '').strip().lower()
             sym_s = str(sym or '').strip()
             imports = getattr(self, 'imports', {}) or {}
-            if not self.is_linux_target and dll_n and sym_s:
+            if not self.is_elf_target and dll_n and sym_s:
                 if dll_n not in imports or sym_s not in (imports.get(dll_n) or []):
                     raise CompileError(
                         f"Extern '{qn}' uses {dll_n}!{sym_s} but the symbol was not added to the PE import table (internal error)",
                         pos, )
             a.call_rip_qword(self._extern_iat_label(str(dll), str(sym)))
-            if self.is_linux_target:
+            if self.is_elf_target:
                 extern_resolved = f"lbl_extern_stub_resolved_{self.new_label_id()}"
                 a.jcc('ae', extern_resolved)
                 if threaded_native:

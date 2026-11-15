@@ -23,7 +23,7 @@ from .tools import u32, u64, extern_library_label_token
 from . import packing
 
 
-COMPILER_VERSION = "1.3.8"
+COMPILER_VERSION = "1.3.9"
 COMPILER_VERSION_TEXT = f"MiniLang Compiler {COMPILER_VERSION}"
 
 
@@ -1038,10 +1038,10 @@ def validate_extern_sigs(
         native_library = str(sig.get("dll", "") or "").strip()
         if not native_library:
             raise CompileError(f"extern function {qn} missing native library name", pos=pos, filename=fn)
-        if str(target).lower() == "linux-x64" and native_library.lower().endswith(".dll"):
+        if str(target).lower() in ("linux-x64", "minux-x64") and native_library.lower().endswith(".dll"):
             raise CompileError(
-                f"extern function {qn}: Windows DLL '{native_library}' cannot be imported by the linux-x64 target; "
-                "guard the declaration with TARGET_OS or use a Linux shared library",
+                f"extern function {qn}: Windows DLL '{native_library}' cannot be imported by the {target} target; "
+                "guard the declaration with TARGET_OS or use a target-native shared library",
                 pos=pos,
                 filename=fn,
             )
@@ -1114,7 +1114,7 @@ def validate_extern_sigs(
         )
         ret_class = _extern_physical_abi_class(rt)
         raw_symbol = str(sig.get("symbol", "") or str(qn).split(".")[-1])
-        if str(target).lower() == "linux-x64":
+        if str(target).lower() in ("linux-x64", "minux-x64"):
             target_key = (str(sig.get("dll", "") or ""), raw_symbol)
         else:
             target_key = (native_library.lower(), raw_symbol)
@@ -1475,6 +1475,9 @@ def compile_to_exe(
     # Step 3: validate extern declarations early (friendly diagnostics)
     validate_extern_sigs(extern_sigs, extern_structs=extern_structs, output_exe=output_exe,
                          input_ml=input_ml, include_dirs=include_dirs, target=target)
+    if target == 'minux-x64':
+        from .minux_runtime import validate_externs
+        validate_externs(extern_sigs)
 
     cg = Codegen(
         ml,
@@ -1507,21 +1510,20 @@ def compile_to_exe(
             show_text=asm_show_text,
         )
 
-    if target == 'linux-x64':
-        from .linux_runtime import emit_linux_startup
-        emit_linux_startup(cg)
+    if target in ('linux-x64', 'minux-x64'):
+        from . import linux_runtime, minux_runtime
+        runtime = minux_runtime if target == 'minux-x64' else linux_runtime
+        runtime.emit_startup(cg)
     cg.emit_program(program)
     if getattr(cg, '_incremental_cache', None) is not None:
         cg._incremental_cache.report()
 
-    if target == 'linux-x64':
+    if target in ('linux-x64', 'minux-x64'):
         from .elf import build_elf64, dynamic_size, plan_elf64
-        from .linux_runtime import emit_linux_runtime, linux_dynamic_imports
-
-        emit_linux_runtime(cg)
-        dynamic_imports = linux_dynamic_imports(cg)
+        runtime.emit_runtime(cg)
+        dynamic_imports = runtime.dynamic_imports(cg)
         layout = plan_elf64(len(cg.asm.buf), len(cg.rdata.data), len(cg.data.data),
-                            dynamic_size(dynamic_imports))
+                            dynamic_size(dynamic_imports, target=target), target=target)
         text_rva = layout.text_off
         rdata_rva = layout.rdata_off
         data_rva = layout.data_off
@@ -1535,7 +1537,7 @@ def compile_to_exe(
 
         for pos, patch_target, kind in cg.asm.patches:
             if patch_target not in label_rva_map:
-                raise RuntimeError(f"Unknown Linux patch target: {patch_target}")
+                raise RuntimeError(f"Unknown ELF patch target: {patch_target}")
             target_rva = label_rva_map[patch_target]
             patch_end = int(pos) + 4
             if kind == 'rip32':
@@ -1543,7 +1545,7 @@ def compile_to_exe(
             elif kind == 'rel32':
                 disp = (target_rva - (text_rva + patch_end)) & 0xFFFFFFFF
             else:
-                raise RuntimeError(f"Unknown Linux patch kind: {kind}")
+                raise RuntimeError(f"Unknown ELF patch kind: {kind}")
             cg.asm.buf[pos:pos + 4] = u32(disp)
 
         for blob, patches in (
@@ -1552,16 +1554,16 @@ def compile_to_exe(
         ):
             for pos, patch_target, kind in patches:
                 if patch_target not in label_rva_map:
-                    raise RuntimeError(f"Unknown Linux data patch target: {patch_target}")
+                    raise RuntimeError(f"Unknown ELF data patch target: {patch_target}")
                 if kind != 'abs64':
-                    raise RuntimeError(f"Unknown Linux data patch kind: {kind}")
+                    raise RuntimeError(f"Unknown ELF data patch kind: {kind}")
                 blob[pos:pos + 8] = u64(layout.base + label_rva_map[patch_target])
 
         image = build_elf64(
             bytes(cg.asm.buf), bytes(cg.rdata.data), bytes(cg.data.data),
             int(getattr(cg, 'bss', None).size if getattr(cg, 'bss', None) is not None else 0),
             entry_offset=int(cg.asm.labels.get('_start', 0)),
-            imports=dynamic_imports,
+            imports=dynamic_imports, target=target,
         )
         with open(output_exe, 'wb') as f:
             f.write(image)
@@ -1595,7 +1597,7 @@ def compile_to_exe(
             # ELF listings use loaded virtual addresses and honor --asm-data
             # just like PE listings. Section headers also identify empty data.
             with open(asm_listing_path, 'a', encoding='utf-8') as listing:
-                listing.write('\n; section .text (ELF64 Linux x64)\n')
+                listing.write(f'\n; section .text (ELF64 {target})\n')
                 if asm_dump_data:
                     for title, blob, offset in (
                         ('.rdata', cg.rdata.data, rdata_rva),
@@ -2049,7 +2051,7 @@ def main(argv: List[str]) -> int:
                                        help='accepted for project parity; Python emits the equivalent monolithic image')
     object_pipeline_group.add_argument('--no-object-pipeline', action='store_true',
                                        help='force monolithic mode (the Python compiler default)')
-    parser.add_argument('--target', default='windows-x64', choices=('windows-x64', 'linux-x64'),
+    parser.add_argument('--target', default='windows-x64', choices=('windows-x64', 'linux-x64', 'minux-x64'),
                         help='native output target (default: windows-x64)')
     parser.add_argument('--incremental-cache', metavar='DIR',
                         help='reuse validated native functions across changed builds')
@@ -2104,6 +2106,9 @@ def main(argv: List[str]) -> int:
                         help='PE subsystem: console|cui or windows|window|gui (Windows target only)')
 
     args = parser.parse_args(argv[1:])
+    if args.target == 'minux-x64' and args.subsystem != 3:
+        print('CompileOptionError: minux-x64 supports the console subsystem only')
+        return 2
 
     if args.gc_concurrent:
         if args.target != 'windows-x64':
@@ -2330,6 +2335,10 @@ def main(argv: List[str]) -> int:
             print(f"PackError: {e}; unpacked compiler output retained at {out}")
             return 2
 
+    if args.target == 'minux-x64' and os.path.getsize(out) > 16*1024*1024:
+        print('CompileError: MinUX loader accepts images up to 16 MiB; use --pack or reduce the program. Output retained at ' + str(out))
+        return 2
+
     try:
         if project_cache_enabled and project_fingerprint(project_build, inp, include_dirs) != project_digest:
             print("[incremental] inputs changed during compilation; artifact cache not published")
@@ -2339,7 +2348,7 @@ def main(argv: List[str]) -> int:
         print(f"ProjectError: cannot update incremental cache: {e}")
         return 2
 
-    image_kind = 'ELF' if getattr(args, 'target', 'windows-x64') == 'linux-x64' else 'PE'
+    image_kind = 'ELF' if getattr(args, 'target', 'windows-x64') in ('linux-x64', 'minux-x64') else 'PE'
     print(f"OK: wrote {out} (native x64 {image_kind}, MiniLang Python compiler {COMPILER_VERSION})")
     if args.asm:
         asm_path = args.asm_out or (os.path.splitext(out)[0] + ".asm")

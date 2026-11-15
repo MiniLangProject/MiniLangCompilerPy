@@ -12,7 +12,7 @@ struct Stream
 Represents stream.
 
 
-Source: `std/tls.ml:70`
+Source: `std/tls.ml:74`
 
 ## Members
 
@@ -26,7 +26,7 @@ function close()
 Release TLS state without closing the underlying TCP socket.
 
 
-Source: `std/tls.ml:98`
+Source: `std/tls.ml:102`
 
 <a id="field-field-std-tls-stream-closed-closed-std-tls-ml-883062905"></a>
 ### closed
@@ -38,7 +38,7 @@ closed
 Closed associated with `Stream`.
 
 
-Source: `std/tls.ml:78`
+Source: `std/tls.ml:82`
 
 <a id="method-method-std-tls-stream-isclosed-function-isclosed-std-tls-ml-1435791159"></a>
 ### isClosed
@@ -50,7 +50,7 @@ function isClosed()
 Report whether this TLS state has been closed.
 
 
-Source: `std/tls.ml:103`
+Source: `std/tls.ml:107`
 
 <a id="field-field-std-tls-stream-provider-provider-std-tls-ml-1222590419"></a>
 ### provider
@@ -62,7 +62,7 @@ provider
 Provider associated with `Stream`.
 
 
-Source: `std/tls.ml:72`
+Source: `std/tls.ml:76`
 
 <a id="method-method-std-tls-stream-receive-function-receive-maximumbytes-std-tls-ml-1572700364"></a>
 ### receive
@@ -78,7 +78,7 @@ Receive up to the requested number of bytes.
 | `maximumBytes` | `dynamic` | — | Maximum payload size. |
 
 
-Source: `std/tls.ml:88`
+Source: `std/tls.ml:92`
 
 <a id="method-method-std-tls-stream-sendall-function-sendall-data-std-tls-ml-310327501"></a>
 ### sendAll
@@ -94,7 +94,7 @@ Send all bytes, including partially accepted provider writes.
 | `data` | `dynamic` | — | Bytes to send. |
 
 
-Source: `std/tls.ml:82`
+Source: `std/tls.ml:86`
 
 <a id="field-field-std-tls-stream-serverside-serverside-std-tls-ml-873928809"></a>
 ### serverSide
@@ -106,7 +106,7 @@ serverSide
 Server side associated with `Stream`.
 
 
-Source: `std/tls.ml:76`
+Source: `std/tls.ml:80`
 
 <a id="method-method-std-tls-stream-shutdown-function-shutdown-std-tls-ml-1156232355"></a>
 ### shutdown
@@ -118,7 +118,7 @@ function shutdown()
 Send a TLS shutdown notification when supported by the provider.
 
 
-Source: `std/tls.ml:93`
+Source: `std/tls.ml:97`
 
 <a id="field-field-std-tls-stream-state-state-std-tls-ml-427289269"></a>
 ### state
@@ -130,4 +130,4 @@ state
 State associated with `Stream`.
 
 
-Source: `std/tls.ml:74`
+Source: `std/tls.ml:78`

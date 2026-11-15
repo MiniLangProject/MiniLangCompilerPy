@@ -22,7 +22,11 @@ const IO_BUF_SIZE = 4096
 const READ_CHUNK_SIZE = 1048576
 /// These layout constants follow the Linux x86-64 glibc ABI. Revisit them when adding another CPU architecture or libc implementation.
 /// @internal
+#if TARGET_OS == "minux"
+const STAT_SIZE = 96
+#else
 const STAT_SIZE = 144
+#endif
 /// Linux x86-64 statfs storage, with room for libc's 120-byte structure.
 /// @internal
 const STATFS_SIZE = 128
@@ -31,13 +35,25 @@ const STATFS_SIZE = 128
 const WSL_DRVFS_MAGIC = 0x01021997
 /// Track the stat mode offset value used by this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+const STAT_MODE_OFFSET = 8
+#else
 const STAT_MODE_OFFSET = 24
+#endif
 /// Track the stat file size offset value used by this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+const STAT_FILE_SIZE_OFFSET = 0
+#else
 const STAT_FILE_SIZE_OFFSET = 48
+#endif
 /// Track the dirent size value used by this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+const DIRENT_SIZE = 88
+#else
 const DIRENT_SIZE = 280
+#endif
 /// Track the dirent name offset value used by this standard-library module.
 /// @internal
 const DIRENT_NAME_OFFSET = 19
@@ -78,64 +94,140 @@ const S_IFDIR = 0x4000
 
 /// Provide the open operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.1" symbol "open" returns i32
+#else
 extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" symbol "open" returns i32
+#endif
 /// Returns read.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _read(fd as int, output as bytes, count as u64) from "libc.so.1" symbol "read" returns i64
+#else
 extern function _read(fd as int, output as bytes, count as u64) from "libc.so.6" symbol "read" returns i64
+#endif
 /// Read directly into a checked interior address of a byte buffer.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _readPointer(fd as int, output as ptr, count as u64) from "libc.so.1" symbol "read" returns i64
+#else
 extern function _readPointer(fd as int, output as ptr, count as u64) from "libc.so.6" symbol "read" returns i64
+#endif
 /// Updates write bytes.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _writeBytes(fd as int, input as bytes, count as u64) from "libc.so.1" symbol "write" returns i64
+#else
 extern function _writeBytes(fd as int, input as bytes, count as u64) from "libc.so.6" symbol "write" returns i64
+#endif
 /// Write a byte-buffer range without allocating a slice.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _writePointer(fd as int, input as ptr, count as u64) from "libc.so.1" symbol "write" returns i64
+#else
 extern function _writePointer(fd as int, input as ptr, count as u64) from "libc.so.6" symbol "write" returns i64
+#endif
 /// Updates write text.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _writeText(fd as int, input as cstr, count as u64) from "libc.so.1" symbol "write" returns i64
+#else
 extern function _writeText(fd as int, input as cstr, count as u64) from "libc.so.6" symbol "write" returns i64
+#endif
 /// Releases or resets close.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _close(fd as int) from "libc.so.1" symbol "close" returns i32
+#else
 extern function _close(fd as int) from "libc.so.6" symbol "close" returns i32
+#endif
 /// Provide the lseek operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _lseek(fd as int, offset as i64, whence as int) from "libc.so.1" symbol "lseek" returns i64
+#else
 extern function _lseek(fd as int, offset as i64, whence as int) from "libc.so.6" symbol "lseek" returns i64
+#endif
 /// Provide the stat operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _stat(path as cstr, output as bytes) from "libc.so.1" symbol "stat" returns i32
+#else
 extern function _stat(path as cstr, output as bytes) from "libc.so.6" symbol "stat" returns i32
+#endif
 /// Read metadata from the already-open descriptor to avoid pathname races.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _fstat(fd as int, output as bytes) from "libc.so.1" symbol "fstat" returns i32
+#else
 extern function _fstat(fd as int, output as bytes) from "libc.so.6" symbol "fstat" returns i32
+#endif
 /// Identify filesystems where an in-kernel copy should be avoided.
 /// @internal
+#if TARGET_OS == "linux"
 extern function _fstatfs(fd as int, output as bytes) from "libc.so.6" symbol "fstatfs" returns i32
+#endif
 /// Truncate only after verifying source and destination are different files.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _ftruncate(fd as int, length as i64) from "libc.so.1" symbol "ftruncate" returns i32
+#else
 extern function _ftruncate(fd as int, length as i64) from "libc.so.6" symbol "ftruncate" returns i32
+#endif
 /// Let the kernel copy regular-file pages without a managed user-space buffer.
 /// @internal
+#if TARGET_OS == "linux"
 extern function _copyFileRange(source as int, sourceOffset as ptr, destination as int, destinationOffset as ptr, count as u64, flags as u32) from "libc.so.6" symbol "copy_file_range" returns i64
+#endif
 /// Provide the unlink operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _unlink(path as cstr) from "libc.so.1" symbol "unlink" returns i32
+#else
 extern function _unlink(path as cstr) from "libc.so.6" symbol "unlink" returns i32
+#endif
 /// Provide the rename operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _rename(source as cstr, destination as cstr) from "libc.so.1" symbol "rename" returns i32
+#else
 extern function _rename(source as cstr, destination as cstr) from "libc.so.6" symbol "rename" returns i32
+#endif
 /// Provide the opendir operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _opendir(path as cstr) from "libc.so.1" symbol "opendir" returns ptr
+#else
 extern function _opendir(path as cstr) from "libc.so.6" symbol "opendir" returns ptr
+#endif
 /// Returns readdir.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _readdir(directory as ptr) from "libc.so.1" symbol "readdir" returns ptr
+#else
 extern function _readdir(directory as ptr) from "libc.so.6" symbol "readdir" returns ptr
+#endif
 /// Releases or resets closedir.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _closedir(directory as ptr) from "libc.so.1" symbol "closedir" returns i32
+#else
 extern function _closedir(directory as ptr) from "libc.so.6" symbol "closedir" returns i32
+#endif
 /// Provide the copy native operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _copyNative(destination as bytes, source as ptr, count as u64) from "libc.so.1" symbol "memcpy" returns ptr
+#else
 extern function _copyNative(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 /// Provide the usleep operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _usleep(microseconds as u32) from "libc.so.1" symbol "usleep" returns i32
+#else
 extern function _usleep(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
+#endif
 
 /// Provide the err operation for this standard-library module.
 /// @internal
@@ -371,7 +463,12 @@ function copyFile(sourcePath, destinationPath, overwrite)
     _close(source)
     return _err("copyFile: stat failed")
   end if
-  if _i64le(sourceStat, 0) == _i64le(destinationStat, 0) and _i64le(sourceStat, 8) == _i64le(destinationStat, 8) then
+#if TARGET_OS == "minux"
+  sameFile = _i64le(sourceStat, 64) == _i64le(destinationStat, 64) and _i64le(sourceStat, 72) == _i64le(destinationStat, 72)
+#else
+  sameFile = _i64le(sourceStat, 0) == _i64le(destinationStat, 0) and _i64le(sourceStat, 8) == _i64le(destinationStat, 8)
+#endif
+  if sameFile then
     _close(destination)
     _close(source)
     return _err("copyFile: source and destination are the same file")
@@ -383,6 +480,9 @@ function copyFile(sourcePath, destinationPath, overwrite)
   end if
   // Prefer in-kernel copying on supported filesystems. An unsupported
   // combination returns -1 and resumes from the descriptors' current offsets.
+#if TARGET_OS == "minux"
+  kernelCopySupported = false
+#else
   kernelCopySupported = true
   filesystem = bytes(STATFS_SIZE, 0)
   if _fstatfs(source, filesystem) == 0 and _i64le(filesystem, 0) == WSL_DRVFS_MAGIC then kernelCopySupported = false end if
@@ -394,6 +494,7 @@ function copyFile(sourcePath, destinationPath, overwrite)
       if copied < 0 then kernelCopySupported = false; break end if
     end while
   end if
+#endif
   if not kernelCopySupported then
     // Reuse one bounded buffer regardless of source size if the kernel path
     // is unavailable (for example across mounts or on older filesystems).

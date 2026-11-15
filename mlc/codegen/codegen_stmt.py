@@ -3993,7 +3993,7 @@ class CodegenStmt:
             # Stabilize the measured ELF hot-loop layout after branch shortening.
             # PE keeps its existing policy: the same padding regressed that
             # layout. Entry padding is skipped by subsequent backedges.
-            if self.is_linux_target:
+            if self.is_elf_target:
                 a.align_loop()
             if versioned:
                 fast_targets = {key: dict(value, bounds_proven=True)

@@ -299,7 +299,11 @@ const O_EXCL = 128
 /// Track the o trunc value used by this standard-library module.
 const O_TRUNC = 512
 /// Track the o dsync value used by this standard-library module.
+#if TARGET_OS == "minux"
+const O_DSYNC = 0
+#else
 const O_DSYNC = 4096
+#endif
 /// Track the o directory value used by this standard-library module.
 const O_DIRECTORY = 65536
 /// Track the o cloexec value used by this standard-library module.
@@ -319,55 +323,132 @@ const LOCK_UNLOCK = 8
 /// Track the ewouldblock value used by this standard-library module.
 const EWOULDBLOCK = 11
 /// These offsets follow the Linux x86-64 glibc stat ABI. Revisit them for another CPU architecture or libc implementation.
+#if TARGET_OS == "minux"
+const STAT_SIZE = 96
+#else
 const STAT_SIZE = 144
+#endif
 /// Track the stat file size offset value used by this standard-library module.
+#if TARGET_OS == "minux"
+const STAT_FILE_SIZE_OFFSET = 0
+#else
 const STAT_FILE_SIZE_OFFSET = 48
+#endif
 
 /// Provide the open operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.1" symbol "open" returns i32
+#else
 extern function _open(path as cstr, flags as int, mode as u32) from "libc.so.6" symbol "open" returns i32
+#endif
 /// Provide the pread operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _pread(handle as int, output as bytes, count as u64, offset as i64) from "libminilang_minux.so" symbol "mlc_pread" returns i64
+#else
 extern function _pread(handle as int, output as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pread" returns i64
+#endif
 /// Read into a validated interior byte-buffer address.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _preadPointer(handle as int, output as ptr, count as u64, offset as i64) from "libminilang_minux.so" symbol "mlc_pread" returns i64
+#else
 extern function _preadPointer(handle as int, output as ptr, count as u64, offset as i64) from "libc.so.6" symbol "pread" returns i64
+#endif
 /// Provide the pwrite operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _pwrite(handle as int, input as bytes, count as u64, offset as i64) from "libminilang_minux.so" symbol "mlc_pwrite" returns i64
+#else
 extern function _pwrite(handle as int, input as bytes, count as u64, offset as i64) from "libc.so.6" symbol "pwrite" returns i64
+#endif
 /// Write from a validated interior byte-buffer address.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _pwritePointer(handle as int, input as ptr, count as u64, offset as i64) from "libminilang_minux.so" symbol "mlc_pwrite" returns i64
+#else
 extern function _pwritePointer(handle as int, input as ptr, count as u64, offset as i64) from "libc.so.6" symbol "pwrite" returns i64
+#endif
 /// Provide the fstat operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _fstat(handle as int, output as bytes) from "libc.so.1" symbol "fstat" returns i32
+#else
 extern function _fstat(handle as int, output as bytes) from "libc.so.6" symbol "fstat" returns i32
+#endif
 /// Provide the ftruncate operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _ftruncate(handle as int, size as i64) from "libc.so.1" symbol "ftruncate" returns i32
+#else
 extern function _ftruncate(handle as int, size as i64) from "libc.so.6" symbol "ftruncate" returns i32
+#endif
 /// Provide the fsync operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _fsync(handle as int) from "libc.so.1" symbol "fsync" returns i32
+/// Open a directory while validating its type without Linux O_DIRECTORY flags.
+/// @internal
+extern function _opendir(path as cstr) from "libc.so.1" symbol "opendir" returns ptr
+/// Return the native descriptor owned by a directory stream.
+/// @internal
+extern function _dirfd(directory as ptr) from "libc.so.1" symbol "dirfd" returns i32
+/// Close a directory stream and release its descriptor.
+/// @internal
+extern function _closedir(directory as ptr) from "libc.so.1" symbol "closedir" returns i32
+#else
 extern function _fsync(handle as int) from "libc.so.6" symbol "fsync" returns i32
+#endif
 /// Provide the flock operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _flock(handle as int, operation as int) from "libminilang_minux.so" symbol "mlc_flock" returns i32
+#else
 extern function _flock(handle as int, operation as int) from "libc.so.6" symbol "flock" returns i32
+#endif
 /// Releases or resets close.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _close(handle as int) from "libc.so.1" symbol "close" returns i32
+#else
 extern function _close(handle as int) from "libc.so.6" symbol "close" returns i32
+#endif
 /// Provide the mkdir operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mkdir(path as cstr, mode as u32) from "libc.so.1" symbol "mkdir" returns i32
+#else
 extern function _mkdir(path as cstr, mode as u32) from "libc.so.6" symbol "mkdir" returns i32
+#endif
 /// Provide the rmdir operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _rmdir(path as cstr) from "libc.so.1" symbol "rmdir" returns i32
+#else
 extern function _rmdir(path as cstr) from "libc.so.6" symbol "rmdir" returns i32
+#endif
 /// Provide the rename operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _rename(source as cstr, destination as cstr) from "libc.so.1" symbol "rename" returns i32
+#else
 extern function _rename(source as cstr, destination as cstr) from "libc.so.6" symbol "rename" returns i32
+#endif
 /// Provide the errno location operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _errnoLocation() from "libminilang_minux.so" symbol "mlc_errno_location" returns ptr
+#else
 extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
+#endif
 /// Provide the copy errno operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _copyErrno(output as bytes, source as ptr, count as u64) from "libc.so.1" symbol "memcpy" returns ptr
+#else
 extern function _copyErrno(output as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 #endif
 
 /// Provide the native error code operation for this standard-library module.
@@ -543,6 +624,12 @@ function writeAt(file, fileOffset, source, sourceOffset, count)
     if actual <= 0 then return _error(FILE_ERR, "writeAt", "write made no progress") end if
     total = total + actual
   end while
+#if TARGET_OS == "minux"
+  if file.durable then
+    flushed = flush(file)
+    if typeof(flushed) == "error" then return flushed end if
+  end if
+#endif
   return total
 end function
 
@@ -797,6 +884,13 @@ function syncDirectory(path)
   if handle < 0 then return _nativeFailure("syncDirectory.open") end if
   result = _fsync(handle)
   closeResult = std.io.file._close(handle)
+  if result != 0 or closeResult != 0 then return _nativeFailure("syncDirectory") end if
+#elif TARGET_OS == "minux"
+  directory = _opendir(path)
+  if directory == 0 then return _nativeFailure("syncDirectory.open") end if
+  handle = _dirfd(directory)
+  result = _fsync(handle)
+  closeResult = _closedir(directory)
   if result != 0 or closeResult != 0 then return _nativeFailure("syncDirectory") end if
 #endif
   return true

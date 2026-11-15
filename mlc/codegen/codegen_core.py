@@ -16,6 +16,7 @@ from ..data import DataBuilder, RDataBuilder, BssBuilder
 from ..errors import CompileError
 from ..pe import KERNEL32, MSVCRT
 from ..tools import align_up, enc_int, enc_void
+from ..targets import is_elf_target
 
 
 class ExprValueTemp:
@@ -41,7 +42,7 @@ class CodegenCore:
         self.source = source
         self.filename = filename
         self.target = str(target or 'windows-x64').lower()
-        self.is_linux_target = self.target == 'linux-x64'
+        self.is_elf_target = is_elf_target(self.target)
 
         # Root directory of the entry file (used for stable, short script paths).
         try:
@@ -288,7 +289,7 @@ class CodegenCore:
         # argv / argc storage for main(args)
         self.data.add_u32('ml_argc', 0)
         self.data.add_u64('ml_argvw', 0)
-        if self.is_linux_target:
+        if self.is_elf_target:
             # Linux starts at ``_start`` with argc/argv on the initial stack.
             # Keep a private GS page for the managed-thread context pointer;
             # unlike Win64 there is no TEB-owned gs:[0x28] slot.

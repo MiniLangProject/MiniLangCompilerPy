@@ -24,7 +24,7 @@ const AES_GCM_ERR = 241
 Track the aes gcm err value used by this standard-library module.
 
 
-Source: `std/crypto/aes_gcm.ml:27`
+Source: `std/crypto/aes_gcm.ml:31`
 
 <a id="function-function-std-crypto-aes-gcm-decrypt-function-decrypt-key-nonce-ciphertext-tag-aad-std-crypto-aes-gcm-ml-485061609"></a>
 ### decrypt
@@ -44,7 +44,7 @@ Convenience API accepting separate ciphertext and tag values.
 | `aad` | `dynamic` | — | Value supplied for `aad`. |
 
 
-Source: `std/crypto/aes_gcm.ml:107`
+Source: `std/crypto/aes_gcm.ml:111`
 
 <a id="function-function-std-crypto-aes-gcm-encrypt-function-encrypt-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-125820132"></a>
 ### encrypt
@@ -64,7 +64,7 @@ Convenience API returning separate ciphertext and tag fields.
 | `tagLength` | `dynamic` | — | Value supplied for `tagLength`. |
 
 
-Source: `std/crypto/aes_gcm.ml:94`
+Source: `std/crypto/aes_gcm.ml:98`
 
 - [std.crypto.aes_gcm.Encrypted](Type-std-crypto-aes-gcm-encrypted-938521788.md) — struct
 <a id="function-function-std-crypto-aes-gcm-open-function-open-key-nonce-sealed-aad-taglength-std-crypto-aes-gcm-ml-1220352403"></a>
@@ -85,7 +85,7 @@ Authenticate and decrypt ciphertext||tag. Authentication failure returns an erro
 | `tagLength` | `dynamic` | — | Value supplied for `tagLength`. |
 
 
-Source: `std/crypto/aes_gcm.ml:77`
+Source: `std/crypto/aes_gcm.ml:81`
 
 <a id="function-function-std-crypto-aes-gcm-seal-function-seal-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-1614549846"></a>
 ### seal
@@ -105,4 +105,4 @@ Encrypt with AES-256-GCM and return ciphertext||tag.
 | `tagLength` | `dynamic` | — | Value supplied for `tagLength`. |
 
 
-Source: `std/crypto/aes_gcm.ml:59`
+Source: `std/crypto/aes_gcm.ml:63`

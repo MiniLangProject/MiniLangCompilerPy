@@ -847,6 +847,7 @@
 | [std.platform.dynamicLibraryExtension](File-std-platform-ml-201801091.md#function-function-std-platform-dynamiclibraryextension-function-dynamiclibraryextension-std-platform-ml-724141498) | `function` | `function dynamicLibraryExtension()` |
 | [std.platform.executableExtension](File-std-platform-ml-201801091.md#function-function-std-platform-executableextension-function-executableextension-std-platform-ml-304518794) | `function` | `function executableExtension()` |
 | [std.platform.isLinux](File-std-platform-ml-201801091.md#function-function-std-platform-islinux-function-islinux-std-platform-ml-689142728) | `function` | `function isLinux()` |
+| [std.platform.isMinux](File-std-platform-ml-201801091.md#function-function-std-platform-isminux-function-isminux-std-platform-ml-2063338622) | `function` | `function isMinux()` |
 | [std.platform.isWindows](File-std-platform-ml-201801091.md#function-function-std-platform-iswindows-function-iswindows-std-platform-ml-1628994826) | `function` | `function isWindows()` |
 | [std.platform.lineEnding](File-std-platform-ml-201801091.md#function-function-std-platform-lineending-function-lineending-std-platform-ml-807574324) | `function` | `function lineEnding()` |
 | [std.platform.operatingSystem](File-std-platform-ml-201801091.md#function-function-std-platform-operatingsystem-function-operatingsystem-std-platform-ml-1171546320) | `function` | `function operatingSystem()` |

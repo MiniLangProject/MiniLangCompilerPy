@@ -43,25 +43,53 @@ extern function SetCurrentDirectoryW(path as wstr) from "kernel32.dll" returns b
 #else
 /// Returns getpid.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _getpid() from "libc.so.1" symbol "getpid" returns i32
+#else
 extern function _getpid() from "libc.so.6" symbol "getpid" returns i32
+#endif
 /// Returns readlink.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _readlink(path as cstr, output as ptr, size as u64) from "libc.so.1" symbol "readlink" returns i64
+#else
 extern function _readlink(path as cstr, output as ptr, size as u64) from "libc.so.6" symbol "readlink" returns i64
+#endif
 /// Returns getenv.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _getenv(name as cstr) from "libc.so.1" symbol "getenv" returns ptr
+#else
 extern function _getenv(name as cstr) from "libc.so.6" symbol "getenv" returns ptr
+#endif
 /// Provide the strlen operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _strlen(value as ptr) from "libc.so.1" symbol "strlen" returns u64
+#else
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
+#endif
 /// Provide the copy from native operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.1" symbol "memcpy" returns ptr
+#else
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 /// Returns getcwd.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _getcwd(output as bytes, size as u64) from "libc.so.1" symbol "getcwd" returns ptr
+#else
 extern function _getcwd(output as bytes, size as u64) from "libc.so.6" symbol "getcwd" returns ptr
+#endif
 /// Provide the chdir operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _chdir(path as cstr) from "libc.so.1" symbol "chdir" returns i32
+#else
 extern function _chdir(path as cstr) from "libc.so.6" symbol "chdir" returns i32
+#endif
 #endif
 
 /// Provide the id operation for this standard-library module.
@@ -74,7 +102,13 @@ function id()
 end function
 
 /// Return the absolute path of the currently running native image.
+#if TARGET_OS == "minux"
+extern function _minuxExecutablePath() from "__minilang_minux_runtime" symbol "minux_executable_path" returns cstr
+#endif
 function executablePath()
+#if TARGET_OS == "minux"
+  return _minuxExecutablePath()
+#else
 #if TARGET_OS == "windows"
   raw = bytes(MAX_PATH_BYTES * 2, 0)
   actual = GetModuleFileNameW(0, raw, MAX_PATH_BYTES)
@@ -86,6 +120,7 @@ function executablePath()
   if actual <= 0 or actual >= MAX_PATH_BYTES then return _error("cannot read executable path") end if
   raw[actual] = 0
   return decodeZ(raw)
+#endif
 #endif
 end function
 

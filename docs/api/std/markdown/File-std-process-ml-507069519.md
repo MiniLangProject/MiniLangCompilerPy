@@ -20,7 +20,7 @@ function currentDirectory()
 Provide the current directory operation for this standard-library module.
 
 
-Source: `std/process.ml:116`
+Source: `std/process.ml:151`
 
 <a id="function-function-std-process-environment-function-environment-name-std-process-ml-1459757785"></a>
 ### environment
@@ -36,7 +36,7 @@ Return an environment value, or void when the variable is absent.
 | `name` | `dynamic` | — | Name of the requested item. |
 
 
-Source: `std/process.ml:94`
+Source: `std/process.ml:129`
 
 <a id="function-function-std-process-executablepath-function-executablepath-std-process-ml-649110652"></a>
 ### executablePath
@@ -48,7 +48,7 @@ function executablePath()
 Return the absolute path of the currently running native image.
 
 
-Source: `std/process.ml:77`
+Source: `std/process.ml:108`
 
 <a id="function-function-std-process-id-function-id-std-process-ml-156871044"></a>
 ### id
@@ -60,7 +60,7 @@ function id()
 Provide the id operation for this standard-library module.
 
 
-Source: `std/process.ml:68`
+Source: `std/process.ml:96`
 
 <a id="constant-constant-std-process-max-environment-bytes-const-max-environment-bytes-1048576-std-process-ml-229265976"></a>
 ### MAX_ENVIRONMENT_BYTES
@@ -112,4 +112,4 @@ Updates set current directory.
 | `path` | `dynamic` | — | Path to operate on. |
 
 
-Source: `std/process.ml:132`
+Source: `std/process.ml:167`

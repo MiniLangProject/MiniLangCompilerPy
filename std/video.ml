@@ -148,73 +148,165 @@ extern function _videoClose(handle as ptr) from "minilang_video.dll" symbol "mlv
 #else
 /// Native bridge ABI query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoAbiVersion() from "libminilang_video.so" symbol "mlv_abi_version" returns u32
+#else
 extern function _videoAbiVersion() from "$ORIGIN/libminilang_video.so" symbol "mlv_abi_version" returns u32
+#endif
 /// Native bridge backend-name query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoBackend(message as bytes, capacity as int) from "libminilang_video.so" symbol "mlv_backend" returns int
+#else
 extern function _videoBackend(message as bytes, capacity as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_backend" returns int
+#endif
 /// Native bridge open operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoOpen(source as cstr, windowHandle as ptr, allowNetwork as int) from "libminilang_video.so" symbol "mlv_open" returns ptr
+#else
 extern function _videoOpen(source as cstr, windowHandle as ptr, allowNetwork as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_open" returns ptr
+#endif
 /// Native bridge output-target operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoAttach(handle as ptr, windowHandle as ptr) from "libminilang_video.so" symbol "mlv_attach" returns int
+#else
 extern function _videoAttach(handle as ptr, windowHandle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_attach" returns int
+#endif
 /// Native bridge playback operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoPlay(handle as ptr) from "libminilang_video.so" symbol "mlv_play" returns int
+#else
 extern function _videoPlay(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_play" returns int
+#endif
 /// Native bridge pause operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoPause(handle as ptr) from "libminilang_video.so" symbol "mlv_pause" returns int
+#else
 extern function _videoPause(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_pause" returns int
+#endif
 /// Native bridge stop operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoStop(handle as ptr) from "libminilang_video.so" symbol "mlv_stop" returns int
+#else
 extern function _videoStop(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_stop" returns int
+#endif
 /// Native bridge seek operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoSeek(handle as ptr, milliseconds as i64) from "libminilang_video.so" symbol "mlv_seek" returns int
+#else
 extern function _videoSeek(handle as ptr, milliseconds as i64) from "$ORIGIN/libminilang_video.so" symbol "mlv_seek" returns int
+#endif
 /// Native bridge volume operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoSetVolume(handle as ptr, volume as double) from "libminilang_video.so" symbol "mlv_set_volume" returns int
+#else
 extern function _videoSetVolume(handle as ptr, volume as double) from "$ORIGIN/libminilang_video.so" symbol "mlv_set_volume" returns int
+#endif
 /// Native bridge mute operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoSetMuted(handle as ptr, muted as int) from "libminilang_video.so" symbol "mlv_set_muted" returns int
+#else
 extern function _videoSetMuted(handle as ptr, muted as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_set_muted" returns int
+#endif
 /// Native bridge playback-rate operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoSetRate(handle as ptr, rate as double) from "libminilang_video.so" symbol "mlv_set_rate" returns int
+#else
 extern function _videoSetRate(handle as ptr, rate as double) from "$ORIGIN/libminilang_video.so" symbol "mlv_set_rate" returns int
+#endif
 /// Native bridge loop operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoSetLoop(handle as ptr, enabled as int) from "libminilang_video.so" symbol "mlv_set_loop" returns int
+#else
 extern function _videoSetLoop(handle as ptr, enabled as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_set_loop" returns int
+#endif
 /// Native bridge state query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoState(handle as ptr) from "libminilang_video.so" symbol "mlv_state" returns int
+#else
 extern function _videoState(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_state" returns int
+#endif
 /// Native bridge position query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoPosition(handle as ptr) from "libminilang_video.so" symbol "mlv_position_ms" returns i64
+#else
 extern function _videoPosition(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_position_ms" returns i64
+#endif
 /// Native bridge duration query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoDuration(handle as ptr) from "libminilang_video.so" symbol "mlv_duration_ms" returns i64
+#else
 extern function _videoDuration(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_duration_ms" returns i64
+#endif
 /// Native bridge audio-stream query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoHasAudio(handle as ptr) from "libminilang_video.so" symbol "mlv_has_audio" returns int
+#else
 extern function _videoHasAudio(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_has_audio" returns int
+#endif
 /// Native bridge video-stream query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoHasVideo(handle as ptr) from "libminilang_video.so" symbol "mlv_has_video" returns int
+#else
 extern function _videoHasVideo(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_has_video" returns int
+#endif
 /// Native bridge width query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoWidth(handle as ptr) from "libminilang_video.so" symbol "mlv_video_width" returns int
+#else
 extern function _videoWidth(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_video_width" returns int
+#endif
 /// Native bridge height query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoHeight(handle as ptr) from "libminilang_video.so" symbol "mlv_video_height" returns int
+#else
 extern function _videoHeight(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_video_height" returns int
+#endif
 /// Native bridge event dequeue operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoPollEvent(handle as ptr, message as bytes, capacity as int) from "libminilang_video.so" symbol "mlv_poll_event" returns int
+#else
 extern function _videoPollEvent(handle as ptr, message as bytes, capacity as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_poll_event" returns int
+#endif
 /// Native bridge event-code query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoEventCode(handle as ptr) from "libminilang_video.so" symbol "mlv_event_code" returns int
+#else
 extern function _videoEventCode(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_event_code" returns int
+#endif
 /// Native bridge diagnostic query.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoError(handle as ptr, message as bytes, capacity as int) from "libminilang_video.so" symbol "mlv_error" returns int
+#else
 extern function _videoError(handle as ptr, message as bytes, capacity as int) from "$ORIGIN/libminilang_video.so" symbol "mlv_error" returns int
+#endif
 /// Native bridge cleanup operation.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _videoClose(handle as ptr) from "libminilang_video.so" symbol "mlv_close" returns void
+#else
 extern function _videoClose(handle as ptr) from "$ORIGIN/libminilang_video.so" symbol "mlv_close" returns void
+#endif
 #endif
 
 /// Return an std.video error with backend context.

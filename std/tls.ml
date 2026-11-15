@@ -14,7 +14,11 @@ package std.tls
 #if TARGET_OS == "windows"
 import std.tls._schannel as native
 #else
+#if TARGET_OS == "minux"
+import std.tls._minux as native
+#else
 import std.tls._openssl as native
+#endif
 #endif
 
 /// Track the tls err value used by this standard-library module.

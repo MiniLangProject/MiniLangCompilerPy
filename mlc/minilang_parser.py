@@ -3531,7 +3531,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.3.8",
+    "MINILANG_VERSION": "1.3.9",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 
@@ -3549,8 +3549,8 @@ def set_compile_target(target: str) -> None:
     normalized = aliases.get(normalized, normalized)
     if normalized == "windows-x64":
         values = {"TARGET_OS": "windows", "TARGET_ARCH": "x64", "TARGET_ABI": "win64", "TARGET_FORMAT": "pe"}
-    elif normalized == "linux-x64":
-        values = {"TARGET_OS": "linux", "TARGET_ARCH": "x64", "TARGET_ABI": "sysv", "TARGET_FORMAT": "elf"}
+    elif normalized in ("linux-x64", "minux-x64"):
+        values = {"TARGET_OS": "minux" if normalized == "minux-x64" else "linux", "TARGET_ARCH": "x64", "TARGET_ABI": "sysv", "TARGET_FORMAT": "elf"}
     else:
         raise ValueError(f"unsupported target: {target!r}")
     _COMPILE_PREDEFINED.update(values)

@@ -24,7 +24,7 @@ Allocate a writable unmanaged block and return its native address.
 | `size` | `dynamic` | — | Value supplied for `size`. |
 
 
-Source: `std/concurrent/shared_value.ml:60`
+Source: `std/concurrent/shared_value.ml:73`
 
 <a id="function-function-std-concurrent-shared-value-clearrecordat-function-clearrecordat-address-std-concurrent-shared-value-ml-353588477"></a>
 ### clearRecordAt
@@ -40,7 +40,7 @@ Zero a native record without releasing any referenced payload.
 | `address` | `dynamic` | — | Value supplied for `address`. |
 
 
-Source: `std/concurrent/shared_value.ml:198`
+Source: `std/concurrent/shared_value.ml:211`
 
 <a id="function-function-std-concurrent-shared-value-destroyat-function-destroyat-address-std-concurrent-shared-value-ml-875610501"></a>
 ### destroyAt
@@ -56,7 +56,7 @@ Release an owned payload and clear its native record.
 | `address` | `dynamic` | — | Value supplied for `address`. |
 
 
-Source: `std/concurrent/shared_value.ml:231`
+Source: `std/concurrent/shared_value.ml:244`
 
 <a id="function-function-std-concurrent-shared-value-encode-function-encode-value-std-concurrent-shared-value-ml-914447698"></a>
 ### encode
@@ -72,7 +72,7 @@ Returns [ok, type, payload, length]. For string/bytes payload owns a native bloc
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/shared_value.ml:142`
+Source: `std/concurrent/shared_value.ml:155`
 
 <a id="function-function-std-concurrent-shared-value-free-function-free-address-std-concurrent-shared-value-ml-384067739"></a>
 ### free
@@ -88,7 +88,7 @@ Release a block previously returned by allocate().
 | `address` | `dynamic` | — | Value supplied for `address`. |
 
 
-Source: `std/concurrent/shared_value.ml:71`
+Source: `std/concurrent/shared_value.ml:84`
 
 <a id="function-function-std-concurrent-shared-value-isshareable-function-isshareable-value-std-concurrent-shared-value-ml-1922324316"></a>
 ### isShareable
@@ -104,7 +104,7 @@ Report whether the legacy snapshot codec supports this value category.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/shared_value.ml:135`
+Source: `std/concurrent/shared_value.ml:148`
 
 <a id="constant-constant-std-concurrent-shared-value-mem-commit-reserve-const-mem-commit-reserve-12288-std-concurrent-shared-value-ml-1429665989"></a>
 ### MEM_COMMIT_RESERVE
@@ -146,7 +146,7 @@ Copy count bytes between two unmanaged addresses.
 | `count` | `dynamic` | — | Number of items to process. |
 
 
-Source: `std/concurrent/shared_value.ml:85`
+Source: `std/concurrent/shared_value.ml:98`
 
 <a id="constant-constant-std-concurrent-shared-value-page-readwrite-const-page-readwrite-4-std-concurrent-shared-value-ml-8023826"></a>
 ### PAGE_READWRITE
@@ -174,7 +174,7 @@ Materialize a managed value from one native snapshot record.
 | `address` | `dynamic` | — | Value supplied for `address`. |
 
 
-Source: `std/concurrent/shared_value.ml:213`
+Source: `std/concurrent/shared_value.ml:226`
 
 <a id="function-function-std-concurrent-shared-value-readi64at-function-readi64at-address-std-concurrent-shared-value-ml-591429923"></a>
 ### readI64At
@@ -190,7 +190,7 @@ Read a signed 64-bit integer from an unmanaged address.
 | `address` | `dynamic` | — | Value supplied for `address`. |
 
 
-Source: `std/concurrent/shared_value.ml:127`
+Source: `std/concurrent/shared_value.ml:140`
 
 <a id="constant-constant-std-concurrent-shared-value-record-size-const-record-size-24-std-concurrent-shared-value-ml-968300124"></a>
 ### RECORD_SIZE
@@ -218,7 +218,7 @@ Release the payload owned by an encoded string or bytes snapshot.
 | `encoded` | `dynamic` | — | Value supplied for `encoded`. |
 
 
-Source: `std/concurrent/shared_value.ml:172`
+Source: `std/concurrent/shared_value.ml:185`
 
 <a id="constant-constant-std-concurrent-shared-value-type-bool-const-type-bool-2-std-concurrent-shared-value-ml-924359988"></a>
 ### TYPE_BOOL
@@ -295,7 +295,7 @@ Write encoded metadata into a RECORD_SIZE native record.
 | `encoded` | `dynamic` | — | Value supplied for `encoded`. |
 
 
-Source: `std/concurrent/shared_value.ml:184`
+Source: `std/concurrent/shared_value.ml:197`
 
 <a id="function-function-std-concurrent-shared-value-writei64at-function-writei64at-address-value-std-concurrent-shared-value-ml-1649928982"></a>
 ### writeI64At
@@ -312,4 +312,4 @@ Store a signed 64-bit integer at an unmanaged address.
 | `value` | `dynamic` | — | Value to process. |
 
 
-Source: `std/concurrent/shared_value.ml:119`
+Source: `std/concurrent/shared_value.ml:132`

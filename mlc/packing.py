@@ -150,6 +150,8 @@ def transform(source, destination, upx, *, unpack=False, replace=False):
     if not replace and destination.exists():
         raise PackingError('destination already exists; choose a new output path')
     original = read_image(source)
+    if upx and not unpack and native_packing.is_minux_elf(original):
+        raise PackingError('MinUX requires the built-in packer; UPX startup stubs use another OS ABI')
     if not unpack and not (original[:2] == b'MZ' or original[:4] == b'\x7fELF'):
         raise PackingError('only PE/ELF executables can be packed')
     if not unpack and original[-16:-8] == MAGIC:

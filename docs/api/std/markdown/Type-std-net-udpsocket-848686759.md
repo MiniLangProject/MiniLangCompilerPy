@@ -12,7 +12,7 @@ struct UdpSocket
 Owned UDP socket for datagram sends and receives.
 
 
-Source: `std/net.ml:1086`
+Source: `std/net.ml:1172`
 
 ## Members
 
@@ -30,7 +30,7 @@ Bind to all local IPv4 addresses on the selected port.
 | `port` | `dynamic` | — | Local UDP port; zero asks the OS to choose one. |
 
 
-Source: `std/net.ml:1101`
+Source: `std/net.ml:1187`
 
 <a id="method-method-std-net-udpsocket-close-function-close-std-net-ml-573356093"></a>
 ### close
@@ -42,7 +42,7 @@ function close()
 Close the datagram socket once; repeat calls return true.
 
 
-Source: `std/net.ml:1152`
+Source: `std/net.ml:1238`
 
 <a id="field-field-std-net-udpsocket-closed-closed-std-net-ml-1054460201"></a>
 ### closed
@@ -54,7 +54,7 @@ closed
 Whether the socket was closed.
 
 
-Source: `std/net.ml:1090`
+Source: `std/net.ml:1176`
 
 <a id="field-field-std-net-udpsocket-handle-handle-std-net-ml-1387425801"></a>
 ### handle
@@ -66,7 +66,7 @@ handle
 Native datagram socket.
 
 
-Source: `std/net.ml:1088`
+Source: `std/net.ml:1174`
 
 <a id="method-method-std-net-udpsocket-isclosed-function-isclosed-std-net-ml-913489813"></a>
 ### isClosed
@@ -78,7 +78,7 @@ function isClosed()
 Report the datagram socket's closed state.
 
 
-Source: `std/net.ml:1161`
+Source: `std/net.ml:1247`
 
 <a id="static_method-static-method-std-net-udpsocket-open-static-function-open-std-net-ml-1892000052"></a>
 ### open
@@ -90,7 +90,7 @@ static function open()
 Create an unbound IPv4 datagram socket.
 
 
-Source: `std/net.ml:1093`
+Source: `std/net.ml:1179`
 
 <a id="method-method-std-net-udpsocket-rawhandle-function-rawhandle-std-net-ml-786980077"></a>
 ### rawHandle
@@ -102,7 +102,7 @@ function rawHandle()
 Borrow the native handle without transferring ownership.
 
 
-Source: `std/net.ml:1146`
+Source: `std/net.ml:1232`
 
 <a id="method-method-std-net-udpsocket-receivefrom-function-receivefrom-maxbytes-std-net-ml-1219401990"></a>
 ### receiveFrom
@@ -118,7 +118,7 @@ Receive [bytes, peerIp, peerPort].
 | `maxBytes` | `dynamic` | — | Maximum datagram size. |
 
 
-Source: `std/net.ml:1131`
+Source: `std/net.ml:1217`
 
 <a id="method-method-std-net-udpsocket-receivefrominto-function-receivefrominto-destination-destinationoffset-count-std-net-ml-1258266449"></a>
 ### receiveFromInto
@@ -136,7 +136,7 @@ Receive into an existing buffer and return [count, peerIp, peerPort].
 | `count` | `dynamic` | — | Maximum bytes to receive. |
 
 
-Source: `std/net.ml:1140`
+Source: `std/net.ml:1226`
 
 <a id="method-method-std-net-udpsocket-sendto-function-sendto-host-port-data-std-net-ml-1361609212"></a>
 ### sendTo
@@ -154,7 +154,7 @@ Send one datagram to an IPv4 peer.
 | `data` | `dynamic` | — | Bytes or UTF-8 text to send. |
 
 
-Source: `std/net.ml:1124`
+Source: `std/net.ml:1210`
 
 <a id="method-method-std-net-udpsocket-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-1810795555"></a>
 ### setReceiveTimeout
@@ -170,7 +170,7 @@ Set the datagram receive timeout in milliseconds.
 | `milliseconds` | `dynamic` | — | Maximum wait time. |
 
 
-Source: `std/net.ml:1108`
+Source: `std/net.ml:1194`
 
 <a id="method-method-std-net-udpsocket-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-708661663"></a>
 ### setSendTimeout
@@ -186,4 +186,4 @@ Set the datagram send timeout in milliseconds.
 | `milliseconds` | `dynamic` | — | Maximum wait time. |
 
 
-Source: `std/net.ml:1115`
+Source: `std/net.ml:1201`

@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 2944 |
+| Blank lines | 3572 |
 | Clone groups | 161 |
-| Cognitive complexity | 3621 (maximum per function: 116) |
-| Comment lines | 4637 |
-| Cyclomatic complexity | 4041 (average: 3.67, maximum: 34) |
-| Documentation coverage | 98.15% (2118 of 2158 documentation items) |
-| Duplicated lines | 1014 (8.68%) |
-| Files | 53 |
-| Functions | 1100 |
-| Maintainability index | 7.71 / 100 |
-| Physical lines | 19265 |
-| Source lines | 11687 |
-| Statements | 8253 |
+| Cognitive complexity | 3652 (maximum per function: 116) |
+| Comment lines | 4736 |
+| Cyclomatic complexity | 4091 (average: 3.66, maximum: 34) |
+| Documentation coverage | 98.15% (2119 of 2159 documentation items) |
+| Duplicated lines | 1014 (8.59%) |
+| Files | 55 |
+| Functions | 1119 |
+| Maintainability index | 7.96 / 100 |
+| Physical lines | 20113 |
+| Source lines | 11808 |
+| Statements | 8345 |
 
 ## Documentation coverage
 
@@ -28,25 +28,25 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 849 | 849 | 100% |
+| API declarations | 850 | 850 | 100% |
 | Constants | 136 | 136 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
 | Fields | 218 | 218 | 100% |
 | Globals | 1 | 1 | 100% |
-| Overall | 2118 | 2158 | 98.15% |
+| Overall | 2119 | 2159 | 98.15% |
 | Parameters | 892 | 892 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 57 | 3488 | 48367 | 33575 | 3545 | 81942 | 966224.82 | 274.34 | 265071231.11 | 322.07 |
+| 57 | 3531 | 49162 | 34150 | 3588 | 83312 | 983828.42 | 275.64 | 271179724.93 | 327.94 |
 
 ## Files
 
 | File | SLOC | Functions | Cyclomatic total / avg / max | Cognitive total / max | Duplication | Halstead volume | MI |
 | --- | ---: | ---: | --- | --- | --- | ---: | ---: |
-| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 305 | 24 | 126 / 5.25 / 33 | 130 / 47 | 9 (2.95%) | 20272.81 | 0 |
+| [`std/_linux_fs.ml`](File-std-linux-fs-ml-2121665983.md) | 304 | 24 | 125 / 5.21 / 32 | 129 / 46 | 9 (2.96%) | 19837.37 | 0 |
 | [`std/array.ml`](File-std-array-ml-1258125823.md) | 300 | 23 | 92 / 4 / 10 | 74 / 9 | 27 (9%) | 9359.66 | 5.78 |
 | [`std/assert.ml`](File-std-assert-ml-1772521196.md) | 92 | 8 | 17 / 2.13 / 3 | 9 / 2 | 0 (0%) | 1751.75 | 32.16 |
 | [`std/audio.ml`](File-std-audio-ml-1379868758.md) | 250 | 27 | 105 / 3.89 / 15 | 78 / 14 | 22 (8.8%) | 12906.72 | 4.78 |
@@ -66,6 +66,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/cpu.ml`](File-std-cpu-ml-1561418518.md) | 19 | 3 | 3 / 1 / 1 | 0 / 0 | 0 (0%) | 372.23 | 53.7 |
 | [`std/crypto.ml`](File-std-crypto-ml-1263151193.md) | 98 | 16 | 59 / 3.69 / 10 | 43 / 9 | 0 (0%) | 6101.03 | 22.12 |
 | [`std/crypto/_cng.ml`](File-std-crypto-cng-ml-1099901917.md) | 330 | 16 | 80 / 5 / 13 | 69 / 14 | 32 (9.7%) | 22981.95 | 3.76 |
+| [`std/crypto/_minux.ml`](File-std-crypto-minux-ml-1620157096.md) | 42 | 9 | 13 / 1.44 / 3 | 4 / 2 | 0 (0%) | 4060.28 | 37.57 |
 | [`std/crypto/_openssl.ml`](File-std-crypto-openssl-ml-882852629.md) | 228 | 12 | 77 / 6.42 / 21 | 83 / 32 | 0 (0%) | 19690.73 | 8.14 |
 | [`std/crypto/aes_gcm.ml`](File-std-crypto-aes-gcm-ml-264581731.md) | 48 | 6 | 26 / 4.33 / 10 | 20 / 9 | 0 (0%) | 2739.36 | 35.76 |
 | [`std/crypto/ecdsa_p256.ml`](File-std-crypto-ecdsa-p256-ml-1815373426.md) | 14 | 1 | 7 / 7 / 7 | 6 / 6 | 0 (0%) | 660.68 | 54.31 |
@@ -84,7 +85,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/math.ml`](File-std-math-ml-790065500.md) | 425 | 50 | 120 / 2.4 / 9 | 77 / 10 | 29 (6.82%) | 16831.11 | 0 |
 | [`std/net.ml`](File-std-net-ml-1989130045.md) | 606 | 67 | 203 / 3.03 / 10 | 140 / 12 | 12 (1.98%) | 36589.36 | 0 |
 | [`std/path.ml`](File-std-path-ml-701536411.md) | 77 | 12 | 53 / 4.42 / 14 | 41 / 13 | 0 (0%) | 4599.11 | 26.07 |
-| [`std/platform.ml`](File-std-platform-ml-201801091.md) | 25 | 8 | 8 / 1 / 1 | 0 / 0 | 0 (0%) | 315.78 | 50.93 |
+| [`std/platform.ml`](File-std-platform-ml-201801091.md) | 28 | 9 | 9 / 1 / 1 | 0 / 0 | 0 (0%) | 357.23 | 49.35 |
 | [`std/process.ml`](File-std-process-ml-507069519.md) | 42 | 6 | 19 / 3.17 / 7 | 13 / 6 | 0 (0%) | 2210.57 | 38.62 |
 | [`std/random.ml`](File-std-random-ml-66683891.md) | 96 | 12 | 27 / 2.25 / 4 | 18 / 5 | 0 (0%) | 3585.36 | 28.24 |
 | [`std/result.ml`](File-std-result-ml-986518417.md) | 88 | 17 | 26 / 1.53 / 2 | 9 / 1 | 0 (0%) | 1976.31 | 31.01 |
@@ -95,6 +96,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/threading.ml`](File-std-threading-ml-508437988.md) | 176 | 41 | 80 / 1.95 / 8 | 39 / 7 | 39 (22.16%) | 7850.03 | 12.98 |
 | [`std/time.ml`](File-std-time-ml-975894601.md) | 619 | 53 | 203 / 3.83 / 17 | 159 / 19 | 0 (0%) | 32686.86 | 0 |
 | [`std/tls.ml`](File-std-tls-ml-2076630303.md) | 165 | 24 | 79 / 3.29 / 14 | 61 / 15 | 0 (0%) | 9145.77 | 13.27 |
+| [`std/tls/_minux.ml`](File-std-tls-minux-ml-1800294030.md) | 77 | 9 | 37 / 4.11 / 10 | 28 / 9 | 0 (0%) | 5442.93 | 27.71 |
 | [`std/tls/_openssl.ml`](File-std-tls-openssl-ml-961424543.md) | 224 | 16 | 94 / 5.88 / 18 | 85 / 19 | 0 (0%) | 19505.96 | 6.05 |
 | [`std/tls/_schannel.ml`](File-std-tls-schannel-ml-805501109.md) | 1163 | 83 | 463 / 5.58 / 24 | 510 / 51 | 66 (5.67%) | 106601.21 | 0 |
 | [`std/uuid.ml`](File-std-uuid-ml-1903850359.md) | 38 | 6 | 18 / 3 / 9 | 12 / 8 | 0 (0%) | 2700.98 | 39.09 |
@@ -253,18 +255,18 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.concurrent.channel.Channel.TryReceive`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-tryreceive-function-tryreceive-std-concurrent-channel-ml-1599168617) | `std/concurrent/channel.ml:260` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.channel.Channel.trySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-416491496) | `std/concurrent/channel.ml:199` | 1 | 1 | 1 | 0 | 0 | 57.36 | 87.55 |
 | [`std.concurrent.channel.Channel.TrySend`](Type-std-concurrent-channel-channel-21011237.md#method-method-std-concurrent-channel-channel-trysend-function-trysend-value-std-concurrent-channel-ml-121058408) | `std/concurrent/channel.ml:253` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.concurrent.shared_value.allocate`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-allocate-function-allocate-size-std-concurrent-shared-value-ml-634200546) | `std/concurrent/shared_value.ml:60` | 4 | 3 | 3 | 2 | 1 | 146.95 | 71.29 |
-| [`std.concurrent.shared_value.clearRecordAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-clearrecordat-function-clearrecordat-address-std-concurrent-shared-value-ml-353588477) | `std/concurrent/shared_value.ml:198` | 4 | 2 | 1 | 0 | 0 | 85.11 | 73.22 |
-| [`std.concurrent.shared_value.destroyAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-destroyat-function-destroyat-address-std-concurrent-shared-value-ml-875610501) | `std/concurrent/shared_value.ml:231` | 8 | 5 | 4 | 3 | 1 | 229.25 | 63.24 |
-| [`std.concurrent.shared_value.encode`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-encode-function-encode-value-std-concurrent-shared-value-ml-914447698) | `std/concurrent/shared_value.ml:142` | 25 | 24 | 9 | 11 | 2 | 942.93 | 47.47 |
-| [`std.concurrent.shared_value.free`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-free-function-free-address-std-concurrent-shared-value-ml-384067739) | `std/concurrent/shared_value.ml:71` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
-| [`std.concurrent.shared_value.isShareable`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-isshareable-function-isshareable-value-std-concurrent-shared-value-ml-1922324316) | `std/concurrent/shared_value.ml:135` | 4 | 2 | 1 | 0 | 0 | 134.89 | 71.82 |
-| [`std.concurrent.shared_value.move`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-move-function-move-destination-source-count-std-concurrent-shared-value-ml-334062803) | `std/concurrent/shared_value.ml:85` | 5 | 4 | 2 | 1 | 1 | 120 | 69.93 |
-| [`std.concurrent.shared_value.readAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-readat-function-readat-address-std-concurrent-shared-value-ml-1679073383) | `std/concurrent/shared_value.ml:213` | 14 | 18 | 8 | 7 | 1 | 569.35 | 54.63 |
-| [`std.concurrent.shared_value.readI64At`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-readi64at-function-readi64at-address-std-concurrent-shared-value-ml-591429923) | `std/concurrent/shared_value.ml:127` | 5 | 3 | 1 | 0 | 0 | 132 | 69.77 |
-| [`std.concurrent.shared_value.releaseEncoded`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-releaseencoded-function-releaseencoded-encoded-std-concurrent-shared-value-ml-645091353) | `std/concurrent/shared_value.ml:172` | 8 | 6 | 6 | 5 | 1 | 304.23 | 62.11 |
-| [`std.concurrent.shared_value.writeEncodedAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writeencodedat-function-writeencodedat-address-encoded-std-concurrent-shared-value-ml-1480224945) | `std/concurrent/shared_value.ml:184` | 11 | 8 | 4 | 3 | 1 | 435.99 | 58.26 |
-| [`std.concurrent.shared_value.writeI64At`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writei64at-function-writei64at-address-value-std-concurrent-shared-value-ml-1649928982) | `std/concurrent/shared_value.ml:119` | 5 | 3 | 1 | 0 | 0 | 128.93 | 69.84 |
+| [`std.concurrent.shared_value.allocate`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-allocate-function-allocate-size-std-concurrent-shared-value-ml-634200546) | `std/concurrent/shared_value.ml:73` | 4 | 3 | 3 | 2 | 1 | 146.95 | 71.29 |
+| [`std.concurrent.shared_value.clearRecordAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-clearrecordat-function-clearrecordat-address-std-concurrent-shared-value-ml-353588477) | `std/concurrent/shared_value.ml:211` | 4 | 2 | 1 | 0 | 0 | 85.11 | 73.22 |
+| [`std.concurrent.shared_value.destroyAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-destroyat-function-destroyat-address-std-concurrent-shared-value-ml-875610501) | `std/concurrent/shared_value.ml:244` | 8 | 5 | 4 | 3 | 1 | 229.25 | 63.24 |
+| [`std.concurrent.shared_value.encode`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-encode-function-encode-value-std-concurrent-shared-value-ml-914447698) | `std/concurrent/shared_value.ml:155` | 25 | 24 | 9 | 11 | 2 | 942.93 | 47.47 |
+| [`std.concurrent.shared_value.free`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-free-function-free-address-std-concurrent-shared-value-ml-384067739) | `std/concurrent/shared_value.ml:84` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
+| [`std.concurrent.shared_value.isShareable`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-isshareable-function-isshareable-value-std-concurrent-shared-value-ml-1922324316) | `std/concurrent/shared_value.ml:148` | 4 | 2 | 1 | 0 | 0 | 134.89 | 71.82 |
+| [`std.concurrent.shared_value.move`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-move-function-move-destination-source-count-std-concurrent-shared-value-ml-334062803) | `std/concurrent/shared_value.ml:98` | 5 | 4 | 2 | 1 | 1 | 120 | 69.93 |
+| [`std.concurrent.shared_value.readAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-readat-function-readat-address-std-concurrent-shared-value-ml-1679073383) | `std/concurrent/shared_value.ml:226` | 14 | 18 | 8 | 7 | 1 | 569.35 | 54.63 |
+| [`std.concurrent.shared_value.readI64At`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-readi64at-function-readi64at-address-std-concurrent-shared-value-ml-591429923) | `std/concurrent/shared_value.ml:140` | 5 | 3 | 1 | 0 | 0 | 132 | 69.77 |
+| [`std.concurrent.shared_value.releaseEncoded`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-releaseencoded-function-releaseencoded-encoded-std-concurrent-shared-value-ml-645091353) | `std/concurrent/shared_value.ml:185` | 8 | 6 | 6 | 5 | 1 | 304.23 | 62.11 |
+| [`std.concurrent.shared_value.writeEncodedAt`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writeencodedat-function-writeencodedat-address-encoded-std-concurrent-shared-value-ml-1480224945) | `std/concurrent/shared_value.ml:197` | 11 | 8 | 4 | 3 | 1 | 435.99 | 58.26 |
+| [`std.concurrent.shared_value.writeI64At`](File-std-concurrent-shared-value-ml-2112657235.md#function-function-std-concurrent-shared-value-writei64at-function-writei64at-address-value-std-concurrent-shared-value-ml-1649928982) | `std/concurrent/shared_value.ml:132` | 5 | 3 | 1 | 0 | 0 | 128.93 | 69.84 |
 | [`std.concurrent.task.Future.Cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-1703225909) | `std/concurrent/task.ml:109` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.task.Future.cancel`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-cancel-function-cancel-std-concurrent-task-ml-175448501) | `std/concurrent/task.ml:79` | 9 | 8 | 4 | 3 | 1 | 241.58 | 61.96 |
 | [`std.concurrent.task.Future.close`](Type-std-concurrent-task-future-1621495977.md#method-method-std-concurrent-task-future-close-function-close-std-concurrent-task-ml-615943313) | `std/concurrent/task.ml:90` | 10 | 9 | 6 | 5 | 1 | 343.13 | 59.63 |
@@ -319,11 +321,11 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.concurrent.thread_pool.ThreadPoolJob.Wait`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-wait-function-wait-std-concurrent-thread-pool-ml-1518778939) | `std/concurrent/thread_pool.ml:223` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
 | [`std.concurrent.thread_pool.ThreadPoolJob.waitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-378084097) | `std/concurrent/thread_pool.ml:166` | 4 | 3 | 2 | 1 | 1 | 95.18 | 72.74 |
 | [`std.concurrent.thread_pool.ThreadPoolJob.WaitFor`](Type-std-concurrent-thread-pool-threadpooljob-859238811.md#method-method-std-concurrent-thread-pool-threadpooljob-waitfor-function-waitfor-milliseconds-std-concurrent-thread-pool-ml-1383667777) | `std/concurrent/thread_pool.ml:226` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
-| [`std.console.disableQuickEdit`](File-std-console-ml-1875579671.md#function-function-std-console-disablequickedit-function-disablequickedit-std-console-ml-1305818672) | `std/console.ml:109` | 10 | 11 | 6 | 5 | 1 | 442.8 | 58.85 |
-| [`std.console.isInteractive`](File-std-console-ml-1875579671.md#function-function-std-console-isinteractive-function-isinteractive-std-console-ml-470243024) | `std/console.ml:97` | 6 | 5 | 3 | 2 | 1 | 185.47 | 66.74 |
-| [`std.console.readPassword`](File-std-console-ml-1875579671.md#function-function-std-console-readpassword-function-readpassword-prompt-std-console-ml-1668045086) | `std/console.ml:181` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.console.readSecret`](File-std-console-ml-1875579671.md#function-function-std-console-readsecret-function-readsecret-prompt-maximumbytes-std-console-ml-989090479) | `std/console.ml:125` | 42 | 50 | 24 | 24 | 2 | 2884.23 | 37.14 |
-| [`std.console.readSecretConfirmed`](File-std-console-ml-1875579671.md#function-function-std-console-readsecretconfirmed-function-readsecretconfirmed-prompt-confirmationprompt-maximumbytes-std-console-ml-500058034) | `std/console.ml:189` | 10 | 13 | 4 | 3 | 1 | 404.24 | 59.4 |
+| [`std.console.disableQuickEdit`](File-std-console-ml-1875579671.md#function-function-std-console-disablequickedit-function-disablequickedit-std-console-ml-1305818672) | `std/console.ml:129` | 10 | 11 | 6 | 5 | 1 | 442.8 | 58.85 |
+| [`std.console.isInteractive`](File-std-console-ml-1875579671.md#function-function-std-console-isinteractive-function-isinteractive-std-console-ml-470243024) | `std/console.ml:117` | 6 | 5 | 3 | 2 | 1 | 185.47 | 66.74 |
+| [`std.console.readPassword`](File-std-console-ml-1875579671.md#function-function-std-console-readpassword-function-readpassword-prompt-std-console-ml-1668045086) | `std/console.ml:211` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.console.readSecret`](File-std-console-ml-1875579671.md#function-function-std-console-readsecret-function-readsecret-prompt-maximumbytes-std-console-ml-989090479) | `std/console.ml:145` | 42 | 50 | 24 | 24 | 2 | 2884.23 | 37.14 |
+| [`std.console.readSecretConfirmed`](File-std-console-ml-1875579671.md#function-function-std-console-readsecretconfirmed-function-readsecretconfirmed-prompt-confirmationprompt-maximumbytes-std-console-ml-500058034) | `std/console.ml:219` | 10 | 13 | 4 | 3 | 1 | 404.24 | 59.4 |
 | [`std.console.wipe`](File-std-console-ml-1875579671.md#function-function-std-console-wipe-function-wipe-buffer-std-console-ml-1632003642) | `std/console.ml:53` | 5 | 5 | 3 | 2 | 1 | 186.91 | 68.44 |
 | [`std.core.abs`](File-std-core-ml-750389783.md#function-function-std-core-abs-function-abs-x-std-core-ml-390262774) | `std/core.ml:125` | 6 | 3 | 2 | 1 | 1 | 68.11 | 69.92 |
 | [`std.core.clamp`](File-std-core-ml-750389783.md#function-function-std-core-clamp-function-clamp-x-lo-hi-std-core-ml-150268134) | `std/core.ml:113` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
@@ -344,24 +346,24 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.cpu.activeFeatures`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-activefeatures-function-activefeatures-std-cpu-ml-774821314) | `std/cpu.ml:46` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
 | [`std.cpu.features`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-features-function-features-std-cpu-ml-440708594) | `std/cpu.ml:41` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
 | [`std.cpu.setDispatchMaskForTesting`](File-std-cpu-ml-1561418518.md#function-function-std-cpu-setdispatchmaskfortesting-function-setdispatchmaskfortesting-mask-std-cpu-ml-816780596) | `std/cpu.ml:52` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.crypto.aes_gcm.decrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-decrypt-function-decrypt-key-nonce-ciphertext-tag-aad-std-crypto-aes-gcm-ml-485061609) | `std/crypto/aes_gcm.ml:107` | 4 | 3 | 3 | 2 | 1 | 248.8 | 69.69 |
-| [`std.crypto.aes_gcm.encrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-encrypt-function-encrypt-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-125820132) | `std/crypto/aes_gcm.ml:94` | 6 | 5 | 2 | 1 | 1 | 329.03 | 65.13 |
-| [`std.crypto.aes_gcm.open`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-open-function-open-key-nonce-sealed-aad-taglength-std-crypto-aes-gcm-ml-1220352403) | `std/crypto/aes_gcm.ml:77` | 10 | 6 | 5 | 4 | 1 | 468.05 | 58.82 |
-| [`std.crypto.aes_gcm.seal`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-seal-function-seal-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-1614549846) | `std/crypto/aes_gcm.ml:59` | 11 | 8 | 5 | 4 | 1 | 531.36 | 57.53 |
-| [`std.crypto.constantTimeEquals`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-constanttimeequals-function-constanttimeequals-a-b-std-crypto-ml-1925949949) | `std/crypto.ml:148` | 4 | 3 | 3 | 2 | 1 | 143.06 | 71.37 |
-| [`std.crypto.ecdsa_p256.verify`](File-std-crypto-ecdsa-p256-ml-1815373426.md#function-function-std-crypto-ecdsa-p256-verify-function-verify-publickey-message-signature-std-crypto-ecdsa-p256-ml-1397114268) | `std/crypto/ecdsa_p256.ml:37` | 10 | 12 | 7 | 6 | 1 | 495.6 | 58.37 |
-| [`std.crypto.hkdfSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha256-function-hkdfsha256-inputkeymaterial-salt-info-length-std-crypto-ml-1740727018) | `std/crypto.ml:94` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
-| [`std.crypto.hkdfSha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha384-function-hkdfsha384-inputkeymaterial-salt-info-length-std-crypto-ml-1751700406) | `std/crypto.ml:103` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
-| [`std.crypto.hmacSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hmacsha256-function-hmacsha256-key-input-std-crypto-ml-689688099) | `std/crypto.ml:56` | 6 | 6 | 4 | 3 | 1 | 302.86 | 65.11 |
-| [`std.crypto.hmacSha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hmacsha384-function-hmacsha384-key-input-std-crypto-ml-1206696471) | `std/crypto.ml:66` | 6 | 6 | 4 | 3 | 1 | 302.86 | 65.11 |
-| [`std.crypto.pbkdf2Sha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-pbkdf2sha256-function-pbkdf2sha256-password-salt-iterations-length-std-crypto-ml-1283186663) | `std/crypto.ml:123` | 3 | 1 | 1 | 0 | 0 | 96.21 | 75.57 |
-| [`std.crypto.pbkdf2Sha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-pbkdf2sha384-function-pbkdf2sha384-password-salt-iterations-length-std-crypto-ml-2002863367) | `std/crypto.ml:132` | 3 | 1 | 1 | 0 | 0 | 96.21 | 75.57 |
-| [`std.crypto.secureRandom`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-securerandom-function-securerandom-length-std-crypto-ml-287450256) | `std/crypto.ml:138` | 6 | 6 | 5 | 4 | 1 | 269.21 | 65.34 |
-| [`std.crypto.secureZero`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-securezero-function-securezero-buffer-std-crypto-ml-1706379390) | `std/crypto.ml:155` | 5 | 5 | 3 | 2 | 1 | 186.91 | 68.44 |
-| [`std.crypto.sha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-sha256-function-sha256-input-std-crypto-ml-2117608982) | `std/crypto.ml:37` | 6 | 6 | 3 | 2 | 1 | 256.76 | 65.75 |
-| [`std.crypto.sha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-sha384-function-sha384-input-std-crypto-ml-534054486) | `std/crypto.ml:46` | 6 | 6 | 3 | 2 | 1 | 256.76 | 65.75 |
-| [`std.crypto.x25519`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-x25519-function-x25519-privatekey-peerpublickey-std-crypto-ml-1569573420) | `std/crypto.ml:173` | 14 | 14 | 7 | 6 | 1 | 590.19 | 54.65 |
-| [`std.crypto.x25519PublicKey`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-x25519publickey-function-x25519publickey-privatekey-std-crypto-ml-664480438) | `std/crypto.ml:163` | 6 | 6 | 4 | 3 | 1 | 271.03 | 65.45 |
+| [`std.crypto.aes_gcm.decrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-decrypt-function-decrypt-key-nonce-ciphertext-tag-aad-std-crypto-aes-gcm-ml-485061609) | `std/crypto/aes_gcm.ml:111` | 4 | 3 | 3 | 2 | 1 | 248.8 | 69.69 |
+| [`std.crypto.aes_gcm.encrypt`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-encrypt-function-encrypt-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-125820132) | `std/crypto/aes_gcm.ml:98` | 6 | 5 | 2 | 1 | 1 | 329.03 | 65.13 |
+| [`std.crypto.aes_gcm.open`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-open-function-open-key-nonce-sealed-aad-taglength-std-crypto-aes-gcm-ml-1220352403) | `std/crypto/aes_gcm.ml:81` | 10 | 6 | 5 | 4 | 1 | 468.05 | 58.82 |
+| [`std.crypto.aes_gcm.seal`](File-std-crypto-aes-gcm-ml-264581731.md#function-function-std-crypto-aes-gcm-seal-function-seal-key-nonce-plaintext-aad-taglength-std-crypto-aes-gcm-ml-1614549846) | `std/crypto/aes_gcm.ml:63` | 11 | 8 | 5 | 4 | 1 | 531.36 | 57.53 |
+| [`std.crypto.constantTimeEquals`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-constanttimeequals-function-constanttimeequals-a-b-std-crypto-ml-1925949949) | `std/crypto.ml:152` | 4 | 3 | 3 | 2 | 1 | 143.06 | 71.37 |
+| [`std.crypto.ecdsa_p256.verify`](File-std-crypto-ecdsa-p256-ml-1815373426.md#function-function-std-crypto-ecdsa-p256-verify-function-verify-publickey-message-signature-std-crypto-ecdsa-p256-ml-1397114268) | `std/crypto/ecdsa_p256.ml:41` | 10 | 12 | 7 | 6 | 1 | 495.6 | 58.37 |
+| [`std.crypto.hkdfSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha256-function-hkdfsha256-inputkeymaterial-salt-info-length-std-crypto-ml-1740727018) | `std/crypto.ml:98` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
+| [`std.crypto.hkdfSha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hkdfsha384-function-hkdfsha384-inputkeymaterial-salt-info-length-std-crypto-ml-1751700406) | `std/crypto.ml:107` | 3 | 1 | 1 | 0 | 0 | 106.61 | 75.26 |
+| [`std.crypto.hmacSha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hmacsha256-function-hmacsha256-key-input-std-crypto-ml-689688099) | `std/crypto.ml:60` | 6 | 6 | 4 | 3 | 1 | 302.86 | 65.11 |
+| [`std.crypto.hmacSha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-hmacsha384-function-hmacsha384-key-input-std-crypto-ml-1206696471) | `std/crypto.ml:70` | 6 | 6 | 4 | 3 | 1 | 302.86 | 65.11 |
+| [`std.crypto.pbkdf2Sha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-pbkdf2sha256-function-pbkdf2sha256-password-salt-iterations-length-std-crypto-ml-1283186663) | `std/crypto.ml:127` | 3 | 1 | 1 | 0 | 0 | 96.21 | 75.57 |
+| [`std.crypto.pbkdf2Sha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-pbkdf2sha384-function-pbkdf2sha384-password-salt-iterations-length-std-crypto-ml-2002863367) | `std/crypto.ml:136` | 3 | 1 | 1 | 0 | 0 | 96.21 | 75.57 |
+| [`std.crypto.secureRandom`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-securerandom-function-securerandom-length-std-crypto-ml-287450256) | `std/crypto.ml:142` | 6 | 6 | 5 | 4 | 1 | 269.21 | 65.34 |
+| [`std.crypto.secureZero`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-securezero-function-securezero-buffer-std-crypto-ml-1706379390) | `std/crypto.ml:159` | 5 | 5 | 3 | 2 | 1 | 186.91 | 68.44 |
+| [`std.crypto.sha256`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-sha256-function-sha256-input-std-crypto-ml-2117608982) | `std/crypto.ml:41` | 6 | 6 | 3 | 2 | 1 | 256.76 | 65.75 |
+| [`std.crypto.sha384`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-sha384-function-sha384-input-std-crypto-ml-534054486) | `std/crypto.ml:50` | 6 | 6 | 3 | 2 | 1 | 256.76 | 65.75 |
+| [`std.crypto.x25519`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-x25519-function-x25519-privatekey-peerpublickey-std-crypto-ml-1569573420) | `std/crypto.ml:177` | 14 | 14 | 7 | 6 | 1 | 590.19 | 54.65 |
+| [`std.crypto.x25519PublicKey`](File-std-crypto-ml-1263151193.md#function-function-std-crypto-x25519publickey-function-x25519publickey-privatekey-std-crypto-ml-664480438) | `std/crypto.ml:167` | 6 | 6 | 4 | 3 | 1 | 271.03 | 65.45 |
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.clear`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#method-method-std-ds-concurrent-hashmap-threadsafehashmap-clear-function-clear-std-ds-concurrent-hashmap-ml-1301294917) | `std/ds/concurrent_hashmap.ml:333` | 14 | 12 | 3 | 2 | 1 | 399.54 | 56.38 |
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.close`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#method-method-std-ds-concurrent-hashmap-threadsafehashmap-close-function-close-std-ds-concurrent-hashmap-ml-869858615) | `std/ds/concurrent_hashmap.ml:412` | 13 | 12 | 3 | 2 | 1 | 374.97 | 57.27 |
 | [`std.ds.concurrent_hashmap.ThreadSafeHashMap.count`](Type-std-ds-concurrent-hashmap-threadsafehashmap-551487914.md#method-method-std-ds-concurrent-hashmap-threadsafehashmap-count-function-count-std-ds-concurrent-hashmap-ml-2095071105) | `std/ds/concurrent_hashmap.ml:150` | 7 | 7 | 3 | 2 | 1 | 191.16 | 65.19 |
@@ -495,17 +497,17 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.fs.readAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-readalltext-function-readalltext-path-std-fs-ml-1923171005) | `std/fs.ml:697` | 62 | 41 | 13 | 15 | 2 | 2288.45 | 35.63 |
 | [`std.fs.writeAllBytes`](File-std-fs-ml-1285967051.md#function-function-std-fs-writeallbytes-function-writeallbytes-path-data-std-fs-ml-354087299) | `std/fs.ml:562` | 12 | 8 | 4 | 3 | 1 | 356.7 | 58.05 |
 | [`std.fs.writeAllText`](File-std-fs-ml-1285967051.md#function-function-std-fs-writealltext-function-writealltext-path-text-std-fs-ml-856051952) | `std/fs.ml:655` | 33 | 25 | 8 | 7 | 1 | 1038.47 | 44.68 |
-| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:554` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
-| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:769` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
-| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:658` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
-| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:450` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:677` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
-| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:462` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:456` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:468` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:720` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
-| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:714` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:708` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.append`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-append-function-append-file-source-sourceoffset-count-std-io-file-ml-1717912519) | `std/io/file.ml:641` | 7 | 7 | 3 | 2 | 1 | 259.15 | 64.26 |
+| [`std.io.file.atomicMove`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-atomicmove-function-atomicmove-source-destination-replaceexisting-std-io-file-ml-17044359) | `std/io/file.ml:856` | 9 | 12 | 10 | 9 | 1 | 660.68 | 58.09 |
+| [`std.io.file.close`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-close-function-close-file-std-io-file-ml-1917059369) | `std/io/file.ml:745` | 12 | 12 | 5 | 5 | 2 | 411.2 | 57.48 |
+| [`std.io.file.create`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-create-function-create-path-std-io-file-ml-118505396) | `std/io/file.ml:531` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdirectory-function-createdirectory-path-std-io-file-ml-1346524798) | `std/io/file.ml:764` | 6 | 7 | 5 | 4 | 1 | 302.86 | 64.98 |
+| [`std.io.file.createDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createdurable-function-createdurable-path-std-io-file-ml-1821741618) | `std/io/file.ml:543` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.createNew`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnew-function-createnew-path-std-io-file-ml-1821480312) | `std/io/file.ml:537` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.createNewDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-createnewdurable-function-createnewdurable-path-std-io-file-ml-825041504) | `std/io/file.ml:549` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.deletePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-deletepath-function-deletepath-path-std-io-file-ml-291993508) | `std/io/file.ml:807` | 6 | 7 | 5 | 4 | 1 | 326.9 | 64.75 |
+| [`std.io.file.directoryExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-directoryexists-function-directoryexists-path-std-io-file-ml-1671780194) | `std/io/file.ml:801` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.fileExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-fileexists-function-fileexists-path-std-io-file-ml-1075595960) | `std/io/file.ml:795` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
 | [`std.io.file.FileHandle.append`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-append-function-append-source-sourceoffset-count-std-io-file-ml-1706463078) | `std/io/file.ml:118` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
 | [`std.io.file.FileHandle.close`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-close-function-close-std-io-file-ml-1593295218) | `std/io/file.ml:156` | 4 | 3 | 2 | 1 | 1 | 101.58 | 72.55 |
 | [`std.io.file.FileHandle.create`](Type-std-io-file-filehandle-736043342.md#static_method-static-method-std-io-file-filehandle-create-static-function-create-path-std-io-file-ml-1622967168) | `std/io/file.ml:65` | 3 | 1 | 1 | 0 | 0 | 68.11 | 76.62 |
@@ -524,125 +526,125 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.io.file.FileHandle.truncate`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-truncate-function-truncate-newsize-std-io-file-ml-1422349835) | `std/io/file.ml:129` | 3 | 1 | 1 | 0 | 0 | 74.01 | 76.37 |
 | [`std.io.file.FileHandle.unlock`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-unlock-function-unlock-std-io-file-ml-1568670926) | `std/io/file.ml:146` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
 | [`std.io.file.FileHandle.writeAt`](Type-std-io-file-filehandle-736043342.md#method-method-std-io-file-filehandle-writeat-function-writeat-fileoffset-source-sourceoffset-count-std-io-file-ml-2075982205) | `std/io/file.ml:110` | 3 | 1 | 1 | 0 | 0 | 128 | 74.7 |
-| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:594` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
-| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:730` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:610` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
-| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:787` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:424` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:431` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
-| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:441` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
-| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:702` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
-| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:737` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
-| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:757` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
-| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:478` | 14 | 19 | 9 | 8 | 1 | 993.8 | 52.8 |
-| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:506` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
-| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:690` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
-| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:564` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
-| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:793` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
-| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:580` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
-| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:642` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
-| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:523` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
-| [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:54` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
-| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:616` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:609` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
-| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:429` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
-| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:454` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
-| [`std.math.ceil`](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `std/math.ml:135` | 10 | 6 | 3 | 2 | 1 | 181.52 | 61.97 |
-| [`std.math.ceilInt`](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `std/math.ml:203` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.clamp`](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `std/math.ml:83` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
-| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:387` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
-| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:631` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:243` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:486` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:514` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
-| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:520` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
-| [`std.math.floor`](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `std/math.ml:115` | 13 | 8 | 4 | 3 | 1 | 220.89 | 58.75 |
-| [`std.math.floorInt`](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `std/math.ml:193` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:647` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:305` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
-| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:481` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
-| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:599` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
-| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:502` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
-| [`std.math.isNumber`](File-std-math-ml-790065500.md#function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864) | `std/math.ml:47` | 4 | 2 | 1 | 0 | 0 | 79.95 | 73.41 |
-| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:324` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
-| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:655` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
-| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:533` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:496` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:543` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
-| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:491` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:556` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
-| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:562` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
-| [`std.math.max`](File-std-math-ml-790065500.md#function-function-std-math-max-function-max-a-b-std-math-ml-1771960409) | `std/math.ml:106` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.min`](File-std-math-ml-790065500.md#function-function-std-math-min-function-min-a-b-std-math-ml-1964626413) | `std/math.ml:96` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
-| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:232` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:569` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
-| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:265` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
-| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:249` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
-| [`std.math.round`](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `std/math.ml:161` | 9 | 5 | 3 | 2 | 1 | 214.05 | 62.46 |
-| [`std.math.roundInt`](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `std/math.ml:223` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.math.sign`](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `std/math.ml:66` | 12 | 7 | 4 | 3 | 1 | 178.41 | 60.16 |
-| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:358` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
-| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:623` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
-| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:663` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
-| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:255` | 6 | 3 | 2 | 1 | 1 | 77.71 | 69.52 |
-| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:415` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
-| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:639` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
-| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:237` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
-| [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:174` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
-| [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:148` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
-| [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:213` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
-| [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:285` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
-| [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:793` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
-| [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:260` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
-| [`std.net.lastError`](File-std-net-ml-1989130045.md#function-function-std-net-lasterror-function-lasterror-std-net-ml-1066354328) | `std/net.ml:305` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
-| [`std.net.setKeepAlive`](File-std-net-ml-1989130045.md#function-function-std-net-setkeepalive-function-setkeepalive-sock-enabled-std-net-ml-1531381615) | `std/net.ml:495` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.net.setNoDelay`](File-std-net-ml-1989130045.md#function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439) | `std/net.ml:502` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.net.setReceiveTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622) | `std/net.ml:525` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.net.setReuseAddress`](File-std-net-ml-1989130045.md#function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191) | `std/net.ml:450` | 7 | 5 | 3 | 3 | 2 | 248.8 | 64.39 |
-| [`std.net.setSendTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534) | `std/net.ml:532` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.net.tcpAccept`](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `std/net.ml:642` | 10 | 6 | 3 | 2 | 1 | 233.83 | 61.2 |
-| [`std.net.tcpAcceptPeer`](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `std/net.ml:658` | 18 | 14 | 3 | 2 | 1 | 572.02 | 52.91 |
-| [`std.net.tcpConnect`](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `std/net.ml:543` | 24 | 17 | 6 | 5 | 1 | 735.91 | 49.01 |
-| [`std.net.TcpConnection.close`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-close-function-close-std-net-ml-687259312) | `std/net.ml:1008` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
-| [`std.net.TcpConnection.connect`](Type-std-net-tcpconnection-1977985074.md#static_method-static-method-std-net-tcpconnection-connect-static-function-connect-host-port-std-net-ml-1609802726) | `std/net.ml:936` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
-| [`std.net.TcpConnection.isClosed`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-isclosed-function-isclosed-std-net-ml-76686828) | `std/net.ml:1017` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.net.TcpConnection.rawHandle`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-rawhandle-function-rawhandle-std-net-ml-728838824) | `std/net.ml:944` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
-| [`std.net.TcpConnection.receive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receive-function-receive-maxbytes-std-net-ml-379140399) | `std/net.ml:958` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
-| [`std.net.TcpConnection.receiveInto`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receiveinto-function-receiveinto-destination-destinationoffset-count-std-net-ml-1783320186) | `std/net.ml:967` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
-| [`std.net.TcpConnection.sendAll`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-sendall-function-sendall-data-std-net-ml-640793894) | `std/net.ml:951` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
-| [`std.net.TcpConnection.setKeepAlive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setkeepalive-function-setkeepalive-enabled-std-net-ml-376425303) | `std/net.ml:995` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
-| [`std.net.TcpConnection.setNoDelay`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setnodelay-function-setnodelay-enabled-std-net-ml-962907511) | `std/net.ml:988` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
-| [`std.net.TcpConnection.setReceiveTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-141272550) | `std/net.ml:974` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
-| [`std.net.TcpConnection.setSendTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-978638174) | `std/net.ml:981` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
-| [`std.net.TcpConnection.shutdown`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-shutdown-function-shutdown-how-std-net-ml-120922612) | `std/net.ml:1002` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
-| [`std.net.tcpListen`](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `std/net.ml:575` | 31 | 25 | 8 | 7 | 1 | 1038.47 | 45.27 |
-| [`std.net.tcpListenAddress`](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `std/net.ml:616` | 23 | 26 | 9 | 8 | 1 | 1156.73 | 47.64 |
-| [`std.net.TcpListener.accept`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-accept-function-accept-std-net-ml-1420514100) | `std/net.ml:1055` | 6 | 6 | 3 | 2 | 1 | 244.42 | 65.9 |
-| [`std.net.TcpListener.acceptPeer`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-acceptpeer-function-acceptpeer-std-net-ml-1895220488) | `std/net.ml:1063` | 6 | 6 | 3 | 2 | 1 | 331.93 | 64.97 |
-| [`std.net.TcpListener.close`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-close-function-close-std-net-ml-111048440) | `std/net.ml:1071` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
-| [`std.net.TcpListener.isClosed`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-isclosed-function-isclosed-std-net-ml-1652573844) | `std/net.ml:1080` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.net.TcpListener.listen`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listen-static-function-listen-port-backlog-std-net-ml-307585415) | `std/net.ml:1032` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
-| [`std.net.TcpListener.listenAddress`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listenaddress-static-function-listenaddress-host-port-backlog-std-net-ml-383965123) | `std/net.ml:1042` | 5 | 4 | 2 | 1 | 1 | 222.91 | 68.04 |
-| [`std.net.TcpListener.rawHandle`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-rawhandle-function-rawhandle-std-net-ml-1151365744) | `std/net.ml:1049` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
-| [`std.net.tcpRecv`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `std/net.ml:748` | 22 | 17 | 8 | 7 | 1 | 661.75 | 49.89 |
-| [`std.net.tcpRecvInto`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `std/net.ml:725` | 9 | 11 | 5 | 4 | 1 | 489.31 | 59.68 |
-| [`std.net.tcpSendAll`](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `std/net.ml:685` | 27 | 21 | 10 | 12 | 2 | 824.37 | 47.01 |
-| [`std.net.tcpShutdown`](File-std-net-ml-1989130045.md#function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342) | `std/net.ml:779` | 10 | 6 | 3 | 2 | 1 | 203.56 | 61.62 |
-| [`std.net.udpBind`](File-std-net-ml-1989130045.md#function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451) | `std/net.ml:822` | 16 | 12 | 5 | 4 | 1 | 492.41 | 54.21 |
-| [`std.net.udpOpen`](File-std-net-ml-1989130045.md#function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978) | `std/net.ml:806` | 10 | 6 | 3 | 2 | 1 | 232.19 | 61.22 |
-| [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:899` | 21 | 19 | 7 | 6 | 1 | 905.86 | 49.51 |
-| [`std.net.udpRecvFromInto`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `std/net.ml:883` | 12 | 14 | 5 | 4 | 1 | 765.1 | 55.59 |
-| [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:847` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
-| [`std.net.UdpSocket.bind`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-bind-function-bind-port-std-net-ml-16149974) | `std/net.ml:1101` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
-| [`std.net.UdpSocket.close`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-close-function-close-std-net-ml-573356093) | `std/net.ml:1152` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
-| [`std.net.UdpSocket.isClosed`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-isclosed-function-isclosed-std-net-ml-913489813) | `std/net.ml:1161` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.net.UdpSocket.open`](Type-std-net-udpsocket-848686759.md#static_method-static-method-std-net-udpsocket-open-static-function-open-std-net-ml-1892000052) | `std/net.ml:1093` | 5 | 4 | 2 | 1 | 1 | 169.46 | 68.88 |
-| [`std.net.UdpSocket.rawHandle`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-rawhandle-function-rawhandle-std-net-ml-786980077) | `std/net.ml:1146` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
-| [`std.net.UdpSocket.receiveFrom`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrom-function-receivefrom-maxbytes-std-net-ml-1219401990) | `std/net.ml:1131` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
-| [`std.net.UdpSocket.receiveFromInto`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrominto-function-receivefrominto-destination-destinationoffset-count-std-net-ml-1258266449) | `std/net.ml:1140` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
-| [`std.net.UdpSocket.sendTo`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-sendto-function-sendto-host-port-data-std-net-ml-1361609212) | `std/net.ml:1124` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
-| [`std.net.UdpSocket.setReceiveTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-1810795555) | `std/net.ml:1108` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
-| [`std.net.UdpSocket.setSendTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-708661663) | `std/net.ml:1115` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.io.file.flush`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-flush-function-flush-file-std-io-file-ml-1772033725) | `std/io/file.ml:681` | 7 | 8 | 4 | 3 | 1 | 252.17 | 64.21 |
+| [`std.io.file.joinPath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-joinpath-function-joinpath-left-right-std-io-file-ml-648345826) | `std/io/file.ml:817` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.io.file.lock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-lock-function-lock-file-mode-wait-std-io-file-ml-1414253107) | `std/io/file.ml:697` | 18 | 22 | 10 | 10 | 2 | 1037.48 | 50.15 |
+| [`std.io.file.movePath`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-movepath-function-movepath-source-destination-replaceexisting-std-io-file-ml-1359616939) | `std/io/file.ml:874` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.io.file.openRead`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openread-function-openread-path-std-io-file-ml-808384584) | `std/io/file.ml:505` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.io.file.openReadWrite`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwrite-function-openreadwrite-path-createifmissing-std-io-file-ml-1630995317) | `std/io/file.ml:512` | 6 | 6 | 3 | 2 | 1 | 241.48 | 65.94 |
+| [`std.io.file.openReadWriteDurable`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-openreadwritedurable-function-openreadwritedurable-path-createifmissing-std-io-file-ml-1261778099) | `std/io/file.ml:522` | 6 | 6 | 3 | 2 | 1 | 238.42 | 65.98 |
+| [`std.io.file.pathExists`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-pathexists-function-pathexists-path-std-io-file-ml-2037795076) | `std/io/file.ml:789` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.io.file.readAllBytes`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readallbytes-function-readallbytes-path-maximumbytes-std-io-file-ml-888056637) | `std/io/file.ml:824` | 16 | 22 | 9 | 9 | 2 | 871.16 | 51.94 |
+| [`std.io.file.readAllText`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readalltext-function-readalltext-path-maximumbytes-std-io-file-ml-2121359345) | `std/io/file.ml:844` | 7 | 7 | 3 | 2 | 1 | 260.06 | 64.25 |
+| [`std.io.file.readAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readat-function-readat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-1658255612) | `std/io/file.ml:559` | 14 | 19 | 9 | 8 | 1 | 993.8 | 52.8 |
+| [`std.io.file.readExactAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-readexactat-function-readexactat-file-fileoffset-destination-destinationoffset-count-std-io-file-ml-560496664) | `std/io/file.ml:587` | 10 | 9 | 4 | 5 | 2 | 387.64 | 59.52 |
+| [`std.io.file.removeDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-removedirectory-function-removedirectory-path-std-io-file-ml-253072106) | `std/io/file.ml:777` | 5 | 5 | 4 | 3 | 1 | 227.55 | 67.71 |
+| [`std.io.file.size`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-size-function-size-file-std-io-file-ml-1605500929) | `std/io/file.ml:651` | 7 | 7 | 3 | 2 | 1 | 285.29 | 63.97 |
+| [`std.io.file.syncDirectory`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-syncdirectory-function-syncdirectory-path-std-io-file-ml-367043320) | `std/io/file.ml:880` | 4 | 3 | 3 | 2 | 1 | 156.08 | 71.11 |
+| [`std.io.file.truncate`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-truncate-function-truncate-file-newsize-std-io-file-ml-718471930) | `std/io/file.ml:667` | 7 | 8 | 7 | 6 | 1 | 456.51 | 62 |
+| [`std.io.file.unlock`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-unlock-function-unlock-file-std-io-file-ml-810506305) | `std/io/file.ml:729` | 9 | 10 | 4 | 3 | 1 | 377.83 | 60.6 |
+| [`std.io.file.writeAt`](File-std-io-file-ml-2074692665.md#function-function-std-io-file-writeat-function-writeat-file-fileoffset-source-sourceoffset-count-std-io-file-ml-307314880) | `std/io/file.ml:604` | 19 | 24 | 11 | 13 | 2 | 1225.79 | 49 |
+| [`std.math.abs`](File-std-math-ml-790065500.md#function-function-std-math-abs-function-abs-x-std-math-ml-573377840) | `std/math.ml:64` | 9 | 5 | 3 | 2 | 1 | 134.89 | 63.87 |
+| [`std.math.acos`](File-std-math-ml-790065500.md#function-function-std-math-acos-function-acos-x-std-math-ml-1386598144) | `std/math.ml:626` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.asin`](File-std-math-ml-790065500.md#function-function-std-math-asin-function-asin-x-std-math-ml-224541764) | `std/math.ml:619` | 4 | 2 | 1 | 0 | 0 | 195.4 | 70.69 |
+| [`std.math.atan`](File-std-math-ml-790065500.md#function-function-std-math-atan-function-atan-x-std-math-ml-2132826072) | `std/math.ml:439` | 17 | 13 | 3 | 2 | 1 | 555 | 53.54 |
+| [`std.math.atan2`](File-std-math-ml-790065500.md#function-function-std-math-atan2-function-atan2-y-x-std-math-ml-1842524175) | `std/math.ml:464` | 19 | 12 | 6 | 6 | 2 | 499.96 | 52.4 |
+| [`std.math.ceil`](File-std-math-ml-790065500.md#function-function-std-math-ceil-function-ceil-x-std-math-ml-1435593484) | `std/math.ml:145` | 10 | 6 | 3 | 2 | 1 | 181.52 | 61.97 |
+| [`std.math.ceilInt`](File-std-math-ml-790065500.md#function-function-std-math-ceilint-function-ceilint-x-std-math-ml-2126782320) | `std/math.ml:213` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.clamp`](File-std-math-ml-790065500.md#function-function-std-math-clamp-function-clamp-x-lo-hi-std-math-ml-473254544) | `std/math.ml:93` | 9 | 5 | 3 | 2 | 1 | 118.03 | 64.27 |
+| [`std.math.cos`](File-std-math-ml-790065500.md#function-function-std-math-cos-function-cos-x-std-math-ml-638965610) | `std/math.ml:397` | 19 | 15 | 3 | 2 | 1 | 593.88 | 52.28 |
+| [`std.math.cosh`](File-std-math-ml-790065500.md#function-function-std-math-cosh-function-cosh-x-std-math-ml-981216312) | `std/math.ml:641` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.degToRad`](File-std-math-ml-790065500.md#function-function-std-math-degtorad-function-degtorad-deg-std-math-ml-600428704) | `std/math.ml:253` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.e`](File-std-math-ml-790065500.md#function-function-std-math-e-function-e-std-math-ml-1291905090) | `std/math.ml:496` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.exp`](File-std-math-ml-790065500.md#function-function-std-math-exp-function-exp-x-std-math-ml-847392178) | `std/math.ml:524` | 3 | 1 | 1 | 0 | 0 | 36 | 78.56 |
+| [`std.math.expm1`](File-std-math-ml-790065500.md#function-function-std-math-expm1-function-expm1-x-std-math-ml-671119542) | `std/math.ml:530` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.floor`](File-std-math-ml-790065500.md#function-function-std-math-floor-function-floor-x-std-math-ml-1858376096) | `std/math.ml:125` | 13 | 8 | 4 | 3 | 1 | 220.89 | 58.75 |
+| [`std.math.floorInt`](File-std-math-ml-790065500.md#function-function-std-math-floorint-function-floorint-x-std-math-ml-1801367900) | `std/math.ml:203` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.fract`](File-std-math-ml-790065500.md#function-function-std-math-fract-function-fract-x-std-math-ml-123616796) | `std/math.ml:657` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.math.gcd`](File-std-math-ml-790065500.md#function-function-std-math-gcd-function-gcd-a-b-std-math-ml-520129697) | `std/math.ml:315` | 13 | 9 | 4 | 3 | 1 | 302.61 | 57.79 |
+| [`std.math.hypot`](File-std-math-ml-790065500.md#function-function-std-math-hypot-function-hypot-x-y-std-math-ml-336937453) | `std/math.ml:491` | 3 | 1 | 1 | 0 | 0 | 109.39 | 75.18 |
+| [`std.math.invSqrt`](File-std-math-ml-790065500.md#function-function-std-math-invsqrt-function-invsqrt-x-std-math-ml-1022224274) | `std/math.ml:609` | 7 | 4 | 2 | 1 | 1 | 127.44 | 66.55 |
+| [`std.math.isIntValue`](File-std-math-ml-790065500.md#function-function-std-math-isintvalue-function-isintvalue-x-std-math-ml-23293032) | `std/math.ml:512` | 9 | 5 | 3 | 2 | 1 | 181.52 | 62.96 |
+| [`std.math.isNumber`](File-std-math-ml-790065500.md#function-function-std-math-isnumber-function-isnumber-x-std-math-ml-2115637864) | `std/math.ml:57` | 4 | 2 | 1 | 0 | 0 | 79.95 | 73.41 |
+| [`std.math.lcm`](File-std-math-ml-790065500.md#function-function-std-math-lcm-function-lcm-a-b-std-math-ml-2106405213) | `std/math.ml:334` | 14 | 9 | 6 | 5 | 1 | 361.37 | 56.28 |
+| [`std.math.lerp`](File-std-math-ml-790065500.md#function-function-std-math-lerp-function-lerp-a-b-t-std-math-ml-1477438275) | `std/math.ml:665` | 3 | 1 | 1 | 0 | 0 | 85.11 | 75.94 |
+| [`std.math.ln`](File-std-math-ml-790065500.md#function-function-std-math-ln-function-ln-x-std-math-ml-120611688) | `std/math.ml:543` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.ln10`](File-std-math-ml-790065500.md#function-function-std-math-ln10-function-ln10-std-math-ml-177958864) | `std/math.ml:506` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.ln1p`](File-std-math-ml-790065500.md#function-function-std-math-ln1p-function-ln1p-x-std-math-ml-858417300) | `std/math.ml:553` | 9 | 6 | 2 | 1 | 1 | 280.54 | 61.77 |
+| [`std.math.ln2`](File-std-math-ml-790065500.md#function-function-std-math-ln2-function-ln2-std-math-ml-236134708) | `std/math.ml:501` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.log10`](File-std-math-ml-790065500.md#function-function-std-math-log10-function-log10-x-std-math-ml-1652022478) | `std/math.ml:566` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.log2`](File-std-math-ml-790065500.md#function-function-std-math-log2-function-log2-x-std-math-ml-559981656) | `std/math.ml:572` | 3 | 1 | 1 | 0 | 0 | 88.81 | 75.81 |
+| [`std.math.max`](File-std-math-ml-790065500.md#function-function-std-math-max-function-max-a-b-std-math-ml-1771960409) | `std/math.ml:116` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.min`](File-std-math-ml-790065500.md#function-function-std-math-min-function-min-a-b-std-math-ml-1964626413) | `std/math.ml:106` | 6 | 3 | 2 | 1 | 1 | 71.7 | 69.76 |
+| [`std.math.pi`](File-std-math-ml-790065500.md#function-function-std-math-pi-function-pi-std-math-ml-108227704) | `std/math.ml:242` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.math.pow`](File-std-math-ml-790065500.md#function-function-std-math-pow-function-pow-base-exponent-std-math-ml-903671006) | `std/math.ml:579` | 21 | 13 | 7 | 9 | 2 | 493.55 | 51.36 |
+| [`std.math.powi`](File-std-math-ml-790065500.md#function-function-std-math-powi-function-powi-base-exp-std-math-ml-456187076) | `std/math.ml:275` | 31 | 21 | 9 | 10 | 2 | 687.6 | 46.39 |
+| [`std.math.radToDeg`](File-std-math-ml-790065500.md#function-function-std-math-radtodeg-function-radtodeg-rad-std-math-ml-511407857) | `std/math.ml:259` | 3 | 1 | 1 | 0 | 0 | 79.95 | 76.13 |
+| [`std.math.round`](File-std-math-ml-790065500.md#function-function-std-math-round-function-round-x-std-math-ml-891501820) | `std/math.ml:171` | 9 | 5 | 3 | 2 | 1 | 214.05 | 62.46 |
+| [`std.math.roundInt`](File-std-math-ml-790065500.md#function-function-std-math-roundint-function-roundint-x-std-math-ml-1459182596) | `std/math.ml:233` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.math.sign`](File-std-math-ml-790065500.md#function-function-std-math-sign-function-sign-x-std-math-ml-1470077816) | `std/math.ml:76` | 12 | 7 | 4 | 3 | 1 | 178.41 | 60.16 |
+| [`std.math.sin`](File-std-math-ml-790065500.md#function-function-std-math-sin-function-sin-x-std-math-ml-77784832) | `std/math.ml:368` | 20 | 16 | 3 | 2 | 1 | 624.5 | 51.64 |
+| [`std.math.sinh`](File-std-math-ml-790065500.md#function-function-std-math-sinh-function-sinh-x-std-math-ml-1215837824) | `std/math.ml:633` | 5 | 3 | 1 | 0 | 0 | 127.44 | 69.88 |
+| [`std.math.smoothstep`](File-std-math-ml-790065500.md#function-function-std-math-smoothstep-function-smoothstep-edge0-edge1-x-std-math-ml-541762641) | `std/math.ml:673` | 8 | 5 | 2 | 1 | 1 | 277.33 | 62.93 |
+| [`std.math.sqrt`](File-std-math-ml-790065500.md#function-function-std-math-sqrt-function-sqrt-x-std-math-ml-760602576) | `std/math.ml:265` | 6 | 3 | 2 | 1 | 1 | 77.71 | 69.52 |
+| [`std.math.tan`](File-std-math-ml-790065500.md#function-function-std-math-tan-function-tan-x-std-math-ml-1295707230) | `std/math.ml:425` | 10 | 6 | 3 | 3 | 2 | 255.41 | 60.93 |
+| [`std.math.tanh`](File-std-math-ml-790065500.md#function-function-std-math-tanh-function-tanh-x-std-math-ml-933610836) | `std/math.ml:649` | 5 | 3 | 1 | 0 | 0 | 141.78 | 69.55 |
+| [`std.math.tau`](File-std-math-ml-790065500.md#function-function-std-math-tau-function-tau-std-math-ml-722341156) | `std/math.ml:247` | 3 | 1 | 1 | 0 | 0 | 57.36 | 77.14 |
+| [`std.math.toIntExact`](File-std-math-ml-790065500.md#function-function-std-math-tointexact-function-tointexact-x-std-math-ml-2107190060) | `std/math.ml:184` | 16 | 10 | 5 | 4 | 1 | 399.41 | 54.85 |
+| [`std.math.trunc`](File-std-math-ml-790065500.md#function-function-std-math-trunc-function-trunc-x-std-math-ml-1042085096) | `std/math.ml:158` | 9 | 5 | 3 | 2 | 1 | 212.55 | 62.48 |
+| [`std.math.truncInt`](File-std-math-ml-790065500.md#function-function-std-math-truncint-function-truncint-x-std-math-ml-53018684) | `std/math.ml:223` | 7 | 4 | 2 | 1 | 1 | 160.54 | 65.85 |
+| [`std.net.cleanup`](File-std-net-ml-1989130045.md#function-function-std-net-cleanup-synchronized-function-cleanup-std-net-ml-1900488416) | `std/net.ml:361` | 11 | 7 | 3 | 2 | 1 | 145.95 | 61.73 |
+| [`std.net.close`](File-std-net-ml-1989130045.md#function-function-std-net-close-function-close-sock-std-net-ml-2027943708) | `std/net.ml:879` | 7 | 4 | 2 | 1 | 1 | 114.45 | 66.88 |
+| [`std.net.init`](File-std-net-ml-1989130045.md#function-function-std-net-init-synchronized-function-init-std-net-ml-1993957128) | `std/net.ml:336` | 13 | 9 | 3 | 2 | 1 | 221.65 | 58.87 |
+| [`std.net.lastError`](File-std-net-ml-1989130045.md#function-function-std-net-lasterror-function-lasterror-std-net-ml-1066354328) | `std/net.ml:381` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
+| [`std.net.setKeepAlive`](File-std-net-ml-1989130045.md#function-function-std-net-setkeepalive-function-setkeepalive-sock-enabled-std-net-ml-1531381615) | `std/net.ml:577` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.net.setNoDelay`](File-std-net-ml-1989130045.md#function-function-std-net-setnodelay-function-setnodelay-sock-enabled-std-net-ml-976341439) | `std/net.ml:584` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.net.setReceiveTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setreceivetimeout-function-setreceivetimeout-sock-milliseconds-std-net-ml-2114040622) | `std/net.ml:611` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.net.setReuseAddress`](File-std-net-ml-1989130045.md#function-function-std-net-setreuseaddress-function-setreuseaddress-sock-enabled-std-net-ml-620588191) | `std/net.ml:526` | 7 | 5 | 3 | 3 | 2 | 248.8 | 64.39 |
+| [`std.net.setSendTimeout`](File-std-net-ml-1989130045.md#function-function-std-net-setsendtimeout-function-setsendtimeout-sock-milliseconds-std-net-ml-739144534) | `std/net.ml:618` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.net.tcpAccept`](File-std-net-ml-1989130045.md#function-function-std-net-tcpaccept-function-tcpaccept-serversocket-std-net-ml-1658993728) | `std/net.ml:728` | 10 | 6 | 3 | 2 | 1 | 233.83 | 61.2 |
+| [`std.net.tcpAcceptPeer`](File-std-net-ml-1989130045.md#function-function-std-net-tcpacceptpeer-function-tcpacceptpeer-serversocket-std-net-ml-324030640) | `std/net.ml:744` | 18 | 14 | 3 | 2 | 1 | 572.02 | 52.91 |
+| [`std.net.tcpConnect`](File-std-net-ml-1989130045.md#function-function-std-net-tcpconnect-function-tcpconnect-host-port-std-net-ml-1793379633) | `std/net.ml:629` | 24 | 17 | 6 | 5 | 1 | 735.91 | 49.01 |
+| [`std.net.TcpConnection.close`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-close-function-close-std-net-ml-687259312) | `std/net.ml:1094` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.TcpConnection.connect`](Type-std-net-tcpconnection-1977985074.md#static_method-static-method-std-net-tcpconnection-connect-static-function-connect-host-port-std-net-ml-1609802726) | `std/net.ml:1022` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
+| [`std.net.TcpConnection.isClosed`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-isclosed-function-isclosed-std-net-ml-76686828) | `std/net.ml:1103` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.TcpConnection.rawHandle`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-rawhandle-function-rawhandle-std-net-ml-728838824) | `std/net.ml:1030` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.net.TcpConnection.receive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receive-function-receive-maxbytes-std-net-ml-379140399) | `std/net.ml:1044` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.TcpConnection.receiveInto`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-receiveinto-function-receiveinto-destination-destinationoffset-count-std-net-ml-1783320186) | `std/net.ml:1053` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.TcpConnection.sendAll`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-sendall-function-sendall-data-std-net-ml-640793894) | `std/net.ml:1037` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.TcpConnection.setKeepAlive`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setkeepalive-function-setkeepalive-enabled-std-net-ml-376425303) | `std/net.ml:1081` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setNoDelay`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setnodelay-function-setnodelay-enabled-std-net-ml-962907511) | `std/net.ml:1074` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setReceiveTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-141272550) | `std/net.ml:1060` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.setSendTimeout`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-978638174) | `std/net.ml:1067` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.TcpConnection.shutdown`](Type-std-net-tcpconnection-1977985074.md#method-method-std-net-tcpconnection-shutdown-function-shutdown-how-std-net-ml-120922612) | `std/net.ml:1088` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.tcpListen`](File-std-net-ml-1989130045.md#function-function-std-net-tcplisten-function-tcplisten-port-backlog-std-net-ml-2129811236) | `std/net.ml:661` | 31 | 25 | 8 | 7 | 1 | 1038.47 | 45.27 |
+| [`std.net.tcpListenAddress`](File-std-net-ml-1989130045.md#function-function-std-net-tcplistenaddress-function-tcplistenaddress-host-port-backlog-std-net-ml-1591213138) | `std/net.ml:702` | 23 | 26 | 9 | 8 | 1 | 1156.73 | 47.64 |
+| [`std.net.TcpListener.accept`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-accept-function-accept-std-net-ml-1420514100) | `std/net.ml:1141` | 6 | 6 | 3 | 2 | 1 | 244.42 | 65.9 |
+| [`std.net.TcpListener.acceptPeer`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-acceptpeer-function-acceptpeer-std-net-ml-1895220488) | `std/net.ml:1149` | 6 | 6 | 3 | 2 | 1 | 331.93 | 64.97 |
+| [`std.net.TcpListener.close`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-close-function-close-std-net-ml-111048440) | `std/net.ml:1157` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.TcpListener.isClosed`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-isclosed-function-isclosed-std-net-ml-1652573844) | `std/net.ml:1166` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.TcpListener.listen`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listen-static-function-listen-port-backlog-std-net-ml-307585415) | `std/net.ml:1118` | 5 | 4 | 2 | 1 | 1 | 201.74 | 68.35 |
+| [`std.net.TcpListener.listenAddress`](Type-std-net-tcplistener-75137386.md#static_method-static-method-std-net-tcplistener-listenaddress-static-function-listenaddress-host-port-backlog-std-net-ml-383965123) | `std/net.ml:1128` | 5 | 4 | 2 | 1 | 1 | 222.91 | 68.04 |
+| [`std.net.TcpListener.rawHandle`](Type-std-net-tcplistener-75137386.md#method-method-std-net-tcplistener-rawhandle-function-rawhandle-std-net-ml-1151365744) | `std/net.ml:1135` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.net.tcpRecv`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecv-function-tcprecv-sock-maxbytes-std-net-ml-76662791) | `std/net.ml:834` | 22 | 17 | 8 | 7 | 1 | 661.75 | 49.89 |
+| [`std.net.tcpRecvInto`](File-std-net-ml-1989130045.md#function-function-std-net-tcprecvinto-function-tcprecvinto-sock-destination-destinationoffset-count-std-net-ml-1543896470) | `std/net.ml:811` | 9 | 11 | 5 | 4 | 1 | 489.31 | 59.68 |
+| [`std.net.tcpSendAll`](File-std-net-ml-1989130045.md#function-function-std-net-tcpsendall-function-tcpsendall-sock-data-std-net-ml-931993120) | `std/net.ml:771` | 27 | 21 | 10 | 12 | 2 | 824.37 | 47.01 |
+| [`std.net.tcpShutdown`](File-std-net-ml-1989130045.md#function-function-std-net-tcpshutdown-function-tcpshutdown-sock-how-std-net-ml-386614342) | `std/net.ml:865` | 10 | 6 | 3 | 2 | 1 | 203.56 | 61.62 |
+| [`std.net.udpBind`](File-std-net-ml-1989130045.md#function-function-std-net-udpbind-function-udpbind-sock-port-std-net-ml-259267451) | `std/net.ml:908` | 16 | 12 | 5 | 4 | 1 | 492.41 | 54.21 |
+| [`std.net.udpOpen`](File-std-net-ml-1989130045.md#function-function-std-net-udpopen-function-udpopen-std-net-ml-167881978) | `std/net.ml:892` | 10 | 6 | 3 | 2 | 1 | 232.19 | 61.22 |
+| [`std.net.udpRecvFrom`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrom-function-udprecvfrom-sock-maxbytes-std-net-ml-226021939) | `std/net.ml:985` | 21 | 19 | 7 | 6 | 1 | 905.86 | 49.51 |
+| [`std.net.udpRecvFromInto`](File-std-net-ml-1989130045.md#function-function-std-net-udprecvfrominto-function-udprecvfrominto-sock-destination-destinationoffset-count-std-net-ml-2017068466) | `std/net.ml:969` | 12 | 14 | 5 | 4 | 1 | 765.1 | 55.59 |
+| [`std.net.udpSendTo`](File-std-net-ml-1989130045.md#function-function-std-net-udpsendto-function-udpsendto-sock-host-port-data-std-net-ml-2003989505) | `std/net.ml:933` | 24 | 16 | 7 | 6 | 1 | 771.1 | 48.74 |
+| [`std.net.UdpSocket.bind`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-bind-function-bind-port-std-net-ml-16149974) | `std/net.ml:1187` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.UdpSocket.close`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-close-function-close-std-net-ml-573356093) | `std/net.ml:1238` | 7 | 7 | 3 | 2 | 1 | 203.13 | 65 |
+| [`std.net.UdpSocket.isClosed`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-isclosed-function-isclosed-std-net-ml-913489813) | `std/net.ml:1247` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.net.UdpSocket.open`](Type-std-net-udpsocket-848686759.md#static_method-static-method-std-net-udpsocket-open-static-function-open-std-net-ml-1892000052) | `std/net.ml:1179` | 5 | 4 | 2 | 1 | 1 | 169.46 | 68.88 |
+| [`std.net.UdpSocket.rawHandle`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-rawhandle-function-rawhandle-std-net-ml-786980077) | `std/net.ml:1232` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.net.UdpSocket.receiveFrom`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrom-function-receivefrom-maxbytes-std-net-ml-1219401990) | `std/net.ml:1217` | 4 | 3 | 2 | 1 | 1 | 135.93 | 71.66 |
+| [`std.net.UdpSocket.receiveFromInto`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-receivefrominto-function-receivefrominto-destination-destinationoffset-count-std-net-ml-1258266449) | `std/net.ml:1226` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.UdpSocket.sendTo`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-sendto-function-sendto-host-port-data-std-net-ml-1361609212) | `std/net.ml:1210` | 4 | 3 | 2 | 1 | 1 | 175.69 | 70.88 |
+| [`std.net.UdpSocket.setReceiveTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setreceivetimeout-function-setreceivetimeout-milliseconds-std-net-ml-1810795555) | `std/net.ml:1194` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
+| [`std.net.UdpSocket.setSendTimeout`](Type-std-net-udpsocket-848686759.md#method-method-std-net-udpsocket-setsendtimeout-function-setsendtimeout-milliseconds-std-net-ml-708661663) | `std/net.ml:1201` | 4 | 3 | 2 | 1 | 1 | 133.44 | 71.72 |
 | [`std.path.changeExtension`](File-std-path-ml-701536411.md#function-function-std-path-changeextension-function-changeextension-path-newextension-std-path-ml-379942222) | `std/path.ml:136` | 9 | 11 | 6 | 5 | 1 | 480.56 | 59.6 |
 | [`std.path.directoryName`](File-std-path-ml-701536411.md#function-function-std-path-directoryname-function-directoryname-path-std-path-ml-1704846025) | `std/path.ml:114` | 8 | 10 | 5 | 4 | 1 | 320.43 | 62.08 |
 | [`std.path.extension`](File-std-path-ml-701536411.md#function-function-std-path-extension-function-extension-path-std-path-ml-598017679) | `std/path.ml:125` | 7 | 7 | 4 | 3 | 1 | 296.13 | 63.72 |
@@ -650,19 +652,20 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.path.isAbsolute`](File-std-path-ml-701536411.md#function-function-std-path-isabsolute-function-isabsolute-path-std-path-ml-2109808033) | `std/path.ml:73` | 8 | 10 | 14 | 13 | 1 | 759.68 | 58.25 |
 | [`std.path.join`](File-std-path-ml-701536411.md#function-function-std-path-join-function-join-left-right-std-path-ml-2015239089) | `std/path.ml:89` | 11 | 15 | 10 | 9 | 1 | 565 | 56.67 |
 | [`std.path.separator`](File-std-path-ml-701536411.md#function-function-std-path-separator-function-separator-std-path-ml-1502985602) | `std/path.ml:25` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.platform.architecture`](File-std-platform-ml-201801091.md#function-function-std-platform-architecture-function-architecture-std-platform-ml-585994492) | `std/platform.ml:24` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.dynamicLibraryExtension`](File-std-platform-ml-201801091.md#function-function-std-platform-dynamiclibraryextension-function-dynamiclibraryextension-std-platform-ml-724141498) | `std/platform.ml:74` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.executableExtension`](File-std-platform-ml-201801091.md#function-function-std-platform-executableextension-function-executableextension-std-platform-ml-304518794) | `std/platform.ml:65` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.isLinux`](File-std-platform-ml-201801091.md#function-function-std-platform-islinux-function-islinux-std-platform-ml-689142728) | `std/platform.ml:38` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.isWindows`](File-std-platform-ml-201801091.md#function-function-std-platform-iswindows-function-iswindows-std-platform-ml-1628994826) | `std/platform.ml:29` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.lineEnding`](File-std-platform-ml-201801091.md#function-function-std-platform-lineending-function-lineending-std-platform-ml-807574324) | `std/platform.ml:56` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.architecture`](File-std-platform-ml-201801091.md#function-function-std-platform-architecture-function-architecture-std-platform-ml-585994492) | `std/platform.ml:28` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.dynamicLibraryExtension`](File-std-platform-ml-201801091.md#function-function-std-platform-dynamiclibraryextension-function-dynamiclibraryextension-std-platform-ml-724141498) | `std/platform.ml:78` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.executableExtension`](File-std-platform-ml-201801091.md#function-function-std-platform-executableextension-function-executableextension-std-platform-ml-304518794) | `std/platform.ml:69` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.isLinux`](File-std-platform-ml-201801091.md#function-function-std-platform-islinux-function-islinux-std-platform-ml-689142728) | `std/platform.ml:42` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.isMinux`](File-std-platform-ml-201801091.md#function-function-std-platform-isminux-function-isminux-std-platform-ml-2063338622) | `std/platform.ml:87` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.isWindows`](File-std-platform-ml-201801091.md#function-function-std-platform-iswindows-function-iswindows-std-platform-ml-1628994826) | `std/platform.ml:33` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.platform.lineEnding`](File-std-platform-ml-201801091.md#function-function-std-platform-lineending-function-lineending-std-platform-ml-807574324) | `std/platform.ml:60` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
 | [`std.platform.operatingSystem`](File-std-platform-ml-201801091.md#function-function-std-platform-operatingsystem-function-operatingsystem-std-platform-ml-1171546320) | `std/platform.ml:15` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.platform.pathSeparator`](File-std-platform-ml-201801091.md#function-function-std-platform-pathseparator-function-pathseparator-std-platform-ml-2119383760) | `std/platform.ml:47` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
-| [`std.process.currentDirectory`](File-std-process-ml-507069519.md#function-function-std-process-currentdirectory-function-currentdirectory-std-process-ml-1016102948) | `std/process.ml:116` | 6 | 5 | 3 | 2 | 1 | 206.32 | 66.42 |
-| [`std.process.environment`](File-std-process-ml-507069519.md#function-function-std-process-environment-function-environment-name-std-process-ml-1459757785) | `std/process.ml:94` | 10 | 12 | 7 | 6 | 1 | 523.19 | 58.21 |
-| [`std.process.executablePath`](File-std-process-ml-507069519.md#function-function-std-process-executablepath-function-executablepath-std-process-ml-649110652) | `std/process.ml:77` | 6 | 5 | 3 | 2 | 1 | 215.49 | 66.28 |
-| [`std.process.id`](File-std-process-ml-507069519.md#function-function-std-process-id-function-id-std-process-ml-156871044) | `std/process.ml:68` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
-| [`std.process.setCurrentDirectory`](File-std-process-ml-507069519.md#function-function-std-process-setcurrentdirectory-function-setcurrentdirectory-path-std-process-ml-2023618091) | `std/process.ml:132` | 5 | 5 | 4 | 3 | 1 | 200.67 | 68.09 |
+| [`std.platform.pathSeparator`](File-std-platform-ml-201801091.md#function-function-std-platform-pathseparator-function-pathseparator-std-platform-ml-2119383760) | `std/platform.ml:51` | 3 | 1 | 1 | 0 | 0 | 22.46 | 80 |
+| [`std.process.currentDirectory`](File-std-process-ml-507069519.md#function-function-std-process-currentdirectory-function-currentdirectory-std-process-ml-1016102948) | `std/process.ml:151` | 6 | 5 | 3 | 2 | 1 | 206.32 | 66.42 |
+| [`std.process.environment`](File-std-process-ml-507069519.md#function-function-std-process-environment-function-environment-name-std-process-ml-1459757785) | `std/process.ml:129` | 10 | 12 | 7 | 6 | 1 | 523.19 | 58.21 |
+| [`std.process.executablePath`](File-std-process-ml-507069519.md#function-function-std-process-executablepath-function-executablepath-std-process-ml-649110652) | `std/process.ml:108` | 6 | 5 | 3 | 2 | 1 | 215.49 | 66.28 |
+| [`std.process.id`](File-std-process-ml-507069519.md#function-function-std-process-id-function-id-std-process-ml-156871044) | `std/process.ml:96` | 3 | 1 | 1 | 0 | 0 | 28.07 | 79.32 |
+| [`std.process.setCurrentDirectory`](File-std-process-ml-507069519.md#function-function-std-process-setcurrentdirectory-function-setcurrentdirectory-path-std-process-ml-2023618091) | `std/process.ml:167` | 5 | 5 | 4 | 3 | 1 | 200.67 | 68.09 |
 | [`std.random.autoSeeded`](File-std-random-ml-66683891.md#function-function-std-random-autoseeded-function-autoseeded-std-random-ml-320500032) | `std/random.ml:135` | 3 | 1 | 1 | 0 | 0 | 60.94 | 76.96 |
 | [`std.random.choice`](File-std-random-ml-66683891.md#function-function-std-random-choice-function-choice-rng-xs-std-random-ml-362850290) | `std/random.ml:161` | 10 | 6 | 3 | 2 | 1 | 199.04 | 61.69 |
 | [`std.random.RNG.nextBool`](Type-std-random-rng-1201142756.md#method-method-std-random-rng-nextbool-function-nextbool-std-random-ml-792594308) | `std/random.ml:84` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
@@ -801,98 +804,98 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.threading.Semaphore.ReleaseMany`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-releasemany-function-releasemany-count-std-threading-ml-1835952538) | `std/threading.ml:227` | 1 | 1 | 1 | 0 | 0 | 46.51 | 88.19 |
 | [`std.threading.Semaphore.tryAcquire`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-2104513587) | `std/threading.ml:182` | 3 | 1 | 1 | 0 | 0 | 43.19 | 78.01 |
 | [`std.threading.Semaphore.TryAcquire`](Type-std-threading-semaphore-750847000.md#method-method-std-threading-semaphore-tryacquire-function-tryacquire-std-threading-ml-599040883) | `std/threading.ml:222` | 1 | 1 | 1 | 0 | 0 | 38.04 | 88.8 |
-| [`std.time.clock.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-addmillis-function-addmillis-t-delta-std-time-ml-1733200724) | `std/time.ml:739` | 15 | 10 | 4 | 3 | 1 | 372.92 | 55.8 |
-| [`std.time.clock.compare`](File-std-time-ml-975894601.md#function-function-std-time-clock-compare-function-compare-a-b-std-time-ml-1662221955) | `std/time.ml:695` | 11 | 17 | 9 | 8 | 1 | 522.69 | 57.04 |
-| [`std.time.clock.fromMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-frommillis-function-frommillis-ms-std-time-ml-576832168) | `std/time.ml:718` | 15 | 11 | 4 | 3 | 1 | 488.4 | 54.98 |
-| [`std.time.clock.isValid`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalid-function-isvalid-t-std-time-ml-358966926) | `std/time.ml:688` | 3 | 1 | 1 | 0 | 0 | 130.8 | 74.64 |
-| [`std.time.clock.isValidHMSM`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalidhmsm-function-isvalidhmsm-h-m-s0-ms-std-time-ml-348818806) | `std/time.ml:675` | 10 | 11 | 13 | 12 | 1 | 464.39 | 57.76 |
-| [`std.time.clock.parse`](File-std-time-ml-975894601.md#function-function-std-time-clock-parse-function-parse-text-std-time-ml-549001107) | `std/time.ml:768` | 42 | 30 | 14 | 19 | 3 | 1884.3 | 39.77 |
-| [`std.time.clock.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-tomillis-function-tomillis-t-std-time-ml-2034526210) | `std/time.ml:709` | 6 | 3 | 2 | 1 | 1 | 230.7 | 66.21 |
-| [`std.time.clock.toString`](File-std-time-ml-975894601.md#function-function-std-time-clock-tostring-function-tostring-t-std-time-ml-68025454) | `std/time.ml:759` | 6 | 3 | 2 | 1 | 1 | 334.7 | 65.08 |
-| [`std.time.clockToString`](File-std-time-ml-975894601.md#function-function-std-time-clocktostring-function-clocktostring-t-std-time-ml-904167438) | `std/time.ml:1087` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.date.addDays`](File-std-time-ml-975894601.md#function-function-std-time-date-adddays-function-adddays-d-delta-std-time-ml-164994134) | `std/time.ml:594` | 10 | 6 | 3 | 2 | 1 | 260.06 | 60.87 |
-| [`std.time.date.compare`](File-std-time-ml-975894601.md#function-function-std-time-date-compare-function-compare-a-b-std-time-ml-265951007) | `std/time.ml:581` | 9 | 13 | 7 | 6 | 1 | 397.62 | 60.04 |
-| [`std.time.date.dayOfWeek`](File-std-time-ml-975894601.md#function-function-std-time-date-dayofweek-function-dayofweek-d-std-time-ml-1357661304) | `std/time.ml:619` | 7 | 4 | 2 | 1 | 1 | 180.94 | 65.49 |
-| [`std.time.date.daysInMonth`](File-std-time-ml-975894601.md#function-function-std-time-date-daysinmonth-function-daysinmonth-year-month-std-time-ml-483008705) | `std/time.ml:446` | 23 | 29 | 17 | 17 | 2 | 824.52 | 47.59 |
-| [`std.time.date.diffDays`](File-std-time-ml-975894601.md#function-function-std-time-date-diffdays-function-diffdays-a-b-std-time-ml-1684126225) | `std/time.ml:608` | 8 | 5 | 3 | 2 | 1 | 252.17 | 63.08 |
-| [`std.time.date.fromOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-fromordinal-function-fromordinal-days-std-time-ml-1450309647) | `std/time.ml:526` | 38 | 33 | 9 | 9 | 2 | 1362.41 | 42.38 |
-| [`std.time.date.isLeapYear`](File-std-time-ml-975894601.md#function-function-std-time-date-isleapyear-function-isleapyear-year-std-time-ml-576789919) | `std/time.ml:430` | 12 | 7 | 4 | 3 | 1 | 229.06 | 59.4 |
-| [`std.time.date.isValid`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalid-function-isvalid-d-std-time-ml-398313186) | `std/time.ml:493` | 3 | 1 | 1 | 0 | 0 | 112 | 75.11 |
-| [`std.time.date.isValidYMD`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalidymd-function-isvalidymd-year-month-day-std-time-ml-1097498691) | `std/time.ml:475` | 13 | 8 | 7 | 6 | 1 | 423.73 | 56.36 |
-| [`std.time.date.parse`](File-std-time-ml-975894601.md#function-function-std-time-date-parse-function-parse-text-std-time-ml-1488842447) | `std/time.ml:640` | 20 | 14 | 8 | 7 | 1 | 922.43 | 49.78 |
-| [`std.time.date.toOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-toordinal-function-toordinal-d-std-time-ml-2117441882) | `std/time.ml:499` | 17 | 13 | 4 | 3 | 1 | 874.74 | 52.02 |
-| [`std.time.date.toString`](File-std-time-ml-975894601.md#function-function-std-time-date-tostring-function-tostring-d-std-time-ml-1073583202) | `std/time.ml:631` | 6 | 3 | 2 | 1 | 1 | 267.57 | 65.76 |
-| [`std.time.datetime.addDays`](File-std-time-ml-975894601.md#function-function-std-time-datetime-adddays-function-adddays-dt-deltadays-std-time-ml-203304236) | `std/time.ml:894` | 13 | 8 | 4 | 3 | 1 | 357.23 | 57.29 |
-| [`std.time.datetime.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-addmillis-function-addmillis-dt-delta-std-time-ml-1561373415) | `std/time.ml:860` | 26 | 19 | 6 | 5 | 1 | 835.29 | 47.87 |
-| [`std.time.datetime.compare`](File-std-time-ml-975894601.md#function-function-std-time-datetime-compare-function-compare-a-b-std-time-ml-1157888456) | `std/time.ml:831` | 7 | 4 | 2 | 1 | 1 | 229.06 | 64.77 |
-| [`std.time.datetime.fromSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromsystemtime-function-fromsystemtime-st-std-time-ml-1983396154) | `std/time.ml:953` | 25 | 19 | 10 | 9 | 1 | 922.47 | 47.4 |
-| [`std.time.datetime.fromUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromunixmillis-function-fromunixmillis-unixms-std-time-ml-399158673) | `std/time.ml:1008` | 22 | 16 | 6 | 5 | 1 | 707.2 | 49.96 |
-| [`std.time.datetime.isValid`](File-std-time-ml-975894601.md#function-function-std-time-datetime-isvalid-function-isvalid-dt-std-time-ml-101864515) | `std/time.ml:824` | 3 | 1 | 1 | 0 | 0 | 122.11 | 74.85 |
-| [`std.time.datetime.nowLocal`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowlocal-function-nowlocal-std-time-ml-1503210091) | `std/time.ml:985` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
-| [`std.time.datetime.nowUnixMillisUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowunixmillisutc-function-nowunixmillisutc-std-time-ml-1128288483) | `std/time.ml:1035` | 7 | 4 | 2 | 1 | 1 | 165.67 | 65.76 |
-| [`std.time.datetime.nowUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowutc-function-nowutc-std-time-ml-120915363) | `std/time.ml:991` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
-| [`std.time.datetime.parse`](File-std-time-ml-975894601.md#function-function-std-time-datetime-parse-function-parse-text-std-time-ml-1598500980) | `std/time.ml:919` | 23 | 16 | 7 | 6 | 1 | 883.18 | 48.73 |
-| [`std.time.datetime.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tomillis-function-tomillis-dt-std-time-ml-874033111) | `std/time.ml:841` | 12 | 8 | 4 | 3 | 1 | 388.64 | 57.79 |
-| [`std.time.datetime.toString`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tostring-function-tostring-dt-std-time-ml-1324149955) | `std/time.ml:910` | 6 | 3 | 2 | 1 | 1 | 216.64 | 66.4 |
-| [`std.time.datetime.toUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tounixmillis-function-tounixmillis-dt-std-time-ml-894528563) | `std/time.ml:998` | 7 | 4 | 2 | 1 | 1 | 189.99 | 65.34 |
-| [`std.time.datetimeToString`](File-std-time-ml-975894601.md#function-function-std-time-datetimetostring-function-datetimetostring-dt-std-time-ml-1282710884) | `std/time.ml:1093` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.dateToString`](File-std-time-ml-975894601.md#function-function-std-time-datetostring-function-datetostring-d-std-time-ml-1682286890) | `std/time.ml:1081` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.time.elapsed`](File-std-time-ml-975894601.md#function-function-std-time-elapsed-function-elapsed-start-time-end-time-std-time-ml-1524773121) | `std/time.ml:324` | 9 | 5 | 4 | 3 | 1 | 159.41 | 63.22 |
-| [`std.time.formatDuration`](File-std-time-ml-975894601.md#function-function-std-time-formatduration-function-formatduration-ms-std-time-ml-951102696) | `std/time.ml:1046` | 27 | 20 | 6 | 5 | 1 | 1023.29 | 46.89 |
-| [`std.time.sleep`](File-std-time-ml-975894601.md#function-function-std-time-sleep-function-sleep-ms-std-time-ml-2137114338) | `std/time.ml:296` | 9 | 5 | 4 | 3 | 1 | 178.38 | 62.88 |
-| [`std.time.ticks`](File-std-time-ml-975894601.md#function-function-std-time-ticks-function-ticks-std-time-ml-23716212) | `std/time.ml:289` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
+| [`std.time.clock.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-addmillis-function-addmillis-t-delta-std-time-ml-1733200724) | `std/time.ml:755` | 15 | 10 | 4 | 3 | 1 | 372.92 | 55.8 |
+| [`std.time.clock.compare`](File-std-time-ml-975894601.md#function-function-std-time-clock-compare-function-compare-a-b-std-time-ml-1662221955) | `std/time.ml:711` | 11 | 17 | 9 | 8 | 1 | 522.69 | 57.04 |
+| [`std.time.clock.fromMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-frommillis-function-frommillis-ms-std-time-ml-576832168) | `std/time.ml:734` | 15 | 11 | 4 | 3 | 1 | 488.4 | 54.98 |
+| [`std.time.clock.isValid`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalid-function-isvalid-t-std-time-ml-358966926) | `std/time.ml:704` | 3 | 1 | 1 | 0 | 0 | 130.8 | 74.64 |
+| [`std.time.clock.isValidHMSM`](File-std-time-ml-975894601.md#function-function-std-time-clock-isvalidhmsm-function-isvalidhmsm-h-m-s0-ms-std-time-ml-348818806) | `std/time.ml:691` | 10 | 11 | 13 | 12 | 1 | 464.39 | 57.76 |
+| [`std.time.clock.parse`](File-std-time-ml-975894601.md#function-function-std-time-clock-parse-function-parse-text-std-time-ml-549001107) | `std/time.ml:784` | 42 | 30 | 14 | 19 | 3 | 1884.3 | 39.77 |
+| [`std.time.clock.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-clock-tomillis-function-tomillis-t-std-time-ml-2034526210) | `std/time.ml:725` | 6 | 3 | 2 | 1 | 1 | 230.7 | 66.21 |
+| [`std.time.clock.toString`](File-std-time-ml-975894601.md#function-function-std-time-clock-tostring-function-tostring-t-std-time-ml-68025454) | `std/time.ml:775` | 6 | 3 | 2 | 1 | 1 | 334.7 | 65.08 |
+| [`std.time.clockToString`](File-std-time-ml-975894601.md#function-function-std-time-clocktostring-function-clocktostring-t-std-time-ml-904167438) | `std/time.ml:1103` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.date.addDays`](File-std-time-ml-975894601.md#function-function-std-time-date-adddays-function-adddays-d-delta-std-time-ml-164994134) | `std/time.ml:610` | 10 | 6 | 3 | 2 | 1 | 260.06 | 60.87 |
+| [`std.time.date.compare`](File-std-time-ml-975894601.md#function-function-std-time-date-compare-function-compare-a-b-std-time-ml-265951007) | `std/time.ml:597` | 9 | 13 | 7 | 6 | 1 | 397.62 | 60.04 |
+| [`std.time.date.dayOfWeek`](File-std-time-ml-975894601.md#function-function-std-time-date-dayofweek-function-dayofweek-d-std-time-ml-1357661304) | `std/time.ml:635` | 7 | 4 | 2 | 1 | 1 | 180.94 | 65.49 |
+| [`std.time.date.daysInMonth`](File-std-time-ml-975894601.md#function-function-std-time-date-daysinmonth-function-daysinmonth-year-month-std-time-ml-483008705) | `std/time.ml:462` | 23 | 29 | 17 | 17 | 2 | 824.52 | 47.59 |
+| [`std.time.date.diffDays`](File-std-time-ml-975894601.md#function-function-std-time-date-diffdays-function-diffdays-a-b-std-time-ml-1684126225) | `std/time.ml:624` | 8 | 5 | 3 | 2 | 1 | 252.17 | 63.08 |
+| [`std.time.date.fromOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-fromordinal-function-fromordinal-days-std-time-ml-1450309647) | `std/time.ml:542` | 38 | 33 | 9 | 9 | 2 | 1362.41 | 42.38 |
+| [`std.time.date.isLeapYear`](File-std-time-ml-975894601.md#function-function-std-time-date-isleapyear-function-isleapyear-year-std-time-ml-576789919) | `std/time.ml:446` | 12 | 7 | 4 | 3 | 1 | 229.06 | 59.4 |
+| [`std.time.date.isValid`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalid-function-isvalid-d-std-time-ml-398313186) | `std/time.ml:509` | 3 | 1 | 1 | 0 | 0 | 112 | 75.11 |
+| [`std.time.date.isValidYMD`](File-std-time-ml-975894601.md#function-function-std-time-date-isvalidymd-function-isvalidymd-year-month-day-std-time-ml-1097498691) | `std/time.ml:491` | 13 | 8 | 7 | 6 | 1 | 423.73 | 56.36 |
+| [`std.time.date.parse`](File-std-time-ml-975894601.md#function-function-std-time-date-parse-function-parse-text-std-time-ml-1488842447) | `std/time.ml:656` | 20 | 14 | 8 | 7 | 1 | 922.43 | 49.78 |
+| [`std.time.date.toOrdinal`](File-std-time-ml-975894601.md#function-function-std-time-date-toordinal-function-toordinal-d-std-time-ml-2117441882) | `std/time.ml:515` | 17 | 13 | 4 | 3 | 1 | 874.74 | 52.02 |
+| [`std.time.date.toString`](File-std-time-ml-975894601.md#function-function-std-time-date-tostring-function-tostring-d-std-time-ml-1073583202) | `std/time.ml:647` | 6 | 3 | 2 | 1 | 1 | 267.57 | 65.76 |
+| [`std.time.datetime.addDays`](File-std-time-ml-975894601.md#function-function-std-time-datetime-adddays-function-adddays-dt-deltadays-std-time-ml-203304236) | `std/time.ml:910` | 13 | 8 | 4 | 3 | 1 | 357.23 | 57.29 |
+| [`std.time.datetime.addMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-addmillis-function-addmillis-dt-delta-std-time-ml-1561373415) | `std/time.ml:876` | 26 | 19 | 6 | 5 | 1 | 835.29 | 47.87 |
+| [`std.time.datetime.compare`](File-std-time-ml-975894601.md#function-function-std-time-datetime-compare-function-compare-a-b-std-time-ml-1157888456) | `std/time.ml:847` | 7 | 4 | 2 | 1 | 1 | 229.06 | 64.77 |
+| [`std.time.datetime.fromSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromsystemtime-function-fromsystemtime-st-std-time-ml-1983396154) | `std/time.ml:969` | 25 | 19 | 10 | 9 | 1 | 922.47 | 47.4 |
+| [`std.time.datetime.fromUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-fromunixmillis-function-fromunixmillis-unixms-std-time-ml-399158673) | `std/time.ml:1024` | 22 | 16 | 6 | 5 | 1 | 707.2 | 49.96 |
+| [`std.time.datetime.isValid`](File-std-time-ml-975894601.md#function-function-std-time-datetime-isvalid-function-isvalid-dt-std-time-ml-101864515) | `std/time.ml:840` | 3 | 1 | 1 | 0 | 0 | 122.11 | 74.85 |
+| [`std.time.datetime.nowLocal`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowlocal-function-nowlocal-std-time-ml-1503210091) | `std/time.ml:1001` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
+| [`std.time.datetime.nowUnixMillisUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowunixmillisutc-function-nowunixmillisutc-std-time-ml-1128288483) | `std/time.ml:1051` | 7 | 4 | 2 | 1 | 1 | 165.67 | 65.76 |
+| [`std.time.datetime.nowUtc`](File-std-time-ml-975894601.md#function-function-std-time-datetime-nowutc-function-nowutc-std-time-ml-120915363) | `std/time.ml:1007` | 4 | 2 | 1 | 0 | 0 | 98.99 | 72.76 |
+| [`std.time.datetime.parse`](File-std-time-ml-975894601.md#function-function-std-time-datetime-parse-function-parse-text-std-time-ml-1598500980) | `std/time.ml:935` | 23 | 16 | 7 | 6 | 1 | 883.18 | 48.73 |
+| [`std.time.datetime.toMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tomillis-function-tomillis-dt-std-time-ml-874033111) | `std/time.ml:857` | 12 | 8 | 4 | 3 | 1 | 388.64 | 57.79 |
+| [`std.time.datetime.toString`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tostring-function-tostring-dt-std-time-ml-1324149955) | `std/time.ml:926` | 6 | 3 | 2 | 1 | 1 | 216.64 | 66.4 |
+| [`std.time.datetime.toUnixMillis`](File-std-time-ml-975894601.md#function-function-std-time-datetime-tounixmillis-function-tounixmillis-dt-std-time-ml-894528563) | `std/time.ml:1014` | 7 | 4 | 2 | 1 | 1 | 189.99 | 65.34 |
+| [`std.time.datetimeToString`](File-std-time-ml-975894601.md#function-function-std-time-datetimetostring-function-datetimetostring-dt-std-time-ml-1282710884) | `std/time.ml:1109` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.dateToString`](File-std-time-ml-975894601.md#function-function-std-time-datetostring-function-datetostring-d-std-time-ml-1682286890) | `std/time.ml:1097` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.time.elapsed`](File-std-time-ml-975894601.md#function-function-std-time-elapsed-function-elapsed-start-time-end-time-std-time-ml-1524773121) | `std/time.ml:340` | 9 | 5 | 4 | 3 | 1 | 159.41 | 63.22 |
+| [`std.time.formatDuration`](File-std-time-ml-975894601.md#function-function-std-time-formatduration-function-formatduration-ms-std-time-ml-951102696) | `std/time.ml:1062` | 27 | 20 | 6 | 5 | 1 | 1023.29 | 46.89 |
+| [`std.time.sleep`](File-std-time-ml-975894601.md#function-function-std-time-sleep-function-sleep-ms-std-time-ml-2137114338) | `std/time.ml:312` | 9 | 5 | 4 | 3 | 1 | 178.38 | 62.88 |
+| [`std.time.ticks`](File-std-time-ml-975894601.md#function-function-std-time-ticks-function-ticks-std-time-ml-23716212) | `std/time.ml:305` | 3 | 1 | 1 | 0 | 0 | 46.51 | 77.78 |
 | [`std.time.win32.GetLocalTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getlocaltime-function-getlocaltime-std-time-ml-2017549839) | `std/time.ml:145` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
 | [`std.time.win32.GetSystemTime`](File-std-time-ml-975894601.md#function-function-std-time-win32-getsystemtime-function-getsystemtime-std-time-ml-1514521483) | `std/time.ml:152` | 5 | 3 | 1 | 0 | 0 | 113.3 | 70.23 |
-| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:238` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:219` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
-| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:116` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:298` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
-| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:231` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
-| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:206` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
-| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:244` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
-| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:193` | 3 | 1 | 1 | 0 | 0 | 179.31 | 73.68 |
-| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:198` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:123` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
-| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:166` | 8 | 7 | 5 | 5 | 2 | 505.32 | 60.7 |
-| [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) | `std/tls.ml:184` | 7 | 7 | 3 | 2 | 1 | 350.94 | 63.34 |
-| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:280` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
-| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:253` | 22 | 20 | 11 | 15 | 3 | 1005.03 | 48.22 |
-| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:130` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
-| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:291` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
-| [`std.tls.Stream.close`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-close-function-close-std-tls-ml-1823044671) | `std/tls.ml:98` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
-| [`std.tls.Stream.isClosed`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-isclosed-function-isclosed-std-tls-ml-1435791159) | `std/tls.ml:103` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
-| [`std.tls.Stream.receive`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-receive-function-receive-maximumbytes-std-tls-ml-1572700364) | `std/tls.ml:88` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.tls.Stream.sendAll`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-sendall-function-sendall-data-std-tls-ml-310327501) | `std/tls.ml:82` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
-| [`std.tls.Stream.shutdown`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-shutdown-function-shutdown-std-tls-ml-1156232355) | `std/tls.ml:93` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
-| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:136` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
-| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:149` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
+| [`std.tls.accept`](File-std-tls-ml-2076630303.md#function-function-std-tls-accept-function-accept-socket-options-std-tls-ml-800200611) | `std/tls.ml:242` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.acceptServer`](File-std-tls-ml-2076630303.md#function-function-std-tls-acceptserver-function-acceptserver-activeprovider-socket-options-std-tls-ml-616544682) | `std/tls.ml:223` | 8 | 9 | 4 | 3 | 1 | 364.35 | 61.83 |
+| [`std.tls.clientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-clientoptions-function-clientoptions-servername-std-tls-ml-739294414) | `std/tls.ml:120` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.close`](File-std-tls-ml-2076630303.md#function-function-std-tls-close-function-close-stream-std-tls-ml-845826000) | `std/tls.ml:302` | 8 | 9 | 4 | 3 | 1 | 278.63 | 62.64 |
+| [`std.tls.connect`](File-std-tls-ml-2076630303.md#function-function-std-tls-connect-function-connect-socket-options-std-tls-ml-1752825555) | `std/tls.ml:235` | 3 | 1 | 1 | 0 | 0 | 69.19 | 76.57 |
+| [`std.tls.connectClient`](File-std-tls-ml-2076630303.md#function-function-std-tls-connectclient-function-connectclient-activeprovider-socket-options-std-tls-ml-1045079724) | `std/tls.ml:210` | 8 | 9 | 4 | 3 | 1 | 360.55 | 61.86 |
+| [`std.tls.isStream`](File-std-tls-ml-2076630303.md#function-function-std-tls-isstream-function-isstream-value-std-tls-ml-1952310795) | `std/tls.ml:248` | 3 | 1 | 1 | 0 | 0 | 34.87 | 78.66 |
+| [`std.tls.nativeProvider`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovider-function-nativeprovider-std-tls-ml-1730938456) | `std/tls.ml:197` | 3 | 1 | 1 | 0 | 0 | 179.31 | 73.68 |
+| [`std.tls.nativeProviderName`](File-std-tls-ml-2076630303.md#function-function-std-tls-nativeprovidername-function-nativeprovidername-std-tls-ml-1534691896) | `std/tls.ml:202` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.tls.pinnedClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-pinnedclientoptions-function-pinnedclientoptions-servername-sha256pin-std-tls-ml-1120473458) | `std/tls.ml:127` | 3 | 1 | 1 | 0 | 0 | 81.41 | 76.08 |
+| [`std.tls.provider`](File-std-tls-ml-2076630303.md#function-function-std-tls-provider-function-provider-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-std-tls-ml-1543267410) | `std/tls.ml:170` | 8 | 7 | 5 | 5 | 2 | 505.32 | 60.7 |
+| [`std.tls.providerWithRange`](File-std-tls-ml-2076630303.md#function-function-std-tls-providerwithrange-function-providerwithrange-name-openclient-openserver-sendbytes-receivebytes-shutdownstream-closestream-sendrange-std-tls-ml-1151490383) | `std/tls.ml:188` | 7 | 7 | 3 | 2 | 1 | 350.94 | 63.34 |
+| [`std.tls.receive`](File-std-tls-ml-2076630303.md#function-function-std-tls-receive-function-receive-stream-maximumbytes-std-tls-ml-1474410327) | `std/tls.ml:284` | 8 | 10 | 8 | 7 | 1 | 510.53 | 60.26 |
+| [`std.tls.sendAll`](File-std-tls-ml-2076630303.md#function-function-std-tls-sendall-function-sendall-stream-data-std-tls-ml-334269506) | `std/tls.ml:257` | 22 | 20 | 11 | 15 | 3 | 1005.03 | 48.22 |
+| [`std.tls.serverOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-serveroptions-function-serveroptions-certificatereference-privatekeyreference-std-tls-ml-1841010559) | `std/tls.ml:134` | 3 | 1 | 1 | 0 | 0 | 71.7 | 76.47 |
+| [`std.tls.shutdown`](File-std-tls-ml-2076630303.md#function-function-std-tls-shutdown-function-shutdown-stream-std-tls-ml-1878438672) | `std/tls.ml:295` | 4 | 3 | 3 | 2 | 1 | 135.93 | 71.53 |
+| [`std.tls.Stream.close`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-close-function-close-std-tls-ml-1823044671) | `std/tls.ml:102` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
+| [`std.tls.Stream.isClosed`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-isclosed-function-isclosed-std-tls-ml-1435791159) | `std/tls.ml:107` | 3 | 1 | 1 | 0 | 0 | 31.7 | 78.95 |
+| [`std.tls.Stream.receive`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-receive-function-receive-maximumbytes-std-tls-ml-1572700364) | `std/tls.ml:92` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.tls.Stream.sendAll`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-sendall-function-sendall-data-std-tls-ml-310327501) | `std/tls.ml:86` | 3 | 1 | 1 | 0 | 0 | 64.53 | 76.79 |
+| [`std.tls.Stream.shutdown`](Type-std-tls-stream-775546137.md#method-method-std-tls-stream-shutdown-function-shutdown-std-tls-ml-1156232355) | `std/tls.ml:97` | 3 | 1 | 1 | 0 | 0 | 49.83 | 77.57 |
+| [`std.tls.validateClientOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateclientoptions-function-validateclientoptions-options-std-tls-ml-702450042) | `std/tls.ml:140` | 10 | 15 | 14 | 13 | 1 | 910.78 | 55.58 |
+| [`std.tls.validateServerOptions`](File-std-tls-ml-2076630303.md#function-function-std-tls-validateserveroptions-function-validateserveroptions-options-std-tls-ml-787870250) | `std/tls.ml:153` | 8 | 11 | 9 | 8 | 1 | 573.86 | 59.77 |
 | [`std.uuid.format`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-format-function-format-raw-std-uuid-ml-2051708080) | `std/uuid.ml:27` | 5 | 4 | 3 | 2 | 1 | 500 | 65.45 |
 | [`std.uuid.isValid`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-isvalid-function-isvalid-text-std-uuid-ml-2002706769) | `std/uuid.ml:64` | 3 | 1 | 1 | 0 | 0 | 58.81 | 77.07 |
 | [`std.uuid.parse`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-parse-function-parse-text-std-uuid-ml-99981495) | `std/uuid.ml:53` | 8 | 9 | 9 | 8 | 1 | 966.32 | 58.19 |
 | [`std.uuid.v4`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4-function-v4-std-uuid-ml-1680180020) | `std/uuid.ml:43` | 7 | 6 | 2 | 1 | 1 | 157.17 | 65.92 |
 | [`std.uuid.v4Bytes`](File-std-uuid-ml-1903850359.md#function-function-std-uuid-v4bytes-function-v4bytes-std-uuid-ml-166922686) | `std/uuid.ml:34` | 7 | 6 | 2 | 1 | 1 | 275.78 | 64.21 |
-| [`std.video.backend`](File-std-video-ml-900169693.md#function-function-std-video-backend-function-backend-std-video-ml-1365649424) | `std/video.ml:489` | 7 | 6 | 2 | 1 | 1 | 175.69 | 65.58 |
-| [`std.video.isAvailable`](File-std-video-ml-900169693.md#function-function-std-video-isavailable-function-isavailable-std-video-ml-1080881046) | `std/video.ml:498` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
-| [`std.video.Player.attach`](Type-std-video-player-1368988610.md#method-method-std-video-player-attach-function-attach-windowhandle-std-video-ml-1608197656) | `std/video.ml:326` | 6 | 7 | 5 | 4 | 1 | 290.05 | 65.11 |
-| [`std.video.Player.backend`](Type-std-video-player-1368988610.md#method-method-std-video-player-backend-function-backend-std-video-ml-1693740782) | `std/video.ml:319` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
-| [`std.video.Player.close`](Type-std-video-player-1368988610.md#method-method-std-video-player-close-function-close-std-video-ml-1703187686) | `std/video.ml:468` | 8 | 7 | 2 | 1 | 1 | 144 | 64.92 |
-| [`std.video.Player.duration`](Type-std-video-player-1368988610.md#method-method-std-video-player-duration-function-duration-std-video-ml-2040872134) | `std/video.ml:372` | 4 | 3 | 2 | 1 | 1 | 89.86 | 72.92 |
-| [`std.video.Player.hasAudio`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasaudio-function-hasaudio-std-video-ml-1292757598) | `std/video.ml:432` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
-| [`std.video.Player.hasVideo`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasvideo-function-hasvideo-std-video-ml-583470366) | `std/video.ml:438` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
-| [`std.video.Player.open`](Type-std-video-player-1368988610.md#static_method-static-method-std-video-player-open-static-function-open-source-options-void-std-video-ml-1315792215) | `std/video.ml:286` | 29 | 40 | 14 | 14 | 2 | 1968 | 43.15 |
-| [`std.video.Player.pause`](Type-std-video-player-1368988610.md#method-method-std-video-player-pause-function-pause-std-video-ml-893559170) | `std/video.ml:341` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
-| [`std.video.Player.play`](Type-std-video-player-1368988610.md#method-method-std-video-player-play-function-play-std-video-ml-899937614) | `std/video.ml:334` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
-| [`std.video.Player.pollEvent`](Type-std-video-player-1368988610.md#method-method-std-video-player-pollevent-function-pollevent-std-video-ml-100661544) | `std/video.ml:456` | 9 | 10 | 4 | 3 | 1 | 515 | 59.66 |
-| [`std.video.Player.position`](Type-std-video-player-1368988610.md#method-method-std-video-player-position-function-position-std-video-ml-1200193178) | `std/video.ml:366` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
-| [`std.video.Player.seek`](Type-std-video-player-1368988610.md#method-method-std-video-player-seek-function-seek-milliseconds-std-video-ml-2146787904) | `std/video.ml:356` | 8 | 7 | 6 | 5 | 1 | 318.95 | 61.96 |
-| [`std.video.Player.setLoop`](Type-std-video-player-1368988610.md#method-method-std-video-player-setloop-function-setloop-enabled-std-video-ml-184318821) | `std/video.ml:421` | 9 | 11 | 5 | 4 | 1 | 371.56 | 60.52 |
-| [`std.video.Player.setMuted`](Type-std-video-player-1368988610.md#method-method-std-video-player-setmuted-function-setmuted-muted-std-video-ml-588095491) | `std/video.ml:397` | 9 | 11 | 5 | 4 | 1 | 368.02 | 60.55 |
-| [`std.video.Player.setPlaybackRate`](Type-std-video-player-1368988610.md#method-method-std-video-player-setplaybackrate-function-setplaybackrate-rate-std-video-ml-2075537326) | `std/video.ml:409` | 9 | 8 | 8 | 7 | 1 | 439.44 | 59.6 |
-| [`std.video.Player.setVolume`](Type-std-video-player-1368988610.md#method-method-std-video-player-setvolume-function-setvolume-volume-std-video-ml-531169772) | `std/video.ml:385` | 9 | 8 | 8 | 7 | 1 | 432.43 | 59.65 |
-| [`std.video.Player.state`](Type-std-video-player-1368988610.md#method-method-std-video-player-state-function-state-std-video-ml-1095459556) | `std/video.ml:378` | 4 | 3 | 2 | 1 | 1 | 108 | 72.36 |
-| [`std.video.Player.stop`](Type-std-video-player-1368988610.md#method-method-std-video-player-stop-function-stop-std-video-ml-2144431098) | `std/video.ml:348` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
-| [`std.video.Player.videoHeight`](Type-std-video-player-1368988610.md#method-method-std-video-player-videoheight-function-videoheight-std-video-ml-1033994046) | `std/video.ml:450` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
-| [`std.video.Player.videoWidth`](Type-std-video-player-1368988610.md#method-method-std-video-player-videowidth-function-videowidth-std-video-ml-2002722782) | `std/video.ml:444` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.backend`](File-std-video-ml-900169693.md#function-function-std-video-backend-function-backend-std-video-ml-1365649424) | `std/video.ml:581` | 7 | 6 | 2 | 1 | 1 | 175.69 | 65.58 |
+| [`std.video.isAvailable`](File-std-video-ml-900169693.md#function-function-std-video-isavailable-function-isavailable-std-video-ml-1080881046) | `std/video.ml:590` | 3 | 1 | 1 | 0 | 0 | 38.04 | 78.39 |
+| [`std.video.Player.attach`](Type-std-video-player-1368988610.md#method-method-std-video-player-attach-function-attach-windowhandle-std-video-ml-1608197656) | `std/video.ml:418` | 6 | 7 | 5 | 4 | 1 | 290.05 | 65.11 |
+| [`std.video.Player.backend`](Type-std-video-player-1368988610.md#method-method-std-video-player-backend-function-backend-std-video-ml-1693740782) | `std/video.ml:411` | 4 | 3 | 2 | 1 | 1 | 87.57 | 73 |
+| [`std.video.Player.close`](Type-std-video-player-1368988610.md#method-method-std-video-player-close-function-close-std-video-ml-1703187686) | `std/video.ml:560` | 8 | 7 | 2 | 1 | 1 | 144 | 64.92 |
+| [`std.video.Player.duration`](Type-std-video-player-1368988610.md#method-method-std-video-player-duration-function-duration-std-video-ml-2040872134) | `std/video.ml:464` | 4 | 3 | 2 | 1 | 1 | 89.86 | 72.92 |
+| [`std.video.Player.hasAudio`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasaudio-function-hasaudio-std-video-ml-1292757598) | `std/video.ml:524` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
+| [`std.video.Player.hasVideo`](Type-std-video-player-1368988610.md#method-method-std-video-player-hasvideo-function-hasvideo-std-video-ml-583470366) | `std/video.ml:530` | 4 | 3 | 2 | 1 | 1 | 96 | 72.72 |
+| [`std.video.Player.open`](Type-std-video-player-1368988610.md#static_method-static-method-std-video-player-open-static-function-open-source-options-void-std-video-ml-1315792215) | `std/video.ml:378` | 29 | 40 | 14 | 14 | 2 | 1968 | 43.15 |
+| [`std.video.Player.pause`](Type-std-video-player-1368988610.md#method-method-std-video-player-pause-function-pause-std-video-ml-893559170) | `std/video.ml:433` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.play`](Type-std-video-player-1368988610.md#method-method-std-video-player-play-function-play-std-video-ml-899937614) | `std/video.ml:426` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.pollEvent`](Type-std-video-player-1368988610.md#method-method-std-video-player-pollevent-function-pollevent-std-video-ml-100661544) | `std/video.ml:548` | 9 | 10 | 4 | 3 | 1 | 515 | 59.66 |
+| [`std.video.Player.position`](Type-std-video-player-1368988610.md#method-method-std-video-player-position-function-position-std-video-ml-1200193178) | `std/video.ml:458` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.Player.seek`](Type-std-video-player-1368988610.md#method-method-std-video-player-seek-function-seek-milliseconds-std-video-ml-2146787904) | `std/video.ml:448` | 8 | 7 | 6 | 5 | 1 | 318.95 | 61.96 |
+| [`std.video.Player.setLoop`](Type-std-video-player-1368988610.md#method-method-std-video-player-setloop-function-setloop-enabled-std-video-ml-184318821) | `std/video.ml:513` | 9 | 11 | 5 | 4 | 1 | 371.56 | 60.52 |
+| [`std.video.Player.setMuted`](Type-std-video-player-1368988610.md#method-method-std-video-player-setmuted-function-setmuted-muted-std-video-ml-588095491) | `std/video.ml:489` | 9 | 11 | 5 | 4 | 1 | 368.02 | 60.55 |
+| [`std.video.Player.setPlaybackRate`](Type-std-video-player-1368988610.md#method-method-std-video-player-setplaybackrate-function-setplaybackrate-rate-std-video-ml-2075537326) | `std/video.ml:501` | 9 | 8 | 8 | 7 | 1 | 439.44 | 59.6 |
+| [`std.video.Player.setVolume`](Type-std-video-player-1368988610.md#method-method-std-video-player-setvolume-function-setvolume-volume-std-video-ml-531169772) | `std/video.ml:477` | 9 | 8 | 8 | 7 | 1 | 432.43 | 59.65 |
+| [`std.video.Player.state`](Type-std-video-player-1368988610.md#method-method-std-video-player-state-function-state-std-video-ml-1095459556) | `std/video.ml:470` | 4 | 3 | 2 | 1 | 1 | 108 | 72.36 |
+| [`std.video.Player.stop`](Type-std-video-player-1368988610.md#method-method-std-video-player-stop-function-stop-std-video-ml-2144431098) | `std/video.ml:440` | 5 | 5 | 3 | 2 | 1 | 168.56 | 68.76 |
+| [`std.video.Player.videoHeight`](Type-std-video-player-1368988610.md#method-method-std-video-player-videoheight-function-videoheight-std-video-ml-1033994046) | `std/video.ml:542` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
+| [`std.video.Player.videoWidth`](Type-std-video-player-1368988610.md#method-method-std-video-player-videowidth-function-videowidth-std-video-ml-2002722782) | `std/video.ml:536` | 4 | 3 | 2 | 1 | 1 | 83.76 | 73.13 |
 | [`std.video.PlayerOptions.defaults`](Type-std-video-playeroptions-261096172.md#static_method-static-method-std-video-playeroptions-defaults-static-function-defaults-std-video-ml-1265987065) | `std/video.ml:61` | 3 | 1 | 1 | 0 | 0 | 91.38 | 75.73 |
 
 ## Code duplication
@@ -911,8 +914,8 @@ Found 161 clone group(s). At most 161 groups are shown.
     value = ( value << 8 ) | buffer [ offset + i ]
     i = i - 1
 
-- [`std/_linux_fs.ml:155`](File-std-linux-fs-ml-2121665983.md)
-- [`std/concurrent/shared_value.ml:106`](File-std-concurrent-shared-value-ml-2112657235.md)
+- [`std/_linux_fs.ml:247`](File-std-linux-fs-ml-2121665983.md)
+- [`std/concurrent/shared_value.ml:119`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:177`](File-std-io-file-ml-2074692665.md)
 
 </details>
@@ -927,8 +930,8 @@ Found 161 clone group(s). At most 161 groups are shown.
     i = i - 1
     end while
 
-- [`std/_linux_fs.ml:156`](File-std-linux-fs-ml-2121665983.md)
-- [`std/concurrent/shared_value.ml:107`](File-std-concurrent-shared-value-ml-2112657235.md)
+- [`std/_linux_fs.ml:248`](File-std-linux-fs-ml-2121665983.md)
+- [`std/concurrent/shared_value.ml:120`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:178`](File-std-io-file-ml-2074692665.md)
 
 </details>
@@ -943,8 +946,8 @@ Found 161 clone group(s). At most 161 groups are shown.
     end while
     return value
 
-- [`std/_linux_fs.ml:157`](File-std-linux-fs-ml-2121665983.md)
-- [`std/concurrent/shared_value.ml:108`](File-std-concurrent-shared-value-ml-2112657235.md)
+- [`std/_linux_fs.ml:249`](File-std-linux-fs-ml-2121665983.md)
+- [`std/concurrent/shared_value.ml:121`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:179`](File-std-io-file-ml-2074692665.md)
 
 </details>
@@ -959,8 +962,8 @@ Found 161 clone group(s). At most 161 groups are shown.
     return value
     end function
 
-- [`std/_linux_fs.ml:158`](File-std-linux-fs-ml-2121665983.md)
-- [`std/concurrent/shared_value.ml:109`](File-std-concurrent-shared-value-ml-2112657235.md)
+- [`std/_linux_fs.ml:250`](File-std-linux-fs-ml-2121665983.md)
+- [`std/concurrent/shared_value.ml:122`](File-std-concurrent-shared-value-ml-2112657235.md)
 - [`std/io/file.ml:180`](File-std-io-file-ml-2074692665.md)
 
 </details>
@@ -1884,8 +1887,8 @@ Found 161 clone group(s). At most 161 groups are shown.
     end while
     end function
 
-- [`std/concurrent/shared_value.ml:94`](File-std-concurrent-shared-value-ml-2112657235.md)
-- [`std/net.ml:417`](File-std-net-ml-1989130045.md)
+- [`std/concurrent/shared_value.ml:107`](File-std-concurrent-shared-value-ml-2112657235.md)
+- [`std/net.ml:493`](File-std-net-ml-1989130045.md)
 
 </details>
 
@@ -1975,7 +1978,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end function
 
 - [`std/core.ml:102`](File-std-core-ml-750389783.md)
-- [`std/math.ml:106`](File-std-math-ml-790065500.md)
+- [`std/math.ml:116`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -1990,7 +1993,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     return hi
 
 - [`std/core.ml:113`](File-std-core-ml-750389783.md)
-- [`std/math.ml:83`](File-std-math-ml-790065500.md)
+- [`std/math.ml:93`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2005,7 +2008,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end if
 
 - [`std/core.ml:114`](File-std-core-ml-750389783.md)
-- [`std/math.ml:84`](File-std-math-ml-790065500.md)
+- [`std/math.ml:94`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2020,7 +2023,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     return x
 
 - [`std/core.ml:115`](File-std-core-ml-750389783.md)
-- [`std/math.ml:85`](File-std-math-ml-790065500.md)
+- [`std/math.ml:95`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2035,7 +2038,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end function
 
 - [`std/core.ml:116`](File-std-core-ml-750389783.md)
-- [`std/math.ml:86`](File-std-math-ml-790065500.md)
+- [`std/math.ml:96`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2050,7 +2053,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end if
 
 - [`std/core.ml:135`](File-std-core-ml-750389783.md)
-- [`std/math.ml:70`](File-std-math-ml-790065500.md)
+- [`std/math.ml:80`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2065,7 +2068,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     return 0
 
 - [`std/core.ml:136`](File-std-core-ml-750389783.md)
-- [`std/math.ml:71`](File-std-math-ml-790065500.md)
+- [`std/math.ml:81`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2080,7 +2083,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end function
 
 - [`std/core.ml:137`](File-std-core-ml-750389783.md)
-- [`std/math.ml:72`](File-std-math-ml-790065500.md)
+- [`std/math.ml:82`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2095,7 +2098,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end function
 
 - [`std/core.ml:92`](File-std-core-ml-750389783.md)
-- [`std/math.ml:96`](File-std-math-ml-790065500.md)
+- [`std/math.ml:106`](File-std-math-ml-790065500.md)
 
 </details>
 
@@ -2110,7 +2113,7 @@ Found 161 clone group(s). At most 161 groups are shown.
     end function
 
 - [`std/crypto/_cng.ml:108`](File-std-crypto-cng-ml-1099901917.md)
-- [`std/net.ml:407`](File-std-net-ml-1989130045.md)
+- [`std/net.ml:483`](File-std-net-ml-1989130045.md)
 
 </details>
 

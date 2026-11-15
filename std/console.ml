@@ -78,19 +78,39 @@ extern function WideCharToMultiByte(codePage as u32, flags as u32, wideText as b
 #else
 /// Reports whether isatty.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _isatty(fd as int) from "libc.so.1" symbol "isatty" returns i32
+#else
 extern function _isatty(fd as int) from "libc.so.6" symbol "isatty" returns i32
+#endif
 /// Returns getpass.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _readSecret(prompt as cstr, output as bytes, capacity as u64) from "libminilang_minux.so" symbol "mlc_read_secret" returns i64
+#else
 extern function _getpass(prompt as cstr) from "libc.so.6" symbol "getpass" returns ptr
+#endif
 /// Provide the strlen operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _strlen(value as ptr) from "libc.so.1" symbol "strlen" returns u64
+#else
 extern function _strlen(value as ptr) from "libc.so.6" symbol "strlen" returns u64
+#endif
 /// Provide the copy from native operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.1" symbol "memcpy" returns ptr
+#else
 extern function _copyFromNative(output as bytes, value as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 /// Provide the wipe native operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _wipeNative(value as ptr, count as u64) from "libminilang_minux.so" symbol "mlc_explicit_bzero" returns void
+#else
 extern function _wipeNative(value as ptr, count as u64) from "libc.so.6" symbol "explicit_bzero" returns void
+#endif
 #endif
 
 /// Reports whether is interactive.
@@ -165,6 +185,15 @@ function readSecret(prompt, maximumBytes)
   wipe(readOut)
   return output
 #else
+#if TARGET_OS == "minux"
+  output = bytes(maximumBytes, 0)
+  count = _readSecret(prompt, output, maximumBytes)
+  if count < 0 then wipe(output); return _error("secret input failed or exceeds configured limit") end if
+  if count == maximumBytes then return output end if
+  result = slice(output, 0, count)
+  wipe(output)
+  return result
+#else
   value = _getpass(prompt)
   if value == 0 then return _error("secret input failed") end if
   count = _strlen(value)
@@ -173,6 +202,7 @@ function readSecret(prompt, maximumBytes)
   if count > 0 then _copyFromNative(output, value, count) end if
   _wipeNative(value, count)
   return output
+#endif
 #endif
 end function
 

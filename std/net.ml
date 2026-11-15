@@ -182,61 +182,137 @@ extern function inet_addr(addr as cstr) from "ws2_32.dll" returns u32
 #else
 /// Provide the socket operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function socket(af as int, type as int, protocol as int) from "libc.so.1" returns i32
+#else
 extern function socket(af as int, type as int, protocol as int) from "libc.so.6" returns i32
+#endif
 /// Releases or resets closesocket.
 /// @internal
+#if TARGET_OS == "minux"
+extern function closesocket(s as int) from "libc.so.1" symbol "close" returns i32
+#else
 extern function closesocket(s as int) from "libc.so.6" symbol "close" returns i32
+#endif
 /// Provide the connect operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.1" returns i32
+#else
 extern function connect(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+#endif
 /// Provide the bind operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.1" returns i32
+#else
 extern function bind(s as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i32
+#endif
 /// Provide the listen operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function listen(s as int, backlog as int) from "libc.so.1" returns i32
+#else
 extern function listen(s as int, backlog as int) from "libc.so.6" returns i32
+#endif
 /// Provide the accept operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.1" returns i32
+#else
 extern function accept(s as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i32
+#endif
 /// Provide the accept no address operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "libc.so.1" symbol "accept" returns i32
+#else
 extern function acceptNoAddress(s as int, addr as ptr, addrlen as ptr) from "libc.so.6" symbol "accept" returns i32
+#endif
 /// Provide the send operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.1" returns i64
+#else
 extern function send(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+#endif
 /// Send a checked interior byte-buffer range without allocating a slice.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _sendPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.1" symbol "send" returns i64
+#else
 extern function _sendPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.6" symbol "send" returns i64
+#endif
 /// Provide the recv operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.1" returns i64
+#else
 extern function recv(s as int, buf as bytes, len as u64, flags as int) from "libc.so.6" returns i64
+#endif
 /// Receive into a checked interior byte-buffer range.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _recvPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.1" symbol "recv" returns i64
+#else
 extern function _recvPointer(s as int, buf as ptr, len as u64, flags as int) from "libc.so.6" symbol "recv" returns i64
+#endif
 /// Provide the sendto operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.1" returns i64
+#else
 extern function sendto(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as u32) from "libc.so.6" returns i64
+#endif
 /// Provide the recvfrom operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.1" returns i64
+#else
 extern function recvfrom(s as int, buf as bytes, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" returns i64
+#endif
 /// Receive a datagram into a checked interior byte-buffer range.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _recvfromPointer(s as int, buf as ptr, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.1" symbol "recvfrom" returns i64
+#else
 extern function _recvfromPointer(s as int, buf as ptr, len as u64, flags as int, addr as bytes, addrlen as bytes) from "libc.so.6" symbol "recvfrom" returns i64
+#endif
 /// Provide the shutdown operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function shutdown(s as int, how as int) from "libc.so.1" returns i32
+#else
 extern function shutdown(s as int, how as int) from "libc.so.6" returns i32
+#endif
 /// Updates setsockopt.
 /// @internal
+#if TARGET_OS == "minux"
+extern function setsockopt(s as int, level as int, optname as int, optval as bytes, optlen as u32) from "libc.so.1" returns i32
+#else
 extern function setsockopt(s as int, level as int, optname as int, optval as bytes, optlen as u32) from "libc.so.6" returns i32
+#endif
 /// Provide the inet addr operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function inet_addr(addr as cstr) from "libc.so.1" returns u32
+#else
 extern function inet_addr(addr as cstr) from "libc.so.6" returns u32
+#endif
 /// Provide the errno location operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _errnoLocation() from "libminilang_minux.so" symbol "mlc_errno_location" returns ptr
+#else
 extern function _errnoLocation() from "libc.so.6" symbol "__errno_location" returns ptr
+#endif
 /// Provide the copy errno operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _copyErrno(destination as bytes, source as ptr, count as u64) from "libc.so.1" symbol "memcpy" returns ptr
+#else
 extern function _copyErrno(destination as bytes, source as ptr, count as u64) from "libc.so.6" symbol "memcpy" returns ptr
+#endif
 #endif
 
 // ---------------------------
@@ -469,7 +545,13 @@ function _prepareTcpListener(sock, operation)
 #if TARGET_OS == "windows"
   return _setBooleanOption(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, true, operation)
 #else
+#if TARGET_OS == "minux"
+  // MinUX binds exclusively by default and currently has no SO_REUSEADDR.
+  // An explicit setReuseAddress request still reports the native error.
+  return true
+#else
   return _setBooleanOption(sock, SOL_SOCKET, SO_REUSEADDR, true, operation)
+#endif
 #endif
 end function
 
@@ -507,6 +589,10 @@ end function
 /// @internal
 function _setTimeout(sock, option, milliseconds, operation)
   if not _isSockHandle(sock) or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_SOCKET_TIMEOUT_MS then return _netErr(operation + ": invalid args") end if
+#if TARGET_OS == "minux"
+  // Native libc maps zero to its finite service default, not to infinity.
+  if milliseconds == 0 then return _netErr(operation + ": MinUX requires a finite native socket timeout") end if
+#endif
 #if TARGET_OS == "windows"
   raw = bytes(4, 0)
   _putU32(raw, 0, milliseconds)

@@ -20,7 +20,11 @@ package std.crypto.aes_gcm
 #if TARGET_OS == "windows"
 import std.crypto._cng as cng
 #else
+#if TARGET_OS == "minux"
+import std.crypto._minux as cng
+#else
 import std.crypto._openssl as cng
+#endif
 #endif
 
 /// Track the aes gcm err value used by this standard-library module.

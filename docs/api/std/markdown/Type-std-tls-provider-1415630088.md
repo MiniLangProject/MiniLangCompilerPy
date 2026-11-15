@@ -12,7 +12,7 @@ struct Provider
 Represents provider.
 
 
-Source: `std/tls.ml:50`
+Source: `std/tls.ml:54`
 
 ## Members
 
@@ -26,7 +26,7 @@ closeStream
 Close stream associated with `Provider`.
 
 
-Source: `std/tls.ml:64`
+Source: `std/tls.ml:68`
 
 <a id="field-field-std-tls-provider-name-name-std-tls-ml-264645400"></a>
 ### name
@@ -38,7 +38,7 @@ name
 Name associated with `Provider`.
 
 
-Source: `std/tls.ml:52`
+Source: `std/tls.ml:56`
 
 <a id="field-field-std-tls-provider-openclient-openclient-std-tls-ml-819340860"></a>
 ### openClient
@@ -50,7 +50,7 @@ openClient
 Open client associated with `Provider`.
 
 
-Source: `std/tls.ml:54`
+Source: `std/tls.ml:58`
 
 <a id="field-field-std-tls-provider-openserver-openserver-std-tls-ml-568276908"></a>
 ### openServer
@@ -62,7 +62,7 @@ openServer
 Open server associated with `Provider`.
 
 
-Source: `std/tls.ml:56`
+Source: `std/tls.ml:60`
 
 <a id="field-field-std-tls-provider-receivebytes-receivebytes-std-tls-ml-573670746"></a>
 ### receiveBytes
@@ -74,7 +74,7 @@ receiveBytes
 Receive bytes associated with `Provider`.
 
 
-Source: `std/tls.ml:60`
+Source: `std/tls.ml:64`
 
 <a id="field-field-std-tls-provider-sendbytes-sendbytes-std-tls-ml-96086634"></a>
 ### sendBytes
@@ -86,7 +86,7 @@ sendBytes
 Send callback; treat its input bytes as read-only and return the consumed count.
 
 
-Source: `std/tls.ml:58`
+Source: `std/tls.ml:62`
 
 <a id="field-field-std-tls-provider-sendrange-sendrange-std-tls-ml-233751482"></a>
 ### sendRange
@@ -98,7 +98,7 @@ sendRange
 Optional ranged send callback: (state, bytes, offset, count) -> consumed count.
 
 
-Source: `std/tls.ml:66`
+Source: `std/tls.ml:70`
 
 <a id="field-field-std-tls-provider-shutdownstream-shutdownstream-std-tls-ml-1938407858"></a>
 ### shutdownStream
@@ -110,4 +110,4 @@ shutdownStream
 Shutdown stream associated with `Provider`.
 
 
-Source: `std/tls.ml:62`
+Source: `std/tls.ml:66`

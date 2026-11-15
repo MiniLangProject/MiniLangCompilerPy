@@ -12,7 +12,7 @@
 
 package std.threading
 
-#if TARGET_OS == "linux"
+#if TARGET_OS == "linux" or TARGET_OS == "minux"
 import std.time as time
 #endif
 
@@ -317,11 +317,19 @@ end struct
 #else
 
 /// POSIX synchronization storage sizes are the glibc x86-64 ABI sizes. The buffers live in MiniLang's non-moving global heap and remain stable while a native primitive references them.
+#if TARGET_OS == "minux"
+const PTHREAD_MUTEX_SIZE = 24
+#else
 const PTHREAD_MUTEX_SIZE = 40
+#endif
 /// Track the pthread mutexattr size value used by this standard-library module.
 const PTHREAD_MUTEXATTR_SIZE = 4
 /// Track the pthread cond size value used by this standard-library module.
+#if TARGET_OS == "minux"
+const PTHREAD_COND_SIZE = 8
+#else
 const PTHREAD_COND_SIZE = 48
+#endif
 /// glibc x86-64 pthread_condattr_t storage size.
 const PTHREAD_CONDATTR_SIZE = 4
 /// Linux clock id used for deadline-based condition waits.
@@ -333,72 +341,168 @@ const PTHREAD_MUTEX_RECURSIVE = 1
 
 /// Provide the mutex attr init operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexAttrInit(attribute as ptr) from "libc.so.1" symbol "pthread_mutexattr_init" returns i32
+#else
 extern function _mutexAttrInit(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_init" returns i32
+#endif
 /// Provide the mutex attr set type operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexAttrSetType(attribute as ptr, kind as int) from "libc.so.1" symbol "pthread_mutexattr_settype" returns i32
+#else
 extern function _mutexAttrSetType(attribute as ptr, kind as int) from "libc.so.6" symbol "pthread_mutexattr_settype" returns i32
+#endif
 /// Provide the mutex attr destroy operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexAttrDestroy(attribute as ptr) from "libc.so.1" symbol "pthread_mutexattr_destroy" returns i32
+#else
 extern function _mutexAttrDestroy(attribute as ptr) from "libc.so.6" symbol "pthread_mutexattr_destroy" returns i32
+#endif
 /// Provide the mutex init operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexInit(mutex as ptr, attribute as ptr) from "libc.so.1" symbol "pthread_mutex_init" returns i32
+#else
 extern function _mutexInit(mutex as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_mutex_init" returns i32
+#endif
 /// Provide the mutex lock operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexLock(mutex as ptr) from "libc.so.1" symbol "pthread_mutex_lock" returns i32
+#else
 extern function _mutexLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_lock" returns i32
+#endif
 /// Provide the mutex try lock operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexTryLock(mutex as ptr) from "libc.so.1" symbol "pthread_mutex_trylock" returns i32
+#else
 extern function _mutexTryLock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_trylock" returns i32
+#endif
 /// Provide the mutex unlock operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexUnlock(mutex as ptr) from "libc.so.1" symbol "pthread_mutex_unlock" returns i32
+#else
 extern function _mutexUnlock(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_unlock" returns i32
+#endif
 /// Provide the mutex destroy operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _mutexDestroy(mutex as ptr) from "libc.so.1" symbol "pthread_mutex_destroy" returns i32
+#else
 extern function _mutexDestroy(mutex as ptr) from "libc.so.6" symbol "pthread_mutex_destroy" returns i32
+#endif
 /// Provide the cond init operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condInit(condition as ptr, attribute as ptr) from "libc.so.1" symbol "pthread_cond_init" returns i32
+#else
 extern function _condInit(condition as ptr, attribute as ptr) from "libc.so.6" symbol "pthread_cond_init" returns i32
+#endif
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condAttrInit(attribute as ptr) from "libc.so.1" symbol "pthread_condattr_init" returns i32
+#else
 extern function _condAttrInit(attribute as ptr) from "libc.so.6" symbol "pthread_condattr_init" returns i32
+#endif
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condAttrSetClock(attribute as ptr, clockId as int) from "libc.so.1" symbol "pthread_condattr_setclock" returns i32
+#else
 extern function _condAttrSetClock(attribute as ptr, clockId as int) from "libc.so.6" symbol "pthread_condattr_setclock" returns i32
+#endif
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condAttrDestroy(attribute as ptr) from "libc.so.1" symbol "pthread_condattr_destroy" returns i32
+#else
 extern function _condAttrDestroy(attribute as ptr) from "libc.so.6" symbol "pthread_condattr_destroy" returns i32
+#endif
 /// Provide the cond wait operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condWait(condition as ptr, mutex as ptr) from "libc.so.1" symbol "pthread_cond_wait" returns i32
+#else
 extern function _condWait(condition as ptr, mutex as ptr) from "libc.so.6" symbol "pthread_cond_wait" returns i32
+#endif
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condTimedWait(condition as ptr, mutex as ptr, deadline as ptr) from "libc.so.1" symbol "pthread_cond_timedwait" returns i32
+#else
 extern function _condTimedWait(condition as ptr, mutex as ptr, deadline as ptr) from "libc.so.6" symbol "pthread_cond_timedwait" returns i32
+#endif
 /// Provide the cond signal operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condSignal(condition as ptr) from "libc.so.1" symbol "pthread_cond_signal" returns i32
+#else
 extern function _condSignal(condition as ptr) from "libc.so.6" symbol "pthread_cond_signal" returns i32
+#endif
 /// Provide the cond broadcast operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condBroadcast(condition as ptr) from "libc.so.1" symbol "pthread_cond_broadcast" returns i32
+#else
 extern function _condBroadcast(condition as ptr) from "libc.so.6" symbol "pthread_cond_broadcast" returns i32
+#endif
 /// Provide the cond destroy operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _condDestroy(condition as ptr) from "libc.so.1" symbol "pthread_cond_destroy" returns i32
+#else
 extern function _condDestroy(condition as ptr) from "libc.so.6" symbol "pthread_cond_destroy" returns i32
+#endif
 /// Provide the sem init operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semInit(semaphore as ptr, shared as int, value as u32) from "__minilang_minux_runtime" symbol "minux_sem_init" returns i32
+#else
 extern function _semInit(semaphore as ptr, shared as int, value as u32) from "libc.so.6" symbol "sem_init" returns i32
+#endif
 /// Provide the sem wait operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semWait(semaphore as ptr) from "__minilang_minux_runtime" symbol "minux_sem_wait" returns i32
+#else
 extern function _semWait(semaphore as ptr) from "libc.so.6" symbol "sem_wait" returns i32
+#endif
 /// Provide the sem try wait operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semTryWait(semaphore as ptr) from "__minilang_minux_runtime" symbol "minux_sem_trywait" returns i32
+#else
 extern function _semTryWait(semaphore as ptr) from "libc.so.6" symbol "sem_trywait" returns i32
+#endif
 /// Provide the sem post operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semPost(semaphore as ptr) from "__minilang_minux_runtime" symbol "minux_sem_post" returns i32
+#else
 extern function _semPost(semaphore as ptr) from "libc.so.6" symbol "sem_post" returns i32
+#endif
 /// Provide the sem get value operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semGetValue(semaphore as ptr, value as ptr) from "__minilang_minux_runtime" symbol "minux_sem_getvalue" returns i32
+#else
 extern function _semGetValue(semaphore as ptr, value as ptr) from "libc.so.6" symbol "sem_getvalue" returns i32
+#endif
 /// Provide the sem destroy operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _semDestroy(semaphore as ptr) from "__minilang_minux_runtime" symbol "minux_sem_destroy" returns i32
+#else
 extern function _semDestroy(semaphore as ptr) from "libc.so.6" symbol "sem_destroy" returns i32
+#endif
 /// Provide the sleep micros operation for this standard-library module.
 /// @internal
+#if TARGET_OS == "minux"
+extern function _sleepMicros(microseconds as u32) from "libc.so.1" symbol "usleep" returns i32
+#else
 extern function _sleepMicros(microseconds as u32) from "libc.so.6" symbol "usleep" returns i32
+#endif
 
 /// Write a nonnegative 64-bit timespec field in native little-endian order.
 /// @internal
@@ -642,11 +746,13 @@ struct Event
       _mutexDestroy(nativeBytesPtr(mutex))
       return error(1602, "could not create condition attributes")
     end if
+#if TARGET_OS != "minux"
     if _condAttrSetClock(nativeBytesPtr(attribute), CLOCK_MONOTONIC) != 0 then
       _condAttrDestroy(nativeBytesPtr(attribute))
       _mutexDestroy(nativeBytesPtr(mutex))
       return error(1602, "could not select monotonic event clock")
     end if
+#endif
     initialized = _condInit(nativeBytesPtr(condition), nativeBytesPtr(attribute)) == 0
     _condAttrDestroy(nativeBytesPtr(attribute))
     if not initialized then
@@ -675,6 +781,16 @@ struct Event
   /// @param milliseconds Maximum duration in milliseconds.
   function waitFor(milliseconds)
     if this.closed or typeof(milliseconds) != "int" or milliseconds < 0 or milliseconds > MAX_PORTABLE_TIMEOUT_MS then return false end if
+#if TARGET_OS == "minux"
+    // MinUX pthread conditions use realtime only. Poll the atomic signal state
+    // under its mutex against a monotonic deadline, preserving timeout semantics.
+    deadline = time.ticks() + milliseconds
+    while true
+      if this.tryWait() then return true end if
+      if time.ticks() >= deadline then return false end if
+      _sleepMicros(1000)
+    end while
+#else
     deadline = time.ticks() + milliseconds
     seconds = (deadline - (deadline % 1000)) / 1000
     nanoseconds = (deadline % 1000) * 1000000
@@ -692,6 +808,7 @@ struct Event
     if not this.manualReset then this.signaled = false end if
     _mutexUnlock(nativeBytesPtr(this.mutex))
     return true
+#endif
   end function
 
   /// Test the signal state without allocating a timed-wait buffer.

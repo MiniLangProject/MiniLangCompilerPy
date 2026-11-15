@@ -2,6 +2,22 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.9 - 2026-11-15
+
+- Add `minux-x64`: native MinUX ELF output, shared SysV FFI marshalling,
+  a reproducibly generated MinUX runtime, GC/VM/thread support and POSIX
+  file/time/process/synchronization adapters.
+- Add cross-compiler/direct/MLO parity checks and isolated QEMU acceptance.
+- Complete MinUX math and unmanaged snapshot imports, implement real directory
+  syncing, and add full MLO self-build/stage2-stage3 fixed-point checks.
+- Fix native C-string length reads at protected page boundaries on all targets.
+- Add MinUX packing and compiler self-rebuild, TCP/UDP, Mbed TLS client/server
+  and crypto, positional/durable files and echo-safe terminal input.
+- Add native MiniGui and PCM-WAV/raw-AVI media bridges. MinUX kernel changes
+  provide process-budgeted VM commitment and open-description advisory locks.
+- Reject Linux ABI imports, ambiguous ELF symbols and legacy UPX for MinUX.
+  See `docs/MINUX.md` for deployment instructions and platform capability limits.
+
 ## 1.3.8 - 2026-11-14
 
 - Add method facades to `std.io.file.FileHandle` and `std.tls.Stream`, plus

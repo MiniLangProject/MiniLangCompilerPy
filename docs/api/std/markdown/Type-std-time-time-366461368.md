@@ -12,7 +12,7 @@ struct Time
 Time-of-day value with millisecond precision.
 
 
-Source: `std/time.ml:347`
+Source: `std/time.ml:363`
 
 ## Members
 
@@ -26,7 +26,7 @@ hour
 Hour associated with `Time`.
 
 
-Source: `std/time.ml:349`
+Source: `std/time.ml:365`
 
 <a id="field-field-std-time-time-millisecond-millisecond-std-time-ml-484175854"></a>
 ### millisecond
@@ -38,7 +38,7 @@ millisecond
 Millisecond associated with `Time`.
 
 
-Source: `std/time.ml:355`
+Source: `std/time.ml:371`
 
 <a id="field-field-std-time-time-minute-minute-std-time-ml-1894647586"></a>
 ### minute
@@ -50,7 +50,7 @@ minute
 Minute associated with `Time`.
 
 
-Source: `std/time.ml:351`
+Source: `std/time.ml:367`
 
 <a id="field-field-std-time-time-second-second-std-time-ml-557219030"></a>
 ### second
@@ -62,4 +62,4 @@ second
 Second associated with `Time`.
 
 
-Source: `std/time.ml:353`
+Source: `std/time.ml:369`

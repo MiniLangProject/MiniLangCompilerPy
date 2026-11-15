@@ -20,7 +20,7 @@ package std.fs
 
 // Portable high-level filesystem API. The target-specific implementations use
 // Win32 wide-character calls or glibc/POSIX file and directory operations.
-#if TARGET_OS == "linux"
+#if TARGET_OS == "linux" or TARGET_OS == "minux"
 import std._linux_fs as linuxfs
 
 /// Provide the fs err operation for this standard-library module.

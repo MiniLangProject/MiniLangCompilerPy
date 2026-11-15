@@ -12,7 +12,7 @@ struct ServerOptions
 Represents server options.
 
 
-Source: `std/tls.ml:38`
+Source: `std/tls.ml:42`
 
 ## Members
 
@@ -26,7 +26,7 @@ certificateReference
 Certificate reference associated with `ServerOptions`.
 
 
-Source: `std/tls.ml:40`
+Source: `std/tls.ml:44`
 
 <a id="field-field-std-tls-serveroptions-minimumversion-minimumversion-std-tls-ml-166282282"></a>
 ### minimumVersion
@@ -38,7 +38,7 @@ minimumVersion
 Minimum version associated with `ServerOptions`.
 
 
-Source: `std/tls.ml:44`
+Source: `std/tls.ml:48`
 
 <a id="field-field-std-tls-serveroptions-privatekeyreference-privatekeyreference-std-tls-ml-2004327986"></a>
 ### privateKeyReference
@@ -50,7 +50,7 @@ privateKeyReference
 Private key reference associated with `ServerOptions`.
 
 
-Source: `std/tls.ml:42`
+Source: `std/tls.ml:46`
 
 <a id="field-field-std-tls-serveroptions-requireclientcertificate-requireclientcertificate-std-tls-ml-612987952"></a>
 ### requireClientCertificate
@@ -62,4 +62,4 @@ requireClientCertificate
 Require client certificate associated with `ServerOptions`.
 
 
-Source: `std/tls.ml:46`
+Source: `std/tls.ml:50`

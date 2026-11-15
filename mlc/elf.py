@@ -1,4 +1,4 @@
-"""Deterministic fixed-address ELF64 image writer for Linux x86-64.
+"""Deterministic fixed-address ELF64 writer for Linux and MinUX x86-64.
 
 Images without native imports stay completely static.  When MiniLang source
 declares Linux ``extern`` functions, the writer adds the smallest useful
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
+from .targets import elf_image_base, elf_interpreter
 from typing import Iterable, Sequence
 
 
@@ -29,14 +30,14 @@ class ELFLayout:
     bss_off: int
 
 
-def plan_elf64(text_size: int, rdata_size: int, data_size: int, dynamic_size: int = 0) -> ELFLayout:
+def plan_elf64(text_size: int, rdata_size: int, data_size: int, dynamic_size: int = 0, *, target: str = 'linux-x64') -> ELFLayout:
     """Return the stable page-aligned layout used by :func:`build_elf64`."""
     text_off = 0x1000
     rdata_off = _align(text_off + int(text_size), 0x1000)
     data_off = _align(rdata_off + int(rdata_size), 0x1000)
     dynamic_off = _align(data_off + int(data_size), 8)
     bss_off = _align(dynamic_off + int(dynamic_size), 16)
-    return ELFLayout(0x400000, text_off, rdata_off, data_off, dynamic_off, bss_off)
+    return ELFLayout(elf_image_base(target), text_off, rdata_off, data_off, dynamic_off, bss_off)
 
 
 @dataclass(frozen=True)
@@ -79,9 +80,9 @@ def _normalize_imports(imports: Iterable[DynamicImport | Sequence[object]]) -> l
 
 
 def _dynamic_blob(imports: list[DynamicImport], *, image_base: int, data_off: int,
-                  blob_off: int) -> _DynamicBlob:
+                  blob_off: int, target: str = 'linux-x64') -> _DynamicBlob:
     """Build dynamic strings, symbols, relocations and the ``DT_*`` table."""
-    interp = b'/lib64/ld-linux-x86-64.so.2\x00'
+    interp = elf_interpreter(target)
     blob = bytearray(interp)
 
     def align_blob(alignment: int) -> None:
@@ -153,22 +154,22 @@ def _dynamic_blob(imports: list[DynamicImport], *, image_base: int, data_off: in
     return _DynamicBlob(bytes(blob), 0, len(interp), table_off, len(entries) * 16)
 
 
-def dynamic_size(imports: Iterable[DynamicImport | Sequence[object]]) -> int:
+def dynamic_size(imports: Iterable[DynamicImport | Sequence[object]], *, target: str = 'linux-x64') -> int:
     """Return the loader-metadata size needed by an import set."""
     normalized = _normalize_imports(imports)
     if not normalized:
         return 0
-    return len(_dynamic_blob(normalized, image_base=0, data_off=0, blob_off=0).data)
+    return len(_dynamic_blob(normalized, image_base=0, data_off=0, blob_off=0, target=target).data)
 
 
 def build_elf64(text: bytes, rdata: bytes, data: bytes, bss_size: int, *, entry_offset: int = 0,
-                imports: Iterable[DynamicImport | Sequence[object]] = ()) -> bytes:
+                imports: Iterable[DynamicImport | Sequence[object]] = (), target: str = 'linux-x64') -> bytes:
     """Build a static or minimally dynamic ET_EXEC image."""
     normalized_imports = _normalize_imports(imports)
-    dyn_size = dynamic_size(normalized_imports)
-    layout = plan_elf64(len(text), len(rdata), len(data), dyn_size)
+    dyn_size = dynamic_size(normalized_imports, target=target)
+    layout = plan_elf64(len(text), len(rdata), len(data), dyn_size, target=target)
     dynamic_info = (_dynamic_blob(normalized_imports, image_base=layout.base, data_off=layout.data_off,
-                                  blob_off=layout.dynamic_off) if normalized_imports else None)
+                                  blob_off=layout.dynamic_off, target=target) if normalized_imports else None)
     dynamic = dynamic_info.data if dynamic_info is not None else b''
     phnum = 6 if normalized_imports else 4
     header_size = 64 + phnum * 56

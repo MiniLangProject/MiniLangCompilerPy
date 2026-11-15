@@ -20,7 +20,7 @@ function backend()
 Return the native backend name.
 
 
-Source: `std/video.ml:489`
+Source: `std/video.ml:581`
 
 - [std.video.Event](Type-std-video-event-1402863457.md) — struct
 - [std.video.EventKind](Type-std-video-eventkind-276077919.md) — enum
@@ -34,7 +34,7 @@ function isAvailable()
 Report whether the installed bridge ABI matches this standard library.
 
 
-Source: `std/video.ml:498`
+Source: `std/video.ml:590`
 
 <a id="constant-constant-std-video-max-video-milliseconds-const-max-video-milliseconds-9223372036854-std-video-ml-2017745157"></a>
 ### MAX_VIDEO_MILLISECONDS

@@ -21,6 +21,7 @@ File-std-cpu-ml-1561418518.md
 File-std-crypto-aes-gcm-ml-264581731.md
 File-std-crypto-cng-ml-1099901917.md
 File-std-crypto-ecdsa-p256-ml-1815373426.md
+File-std-crypto-minux-ml-1620157096.md
 File-std-crypto-ml-1263151193.md
 File-std-crypto-openssl-ml-882852629.md
 File-std-ds-concurrent-hashmap-ml-1798836270.md
@@ -49,6 +50,7 @@ File-std-string-ml-1276545685.md
 File-std-test-ml-828131286.md
 File-std-threading-ml-508437988.md
 File-std-time-ml-975894601.md
+File-std-tls-minux-ml-1800294030.md
 File-std-tls-ml-2076630303.md
 File-std-tls-openssl-ml-961424543.md
 File-std-tls-schannel-ml-805501109.md
@@ -79,6 +81,7 @@ Package-std-crypto-59860101.md
 Package-std-crypto-aes-gcm-1236376730.md
 Package-std-crypto-cng-1689638184.md
 Package-std-crypto-ecdsa-p256-1946688473.md
+Package-std-crypto-minux-1492070059.md
 Package-std-crypto-openssl-283241284.md
 Package-std-ds-concurrent-hashmap-1876233881.md
 Package-std-ds-concurrent-list-265784845.md
@@ -107,6 +110,7 @@ Package-std-test-298069872.md
 Package-std-threading-978326764.md
 Package-std-time-1528865365.md
 Package-std-tls-1723050133.md
+Package-std-tls-minux-598387195.md
 Package-std-tls-openssl-642560948.md
 Package-std-tls-schannel-1489719394.md
 Package-std-uuid-358467167.md

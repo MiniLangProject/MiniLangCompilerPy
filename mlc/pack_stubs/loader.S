@@ -20,16 +20,28 @@ stub_start:
     test eax, eax
     jz failed
 #else
+#ifdef MINUX_STUB
+    push rdi                   // ld-minux passes argc/argv/envp in registers.
+    push rsi
+#endif
     push rdx                   // Preserve rtld's finalizer register.
     lea rbx, [rip + params]
     call verify_payload
     test eax, eax
     jz failed
+#ifdef MINUX_STUB
+    mov eax, 476              // MinUX protectMemory(address,length,protection)
+#else
     mov eax, 10               // mprotect
+#endif
     mov rdi, [rbx + 8]
     mov rsi, [rbx + 56]
     mov edx, 3                // PROT_READ | PROT_WRITE
+#ifdef MINUX_STUB
+    int 0x80
+#else
     syscall
+#endif
     test rax, rax
     js failed
 #endif
@@ -52,14 +64,26 @@ stub_start:
     jz failed
     add rsp, 56
 #else
+#ifdef MINUX_STUB
+    mov eax, 476
+#else
     mov eax, 10
+#endif
     mov rdi, [rbx + 8]
     mov rsi, [rbx + 56]
     mov edx, 5                // PROT_READ | PROT_EXEC
+#ifdef MINUX_STUB
+    int 0x80
+#else
     syscall
+#endif
     test rax, rax
     js failed
     pop rdx
+#ifdef MINUX_STUB
+    pop rsi
+    pop rdi
+#endif
 #endif
     jmp QWORD PTR [rbx + 32]
 failed:
@@ -72,7 +96,11 @@ failed:
 #else
     mov eax, 60
     mov edi, 127
+#ifdef MINUX_STUB
+    int 0x80
+#else
     syscall
+#endif
     ud2
 #endif
 

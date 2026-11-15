@@ -28,6 +28,16 @@ extern function _nativeExp(value as double) from "msvcrt.dll" symbol "exp" retur
 /// Native natural-logarithm entry point used by this package.
 /// @internal
 extern function _nativeLn(value as double) from "msvcrt.dll" symbol "log" returns double
+#elif TARGET_OS == "minux"
+/// Native square-root entry point provided by MinUX libc.
+/// @internal
+extern function _nativeSqrt(value as double) from "libc.so.1" symbol "sqrt" returns double
+/// Native exponential entry point provided by MinUX libc.
+/// @internal
+extern function _nativeExp(value as double) from "libc.so.1" symbol "exp" returns double
+/// Native natural-logarithm entry point provided by MinUX libc.
+/// @internal
+extern function _nativeLn(value as double) from "libc.so.1" symbol "log" returns double
 #else
 /// Native square-root entry point used by this package.
 /// @internal

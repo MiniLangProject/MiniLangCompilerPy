@@ -13,10 +13,14 @@ package std.platform
 
 /// Provide the operating system operation for this standard-library module.
 function operatingSystem()
+#if TARGET_OS == "minux"
+  return "minux"
+#else
 #if TARGET_OS == "windows"
   return "windows"
 #else
   return "linux"
+#endif
 #endif
 end function
 
@@ -76,5 +80,14 @@ function dynamicLibraryExtension()
   return ".dll"
 #else
   return ".so"
+#endif
+end function
+
+/// Whether the selected output platform is MinUX.
+function isMinux()
+#if TARGET_OS == "minux"
+  return true
+#else
+  return false
 #endif
 end function

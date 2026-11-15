@@ -462,6 +462,10 @@ function test_fs_io()
   suffix = try(uuid.v4())
   if typeof(suffix) == "error" then suffix = "fallback-" + t.ticks() end if
   prefix = "ml_stdlib_io_" + suffix
+#if TARGET_OS == "minux"
+  // Keep every generated leaf below the native NAME_MAX of 63 bytes.
+  prefix = "mlio_" + suffix
+#endif
   p_txt = prefix + ".txt"
   p_utf8 = prefix + "_utf8.txt"
   p_bin = prefix + ".bin"
@@ -792,6 +796,17 @@ function test_net_tcp_udp()
   chk(a.assertTrue(typeof(try(net.tcpListen(65536, 1))) == "error", "net: tcpListen rejects oversized port"))
   chk(a.assertTrue(typeof(try(net.tcpListenAddress("127.0.0.1", -1, 1))) == "error", "net: tcpListenAddress rejects negative port"))
 
+#if TARGET_OS == "minux"
+  // The native stack has no loopback interface. TCP/UDP payloads and TLS are
+  // exercised against independent host peers by check_minux_network.py.
+  udp = net.udpOpen()
+  chk(a.assertTrue(typeof(udp) == "int", "net: native UDP socket"))
+  chk(a.assertTrue(typeof(try(net.setReuseAddress(udp, true))) == "error", "net: MinUX explicitly rejects unsupported UDP reuse"))
+  chk(a.assertEq(net.close(udp), true, "net: native UDP close"))
+  chk(a.assertEq(net.cleanup(), true, "net: native cleanup"))
+  print "[SKIP] localhost TCP/UDP round trips: MinUX has no loopback interface; use check_minux_network.py for host-peer coverage"
+#else
+
   // TCP roundtrip on localhost
   lp = try(_tcpListenAny(8))
   chk(_assertNotError(lp, "net: tcpListenAny"))
@@ -961,6 +976,7 @@ function test_net_tcp_udp()
   net.close(u1)
   net.close(u2)
   net.cleanup()
+#endif
 end function
 
 function test_gc_periodic()

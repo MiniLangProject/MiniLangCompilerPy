@@ -29,7 +29,7 @@ Compare two bytes values without content-dependent early exits.
 | `b` | `dynamic` | — | Second input value. |
 
 
-Source: `std/crypto.ml:148`
+Source: `std/crypto.ml:152`
 
 <a id="constant-constant-std-crypto-crypto-err-const-crypto-err-240-std-crypto-ml-407979147"></a>
 ### CRYPTO_ERR
@@ -41,7 +41,7 @@ const CRYPTO_ERR = 240
 Track the crypto err value used by this standard-library module.
 
 
-Source: `std/crypto.ml:27`
+Source: `std/crypto.ml:31`
 
 <a id="function-function-std-crypto-hkdfsha256-function-hkdfsha256-inputkeymaterial-salt-info-length-std-crypto-ml-1740727018"></a>
 ### hkdfSha256
@@ -60,7 +60,7 @@ RFC-5869 HKDF-SHA-256 (extract and expand).
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/crypto.ml:94`
+Source: `std/crypto.ml:98`
 
 <a id="function-function-std-crypto-hkdfsha384-function-hkdfsha384-inputkeymaterial-salt-info-length-std-crypto-ml-1751700406"></a>
 ### hkdfSha384
@@ -79,7 +79,7 @@ RFC-5869 HKDF-SHA-384 (extract and expand).
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/crypto.ml:103`
+Source: `std/crypto.ml:107`
 
 <a id="function-function-std-crypto-hmacsha256-function-hmacsha256-key-input-std-crypto-ml-689688099"></a>
 ### hmacSha256
@@ -96,7 +96,7 @@ Compute HMAC-SHA-256 through the platform crypto backend.
 | `input` | `dynamic` | — | Value supplied for `input`. |
 
 
-Source: `std/crypto.ml:56`
+Source: `std/crypto.ml:60`
 
 <a id="function-function-std-crypto-hmacsha384-function-hmacsha384-key-input-std-crypto-ml-1206696471"></a>
 ### hmacSha384
@@ -113,7 +113,7 @@ Compute HMAC-SHA-384 through the platform crypto backend.
 | `input` | `dynamic` | — | Value supplied for `input`. |
 
 
-Source: `std/crypto.ml:66`
+Source: `std/crypto.ml:70`
 
 <a id="function-function-std-crypto-pbkdf2sha256-function-pbkdf2sha256-password-salt-iterations-length-std-crypto-ml-1283186663"></a>
 ### pbkdf2Sha256
@@ -132,7 +132,7 @@ Derive key material using PBKDF2-HMAC-SHA-256.
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/crypto.ml:123`
+Source: `std/crypto.ml:127`
 
 <a id="function-function-std-crypto-pbkdf2sha384-function-pbkdf2sha384-password-salt-iterations-length-std-crypto-ml-2002863367"></a>
 ### pbkdf2Sha384
@@ -151,7 +151,7 @@ Derive key material using PBKDF2-HMAC-SHA-384.
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/crypto.ml:132`
+Source: `std/crypto.ml:136`
 
 <a id="function-function-std-crypto-securerandom-function-securerandom-length-std-crypto-ml-287450256"></a>
 ### secureRandom
@@ -167,7 +167,7 @@ Obtain cryptographically secure random bytes from the platform provider.
 | `length` | `dynamic` | — | Number of elements or bytes to process. |
 
 
-Source: `std/crypto.ml:138`
+Source: `std/crypto.ml:142`
 
 <a id="function-function-std-crypto-securezero-function-securezero-buffer-std-crypto-ml-1706379390"></a>
 ### secureZero
@@ -183,7 +183,7 @@ Best-effort in-place erasure. MiniLang's native fill helper performs the observa
 | `buffer` | `dynamic` | — | Buffer to process. |
 
 
-Source: `std/crypto.ml:155`
+Source: `std/crypto.ml:159`
 
 <a id="function-function-std-crypto-sha256-function-sha256-input-std-crypto-ml-2117608982"></a>
 ### sha256
@@ -199,7 +199,7 @@ Compute SHA-256 through the platform crypto backend.
 | `input` | `dynamic` | — | Value supplied for `input`. |
 
 
-Source: `std/crypto.ml:37`
+Source: `std/crypto.ml:41`
 
 <a id="function-function-std-crypto-sha384-function-sha384-input-std-crypto-ml-534054486"></a>
 ### sha384
@@ -215,7 +215,7 @@ Compute SHA-384 through the platform crypto backend.
 | `input` | `dynamic` | — | Value supplied for `input`. |
 
 
-Source: `std/crypto.ml:46`
+Source: `std/crypto.ml:50`
 
 <a id="function-function-std-crypto-x25519-function-x25519-privatekey-peerpublickey-std-crypto-ml-1569573420"></a>
 ### x25519
@@ -232,7 +232,7 @@ Derive an X25519 shared secret. CNG errors and all-zero weak results are rejecte
 | `peerPublicKey` | `dynamic` | — | Value supplied for `peerPublicKey`. |
 
 
-Source: `std/crypto.ml:173`
+Source: `std/crypto.ml:177`
 
 <a id="function-function-std-crypto-x25519publickey-function-x25519publickey-privatekey-std-crypto-ml-664480438"></a>
 ### x25519PublicKey
@@ -248,4 +248,4 @@ Derive the RFC-7748 public key for a 32-byte X25519 private scalar.
 | `privateKey` | `dynamic` | — | Value supplied for `privateKey`. |
 
 
-Source: `std/crypto.ml:163`
+Source: `std/crypto.ml:167`

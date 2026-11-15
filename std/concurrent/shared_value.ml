@@ -40,6 +40,19 @@ extern function MoveFromBytes(destination as ptr, source as bytes, count as int)
 /// Provide the move pointers operation for this standard-library module.
 /// @internal
 extern function MovePointers(destination as ptr, source as ptr, count as int) from "kernel32.dll" symbol "RtlMoveMemory" returns ptr
+#elif TARGET_OS == "minux"
+/// Allocate an unmanaged snapshot block using MinUX libc.
+/// @internal
+extern function NativeAllocate(size as u64) from "libc.so.1" symbol "malloc" returns ptr
+/// Release an unmanaged snapshot block using MinUX libc.
+/// @internal
+extern function NativeFree(address as ptr) from "libc.so.1" symbol "free" returns void
+/// Copy managed bytes into an unmanaged snapshot block.
+/// @internal
+extern function MoveFromBytes(destination as ptr, source as bytes, count as u64) from "libc.so.1" symbol "memmove" returns ptr
+/// Copy between unmanaged snapshot blocks, allowing overlap.
+/// @internal
+extern function MovePointers(destination as ptr, source as ptr, count as u64) from "libc.so.1" symbol "memmove" returns ptr
 #else
 /// Provide the native allocate operation for this standard-library module.
 /// @internal

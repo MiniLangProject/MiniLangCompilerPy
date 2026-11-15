@@ -186,16 +186,32 @@ namespace linux
 
   /// Provide clock gettime behavior for this standard-library module.
   /// @internal
+  #if TARGET_OS == "minux"
+  extern function clock_gettime(clockId as int, output as bytes) from "libc.so.1" returns i32
+  #else
   extern function clock_gettime(clockId as int, output as bytes) from "libc.so.6" returns i32
+  #endif
   /// Provide nanosleep behavior for this standard-library module.
   /// @internal
+  #if TARGET_OS == "minux"
+  extern function nanosleep(request as bytes, remaining as ptr) from "libc.so.1" returns i32
+  #else
   extern function nanosleep(request as bytes, remaining as ptr) from "libc.so.6" returns i32
+  #endif
   /// Provide localtime r behavior for this standard-library module.
   /// @internal
+  #if TARGET_OS == "minux"
+  extern function localtime_r(timeValue as bytes, output as bytes) from "libc.so.1" returns ptr
+  #else
   extern function localtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
+  #endif
   /// Provide gmtime r behavior for this standard-library module.
   /// @internal
+  #if TARGET_OS == "minux"
+  extern function gmtime_r(timeValue as bytes, output as bytes) from "libc.so.1" returns ptr
+  #else
   extern function gmtime_r(timeValue as bytes, output as bytes) from "libc.so.6" returns ptr
+  #endif
 
   /// Provide i32le behavior for this standard-library module.
   /// @internal

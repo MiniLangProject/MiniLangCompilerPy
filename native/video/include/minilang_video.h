@@ -49,8 +49,8 @@ enum {
 
 MLV_EXPORT uint32_t mlv_abi_version(void);
 MLV_EXPORT int mlv_backend(unsigned char *message, int capacity);
-MLV_EXPORT void *mlv_open(const char *source, uintptr_t window_handle, int allow_network);
-MLV_EXPORT int mlv_attach(void *handle, uintptr_t window_handle);
+MLV_EXPORT void *mlv_open(const char *source, uint64_t window_handle, int allow_network);
+MLV_EXPORT int mlv_attach(void *handle, uint64_t window_handle);
 MLV_EXPORT int mlv_play(void *handle);
 MLV_EXPORT int mlv_pause(void *handle);
 MLV_EXPORT int mlv_stop(void *handle);

@@ -2,17 +2,17 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-MiniLang compiles `.ml` programs directly to native **Windows x64 (PE32+)** or
-**Linux x64 (ELF64)** executables. This repository contains the Python bootstrap
+MiniLang compiles `.ml` programs directly to native **Windows x64 (PE32+)**,
+**Linux x64 (ELF64)** and **MinUX x64 (ELF64)** executables. This repository contains the Python bootstrap
 and reference compiler. The [self-hosted compiler](https://github.com/MiniLangProject/MiniLangCompilerML)
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.8.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.9.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.8 adds resource-owning methods and optional TCP/UDP objects to
-the shared standard library. See the [API and measurement report](docs/reports/STDLIB_OOP_2026-11-14.md).
-The dependency-free executable packer introduced in 1.3.7 remains available.
+Version 1.3.9 adds native MinUX output, packing and compiler selfhosting,
+including MinUX standard-library, TLS/crypto, file, terminal and media adapters.
+See the [MinUX guide](docs/MINUX.md) for setup, verified capabilities and limits.
 
 ## Quick start
 
@@ -125,7 +125,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.8 verification matrix](docs/reports/release-1.3.8-version-matrix.json).
+[1.3.9 verification matrix](docs/reports/release-1.3.9-version-matrix.json).
 
 ## Documentation and development
 
@@ -157,3 +157,12 @@ Both compiler implementations and their documentation were developed with the
 assistance of generative AI. Licensed under [Apache 2.0](LICENSE); see
 [third-party notices](THIRD_PARTY_NOTICES.md) for bundled or generated-code
 components that require attribution.
+
+## MinUX target (source builds)
+
+Use `--target minux-x64` to cross-compile native MinUX programs. The target
+uses MinUX ELF loading, libc, VM services and pthreads; it includes file, time,
+process, synchronization, networking/TLS/crypto, native GUI/media adapters,
+built-in packing and compiler self-rebuild. See [MinUX usage and verification](docs/MINUX.md)
+for prerequisites, supported modules, repeatable guest tests and current limits.
+Available in release 1.3.9; older compiler packages must be rebuilt.

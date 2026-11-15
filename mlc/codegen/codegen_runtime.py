@@ -2799,8 +2799,19 @@ class CodegenRuntime:
         """Helper: strlen for NUL-terminated ascii/utf8. RCX=ptr, returns EDX=len."""
         a = self.asm
         a.mark('fn_strlen')
-        a.mov_r32_imm32('edx', 0x7FFFFFFF)
-        a.call('fn_scan_nul_bytes')
+        # Native C strings promise bytes only through their NUL. A vector load
+        # may cross into a guard page even if the string is properly terminated.
+        loop = f'strlen_loop_{self.new_label_id()}'
+        done = f'{loop}_done'
+        a.xor_r32_r32('edx', 'edx')
+        a.mark(loop)
+        a.lea_r64_mem_bis('r11', 'rcx', 'rdx', 1, 0)
+        a.movzx_r32_membase_disp('eax', 'r11', 0)
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', done)
+        a.inc_r32('edx')
+        a.jmp(loop)
+        a.mark(done)
         a.ret()
 
     def emit_string_eq_function(self) -> None:
@@ -3217,7 +3228,7 @@ class CodegenRuntime:
         - Frees argvw buffer via LocalFree and clears ml_argc/ml_argvw.
         - Returns: RAX = tagged pointer to OBJ_ARRAY.
         """
-        if bool(getattr(self, 'is_linux_target', False)):
+        if bool(getattr(self, 'is_elf_target', False)):
             self._emit_build_args_linux()
             return
         self.ensure_gc_data()

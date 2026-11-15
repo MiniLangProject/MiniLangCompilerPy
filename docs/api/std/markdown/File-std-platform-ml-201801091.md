@@ -20,7 +20,7 @@ function architecture()
 Provide the architecture operation for this standard-library module.
 
 
-Source: `std/platform.ml:24`
+Source: `std/platform.ml:28`
 
 <a id="function-function-std-platform-dynamiclibraryextension-function-dynamiclibraryextension-std-platform-ml-724141498"></a>
 ### dynamicLibraryExtension
@@ -32,7 +32,7 @@ function dynamicLibraryExtension()
 Provide the dynamic library extension operation for this standard-library module.
 
 
-Source: `std/platform.ml:74`
+Source: `std/platform.ml:78`
 
 <a id="function-function-std-platform-executableextension-function-executableextension-std-platform-ml-304518794"></a>
 ### executableExtension
@@ -44,7 +44,7 @@ function executableExtension()
 Provide the executable extension operation for this standard-library module.
 
 
-Source: `std/platform.ml:65`
+Source: `std/platform.ml:69`
 
 <a id="function-function-std-platform-islinux-function-islinux-std-platform-ml-689142728"></a>
 ### isLinux
@@ -56,7 +56,19 @@ function isLinux()
 Reports whether is linux.
 
 
-Source: `std/platform.ml:38`
+Source: `std/platform.ml:42`
+
+<a id="function-function-std-platform-isminux-function-isminux-std-platform-ml-2063338622"></a>
+### isMinux
+
+```ml
+function isMinux()
+```
+
+Whether the selected output platform is MinUX.
+
+
+Source: `std/platform.ml:87`
 
 <a id="function-function-std-platform-iswindows-function-iswindows-std-platform-ml-1628994826"></a>
 ### isWindows
@@ -68,7 +80,7 @@ function isWindows()
 Reports whether is windows.
 
 
-Source: `std/platform.ml:29`
+Source: `std/platform.ml:33`
 
 <a id="function-function-std-platform-lineending-function-lineending-std-platform-ml-807574324"></a>
 ### lineEnding
@@ -80,7 +92,7 @@ function lineEnding()
 Provide the line ending operation for this standard-library module.
 
 
-Source: `std/platform.ml:56`
+Source: `std/platform.ml:60`
 
 <a id="function-function-std-platform-operatingsystem-function-operatingsystem-std-platform-ml-1171546320"></a>
 ### operatingSystem
@@ -104,4 +116,4 @@ function pathSeparator()
 Provide the path separator operation for this standard-library module.
 
 
-Source: `std/platform.ml:47`
+Source: `std/platform.ml:51`

@@ -12,7 +12,7 @@ struct Player
 A native player handle with deterministic explicit ownership.
 
 
-Source: `std/video.ml:269`
+Source: `std/video.ml:361`
 
 ## Members
 
@@ -30,7 +30,7 @@ Attach video output to a native child-window handle before playback.
 | `windowHandle` | `dynamic` | — | Non-zero platform handle owned by the GUI. |
 
 
-Source: `std/video.ml:326`
+Source: `std/video.ml:418`
 
 <a id="method-method-std-video-player-backend-function-backend-std-video-ml-1693740782"></a>
 ### backend
@@ -42,7 +42,7 @@ function backend()
 Return the backend selected for this target.
 
 
-Source: `std/video.ml:319`
+Source: `std/video.ml:411`
 
 <a id="method-method-std-video-player-close-function-close-std-video-ml-1703187686"></a>
 ### close
@@ -54,7 +54,7 @@ function close()
 Release playback threads, decoder state and native handles. Multiple close calls are harmless.
 
 
-Source: `std/video.ml:468`
+Source: `std/video.ml:560`
 
 <a id="method-method-std-video-player-duration-function-duration-std-video-ml-2040872134"></a>
 ### duration
@@ -66,7 +66,7 @@ function duration()
 Return duration in milliseconds, or -1 while unknown.
 
 
-Source: `std/video.ml:372`
+Source: `std/video.ml:464`
 
 <a id="method-method-std-video-player-hasaudio-function-hasaudio-std-video-ml-1292757598"></a>
 ### hasAudio
@@ -78,7 +78,7 @@ function hasAudio()
 Report whether the loaded source has an audio stream.
 
 
-Source: `std/video.ml:432`
+Source: `std/video.ml:524`
 
 <a id="method-method-std-video-player-hasvideo-function-hasvideo-std-video-ml-583470366"></a>
 ### hasVideo
@@ -90,7 +90,7 @@ function hasVideo()
 Report whether the loaded source has a video stream.
 
 
-Source: `std/video.ml:438`
+Source: `std/video.ml:530`
 
 <a id="static_method-static-method-std-video-player-open-static-function-open-source-options-void-std-video-ml-1315792215"></a>
 ### open
@@ -107,7 +107,7 @@ Open a local path or URI without beginning playback. Attach a native child-windo
 | `options` | `dynamic` | `void` | PlayerOptions, or void for defaults. |
 
 
-Source: `std/video.ml:286`
+Source: `std/video.ml:378`
 
 <a id="field-field-std-video-player-options-options-std-video-ml-1898541966"></a>
 ### options
@@ -119,7 +119,7 @@ options
 Options retained for introspection.
 
 
-Source: `std/video.ml:274`
+Source: `std/video.ml:366`
 
 <a id="method-method-std-video-player-pause-function-pause-std-video-ml-893559170"></a>
 ### pause
@@ -131,7 +131,7 @@ function pause()
 Pause playback while retaining the current position.
 
 
-Source: `std/video.ml:341`
+Source: `std/video.ml:433`
 
 <a id="method-method-std-video-player-play-function-play-std-video-ml-899937614"></a>
 ### play
@@ -143,7 +143,7 @@ function play()
 Start or resume playback.
 
 
-Source: `std/video.ml:334`
+Source: `std/video.ml:426`
 
 <a id="method-method-std-video-player-pollevent-function-pollevent-std-video-ml-100661544"></a>
 ### pollEvent
@@ -155,7 +155,7 @@ function pollEvent()
 Return the next queued event, or void when no event is available.
 
 
-Source: `std/video.ml:456`
+Source: `std/video.ml:548`
 
 <a id="method-method-std-video-player-position-function-position-std-video-ml-1200193178"></a>
 ### position
@@ -167,7 +167,7 @@ function position()
 Return the current playback position in milliseconds.
 
 
-Source: `std/video.ml:366`
+Source: `std/video.ml:458`
 
 <a id="method-method-std-video-player-seek-function-seek-milliseconds-std-video-ml-2146787904"></a>
 ### seek
@@ -183,7 +183,7 @@ Seek to a non-negative millisecond position.
 | `milliseconds` | `dynamic` | — | Target position from the beginning of the stream. |
 
 
-Source: `std/video.ml:356`
+Source: `std/video.ml:448`
 
 <a id="method-method-std-video-player-setloop-function-setloop-enabled-std-video-ml-184318821"></a>
 ### setLoop
@@ -199,7 +199,7 @@ Enable or disable automatic restart after end of stream.
 | `enabled` | `dynamic` | — | Whether end-of-stream restarts playback. |
 
 
-Source: `std/video.ml:421`
+Source: `std/video.ml:513`
 
 <a id="method-method-std-video-player-setmuted-function-setmuted-muted-std-video-ml-588095491"></a>
 ### setMuted
@@ -215,7 +215,7 @@ Mute or unmute audio.
 | `muted` | `dynamic` | — | Whether audio output is muted. |
 
 
-Source: `std/video.ml:397`
+Source: `std/video.ml:489`
 
 <a id="method-method-std-video-player-setplaybackrate-function-setplaybackrate-rate-std-video-ml-2075537326"></a>
 ### setPlaybackRate
@@ -231,7 +231,7 @@ Set playback speed from 0.25 through 4.0.
 | `rate` | `dynamic` | — | Requested playback-rate multiplier. |
 
 
-Source: `std/video.ml:409`
+Source: `std/video.ml:501`
 
 <a id="method-method-std-video-player-setvolume-function-setvolume-volume-std-video-ml-531169772"></a>
 ### setVolume
@@ -247,7 +247,7 @@ Set linear volume from 0.0 through 1.0.
 | `volume` | `dynamic` | — | Linear volume in the inclusive range 0.0 through 1.0. |
 
 
-Source: `std/video.ml:385`
+Source: `std/video.ml:477`
 
 <a id="method-method-std-video-player-state-function-state-std-video-ml-1095459556"></a>
 ### state
@@ -259,7 +259,7 @@ function state()
 Return the current lifecycle state.
 
 
-Source: `std/video.ml:378`
+Source: `std/video.ml:470`
 
 <a id="method-method-std-video-player-stop-function-stop-std-video-ml-2144431098"></a>
 ### stop
@@ -271,7 +271,7 @@ function stop()
 Stop playback and seek to the beginning.
 
 
-Source: `std/video.ml:348`
+Source: `std/video.ml:440`
 
 <a id="method-method-std-video-player-videoheight-function-videoheight-std-video-ml-1033994046"></a>
 ### videoHeight
@@ -283,7 +283,7 @@ function videoHeight()
 Return the decoded video height, or zero before metadata is available.
 
 
-Source: `std/video.ml:450`
+Source: `std/video.ml:542`
 
 <a id="method-method-std-video-player-videowidth-function-videowidth-std-video-ml-2002722782"></a>
 ### videoWidth
@@ -295,4 +295,4 @@ function videoWidth()
 Return the decoded video width, or zero before metadata is available.
 
 
-Source: `std/video.ml:444`
+Source: `std/video.ml:536`
