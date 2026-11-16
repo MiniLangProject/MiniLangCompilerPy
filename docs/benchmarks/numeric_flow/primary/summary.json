@@ -1,0 +1,362 @@
+[
+  {
+    "case": "byte_copy",
+    "n": 8388608,
+    "reps": 24,
+    "rounds": 11,
+    "median_ms": {
+      "before": 16.024009791666668,
+      "after": 15.813798166666666
+    },
+    "relative_iqr": {
+      "before": 0.08773115426646151,
+      "after": 0.10613236980207233
+    },
+    "median_speedup": 1.013292924494452,
+    "paired_median_speedup": 1.0225510413067143,
+    "pair_min": 0.9231729755517473,
+    "pair_max": 1.1548147424851203,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 63084,
+      "after": 63084
+    }
+  },
+  {
+    "case": "byte_search",
+    "n": 8388608,
+    "reps": 56,
+    "rounds": 11,
+    "median_ms": {
+      "before": 3.992761089285714,
+      "after": 4.149504125
+    },
+    "relative_iqr": {
+      "before": 0.09356991195239892,
+      "after": 0.22795219881501252
+    },
+    "median_speedup": 0.962226080275487,
+    "paired_median_speedup": 0.8935554579982459,
+    "pair_min": 0.7795550843238579,
+    "pair_max": 1.2028284524654886,
+    "faster_pairs": 3,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66539,
+      "after": 66539
+    }
+  },
+  {
+    "case": "array_scan",
+    "n": 194470,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 23.0341250625,
+      "after": 23.210219
+    },
+    "relative_iqr": {
+      "before": 0.07064070408947402,
+      "after": 0.08594656625170145
+    },
+    "median_speedup": 0.992413085912718,
+    "paired_median_speedup": 0.9971452034994532,
+    "pair_min": 0.8927342099674187,
+    "pair_max": 1.0700646413741424,
+    "faster_pairs": 5,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66826,
+      "after": 66826
+    }
+  },
+  {
+    "case": "array_scatter",
+    "n": 225245,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 24.8295079375,
+      "after": 24.42511
+    },
+    "relative_iqr": {
+      "before": 0.11183216989194915,
+      "after": 0.1420938687686565
+    },
+    "median_speedup": 1.016556647544269,
+    "paired_median_speedup": 0.9681478495646618,
+    "pair_min": 0.7901143623554163,
+    "pair_max": 1.0569570899256586,
+    "faster_pairs": 4,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66602,
+      "after": 66602
+    }
+  },
+  {
+    "case": "sieve",
+    "n": 1977051,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 16.499595625,
+      "after": 17.024330125
+    },
+    "relative_iqr": {
+      "before": 0.053702668394941346,
+      "after": 0.05492564865309201
+    },
+    "median_speedup": 0.9691773775445395,
+    "paired_median_speedup": 0.9794644529651962,
+    "pair_min": 0.8755888651241653,
+    "pair_max": 1.0949970040031558,
+    "faster_pairs": 4,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 63050,
+      "after": 63050
+    }
+  },
+  {
+    "case": "heapsort",
+    "n": 82396,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 30.774774125,
+      "after": 30.7007091875
+    },
+    "relative_iqr": {
+      "before": 0.08748541870898296,
+      "after": 0.0473547489121826
+    },
+    "median_speedup": 1.0024124829510503,
+    "paired_median_speedup": 0.9975302571539227,
+    "pair_min": 0.9330187061580186,
+    "pair_max": 1.0720284037334527,
+    "faster_pairs": 4,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 79402,
+      "after": 79402
+    }
+  },
+  {
+    "case": "escaped_nodes",
+    "n": 262144,
+    "reps": 40,
+    "rounds": 11,
+    "median_ms": {
+      "before": 8.038252974999999,
+      "after": 8.212048
+    },
+    "relative_iqr": {
+      "before": 0.08044990957752231,
+      "after": 0.12238384079099399
+    },
+    "median_speedup": 0.9788365794988046,
+    "paired_median_speedup": 0.9914877374426764,
+    "pair_min": 0.8629767206922982,
+    "pair_max": 1.0855957375874472,
+    "faster_pairs": 2,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 67818,
+      "after": 67818
+    }
+  },
+  {
+    "case": "int_mix",
+    "n": 2097152,
+    "reps": 32,
+    "rounds": 11,
+    "median_ms": {
+      "before": 10.808711625,
+      "after": 11.034111
+    },
+    "relative_iqr": {
+      "before": 0.10908462170670595,
+      "after": 0.06874932255530146
+    },
+    "median_speedup": 0.9795724934251614,
+    "paired_median_speedup": 1.0021723248499756,
+    "pair_min": 0.837341624048616,
+    "pair_max": 1.026127565042404,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 59306,
+      "after": 59306
+    }
+  },
+  {
+    "case": "branch_mix",
+    "n": 1909761,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 20.4326465,
+      "after": 20.611594625
+    },
+    "relative_iqr": {
+      "before": 0.03755919785036167,
+      "after": 0.06321875011162559
+    },
+    "median_speedup": 0.9913180843959084,
+    "paired_median_speedup": 1.0062650586863104,
+    "pair_min": 0.929192997035355,
+    "pair_max": 1.055681046034836,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 59434,
+      "after": 59434
+    }
+  },
+  {
+    "case": "float_recurrence",
+    "n": 260986,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 31.7649695625,
+      "after": 26.5249856875
+    },
+    "relative_iqr": {
+      "before": 0.06675443001221355,
+      "after": 0.09047207285133055
+    },
+    "median_speedup": 1.197548980298578,
+    "paired_median_speedup": 1.1975375605628986,
+    "pair_min": 1.0904979461702502,
+    "pair_max": 1.3509406323407276,
+    "faster_pairs": 11,
+    "same_bytes": false,
+    "text_bytes": {
+      "before": 208803,
+      "after": 208291
+    }
+  },
+  {
+    "case": "mandelbrot",
+    "n": 126,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 22.31513075,
+      "after": 22.5988418125
+    },
+    "relative_iqr": {
+      "before": 0.03708056079841701,
+      "after": 0.10539035671653849
+    },
+    "median_speedup": 0.9874457697941373,
+    "paired_median_speedup": 0.9942511101325137,
+    "pair_min": 0.866211794455863,
+    "pair_max": 1.0810053721684025,
+    "faster_pairs": 5,
+    "same_bytes": false,
+    "text_bytes": {
+      "before": 70986,
+      "after": 70826
+    }
+  },
+  {
+    "case": "recursive_tree",
+    "n": 1265,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 26.6362268125,
+      "after": 27.2557925
+    },
+    "relative_iqr": {
+      "before": 0.07849207874738659,
+      "after": 0.07116667493707989
+    },
+    "median_speedup": 0.9772684765082505,
+    "paired_median_speedup": 0.9866030000307556,
+    "pair_min": 0.9099148059658008,
+    "pair_max": 1.0434065892946938,
+    "faster_pairs": 1,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 64650,
+      "after": 64650
+    }
+  },
+  {
+    "case": "ascii_parse",
+    "n": 262144,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 25.97263825,
+      "after": 25.4941876875
+    },
+    "relative_iqr": {
+      "before": 0.15219102982347202,
+      "after": 0.1096223542894163
+    },
+    "median_speedup": 1.0187670448011406,
+    "paired_median_speedup": 1.0561087698905332,
+    "pair_min": 0.9284952972659706,
+    "pair_max": 1.2198317031384334,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 65226,
+      "after": 65226
+    }
+  },
+  {
+    "case": "string_concat",
+    "n": 7262,
+    "reps": 24,
+    "rounds": 11,
+    "median_ms": {
+      "before": 16.300589708333334,
+      "after": 16.097010875
+    },
+    "relative_iqr": {
+      "before": 0.19086392050852008,
+      "after": 0.05519679545266307
+    },
+    "median_speedup": 1.012646996073632,
+    "paired_median_speedup": 1.0451240375936055,
+    "pair_min": 0.8722475713251225,
+    "pair_max": 1.1349542058927642,
+    "faster_pairs": 8,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 67274,
+      "after": 67274
+    }
+  },
+  {
+    "case": "string_builder",
+    "n": 114195,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 25.1270973125,
+      "after": 25.50852775
+    },
+    "relative_iqr": {
+      "before": 0.06965760074599942,
+      "after": 0.061810054874687936
+    },
+    "median_speedup": 0.98504694425181,
+    "paired_median_speedup": 0.9995966220536244,
+    "pair_min": 0.9108117020360923,
+    "pair_max": 1.032957825124997,
+    "faster_pairs": 5,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 105354,
+      "after": 105354
+    }
+  }
+]

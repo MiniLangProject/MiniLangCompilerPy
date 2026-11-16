@@ -325,6 +325,11 @@ class CodegenExpr:
                     return self._OPT_NO
                 if isinstance(rv, (int, float)):
                     r = -rv
+                    # Match the native result normalizer: its unordered
+                    # comparison takes the tagged-int path and wraps to zero.
+                    # Raw literals and const-binding values remain untouched.
+                    if isinstance(r, float) and r != r:
+                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -380,6 +385,8 @@ class CodegenExpr:
             if op == '+':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv + rv
+                    if isinstance(r, float) and r != r:
+                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -389,6 +396,8 @@ class CodegenExpr:
             if op == '-':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv - rv
+                    if isinstance(r, float) and r != r:
+                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -396,6 +405,8 @@ class CodegenExpr:
             if op == '*':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv * rv
+                    if isinstance(r, float) and r != r:
+                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -407,6 +418,8 @@ class CodegenExpr:
                     if float(rv) == 0.0:
                         return self._OPT_NO
                     r = float(lv) / float(rv)
+                    if r != r:
+                        return 0
                     if r.is_integer():
                         return wrap_i61(int(r))
                     return float(r)
@@ -459,11 +472,12 @@ class CodegenExpr:
             return int(v)
         return None
 
-    def _opt_const_nonzero_number(self, e: Any) -> bool:
+    def _opt_const_nonzero_number(self, e: Any, ordered: bool = False) -> bool:
         """Return whether constant evaluation proves a non-zero numeric value."""
         value = self._opt_try_const_value(e)
         return (value is not self._OPT_NO and not isinstance(value, bool)
-                and isinstance(value, (int, float)) and value != 0)
+                and isinstance(value, (int, float)) and value != 0
+                and (not ordered or value == value))
 
     def _opt_const_nonnegative_int(self, e: Any) -> bool:
         """Return whether constant evaluation proves a valid shift count."""
@@ -686,7 +700,55 @@ class CodegenExpr:
         self.emit_expr(call)
         return True
 
-    def _opt_expr_known_type(self, e: Any) -> Optional[str]:
+    def _opt_builtin_name_is_direct(self, name: str, shadows=None) -> bool:
+        """Conservatively identify a builtin without callable/name rebinding."""
+        if shadows is not None and name in shadows:
+            return False
+        binding = self.resolve_binding(name)
+        # Builtins themselves have ordinary global value slots. Direct calls
+        # still use their special form unless a declaration changes resolution.
+        if binding is not None and getattr(binding, 'kind', None) != 'global':
+            return False
+        if self._qname_of(self.ml.Var(name)) != name:
+            return False
+        for pool in ('user_functions', 'extern_sigs', 'struct_fields', 'enum_id'):
+            if name in (getattr(self, pool, {}) or {}):
+                return False
+        return True
+
+    def _opt_builtin_tofloat_arg(self, e: Any, shadows=None) -> Any:
+        """Return a direct toFloat operand, retaining try/error uncertainty."""
+        ml = self.ml
+        if int(getattr(self, '_errprop_suppression', 0) or 0) != 0:
+            return None
+        if not isinstance(e, ml.Call) or not isinstance(e.callee, ml.Var):
+            return None
+        if e.callee.name != 'toFloat' or len(e.args) != 1:
+            return None
+        if any(name is not None for name in (getattr(e, 'arg_names', []) or [])):
+            return None
+        if not self._opt_builtin_name_is_direct('toFloat', shadows):
+            return None
+        return e.args[0]
+
+    def _opt_numeric_arg_is_pure(self, e: Any, known=None) -> bool:
+        """Limit new builtin facts to numeric leaves and primitive arithmetic."""
+        ml = self.ml
+        if isinstance(e, ml.Num):
+            return type(e.value) in (int, float)
+        if isinstance(e, ml.Var):
+            fact = known.get(str(e.name)) if known is not None else self._opt_expr_known_type(e, True)
+            return self._opt_value_type_base(fact) in ('int', 'float', 'number')
+        if isinstance(e, ml.Unary) and e.op in ('-', '~'):
+            return self._opt_numeric_arg_is_pure(e.right, known)
+        # Fallible division/modulo needs a separate non-zero, ordered proof.
+        # Keep this new builtin fact limited to total primitive arithmetic.
+        if isinstance(e, ml.Bin) and e.op in ('+', '-', '*', '&', '|', '^', '<<', '>>'):
+            return (self._opt_numeric_arg_is_pure(e.left, known)
+                    and self._opt_numeric_arg_is_pure(e.right, known))
+        return False
+
+    def _opt_expr_known_type(self, e: Any, extended: bool = False) -> Optional[str]:
         """Return a conservative local representation fact for an expression."""
         ml = self.ml
         if e is None:
@@ -702,7 +764,8 @@ class CodegenExpr:
             return f"array:{len(list(getattr(e, 'items', []) or []))}"
         if isinstance(e, getattr(ml, 'Var', ())):
             name = str(getattr(e, 'name', '') or '')
-            fact = (getattr(self, '_known_value_types', {}) or {}).get(name)
+            facts_name = '_known_numeric_value_types' if extended else '_known_value_types'
+            fact = (getattr(self, facts_name, {}) or {}).get(name)
             if not isinstance(fact, str):
                 return None
             try:
@@ -721,9 +784,11 @@ class CodegenExpr:
             # Reuse full operand facts for overload resolution and builtin
             # inference. Recursing through both paths doubles work at each
             # level whenever any imported module declares an operator.
-            right_fact = self._opt_expr_known_type(getattr(e, 'right', None))
+            right_fact = self._opt_expr_known_type(getattr(e, 'right', None), extended)
             overload = self._resolve_operator_overload_facts(op, [right_fact], e)
             if overload is not None:
+                if extended and self._opt_value_type_base(overload[2]) in ('int', 'float', 'number'):
+                    return None
                 return overload[2]
             rb = self._opt_value_type_base(right_fact)
             if op == 'not' and rb:
@@ -739,11 +804,13 @@ class CodegenExpr:
             op = str(getattr(e, 'op', '') or '')
             # Keep qualified struct facts intact until overload selection;
             # only builtin inference needs their representation base types.
-            left_fact = self._opt_expr_known_type(getattr(e, 'left', None))
-            right_fact = self._opt_expr_known_type(getattr(e, 'right', None))
+            left_fact = self._opt_expr_known_type(getattr(e, 'left', None), extended)
+            right_fact = self._opt_expr_known_type(getattr(e, 'right', None), extended)
             overload = self._resolve_operator_overload_facts(
                 op, [left_fact, right_fact], e)
             if overload is not None:
+                if extended and self._opt_value_type_base(overload[2]) in ('int', 'float', 'number'):
+                    return None
                 return overload[2]
             lb = self._opt_value_type_base(left_fact)
             rb = self._opt_value_type_base(right_fact)
@@ -760,24 +827,24 @@ class CodegenExpr:
                 return 'int'
             if op in ('+', '-', '*') and lb == rb == 'int':
                 return 'int'
-            if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+            if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right, extended):
                 return 'int'
-            if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+            if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right, extended):
                 return 'int'
             if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
                 return 'number'
             if (op in ('/', '%') and lb in ('int', 'float', 'number')
-                    and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right)):
+                    and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right, extended)):
                 return 'number'
             return None
         if isinstance(e, getattr(ml, 'Index', ())):
-            target_type = self._opt_expr_known_type(getattr(e, 'target', None))
+            target_type = self._opt_expr_known_type(getattr(e, 'target', None), extended)
             base = self._opt_value_type_base(target_type)
             exact_len = self._opt_value_type_exact_length(target_type)
             index = self._opt_try_const_int(getattr(e, 'index', None))
             if base == 'bytes' and exact_len is not None and index is not None and -exact_len <= index < exact_len:
                 return 'int'
-            index_base = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'index', None)))
+            index_base = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'index', None), extended))
             # Specialized indexing propagates target and bounds errors. Its
             # normal continuation therefore has a stable result type even when
             # the bytes constructor itself still needs a runtime type guard.
@@ -787,6 +854,11 @@ class CodegenExpr:
                 return 'string'
         if isinstance(e, getattr(ml, 'Call', ())):
             callee = getattr(e, 'callee', None)
+            float_arg = self._opt_builtin_tofloat_arg(e) if extended else None
+            if float_arg is not None and self._opt_numeric_arg_is_pure(float_arg):
+                arg_type = self._opt_value_type_base(self._opt_expr_known_type(float_arg, extended))
+                if arg_type in ('int', 'float', 'number'):
+                    return 'float'
             try:
                 fn_qname = self._opt_static_user_fn(callee)
             except Exception:
@@ -796,6 +868,11 @@ class CodegenExpr:
                 result = self._operator_declared_type_fact(
                     getattr(declared, 'return_type', None), '', declared)
                 if result:
+                    # A return annotation does not guard implicit fallthrough,
+                    # and a callee may resolve typeof in another namespace.
+                    # Keep opaque numeric returns out of the extended facts.
+                    if extended and self._opt_value_type_base(result) in ('int', 'float', 'number'):
+                        return None
                     return result
             parts: list[str] = []
             current = callee
@@ -868,7 +945,7 @@ class CodegenExpr:
         return plan
 
     def _validate_statically_known_index(self, e: Any) -> None:
-        """Reject index mistakes proven by local type/length facts.
+        """Preserve index diagnostics proven by the legacy type/length facts.
 
         Unknown or flow-dependent values deliberately retain the existing
         catchable runtime checks; this diagnostic only fires when compilation
@@ -876,11 +953,11 @@ class CodegenExpr:
         """
         target = getattr(e, 'target', None)
         index = getattr(e, 'index', None)
-        target_fact = self._opt_expr_known_type(target)
+        target_fact = self._opt_expr_known_type(target, False)
         target_kind = self._opt_value_type_base(target_fact)
         if target_kind not in ('array', 'bytes', 'bytes?', 'string'):
             return
-        index_kind = self._opt_value_type_base(self._opt_expr_known_type(index))
+        index_kind = self._opt_value_type_base(self._opt_expr_known_type(index, False))
         if index_kind is not None and index_kind != 'int':
             raise self.error(f"Index must be an int; statically known type is '{index_kind}'", index)
         exact_len = self._opt_value_type_exact_length(target_fact)
@@ -1211,7 +1288,14 @@ class CodegenExpr:
         rhs = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None)))
         numeric = {'int', 'float', 'number'}
         if lhs not in numeric or rhs not in numeric or 'float' not in (lhs, rhs):
-            return False
+            # Preserve every pre-existing path as a complete legacy pair.
+            # New facts must not combine with an opaque legacy call return.
+            if int(getattr(self, '_errprop_suppression', 0) or 0) != 0:
+                return False
+            lhs = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'left', None), True))
+            rhs = self._opt_value_type_base(self._opt_expr_known_type(getattr(e, 'right', None), True))
+            if lhs not in numeric or rhs not in numeric or 'float' not in (lhs, rhs):
+                return False
 
         a = self.asm
         lid = self.new_label_id()
@@ -1271,6 +1355,154 @@ class CodegenExpr:
 
         a.mark(l_fail)
         a.mov_rax_imm64(enc_void())
+        a.mark(l_done)
+        return True
+
+    def _opt_float_child_local_leaves(self, expr: Any, depth: int = 0) -> Optional[list[Any]]:
+        """Prove a bounded, call-free numeric tree and collect its local leaves."""
+        if depth > 2:
+            return None
+        if isinstance(expr, self.ml.Num):
+            return [] if type(expr.value) in (int, float) else None
+        if isinstance(expr, self.ml.Var):
+            if not self.in_function:
+                return None
+            fact = self._opt_value_type_base(self._opt_expr_known_type(expr, True))
+            binding = self.resolve_binding(expr.name)
+            if (fact not in ('int', 'float', 'number') or binding is None
+                    or binding.kind not in ('local', 'param') or binding.boxed
+                    or binding.capture_index is not None):
+                return None
+            return [expr]
+        if isinstance(expr, self.ml.Bin) and expr.op in ('+', '-', '*'):
+            left = self._opt_float_child_local_leaves(expr.left, depth + 1)
+            if left is None:
+                return None
+            right = self._opt_float_child_local_leaves(expr.right, depth + 1)
+            if right is None:
+                return None
+            names = {leaf.name for leaf in left}
+            return left + [leaf for leaf in right if leaf.name not in names]
+        return None
+
+    def _opt_emit_float_parent_without_child_box(self, e: Any) -> bool:
+        """Elide one numeric child's box when a float-literal parent consumes it.
+
+        Deeper operands retain ordinary rooted evaluation. After that boundary,
+        the child's canonical numeric value lives only in XMM0 until the parent
+        materializes its result. This never carries an unboxed value across a
+        call, changes integer arithmetic, or reassociates floating operations.
+        """
+        ml = self.ml
+        if (e.op not in ('+', '-', '*') or not isinstance(e.right, ml.Num)
+                or type(e.right.value) is not float or not isinstance(e.left, ml.Bin)
+                or e.left.op not in ('+', '-', '*')):
+            return False
+        child = e.left
+        leaves = self._opt_float_child_local_leaves(child)
+        if not leaves:
+            return False
+        lhs = self._opt_value_type_base(self._opt_expr_known_type(child.left, True))
+        rhs = self._opt_value_type_base(self._opt_expr_known_type(child.right, True))
+        if lhs not in ('int', 'float', 'number') or rhs not in ('int', 'float', 'number'):
+            return False
+        # An integer-only or folded child has no runtime float box to remove.
+        if lhs == rhs == 'int':
+            return False
+        try:
+            if self._opt_try_const_value(child) is not self._OPT_NO:
+                return False
+        except Exception:
+            return False
+        a = self.asm
+        lid = self.new_label_id()
+        l_slow = f'float_parent_nobox_slow_{lid}'
+        l_float = f'float_parent_nobox_float_{lid}'
+        l_parent = f'float_parent_nobox_parent_{lid}'
+        l_done = f'float_parent_nobox_done_{lid}'
+        a.mark(f'float_parent_nobox_guard_{lid}')
+        # Guard the leaf facts before evaluating either subtree. A miss reaches
+        # the original expression exactly once, including its error behavior.
+        # Locals cannot change here: calls, captures and globals are excluded.
+        for i, leaf in enumerate(leaves):
+            fact = self._opt_value_type_base(self._opt_expr_known_type(leaf, True))
+            l_ok = f'float_parent_nobox_leaf_{lid}_{i}'
+            self.emit_expr(leaf)
+            a.mov_r64_r64('rdx', 'rax')
+            a.and_r64_imm('rdx', 7)
+            if fact == 'int':
+                a.cmp_r64_imm('rdx', TAG_INT)
+                a.jcc('ne', l_slow)
+            else:
+                if fact == 'number':
+                    a.cmp_r64_imm('rdx', TAG_INT)
+                    a.jcc('e', l_ok)
+                a.cmp_r64_imm('rdx', TAG_FLOAT)
+                a.jcc('e', l_ok)
+                a.cmp_r64_imm('rdx', TAG_PTR)
+                a.jcc('ne', l_slow)
+                a.mov_r32_membase_disp('edx', 'rax', 0)
+                a.cmp_r32_imm('edx', OBJ_FLOAT)
+                a.jcc('ne', l_slow)
+            a.mark(l_ok)
+
+        a.mark(f'float_parent_nobox_fast_{lid}')
+        left_tmp = self.alloc_expr_temps(8)
+        self.emit_expr(child.left)
+        a.mov_rsp_disp32_rax(left_tmp)
+        self.emit_expr(child.right)
+        a.mov_r64_r64('r11', 'rax')
+        a.mov_r64_membase_disp('r10', 'rsp', left_tmp)
+        self.free_expr_temps(8)
+        a.mark(f'float_parent_nobox_child_{lid}')
+
+        # A `number` fact admits actual int/int operands. Compute their exact
+        # tagged result first; early conversion would lose precision above 2^53.
+        a.mov_rax_r10()
+        a.and_rax_imm8(7)
+        a.cmp_rax_imm8(TAG_INT)
+        a.jcc('ne', l_float)
+        a.mov_rax_r11()
+        a.and_rax_imm8(7)
+        a.cmp_rax_imm8(TAG_INT)
+        a.jcc('ne', l_float)
+        self._opt_emit_known_int_binop(child.op, None, None)
+        a.sar_rax_imm8(3)
+        a.cvtsi2sd_xmm_r64('xmm0', 'rax')
+        a.jmp(l_parent)
+
+        a.mark(l_float)
+        # The leaf guards and total primitive +,-,* operations prove that both
+        # conversions succeed. Their defensive slow edges are unreachable after
+        # operand evaluation, so the fallback never repeats a language effect.
+        a.mov_rax_r10()
+        self.emit_to_double_xmm(0, l_slow)
+        a.mov_rax_r11()
+        self.emit_to_double_xmm(1, l_slow)
+        if child.op == '+':
+            a.addsd_xmm_xmm('xmm0', 'xmm1')
+        elif child.op == '-':
+            a.subsd_xmm_xmm('xmm0', 'xmm1')
+        else:
+            a.mulsd_xmm_xmm('xmm0', 'xmm1')
+        self.emit_normalize_xmm0_for_double_consumer()
+
+        a.mark(l_parent)
+        # Loading this literal cannot call, collect, or overwrite raw XMM0.
+        self._opt_emit_const_value(e.right.value)
+        self.emit_to_double_xmm(1, l_slow)
+        if e.op == '+':
+            a.addsd_xmm_xmm('xmm0', 'xmm1')
+        elif e.op == '-':
+            a.subsd_xmm_xmm('xmm0', 'xmm1')
+        else:
+            a.mulsd_xmm_xmm('xmm0', 'xmm1')
+        a.mark(f'float_parent_nobox_materialize_{lid}')
+        self.emit_normalize_xmm0_to_value()
+        a.jmp(l_done)
+
+        a.mark(l_slow)
+        self.emit_expr(e, allow_float_box_elision=False)
         a.mark(l_done)
         return True
 
@@ -2828,6 +3060,7 @@ class CodegenExpr:
         saved_ctx_qn = getattr(self, '_current_fn_qname', None)
         saved_inline_alloc = bool(getattr(self, '_inline_alloc_enabled', False))
         saved_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
+        saved_known_numeric_value_types = dict(getattr(self, '_known_numeric_value_types', {}) or {})
         saved_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
         saved_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
@@ -2897,6 +3130,9 @@ class CodegenExpr:
                 name for name, fact in self._known_value_types.items()
                 if self._opt_value_type_base(fact) == 'int'
             }
+            # Inline scopes retain their legacy facts. New numeric facts need
+            # the whole-function proof and must not inherit caller assumptions.
+            self._known_numeric_value_types = {}
             self._loop_index_fast_stack = []
 
             # Use the callee's qualification context for unqualified name resolution.
@@ -2957,6 +3193,7 @@ class CodegenExpr:
             self._current_fn_file = saved_ctx_file
             self._current_fn_qname = saved_ctx_qn
             self._known_value_types = saved_known_value_types
+            self._known_numeric_value_types = saved_known_numeric_value_types
             self._known_int_names = saved_known_int_names
             self._loop_index_fast_stack = saved_loop_index_fast_stack
 
@@ -3270,6 +3507,44 @@ class CodegenExpr:
             return lit
         return ''
 
+    def _opt_literal_expr(self, e: Any) -> bool:
+        """Recognize expression trees whose leaves are primitive literals only.
+
+        Deliberately exclude names, calls and nested TypeGuards. In particular,
+        a declaration's inferred type must not prove its own initializer guard,
+        and parameter contracts must run before their facts can be trusted.
+        Constant evaluation below decides whether an allowed tree is valid.
+        """
+        ml = self.ml
+        if isinstance(e, (ml.Num, ml.Bool, ml.Str)):
+            return True
+        if isinstance(e, ml.Unary):
+            return self._opt_literal_expr(e.right)
+        if isinstance(e, ml.Bin):
+            return (self._opt_literal_expr(e.left)
+                    and self._opt_literal_expr(e.right))
+        return False
+
+    def _opt_literal_guard_is_redundant(self, e: Any) -> bool:
+        """Prove a primitive guard independently of all flow/type assumptions."""
+        if not self._opt_literal_expr(e.expr):
+            return False
+        try:
+            value = self._opt_try_const_value(e.expr)
+        except Exception:
+            return False
+        value_type = {bool: 'bool', int: 'int', float: 'float', str: 'string'}.get(type(value), '')
+        raw_type = str(getattr(e, 'type_name', '') or '')
+        aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+        canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
+        if not value_type or canonical != value_type:
+            return False
+        # Match the existing guard's direct typeof/tag-check resolution. A user
+        # declaration of typeof can have effects or return a different label.
+        probe_arg = self.ml.DeferredCapture(0)
+        probe = self.ml.Call(self.ml.Var('typeof'), [probe_arg])
+        return self._typeof_fold_arg(probe) is probe_arg
+
     def _emit_typeof_literal_check(self, arg: Any, lit: str) -> None:
         """Emit a direct `typeof(<arg>) == "<lit>"` check: value tag and, for pointer types, object-type checks replace the fn_typeof call and the generic equality cascade."""
         a = self.asm
@@ -3362,7 +3637,7 @@ class CodegenExpr:
         a.shl_rax_imm8(3)
         a.or_rax_imm8(TAG_BOOL)
 
-    def emit_expr(self, e: Any) -> None:
+    def emit_expr(self, e: Any, *, allow_float_box_elision: bool = True) -> None:
         """Emit code so that RAX contains the Value."""
         ml = self.ml
         a = self.asm
@@ -3432,6 +3707,12 @@ class CodegenExpr:
             return
 
         if hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard):
+            if self._opt_literal_guard_is_redundant(e):
+                # The same ordinary emitter retains folding and exact numeric
+                # normalization. A proven primitive constant cannot be Error or
+                # allocate, so no guard temp/root or error boundary is needed.
+                self.emit_expr(e.expr)
+                return
             lid = self.new_label_id()
             l_valid = f"type_guard_valid_{lid}"
             l_done = f"type_guard_done_{lid}"
@@ -4345,6 +4626,9 @@ class CodegenExpr:
                     if e.op == '!=':
                         a.xor_r64_imm('rax', 8)
                     return
+
+            if allow_float_box_elision and self._opt_emit_float_parent_without_child_box(e):
+                return
 
             # Normal binary expressions may nest calls, indexing, and helper paths
             # that transiently repurpose scratch/non-volatile registers. Keep the

@@ -863,17 +863,20 @@ class CodegenStmt:
             return None
         return value if value >= 0 else None
 
-    def _infer_known_value_types(self, fn: Any) -> dict[str, str]:
+    def _infer_known_value_types(self, fn: Any, extended: bool = False) -> dict[str, str]:
         """Infer conservative representation facts for initialized local names.
 
         The native backend is dynamically typed, so these facts are only used
         when every write in the function preserves the same representation
-        category. A candidate also needs an unconditional function-body
-        initializer (loop variables are initialized by their loop prologue).
+        category. Initializers must dominate reads within their lexical block;
+        no initialization flows unconditionally out of a branch or loop.
+        Legacy mode retains the original direct-function initializer rule for
+        static diagnostics and previously observable custom return contracts.
         Untyped/optional parameters, globals, captures, synchronized values and
         boxed locals are deliberately excluded.
         """
-        cached = getattr(fn, '_ml_known_value_types', None)
+        cache_name = '_ml_known_numeric_value_types' if extended else '_ml_known_value_types'
+        cached = getattr(fn, cache_name, None)
         if isinstance(cached, dict):
             return dict(cached)
 
@@ -886,6 +889,10 @@ class CodegenStmt:
         params = list(getattr(fn, 'params', []) or [])
         param_types = list(getattr(fn, 'param_types', []) or [])
         param_optional = list(getattr(fn, 'param_optional', []) or [])
+        call_shadows = (set(getattr(fn, '_ml_locals', ()) or ())
+                        | set(getattr(fn, '_ml_captures', ()) or ()) | set(params))
+        primitive_guards_known = (not extended
+                                  or self._opt_builtin_name_is_direct('typeof', call_shadows))
         excluded: set[str] = set()
         typed_param_facts: dict[str, str] = {}
         operator_types_enabled = bool(getattr(self, 'operator_overloads_present', False))
@@ -907,10 +914,16 @@ class CodegenStmt:
                 if isinstance(candidate, str) and candidate.startswith('struct:'):
                     closed_struct = candidate[7:] not in (
                         getattr(self, 'polymorphic_class_names', set()) or set())
-            # Container contracts also seed loop layout facts without operator
-            # overloads. The validation pass below still rejects later writes.
-            if operator_types_enabled or ty in ('array', 'bytes') or closed_struct:
-                fact = self._operator_declared_type_fact(ty, '', fn)
+            fact = self._operator_declared_type_fact(ty, '', fn)
+            primitive = fact in ('int', 'float', 'bool', 'string', 'array', 'bytes',
+                                 'function', 'thread', 'error', 'void')
+            if extended and primitive and not primitive_guards_known:
+                excluded.add(str(param))
+                continue
+            # Entry guards remain real assignments in the write set. Their
+            # representation joins every later write; annotations are not an
+            # assumption that can remove the entry checks themselves.
+            if operator_types_enabled or ty in ('array', 'bytes') or closed_struct or (extended and primitive):
                 if fact:
                     typed_param_facts[str(param)] = fact
                 else:
@@ -918,6 +931,14 @@ class CodegenStmt:
         excluded.update(str(x) for x in (getattr(fn, '_ml_boxed', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_captures', set()) or set()))
         excluded.update(str(x) for x in (getattr(fn, '_ml_globals_declared', set()) or set()))
+        if extended:
+            # This lattice is name-based. Distinct lexical bindings must not
+            # share a fact merely because their spellings happen to match.
+            local_counts: dict[str, int] = {}
+            for binding in getattr(self, '_function_locals', []) or []:
+                name = str(getattr(binding, 'name', '') or '')
+                local_counts[name] = local_counts.get(name, 0) + 1
+            excluded.update(name for name, count in local_counts.items() if count > 1)
 
         def record_assignment(st: Any, *, direct: bool) -> None:
             name = str(getattr(st, 'name', '') or '')
@@ -928,7 +949,7 @@ class CodegenStmt:
                 return
             assignments.setdefault(name, []).append(getattr(st, 'expr', None))
             normal_names.add(name)
-            if direct:
+            if direct or extended:
                 direct_initializers.append((name, getattr(st, 'expr', None)))
 
         def walk(stmts: list[Any], *, direct: bool = False, loop_depth: int = 0) -> None:
@@ -970,8 +991,6 @@ class CodegenStmt:
         walk(list(getattr(fn, 'body', []) or []), direct=True)
         # The analysis runs before this function's local bindings are emitted.
         # Preserve lexical shadowing when resolving annotated callees.
-        call_shadows = (set(getattr(fn, '_ml_locals', ()) or ())
-                        | set(getattr(fn, '_ml_captures', ()) or ()) | set(params))
         excluded.update(loop_names.intersection(normal_names))
 
         # Function-wide facts are only safe when the unconditional initializer
@@ -1007,12 +1026,14 @@ class CodegenStmt:
                 if isinstance(st, (getattr(ml, 'Assign', ()), getattr(ml, 'ConstDecl', ()),
                                    getattr(ml, 'SynchronizedDecl', ()))):
                     scan_read_expr(getattr(st, 'expr', None), initialized)
-                    if direct:
+                    if direct or extended:
                         initialized.add(str(getattr(st, 'name', '') or ''))
                     continue
                 if isinstance(st, getattr(ml, 'For', ())):
                     scan_read_expr(getattr(st, 'start', None), initialized)
                     scan_read_expr(getattr(st, 'end', None), initialized)
+                    if extended:
+                        scan_read_expr(getattr(st, 'step', None), initialized)
                     inner = set(initialized)
                     inner.add(str(getattr(st, 'var', '') or ''))
                     scan_read_order(list(getattr(st, 'body', []) or []), inner, direct=False)
@@ -1025,6 +1046,8 @@ class CodegenStmt:
                     continue
                 for attr in ('expr', 'cond', 'target', 'index', 'start', 'end', 'iterable', 'obj'):
                     scan_read_expr(getattr(st, attr, None), initialized)
+                if extended:
+                    scan_read_expr(getattr(st, 'lock', None), initialized)
                 if isinstance(st, getattr(ml, 'If', ())):
                     scan_read_order(list(getattr(st, 'then_body', []) or []), set(initialized), direct=False)
                     for cond, branch in getattr(st, 'elifs', []) or []:
@@ -1033,6 +1056,15 @@ class CodegenStmt:
                     scan_read_order(list(getattr(st, 'else_body', []) or []), set(initialized), direct=False)
                 elif isinstance(st, getattr(ml, 'Switch', ())):
                     for case in getattr(st, 'cases', []) or []:
+                        if extended:
+                            for value in list(getattr(case, 'values', []) or []):
+                                if isinstance(value, (list, tuple)):
+                                    for part in value:
+                                        scan_read_expr(part, initialized)
+                                else:
+                                    scan_read_expr(value, initialized)
+                            scan_read_expr(getattr(case, 'range_start', None), initialized)
+                            scan_read_expr(getattr(case, 'range_end', None), initialized)
                         scan_read_order(list(getattr(case, 'body', []) or []), set(initialized), direct=False)
                     scan_read_order(list(getattr(st, 'default_body', []) or []), set(initialized), direct=False)
                 else:
@@ -1097,9 +1129,9 @@ class CodegenStmt:
                 aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
                 canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
                 if canonical in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread', 'error'):
-                    return canonical
+                    return canonical if primitive_guards_known else None
                 if canonical == 'void':
-                    return 'void'
+                    return 'void' if primitive_guards_known else None
                 try:
                     qualified = self._qualify_identifier(raw_type, expr, kind='struct')
                 except Exception:
@@ -1113,6 +1145,8 @@ class CodegenStmt:
                 operand_fact = infer_expr(operand, known)
                 overload = self._resolve_operator_overload_facts(op, [operand_fact], expr)
                 if overload is not None:
+                    if extended and self._value_type_base(overload[2]) in ('int', 'float', 'number'):
+                        return None
                     return overload[2]
                 rt = operand_fact
                 rb = self._value_type_base(rt)
@@ -1131,6 +1165,8 @@ class CodegenStmt:
                 right_fact = infer_expr(getattr(expr, 'right', None), known)
                 overload = self._resolve_operator_overload_facts(op, [left_fact, right_fact], expr)
                 if overload is not None:
+                    if extended and self._value_type_base(overload[2]) in ('int', 'float', 'number'):
+                        return None
                     return overload[2]
                 lt = left_fact
                 rt = right_fact
@@ -1149,14 +1185,14 @@ class CodegenStmt:
                     return 'int'
                 if op in ('+', '-', '*') and lb == rb == 'int':
                     return 'int'
-                if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                if op == '%' and lb == rb == 'int' and self._opt_const_nonzero_number(right, extended):
                     return 'int'
-                if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right):
+                if op == 'div' and lb == rb == 'int' and self._opt_const_nonzero_number(right, extended):
                     return 'int'
                 if op in ('+', '-', '*') and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
                     return 'number'
                 if (op in ('/', '%') and lb in ('int', 'float', 'number')
-                        and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right)):
+                        and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right, extended)):
                     return 'number'
                 return None
             if isinstance(expr, getattr(ml, 'Index', ())):
@@ -1173,8 +1209,12 @@ class CodegenStmt:
                 if isinstance(cal, getattr(ml, 'Var', ())):
                     raw = str(getattr(cal, 'name', '') or '')
                 args = list(getattr(expr, 'args', []) or [])
+                float_arg = self._opt_builtin_tofloat_arg(expr, call_shadows) if extended else None
+                if float_arg is not None and self._opt_numeric_arg_is_pure(float_arg, known):
+                    if self._value_type_base(infer_expr(float_arg, known)) in ('int', 'float', 'number'):
+                        return 'float'
                 if raw in ('len',):
-                    return 'int'
+                    return 'int' if not extended or self._opt_builtin_name_is_direct('len', call_shadows) else None
                 if raw in ('typeof', 'typeName'):
                     return 'string'
                 try:
@@ -1186,7 +1226,12 @@ class CodegenStmt:
                     return_type = getattr(declared, 'return_type', None)
                     if return_type:
                         guarded = ml.TypeGuard(expr, str(return_type), False)
-                        return infer_expr(guarded, known)
+                        result = infer_expr(guarded, known)
+                        # An annotation alone does not cover implicit void
+                        # fallthrough or another namespace's custom typeof.
+                        if extended and self._value_type_base(result) in ('int', 'float', 'number'):
+                            return None
+                        return result
                 if raw in ('bytes', 'byteBuffer'):
                     if len(args) == 0:
                         return 'bytes:0'
@@ -1218,11 +1263,14 @@ class CodegenStmt:
         initialized_names = ({name for name, _ in direct_initializers} | set(loop_names) |
                              set(typed_param_facts))
         candidates = ((set(assignments) | set(loop_names) | set(typed_param_facts)) & initialized_names) - excluded
-        facts: dict[str, str] = dict(typed_param_facts)
+        facts: dict[str, str] = {
+            name: fact for name, fact in typed_param_facts.items()
+            if not extended or name not in excluded
+        }
         facts.update({name: 'int' for name in loop_names if name in candidates})
 
-        # Seed from unconditional initializers, then propagate through local
-        # aliases and induction updates until no new fact is discovered.
+        # Seed from candidate definitions, then propagate through local aliases
+        # and induction updates. Final validation removes unsupported cycles.
         for name, expr in direct_initializers:
             if name not in candidates or name in facts:
                 continue
@@ -1276,7 +1324,7 @@ class CodegenStmt:
                     del facts[name]
                     changed = True
 
-        setattr(fn, '_ml_known_value_types', dict(facts))
+        setattr(fn, cache_name, dict(facts))
         setattr(fn, '_ml_promotion_hot_names', set(x for x in promotion_hot_names if x))
         return dict(facts)
 
@@ -1459,6 +1507,11 @@ class CodegenStmt:
             })
         return plans
 
+    def _opt_is_byte_literal(self, expr: Any) -> bool:
+        """Prove byte validity only for integer literals, without constant folding."""
+        return (isinstance(expr, self.ml.Num) and type(expr.value) is int
+                and 0 <= expr.value <= 255)
+
     def _opt_emit_known_setindex(self, stmt: Any, plan: dict[str, Any]) -> None:
         """Emit a fixed-layout array/bytes store using local type-flow facts."""
         a = self.asm
@@ -1533,16 +1586,22 @@ class CodegenStmt:
             a.mov_mem_bis_r64('r11', 'rcx', 8, 8, 'r10')
             a.jmp(l_done)
         else:
-            a.mov_r64_r64('r8', 'r10')
-            a.and_r64_imm('r8', 7)
-            a.cmp_r64_imm('r8', TAG_INT)
-            a.jcc('ne', l_bad_byte)
+            # A literal byte cannot fail these RHS checks. Keep evaluation,
+            # target/bounds errors and decoding unchanged; floats, bools and
+            # computed values still take the checked path.
+            byte_literal = self._opt_is_byte_literal(getattr(stmt, 'expr', None))
+            if not byte_literal:
+                a.mov_r64_r64('r8', 'r10')
+                a.and_r64_imm('r8', 7)
+                a.cmp_r64_imm('r8', TAG_INT)
+                a.jcc('ne', l_bad_byte)
             a.mov_r64_r64('rax', 'r10')
             a.sar_r64_imm8('rax', 3)
-            a.cmp_r64_imm('rax', 0)
-            a.jcc('l', l_bad_byte)
-            a.cmp_r64_imm('rax', 255)
-            a.jcc('g', l_bad_byte)
+            if not byte_literal:
+                a.cmp_r64_imm('rax', 0)
+                a.jcc('l', l_bad_byte)
+                a.cmp_r64_imm('rax', 255)
+                a.jcc('g', l_bad_byte)
             a.lea_r64_mem_bis('r8', 'r11', 'rcx', 1, 8)
             a.mov_membase_disp_r8('r8', 0, 'al')
             a.jmp(l_done)
@@ -4251,19 +4310,24 @@ class CodegenStmt:
             # bytes store
             a.mark(l_store_bytes)
 
-            # rhs must be TAG_INT
-            a.mov_r64_r64("r8", "r10")
-            a.and_r64_imm("r8", 7)
-            a.cmp_r64_imm("r8", TAG_INT)
-            a.jcc('ne', l_bad_byte)
+            # Only an integer literal in 0..255 proves the RHS valid. All
+            # operand evaluation and target/index/bounds checks stay above,
+            # preserving their order even when the byte checks are omitted.
+            byte_literal = self._opt_is_byte_literal(s.expr)
+            if not byte_literal:
+                a.mov_r64_r64("r8", "r10")
+                a.and_r64_imm("r8", 7)
+                a.cmp_r64_imm("r8", TAG_INT)
+                a.jcc('ne', l_bad_byte)
 
             # rax = decoded rhs
             a.mov_r64_r64("rax", "r10")
             a.sar_r64_imm8("rax", 3)
-            a.cmp_r64_imm("rax", 0)
-            a.jcc('l', l_bad_byte)
-            a.cmp_r64_imm("rax", 255)
-            a.jcc('g', l_bad_byte)
+            if not byte_literal:
+                a.cmp_r64_imm("rax", 0)
+                a.jcc('l', l_bad_byte)
+                a.cmp_r64_imm("rax", 255)
+                a.jcc('g', l_bad_byte)
 
             # addr = r11 + 8 + idx
             a.mov_r64_r64("r8", "r11")
@@ -6859,6 +6923,10 @@ class CodegenStmt:
         # Running it in the last module initializer's context makes generated
         # code depend on unrelated source order and differs from MLO emission.
         known_value_types_for_fn = infer_with_function_context(lambda: self._infer_known_value_types(fn))
+        # Existing consumers retain the exact legacy facts. Stronger numeric
+        # proofs live separately and are requested only by new lowering paths.
+        known_numeric_types_for_fn = infer_with_function_context(
+            lambda: self._infer_known_value_types(fn, True))
         old_scalar_structs = getattr(self, '_scalar_structs', [])
         self._scalar_structs = infer_with_function_context(lambda: codegen_opt.scalar_candidates(self, fn))
         promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
@@ -7077,6 +7145,7 @@ class CodegenStmt:
         old_root_static_qwords = int(getattr(self, '_current_root_static_qwords', 0) or 0)
         old_known_int_names = set(getattr(self, '_known_int_names', set()) or set())
         old_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
+        old_known_numeric_value_types = dict(getattr(self, '_known_numeric_value_types', {}) or {})
         old_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
 
         # Save/override scope stack for real emission (function-local only)
@@ -7095,6 +7164,7 @@ class CodegenStmt:
         self._known_int_names = infer_with_function_context(
             lambda: self._infer_known_int_names(fn))
         self._known_value_types = dict(known_value_types_for_fn)
+        self._known_numeric_value_types = dict(known_numeric_types_for_fn)
         self._loop_index_fast_stack = []
 
         if saved_emit_stack is not None:
@@ -7330,6 +7400,7 @@ class CodegenStmt:
         self._current_root_static_qwords = old_root_static_qwords
         self._known_int_names = old_known_int_names
         self._known_value_types = old_known_value_types
+        self._known_numeric_value_types = old_known_numeric_value_types
         self._scalar_structs = old_scalar_structs
         self._loop_index_fast_stack = old_loop_index_fast_stack
 

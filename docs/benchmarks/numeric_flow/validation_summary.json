@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "parity_cases": 42,
+  "compared_images": 126,
+  "linux_runtime_cases": 24,
+  "all_linux_outputs_equal_baseline": true,
+  "bootstrap_selfhost_identical": true,
+  "primary_correctness_runs": 294,
+  "primary_full_size_correctness_runs": 30,
+  "ablation_correctness_runs": 54,
+  "gc_diagnostic_runs": 27,
+  "primary_timed_runs": 330,
+  "ablation_and_c_timed_runs": 110,
+  "all_timed_checksums_and_warmups_valid": true,
+  "unchanged_primary_images": 13,
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  }
+}

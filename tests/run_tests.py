@@ -5124,6 +5124,27 @@ def main() -> int:
         must_contain=["native pack 17"],
         timeout_compile_s=120, timeout_run_s=120))
     tests.append(lambda: test_program_no_fail(
+        name="codegen: proven check elision preserves contracts and errors",
+        mlc_runner=mlc_runner, ml_path=tests_root / "proven_check_elision.ml",
+        must_contain=["PROVEN CHECK ELISION [OK]"],
+        timeout_compile_s=120, timeout_run_s=120))
+    tests.append(lambda: test_program_no_fail(
+        name="codegen: proven check elision preserves custom typeof effects",
+        mlc_runner=mlc_runner, ml_path=tests_root / "proven_check_elision_typeof.ml",
+        must_contain=["PROVEN CHECK TYPEOF [OK]"],
+        timeout_compile_s=120, timeout_run_s=120))
+    for fixture, marker, title in (
+            ("numeric_typeflow_boxing", "NUMERIC TYPEFLOW BOXING [OK]",
+             "numeric type flow and bounded float boxing"),
+            ("numeric_typeflow_typeof", "NUMERIC TYPEFLOW TYPEOF [OK]",
+             "numeric type flow preserves custom typeof"),
+            ("numeric_typeflow_tofloat", "NUMERIC TYPEFLOW TOFLOAT [OK]",
+             "numeric type flow preserves custom toFloat")):
+        tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(
+            name="codegen: " + title,
+            mlc_runner=mlc_runner, ml_path=tests_root / (fixture + ".ml"),
+            must_contain=[marker], timeout_compile_s=120, timeout_run_s=120))
+    tests.append(lambda: test_program_no_fail(
         name="codegen: dynamic ordered comparisons and error joins",
         mlc_runner=mlc_runner, ml_path=tests_root / "ordered_comparison.ml",
         must_contain=["[OK] dynamic ordered comparisons"],

@@ -1,0 +1,302 @@
+{
+  "byte_copy": {
+    "n": 8388608,
+    "configs": {
+      "minilang": {
+        "reps": 24,
+        "cycle_checksum": 2027060392,
+        "warmup_checksum": 195952485
+      },
+      "c_o3": {
+        "reps": 16,
+        "cycle_checksum": 2027060392,
+        "warmup_checksum": 195952485
+      },
+      "cpp_o3": {
+        "reps": 16,
+        "cycle_checksum": 2027060392,
+        "warmup_checksum": 195952485
+      }
+    }
+  },
+  "byte_search": {
+    "n": 8388608,
+    "configs": {
+      "minilang": {
+        "reps": 56,
+        "cycle_checksum": 2147466368,
+        "warmup_checksum": 268433408
+      },
+      "c_o3": {
+        "reps": 8,
+        "cycle_checksum": 2147466368,
+        "warmup_checksum": 268433408
+      },
+      "cpp_o3": {
+        "reps": 8,
+        "cycle_checksum": 2147466368,
+        "warmup_checksum": 268433408
+      }
+    }
+  },
+  "array_scan": {
+    "n": 194470,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1739240000,
+        "warmup_checksum": 601522432
+      },
+      "c_o3": {
+        "reps": 168,
+        "cycle_checksum": 1739240000,
+        "warmup_checksum": 601522432
+      },
+      "cpp_o3": {
+        "reps": 176,
+        "cycle_checksum": 1739240000,
+        "warmup_checksum": 601522432
+      }
+    }
+  },
+  "array_scatter": {
+    "n": 225245,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1643376744,
+        "warmup_checksum": 170026751
+      },
+      "c_o3": {
+        "reps": 72,
+        "cycle_checksum": 1643376744,
+        "warmup_checksum": 170026751
+      },
+      "cpp_o3": {
+        "reps": 72,
+        "cycle_checksum": 1643376744,
+        "warmup_checksum": 170026751
+      }
+    }
+  },
+  "sieve": {
+    "n": 1977051,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1079828,
+        "warmup_checksum": 134982
+      },
+      "c_o3": {
+        "reps": 112,
+        "cycle_checksum": 1079828,
+        "warmup_checksum": 134982
+      },
+      "cpp_o3": {
+        "reps": 136,
+        "cycle_checksum": 1079828,
+        "warmup_checksum": 134982
+      }
+    }
+  },
+  "heapsort": {
+    "n": 82396,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1260277024,
+        "warmup_checksum": 21186486
+      },
+      "c_o3": {
+        "reps": 48,
+        "cycle_checksum": 1260277024,
+        "warmup_checksum": 21186486
+      },
+      "cpp_o3": {
+        "reps": 48,
+        "cycle_checksum": 1260277024,
+        "warmup_checksum": 21186486
+      }
+    }
+  },
+  "escaped_nodes": {
+    "n": 262144,
+    "configs": {
+      "minilang": {
+        "reps": 40,
+        "cycle_checksum": 1626341376,
+        "warmup_checksum": 20840448
+      },
+      "c_o3": {
+        "reps": 64,
+        "cycle_checksum": 1626341376,
+        "warmup_checksum": 20840448
+      },
+      "cpp_o3": {
+        "reps": 56,
+        "cycle_checksum": 1626341376,
+        "warmup_checksum": 20840448
+      }
+    }
+  },
+  "int_mix": {
+    "n": 2097152,
+    "configs": {
+      "minilang": {
+        "reps": 32,
+        "cycle_checksum": 708178792,
+        "warmup_checksum": 73846381
+      },
+      "c_o3": {
+        "reps": 88,
+        "cycle_checksum": 708178792,
+        "warmup_checksum": 73846381
+      },
+      "cpp_o3": {
+        "reps": 96,
+        "cycle_checksum": 708178792,
+        "warmup_checksum": 73846381
+      }
+    }
+  },
+  "branch_mix": {
+    "n": 1909761,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1869522917,
+        "warmup_checksum": 1799670846
+      },
+      "c_o3": {
+        "reps": 40,
+        "cycle_checksum": 1869522917,
+        "warmup_checksum": 1799670846
+      },
+      "cpp_o3": {
+        "reps": 32,
+        "cycle_checksum": 1869522917,
+        "warmup_checksum": 1799670846
+      }
+    }
+  },
+  "float_recurrence": {
+    "n": 260986,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 443985351,
+        "warmup_checksum": 55500954
+      },
+      "c_o3": {
+        "reps": 416,
+        "cycle_checksum": 443985351,
+        "warmup_checksum": 55500954
+      },
+      "cpp_o3": {
+        "reps": 408,
+        "cycle_checksum": 443985351,
+        "warmup_checksum": 55500954
+      }
+    }
+  },
+  "mandelbrot": {
+    "n": 126,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 2227976,
+        "warmup_checksum": 278594
+      },
+      "c_o3": {
+        "reps": 440,
+        "cycle_checksum": 2227976,
+        "warmup_checksum": 278594
+      },
+      "cpp_o3": {
+        "reps": 432,
+        "cycle_checksum": 2227976,
+        "warmup_checksum": 278594
+      }
+    }
+  },
+  "recursive_tree": {
+    "n": 1265,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1577460471,
+        "warmup_checksum": 1847544533
+      },
+      "c_o3": {
+        "reps": 56,
+        "cycle_checksum": 1577460471,
+        "warmup_checksum": 1847544533
+      },
+      "cpp_o3": {
+        "reps": 136,
+        "cycle_checksum": 1577460471,
+        "warmup_checksum": 1847544533
+      }
+    }
+  },
+  "ascii_parse": {
+    "n": 262144,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 1649835040,
+        "warmup_checksum": 387140704
+      },
+      "c_o3": {
+        "reps": 152,
+        "cycle_checksum": 1649835040,
+        "warmup_checksum": 387140704
+      },
+      "cpp_o3": {
+        "reps": 152,
+        "cycle_checksum": 1649835040,
+        "warmup_checksum": 387140704
+      }
+    }
+  },
+  "string_concat": {
+    "n": 7262,
+    "configs": {
+      "minilang": {
+        "reps": 24,
+        "cycle_checksum": 359384650,
+        "warmup_checksum": 2033976145
+      },
+      "c_o3": {
+        "reps": 16,
+        "cycle_checksum": 359384650,
+        "warmup_checksum": 2033976145
+      },
+      "cpp_o3": {
+        "reps": 24,
+        "cycle_checksum": 359384650,
+        "warmup_checksum": 2033976145
+      }
+    }
+  },
+  "string_builder": {
+    "n": 114195,
+    "configs": {
+      "minilang": {
+        "reps": 16,
+        "cycle_checksum": 500618432,
+        "warmup_checksum": 934069861
+      },
+      "c_o3": {
+        "reps": 56,
+        "cycle_checksum": 500618432,
+        "warmup_checksum": 934069861
+      },
+      "cpp_o3": {
+        "reps": 56,
+        "cycle_checksum": 500618432,
+        "warmup_checksum": 934069861
+      }
+    }
+  }
+}

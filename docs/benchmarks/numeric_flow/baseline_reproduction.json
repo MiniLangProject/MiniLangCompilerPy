@@ -1,0 +1,62 @@
+[
+  {
+    "case": "byte_copy",
+    "matches_measured_before": true
+  },
+  {
+    "case": "byte_search",
+    "matches_measured_before": true
+  },
+  {
+    "case": "array_scan",
+    "matches_measured_before": true
+  },
+  {
+    "case": "array_scatter",
+    "matches_measured_before": true
+  },
+  {
+    "case": "sieve",
+    "matches_measured_before": true
+  },
+  {
+    "case": "heapsort",
+    "matches_measured_before": true
+  },
+  {
+    "case": "escaped_nodes",
+    "matches_measured_before": true
+  },
+  {
+    "case": "int_mix",
+    "matches_measured_before": true
+  },
+  {
+    "case": "branch_mix",
+    "matches_measured_before": true
+  },
+  {
+    "case": "float_recurrence",
+    "matches_measured_before": true
+  },
+  {
+    "case": "mandelbrot",
+    "matches_measured_before": true
+  },
+  {
+    "case": "recursive_tree",
+    "matches_measured_before": true
+  },
+  {
+    "case": "ascii_parse",
+    "matches_measured_before": true
+  },
+  {
+    "case": "string_concat",
+    "matches_measured_before": true
+  },
+  {
+    "case": "string_builder",
+    "matches_measured_before": true
+  }
+]

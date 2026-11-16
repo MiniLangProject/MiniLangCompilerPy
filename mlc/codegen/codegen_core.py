@@ -373,6 +373,9 @@ class CodegenCore:
         # Conservative per-function representation facts and active proven
         # loop-index/container relationships used by optimized lowering.
         self._known_value_types: dict[str, str] = {}
+        # Stronger facts are consumed explicitly by new numeric lowering;
+        # existing diagnostics and optimizations retain their original facts.
+        self._known_numeric_value_types: dict[str, str] = {}
         self._loop_index_fast_stack: list[dict[str, Any]] = []
 
         # ------------------------------------------------------------
@@ -869,7 +872,13 @@ class CodegenCore:
         if hasattr(self, "emit_load_var_scoped") and callable(getattr(self, "emit_load_var_scoped")):
             # Params are always visible in functions.
             if self.in_function and name in self.func_param_offsets:
-                a.mov_rax_rsp_disp32(self.func_param_offsets[name])
+                # A captured parameter's stack home contains an OBJ_BOX cell,
+                # not the parameter value. Reuse the scoped cell dereference.
+                binding = self.resolve_binding(name)
+                if binding is not None and bool(getattr(binding, 'boxed', False)):
+                    self.emit_load_var_scoped(name, node)
+                else:
+                    a.mov_rax_rsp_disp32(self.func_param_offsets[name])
                 return
 
             # Lexical lookup (locals must have been introduced by a prior write)
@@ -909,7 +918,7 @@ class CodegenCore:
         Step 9: if CodegenScope is integrated, use lexical scoping rules:
           - first write in a scope introduces a binding in that scope
           - writes update the nearest existing binding (including globals)
-          - function parameters always write to their param slots
+          - function parameters write to their slots or captured cells
         Otherwise, fall back to legacy behavior.
         """
         # Normalize identifier representation (frontend may pass tokens/nodes)
@@ -921,9 +930,13 @@ class CodegenCore:
 
         # New scoped semantics (preferred)
         if hasattr(self, "emit_store_var_scoped") and callable(getattr(self, "emit_store_var_scoped")):
-            # Params always target their stack slots.
+            # Captured parameters retain their cell pointer in the stack slot.
             if self.in_function and name in self.func_param_offsets:
-                a.mov_rsp_disp32_rax(self.func_param_offsets[name])
+                binding = self.resolve_binding(name)
+                if binding is not None and bool(getattr(binding, 'boxed', False)):
+                    self.emit_store_var_scoped(name, node)
+                else:
+                    a.mov_rsp_disp32_rax(self.func_param_offsets[name])
                 return
 
             # In functions, ensure local bindings have a concrete stack slot.
@@ -1083,6 +1096,39 @@ class CodegenCore:
         a.mark(l_box)
         a.call('fn_box_float')
         a.mark(l_end)
+
+    def emit_normalize_xmm0_for_double_consumer(self) -> None:
+        """Keep normalize(XMM0) unboxed for an immediate numeric consumer.
+
+        This is not ordinary double arithmetic: exact integer results are first
+        retagged to reproduce signed-61 wrap, then converted back to double. Keep
+        the normalizer's unordered/equal branch and float32 probe unchanged;
+        only the intermediate representation and allocation are unnecessary.
+        The caller must not keep this raw XMM0 across a call or a safepoint.
+        """
+        a = self.asm
+        lid = self.new_label_id()
+        l_int = f'norm_double_int_{lid}'
+        l_float = f'norm_double_float_{lid}'
+        l_done = f'norm_double_done_{lid}'
+        a.cvttsd2si_r64_xmm('rax', 'xmm0')
+        a.cvtsi2sd_xmm_r64('xmm1', 'rax')
+        a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+        a.jcc('e', l_int)
+        a.jmp(l_float)
+        a.mark(l_int)
+        a.shl_rax_imm8(3)
+        a.or_rax_imm8(TAG_INT)
+        a.sar_rax_imm8(3)
+        a.cvtsi2sd_xmm_r64('xmm0', 'rax')
+        a.jmp(l_done)
+        a.mark(l_float)
+        # Both the exact-f32 and boxed-f64 representations unbox to the original
+        # XMM0. Retain the probe, including its floating-point status effects.
+        a.cvtsd2ss_xmm_xmm('xmm2', 'xmm0')
+        a.cvtss2sd_xmm_xmm('xmm3', 'xmm2')
+        a.ucomisd_xmm_xmm('xmm0', 'xmm3')
+        a.mark(l_done)
 
     def emit_force_xmm0_to_float_value(self) -> None:
         """Encode XMM0 as a float value without normalizing exact integers to TAG_INT."""
