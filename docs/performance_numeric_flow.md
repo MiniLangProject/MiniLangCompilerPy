@@ -1,6 +1,19 @@
-# Numeric value flow and bounded float box elision
+# Numeric value flow and bounded float box elision — Phase 2 checkpoint
 
 Date: 2026-11-16. Branch: `perf/proven-check-elision`.
+
+**Historical version scope.** This report describes the completed Phase 2
+checkpoint, before the guarded nullable/RHS extension. Its measurements,
+validation totals and references to the final compiler apply to these commits:
+
+| Repository | Phase 2 commit |
+|---|---|
+| MiniLangCompilerPy | `0d9fdec53c26281b3b26b75f9c06539a20202ebd` |
+| MiniLangCompilerML | `0e852366880d51ccc39f6fa2e05b384dcc875910` |
+
+Check out both commits for the exact source state described here. The pull
+requests continue with [Phase 3](performance_numeric_nullable.md), whose results
+must be evaluated separately.
 
 This phase adds conservative numeric facts and removes one temporary float
 materialization in a restricted arithmetic pattern. The historical
@@ -18,7 +31,7 @@ materializations. No general speedup is claimed: thirteen other primary images
 are byte-identical, and Mandelbrot has no consistent timing improvement.
 
 The measured comparison baseline is the completed first-round check-elision
-compiler. The public baseline wrapper uses the current Python compiler with new
+compiler. The public baseline wrapper uses the Phase 2 Python compiler with new
 known-type queries forced to legacy and child-root box elision disabled.
 For the fifteen original benchmark programs with matching source/import paths,
 it reproduces every actually measured before image byte-for-byte. This is a
@@ -279,9 +292,13 @@ intermediate normalization. Neither is implemented by this change.
 
 ## Reproduction and evidence
 
-From the Python repository next to the MiniLang repository:
+From the Python repository next to the MiniLang repository, first select both
+historical checkpoints:
 
 ```sh
+git checkout 0d9fdec53c26281b3b26b75f9c06539a20202ebd
+git -C ../MiniLangCompilerML checkout 0e852366880d51ccc39f6fa2e05b384dcc875910
+
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 sh ../MiniLangCompilerML/build.sh --compiler "$PWD/mlc_win64.py" \
   --output "$PWD/../MiniLangCompilerML/build/mlc_numeric_flow"
@@ -301,7 +318,9 @@ bash ../MiniLangCompilerML/scripts/run_native_linux_regressions.sh \
 
 The portable runner also accepts `--target windows-x64 --target minux-x64` and
 repeated `--fixture` selections. `--gc-concurrent` is the existing Windows-only
-option. These commands check the current compilers. The historical baseline
+option. These commands reproduce the Phase 2 checks only when both repositories
+are at the pinned commits above; newer branch heads include additional work.
+The historical baseline
 output comparisons reported above were recorded during evaluation; the public
 benchmark wrapper does not replace that compiler for general regression tests.
 

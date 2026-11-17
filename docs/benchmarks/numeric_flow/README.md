@@ -1,9 +1,22 @@
-# Numeric-flow benchmark evidence
+# Numeric-flow benchmark evidence — Phase 2 checkpoint
 
 This directory contains the benchmark source code, independent checksum oracles,
 fixed inputs, individual numeric observations and summaries for the second
 optimization round. The compiler changes and interpretation are described in
 [performance_numeric_flow.md](../../performance_numeric_flow.md).
+
+This is a historical checkpoint. The pull requests now also contain the
+[Phase 3 extension](../../performance_numeric_nullable.md). Reproducing the
+observations in this directory requires both repositories at the Phase 2 source
+state, rather than their moving pull-request heads:
+
+| Repository | Required Phase 2 commit |
+|---|---|
+| MiniLangCompilerPy | `0d9fdec53c26281b3b26b75f9c06539a20202ebd` |
+| MiniLangCompilerML | `0e852366880d51ccc39f6fa2e05b384dcc875910` |
+
+References below to the final compiler and the `after` variant mean this
+checkpoint. The [Phase 3 evidence](../numeric_nullable/README.md) is separate.
 
 ## Published observations
 
@@ -27,14 +40,14 @@ were measured at the same time.
 
 - `before`: the retained first-round proven-check optimizations, before the new
   numeric-flow and boxing work. It is not pristine MiniLang 1.3.9.
-- `inference`: the final compiler with only the new child-box elimination hook
+- `inference`: the Phase 2 compiler with only the new child-box elimination hook
   disabled. This isolates the contribution of boxing from numeric inference.
-- `after`: the final compiler in these pull requests.
+- `after`: the compiler at the two Phase 2 commits listed above.
 - `c_o3` / `cpp_o3`: the same numeric kernel and separate C driver compiled as C11
   or C++17 with GCC/G++ 14.2.0, `-O3 -march=x86-64 -mtune=generic`,
   `-ffp-contract=off -fno-fast-math`, without LTO.
 
-`before_compiler.py` uses the final Python compiler with the new numeric type
+`before_compiler.py` uses the Phase 2 Python compiler with the new numeric type
 queries and child-box elimination disabled. For **all 15 published benchmark
 inputs**, it was checked to reproduce the measured historical `before` images
 byte for byte, using identical source and import paths. This is a
@@ -68,15 +81,18 @@ not cumulative allocation totals.
 Only Linux outputs were executed. Windows, MinUX and Windows concurrent-GC
 configurations were compiled and compared, not runtime-tested.
 
-## Reproduce from the companion pull requests
+## Reproduce the historical checkpoint
 
 Requirements: Linux x86-64, Python 3, GCC/G++, `taskset`, and matching checkouts of
-both compiler pull requests. Run the following in `MiniLangCompilerPy`, with
+both compiler repositories at the pinned commits above. Run the following in `MiniLangCompilerPy`, with
 `MiniLangCompilerML` next to it. The commands create their outputs under `build`.
 Choose an available CPU appropriate to your machine; the example uses the first
 allowed one. Retain the fixed inputs and repeat counts for a comparable run.
 
 ```sh
+git checkout 0d9fdec53c26281b3b26b75f9c06539a20202ebd
+git -C ../MiniLangCompilerML checkout 0e852366880d51ccc39f6fa2e05b384dcc875910
+
 export MINILANG_PY_REPO="$PWD"
 MINILANG_ML_REPO="$(cd ../MiniLangCompilerML && pwd)"
 BENCH_EVIDENCE="$MINILANG_PY_REPO/docs/benchmarks/numeric_flow"

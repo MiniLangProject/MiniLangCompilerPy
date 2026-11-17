@@ -872,6 +872,8 @@ class CodegenStmt:
         no initialization flows unconditionally out of a branch or loop.
         Legacy mode retains the original direct-function initializer rule for
         static diagnostics and previously observable custom return contracts.
+        Extended number? facts are numeric-or-void candidates for guarded
+        lowering only; they never prove that a value is a number.
         Untyped/optional parameters, globals, captures, synchronized values and
         boxed locals are deliberately excluded.
         """
@@ -1194,6 +1196,16 @@ class CodegenStmt:
                 if (op in ('/', '%') and lb in ('int', 'float', 'number')
                         and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right, extended)):
                     return 'number'
+                if extended:
+                    # A fallible numeric division may return void. Retain that
+                    # possibility through arithmetic; only a runtime-guarded
+                    # consumer may use this candidate as a numeric value.
+                    if op == '/' and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                        return 'number?'
+                    if (op in ('+', '-', '*') and 'number?' in (lb, rb)
+                            and lb in ('int', 'float', 'number', 'number?')
+                            and rb in ('int', 'float', 'number', 'number?')):
+                        return 'number?'
                 return None
             if isinstance(expr, getattr(ml, 'Index', ())):
                 tb = self._value_type_base(infer_expr(getattr(expr, 'target', None), known))
@@ -1293,6 +1305,8 @@ class CodegenStmt:
                     merged = inferred[0]
                 elif bases <= {'int', 'float', 'number'}:
                     merged = 'number'
+                elif extended and 'number?' in bases and bases <= {'int', 'float', 'number', 'number?'}:
+                    merged = 'number?'
                 elif len(bases) == 1 and next(iter(bases), None) in ('array', 'bytes', 'string'):
                     merged = next(iter(bases))
                 if merged and facts.get(name) != merged:
@@ -1319,6 +1333,7 @@ class CodegenStmt:
                     continue
                 bases = {self._value_type_base(x) for x in inferred}
                 valid = (len(set(inferred)) == 1 or bases <= {'int', 'float', 'number'} or
+                         (extended and 'number?' in bases and bases <= {'int', 'float', 'number', 'number?'}) or
                          (len(bases) == 1 and next(iter(bases), None) in ('array', 'bytes', 'string')))
                 if not valid:
                     del facts[name]

@@ -24,6 +24,9 @@ FIXTURES = {
     "numeric_typeflow_boxing": "NUMERIC TYPEFLOW BOXING [OK]",
     "numeric_typeflow_typeof": "NUMERIC TYPEFLOW TYPEOF [OK]",
     "numeric_typeflow_tofloat": "NUMERIC TYPEFLOW TOFLOAT [OK]",
+    "numeric_nullable_boxing": "NUMERIC NULLABLE BOXING [OK]",
+    "numeric_nullable_typeof": "NUMERIC NULLABLE TYPEOF [OK]",
+    "numeric_nullable_tofloat": "NUMERIC NULLABLE TOFLOAT [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -140,6 +143,63 @@ def inspect_assembly(fixture, assembly):
     if fixture == "numeric_typeflow_tofloat":
         contains("converted", "numeric_float_fast_", False)
         contains("converted", "float_parent_nobox_fast_", False)
+
+    if fixture == "numeric_nullable_boxing":
+        positive = ("variableFloatRight", "variableFloatMulRight",
+                    "variableFloatSubRight", "variableNumberRight", "nullableAdd",
+                    "nullableMultiply", "nullableSubtract", "nullableFloatDivisor",
+                    "nullableRight", "caughtNullableRight", "caughtNullableAdd",
+                    "nullableAliasJoin", "nullableLoopJoin", "nullableChain",
+                    "smallMandelbrot", "nullableGc")
+        negative = ("referenceAdd", "referenceMul", "referenceSub", "referenceCaught",
+                    "referenceDivision", "referenceMandelbrot", "readBeforeNumericInit",
+                    "zeroTripRight", "noFuseRightCall", "noFuseBothCalls",
+                    "noFuseErrorOrder", "noFuseRightMember", "noFuseRightIndex",
+                    "noFuseRightGlobal", "noFuseRightSynchronized", "noFuseRightCapture",
+                    "noFuseMixedRight", "optionalRight", "noFuseOpaqueRight",
+                    "noFuseErrorRight")
+        for name in positive:
+            contains(name, "float_parent_nobox_rhs_fast_", True)
+            text = body(name)
+            regions = re.findall(
+                r"(?ms)^float_parent_nobox_child_(\d+):(?P<code>.*?)"
+                r"^float_parent_nobox_materialize_\1:", text)
+            if not regions:
+                raise AssertionError(f"Missing nullable unboxed lifetime boundary: {name}")
+            for label, code in regions:
+                if re.search(r"(?i)\bcall\b", code):
+                    raise AssertionError(f"Nullable float crosses a call: {name} {label}")
+            guards = re.findall(
+                r"(?ms)^float_parent_nobox_rhs_guard_(\d+):(?P<code>.*?)"
+                r"^float_parent_nobox_rhs_fast_\1:", text)
+            if not guards:
+                raise AssertionError(f"Missing actual-float RHS guard: {name}")
+            for label, code in guards:
+                rhs_ok = code.find(f"float_parent_nobox_rhs_ok_{label}:")
+                leaf = code.find(f"float_parent_nobox_leaf_{label}_")
+                if rhs_ok < 0 or leaf < rhs_ok or re.search(r"(?i)\bcall\b", code):
+                    raise AssertionError(f"RHS guard does not precede child work: {name} {label}")
+                if f"float_parent_nobox_slow_{label}" not in code:
+                    raise AssertionError(f"Missing original-expression fallback: {name} {label}")
+            checks.append({"function": name, "call_free_unboxed_regions": len(regions),
+                           "rhs_float_guard_before_child": len(guards)})
+        for name in negative:
+            contains(name, "float_parent_nobox_fast_", False)
+        contains("nullableGc", "call fn_box_float", True)
+        # Nullable candidates cannot authorize the unconditional conversion
+        # fastpath. These leaves still need ordinary void/error behavior.
+        for name in ("caughtNullableChild", "nullableConversionTag"):
+            contains(name, "float_parent_nobox_fast_", False)
+
+    if fixture == "numeric_nullable_typeof":
+        for name in ("shadowedDivisor", "shadowedRight"):
+            contains(name, "type_guard_valid_", True)
+            contains(name, "float_parent_nobox_fast_", False)
+            contains(name, "numeric_float_fast_", False)
+
+    if fixture == "numeric_nullable_tofloat":
+        for name in ("shadowedDivision", "shadowedRight", "reference"):
+            contains(name, "float_parent_nobox_fast_", False)
     return checks
 
 
@@ -182,7 +242,9 @@ def main():
                         listing = work / f"{target}-{fixture}.asm"
                         inspect_paths = host == "python" and fixture in (
                             "proven_check_elision", "numeric_typeflow_boxing",
-                            "numeric_typeflow_typeof", "numeric_typeflow_tofloat")
+                            "numeric_typeflow_typeof", "numeric_typeflow_tofloat",
+                            "numeric_nullable_boxing", "numeric_nullable_typeof",
+                            "numeric_nullable_tofloat")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:

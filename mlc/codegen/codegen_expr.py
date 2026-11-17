@@ -836,6 +836,16 @@ class CodegenExpr:
             if (op in ('/', '%') and lb in ('int', 'float', 'number')
                     and rb in ('int', 'float', 'number') and self._opt_const_nonzero_number(right, extended)):
                 return 'number'
+            if extended:
+                # Keep fallible numeric arithmetic as a candidate, not a type
+                # guarantee. Only consumers with complete runtime tag guards
+                # may use number?; direct numeric lowering must reject it.
+                if op == '/' and lb in ('int', 'float', 'number') and rb in ('int', 'float', 'number'):
+                    return 'number?'
+                if (op in ('+', '-', '*') and 'number?' in (lb, rb)
+                        and lb in ('int', 'float', 'number', 'number?')
+                        and rb in ('int', 'float', 'number', 'number?')):
+                    return 'number?'
             return None
         if isinstance(e, getattr(ml, 'Index', ())):
             target_type = self._opt_expr_known_type(getattr(e, 'target', None), extended)
@@ -1359,7 +1369,11 @@ class CodegenExpr:
         return True
 
     def _opt_float_child_local_leaves(self, expr: Any, depth: int = 0) -> Optional[list[Any]]:
-        """Prove a bounded, call-free numeric tree and collect its local leaves."""
+        """Collect bounded, call-free numeric candidates for runtime guards.
+
+        A number? fact permits void, so it is not a numeric guarantee. Every
+        collected local is checked before evaluating the guarded expression.
+        """
         if depth > 2:
             return None
         if isinstance(expr, self.ml.Num):
@@ -1369,7 +1383,7 @@ class CodegenExpr:
                 return None
             fact = self._opt_value_type_base(self._opt_expr_known_type(expr, True))
             binding = self.resolve_binding(expr.name)
-            if (fact not in ('int', 'float', 'number') or binding is None
+            if (fact not in ('int', 'float', 'number', 'number?') or binding is None
                     or binding.kind not in ('local', 'param') or binding.boxed
                     or binding.capture_index is not None):
                 return None
@@ -1386,7 +1400,7 @@ class CodegenExpr:
         return None
 
     def _opt_emit_float_parent_without_child_box(self, e: Any) -> bool:
-        """Elide one numeric child's box when a float-literal parent consumes it.
+        """Elide one numeric child's box for an actual-float parent operand.
 
         Deeper operands retain ordinary rooted evaluation. After that boundary,
         the child's canonical numeric value lives only in XMM0 until the parent
@@ -1394,9 +1408,19 @@ class CodegenExpr:
         call, changes integer arithmetic, or reassociates floating operations.
         """
         ml = self.ml
-        if (e.op not in ('+', '-', '*') or not isinstance(e.right, ml.Num)
-                or type(e.right.value) is not float or not isinstance(e.left, ml.Bin)
+        if (e.op not in ('+', '-', '*') or not isinstance(e.left, ml.Bin)
                 or e.left.op not in ('+', '-', '*')):
+            return False
+        rhs_is_local = False
+        if isinstance(e.right, ml.Num) and type(e.right.value) is float:
+            pass
+        elif isinstance(e.right, ml.Var):
+            right_fact = self._opt_value_type_base(self._opt_expr_known_type(e.right, True))
+            if (right_fact not in ('float', 'number', 'number?')
+                    or not self._opt_float_child_local_leaves(e.right)):
+                return False
+            rhs_is_local = True
+        else:
             return False
         child = e.left
         leaves = self._opt_float_child_local_leaves(child)
@@ -1404,7 +1428,8 @@ class CodegenExpr:
             return False
         lhs = self._opt_value_type_base(self._opt_expr_known_type(child.left, True))
         rhs = self._opt_value_type_base(self._opt_expr_known_type(child.right, True))
-        if lhs not in ('int', 'float', 'number') or rhs not in ('int', 'float', 'number'):
+        numeric_candidates = ('int', 'float', 'number', 'number?')
+        if lhs not in numeric_candidates or rhs not in numeric_candidates:
             return False
         # An integer-only or folded child has no runtime float box to remove.
         if lhs == rhs == 'int':
@@ -1421,9 +1446,27 @@ class CodegenExpr:
         l_parent = f'float_parent_nobox_parent_{lid}'
         l_done = f'float_parent_nobox_done_{lid}'
         a.mark(f'float_parent_nobox_guard_{lid}')
+        if rhs_is_local:
+            a.mark(f'float_parent_nobox_rhs_guard_{lid}')
+            l_rhs_ok = f'float_parent_nobox_rhs_ok_{lid}'
+            self.emit_expr(e.right)
+            a.mov_r64_r64('rdx', 'rax')
+            a.and_r64_imm('rdx', 7)
+            a.cmp_r64_imm('rdx', TAG_FLOAT)
+            a.jcc('e', l_rhs_ok)
+            a.cmp_r64_imm('rdx', TAG_PTR)
+            a.jcc('ne', l_slow)
+            a.mov_r32_membase_disp('edx', 'rax', 0)
+            a.cmp_r32_imm('edx', OBJ_FLOAT)
+            a.jcc('ne', l_slow)
+            a.mark(l_rhs_ok)
+            # An actual int RHS must retain the original int/int parent path.
+            # Converting the child to double first could lose bits above 2^53.
         # Guard the leaf facts before evaluating either subtree. A miss reaches
         # the original expression exactly once, including its error behavior.
         # Locals cannot change here: calls, captures and globals are excluded.
+        # This also holds under try: successful guards leave only total numeric
+        # +,-,* operations; every miss retains the original suppression scope.
         for i, leaf in enumerate(leaves):
             fact = self._opt_value_type_base(self._opt_expr_known_type(leaf, True))
             l_ok = f'float_parent_nobox_leaf_{lid}_{i}'
@@ -1434,7 +1477,7 @@ class CodegenExpr:
                 a.cmp_r64_imm('rdx', TAG_INT)
                 a.jcc('ne', l_slow)
             else:
-                if fact == 'number':
+                if fact in ('number', 'number?'):
                     a.cmp_r64_imm('rdx', TAG_INT)
                     a.jcc('e', l_ok)
                 a.cmp_r64_imm('rdx', TAG_FLOAT)
@@ -1447,6 +1490,8 @@ class CodegenExpr:
             a.mark(l_ok)
 
         a.mark(f'float_parent_nobox_fast_{lid}')
+        if rhs_is_local:
+            a.mark(f'float_parent_nobox_rhs_fast_{lid}')
         left_tmp = self.alloc_expr_temps(8)
         self.emit_expr(child.left)
         a.mov_rsp_disp32_rax(left_tmp)
@@ -1488,8 +1533,13 @@ class CodegenExpr:
         self.emit_normalize_xmm0_for_double_consumer()
 
         a.mark(l_parent)
-        # Loading this literal cannot call, collect, or overwrite raw XMM0.
-        self._opt_emit_const_value(e.right.value)
+        # The ordinary local remains rooted during deeper operand evaluation.
+        # Reload it after possible collections; never keep an earlier raw value.
+        # Either permitted RHS load cannot call or overwrite raw XMM0.
+        if rhs_is_local:
+            self.emit_expr(e.right)
+        else:
+            self._opt_emit_const_value(e.right.value)
         self.emit_to_double_xmm(1, l_slow)
         if e.op == '+':
             a.addsd_xmm_xmm('xmm0', 'xmm1')

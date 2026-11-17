@@ -5139,7 +5139,13 @@ def main() -> int:
             ("numeric_typeflow_typeof", "NUMERIC TYPEFLOW TYPEOF [OK]",
              "numeric type flow preserves custom typeof"),
             ("numeric_typeflow_tofloat", "NUMERIC TYPEFLOW TOFLOAT [OK]",
-             "numeric type flow preserves custom toFloat")):
+             "numeric type flow preserves custom toFloat"),
+            ("numeric_nullable_boxing", "NUMERIC NULLABLE BOXING [OK]",
+             "nullable numeric candidates and guarded float RHS"),
+            ("numeric_nullable_typeof", "NUMERIC NULLABLE TYPEOF [OK]",
+             "nullable candidates preserve custom typeof"),
+            ("numeric_nullable_tofloat", "NUMERIC NULLABLE TOFLOAT [OK]",
+             "nullable candidates preserve custom toFloat")):
         tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(
             name="codegen: " + title,
             mlc_runner=mlc_runner, ml_path=tests_root / (fixture + ".ml"),

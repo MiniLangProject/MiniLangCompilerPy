@@ -1,0 +1,36 @@
+[
+  {
+    "case": "float_recurrence",
+    "executable_segment_bytes": {
+      "before": 208291,
+      "nullable_only": 208291,
+      "rhs_only": 208291,
+      "after": 208291
+    },
+    "same_as_before": {
+      "nullable_only": true,
+      "rhs_only": true,
+      "after": true
+    },
+    "after_python_native_identical": true,
+    "static_rhs_box_elision_sites": 0,
+    "static_rhs_sites_include_cold_fallback": false
+  },
+  {
+    "case": "mandelbrot",
+    "executable_segment_bytes": {
+      "before": 70826,
+      "nullable_only": 70826,
+      "rhs_only": 70826,
+      "after": 73322
+    },
+    "same_as_before": {
+      "nullable_only": true,
+      "rhs_only": true,
+      "after": false
+    },
+    "after_python_native_identical": true,
+    "static_rhs_box_elision_sites": 3,
+    "static_rhs_sites_include_cold_fallback": true
+  }
+]
