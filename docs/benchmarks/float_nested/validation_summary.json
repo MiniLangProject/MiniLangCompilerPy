@@ -1,0 +1,55 @@
+{
+  "parity_cases": 88,
+  "compared_images": 264,
+  "linux_runtime_cases": 36,
+  "compared_platforms": {
+    "linux_x64": {
+      "parity_cases": 36,
+      "compared_images": 108,
+      "runtime_cases": 36,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 0
+    },
+    "windows_x64": {
+      "parity_cases": 33,
+      "compared_images": 99,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 14,
+      "concurrent_gc_images": 42,
+      "compile_only_cases": 33
+    },
+    "minux_x64": {
+      "parity_cases": 19,
+      "compared_images": 57,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 19
+    }
+  },
+  "all_linux_outputs_equal_baseline": true,
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  },
+  "success": true,
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "bootstrap_selfhost_identical": true,
+  "native_compiler_bytes": 66241424,
+  "disabled_nested_loop_hooks_reproduce_baseline_images": true,
+  "float_comparison_pair_orders_balanced": true,
+  "primary_correctness_runs": 294,
+  "primary_full_size_correctness_runs": 30,
+  "float_comparison_correctness_runs": 36,
+  "gc_diagnostic_runs": 20,
+  "primary_timed_runs": 330,
+  "float_comparison_timed_runs": 88,
+  "all_timed_checksums_and_warmups_valid": true,
+  "unchanged_primary_images": 14
+}

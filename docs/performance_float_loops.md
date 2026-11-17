@@ -1,6 +1,20 @@
-# Guarded float loops
+# Guarded float loops — Phase 5 checkpoint
 
-Date: 2026-11-17. Branch: `perf/proven-check-elision`.
+Date: 2026-11-17.
+
+**Historical version scope.** This report describes the completed Phase 5
+checkpoint. Its measurements, validation totals and implementation references
+apply to these public commits:
+
+| Repository | Phase 5 commit |
+|---|---|
+| MiniLangCompilerPy | `b1f8cc0ef85831895724ec40665a07ec74d7740b` |
+| MiniLangCompilerML | `b15ec01c44ebba4b27d4c079604c4554caf000ed` |
+
+The repositories now continue on `main` with
+[Phase 6: nested float loops](performance_float_nested.md). Use the pinned
+commits above to reproduce Phase 5. Its comparison boundary and observations
+remain separate from the [Phase 6 evidence](benchmarks/float_nested/README.md).
 
 This fifth round keeps eligible floating-point state unboxed across assignments
 and loop iterations. It uses a private, unscanned area of the function frame,
@@ -130,8 +144,8 @@ retained results after another collection. The Thread fixture verifies code
 generation without starting an operating-system thread.
 
 The implementation is in
-[Python statement lowering](https://github.com/MiniLangProject/MiniLangCompilerPy/blob/perf/proven-check-elision/mlc/codegen/codegen_stmt.py)
-and [MiniLang statement lowering](https://github.com/MiniLangProject/MiniLangCompilerML/blob/perf/proven-check-elision/mlc/codegen/codegen_stmt.ml),
+[Python statement lowering](https://github.com/MiniLangProject/MiniLangCompilerPy/blob/b1f8cc0ef85831895724ec40665a07ec74d7740b/mlc/codegen/codegen_stmt.py)
+and [MiniLang statement lowering](https://github.com/MiniLangProject/MiniLangCompilerML/blob/b15ec01c44ebba4b27d4c079604c4554caf000ed/mlc/codegen/codegen_stmt.ml),
 with function-context fields in each `codegen_core` module. Existing expression
 normalization and GC helpers are reused. The test harness is
 [check_proven_check_elision.py](../tests/check_proven_check_elision.py).

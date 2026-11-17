@@ -1,6 +1,6 @@
 # Guarded float loops: benchmark evidence
 
-This is the fifth optimization round. See
+This is the historical fifth optimization round. See
 [performance_float_loops.md](../../performance_float_loops.md) for implementation,
 validation and interpretation. All fifteen original benchmark sources, drivers,
 fixed inputs and checksum oracles are reused from
@@ -13,10 +13,18 @@ fixed inputs and checksum oracles are reused from
 - Python: [`6a953bb4f7f51947ba149fd64e2cbbdcefb17876`](https://github.com/MiniLangProject/MiniLangCompilerPy/commit/6a953bb4f7f51947ba149fd64e2cbbdcefb17876).
 - MiniLang: [`ddc67c9c4f9c5828101e884076915f6536a3942c`](https://github.com/MiniLangProject/MiniLangCompilerML/commit/ddc67c9c4f9c5828101e884076915f6536a3942c).
 
-`after` is the matching fifth-round source in the companion pull requests. It
-adds the guarded, transactional raw loop; previous expression optimizations
+`after` is the completed fifth-round source at these fixed commits:
+
+- Python: [`b1f8cc0ef85831895724ec40665a07ec74d7740b`](https://github.com/MiniLangProject/MiniLangCompilerPy/commit/b1f8cc0ef85831895724ec40665a07ec74d7740b).
+- MiniLang: [`b15ec01c44ebba4b27d4c079604c4554caf000ed`](https://github.com/MiniLangProject/MiniLangCompilerML/commit/b15ec01c44ebba4b27d4c079604c4554caf000ed).
+
+It adds the guarded, transactional raw loop; previous expression optimizations
 remain enabled. Both variants compile identical benchmark and standard-library
 paths. Earlier reports retain their own pinned revisions and measurement series.
+The repositories now continue on `main` with
+[Phase 6](../../performance_float_nested.md) and its
+[separate evidence](../float_nested/README.md). The commands below select both
+Phase 5 commits explicitly; they do not measure the current branch tip.
 
 ## Published observations
 
@@ -69,17 +77,21 @@ numbers. These are kernel comparisons, not universal language-speed estimates.
 
 ## Reproduce
 
-Requirements: Linux x86-64, Python 3, Git, GCC/G++, `taskset`, and matching Phase 5
-checkouts of both companion repositories. Start in `MiniLangCompilerPy`, with
-`MiniLangCompilerML` beside it. Use an empty `BENCH_RUN` directory. Finish all
-preparation before timing and do not run compilation concurrently with timings.
+Requirements: Linux x86-64, Python 3, Git, GCC/G++, `taskset`, and checkouts of
+both companion repositories. Start in `MiniLangCompilerPy`, with
+`MiniLangCompilerML` beside it. Use an empty `BENCH_RUN` directory. The commands
+create detached checkouts for both measured revisions without creating branches.
+Finish all preparation before timing and do not run compilation concurrently
+with timings.
 
 ```sh
 MINILANG_PY_REPO="$PWD"
 MINILANG_ML_REPO="$(cd ../MiniLangCompilerML && pwd)"
-BENCH_EVIDENCE="$MINILANG_PY_REPO/docs/benchmarks/float_loops"
-BENCH_ORIGINAL="$MINILANG_PY_REPO/docs/benchmarks/numeric_flow"
 BENCH_RUN="$MINILANG_PY_REPO/build/float-loop-reproduction"
+BENCH_AFTER_PY="$BENCH_RUN/after-py"
+BENCH_AFTER_ML="$BENCH_RUN/after-ml"
+BENCH_EVIDENCE="$BENCH_AFTER_PY/docs/benchmarks/float_loops"
+BENCH_ORIGINAL="$BENCH_AFTER_PY/docs/benchmarks/numeric_flow"
 BENCH_CPU="$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')"
 mkdir -p "$BENCH_RUN"
 
@@ -89,12 +101,18 @@ git -C "$MINILANG_PY_REPO" worktree add --detach "$BENCH_RUN/baseline-py" \
 git -C "$MINILANG_ML_REPO" fetch origin ddc67c9c4f9c5828101e884076915f6536a3942c
 git -C "$MINILANG_ML_REPO" worktree add --detach "$BENCH_RUN/baseline-ml" \
   ddc67c9c4f9c5828101e884076915f6536a3942c
+git -C "$MINILANG_PY_REPO" fetch origin b1f8cc0ef85831895724ec40665a07ec74d7740b
+git -C "$MINILANG_PY_REPO" worktree add --detach "$BENCH_AFTER_PY" \
+  b1f8cc0ef85831895724ec40665a07ec74d7740b
+git -C "$MINILANG_ML_REPO" fetch origin b15ec01c44ebba4b27d4c079604c4554caf000ed
+git -C "$MINILANG_ML_REPO" worktree add --detach "$BENCH_AFTER_ML" \
+  b15ec01c44ebba4b27d4c079604c4554caf000ed
 
 sh "$BENCH_RUN/baseline-ml/build.sh" \
   --compiler "$BENCH_RUN/baseline-py/mlc_win64.py" \
   --output "$BENCH_RUN/baseline-compiler"
-sh "$MINILANG_ML_REPO/build.sh" \
-  --compiler "$MINILANG_PY_REPO/mlc_win64.py" \
+sh "$BENCH_AFTER_ML/build.sh" \
+  --compiler "$BENCH_AFTER_PY/mlc_win64.py" \
   --output "$BENCH_RUN/after-compiler"
 
 mkdir -p "$BENCH_RUN/suite"
@@ -120,31 +138,31 @@ for action in build validate; do
   python3 "$BENCH_EVIDENCE/compare_compilers.py" "$action" \
     --suite "$BENCH_RUN/suite" --before "$BENCH_RUN/baseline-compiler" \
     --after "$BENCH_RUN/after-compiler" \
-    --python-compiler "$MINILANG_PY_REPO/mlc_win64.py" \
-    --stdlib "$MINILANG_PY_REPO" --work "$BENCH_RUN/primary" \
+    --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" \
+    --stdlib "$BENCH_AFTER_PY" --work "$BENCH_RUN/primary" \
     --cpu "$BENCH_CPU" --rounds 11
 done
 python3 "$BENCH_EVIDENCE/diagnose_float_loops.py" prepare \
   --suite "$BENCH_RUN/suite" --before "$BENCH_RUN/baseline-compiler" \
   --after "$BENCH_RUN/after-compiler" \
-  --python-compiler "$MINILANG_PY_REPO/mlc_win64.py" \
-  --stdlib "$MINILANG_PY_REPO" --work "$BENCH_RUN/float-comparison" \
+  --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" \
+  --stdlib "$BENCH_AFTER_PY" --work "$BENCH_RUN/float-comparison" \
   --cpu "$BENCH_CPU" --rounds 11
 
 for action in measure summarize; do
   python3 "$BENCH_EVIDENCE/compare_compilers.py" "$action" \
     --suite "$BENCH_RUN/suite" --before "$BENCH_RUN/baseline-compiler" \
     --after "$BENCH_RUN/after-compiler" \
-    --python-compiler "$MINILANG_PY_REPO/mlc_win64.py" \
-    --stdlib "$MINILANG_PY_REPO" --work "$BENCH_RUN/primary" \
+    --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" \
+    --stdlib "$BENCH_AFTER_PY" --work "$BENCH_RUN/primary" \
     --cpu "$BENCH_CPU" --rounds 11
 done
 for action in measure summarize; do
   python3 "$BENCH_EVIDENCE/diagnose_float_loops.py" "$action" \
     --suite "$BENCH_RUN/suite" --before "$BENCH_RUN/baseline-compiler" \
     --after "$BENCH_RUN/after-compiler" \
-    --python-compiler "$MINILANG_PY_REPO/mlc_win64.py" \
-    --stdlib "$MINILANG_PY_REPO" --work "$BENCH_RUN/float-comparison" \
+    --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" \
+    --stdlib "$BENCH_AFTER_PY" --work "$BENCH_RUN/float-comparison" \
     --cpu "$BENCH_CPU" --rounds 11
 done
 ```
@@ -156,20 +174,20 @@ numeric observations.
 
 ## Reproduce focused semantics and parity
 
-With the compilers above built, run from `MiniLangCompilerPy`:
+With the compilers above built, use the pinned Phase 5 test harness:
 
 ```sh
-python3 tests/check_proven_check_elision.py \
-  --python-compiler mlc_win64.py --native-compiler "$BENCH_RUN/after-compiler" \
+python3 "$BENCH_AFTER_PY/tests/check_proven_check_elision.py" \
+  --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" --native-compiler "$BENCH_RUN/after-compiler" \
   --baseline-compiler "$BENCH_RUN/baseline-compiler" --target linux-x64 \
   --output "$BENCH_RUN/linux-matrix.json"
-python3 tests/check_proven_check_elision.py \
-  --python-compiler mlc_win64.py --native-compiler "$BENCH_RUN/after-compiler" \
+python3 "$BENCH_AFTER_PY/tests/check_proven_check_elision.py" \
+  --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" --native-compiler "$BENCH_RUN/after-compiler" \
   --target windows-x64 --target minux-x64 \
   --fixture numeric_float_loop --fixture numeric_float_loop_typeof \
   --fixture numeric_float_loop_threads --output "$BENCH_RUN/loop-cross.json"
-python3 tests/check_proven_check_elision.py \
-  --python-compiler mlc_win64.py --native-compiler "$BENCH_RUN/after-compiler" \
+python3 "$BENCH_AFTER_PY/tests/check_proven_check_elision.py" \
+  --python-compiler "$BENCH_AFTER_PY/mlc_win64.py" --native-compiler "$BENCH_RUN/after-compiler" \
   --target windows-x64 --gc-concurrent \
   --fixture numeric_float_loop --fixture numeric_float_loop_typeof \
   --fixture numeric_float_loop_threads --output "$BENCH_RUN/loop-concurrent.json"
