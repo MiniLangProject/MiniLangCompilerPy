@@ -1387,6 +1387,36 @@ class CodegenStmt:
                 assigned.append(reg)
         return assigned
 
+    def _opt_float_loop_candidates(self, fn: Any) -> list[Any]:
+        """Find loop sites in this function's lexical statement bodies.
+
+        Accepted raw regions cannot contain another loop, so all sites may
+        reuse one arena. Nested functions and synchronized blocks are not
+        traversed; their scope or synchronization belongs to another region.
+        """
+        ml = self.ml
+        sites: list[Any] = []
+
+        def walk(stmts: list[Any]) -> None:
+            for stmt in stmts or []:
+                if type(stmt) is ml.While:
+                    sites.append(stmt)
+                    walk(stmt.body)
+                elif type(stmt) in (ml.DoWhile, ml.For) or self._is_foreach_stmt(stmt):
+                    walk(getattr(stmt, 'body', []) or [])
+                elif type(stmt) is ml.If:
+                    walk(stmt.then_body)
+                    for _cond, body in stmt.elifs:
+                        walk(body)
+                    walk(stmt.else_body)
+                elif type(stmt) is ml.Switch:
+                    for case in stmt.cases:
+                        walk(case.body)
+                    walk(getattr(stmt, 'default_body', []) or [])
+
+        walk(getattr(fn, 'body', []) or [])
+        return sites
+
     def _opt_float_loop_shape(self, loop: Any) -> Optional[dict[str, Any]]:
         """Plan a bounded pure counted loop without consulting active scopes.
 
@@ -1399,6 +1429,13 @@ class CodegenStmt:
         if type(loop) is not ml.While:
             return None
         cond = getattr(loop, 'cond', None)
+        escape = None
+        if type(cond) is ml.Bin and cond.op == 'and':
+            escape = cond.right
+            cond = cond.left
+            if (type(escape) is not ml.Bin
+                    or escape.op not in ('==', '!=', '<', '<=', '>', '>=')):
+                return None
         if (type(cond) is not ml.Bin or cond.op != '<'
                 or type(cond.left) is not ml.Var):
             return None
@@ -1467,6 +1504,20 @@ class CodegenStmt:
                 return None
             return (count, saved, True)
 
+        # A condition is evaluated against the committed state before the
+        # current iteration's assignments. Seed its leaves before planning
+        # the body and retain an immutable snapshot of those state references.
+        escape_env: dict[str, tuple[int, int]] = {}
+        if escape is not None:
+            left = tree(escape.left)
+            right = tree(escape.right)
+            if left is None or right is None:
+                return None
+            saved = max(left[1], right[1] + 1 if type(escape.right) is ml.Bin else 0)
+            if left[0] + right[0] > 7 or saved > 2 or not (left[2] or right[2]):
+                return None
+            escape_env = dict(env)
+
         for stmt in body[:-1]:
             if (type(stmt) is not ml.Assign
                     or getattr(stmt, 'declared_type', None) not in (None, '')
@@ -1503,7 +1554,9 @@ class CodegenStmt:
         if len(states) > 8:
             return None
         outputs = [(name, env[name][1], output_nodes[name]) for name in output_names]
-        return {'counter': counter, 'bound': bound, 'bound_name': bound_name,
+        return {'counter': counter, 'counter_cond': cond,
+                'escape': escape, 'escape_env': escape_env,
+                'bound': bound, 'bound_name': bound_name,
                 'update': update, 'live_ins': live_ins, 'states': states,
                 'definitions': definitions, 'steps': steps, 'body_locals': body_locals,
                 'outputs': outputs,
@@ -1515,7 +1568,7 @@ class CodegenStmt:
                 or getattr(self, '_inline_call_stack', []) or getattr(self, '_inline_param_stack', [])):
             return 0
         size = 0
-        for stmt in getattr(fn, 'body', []) or []:
+        for stmt in self._opt_float_loop_candidates(fn):
             plan = self._opt_float_loop_shape(stmt)
             if plan is not None:
                 size = max(size, plan['bytes'])
@@ -1577,7 +1630,7 @@ class CodegenStmt:
             return False
         if any(not self._opt_expr_known_int(operand)
                or self._opt_value_type_base(self._opt_expr_known_type(operand)) not in (None, 'int')
-               for operand in (stmt.cond.left, plan['bound'])):
+               for operand in (plan['counter_cond'].left, plan['bound'])):
             return False
         for name in plan['live_ins']:
             fact = self._opt_value_type_base(self._opt_expr_known_type(self.ml.Var(name), True))
@@ -1612,6 +1665,7 @@ class CodegenStmt:
         a = self.asm
         lid = self.new_label_id()
         fast = f'float_loop_fast_{lid}'
+        guard = f'float_loop_guard_{lid}'
         deopt = f'float_loop_deopt_{lid}'
         slow = f'float_loop_slow_{lid}'
         done = f'float_loop_done_{lid}'
@@ -1641,8 +1695,33 @@ class CodegenStmt:
                 for name, node in group:
                     self.emit_store_var(name, node)
 
-        a.mark(f'float_loop_guard_{lid}')
-        for operand in (stmt.cond.left, plan['bound']):
+        def compare_escape(exit_label: str) -> None:
+            escape = plan['escape']
+            a.mark(f'float_loop_condition_{lid}')
+            self._opt_emit_float_loop_raw(escape.left, plan['escape_env'], state_count, 0, deopt)
+            if type(escape.right) is self.ml.Bin:
+                a.movapd_xmm_xmm('xmm4', 'xmm0')
+                self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 1, deopt)
+                a.movapd_xmm_xmm('xmm1', 'xmm0')
+                a.movapd_xmm_xmm('xmm0', 'xmm4')
+            else:
+                self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 0,
+                                              deopt, 'xmm1')
+            a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+            # NaN leaves retain ordinary unordered comparisons. Arithmetic
+            # producing NaN has already taken the normalization bailout.
+            if escape.op == '!=':
+                accepted = f'float_loop_condition_true_{lid}'
+                a.jcc('p', accepted)
+                a.jcc('e', exit_label)
+                a.mark(accepted)
+            else:
+                a.jcc('p', exit_label)
+                a.jcc({'==': 'ne', '<': 'ae', '<=': 'a', '>': 'be', '>=': 'b'}[escape.op],
+                      exit_label)
+
+        a.mark(guard)
+        for operand in (plan['counter_cond'].left, plan['bound']):
             self.emit_expr(operand)
             a.mov_r64_r64('rdx', 'rax')
             a.and_r64_imm('rdx', 7)
@@ -1670,6 +1749,9 @@ class CodegenStmt:
         a.mov_membase_disp_imm32('rsp', flag_off, 0, qword=True)
 
         a.mark(fast)
+        normal_exit = f'float_loop_exit_{lid}'
+        if plan['escape'] is not None:
+            compare_escape(normal_exit)
         for node, definition in plan['steps']:
             self.emit_dbg_line(node)
             if definition is not None:
@@ -1687,10 +1769,15 @@ class CodegenStmt:
         a.add_rax_imm8(8)
         self.emit_store_var(plan['counter'], plan['update'])
         a.mov_membase_disp_imm32('rsp', flag_off, 1, qword=True)
-        normal_exit = f'float_loop_exit_{lid}'
         compare_counter(normal_exit)
         a.jmp(fast)
         a.mark(normal_exit)
+        if plan['escape'] is not None:
+            # A false first condition must preserve the original tagged
+            # outputs, including old aliases and uninitialized write-only slots.
+            a.mov_r64_membase_disp('rax', 'rsp', flag_off)
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('e', done)
         materialize()
         a.jmp(done)
 
@@ -1703,7 +1790,35 @@ class CodegenStmt:
         old_disabled = self._float_loop_disabled
         self._float_loop_disabled = True
         try:
-            self.emit_stmt(stmt)
+            if plan['escape'] is None:
+                self.emit_stmt(stmt)
+            else:
+                # Replay one ordinary condition and body, then try the guards
+                # again. Every miss makes ordinary-loop progress, even if a
+                # condition or body result normalizes to int on every visit.
+                self.emit_gc_safepoint_poll()
+                self.emit_thread_cancellation_poll()
+                self.emit_expr(stmt.cond)
+                if self._opt_value_type_base(self._opt_expr_known_type(stmt.cond)) == 'bool':
+                    a.mark(f'bool_condition_fast_{self.new_label_id()}')
+                    a.cmp_r64_imm('rax', enc_bool(False))
+                    a.jcc('e', done)
+                else:
+                    condition_ok = f'float_loop_condition_ok_{lid}'
+                    a.mov_r64_r64('r10', 'rax')
+                    a.and_r64_imm('r10', 7)
+                    a.cmp_r64_imm('r10', TAG_VOID)
+                    a.jcc('ne', condition_ok)
+                    self._emit_make_error_const(ERR_VOID_OP, 'Cannot use void as condition')
+                    self._emit_auto_errprop()
+                    a.jmp(done)
+                    a.mark(condition_ok)
+                    self.emit_jmp_if_false_rax(done)
+                self.push_scope()
+                self._emit_stmt_list(stmt.body)
+                self.pop_scope()
+                a.mark(f'float_loop_reentry_{lid}')
+                a.jmp(guard)
         finally:
             self._float_loop_disabled = old_disabled
         a.mark(done)
@@ -7511,7 +7626,7 @@ class CodegenStmt:
         self._loop_index_fast_stack = []
         self._float_loop_raw_base = float_loop_raw_base
         self._float_loop_raw_size = float_loop_raw_size
-        self._float_loop_sites = {id(stmt) for stmt in fn.body if type(stmt) is ml.While}
+        self._float_loop_sites = {id(stmt) for stmt in self._opt_float_loop_candidates(fn)}
         self._float_loop_disabled = False
 
         if saved_emit_stack is not None:

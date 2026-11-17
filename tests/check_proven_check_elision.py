@@ -33,6 +33,9 @@ FIXTURES = {
     "numeric_float_loop": "NUMERIC FLOAT LOOP [OK]",
     "numeric_float_loop_typeof": "NUMERIC FLOAT LOOP TYPEOF [OK]",
     "numeric_float_loop_threads": "NUMERIC FLOAT LOOP THREADS [OK]",
+    "numeric_float_nested": "NUMERIC FLOAT NESTED [OK]",
+    "numeric_float_nested_typeof": "NUMERIC FLOAT NESTED TYPEOF [OK]",
+    "numeric_float_nested_threads": "NUMERIC FLOAT NESTED THREADS [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -372,6 +375,116 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
         contains("threadedLoop", "float_loop_fast_", False)
         contains("threadedLoop", "gc_poll_done_", True)
         contains("threadedLoop", "thread_cancel_done_", True)
+
+    if fixture == "numeric_float_nested":
+        # Counts include arithmetic in the escape predicate. The two sibling
+        # sites have separate labels and sequential ownership of one arena.
+        positive = {
+            "nestedCounted": [(2, 1, False)],
+            "nestedBranches": [(2, 1, False), (2, 1, False)],
+            "nestedSiblings": [(5, 2, True), (5, 2, True)],
+            "nestedMandel": [(8, 4, True)],
+            "compoundReentry": [(4, 3, True)],
+            "compoundEscape": [(4, 2, True)],
+            "compoundCounter": [(2, 1, True)],
+            "compoundIntegerEntry": [(5, 2, True)],
+            "compoundNormalizeCondition": [(5, 2, True)],
+            "compoundShortCircuit": [(3, 1, True)],
+            "compoundAliases": [(2, 1, True)],
+            "compoundWriteOnly": [(2, 1, True)],
+            "compoundBothTrees": [(8, 1, True)],
+            "compareEqual": [(2, 1, True)],
+            "compareUnequal": [(2, 1, True)],
+            "compareLess": [(2, 1, True)],
+            "compareLessEqual": [(2, 1, True)],
+            "compareGreater": [(2, 1, True)],
+            "compareGreaterEqual": [(2, 1, True)],
+        }
+        negative = ("referenceCounted", "referenceSiblings", "referenceReentry",
+                    "referenceEscape", "referenceIntegerEntry",
+                    "referenceNormalizeCondition", "referenceAliases",
+                    "referenceBothTrees", "referenceCompare", "referenceMandel",
+                    "noNestedCall", "noNestedGlobal", "noNestedCapture",
+                    "noNestedOldAlias", "noNestedChangingBound", "noNestedOr",
+                    "noNestedDuplicate", "noNestedInline")
+        call_pattern = r"(?i)\bcall(?:_\w+)?(?:\s|\()"
+        for name, expected_regions in positive.items():
+            contains(name, "float_loop_fast_", not gc_concurrent)
+            if gc_concurrent:
+                contains(name, "gc_poll_done_", True)
+                continue
+            text = body(name)
+            regions = re.findall(r"(?ms)^float_loop_fast_(\d+):(.*?)"
+                                 r"^float_loop_exit_\1:", text)
+            if len(regions) != len(expected_regions):
+                raise AssertionError(f"Incorrect nested loop sites: {name}")
+            for (label, code), (operations, groups, compound) in zip(regions, expected_regions):
+                if re.search(call_pattern, code):
+                    raise AssertionError(f"Raw nested state crosses a call: {name} {label}")
+                commit = f"float_loop_commit_{label}:"
+                if code.count(commit) != 1:
+                    raise AssertionError(f"Missing unique nested commit: {name} {label}")
+                speculative, committed = code.split(commit)
+                normalizers = re.findall(r"(?ms)^float_tree_normalize_\d+:(.*?)"
+                                         r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
+                if len(normalizers) != operations or "float_tree_normalize_" in committed:
+                    raise AssertionError(f"Incorrect nested normalization boundaries: {name} {label}")
+                for normalizer in normalizers:
+                    if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
+                                     + re.escape(f"float_loop_deopt_{label}") + r"\b", normalizer):
+                        raise AssertionError(f"Missing nested integer/NaN bailout: {name} {label}")
+                if not re.search(r"\b(?:jmp|jl)\s+" + re.escape(f"float_loop_fast_{label}")
+                                 + r"\b", committed):
+                    raise AssertionError(f"Missing nested committed backedge: {name} {label}")
+                guard = re.search(r"(?ms)^float_loop_guard_" + re.escape(label) + r":(.*?)"
+                                  r"^float_loop_fast_" + re.escape(label) + r":", text)
+                if not guard or re.search(call_pattern, guard[1]):
+                    raise AssertionError(f"Invalid nested entry guard: {name} {label}")
+                zero_trip = re.search(r"\bjge\s+" + re.escape(f"float_loop_done_{label}")
+                                      + r"\b", guard[1])
+                if not zero_trip or guard[1].find(f"float_loop_leaf_{label}_") < zero_trip.end():
+                    raise AssertionError(f"Nested condition precedes zero-trip check: {name} {label}")
+                exit_path = re.search(r"(?ms)^float_loop_exit_" + re.escape(label) + r":(.*?)"
+                                      r"^float_loop_deopt_" + re.escape(label) + r":", text)
+                if (not exit_path or "float_loop_materialize_" not in exit_path[1]
+                        or len(re.findall(r"\bcall\s+fn_box_float\b", exit_path[1])) != groups):
+                    raise AssertionError(f"Incorrect nested output alias groups: {name} {label}")
+                condition_marker = f"float_loop_condition_{label}:"
+                if (condition_marker in speculative) != compound:
+                    raise AssertionError(f"Incorrect compound condition path: {name} {label}")
+                reentry = re.search(r"(?ms)^float_loop_reentry_" + re.escape(label)
+                                    + r":(.*?)^float_loop_done_" + re.escape(label) + r":", text)
+                if bool(reentry) != compound:
+                    raise AssertionError(f"Incorrect ordinary-iteration reentry: {name} {label}")
+                if compound:
+                    if not re.search(r"\bjmp\s+" + re.escape(f"float_loop_guard_{label}")
+                                     + r"\b", reentry[1]):
+                        raise AssertionError(f"Missing reentry guard backedge: {name} {label}")
+                    before_materialize = exit_path[1].split("float_loop_materialize_", 1)[0]
+                    if not re.search(r"\bje\s+" + re.escape(f"float_loop_done_{label}")
+                                     + r"\b", before_materialize):
+                        raise AssertionError(f"First false condition materializes outputs: {name} {label}")
+                    slow = text.find(f"float_loop_slow_{label}:")
+                    if slow < 0 or slow >= reentry.start():
+                        raise AssertionError(f"Reentry precedes ordinary retry: {name} {label}")
+                checks.append({"function": name, "loop_label": label,
+                               "compound_condition": compound,
+                               "call_free_raw_region": True,
+                               "normalizers_before_commit": operations,
+                               "exit_materialization_groups": groups,
+                               "ordinary_iteration_reentry": compound})
+        for name in negative:
+            contains(name, "float_loop_fast_", False)
+
+    if fixture == "numeric_float_nested_typeof":
+        for name in ("shadowedNested", "shadowedCompound"):
+            contains(name, "type_guard_valid_", True)
+            contains(name, "float_loop_fast_", False)
+
+    if fixture == "numeric_float_nested_threads":
+        contains("threadedNested", "float_loop_fast_", False)
+        contains("threadedNested", "gc_poll_done_", True)
+        contains("threadedNested", "thread_cancel_done_", True)
     return checks
 
 
@@ -419,7 +532,8 @@ def main():
                             "numeric_nullable_tofloat", "numeric_float_tree",
                             "numeric_float_tree_typeof", "numeric_float_tree_tofloat",
                             "numeric_float_loop", "numeric_float_loop_typeof",
-                            "numeric_float_loop_threads")
+                            "numeric_float_loop_threads", "numeric_float_nested",
+                            "numeric_float_nested_typeof", "numeric_float_nested_threads")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:
