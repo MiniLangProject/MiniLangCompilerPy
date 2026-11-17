@@ -1,6 +1,19 @@
-# Guarded nullable numeric candidates and variable float operands
+# Guarded nullable numeric candidates and variable float operands — Phase 3 checkpoint
 
 Date: 2026-11-17. Branch: `perf/proven-check-elision`.
+
+**Historical version scope.** This report describes the completed Phase 3
+checkpoint. Its measurements, validation totals and references to the full
+compiler apply to these public commits:
+
+| Repository | Phase 3 commit |
+|---|---|
+| MiniLangCompilerPy | `45f63f6ef125863003cd6e2959916635f34a72ec` |
+| MiniLangCompilerML | `a96f41f6396e3bbaf841643d9a174c1a39902ada` |
+
+Select both commits to reproduce this source state. The pull requests continue
+with [Phase 4: guarded float expression trees](performance_float_trees.md).
+Each phase retains its own comparison baseline and measurement series.
 
 This phase extends the bounded float-box optimization from the
 [Phase 2 checkpoint](performance_numeric_flow.md). It adds guarded candidates
@@ -314,9 +327,12 @@ they do not establish a general MiniLang speedup.
 ## Reproduce the semantic checks
 
 From `MiniLangCompilerPy`, with the matching `MiniLangCompilerML` checkout beside
-it, build the current source and run the focused matrix:
+it, first select both Phase 3 checkpoints, then run the focused matrix:
 
 ```sh
+git checkout 45f63f6ef125863003cd6e2959916635f34a72ec
+git -C ../MiniLangCompilerML checkout a96f41f6396e3bbaf841643d9a174c1a39902ada
+
 sh ../MiniLangCompilerML/build.sh --compiler "$PWD/mlc_win64.py" \
   --output "$PWD/../MiniLangCompilerML/build/mlc_numeric_nullable"
 sh ../MiniLangCompilerML/build.sh \
@@ -336,5 +352,6 @@ python3 tests/check_proven_check_elision.py --python-compiler mlc_win64.py \
 The optional `--baseline-compiler` argument compares observable output against
 a separately built Phase 2 compiler. The exact historical commits are listed
 in the [Phase 2 reproduction instructions](benchmarks/numeric_flow/README.md).
-Omitting the argument checks the current program assertions and compiler-image
-parity; it does not claim a fresh comparison with a historical binary.
+Omitting the argument checks the selected checkpoint's program assertions and
+compiler-image parity; it does not claim a fresh comparison with a historical
+binary. Newer pull-request heads include additional work.

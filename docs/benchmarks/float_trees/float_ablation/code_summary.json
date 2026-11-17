@@ -1,0 +1,42 @@
+[
+  {
+    "case": "float_recurrence",
+    "executable_segment_bytes": {
+      "before": 208291,
+      "arithmetic_only": 212515,
+      "comparison_only": 208291,
+      "after": 212515
+    },
+    "same_as_before": {
+      "arithmetic_only": false,
+      "comparison_only": true,
+      "after": false
+    },
+    "after_python_native_identical": true,
+    "disabled_tree_hook_identical_to_before": true,
+    "static_tree_arithmetic_roots": 6,
+    "static_tree_comparison_roots": 0,
+    "static_tree_normalizers": 14,
+    "static_sites_include_fallback_paths": true
+  },
+  {
+    "case": "mandelbrot",
+    "executable_segment_bytes": {
+      "before": 73322,
+      "arithmetic_only": 75114,
+      "comparison_only": 73802,
+      "after": 75562
+    },
+    "same_as_before": {
+      "arithmetic_only": false,
+      "comparison_only": false,
+      "after": false
+    },
+    "after_python_native_identical": true,
+    "disabled_tree_hook_identical_to_before": true,
+    "static_tree_arithmetic_roots": 3,
+    "static_tree_comparison_roots": 1,
+    "static_tree_normalizers": 5,
+    "static_sites_include_fallback_paths": true
+  }
+]

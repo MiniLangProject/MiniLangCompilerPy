@@ -5145,7 +5145,13 @@ def main() -> int:
             ("numeric_nullable_typeof", "NUMERIC NULLABLE TYPEOF [OK]",
              "nullable candidates preserve custom typeof"),
             ("numeric_nullable_tofloat", "NUMERIC NULLABLE TOFLOAT [OK]",
-             "nullable candidates preserve custom toFloat")):
+             "nullable candidates preserve custom toFloat"),
+            ("numeric_float_tree", "NUMERIC FLOAT TREE [OK]",
+             "bounded float trees preserve intermediate normalization"),
+            ("numeric_float_tree_typeof", "NUMERIC FLOAT TREE TYPEOF [OK]",
+             "bounded float trees preserve custom typeof"),
+            ("numeric_float_tree_tofloat", "NUMERIC FLOAT TREE TOFLOAT [OK]",
+             "bounded float trees preserve custom toFloat")):
         tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(
             name="codegen: " + title,
             mlc_runner=mlc_runner, ml_path=tests_root / (fixture + ".ml"),

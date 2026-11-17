@@ -1,9 +1,21 @@
-# Guarded nullable arithmetic: benchmark evidence
+# Guarded nullable arithmetic: benchmark evidence — Phase 3 checkpoint
 
 This is the third optimization round. The implementation and interpretation are
 described in [performance_numeric_nullable.md](../../performance_numeric_nullable.md).
 The original 15 kernels, drivers and independent checksum oracles are reused
 from [the preceding evidence folder](../numeric_flow/suite/).
+
+These observations describe a historical checkpoint. The pull requests now
+also contain [Phase 4](../../performance_float_trees.md). Reproduce this
+folder's `after` compiler with the following source revisions:
+
+| Repository | Required Phase 3 commit |
+|---|---|
+| MiniLangCompilerPy | `45f63f6ef125863003cd6e2959916635f34a72ec` |
+| MiniLangCompilerML | `a96f41f6396e3bbaf841643d9a174c1a39902ada` |
+
+The [Phase 4 observations](../float_trees/README.md) use a separate baseline
+and measurement series.
 
 ## Comparison boundary
 
@@ -13,8 +25,8 @@ optimization. Its public compiler revisions are:
 - Python: [`0d9fdec53c26281b3b26b75f9c06539a20202ebd`](https://github.com/MiniLangProject/MiniLangCompilerPy/commit/0d9fdec53c26281b3b26b75f9c06539a20202ebd).
 - MiniLang: [`0e852366880d51ccc39f6fa2e05b384dcc875910`](https://github.com/MiniLangProject/MiniLangCompilerML/commit/0e852366880d51ccc39f6fa2e05b384dcc875910).
 
-`after` is the matching next-round compiler source in these companion pull
-requests. It combines guarded nullable numeric candidates with variable-RHS
+`after` is the compiler at the two Phase 3 commits listed above. It combines
+guarded nullable numeric candidates with variable-RHS
 float-parent box elision. A candidate is not a guaranteed numeric type and is
 not a new language annotation. Actual numeric leaf tags and an actual float RHS
 are checked before evaluating an eligible expression.
@@ -83,13 +95,17 @@ fallback site; this does not mean three saved objects per iteration.
 
 ## Reproduce
 
-Requirements: Linux x86-64, Python 3, GCC/G++, `taskset`, Git and matching checkouts
-of both companion pull requests. Run from `MiniLangCompilerPy`, with
+Requirements: Linux x86-64, Python 3, GCC/G++, `taskset`, Git and clean matching
+checkouts of both repositories at the Phase 3 commits above. Run from
+`MiniLangCompilerPy`, with
 `MiniLangCompilerML` next to it. Use an empty `BENCH_RUN` directory for a new run.
 The baseline worktrees use the public historical revisions, while the measured
 benchmark source and standard-library paths are identical for before and after.
 
 ```sh
+git checkout 45f63f6ef125863003cd6e2959916635f34a72ec
+git -C ../MiniLangCompilerML checkout a96f41f6396e3bbaf841643d9a174c1a39902ada
+
 MINILANG_PY_REPO="$PWD"
 MINILANG_ML_REPO="$(cd ../MiniLangCompilerML && pwd)"
 BENCH_EVIDENCE="$MINILANG_PY_REPO/docs/benchmarks/numeric_nullable"

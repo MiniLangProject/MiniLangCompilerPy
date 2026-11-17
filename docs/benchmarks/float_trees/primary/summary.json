@@ -1,0 +1,362 @@
+[
+  {
+    "case": "byte_copy",
+    "n": 8388608,
+    "reps": 24,
+    "rounds": 11,
+    "median_ms": {
+      "before": 14.584426666666666,
+      "after": 14.142793
+    },
+    "relative_iqr": {
+      "before": 0.09199479730433924,
+      "after": 0.15182763345731398
+    },
+    "median_speedup": 1.0312267645200397,
+    "paired_median_speedup": 1.0441731287919342,
+    "pair_min": 0.8192991268849436,
+    "pair_max": 1.2491242701382026,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 63084,
+      "after": 63084
+    }
+  },
+  {
+    "case": "byte_search",
+    "n": 8388608,
+    "reps": 56,
+    "rounds": 11,
+    "median_ms": {
+      "before": 3.402990375,
+      "after": 3.842285
+    },
+    "relative_iqr": {
+      "before": 0.16521501537977676,
+      "after": 0.31364667397506585
+    },
+    "median_speedup": 0.8856683913348437,
+    "paired_median_speedup": 0.9448157896340575,
+    "pair_min": 0.7390404427915058,
+    "pair_max": 1.3043718608720218,
+    "faster_pairs": 3,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66539,
+      "after": 66539
+    }
+  },
+  {
+    "case": "array_scan",
+    "n": 194470,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 20.5427414375,
+      "after": 20.6118933125
+    },
+    "relative_iqr": {
+      "before": 0.08888595178766047,
+      "after": 0.051698092278295166
+    },
+    "median_speedup": 0.99664504982868,
+    "paired_median_speedup": 0.9845723661368487,
+    "pair_min": 0.9680226973812113,
+    "pair_max": 1.1298389021997772,
+    "faster_pairs": 4,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66826,
+      "after": 66826
+    }
+  },
+  {
+    "case": "array_scatter",
+    "n": 225245,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 23.3417945,
+      "after": 22.6204635625
+    },
+    "relative_iqr": {
+      "before": 0.0925062954135767,
+      "after": 0.08667905918826813
+    },
+    "median_speedup": 1.03188842419197,
+    "paired_median_speedup": 1.0133196686061268,
+    "pair_min": 0.9802728018712701,
+    "pair_max": 1.1671550138963644,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 66602,
+      "after": 66602
+    }
+  },
+  {
+    "case": "sieve",
+    "n": 1977051,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 14.384288875,
+      "after": 14.0988289375
+    },
+    "relative_iqr": {
+      "before": 0.08857828833752479,
+      "after": 0.13904509436140536
+    },
+    "median_speedup": 1.0202470672397999,
+    "paired_median_speedup": 1.002399819516096,
+    "pair_min": 0.8763695264502913,
+    "pair_max": 1.0635098772123939,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 63050,
+      "after": 63050
+    }
+  },
+  {
+    "case": "heapsort",
+    "n": 82396,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 27.6591499375,
+      "after": 27.02298225
+    },
+    "relative_iqr": {
+      "before": 0.04817440622762812,
+      "after": 0.060328764231786444
+    },
+    "median_speedup": 1.0235417276159444,
+    "paired_median_speedup": 1.008841869593583,
+    "pair_min": 0.9440541146741017,
+    "pair_max": 1.0940851352928689,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 79402,
+      "after": 79402
+    }
+  },
+  {
+    "case": "escaped_nodes",
+    "n": 262144,
+    "reps": 40,
+    "rounds": 11,
+    "median_ms": {
+      "before": 6.782279425,
+      "after": 6.803943075
+    },
+    "relative_iqr": {
+      "before": 0.03548366779358983,
+      "after": 0.0713241416999951
+    },
+    "median_speedup": 0.9968160153956019,
+    "paired_median_speedup": 0.9979148412538262,
+    "pair_min": 0.9281898396714434,
+    "pair_max": 1.0518499629019673,
+    "faster_pairs": 5,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 67818,
+      "after": 67818
+    }
+  },
+  {
+    "case": "int_mix",
+    "n": 2097152,
+    "reps": 32,
+    "rounds": 11,
+    "median_ms": {
+      "before": 9.7618528125,
+      "after": 9.735890125
+    },
+    "relative_iqr": {
+      "before": 0.1273291580885532,
+      "after": 0.058033230551685175
+    },
+    "median_speedup": 1.00266669890135,
+    "paired_median_speedup": 1.0026666989013497,
+    "pair_min": 0.9559607902255426,
+    "pair_max": 1.101086998968503,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 59306,
+      "after": 59306
+    }
+  },
+  {
+    "case": "branch_mix",
+    "n": 1909761,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 18.3278003125,
+      "after": 18.429743125
+    },
+    "relative_iqr": {
+      "before": 0.06698536398624351,
+      "after": 0.04261185612699635
+    },
+    "median_speedup": 0.9944685711673475,
+    "paired_median_speedup": 0.9816547245133495,
+    "pair_min": 0.7534718986169143,
+    "pair_max": 1.0219540222756347,
+    "faster_pairs": 4,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 59434,
+      "after": 59434
+    }
+  },
+  {
+    "case": "float_recurrence",
+    "n": 260986,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 23.819741,
+      "after": 8.7152068125
+    },
+    "relative_iqr": {
+      "before": 0.06388538450103215,
+      "after": 0.04880652251303073
+    },
+    "median_speedup": 2.7331240109914487,
+    "paired_median_speedup": 2.6939658557016766,
+    "pair_min": 2.5581779603578116,
+    "pair_max": 2.8869859620036364,
+    "faster_pairs": 11,
+    "same_bytes": false,
+    "text_bytes": {
+      "before": 208291,
+      "after": 212515
+    }
+  },
+  {
+    "case": "mandelbrot",
+    "n": 126,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 16.797994625,
+      "after": 11.3944139375
+    },
+    "relative_iqr": {
+      "before": 0.09578276892084671,
+      "after": 0.06208601459279748
+    },
+    "median_speedup": 1.4742306815549637,
+    "paired_median_speedup": 1.4656712346563094,
+    "pair_min": 1.3943613857159505,
+    "pair_max": 1.6220068670405412,
+    "faster_pairs": 11,
+    "same_bytes": false,
+    "text_bytes": {
+      "before": 73322,
+      "after": 75562
+    }
+  },
+  {
+    "case": "recursive_tree",
+    "n": 1265,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 24.2666295,
+      "after": 24.1627968125
+    },
+    "relative_iqr": {
+      "before": 0.03243080173124166,
+      "after": 0.07756269698590795
+    },
+    "median_speedup": 1.004297213120887,
+    "paired_median_speedup": 1.013187543642926,
+    "pair_min": 0.913364720019156,
+    "pair_max": 1.0587041262472956,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 64650,
+      "after": 64650
+    }
+  },
+  {
+    "case": "ascii_parse",
+    "n": 262144,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 22.315529625,
+      "after": 22.3144939375
+    },
+    "relative_iqr": {
+      "before": 0.05624425102570246,
+      "after": 0.08370703219762408
+    },
+    "median_speedup": 1.000046413219269,
+    "paired_median_speedup": 1.0050843175453097,
+    "pair_min": 0.902033061794461,
+    "pair_max": 1.0813669183323182,
+    "faster_pairs": 6,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 65226,
+      "after": 65226
+    }
+  },
+  {
+    "case": "string_concat",
+    "n": 7262,
+    "reps": 24,
+    "rounds": 11,
+    "median_ms": {
+      "before": 14.102785333333333,
+      "after": 13.902244041666666
+    },
+    "relative_iqr": {
+      "before": 0.139914713301552,
+      "after": 0.1277950849523672
+    },
+    "median_speedup": 1.014425102240014,
+    "paired_median_speedup": 1.0228536188036117,
+    "pair_min": 0.8704821745376504,
+    "pair_max": 1.1981363344586398,
+    "faster_pairs": 8,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 67274,
+      "after": 67274
+    }
+  },
+  {
+    "case": "string_builder",
+    "n": 114195,
+    "reps": 16,
+    "rounds": 11,
+    "median_ms": {
+      "before": 22.754905625,
+      "after": 22.5486363125
+    },
+    "relative_iqr": {
+      "before": 0.05189633147511681,
+      "after": 0.08723497056491894
+    },
+    "median_speedup": 1.0091477510941826,
+    "paired_median_speedup": 1.0109478488844372,
+    "pair_min": 0.8847327767641636,
+    "pair_max": 1.0680167241044989,
+    "faster_pairs": 7,
+    "same_bytes": true,
+    "text_bytes": {
+      "before": 105354,
+      "after": 105354
+    }
+  }
+]

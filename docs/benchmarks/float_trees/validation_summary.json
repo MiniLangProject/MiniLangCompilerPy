@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "parity_cases": 64,
+  "compared_images": 192,
+  "linux_runtime_cases": 30,
+  "all_linux_outputs_equal_baseline": true,
+  "bootstrap_selfhost_identical": true,
+  "disabled_tree_hook_reproduces_baseline_images": true,
+  "ablation_pair_orders_balanced": true,
+  "native_compiler_bytes": 65549104,
+  "primary_correctness_runs": 294,
+  "primary_full_size_correctness_runs": 30,
+  "ablation_correctness_runs": 72,
+  "gc_diagnostic_runs": 40,
+  "primary_timed_runs": 330,
+  "ablation_and_c_timed_runs": 132,
+  "all_timed_checksums_and_warmups_valid": true,
+  "unchanged_primary_images": 13,
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  }
+}

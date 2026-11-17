@@ -1399,6 +1399,186 @@ class CodegenExpr:
             return left + [leaf for leaf in right if leaf.name not in names]
         return None
 
+    def _opt_float_tree_plan(self, expr: Any, depth: int = 0) -> Optional[tuple[list[Any], int, int]]:
+        """Plan a small pure tree whose runtime leaves can all be floats.
+
+        The final two fields count arithmetic nodes and simultaneously saved
+        left operands. Only XMM4/XMM5 may hold those operands: XMM0-XMM3 are
+        scratch, and XMM6+ have preservation requirements on Windows.
+        """
+        ml = self.ml
+        if isinstance(expr, ml.Num):
+            return ([], 0, 0) if type(expr.value) is float else None
+        if isinstance(expr, ml.Var):
+            if not self.in_function:
+                return None
+            fact = self._opt_value_type_base(self._opt_expr_known_type(expr, True))
+            binding = self.resolve_binding(expr.name)
+            if (fact not in ('float', 'number', 'number?') or binding is None
+                    or binding.kind not in ('local', 'param') or binding.boxed
+                    or binding.capture_index is not None):
+                return None
+            return ([expr], 0, 0)
+        if not isinstance(expr, ml.Bin) or expr.op not in ('+', '-', '*') or depth >= 3:
+            return None
+        # Preserve the compiler's encoded constant-fold result. Recomputing a
+        # constant-only subtree as raw floating arithmetic can change its tag,
+        # precision or intermediate signed61 normalization.
+        try:
+            if self._opt_try_const_value(expr) is not self._OPT_NO:
+                return None
+        except Exception:
+            return None
+        left = self._opt_float_tree_plan(expr.left, depth + 1)
+        if left is None:
+            return None
+        right = self._opt_float_tree_plan(expr.right, depth + 1)
+        if right is None:
+            return None
+        count = left[1] + right[1] + 1
+        saved = max(left[2], right[2] + 1 if isinstance(expr.right, ml.Bin) else 0)
+        if count > 7 or saved > 2:
+            return None
+        names = {leaf.name for leaf in left[0]}
+        leaves = left[0] + [leaf for leaf in right[0] if leaf.name not in names]
+        return (leaves, count, saved)
+
+    def _opt_emit_float_tree_normalize(self, slow: str) -> None:
+        """Keep only a result that the ordinary normalizer would keep float.
+
+        Exact integers and unordered values run the complete original tree.
+        This retains integer/integer precision and signed61 wrapping without
+        placing an integer result in the raw-double representation.
+        """
+        a = self.asm
+        a.mark(f'float_tree_normalize_{self.new_label_id()}')
+        a.cvttsd2si_r64_xmm('rax', 'xmm0')
+        a.cvtsi2sd_xmm_r64('xmm1', 'rax')
+        a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+        a.jcc('e', slow)
+        # Both exact-f32 and boxed-f64 values unbox to the original double.
+        # Retain the normalizer's probe and its floating-point status effects.
+        a.cvtsd2ss_xmm_xmm('xmm2', 'xmm0')
+        a.cvtss2sd_xmm_xmm('xmm3', 'xmm2')
+        a.ucomisd_xmm_xmm('xmm0', 'xmm3')
+
+    def _opt_emit_float_tree_raw(self, expr: Any, saved: int, slow: str, normalize: bool) -> None:
+        """Emit a prevalidated tree without calls, allocation or raw spills."""
+        ml = self.ml
+        a = self.asm
+        if not isinstance(expr, ml.Bin):
+            self.emit_expr(expr)
+            self.emit_to_double_xmm(0, slow)
+            return
+        self._opt_emit_float_tree_raw(expr.left, saved, slow, True)
+        if isinstance(expr.right, ml.Bin):
+            left_reg = f'xmm{4 + saved}'
+            a.movapd_xmm_xmm(left_reg, 'xmm0')
+            self._opt_emit_float_tree_raw(expr.right, saved + 1, slow, True)
+            a.movapd_xmm_xmm('xmm1', 'xmm0')
+            a.movapd_xmm_xmm('xmm0', left_reg)
+        else:
+            # A primitive local or literal load cannot overwrite raw XMM0.
+            self.emit_expr(expr.right)
+            self.emit_to_double_xmm(1, slow)
+        if expr.op == '+':
+            a.addsd_xmm_xmm('xmm0', 'xmm1')
+        elif expr.op == '-':
+            a.subsd_xmm_xmm('xmm0', 'xmm1')
+        elif expr.op == '*':
+            a.mulsd_xmm_xmm('xmm0', 'xmm1')
+        # A comparison is permitted only at the root. Leave its two operands
+        # in XMM0/XMM1 for the caller's ordinary unordered-aware comparison.
+        if normalize:
+            self._opt_emit_float_tree_normalize(slow)
+
+    def _opt_emit_float_tree(self, e: Any) -> bool:
+        """Avoid intermediate float Values inside a guarded pure expression.
+
+        Every variable must hold an actual float before work starts. Every
+        non-root arithmetic result must retain a float representation under
+        ordinary normalization. A miss replays only this effect-free tree on
+        the preceding optimizer, preserving integer, void and Error behavior.
+        """
+        ml = self.ml
+        op = str(getattr(e, 'op', '') or '')
+        arithmetic = op in ('+', '-', '*')
+        comparison = op in ('==', '!=', '<', '<=', '>', '>=')
+        if not arithmetic and not comparison:
+            return False
+        if arithmetic:
+            plan = self._opt_float_tree_plan(e)
+            if plan is None or plan[1] < 2:
+                return False
+            leaves = plan[0]
+        else:
+            left = self._opt_float_tree_plan(e.left)
+            if left is None:
+                return False
+            right = self._opt_float_tree_plan(e.right)
+            if right is None:
+                return False
+            count = left[1] + right[1]
+            saved = max(left[2], right[2] + 1 if isinstance(e.right, ml.Bin) else 0)
+            if count < 1 or count > 7 or saved > 2:
+                return False
+            names = {leaf.name for leaf in left[0]}
+            leaves = left[0] + [leaf for leaf in right[0] if leaf.name not in names]
+        if not leaves:
+            return False
+
+        a = self.asm
+        lid = self.new_label_id()
+        slow = f'float_tree_slow_{lid}'
+        done = f'float_tree_done_{lid}'
+        a.mark(f'float_tree_guard_{lid}')
+        for i, leaf in enumerate(leaves):
+            accepted = f'float_tree_leaf_{lid}_{i}'
+            self.emit_expr(leaf)
+            a.mov_r64_r64('rdx', 'rax')
+            a.and_r64_imm('rdx', 7)
+            a.cmp_r64_imm('rdx', TAG_FLOAT)
+            a.jcc('e', accepted)
+            a.cmp_r64_imm('rdx', TAG_PTR)
+            a.jcc('ne', slow)
+            a.mov_r32_membase_disp('edx', 'rax', 0)
+            a.cmp_r32_imm('edx', OBJ_FLOAT)
+            a.jcc('ne', slow)
+            a.mark(accepted)
+        a.mark(f'float_tree_fast_{lid}')
+        self._opt_emit_float_tree_raw(e, 0, slow, False)
+        if arithmetic:
+            # All other raw values are dead before the only permitted box.
+            a.mark(f'float_tree_materialize_{lid}')
+            self.emit_normalize_xmm0_to_value()
+        else:
+            a.mark(f'float_tree_compare_{lid}')
+            a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+            if op == '==':
+                a.setcc_al('e')
+                a.setcc_r8('dl', 'p')
+                a.xor_r8_imm8('dl', 1)
+                a.and_r8_r8('al', 'dl')
+            elif op == '!=':
+                a.setcc_al('ne')
+                a.setcc_r8('dl', 'p')
+                a.or_r8_r8('al', 'dl')
+            else:
+                cc = {'<': 'b', '<=': 'be', '>': 'a', '>=': 'ae'}[op]
+                a.setcc_al(cc)
+                a.setcc_r8('dl', 'p')
+                a.xor_r8_imm8('dl', 1)
+                a.and_r8_r8('al', 'dl')
+            a.movzx_eax_al()
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_BOOL)
+        a.jmp(done)
+        a.mark(slow)
+        # Keep the preceding bounded-box optimization available on a miss.
+        self.emit_expr(e, allow_float_tree_elision=False)
+        a.mark(done)
+        return True
+
     def _opt_emit_float_parent_without_child_box(self, e: Any) -> bool:
         """Elide one numeric child's box for an actual-float parent operand.
 
@@ -1552,7 +1732,7 @@ class CodegenExpr:
         a.jmp(l_done)
 
         a.mark(l_slow)
-        self.emit_expr(e, allow_float_box_elision=False)
+        self.emit_expr(e, allow_float_box_elision=False, allow_float_tree_elision=False)
         a.mark(l_done)
         return True
 
@@ -3687,7 +3867,8 @@ class CodegenExpr:
         a.shl_rax_imm8(3)
         a.or_rax_imm8(TAG_BOOL)
 
-    def emit_expr(self, e: Any, *, allow_float_box_elision: bool = True) -> None:
+    def emit_expr(self, e: Any, *, allow_float_box_elision: bool = True,
+                  allow_float_tree_elision: bool = True) -> None:
         """Emit code so that RAX contains the Value."""
         ml = self.ml
         a = self.asm
@@ -4677,6 +4858,8 @@ class CodegenExpr:
                         a.xor_r64_imm('rax', 8)
                     return
 
+            if allow_float_tree_elision and self._opt_emit_float_tree(e):
+                return
             if allow_float_box_elision and self._opt_emit_float_parent_without_child_box(e):
                 return
 

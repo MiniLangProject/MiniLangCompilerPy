@@ -27,6 +27,9 @@ FIXTURES = {
     "numeric_nullable_boxing": "NUMERIC NULLABLE BOXING [OK]",
     "numeric_nullable_typeof": "NUMERIC NULLABLE TYPEOF [OK]",
     "numeric_nullable_tofloat": "NUMERIC NULLABLE TOFLOAT [OK]",
+    "numeric_float_tree": "NUMERIC FLOAT TREE [OK]",
+    "numeric_float_tree_typeof": "NUMERIC FLOAT TREE TYPEOF [OK]",
+    "numeric_float_tree_tofloat": "NUMERIC FLOAT TREE TOFLOAT [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -200,6 +203,88 @@ def inspect_assembly(fixture, assembly):
     if fixture == "numeric_nullable_tofloat":
         for name in ("shadowedDivision", "shadowedRight", "reference"):
             contains(name, "float_parent_nobox_fast_", False)
+
+    if fixture == "numeric_float_tree":
+        # Listings use both ordinary mnemonics and helper spellings such as
+        # movapd_xmm_xmm(xmm5, xmm0). Check the actual instruction comments.
+        call_pattern = r"(?i)\bcall(?:_\w+)?(?:\s|\()"
+        stack_store_pattern = (
+            r"(?i)\b(?:mov\w*\s+(?:qword\s+)?\[rsp"
+            r"|mov\w*_membase_disp_\w+\(\s*rsp\b"
+            r"|mov_rsp_disp32_\w+\()")
+        guarded_work_pattern = r"(?i)\b(?:call|addsd|subsd|mulsd)(?:_\w+)?(?:\s|\()"
+        positive = ("treeBalanced", "treeDeep", "treeEight", "treeRightNested",
+                    "treeNumberCancellation", "treeTwoCancellation", "treeWrap",
+                    "treeNaN", "treeProbe", "treeSubnormal", "treeOrder",
+                    "treeComparisons", "treeCompareRight", "treeCompareLeft",
+                    "treeCompareLiteral", "treeNullable", "treeCaughtNullable",
+                    "treeNullableComparison", "treeBuiltinConverted")
+        negative = ("referenceBalanced", "referenceDeep", "referenceEight",
+                    "referenceRightNested", "referenceCancellation",
+                    "referenceTwoCancellation", "referenceWrap", "referenceNaN",
+                    "referenceProbe", "referenceSubnormal", "referenceOrder",
+                    "referenceComparisons", "referenceCompareRight",
+                    "referenceCompareLeft", "referenceNullable",
+                    "referenceNullableComparison", "noTreeCall", "noTreeErrorOrder",
+                    "noTreeMember", "noTreeIndex", "noTreeGlobal",
+                    "noTreeSynchronized", "noTreeCapture", "noTreeOptional",
+                    "noTreeIntegerLeaf", "noTreeIntegerLiteral",
+                    "noTreeConstantSubtree", "noTreeDivision")
+        for name in positive:
+            contains(name, "float_tree_fast_", True)
+            text = body(name)
+            regions = re.findall(
+                r"(?ms)^float_tree_fast_(\d+):(?P<code>.*?)"
+                r"^float_tree_(materialize|compare)_\1:", text)
+            if not regions:
+                raise AssertionError(f"Missing float tree lifetime boundary: {name}")
+            for label, code, consumer in regions:
+                if re.search(call_pattern, code):
+                    raise AssertionError(f"Unmaterialized tree crosses a call: {name} {label}")
+                if re.search(stack_store_pattern, code):
+                    raise AssertionError(f"Raw tree stores into a stack/root slot: {name} {label}")
+                normalizers = re.findall(r"(?m)^float_tree_normalize_\d+:", code)
+                maximum = 6 if consumer == "materialize" else 7
+                if not 1 <= len(normalizers) <= maximum:
+                    raise AssertionError(f"Incorrect bounded tree normalization: {name} {label}")
+                if f"float_tree_slow_{label}" not in code:
+                    raise AssertionError(f"Missing non-float intermediate fallback: {name} {label}")
+            guards = re.findall(
+                r"(?ms)^float_tree_guard_(\d+):(?P<code>.*?)"
+                r"^float_tree_fast_\1:", text)
+            for label, code in guards:
+                if re.search(guarded_work_pattern, code):
+                    raise AssertionError(f"Leaf guards run after tree work: {name} {label}")
+                if f"float_tree_leaf_{label}_" not in code:
+                    raise AssertionError(f"Missing actual-float leaf guard: {name} {label}")
+            if not guards:
+                raise AssertionError(f"Missing tree leaf guards: {name}")
+            if name == "treeEight" and not any(
+                    re.search(r"(?i)\bmovapd(?:_xmm_xmm)?[\s(]+xmm5\s*,", code)
+                    for label, code, consumer in regions):
+                raise AssertionError("Seven-node tree does not exercise its second saved operand")
+            checks.append({"function": name, "call_free_float_tree_regions": len(regions),
+                           "actual_float_leaf_guard_regions": len(guards)})
+        for name in negative:
+            contains(name, "float_tree_fast_", False)
+        contains("treeEight", "call fn_box_float", True)
+        # The overdeep root may optimize a three-level descendant, but never
+        # the four-level expression with three inner normalization boundaries.
+        for label, code in re.findall(
+                r"(?ms)^float_tree_fast_(\d+):(?P<code>.*?)"
+                r"^float_tree_materialize_\1:", body("outsideDepthBudget")):
+            if len(re.findall(r"(?m)^float_tree_normalize_\d+:", code)) > 2:
+                raise AssertionError(f"Float tree exceeded depth budget: {label}")
+
+    if fixture == "numeric_float_tree_typeof":
+        for name in ("shadowedTree", "shadowedComparison"):
+            contains(name, "type_guard_valid_", True)
+            contains(name, "float_tree_fast_", False)
+
+    if fixture == "numeric_float_tree_tofloat":
+        for name in ("shadowedTree", "shadowedComparison", "reference",
+                     "referenceComparison"):
+            contains(name, "float_tree_fast_", False)
     return checks
 
 
@@ -244,7 +329,8 @@ def main():
                             "proven_check_elision", "numeric_typeflow_boxing",
                             "numeric_typeflow_typeof", "numeric_typeflow_tofloat",
                             "numeric_nullable_boxing", "numeric_nullable_typeof",
-                            "numeric_nullable_tofloat")
+                            "numeric_nullable_tofloat", "numeric_float_tree",
+                            "numeric_float_tree_typeof", "numeric_float_tree_tofloat")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:
