@@ -1387,6 +1387,328 @@ class CodegenStmt:
                 assigned.append(reg)
         return assigned
 
+    def _opt_float_loop_shape(self, loop: Any) -> Optional[dict[str, Any]]:
+        """Plan a bounded pure counted loop without consulting active scopes.
+
+        References are (0, committed-state index) or (1, fresh definition
+        index). A variable assignment only changes this compile-time alias map.
+        Decl-site metadata distinguishes body locals from observable outputs,
+        so an uninitialized body temporary is never an entry guard.
+        """
+        ml = self.ml
+        if type(loop) is not ml.While:
+            return None
+        cond = getattr(loop, 'cond', None)
+        if (type(cond) is not ml.Bin or cond.op != '<'
+                or type(cond.left) is not ml.Var):
+            return None
+        counter = str(cond.left.name)
+        if not ml._compile_valid_name(counter):
+            return None
+        bound = cond.right
+        bound_name = None
+        if type(bound) is ml.Var:
+            bound_name = str(bound.name)
+            if not ml._compile_valid_name(bound_name) or bound_name == counter:
+                return None
+        elif (type(bound) is not ml.Num or type(bound.value) is not int
+              or not -(1 << 60) <= bound.value < (1 << 60)):
+            return None
+        body = list(getattr(loop, 'body', []) or [])
+        if not 2 <= len(body) <= 12:
+            return None
+        update = body[-1]
+        if (type(update) is not ml.Assign or str(update.name) != counter
+                or getattr(update, 'declared_type', None) not in (None, '', 'int')
+                or bool(getattr(update, 'declared_optional', False))):
+            return None
+        increment = update.expr
+        if type(increment) is getattr(ml, 'TypeGuard', None):
+            if increment.type_name != 'int' or increment.optional:
+                return None
+            increment = increment.expr
+        if (type(increment) is not ml.Bin or increment.op != '+'
+                or type(increment.left) is not ml.Var or str(increment.left.name) != counter
+                or type(increment.right) is not ml.Num
+                or type(increment.right.value) is not int or increment.right.value != 1):
+            return None
+
+        live_ins: list[str] = []
+        env: dict[str, tuple[int, int]] = {}
+        definitions: list[tuple[Any, dict[str, tuple[int, int]]]] = []
+        steps: list[tuple[Any, Optional[int]]] = []
+        body_locals: dict[str, Any] = {}
+        output_names: list[str] = []
+        output_nodes: dict[str, Any] = {}
+
+        def tree(expr: Any, depth: int = 0) -> Optional[tuple[int, int, bool]]:
+            if type(expr) is ml.Num:
+                return (0, 0, False) if type(expr.value) is float else None
+            if type(expr) is ml.Var:
+                name = str(expr.name)
+                if not ml._compile_valid_name(name) or name in (counter, bound_name):
+                    return None
+                if name not in env:
+                    env[name] = (0, len(live_ins))
+                    live_ins.append(name)
+                return (0, 0, True)
+            if type(expr) is not ml.Bin or expr.op not in ('+', '-', '*') or depth >= 3:
+                return None
+            left = tree(expr.left, depth + 1)
+            right = tree(expr.right, depth + 1)
+            if left is None or right is None:
+                return None
+            # Preserve the existing encoded result of constant-only subtrees.
+            if not left[2] and not right[2]:
+                return None
+            count = left[0] + right[0] + 1
+            saved = max(left[1], right[1] + 1 if type(expr.right) is ml.Bin else 0)
+            if count > 7 or saved > 2:
+                return None
+            return (count, saved, True)
+
+        for stmt in body[:-1]:
+            if (type(stmt) is not ml.Assign
+                    or getattr(stmt, 'declared_type', None) not in (None, '')
+                    or bool(getattr(stmt, 'declared_optional', False))):
+                return None
+            name = str(stmt.name)
+            if not ml._compile_valid_name(name) or name in (counter, bound_name, 'typeof'):
+                return None
+            rhs = stmt.expr
+            if type(rhs) not in (ml.Bin, ml.Var) or tree(rhs) is None:
+                return None
+            if type(rhs) is ml.Bin:
+                index = len(definitions)
+                definitions.append((rhs, dict(env)))
+                env[name] = (1, index)
+                steps.append((stmt, index))
+            else:
+                env[name] = env[str(rhs.name)]
+                steps.append((stmt, None))
+            declared = getattr(self, '_decl_site_bindings', {}).get(self._decl_key(stmt, name))
+            if declared is not None:
+                body_locals[name] = declared
+            if name not in body_locals:
+                if name not in output_names:
+                    output_names.append(name)
+                output_nodes[name] = stmt
+
+        if not live_ins or not output_names or not 1 <= len(definitions) <= 8:
+            return None
+        if any(env[name][0] != 1 for name in output_names):
+            # A retained old object/literal would need dynamic alias identity.
+            return None
+        states = live_ins + [name for name in output_names if name not in live_ins]
+        if len(states) > 8:
+            return None
+        outputs = [(name, env[name][1], output_nodes[name]) for name in output_names]
+        return {'counter': counter, 'bound': bound, 'bound_name': bound_name,
+                'update': update, 'live_ins': live_ins, 'states': states,
+                'definitions': definitions, 'steps': steps, 'body_locals': body_locals,
+                'outputs': outputs,
+                'bytes': align_up((len(states) + len(definitions) + 1) * 8, 16)}
+
+    def _opt_float_loop_arena_bytes(self, fn: Any) -> int:
+        """Reserve only syntactic candidates; binding checks happen at emission."""
+        if (bool(getattr(self, 'native_threads_possible', True))
+                or getattr(self, '_inline_call_stack', []) or getattr(self, '_inline_param_stack', [])):
+            return 0
+        size = 0
+        for stmt in getattr(fn, 'body', []) or []:
+            plan = self._opt_float_loop_shape(stmt)
+            if plan is not None:
+                size = max(size, plan['bytes'])
+        return size
+
+    def _opt_emit_float_loop_raw(self, expr: Any, env: dict[str, tuple[int, int]],
+                                 state_count: int, saved: int, slow: str,
+                                 target: str = 'xmm0') -> None:
+        """Evaluate one prevalidated definition using XMM0-XMM5 only."""
+        ml = self.ml
+        a = self.asm
+        if type(expr) is ml.Var:
+            bank, index = env[str(expr.name)]
+            slot = index + (state_count if bank else 0)
+            a.movsd_xmm_membase_disp(target, 'rsp', self._float_loop_raw_base + slot * 8)
+            return
+        if type(expr) is ml.Num:
+            self.emit_expr(expr)
+            self.emit_to_double_xmm(0 if target == 'xmm0' else 1, slow)
+            return
+        self._opt_emit_float_loop_raw(expr.left, env, state_count, saved, slow)
+        if type(expr.right) is ml.Bin:
+            left_reg = f'xmm{4 + saved}'
+            a.movapd_xmm_xmm(left_reg, 'xmm0')
+            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved + 1, slow)
+            a.movapd_xmm_xmm('xmm1', 'xmm0')
+            a.movapd_xmm_xmm('xmm0', left_reg)
+        else:
+            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved, slow, 'xmm1')
+        if expr.op == '+':
+            a.addsd_xmm_xmm('xmm0', 'xmm1')
+        elif expr.op == '-':
+            a.subsd_xmm_xmm('xmm0', 'xmm1')
+        else:
+            a.mulsd_xmm_xmm('xmm0', 'xmm1')
+        # Assignment roots need the same integer/NaN bailout as intermediates.
+        self._opt_emit_float_tree_normalize(slow)
+
+    def _opt_emit_float_loop(self, stmt: Any) -> bool:
+        """Keep a pure counted loop's float state unboxed until exit/deopt.
+
+        The committed bank is a transaction checkpoint. A failed definition
+        writes no observable home and does not advance the integer counter;
+        materializing that bank permits ordinary lowering to replay precisely
+        the current iteration, including its original Error/void behavior.
+        """
+        if (not self.in_function or bool(getattr(self, 'native_threads_possible', True))
+                or self._float_loop_disabled or id(stmt) not in self._float_loop_sites
+                or self._float_loop_raw_size <= 0 or getattr(self, '_inline_call_stack', [])
+                or getattr(self, '_inline_param_stack', [])):
+            return False
+        plan = self._opt_float_loop_shape(stmt)
+        if plan is None or plan['bytes'] > self._float_loop_raw_size:
+            return False
+        # The ordinary compiler can select overloads or integer operations from
+        # static facts. Runtime tags must not bypass those existing semantics,
+        # nor may removing a typed induction update erase a custom typeof call.
+        if not self._opt_builtin_name_is_direct('typeof'):
+            return False
+        if any(not self._opt_expr_known_int(operand)
+               or self._opt_value_type_base(self._opt_expr_known_type(operand)) not in (None, 'int')
+               for operand in (stmt.cond.left, plan['bound'])):
+            return False
+        for name in plan['live_ins']:
+            fact = self._opt_value_type_base(self._opt_expr_known_type(self.ml.Var(name), True))
+            if fact not in ('float', 'number', 'number?'):
+                return False
+        for name in plan['states'] + list(plan['body_locals']):
+            fact = self._opt_value_type_base(self._known_value_types.get(name))
+            if name in self._known_int_names or fact not in (None, 'float', 'number', 'number?'):
+                return False
+        names = plan['states'] + [plan['counter']]
+        if plan['bound_name'] is not None:
+            names.append(plan['bound_name'])
+        names += list(plan['body_locals'])
+        counts: dict[str, int] = {}
+        for binding in getattr(self, '_function_locals', []):
+            counts[binding.name] = counts.get(binding.name, 0) + 1
+        for name in self.func_param_offsets:
+            counts[str(name)] = counts.get(str(name), 0) + 1
+        scalar_bindings = {id(item[1]) for item in getattr(self, '_scalar_structs', [])}
+        for name in names:
+            binding = (plan['body_locals'].get(name) if name in plan['body_locals']
+                       else self.resolve_binding(name))
+            if (counts.get(name, 0) != 1 or binding is None
+                    or binding.kind not in ('local', 'param') or binding.boxed
+                    or binding.capture_index is not None or binding.is_const
+                    or binding.offset is None or id(binding) in scalar_bindings):
+                return False
+        # A read before a new body's declaration would refer to another binding.
+        if any(name in plan['body_locals'] for name in plan['live_ins']):
+            return False
+
+        a = self.asm
+        lid = self.new_label_id()
+        fast = f'float_loop_fast_{lid}'
+        deopt = f'float_loop_deopt_{lid}'
+        slow = f'float_loop_slow_{lid}'
+        done = f'float_loop_done_{lid}'
+        state_count = len(plan['states'])
+        work_base = self._float_loop_raw_base + state_count * 8
+        flag_off = work_base + len(plan['definitions']) * 8
+        slots = {name: self._float_loop_raw_base + index * 8
+                 for index, name in enumerate(plan['states'])}
+
+        def compare_counter(exit_label: str) -> None:
+            self.emit_expr(plan['bound'])
+            a.mov_r64_r64('r10', 'rax')
+            self.emit_load_var(plan['counter'], stmt)
+            a.cmp_r64_r64('rax', 'r10')
+            a.jcc('ge', exit_label)
+
+        def materialize() -> None:
+            a.mark(f'float_loop_materialize_{self.new_label_id()}')
+            groups: dict[int, list[tuple[str, Any]]] = {}
+            for name, definition, node in plan['outputs']:
+                groups.setdefault(definition, []).append((name, node))
+            for group in groups.values():
+                a.movsd_xmm_membase_disp('xmm0', 'rsp', slots[group[0][0]])
+                self.emit_force_xmm0_to_float_value()
+                # Publish each boxed result before the next allocation. Aliases
+                # receive the same Value, preserving nativeRawValue identity.
+                for name, node in group:
+                    self.emit_store_var(name, node)
+
+        a.mark(f'float_loop_guard_{lid}')
+        for operand in (stmt.cond.left, plan['bound']):
+            self.emit_expr(operand)
+            a.mov_r64_r64('rdx', 'rax')
+            a.and_r64_imm('rdx', 7)
+            a.cmp_r64_imm('rdx', TAG_INT)
+            a.jcc('ne', slow)
+        # Zero trips must neither inspect float inputs nor allocate new values.
+        compare_counter(done)
+        for index, name in enumerate(plan['live_ins']):
+            accepted = f'float_loop_leaf_{lid}_{index}'
+            self.emit_load_var(name, stmt)
+            a.mov_r64_r64('rdx', 'rax')
+            a.and_r64_imm('rdx', 7)
+            a.cmp_r64_imm('rdx', TAG_FLOAT)
+            a.jcc('e', accepted)
+            a.cmp_r64_imm('rdx', TAG_PTR)
+            a.jcc('ne', slow)
+            a.mov_r32_membase_disp('edx', 'rax', 0)
+            a.cmp_r32_imm('edx', OBJ_FLOAT)
+            a.jcc('ne', slow)
+            a.mark(accepted)
+        for name in plan['live_ins']:
+            self.emit_load_var(name, stmt)
+            self.emit_to_double_xmm(0, slow)
+            a.movsd_membase_disp_xmm('rsp', slots[name], 'xmm0')
+        a.mov_membase_disp_imm32('rsp', flag_off, 0, qword=True)
+
+        a.mark(fast)
+        for node, definition in plan['steps']:
+            self.emit_dbg_line(node)
+            if definition is not None:
+                expr, env = plan['definitions'][definition]
+                self._opt_emit_float_loop_raw(expr, env, state_count, 0, deopt)
+                a.movsd_membase_disp_xmm('rsp', work_base + definition * 8, 'xmm0')
+        a.mark(f'float_loop_commit_{lid}')
+        for name, definition, _node in plan['outputs']:
+            a.movsd_xmm_membase_disp('xmm0', 'rsp', work_base + definition * 8)
+            a.movsd_membase_disp_xmm('rsp', slots[name], 'xmm0')
+        self.emit_dbg_line(plan['update'])
+        self.emit_load_var(plan['counter'], stmt)
+        # Actual int operands plus i < invariant bound prove that +1 cannot
+        # overflow signed61, including a bound at the maximum tagged integer.
+        a.add_rax_imm8(8)
+        self.emit_store_var(plan['counter'], plan['update'])
+        a.mov_membase_disp_imm32('rsp', flag_off, 1, qword=True)
+        normal_exit = f'float_loop_exit_{lid}'
+        compare_counter(normal_exit)
+        a.jmp(fast)
+        a.mark(normal_exit)
+        materialize()
+        a.jmp(done)
+
+        a.mark(deopt)
+        a.mov_r64_membase_disp('rax', 'rsp', flag_off)
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', slow)
+        materialize()
+        a.mark(slow)
+        old_disabled = self._float_loop_disabled
+        self._float_loop_disabled = True
+        try:
+            self.emit_stmt(stmt)
+        finally:
+            self._float_loop_disabled = old_disabled
+        a.mark(done)
+        return True
+
     def _for_index_hoist_plans(self, loop: Any, index_binding: Any) -> list[dict[str, Any]]:
         """Hoist stable container roots; only fixed lengths prove bounds.
 
@@ -3781,6 +4103,8 @@ class CodegenStmt:
             tv = self._opt_try_truthy(getattr(s, 'cond', None))
             # while false -> remove loop entirely
             if tv is False:
+                return
+            if self._opt_emit_float_loop(s):
                 return
 
             top = f"while_top_{a.pos}"
@@ -6945,6 +7269,7 @@ class CodegenStmt:
         old_scalar_structs = getattr(self, '_scalar_structs', [])
         self._scalar_structs = infer_with_function_context(lambda: codegen_opt.scalar_candidates(self, fn))
         promoted_local_regs = self._select_promoted_local_registers(fn, known_value_types_for_fn)
+        float_loop_raw_size = self._opt_float_loop_arena_bytes(fn)
         n_locals = len(getattr(self, "_function_locals", []))
 
         # ---- stack layout ----
@@ -7003,7 +7328,8 @@ class CodegenStmt:
         # expression temp arena starts after call-temp area
         expr_temp_base = call_temp_base + call_temp_bytes
 
-        frame_end = expr_temp_base + self.expr_temp_max
+        float_loop_raw_base = expr_temp_base + self.expr_temp_max
+        frame_end = float_loop_raw_base + float_loop_raw_size
 
         # Reserve space for GC shadow-stack root-frame record (32 bytes).
         frame_size = align_up(frame_end + 0x20, 16)
@@ -7162,6 +7488,8 @@ class CodegenStmt:
         old_known_value_types = dict(getattr(self, '_known_value_types', {}) or {})
         old_known_numeric_value_types = dict(getattr(self, '_known_numeric_value_types', {}) or {})
         old_loop_index_fast_stack = list(getattr(self, '_loop_index_fast_stack', []) or [])
+        old_float_loop_context = (self._float_loop_raw_base, self._float_loop_raw_size,
+                                  self._float_loop_sites, self._float_loop_disabled)
 
         # Save/override scope stack for real emission (function-local only)
         saved_emit_stack = getattr(self, "_scope_stack", None)
@@ -7181,6 +7509,10 @@ class CodegenStmt:
         self._known_value_types = dict(known_value_types_for_fn)
         self._known_numeric_value_types = dict(known_numeric_types_for_fn)
         self._loop_index_fast_stack = []
+        self._float_loop_raw_base = float_loop_raw_base
+        self._float_loop_raw_size = float_loop_raw_size
+        self._float_loop_sites = {id(stmt) for stmt in fn.body if type(stmt) is ml.While}
+        self._float_loop_disabled = False
 
         if saved_emit_stack is not None:
             base_globals = {}
@@ -7418,6 +7750,8 @@ class CodegenStmt:
         self._known_numeric_value_types = old_known_numeric_value_types
         self._scalar_structs = old_scalar_structs
         self._loop_index_fast_stack = old_loop_index_fast_stack
+        (self._float_loop_raw_base, self._float_loop_raw_size,
+         self._float_loop_sites, self._float_loop_disabled) = old_float_loop_context
 
         for index, reg in enumerate(promoted_local_regs):
             a.movdqu_xmm_membase_disp(reg, 'rsp', promoted_save_base + index * 16)

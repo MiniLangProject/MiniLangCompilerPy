@@ -30,6 +30,9 @@ FIXTURES = {
     "numeric_float_tree": "NUMERIC FLOAT TREE [OK]",
     "numeric_float_tree_typeof": "NUMERIC FLOAT TREE TYPEOF [OK]",
     "numeric_float_tree_tofloat": "NUMERIC FLOAT TREE TOFLOAT [OK]",
+    "numeric_float_loop": "NUMERIC FLOAT LOOP [OK]",
+    "numeric_float_loop_typeof": "NUMERIC FLOAT LOOP TYPEOF [OK]",
+    "numeric_float_loop_threads": "NUMERIC FLOAT LOOP THREADS [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -79,7 +82,7 @@ def executable_target():
     return None
 
 
-def inspect_assembly(fixture, assembly):
+def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
     """Prove that the intended paths are exercised, and exclusions remain."""
     checks = []
 
@@ -285,6 +288,90 @@ def inspect_assembly(fixture, assembly):
         for name in ("shadowedTree", "shadowedComparison", "reference",
                      "referenceComparison"):
             contains(name, "float_tree_fast_", False)
+
+    if fixture == "numeric_float_loop":
+        # Every arithmetic result is checked before the iteration commits.
+        # Private unscanned spills are permitted here; a call is not.
+        call_pattern = r"(?i)\bcall(?:_\w+)?(?:\s|\()"
+        positive = {
+            "loopRecurrence": (12, 3),
+            "loopAlias": (2, 1),
+            "loopWriteOnly": (2, 1),
+            "loopLate": (3, 3),
+            "loopNumericEntry": (2, 2),
+            "loopCounter": (2, 1),
+            "loopSpecial": (3, 1),
+        }
+        negative = ("referenceRecurrence", "referenceAlias", "referenceWriteOnly",
+                    "referenceLate", "referenceNumericEntry", "referenceSpecial",
+                    "referenceOldAlias",
+                    "noLoopCall", "noLoopError", "noLoopGlobal",
+                    "noLoopSynchronized", "noLoopCapture", "noLoopContract",
+                    "noLoopControl", "noLoopReturn", "noLoopChangingBound",
+                    "noLoopStep", "noLoopOldAlias", "noLoopBodyTypeof")
+        for name, (operations, materializations) in positive.items():
+            contains(name, "float_loop_fast_", not gc_concurrent)
+            if gc_concurrent:
+                contains(name, "gc_poll_done_", True)
+                continue
+            text = body(name)
+            regions = re.findall(
+                r"(?ms)^float_loop_fast_(\d+):(?P<code>.*?)"
+                r"^float_loop_exit_\1:", text)
+            if len(regions) != 1:
+                raise AssertionError(f"Missing counted float loop boundary: {name}")
+            for label, code in regions:
+                if re.search(call_pattern, code):
+                    raise AssertionError(f"Unmaterialized loop crosses a call: {name} {label}")
+                commit = f"float_loop_commit_{label}:"
+                if code.count(commit) != 1:
+                    raise AssertionError(f"Missing unique iteration commit: {name} {label}")
+                speculative, committed = code.split(commit)
+                normalizers = re.findall(
+                    r"(?ms)^float_tree_normalize_\d+:(.*?)"
+                    r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
+                if len(normalizers) != operations or "float_tree_normalize_" in committed:
+                    raise AssertionError(f"Arithmetic normalization after/missing commit: {name} {label}")
+                for normalizer in normalizers:
+                    if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
+                                     + re.escape(f"float_loop_deopt_{label}") + r"\b",
+                                     normalizer):
+                        raise AssertionError(f"Missing integer/NaN rollback guard: {name} {label}")
+                # Peephole lowering may combine jge exit; jmp fast into jl fast.
+                if not re.search(r"\b(?:jmp|jl)\s+" + re.escape(f"float_loop_fast_{label}")
+                                 + r"\b", committed):
+                    raise AssertionError(f"Missing committed-loop backedge: {name} {label}")
+                exit_path = re.search(
+                    r"(?ms)^float_loop_exit_" + re.escape(label) + r":(.*?)"
+                    r"^float_loop_deopt_" + re.escape(label) + r":", text)
+                if (not exit_path or "float_loop_materialize_" not in exit_path[1]
+                        or len(re.findall(r"\bcall\s+fn_box_float\b", exit_path[1]))
+                        != materializations):
+                    raise AssertionError(f"Incorrect exit materialization/alias groups: {name} {label}")
+                guard = re.search(
+                    r"(?ms)^float_loop_guard_" + re.escape(label) + r":(.*?)"
+                    r"^float_loop_fast_" + re.escape(label) + r":", text)
+                if not guard or re.search(call_pattern, guard[1]):
+                    raise AssertionError(f"Invalid float loop entry guard: {name} {label}")
+                zero_trip = re.search(r"\bjge\s+" + re.escape(f"float_loop_done_{label}")
+                                      + r"\b", guard[1])
+                first_leaf = guard[1].find(f"float_loop_leaf_{label}_")
+                if not zero_trip or first_leaf < zero_trip.end():
+                    raise AssertionError(f"Float inputs inspected before zero-trip test: {name} {label}")
+            checks.append({"function": name, "call_free_float_loops": len(regions),
+                           "normalizers_before_commit": operations,
+                           "exit_materialization_groups": materializations})
+        for name in negative:
+            contains(name, "float_loop_fast_", False)
+
+    if fixture == "numeric_float_loop_typeof":
+        contains("shadowedLoop", "type_guard_valid_", True)
+        contains("shadowedLoop", "float_loop_fast_", False)
+
+    if fixture == "numeric_float_loop_threads":
+        contains("threadedLoop", "float_loop_fast_", False)
+        contains("threadedLoop", "gc_poll_done_", True)
+        contains("threadedLoop", "thread_cancel_done_", True)
     return checks
 
 
@@ -330,7 +417,9 @@ def main():
                             "numeric_typeflow_typeof", "numeric_typeflow_tofloat",
                             "numeric_nullable_boxing", "numeric_nullable_typeof",
                             "numeric_nullable_tofloat", "numeric_float_tree",
-                            "numeric_float_tree_typeof", "numeric_float_tree_tofloat")
+                            "numeric_float_tree_typeof", "numeric_float_tree_tofloat",
+                            "numeric_float_loop", "numeric_float_loop_typeof",
+                            "numeric_float_loop_threads")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:
@@ -339,7 +428,9 @@ def main():
                         if inspect_paths:
                             assembly = listing.read_text(encoding="utf-8")
                             emissions.append({"fixture": fixture, "target": target,
-                                              "checks": inspect_assembly(fixture, assembly)})
+                                              "checks": inspect_assembly(
+                                                  fixture, assembly,
+                                                  gc_concurrent=args.gc_concurrent)})
                         data = output.read_bytes()
                         digest = hashlib.sha256(data).hexdigest()
                         rows.append({"fixture": fixture, "target": target, "host": host,

@@ -14,7 +14,13 @@ and variable-RHS child-root box elision. Its public compiler revisions are:
 - Python: [`45f63f6ef125863003cd6e2959916635f34a72ec`](https://github.com/MiniLangProject/MiniLangCompilerPy/commit/45f63f6ef125863003cd6e2959916635f34a72ec).
 - MiniLang: [`a96f41f6396e3bbaf841643d9a174c1a39902ada`](https://github.com/MiniLangProject/MiniLangCompilerML/commit/a96f41f6396e3bbaf841643d9a174c1a39902ada).
 
-`after` is the matching fourth-round source in these companion pull requests.
+`after` is the completed fourth-round source at these fixed commits:
+
+- Python: [`6a953bb4f7f51947ba149fd64e2cbbdcefb17876`](https://github.com/MiniLangProject/MiniLangCompilerPy/commit/6a953bb4f7f51947ba149fd64e2cbbdcefb17876).
+- MiniLang: [`ddc67c9c4f9c5828101e884076915f6536a3942c`](https://github.com/MiniLangProject/MiniLangCompilerML/commit/ddc67c9c4f9c5828101e884076915f6536a3942c).
+
+The pull requests now also include [Phase 5](../float_loops/README.md); choose
+both Phase 4 commits before running the reproduction commands below.
 It adds bounded, call-free float expression trees, including comparison roots.
 All variable leaves must pass actual-float guards. Every non-root arithmetic
 result must retain a float representation under the existing normalizer;
@@ -92,7 +98,7 @@ include fallback copies and must not be interpreted as objects saved per loop.
 ## Reproduce
 
 Requirements: Linux x86-64, Python 3, GCC/G++, Git, `taskset`, and matching
-checkouts of both companion pull requests. Run from `MiniLangCompilerPy`, with
+checkouts at both Phase 4 commits listed above. Run from `MiniLangCompilerPy`, with
 `MiniLangCompilerML` beside it. Use an empty `BENCH_RUN` directory. The baseline
 compilers come from pinned worktrees; both measured variants compile the same
 benchmark and standard-library paths.

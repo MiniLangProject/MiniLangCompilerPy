@@ -377,6 +377,12 @@ class CodegenCore:
         # existing diagnostics and optimizations retain their original facts.
         self._known_numeric_value_types: dict[str, str] = {}
         self._loop_index_fast_stack: list[dict[str, Any]] = []
+        # Bounded float-loop state lives beyond the expression-temp arena and
+        # outside the published GC root prefix. It never contains Value roots.
+        self._float_loop_raw_base: int = 0
+        self._float_loop_raw_size: int = 0
+        self._float_loop_sites: set[int] = set()
+        self._float_loop_disabled: bool = False
 
         # ------------------------------------------------------------
         # Lexical scope support (CodegenScope mixin)

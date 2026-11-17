@@ -5151,7 +5151,13 @@ def main() -> int:
             ("numeric_float_tree_typeof", "NUMERIC FLOAT TREE TYPEOF [OK]",
              "bounded float trees preserve custom typeof"),
             ("numeric_float_tree_tofloat", "NUMERIC FLOAT TREE TOFLOAT [OK]",
-             "bounded float trees preserve custom toFloat")):
+             "bounded float trees preserve custom toFloat"),
+            ("numeric_float_loop", "NUMERIC FLOAT LOOP [OK]",
+             "counted float loops preserve transactional state and roots"),
+            ("numeric_float_loop_typeof", "NUMERIC FLOAT LOOP TYPEOF [OK]",
+             "counted float loops preserve custom typeof"),
+            ("numeric_float_loop_threads", "NUMERIC FLOAT LOOP THREADS [OK]",
+             "counted float loops retain threaded polls")):
         tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(
             name="codegen: " + title,
             mlc_runner=mlc_runner, ml_path=tests_root / (fixture + ".ml"),

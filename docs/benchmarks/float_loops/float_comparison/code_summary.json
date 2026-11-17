@@ -1,0 +1,52 @@
+[
+  {
+    "case": "float_recurrence",
+    "executable_segment_bytes": {
+      "before": 212515,
+      "after": 214947
+    },
+    "same_as_before": {
+      "after": false
+    },
+    "after_python_native_identical": true,
+    "disabled_loop_hooks_identical_to_before": true,
+    "static_sites_include_fallback_paths": true,
+    "static_loop_guards": 1,
+    "static_loop_fast_regions": 1,
+    "static_loop_commits": 1,
+    "static_loop_exits": 1,
+    "static_loop_deoptimizations": 1,
+    "static_loop_materializations": 2,
+    "static_tree_arithmetic_roots": 6,
+    "static_tree_comparison_roots": 0,
+    "static_tree_normalizers": 26,
+    "static_loop_normalizers": 12,
+    "static_loop_fallback_tree_normalizers": 14,
+    "static_other_tree_normalizers": 0
+  },
+  {
+    "case": "mandelbrot",
+    "executable_segment_bytes": {
+      "before": 75562,
+      "after": 75562
+    },
+    "same_as_before": {
+      "after": true
+    },
+    "after_python_native_identical": true,
+    "disabled_loop_hooks_identical_to_before": true,
+    "static_sites_include_fallback_paths": true,
+    "static_loop_guards": 0,
+    "static_loop_fast_regions": 0,
+    "static_loop_commits": 0,
+    "static_loop_exits": 0,
+    "static_loop_deoptimizations": 0,
+    "static_loop_materializations": 0,
+    "static_tree_arithmetic_roots": 3,
+    "static_tree_comparison_roots": 1,
+    "static_tree_normalizers": 5,
+    "static_loop_normalizers": 0,
+    "static_loop_fallback_tree_normalizers": 0,
+    "static_other_tree_normalizers": 5
+  }
+]

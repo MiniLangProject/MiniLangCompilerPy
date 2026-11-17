@@ -1,6 +1,19 @@
-# Guarded float expression trees
+# Guarded float expression trees — Phase 4 checkpoint
 
 Date: 2026-11-17. Branch: `perf/proven-check-elision`.
+
+**Historical version scope.** This report describes the completed Phase 4
+checkpoint. Its measurements, validation totals and references to the full
+compiler apply to these public commits:
+
+| Repository | Phase 4 commit |
+|---|---|
+| MiniLangCompilerPy | `6a953bb4f7f51947ba149fd64e2cbbdcefb17876` |
+| MiniLangCompilerML | `ddc67c9c4f9c5828101e884076915f6536a3942c` |
+
+Select both commits to reproduce this source state. The pull requests continue
+with [Phase 5: guarded float loops](performance_float_loops.md). Each phase
+retains its own comparison baseline and measurement series.
 
 This fourth optimization round removes intermediate float materializations
 inside bounded, pure arithmetic expressions. It also lets a comparison consume
@@ -441,8 +454,8 @@ the byte-identity controls and emitted sites.
 
 ## Reproduce the semantic checks
 
-From `MiniLangCompilerPy`, with the matching current `MiniLangCompilerML`
-checkout beside it:
+From `MiniLangCompilerPy`, with both repositories at the Phase 4 commits listed
+in the historical version scope above and `MiniLangCompilerML` beside it:
 
 ```sh
 sh ../MiniLangCompilerML/build.sh --compiler "$PWD/mlc_win64.py" \
