@@ -1,0 +1,251 @@
+{
+  "image_base": 4194304,
+  "bench_start": 4200400,
+  "bench_end": 4220992,
+  "major_ranges": [
+    {
+      "category": "guard",
+      "start": 4206568,
+      "end": 4207574
+    },
+    {
+      "category": "raw_other",
+      "start": 4207574,
+      "end": 4208092
+    },
+    {
+      "category": "commit_counter",
+      "start": 4208092,
+      "end": 4208215
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4208215,
+      "end": 4208565
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4208565,
+      "end": 4208822
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4208822,
+      "end": 4220401
+    }
+  ],
+  "integer_rejoin_ranges": [
+    {
+      "category": "integer_rejoin",
+      "start": 4208477,
+      "end": 4208499
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208499,
+      "end": 4208521
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208521,
+      "end": 4208543
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208543,
+      "end": 4208565
+    }
+  ],
+  "ranges": [
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207596,
+      "end": 4207616
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207616,
+      "end": 4207628
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207721,
+      "end": 4207741
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207741,
+      "end": 4207753
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207766,
+      "end": 4207786
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207786,
+      "end": 4207798
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207811,
+      "end": 4207831
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207831,
+      "end": 4207843
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207881,
+      "end": 4207901
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207901,
+      "end": 4207913
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207926,
+      "end": 4207946
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207946,
+      "end": 4207958
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207986,
+      "end": 4208006
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208006,
+      "end": 4208018
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4208051,
+      "end": 4208071
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208071,
+      "end": 4208083
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4209532,
+      "end": 4209552
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4209552,
+      "end": 4209564
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212347,
+      "end": 4212367
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212367,
+      "end": 4212379
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212485,
+      "end": 4212505
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212505,
+      "end": 4212517
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4214151,
+      "end": 4214171
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4214171,
+      "end": 4214183
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4217184,
+      "end": 4217204
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4217204,
+      "end": 4217216
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208477,
+      "end": 4208499
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208499,
+      "end": 4208521
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208521,
+      "end": 4208543
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4208543,
+      "end": 4208565
+    },
+    {
+      "category": "guard",
+      "start": 4206568,
+      "end": 4207574
+    },
+    {
+      "category": "raw_other",
+      "start": 4207574,
+      "end": 4208092
+    },
+    {
+      "category": "commit_counter",
+      "start": 4208092,
+      "end": 4208215
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4208215,
+      "end": 4208565
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4208565,
+      "end": 4208822
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4208822,
+      "end": 4220401
+    },
+    {
+      "category": "bench_other",
+      "start": 4200400,
+      "end": 4220992
+    },
+    {
+      "category": "executable_other",
+      "start": 4198400,
+      "end": 4276202
+    }
+  ]
+}

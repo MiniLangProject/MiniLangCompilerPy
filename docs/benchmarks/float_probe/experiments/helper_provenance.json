@@ -1,0 +1,14 @@
+[
+  {
+    "experiment": "scratch_zero",
+    "recorded_helper_sha256": "dd8c87909cb014388f1d87cea7b4e7a81d5647afddefee535dc2c080ccb83ea4",
+    "portable_helper_sha256": "6fad88fe74c564ae54cedc808daf2a8165bffe0da6836eaa6200f6ecb6c0ab5a",
+    "publication_change": "Explicit path arguments, sibling helper import, allowed build CPU fallback; original records remain unchanged."
+  },
+  {
+    "experiment": "dead_compare",
+    "recorded_helper_sha256": "2a9f4d33cabca435c0d494c79e22e9cc2fdb49fb2ba7050180aa0278b05a9b50",
+    "portable_helper_sha256": "54d014b72a3d05ef503c74b3ad21ed4c2087d755c6a3b2b91025c8cbe8d58e92",
+    "publication_change": "Explicit path arguments, sibling helper import, allowed build CPU fallback; original records remain unchanged."
+  }
+]

@@ -1,0 +1,4398 @@
+{
+  "success": true,
+  "platform": "linux-x64",
+  "probe_cases": 17,
+  "control_modes": 16,
+  "paired_observations": 272,
+  "control_bits_preserved": true,
+  "sticky_flags_tags_and_counts_equal": true,
+  "masked_exceptions_only": true,
+  "source_sha256": "1f064ae82d11d5f61b6b0a62c601451742e9818658c4167d24d383cdcb4a4b32",
+  "bridge_source_sha256": "4f8a9694d6090fdefda7cd69959e805ab77d2d2db8a86ffa54d06f030a0dc63d",
+  "bridge_binary_sha256": "fe4c3b0c55372d8b26a7a3705e849e9f77409b389b68707aa4fc65455a8a13b1",
+  "method": {
+    "timed": false,
+    "numeric_result_bits_compared": false,
+    "comparison_fields": [
+      "mode",
+      "probe",
+      "mxcsr",
+      "sticky_flags",
+      "result_type",
+      "iteration_count"
+    ],
+    "control_modes": "Four rounding modes crossed with default, DAZ, FTZ and DAZ+FTZ.",
+    "capture": "Prepare inputs, set masked MXCSR control mode, call candidate, read MXCSR, restore initial MXCSR, print only flags/tag/integer counter.",
+    "scope": "Sticky exception flags and control bits plus result tags and iteration counts; numerical equality is checked by the separate semantic fixture.",
+    "limitations": [
+      "Masked exceptions only; signal/trap behavior is not tested.",
+      "An initial development driver failed when attempting to format infinity in the baseline program. The recorded driver avoids floating-result formatting and retains all 272 probe/mode pairs."
+    ]
+  },
+  "variants": {
+    "before": {
+      "compiler_sha256": "3b308c32aed932fe1633800467a6c0ad14f33201cf06cf2df217025ff9551712",
+      "binary_sha256": "40451bd137d2335c7f4b3af2adaee940e4d32006186fe99729f914ef81ed1b52",
+      "rows": [
+        {
+          "mode": 8064,
+          "probe": "fractional",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "integer-child",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "integer-chain",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "positive-wrap",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "negative-wrap",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "wrap-zero",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "nan-child",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "quiet-nan-source",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "signaling-nan-source",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "subnormal-left",
+          "mxcsr": 8114,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "subnormal-right",
+          "mxcsr": 8114,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "f32-boundary",
+          "mxcsr": 8098,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "infinity-child",
+          "mxcsr": 8065,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "negative-zero",
+          "mxcsr": 8064,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "condition-int",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "condition-nan",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "literal-subnormal",
+          "mxcsr": 8098,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "fractional",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "integer-child",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "integer-chain",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "positive-wrap",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "negative-wrap",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "wrap-zero",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "nan-child",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "quiet-nan-source",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "signaling-nan-source",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "subnormal-left",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "subnormal-right",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "f32-boundary",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "infinity-child",
+          "mxcsr": 8129,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "negative-zero",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "condition-int",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "condition-nan",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "literal-subnormal",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "fractional",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "integer-child",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "integer-chain",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "positive-wrap",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "negative-wrap",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "wrap-zero",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "nan-child",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "quiet-nan-source",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "signaling-nan-source",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "subnormal-left",
+          "mxcsr": 40882,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "subnormal-right",
+          "mxcsr": 40882,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "f32-boundary",
+          "mxcsr": 40866,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "infinity-child",
+          "mxcsr": 40833,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "negative-zero",
+          "mxcsr": 40832,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "condition-int",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "condition-nan",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "literal-subnormal",
+          "mxcsr": 40866,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "fractional",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "integer-child",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "integer-chain",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "positive-wrap",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "negative-wrap",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "wrap-zero",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "nan-child",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "quiet-nan-source",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "signaling-nan-source",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "subnormal-left",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "subnormal-right",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "f32-boundary",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "infinity-child",
+          "mxcsr": 40897,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "negative-zero",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "condition-int",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "condition-nan",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "literal-subnormal",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "fractional",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "integer-child",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "integer-chain",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "positive-wrap",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "negative-wrap",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "wrap-zero",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "nan-child",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "quiet-nan-source",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "signaling-nan-source",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "subnormal-left",
+          "mxcsr": 16306,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "subnormal-right",
+          "mxcsr": 16306,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "f32-boundary",
+          "mxcsr": 16290,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "infinity-child",
+          "mxcsr": 16257,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "negative-zero",
+          "mxcsr": 16256,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "condition-int",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "condition-nan",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "literal-subnormal",
+          "mxcsr": 16290,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "fractional",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "integer-child",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "integer-chain",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "positive-wrap",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "negative-wrap",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "wrap-zero",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "nan-child",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "quiet-nan-source",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "signaling-nan-source",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "subnormal-left",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "subnormal-right",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "f32-boundary",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "infinity-child",
+          "mxcsr": 16321,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "negative-zero",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "condition-int",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "condition-nan",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "literal-subnormal",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "fractional",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "integer-child",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "integer-chain",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "positive-wrap",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "negative-wrap",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "wrap-zero",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "nan-child",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "quiet-nan-source",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "signaling-nan-source",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "subnormal-left",
+          "mxcsr": 49074,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "subnormal-right",
+          "mxcsr": 49074,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "f32-boundary",
+          "mxcsr": 49058,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "infinity-child",
+          "mxcsr": 49025,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "negative-zero",
+          "mxcsr": 49024,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "condition-int",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "condition-nan",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "literal-subnormal",
+          "mxcsr": 49058,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "fractional",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "integer-child",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "integer-chain",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "positive-wrap",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "negative-wrap",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "wrap-zero",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "nan-child",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "quiet-nan-source",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "signaling-nan-source",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "subnormal-left",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "subnormal-right",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "f32-boundary",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "infinity-child",
+          "mxcsr": 49089,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "negative-zero",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "condition-int",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "condition-nan",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "literal-subnormal",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "fractional",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "integer-child",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "integer-chain",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "positive-wrap",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "negative-wrap",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "wrap-zero",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "nan-child",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "quiet-nan-source",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "signaling-nan-source",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "subnormal-left",
+          "mxcsr": 24498,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "subnormal-right",
+          "mxcsr": 24498,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "f32-boundary",
+          "mxcsr": 24482,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "infinity-child",
+          "mxcsr": 24449,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "negative-zero",
+          "mxcsr": 24448,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "condition-int",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "condition-nan",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "literal-subnormal",
+          "mxcsr": 24482,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "fractional",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "integer-child",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "integer-chain",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "positive-wrap",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "negative-wrap",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "wrap-zero",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "nan-child",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "quiet-nan-source",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "signaling-nan-source",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "subnormal-left",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "subnormal-right",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "f32-boundary",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "infinity-child",
+          "mxcsr": 24513,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "negative-zero",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "condition-int",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "condition-nan",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "literal-subnormal",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "fractional",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "integer-child",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "integer-chain",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "positive-wrap",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "negative-wrap",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "wrap-zero",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "nan-child",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "quiet-nan-source",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "signaling-nan-source",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "subnormal-left",
+          "mxcsr": 57266,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "subnormal-right",
+          "mxcsr": 57266,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "f32-boundary",
+          "mxcsr": 57250,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "infinity-child",
+          "mxcsr": 57217,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "negative-zero",
+          "mxcsr": 57216,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "condition-int",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "condition-nan",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "literal-subnormal",
+          "mxcsr": 57250,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "fractional",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "integer-child",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "integer-chain",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "positive-wrap",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "negative-wrap",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "wrap-zero",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "nan-child",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "quiet-nan-source",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "signaling-nan-source",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "subnormal-left",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "subnormal-right",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "f32-boundary",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "infinity-child",
+          "mxcsr": 57281,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "negative-zero",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "condition-int",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "condition-nan",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "literal-subnormal",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "fractional",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "integer-child",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "integer-chain",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "positive-wrap",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "negative-wrap",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "wrap-zero",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "nan-child",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "quiet-nan-source",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "signaling-nan-source",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "subnormal-left",
+          "mxcsr": 32690,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "subnormal-right",
+          "mxcsr": 32690,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "f32-boundary",
+          "mxcsr": 32674,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "infinity-child",
+          "mxcsr": 32641,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "negative-zero",
+          "mxcsr": 32640,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "condition-int",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "condition-nan",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "literal-subnormal",
+          "mxcsr": 32674,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "fractional",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "integer-child",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "integer-chain",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "positive-wrap",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "negative-wrap",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "wrap-zero",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "nan-child",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "quiet-nan-source",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "signaling-nan-source",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "subnormal-left",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "subnormal-right",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "f32-boundary",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "infinity-child",
+          "mxcsr": 32705,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "negative-zero",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "condition-int",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "condition-nan",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "literal-subnormal",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "fractional",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "integer-child",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "integer-chain",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "positive-wrap",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "negative-wrap",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "wrap-zero",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "nan-child",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "quiet-nan-source",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "signaling-nan-source",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "subnormal-left",
+          "mxcsr": 65458,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "subnormal-right",
+          "mxcsr": 65458,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "f32-boundary",
+          "mxcsr": 65442,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "infinity-child",
+          "mxcsr": 65409,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "negative-zero",
+          "mxcsr": 65408,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "condition-int",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "condition-nan",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "literal-subnormal",
+          "mxcsr": 65442,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "fractional",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "integer-child",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "integer-chain",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "positive-wrap",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "negative-wrap",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "wrap-zero",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "nan-child",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "quiet-nan-source",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "signaling-nan-source",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "subnormal-left",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "subnormal-right",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "f32-boundary",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "infinity-child",
+          "mxcsr": 65473,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "negative-zero",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "condition-int",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "condition-nan",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "literal-subnormal",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        }
+      ]
+    },
+    "after": {
+      "compiler_sha256": "2911090e0beaf289a289fee361ee8fc4d6d771765785cef71e3cb925a32256ff",
+      "binary_sha256": "1950478f03bc7f0451e6c18e1f6be1bd79840e95cd8cc2e45eb210e4a8ee52f4",
+      "rows": [
+        {
+          "mode": 8064,
+          "probe": "fractional",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "integer-child",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "integer-chain",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "positive-wrap",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "negative-wrap",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "wrap-zero",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "nan-child",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "quiet-nan-source",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "signaling-nan-source",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "subnormal-left",
+          "mxcsr": 8114,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "subnormal-right",
+          "mxcsr": 8114,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "f32-boundary",
+          "mxcsr": 8098,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "infinity-child",
+          "mxcsr": 8065,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "negative-zero",
+          "mxcsr": 8064,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "condition-int",
+          "mxcsr": 8096,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "condition-nan",
+          "mxcsr": 8097,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8064,
+          "probe": "literal-subnormal",
+          "mxcsr": 8098,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "fractional",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "integer-child",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "integer-chain",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "positive-wrap",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "negative-wrap",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "wrap-zero",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "nan-child",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "quiet-nan-source",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "signaling-nan-source",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "subnormal-left",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "subnormal-right",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "f32-boundary",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "infinity-child",
+          "mxcsr": 8129,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "negative-zero",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "condition-int",
+          "mxcsr": 8160,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "condition-nan",
+          "mxcsr": 8161,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 8128,
+          "probe": "literal-subnormal",
+          "mxcsr": 8128,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "fractional",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "integer-child",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "integer-chain",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "positive-wrap",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "negative-wrap",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "wrap-zero",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "nan-child",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "quiet-nan-source",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "signaling-nan-source",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "subnormal-left",
+          "mxcsr": 40882,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "subnormal-right",
+          "mxcsr": 40882,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "f32-boundary",
+          "mxcsr": 40866,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "infinity-child",
+          "mxcsr": 40833,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "negative-zero",
+          "mxcsr": 40832,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "condition-int",
+          "mxcsr": 40864,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "condition-nan",
+          "mxcsr": 40865,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40832,
+          "probe": "literal-subnormal",
+          "mxcsr": 40866,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "fractional",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "integer-child",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "integer-chain",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "positive-wrap",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "negative-wrap",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "wrap-zero",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "nan-child",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "quiet-nan-source",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "signaling-nan-source",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "subnormal-left",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "subnormal-right",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "f32-boundary",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "infinity-child",
+          "mxcsr": 40897,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "negative-zero",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "condition-int",
+          "mxcsr": 40928,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "condition-nan",
+          "mxcsr": 40929,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 40896,
+          "probe": "literal-subnormal",
+          "mxcsr": 40896,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "fractional",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "integer-child",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "integer-chain",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "positive-wrap",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "negative-wrap",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "wrap-zero",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "nan-child",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "quiet-nan-source",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "signaling-nan-source",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "subnormal-left",
+          "mxcsr": 16306,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "subnormal-right",
+          "mxcsr": 16306,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "f32-boundary",
+          "mxcsr": 16290,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "infinity-child",
+          "mxcsr": 16257,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "negative-zero",
+          "mxcsr": 16256,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "condition-int",
+          "mxcsr": 16288,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "condition-nan",
+          "mxcsr": 16289,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16256,
+          "probe": "literal-subnormal",
+          "mxcsr": 16290,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "fractional",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "integer-child",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "integer-chain",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "positive-wrap",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "negative-wrap",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "wrap-zero",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "nan-child",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "quiet-nan-source",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "signaling-nan-source",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "subnormal-left",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "subnormal-right",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "f32-boundary",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "infinity-child",
+          "mxcsr": 16321,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "negative-zero",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "condition-int",
+          "mxcsr": 16352,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "condition-nan",
+          "mxcsr": 16353,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 16320,
+          "probe": "literal-subnormal",
+          "mxcsr": 16320,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "fractional",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "integer-child",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "integer-chain",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "positive-wrap",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "negative-wrap",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "wrap-zero",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "nan-child",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "quiet-nan-source",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "signaling-nan-source",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "subnormal-left",
+          "mxcsr": 49074,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "subnormal-right",
+          "mxcsr": 49074,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "f32-boundary",
+          "mxcsr": 49058,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "infinity-child",
+          "mxcsr": 49025,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "negative-zero",
+          "mxcsr": 49024,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "condition-int",
+          "mxcsr": 49056,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "condition-nan",
+          "mxcsr": 49057,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49024,
+          "probe": "literal-subnormal",
+          "mxcsr": 49058,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "fractional",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "integer-child",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "integer-chain",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "positive-wrap",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "negative-wrap",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "wrap-zero",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "nan-child",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "quiet-nan-source",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "signaling-nan-source",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "subnormal-left",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "subnormal-right",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "f32-boundary",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "infinity-child",
+          "mxcsr": 49089,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "negative-zero",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "condition-int",
+          "mxcsr": 49120,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "condition-nan",
+          "mxcsr": 49121,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 49088,
+          "probe": "literal-subnormal",
+          "mxcsr": 49088,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "fractional",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "integer-child",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "integer-chain",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "positive-wrap",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "negative-wrap",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "wrap-zero",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "nan-child",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "quiet-nan-source",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "signaling-nan-source",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "subnormal-left",
+          "mxcsr": 24498,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "subnormal-right",
+          "mxcsr": 24498,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "f32-boundary",
+          "mxcsr": 24482,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "infinity-child",
+          "mxcsr": 24449,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "negative-zero",
+          "mxcsr": 24448,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "condition-int",
+          "mxcsr": 24480,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "condition-nan",
+          "mxcsr": 24481,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24448,
+          "probe": "literal-subnormal",
+          "mxcsr": 24482,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "fractional",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "integer-child",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "integer-chain",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "positive-wrap",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "negative-wrap",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "wrap-zero",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "nan-child",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "quiet-nan-source",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "signaling-nan-source",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "subnormal-left",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "subnormal-right",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "f32-boundary",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "infinity-child",
+          "mxcsr": 24513,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "negative-zero",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "condition-int",
+          "mxcsr": 24544,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "condition-nan",
+          "mxcsr": 24545,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 24512,
+          "probe": "literal-subnormal",
+          "mxcsr": 24512,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "fractional",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "integer-child",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "integer-chain",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "positive-wrap",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "negative-wrap",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "wrap-zero",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "nan-child",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "quiet-nan-source",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "signaling-nan-source",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "subnormal-left",
+          "mxcsr": 57266,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "subnormal-right",
+          "mxcsr": 57266,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "f32-boundary",
+          "mxcsr": 57250,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "infinity-child",
+          "mxcsr": 57217,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "negative-zero",
+          "mxcsr": 57216,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "condition-int",
+          "mxcsr": 57248,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "condition-nan",
+          "mxcsr": 57249,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57216,
+          "probe": "literal-subnormal",
+          "mxcsr": 57250,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "fractional",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "integer-child",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "integer-chain",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "positive-wrap",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "negative-wrap",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "wrap-zero",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "nan-child",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "quiet-nan-source",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "signaling-nan-source",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "subnormal-left",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "subnormal-right",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "f32-boundary",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "infinity-child",
+          "mxcsr": 57281,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "negative-zero",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "condition-int",
+          "mxcsr": 57312,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "condition-nan",
+          "mxcsr": 57313,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 57280,
+          "probe": "literal-subnormal",
+          "mxcsr": 57280,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "fractional",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "integer-child",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "integer-chain",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "positive-wrap",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "negative-wrap",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "wrap-zero",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "nan-child",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "quiet-nan-source",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "signaling-nan-source",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "subnormal-left",
+          "mxcsr": 32690,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "subnormal-right",
+          "mxcsr": 32690,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "f32-boundary",
+          "mxcsr": 32674,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "infinity-child",
+          "mxcsr": 32641,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "negative-zero",
+          "mxcsr": 32640,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "condition-int",
+          "mxcsr": 32672,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "condition-nan",
+          "mxcsr": 32673,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32640,
+          "probe": "literal-subnormal",
+          "mxcsr": 32674,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "fractional",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "integer-child",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "integer-chain",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "positive-wrap",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "negative-wrap",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "wrap-zero",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "nan-child",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "quiet-nan-source",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "signaling-nan-source",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "subnormal-left",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "subnormal-right",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "f32-boundary",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "infinity-child",
+          "mxcsr": 32705,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "negative-zero",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "condition-int",
+          "mxcsr": 32736,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "condition-nan",
+          "mxcsr": 32737,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 32704,
+          "probe": "literal-subnormal",
+          "mxcsr": 32704,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "fractional",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "integer-child",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "integer-chain",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "positive-wrap",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "negative-wrap",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "wrap-zero",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "nan-child",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "quiet-nan-source",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "signaling-nan-source",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "subnormal-left",
+          "mxcsr": 65458,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "subnormal-right",
+          "mxcsr": 65458,
+          "sticky_flags": 50,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "f32-boundary",
+          "mxcsr": 65442,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "infinity-child",
+          "mxcsr": 65409,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "negative-zero",
+          "mxcsr": 65408,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "condition-int",
+          "mxcsr": 65440,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "condition-nan",
+          "mxcsr": 65441,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65408,
+          "probe": "literal-subnormal",
+          "mxcsr": 65442,
+          "sticky_flags": 34,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "fractional",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "integer-child",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "integer-chain",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "positive-wrap",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "negative-wrap",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "wrap-zero",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "nan-child",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "quiet-nan-source",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "signaling-nan-source",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "subnormal-left",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "subnormal-right",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "f32-boundary",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "infinity-child",
+          "mxcsr": 65473,
+          "sticky_flags": 1,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "negative-zero",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "condition-int",
+          "mxcsr": 65504,
+          "sticky_flags": 32,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "condition-nan",
+          "mxcsr": 65505,
+          "sticky_flags": 33,
+          "result_type": "float",
+          "iteration_count": 1
+        },
+        {
+          "mode": 65472,
+          "probe": "literal-subnormal",
+          "mxcsr": 65472,
+          "sticky_flags": 0,
+          "result_type": "int",
+          "iteration_count": 1
+        }
+      ]
+    }
+  }
+}

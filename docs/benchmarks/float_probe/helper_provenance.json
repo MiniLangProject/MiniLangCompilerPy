@@ -1,0 +1,32 @@
+[
+  {
+    "helper": "compare_compilers.py",
+    "recorded_sha256": "7d137ec36a4e1cb8b05db3d50f9576c7811d517d516a6858cd49d903e4b24087",
+    "public_sha256": "7d137ec36a4e1cb8b05db3d50f9576c7811d517d516a6858cd49d903e4b24087",
+    "publication_change": "None; exact measured/preparation helper bytes."
+  },
+  {
+    "helper": "diagnose_float_dependencies.py",
+    "recorded_sha256": "4e980c499740da2b25fd0a12ebce7a5c704e10c809be88c745301c2c1b659b1f",
+    "public_sha256": "baa0a82b55c10f6c5f5fa7a942f65079c32803e0353881b329629b81c9d2bb8e",
+    "publication_change": "Opening docstring corrected to name the accepted comparison-removal candidate; executable logic unchanged."
+  },
+  {
+    "helper": "profile_float_costs.py",
+    "recorded_sha256": "ae68200bff4e5c24ea4f377a424473122147a698d0e3b57ed4978c46264254e4",
+    "public_sha256": "ae68200bff4e5c24ea4f377a424473122147a698d0e3b57ed4978c46264254e4",
+    "publication_change": "None; exact measured/preparation helper bytes."
+  },
+  {
+    "helper": "summarize_float_profile.py",
+    "recorded_sha256": "f0296dac6fb4e3fe22c5fa6d7d77ddada4224f9f784365e769f002ceda0b9da9",
+    "public_sha256": "f0296dac6fb4e3fe22c5fa6d7d77ddada4224f9f784365e769f002ceda0b9da9",
+    "publication_change": "None; exact measured/preparation helper bytes."
+  },
+  {
+    "helper": "check_float_probe_mxcsr.py",
+    "recorded_sha256": "e08728ab93be40d30a0d74bacc72c50ccb1ee721af7cc399c01c74cd8e8c888c",
+    "public_sha256": "e08728ab93be40d30a0d74bacc72c50ccb1ee721af7cc399c01c74cd8e8c888c",
+    "publication_change": "None; exact measured/preparation helper bytes."
+  }
+]

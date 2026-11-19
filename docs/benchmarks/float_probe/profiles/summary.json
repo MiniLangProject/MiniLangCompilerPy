@@ -1,0 +1,129 @@
+[
+  {
+    "case": "float_recurrence",
+    "processes": 48,
+    "calls_per_process": 16,
+    "samples": 3640,
+    "lost_samples": 0,
+    "category_counts": {
+      "outside_executable": 22,
+      "raw_normalizer_f32_probe": 1384,
+      "raw_normalizer_int_guard": 1415,
+      "commit_counter": 128,
+      "raw_other": 690,
+      "executable_other": 1
+    },
+    "sample_shares": {
+      "outside_executable": 0.006043956043956044,
+      "raw_normalizer_f32_probe": 0.3802197802197802,
+      "raw_normalizer_int_guard": 0.38873626373626374,
+      "commit_counter": 0.035164835164835165,
+      "raw_other": 0.18956043956043955,
+      "executable_other": 0.0002747252747252747
+    },
+    "raw_normalizer_share": 0.768956043956044,
+    "period_groups": [
+      {
+        "period_ns": 997003,
+        "samples": 1226,
+        "raw_normalizer_share": 0.7716150081566069,
+        "ordinary_path_share": 0.0,
+        "integer_rejoin_share": 0.0,
+        "executable_other_share": 0.0
+      },
+      {
+        "period_ns": 1000003,
+        "samples": 1214,
+        "raw_normalizer_share": 0.7685337726523888,
+        "ordinary_path_share": 0.0,
+        "integer_rejoin_share": 0.0,
+        "executable_other_share": 0.0008237232289950577
+      },
+      {
+        "period_ns": 1009003,
+        "samples": 1200,
+        "raw_normalizer_share": 0.7666666666666667,
+        "ordinary_path_share": 0.0,
+        "integer_rejoin_share": 0.0,
+        "executable_other_share": 0.0
+      }
+    ],
+    "runtime_function_samples": {
+      "fn_user_main": 1
+    }
+  },
+  {
+    "case": "mandelbrot",
+    "processes": 48,
+    "calls_per_process": 16,
+    "samples": 4605,
+    "lost_samples": 0,
+    "category_counts": {
+      "outside_executable": 17,
+      "raw_normalizer_int_guard": 1415,
+      "raw_other": 541,
+      "executable_other": 984,
+      "exit_materialization": 54,
+      "raw_normalizer_f32_probe": 794,
+      "bench_other": 267,
+      "commit_counter": 132,
+      "ordinary_other": 284,
+      "integer_rejoin": 48,
+      "guard": 64,
+      "ordinary_normalizer_int_guard": 4,
+      "ordinary_normalizer_f32_probe": 1
+    },
+    "sample_shares": {
+      "outside_executable": 0.003691639522258415,
+      "raw_normalizer_int_guard": 0.30727470141150925,
+      "raw_other": 0.11748099891422367,
+      "executable_other": 0.21368078175895766,
+      "exit_materialization": 0.011726384364820847,
+      "raw_normalizer_f32_probe": 0.17242128121606948,
+      "bench_other": 0.057980456026058634,
+      "commit_counter": 0.028664495114006514,
+      "ordinary_other": 0.06167209554831705,
+      "integer_rejoin": 0.010423452768729642,
+      "guard": 0.013897937024972856,
+      "ordinary_normalizer_int_guard": 0.0008686210640608035,
+      "ordinary_normalizer_f32_probe": 0.00021715526601520088
+    },
+    "raw_normalizer_share": 0.47969598262757873,
+    "period_groups": [
+      {
+        "period_ns": 997003,
+        "samples": 1502,
+        "raw_normalizer_share": 0.49467376830892146,
+        "ordinary_path_share": 0.05858854860186418,
+        "integer_rejoin_share": 0.009986684420772303,
+        "executable_other_share": 0.20639147802929428
+      },
+      {
+        "period_ns": 1000003,
+        "samples": 1536,
+        "raw_normalizer_share": 0.4635416666666667,
+        "ordinary_path_share": 0.06315104166666667,
+        "integer_rejoin_share": 0.010416666666666666,
+        "executable_other_share": 0.22330729166666666
+      },
+      {
+        "period_ns": 1009003,
+        "samples": 1567,
+        "raw_normalizer_share": 0.48117421825143586,
+        "ordinary_path_share": 0.06636885768985322,
+        "integer_rejoin_share": 0.010848755583918315,
+        "executable_other_share": 0.21123165283982132
+      }
+    ],
+    "runtime_function_samples": {
+      "fn_alloc": 413,
+      "fn_gc_collect": 412,
+      "fn_box_float": 97,
+      "fn_toFloat": 46,
+      "fn_cpu_init": 7,
+      "fn_toNumber": 6,
+      "fn_user_main": 2,
+      "fn_str_eq": 1
+    }
+  }
+]

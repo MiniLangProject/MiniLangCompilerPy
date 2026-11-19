@@ -1,0 +1,1296 @@
+{
+  "schema": "minilang-real-applications-v1",
+  "complete": true,
+  "host": {
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "cpu_affinity": [
+      2
+    ]
+  },
+  "rounds": 7,
+  "runner": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/compare_applications.py",
+    "bytes": 13988,
+    "sha256": "9f38bb2f06162c43bd463473c9d7898a81b0f2e9dfc38ee1f3271abfd779e13b"
+  },
+  "runner_arguments": [
+    "--before",
+    "optimization_work/phase9/baseline_compiler",
+    "--after",
+    "optimization_work/phase9/after_compiler",
+    "--repository",
+    "optimization_work/phase9/baseline_ml",
+    "--work",
+    "optimization_work/phase9/application/final",
+    "--rounds",
+    "7",
+    "--cpu",
+    "2",
+    "--timeout",
+    "300"
+  ],
+  "repository": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+    "revision": "c92a678308d408c4f566f007c8ab16fcb5298ca2",
+    "stdlib_tree": "646965a737635e5f1558694e6907eebdf9dae6fa",
+    "clean": true
+  },
+  "compilers": {
+    "before": {
+      "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+      "bytes": 66393008,
+      "sha256": "3b308c32aed932fe1633800467a6c0ad14f33201cf06cf2df217025ff9551712"
+    },
+    "after": {
+      "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+      "bytes": 66393008,
+      "sha256": "2911090e0beaf289a289fee361ee8fc4d6d771765785cef71e3cb925a32256ff"
+    }
+  },
+  "source": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+    "bytes": 38103,
+    "sha256": "201293c0c2205a1a18e607a03632e0056b5aca11d3d26a70cf464e79cc4470d2"
+  },
+  "original_formatter_input": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/mlc/codegen/codegen_stmt.ml",
+    "bytes": 488825,
+    "sha256": "6537e54af862fb6a3549957971ba0fa5f2ce8f86cc878a0af4943454fdfc87b5"
+  },
+  "frozen_formatter_input": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+    "bytes": 488825,
+    "sha256": "6537e54af862fb6a3549957971ba0fa5f2ce8f86cc878a0af4943454fdfc87b5"
+  },
+  "method": {
+    "pipeline": "monolithic",
+    "incremental_cache": "disabled",
+    "target": "linux-x64",
+    "warmups_per_case_and_variant": 1,
+    "scope": "Whole fresh processes, including startup and cached file I/O",
+    "memory": "Linux wait4 peak RSS in KiB for the single child process",
+    "correctness": "Stable emitted image hash within each variant; identical formatted output across every run and variant",
+    "order": "Case order and compiler order alternate by round; variant order is offset between cases",
+    "outlier_policy": "Retain all successful measured runs; abort on any failure",
+    "limitations": "Two tools from the compiler repository, not a game/database workload. Shared-host timing does not establish controlled-hardware performance."
+  },
+  "expected_image_hashes": {
+    "before": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3",
+    "after": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+  },
+  "expected_formatted_hash": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235",
+  "rows": [
+    {
+      "wall_seconds": 2.078044102,
+      "cpu_seconds": 2.052326,
+      "user_seconds": 1.948334,
+      "system_seconds": 0.103992,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33553,
+      "major_faults": 0,
+      "voluntary_switches": 10,
+      "involuntary_switches": 111,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before--1.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": -1,
+      "warmup": true,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.018487092,
+      "cpu_seconds": 2.007577,
+      "user_seconds": 1.934485,
+      "system_seconds": 0.07309199999999999,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33168,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 50,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after--1.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": -1,
+      "warmup": true,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.116810948,
+      "cpu_seconds": 0.116362,
+      "user_seconds": 0.108272,
+      "system_seconds": 0.00809,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 1,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before--1.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": -1,
+      "warmup": true,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.117913058,
+      "cpu_seconds": 0.117502,
+      "user_seconds": 0.117502,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 4,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after--1.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": -1,
+      "warmup": true,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 1.952934449,
+      "cpu_seconds": 1.9338359999999999,
+      "user_seconds": 1.886334,
+      "system_seconds": 0.047501999999999996,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33553,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 73,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-0.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 0,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.023346838,
+      "cpu_seconds": 2.018371,
+      "user_seconds": 1.926851,
+      "system_seconds": 0.09151999999999999,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33168,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 37,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-0.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 0,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.116836918,
+      "cpu_seconds": 0.116443,
+      "user_seconds": 0.112511,
+      "system_seconds": 0.003932,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 3,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-0.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 0,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.138057193,
+      "cpu_seconds": 0.137768,
+      "user_seconds": 0.137768,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 2,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-0.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 0,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.121863278,
+      "cpu_seconds": 0.12158799999999999,
+      "user_seconds": 0.11766499999999999,
+      "system_seconds": 0.003922999999999999,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 2,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-1.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 1,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.122518446,
+      "cpu_seconds": 0.12221699999999999,
+      "user_seconds": 0.12221699999999999,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 3,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-1.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 1,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.204030035,
+      "cpu_seconds": 2.2010579999999997,
+      "user_seconds": 2.114505,
+      "system_seconds": 0.08655299999999999,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33167,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 48,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-1.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 1,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.417671193,
+      "cpu_seconds": 2.40737,
+      "user_seconds": 2.259556,
+      "system_seconds": 0.147814,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33552,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 47,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-1.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 1,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.389905027,
+      "cpu_seconds": 2.3784829999999997,
+      "user_seconds": 2.298729,
+      "system_seconds": 0.07975399999999999,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33552,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 74,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-2.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 2,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.519173728,
+      "cpu_seconds": 2.504952,
+      "user_seconds": 2.459187,
+      "system_seconds": 0.045765,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33167,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 64,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-2.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 2,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.233317988,
+      "cpu_seconds": 0.22914199999999998,
+      "user_seconds": 0.22137199999999999,
+      "system_seconds": 0.00777,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 16,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-2.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 2,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.206153292,
+      "cpu_seconds": 0.19653400000000001,
+      "user_seconds": 0.178761,
+      "system_seconds": 0.017773,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 58,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-2.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 2,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.218035484,
+      "cpu_seconds": 0.21753299999999998,
+      "user_seconds": 0.21753299999999998,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2806,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 4,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-3.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 3,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.218820696,
+      "cpu_seconds": 0.21845799999999999,
+      "user_seconds": 0.21845799999999999,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2806,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 3,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-3.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 3,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.644137464,
+      "cpu_seconds": 2.6350079999999996,
+      "user_seconds": 2.554238,
+      "system_seconds": 0.08077,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33168,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 103,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-3.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 3,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.29747859,
+      "cpu_seconds": 2.2819279999999997,
+      "user_seconds": 2.163061,
+      "system_seconds": 0.118867,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33553,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 46,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-3.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 3,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.425037997,
+      "cpu_seconds": 2.4139299999999997,
+      "user_seconds": 2.333493,
+      "system_seconds": 0.080437,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33552,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 85,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-4.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 4,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.559832928,
+      "cpu_seconds": 2.54858,
+      "user_seconds": 2.457439,
+      "system_seconds": 0.091141,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33167,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 48,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-4.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 4,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.238902405,
+      "cpu_seconds": 0.23210799999999998,
+      "user_seconds": 0.22028899999999998,
+      "system_seconds": 0.011819,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 64,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-4.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 4,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.152541311,
+      "cpu_seconds": 0.15212699999999998,
+      "user_seconds": 0.15212699999999998,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 4,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-4.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 4,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.232431695,
+      "cpu_seconds": 0.231809,
+      "user_seconds": 0.22380799999999998,
+      "system_seconds": 0.008001,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 5,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-5.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 5,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.144759105,
+      "cpu_seconds": 0.14437699999999998,
+      "user_seconds": 0.14010799999999998,
+      "system_seconds": 0.004269,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2807,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 2,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-5.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 5,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.32699391,
+      "cpu_seconds": 2.3222549999999997,
+      "user_seconds": 2.15251,
+      "system_seconds": 0.16974499999999998,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33167,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 52,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-5.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 5,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.339019363,
+      "cpu_seconds": 2.335689,
+      "user_seconds": 2.191366,
+      "system_seconds": 0.144323,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33552,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 33,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-5.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 5,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.133081584,
+      "cpu_seconds": 2.130254,
+      "user_seconds": 1.977927,
+      "system_seconds": 0.152327,
+      "peak_rss_kib": 181700,
+      "minor_faults": 33552,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 32,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-before-6.log",
+      "case": "compile_formatter",
+      "variant": "before",
+      "round": 6,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 2.050829804,
+      "cpu_seconds": 2.047478,
+      "user_seconds": 1.9699019999999998,
+      "system_seconds": 0.07757599999999999,
+      "peak_rss_kib": 187716,
+      "minor_faults": 33168,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 40,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml/tools/mlfmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "-I",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/baseline_ml",
+        "--target",
+        "linux-x64",
+        "--no-object-pipeline",
+        "--no-incremental"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/compile_formatter-after-6.log",
+      "case": "compile_formatter",
+      "variant": "after",
+      "round": 6,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-output",
+        "bytes": 1704512,
+        "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+      },
+      "output_sha256": "4623504fd3f83d0ab246bc1d21d9b4b40034671819a0798f3b748cd997213519",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.12524167,
+      "cpu_seconds": 0.124859,
+      "user_seconds": 0.12074,
+      "system_seconds": 0.004118999999999999,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2808,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 1,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-after-6.log",
+      "case": "format_compiler_source",
+      "variant": "after",
+      "round": 6,
+      "warmup": false,
+      "order_in_pair": 0,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "wall_seconds": 0.158158141,
+      "cpu_seconds": 0.157794,
+      "user_seconds": 0.14987999999999999,
+      "system_seconds": 0.007914,
+      "peak_rss_kib": 16128,
+      "minor_faults": 2806,
+      "major_faults": 0,
+      "voluntary_switches": 1,
+      "involuntary_switches": 2,
+      "returncode": 0,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/inputs/codegen_stmt.ml",
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "--indent",
+        "2",
+        "--max-blank",
+        "2"
+      ],
+      "log": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/logs/format_compiler_source-before-6.log",
+      "case": "format_compiler_source",
+      "variant": "before",
+      "round": 6,
+      "warmup": false,
+      "order_in_pair": 1,
+      "artifact": {
+        "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+        "bytes": 488222,
+        "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+      },
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    }
+  ],
+  "summary": {
+    "compile_formatter": {
+      "rounds": 7,
+      "medians": {
+        "before": {
+          "wall_seconds": 2.339019363,
+          "cpu_seconds": 2.335689,
+          "peak_rss_kib": 181700
+        },
+        "after": {
+          "wall_seconds": 2.32699391,
+          "cpu_seconds": 2.3222549999999997,
+          "peak_rss_kib": 187716
+        }
+      },
+      "paired_wall_speedups": [
+        0.9652000400140986,
+        1.0969320538320158,
+        0.9486860713244148,
+        0.868895290536226,
+        0.9473422935045548,
+        1.005167805961297,
+        1.0401065850708693
+      ],
+      "paired_median_wall_speedup": 0.9652000400140986,
+      "paired_min_wall_speedup": 0.868895290536226,
+      "paired_max_wall_speedup": 1.0969320538320158,
+      "after_faster_pairs": 3,
+      "relative_wall_iqr": {
+        "before": 0.0805927586500274,
+        "after": 0.17708400813992692
+      },
+      "order_counts": {
+        "before": 4,
+        "after": 3
+      }
+    },
+    "format_compiler_source": {
+      "rounds": 7,
+      "medians": {
+        "before": {
+          "wall_seconds": 0.158158141,
+          "cpu_seconds": 0.157794,
+          "peak_rss_kib": 16128
+        },
+        "after": {
+          "wall_seconds": 0.144759105,
+          "cpu_seconds": 0.14437699999999998,
+          "peak_rss_kib": 16128
+        }
+      },
+      "paired_wall_speedups": [
+        1.1816230294606025,
+        0.9946524950210355,
+        0.8835722173294241,
+        0.9964116191276532,
+        0.6385088965512926,
+        1.6056447364744346,
+        1.2628236352964632
+      ],
+      "paired_median_wall_speedup": 0.9964116191276532,
+      "paired_min_wall_speedup": 0.6385088965512926,
+      "paired_max_wall_speedup": 1.6056447364744346,
+      "after_faster_pairs": 3,
+      "relative_wall_iqr": {
+        "before": 0.4223313171087412,
+        "after": 0.7059264700482917
+      },
+      "order_counts": {
+        "before": 3,
+        "after": 4
+      }
+    }
+  },
+  "formatter_images": {
+    "before": {
+      "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-before",
+      "bytes": 1704512,
+      "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+    },
+    "after": {
+      "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatter-after",
+      "bytes": 1704512,
+      "sha256": "cd71b9c1a88398f2e53a2a923d9ba590dd61099ea1b52547fd4b0a1588bc78d3"
+    }
+  },
+  "formatted_output": {
+    "path": "/workspace/scratch/b95954a71d57/optimization_work/phase9/application/final/build/formatted-output.ml",
+    "bytes": 488222,
+    "sha256": "891c8e288d072c14c0bdf61bc7f4b960c8ccbadd87b3ba0c93eeccc2109a9235"
+  }
+}

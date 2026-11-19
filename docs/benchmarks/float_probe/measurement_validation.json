@@ -1,0 +1,34 @@
+{
+  "baseline_native_artifact_reused": true,
+  "baseline_compiler_sha256": "3b308c32aed932fe1633800467a6c0ad14f33201cf06cf2df217025ff9551712",
+  "candidate_compiler_sha256": "2911090e0beaf289a289fee361ee8fc4d6d771765785cef71e3cb925a32256ff",
+  "confirmation_timed_processes": 418,
+  "exploratory_timed_processes": 128,
+  "baseline_profile_processes": 96,
+  "baseline_profile_samples": 8245,
+  "mxcsr_targeted_pairs": 576,
+  "mxcsr_targeted_observations": 1728,
+  "primary_correctness_observations": 294,
+  "separate_minilang_correctness_observations": 36,
+  "separate_c_cpp_correctness_observations": 36,
+  "untimed_gc_observations": 20,
+  "no_timing_repeats": true,
+  "no_outlier_removal": true,
+  "source_freeze": [
+    {
+      "repository": "MiniLangCompilerPy",
+      "files": {
+        "mlc/codegen/codegen_expr.py": "f29a42c9e81c4bc396d6ca4f3a3c39ab0a1246bb91ba1291e1bb2bd22994ecc3",
+        "tests/check_proven_check_elision.py": "fbe16523404977c4719bc4aea5bfe8ca05c5bb236aa22ce656cca65d38dc97e0"
+      }
+    },
+    {
+      "repository": "MiniLangCompilerML",
+      "files": {
+        "mlc/codegen/codegen_expr.ml": "4ba4afff7aebe1abb11ace16fe10710c9c6208f5b9d31769d31d21b37ba3b3f7",
+        "tests/check_proven_check_elision.py": "fbe16523404977c4719bc4aea5bfe8ca05c5bb236aa22ce656cca65d38dc97e0"
+      }
+    }
+  ],
+  "export_note": "Numeric data and source hashes are retained. Transient workspace roots become <workspace>; generated binaries and individual process logs are omitted."
+}

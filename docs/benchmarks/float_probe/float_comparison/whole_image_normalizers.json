@@ -1,0 +1,132 @@
+[
+  {
+    "case": "float_recurrence",
+    "variants": {
+      "optimizations_disabled": {
+        "whole_image_raw_normalizers": 26,
+        "per_function": {
+          "fn_user_bench": 26
+        },
+        "image_sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37"
+      },
+      "python": {
+        "whole_image_raw_normalizers": 26,
+        "per_function": {
+          "fn_user_bench": 26
+        },
+        "image_sha256": "61cfb358fe308c254de3c9dcc7fe009c9fe4db0dc832ba8b8dcf4f34d98c8584"
+      }
+    },
+    "total_removed_compare_bytes": 104,
+    "normalizer_bytes_before": 32,
+    "normalizer_bytes_after": 28,
+    "all_sites_byte_verified": true,
+    "label_anchors": {
+      "fn_user_bench": {
+        "before": 6672,
+        "after": 6672,
+        "delta": 0
+      },
+      "fn_ret_bench": {
+        "before": 26827,
+        "after": 26723,
+        "delta": -104
+      },
+      "fn_user_main": {
+        "before": 26912,
+        "after": 26800,
+        "delta": -112
+      },
+      "fn_extern_g_std_math__nativeSqrt_104": {
+        "before": 189184,
+        "after": 189056,
+        "delta": -128
+      },
+      "fn_cpu_init": {
+        "before": 190048,
+        "after": 189920,
+        "delta": -128
+      }
+    },
+    "alignment_nop_bytes": {
+      "fn_user_main": {
+        "before": 11,
+        "after": 3,
+        "delta": -8
+      },
+      "fn_extern_g_std_math__nativeSqrt_104": {
+        "before": 27,
+        "after": 11,
+        "delta": -16
+      }
+    },
+    "executable_segment_delta": -128,
+    "scope": "All float_tree_normalize labels across the whole image; fallback labels are raw-tree normalizers inside the retained ordinary loop path, not ordinary Value materializers.",
+    "alignment": "User functions are aligned to 16 bytes in emit_function; extern/runtime helpers to 32 bytes via emit_runtime_alignment. Net padding delta accounts exactly for the difference between removed instruction bytes and segment size."
+  },
+  {
+    "case": "mandelbrot",
+    "variants": {
+      "optimizations_disabled": {
+        "whole_image_raw_normalizers": 13,
+        "per_function": {
+          "fn_user_bench": 13
+        },
+        "image_sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc"
+      },
+      "python": {
+        "whole_image_raw_normalizers": 13,
+        "per_function": {
+          "fn_user_bench": 13
+        },
+        "image_sha256": "2266fcb75343503821169938212f84b544569e0ec90d22b8caa0099dda7fcbc3"
+      }
+    },
+    "total_removed_compare_bytes": 52,
+    "normalizer_bytes_before": 32,
+    "normalizer_bytes_after": 28,
+    "all_sites_byte_verified": true,
+    "label_anchors": {
+      "fn_user_bench": {
+        "before": 6096,
+        "after": 6096,
+        "delta": 0
+      },
+      "fn_ret_bench": {
+        "before": 26612,
+        "after": 26560,
+        "delta": -52
+      },
+      "fn_user_main": {
+        "before": 26688,
+        "after": 26640,
+        "delta": -48
+      },
+      "fn_extern_g_measurement_clock_54": {
+        "before": 55104,
+        "after": 55072,
+        "delta": -32
+      },
+      "fn_cpu_init": {
+        "before": 55296,
+        "after": 55264,
+        "delta": -32
+      }
+    },
+    "alignment_nop_bytes": {
+      "fn_user_main": {
+        "before": 2,
+        "after": 6,
+        "delta": 4
+      },
+      "fn_extern_g_measurement_clock_54": {
+        "before": 7,
+        "after": 23,
+        "delta": 16
+      }
+    },
+    "executable_segment_delta": -32,
+    "scope": "All float_tree_normalize labels across the whole image; fallback labels are raw-tree normalizers inside the retained ordinary loop path, not ordinary Value materializers.",
+    "alignment": "User functions are aligned to 16 bytes in emit_function; extern/runtime helpers to 32 bytes via emit_runtime_alignment. Net padding delta accounts exactly for the difference between removed instruction bytes and segment size."
+  }
+]

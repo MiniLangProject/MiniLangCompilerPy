@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "checks": [
+    {
+      "helper": "ablate_dead_compare.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "ablate_scratch_dependencies.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "check_float_probe_mxcsr.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "compare_applications.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "compare_compilers.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "diagnose_float_dependencies.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "profile_float_costs.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "restore_probe_compare_compiler.py",
+      "help_exit_code": 0
+    },
+    {
+      "helper": "summarize_float_profile.py",
+      "help_exit_code": 0
+    },
+    {
+      "case": "float_recurrence",
+      "portable_restoration_exact": true,
+      "sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37"
+    },
+    {
+      "case": "mandelbrot",
+      "portable_restoration_exact": true,
+      "sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc"
+    }
+  ],
+  "generated_wrapper_sha256": "61462850fd3715abcf247bd1239ad8681fc68edd54f224cb686fec7946ffa6ed",
+  "no_runtime_timing": true
+}

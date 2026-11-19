@@ -1,0 +1,371 @@
+{
+  "image_base": 4194304,
+  "bench_start": 4200976,
+  "bench_end": 4221216,
+  "major_ranges": [
+    {
+      "category": "guard",
+      "start": 4203102,
+      "end": 4203631
+    },
+    {
+      "category": "raw_other",
+      "start": 4203631,
+      "end": 4204347
+    },
+    {
+      "category": "commit_counter",
+      "start": 4204347,
+      "end": 4204460
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4204460,
+      "end": 4204702
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4204702,
+      "end": 4204890
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4204890,
+      "end": 4219055
+    }
+  ],
+  "integer_rejoin_ranges": [
+    {
+      "category": "integer_rejoin",
+      "start": 4204636,
+      "end": 4204658
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4204658,
+      "end": 4204680
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4204680,
+      "end": 4204702
+    }
+  ],
+  "ranges": [
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203668,
+      "end": 4203688
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203688,
+      "end": 4203700
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203729,
+      "end": 4203749
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203749,
+      "end": 4203761
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203773,
+      "end": 4203793
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203793,
+      "end": 4203805
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203821,
+      "end": 4203841
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203841,
+      "end": 4203853
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203894,
+      "end": 4203914
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203914,
+      "end": 4203926
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203955,
+      "end": 4203975
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4203975,
+      "end": 4203987
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4203999,
+      "end": 4204019
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204019,
+      "end": 4204031
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4204047,
+      "end": 4204067
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204067,
+      "end": 4204079
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4204157,
+      "end": 4204177
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204177,
+      "end": 4204189
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4204201,
+      "end": 4204221
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204221,
+      "end": 4204233
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4204262,
+      "end": 4204282
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204282,
+      "end": 4204294
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4204306,
+      "end": 4204326
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4204326,
+      "end": 4204338
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4205581,
+      "end": 4205601
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4205601,
+      "end": 4205613
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4205821,
+      "end": 4205841
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4205841,
+      "end": 4205853
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4205865,
+      "end": 4205885
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4205885,
+      "end": 4205897
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4207737,
+      "end": 4207757
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4207757,
+      "end": 4207769
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4207977,
+      "end": 4207997
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4207997,
+      "end": 4208009
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4210399,
+      "end": 4210419
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4210419,
+      "end": 4210431
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4210639,
+      "end": 4210659
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4210659,
+      "end": 4210671
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4210683,
+      "end": 4210703
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4210703,
+      "end": 4210715
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212555,
+      "end": 4212575
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212575,
+      "end": 4212587
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212795,
+      "end": 4212815
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212815,
+      "end": 4212827
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4215387,
+      "end": 4215407
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4215407,
+      "end": 4215419
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4215431,
+      "end": 4215451
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4215451,
+      "end": 4215463
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4215671,
+      "end": 4215691
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4215691,
+      "end": 4215703
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4216209,
+      "end": 4216229
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4216229,
+      "end": 4216241
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4204636,
+      "end": 4204658
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4204658,
+      "end": 4204680
+    },
+    {
+      "category": "integer_rejoin",
+      "start": 4204680,
+      "end": 4204702
+    },
+    {
+      "category": "guard",
+      "start": 4203102,
+      "end": 4203631
+    },
+    {
+      "category": "raw_other",
+      "start": 4203631,
+      "end": 4204347
+    },
+    {
+      "category": "commit_counter",
+      "start": 4204347,
+      "end": 4204460
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4204460,
+      "end": 4204702
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4204702,
+      "end": 4204890
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4204890,
+      "end": 4219055
+    },
+    {
+      "category": "bench_other",
+      "start": 4200976,
+      "end": 4221216
+    },
+    {
+      "category": "executable_other",
+      "start": 4198400,
+      "end": 4412707
+    }
+  ]
+}

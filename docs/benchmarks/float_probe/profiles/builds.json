@@ -1,0 +1,94 @@
+[
+  {
+    "case": "float_recurrence",
+    "variant": "python",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "<workspace>/projects/MiniLangCompilerPy/mlc_win64.py",
+      "<workspace>/optimization_work/phase9/measurement/suite/inputs/float_recurrence.ml",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/float_recurrence/python",
+      "--target",
+      "linux-x64",
+      "--no-object-pipeline",
+      "--no-incremental",
+      "-I",
+      "<workspace>/projects/MiniLangCompilerPy",
+      "--asm",
+      "--asm-out",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/float_recurrence/python.asm",
+      "--dump-labels",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/float_recurrence/python.labels"
+    ],
+    "binary_sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "labels_sha256": "05268d690c62860158cf2fb481a98c049498c1bdbd68c3fc9c3fb9e94ce08fa4",
+    "matches_published_phase8_image": true,
+    "seconds": 1.179705846006982
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "native",
+    "command": [
+      "<workspace>/optimization_work/phase8/after_compiler",
+      "<workspace>/optimization_work/phase9/measurement/suite/inputs/float_recurrence.ml",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/float_recurrence/native",
+      "--target",
+      "linux-x64",
+      "--no-object-pipeline",
+      "--no-incremental",
+      "-I",
+      "<workspace>/projects/MiniLangCompilerPy"
+    ],
+    "binary_sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "labels_sha256": "05268d690c62860158cf2fb481a98c049498c1bdbd68c3fc9c3fb9e94ce08fa4",
+    "matches_published_phase8_image": true,
+    "seconds": 0.23202091100392863
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "python",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "<workspace>/projects/MiniLangCompilerPy/mlc_win64.py",
+      "<workspace>/optimization_work/phase9/measurement/suite/inputs/mandelbrot.ml",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/mandelbrot/python",
+      "--target",
+      "linux-x64",
+      "--no-object-pipeline",
+      "--no-incremental",
+      "-I",
+      "<workspace>/projects/MiniLangCompilerPy",
+      "--asm",
+      "--asm-out",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/mandelbrot/python.asm",
+      "--dump-labels",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/mandelbrot/python.labels"
+    ],
+    "binary_sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "labels_sha256": "59c46d77e4bb855c920ba891f12b747dc4d353676b386ef7b0edcab72d73b19d",
+    "matches_published_phase8_image": true,
+    "seconds": 0.4602479720051633
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "native",
+    "command": [
+      "<workspace>/optimization_work/phase8/after_compiler",
+      "<workspace>/optimization_work/phase9/measurement/suite/inputs/mandelbrot.ml",
+      "<workspace>/optimization_work/phase9/measurement/profile_images/mandelbrot/native",
+      "--target",
+      "linux-x64",
+      "--no-object-pipeline",
+      "--no-incremental",
+      "-I",
+      "<workspace>/projects/MiniLangCompilerPy"
+    ],
+    "binary_sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "labels_sha256": "59c46d77e4bb855c920ba891f12b747dc4d353676b386ef7b0edcab72d73b19d",
+    "matches_published_phase8_image": true,
+    "seconds": 0.07191571200382896
+  }
+]

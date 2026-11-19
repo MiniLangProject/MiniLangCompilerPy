@@ -1,0 +1,3074 @@
+{
+  "host": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "flags": [
+    "--gc-concurrent"
+  ],
+  "images": [
+    {
+      "fixture": "gc_box_float_safepoint",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1899ec215b3c7d2f9b64a5f664ad2e065f4f76eb832d0e82fb1d5927c5b860c2",
+      "source_sha256": "db13e74c56ca1a50d87aef03b46cb2a404446ce36ea68b5527457d44c9653f3f",
+      "bytes": 259072,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_box_float_safepoint.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_box_float_safepoint-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "gc_box_float_safepoint",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1899ec215b3c7d2f9b64a5f664ad2e065f4f76eb832d0e82fb1d5927c5b860c2",
+      "source_sha256": "db13e74c56ca1a50d87aef03b46cb2a404446ce36ea68b5527457d44c9653f3f",
+      "bytes": 259072,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_box_float_safepoint.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_box_float_safepoint-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "gc_box_float_safepoint",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "1899ec215b3c7d2f9b64a5f664ad2e065f4f76eb832d0e82fb1d5927c5b860c2",
+      "source_sha256": "db13e74c56ca1a50d87aef03b46cb2a404446ce36ea68b5527457d44c9653f3f",
+      "bytes": 259072,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_box_float_safepoint.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_box_float_safepoint-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "gc_float_call_roots",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "fe7fccddcf83f7e193e75740b012b29e267686359727281b3bb6e287f6a7c690",
+      "source_sha256": "0710bca76b8f22d5dbd41a48227ae9631a12b0cec91c6a8be8e847d1d32189c8",
+      "bytes": 297984,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_float_call_roots.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_float_call_roots-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "gc_float_call_roots",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "fe7fccddcf83f7e193e75740b012b29e267686359727281b3bb6e287f6a7c690",
+      "source_sha256": "0710bca76b8f22d5dbd41a48227ae9631a12b0cec91c6a8be8e847d1d32189c8",
+      "bytes": 297984,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_float_call_roots.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_float_call_roots-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "gc_float_call_roots",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "fe7fccddcf83f7e193e75740b012b29e267686359727281b3bb6e287f6a7c690",
+      "source_sha256": "0710bca76b8f22d5dbd41a48227ae9631a12b0cec91c6a8be8e847d1d32189c8",
+      "bytes": 297984,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/gc_float_call_roots.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-gc_float_call_roots-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "f873f0cdd089601bce008d91d02c7492cf27751bf340921a834883c695d10c9a",
+      "source_sha256": "1b0ba02257a0157392d5105a3ef1e47c76c8c0f5d1eb67e87d05b66d02e5a9c8",
+      "bytes": 366592,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "f873f0cdd089601bce008d91d02c7492cf27751bf340921a834883c695d10c9a",
+      "source_sha256": "1b0ba02257a0157392d5105a3ef1e47c76c8c0f5d1eb67e87d05b66d02e5a9c8",
+      "bytes": 366592,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "f873f0cdd089601bce008d91d02c7492cf27751bf340921a834883c695d10c9a",
+      "source_sha256": "1b0ba02257a0157392d5105a3ef1e47c76c8c0f5d1eb67e87d05b66d02e5a9c8",
+      "bytes": 366592,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_threads",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2c2dcb3776fd5aca5040ef470ebe49b4e5238c8aab70b3bb5cea7439ccb1eee3",
+      "source_sha256": "cc8aedfa972b57bb8bf2394afa4ad255aa09447bfec9fe864f783af00aa471b3",
+      "bytes": 98304,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_threads-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_threads.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_threads",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "2c2dcb3776fd5aca5040ef470ebe49b4e5238c8aab70b3bb5cea7439ccb1eee3",
+      "source_sha256": "cc8aedfa972b57bb8bf2394afa4ad255aa09447bfec9fe864f783af00aa471b3",
+      "bytes": 98304,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_threads-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_threads",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "2c2dcb3776fd5aca5040ef470ebe49b4e5238c8aab70b3bb5cea7439ccb1eee3",
+      "source_sha256": "cc8aedfa972b57bb8bf2394afa4ad255aa09447bfec9fe864f783af00aa471b3",
+      "bytes": 98304,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_threads-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_typeof",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "530449b76f17b1f202550bb6d075df9869c2d60a81e3a2ed9f4ce9c9c36ced8f",
+      "source_sha256": "871994f7c785b5b5cddc0fed0017106ced55751176da0254fd7074c416195b3e",
+      "bytes": 102912,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_typeof-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_typeof.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_typeof",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "530449b76f17b1f202550bb6d075df9869c2d60a81e3a2ed9f4ce9c9c36ced8f",
+      "source_sha256": "871994f7c785b5b5cddc0fed0017106ced55751176da0254fd7074c416195b3e",
+      "bytes": 102912,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_typeof-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_typeof",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "530449b76f17b1f202550bb6d075df9869c2d60a81e3a2ed9f4ce9c9c36ced8f",
+      "source_sha256": "871994f7c785b5b5cddc0fed0017106ced55751176da0254fd7074c416195b3e",
+      "bytes": 102912,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_loop_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_loop_typeof-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "870d3313d9a1652b8f8571454a5fe10eb60a689574fd8d84cbb89a84cc7230ae",
+      "source_sha256": "a9579386bc3a12b2c74d6701bc49c5d0774bf0bab2c7f31d4ccaba7b9c8dc13a",
+      "bytes": 557568,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "870d3313d9a1652b8f8571454a5fe10eb60a689574fd8d84cbb89a84cc7230ae",
+      "source_sha256": "a9579386bc3a12b2c74d6701bc49c5d0774bf0bab2c7f31d4ccaba7b9c8dc13a",
+      "bytes": 557568,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "870d3313d9a1652b8f8571454a5fe10eb60a689574fd8d84cbb89a84cc7230ae",
+      "source_sha256": "a9579386bc3a12b2c74d6701bc49c5d0774bf0bab2c7f31d4ccaba7b9c8dc13a",
+      "bytes": 557568,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_threads",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "786e6baacafbe26b8635b94e3de558f2d35d2f8e459974f6cd5d25d31d9c0acd",
+      "source_sha256": "62149628aee33741e7c49b86402f08e2b3cb428883d626db7bec28cc1ea2c8a1",
+      "bytes": 99840,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_threads-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_threads.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_threads",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "786e6baacafbe26b8635b94e3de558f2d35d2f8e459974f6cd5d25d31d9c0acd",
+      "source_sha256": "62149628aee33741e7c49b86402f08e2b3cb428883d626db7bec28cc1ea2c8a1",
+      "bytes": 99840,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_threads-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_threads",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "786e6baacafbe26b8635b94e3de558f2d35d2f8e459974f6cd5d25d31d9c0acd",
+      "source_sha256": "62149628aee33741e7c49b86402f08e2b3cb428883d626db7bec28cc1ea2c8a1",
+      "bytes": 99840,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_threads.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_threads-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_typeof",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "98486ba5ea1b135d8bc1a7b0ea43334075a7ab83f646d36d53b30f354b1d6a24",
+      "source_sha256": "6e2ee9bd6b7ae5b7c5fa35fa61a05b92c985102a5f03f502a3e484cd7fabbd07",
+      "bytes": 113152,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_typeof-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_typeof.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_typeof",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "98486ba5ea1b135d8bc1a7b0ea43334075a7ab83f646d36d53b30f354b1d6a24",
+      "source_sha256": "6e2ee9bd6b7ae5b7c5fa35fa61a05b92c985102a5f03f502a3e484cd7fabbd07",
+      "bytes": 113152,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_typeof-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_typeof",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "98486ba5ea1b135d8bc1a7b0ea43334075a7ab83f646d36d53b30f354b1d6a24",
+      "source_sha256": "6e2ee9bd6b7ae5b7c5fa35fa61a05b92c985102a5f03f502a3e484cd7fabbd07",
+      "bytes": 113152,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_nested_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_nested_typeof-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_cache",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "68b6951adf83b204986851b10a5affdff97c6e71879ca93719141d459250d70f",
+      "source_sha256": "84b4e417fe2abd463474b60e8c0cf2e382678023322440fdd313b0209bf7b329",
+      "bytes": 357376,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_cache.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_cache-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_cache.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_cache",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "68b6951adf83b204986851b10a5affdff97c6e71879ca93719141d459250d70f",
+      "source_sha256": "84b4e417fe2abd463474b60e8c0cf2e382678023322440fdd313b0209bf7b329",
+      "bytes": 357376,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_cache.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_cache-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_cache",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "68b6951adf83b204986851b10a5affdff97c6e71879ca93719141d459250d70f",
+      "source_sha256": "84b4e417fe2abd463474b60e8c0cf2e382678023322440fdd313b0209bf7b329",
+      "bytes": 357376,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_cache.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_cache-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cafd53d4865e93568f5b2e7d4f3e008937ec286e2502de4d7f9f8e0d81c64831",
+      "source_sha256": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+      "bytes": 392704,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_consumer.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_consumer-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_consumer.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cafd53d4865e93568f5b2e7d4f3e008937ec286e2502de4d7f9f8e0d81c64831",
+      "source_sha256": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+      "bytes": 392704,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_consumer.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_consumer-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "cafd53d4865e93568f5b2e7d4f3e008937ec286e2502de4d7f9f8e0d81c64831",
+      "source_sha256": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+      "bytes": 392704,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_consumer.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_consumer-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "11e6d52b78d5f69553d9a9ac411a6e3e625700fa152b707cc64b0392d400030e",
+      "source_sha256": "f0ff6a50cf7ac3bcb262ba5d3cac80f93b49a8ee07e4784d54bdc6d11deab993",
+      "bytes": 509440,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "11e6d52b78d5f69553d9a9ac411a6e3e625700fa152b707cc64b0392d400030e",
+      "source_sha256": "f0ff6a50cf7ac3bcb262ba5d3cac80f93b49a8ee07e4784d54bdc6d11deab993",
+      "bytes": 509440,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "11e6d52b78d5f69553d9a9ac411a6e3e625700fa152b707cc64b0392d400030e",
+      "source_sha256": "f0ff6a50cf7ac3bcb262ba5d3cac80f93b49a8ee07e4784d54bdc6d11deab993",
+      "bytes": 509440,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_tofloat",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "855003684ed95f60e32b8da130958bcf0b87aaa19b2397dfc6ca63f4e2359738",
+      "source_sha256": "3aa9b7173dc1ea8aabad37b95300c201b6ce22ae668388f3e20d55b4700e3234",
+      "bytes": 116224,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_tofloat.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_tofloat-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_tofloat.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_tofloat",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "855003684ed95f60e32b8da130958bcf0b87aaa19b2397dfc6ca63f4e2359738",
+      "source_sha256": "3aa9b7173dc1ea8aabad37b95300c201b6ce22ae668388f3e20d55b4700e3234",
+      "bytes": 116224,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_tofloat.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_tofloat-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_tofloat",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "855003684ed95f60e32b8da130958bcf0b87aaa19b2397dfc6ca63f4e2359738",
+      "source_sha256": "3aa9b7173dc1ea8aabad37b95300c201b6ce22ae668388f3e20d55b4700e3234",
+      "bytes": 116224,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_tofloat.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_tofloat-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_typeof",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6788bb5372567bfe22e3197eb6107616541f55d8ea7a747b6667d3bc30879859",
+      "source_sha256": "9841d0b89012672e1701d8d7e19257a7524de9cce236ff32a9c038eecf3b2f15",
+      "bytes": 119808,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_typeof-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_typeof.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_typeof",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6788bb5372567bfe22e3197eb6107616541f55d8ea7a747b6667d3bc30879859",
+      "source_sha256": "9841d0b89012672e1701d8d7e19257a7524de9cce236ff32a9c038eecf3b2f15",
+      "bytes": 119808,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_typeof-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_typeof",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "6788bb5372567bfe22e3197eb6107616541f55d8ea7a747b6667d3bc30879859",
+      "source_sha256": "9841d0b89012672e1701d8d7e19257a7524de9cce236ff32a9c038eecf3b2f15",
+      "bytes": 119808,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_float_tree_typeof.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_float_tree_typeof-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e21d100efa0998acb8e6a7150d2a365819f081558e72776d527ab3ebefcb939f",
+      "source_sha256": "0ff530ab5e914cfb0ed6dead46cbec68db660576c94e72ef17728997e19873d9",
+      "bytes": 438784,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_nullable_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_nullable_boxing-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_nullable_boxing.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "e21d100efa0998acb8e6a7150d2a365819f081558e72776d527ab3ebefcb939f",
+      "source_sha256": "0ff530ab5e914cfb0ed6dead46cbec68db660576c94e72ef17728997e19873d9",
+      "bytes": 438784,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_nullable_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_nullable_boxing-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "e21d100efa0998acb8e6a7150d2a365819f081558e72776d527ab3ebefcb939f",
+      "source_sha256": "0ff530ab5e914cfb0ed6dead46cbec68db660576c94e72ef17728997e19873d9",
+      "bytes": 438784,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_nullable_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_nullable_boxing-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "25f1d5d4f20a0e9b8e0f31c3e652d5be9433377b4d33f17947b8ee9c3177b3f3",
+      "source_sha256": "df7bbf26ebf5494feed9b75bddf1cbca6b70a5a39e0a553bcab6dd2cc45f1cfe",
+      "bytes": 377856,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_typeflow_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_typeflow_boxing-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_typeflow_boxing.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "25f1d5d4f20a0e9b8e0f31c3e652d5be9433377b4d33f17947b8ee9c3177b3f3",
+      "source_sha256": "df7bbf26ebf5494feed9b75bddf1cbca6b70a5a39e0a553bcab6dd2cc45f1cfe",
+      "bytes": 377856,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_typeflow_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_typeflow_boxing-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "25f1d5d4f20a0e9b8e0f31c3e652d5be9433377b4d33f17947b8ee9c3177b3f3",
+      "source_sha256": "df7bbf26ebf5494feed9b75bddf1cbca6b70a5a39e0a553bcab6dd2cc45f1cfe",
+      "bytes": 377856,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/numeric_typeflow_boxing.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-numeric_typeflow_boxing-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "proven_check_elision",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "417a8a332d37c9cc9c21b909ea7d2ca949f895b42a81958b75872117d2eedb5a",
+      "source_sha256": "5cff38fc9b0dbc9e586b093167e214ae6a9555e28e8009482b7e0785e895c753",
+      "bytes": 385024,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/proven_check_elision.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-proven_check_elision-python.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent",
+        "--asm",
+        "--asm-out",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-proven_check_elision.asm"
+      ]
+    },
+    {
+      "fixture": "proven_check_elision",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "417a8a332d37c9cc9c21b909ea7d2ca949f895b42a81958b75872117d2eedb5a",
+      "source_sha256": "5cff38fc9b0dbc9e586b093167e214ae6a9555e28e8009482b7e0785e895c753",
+      "bytes": 385024,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/proven_check_elision.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-proven_check_elision-native.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ]
+    },
+    {
+      "fixture": "proven_check_elision",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "417a8a332d37c9cc9c21b909ea7d2ca949f895b42a81958b75872117d2eedb5a",
+      "source_sha256": "5cff38fc9b0dbc9e586b093167e214ae6a9555e28e8009482b7e0785e895c753",
+      "bytes": 385024,
+      "command": [
+        "/workspace/scratch/b95954a71d57/optimization_work/phase9/after_compiler",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy/tests/proven_check_elision.ml",
+        "/tmp/ml_proven_checks_66z2io7y/windows-x64-proven_check_elision-native-mlo.exe",
+        "-I",
+        "/workspace/scratch/b95954a71d57/projects/MiniLangCompilerPy",
+        "--target",
+        "windows-x64",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ]
+    }
+  ],
+  "runtime_checks": [],
+  "emission_checks": [
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "loopRecurrence",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopRecurrence",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopAlias",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopWriteOnly",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopLate",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopNumericEntry",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopCounter",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopCounter",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "loopSpecial",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopSpecial",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "referenceRecurrence",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSpecial",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopError",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopSynchronized",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopContract",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopControl",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopReturn",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopStep",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopBodyTypeof",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_threads",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "threadedLoop",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "threadedLoop",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "threadedLoop",
+          "marker": "thread_cancel_done_",
+          "present": true
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop_typeof",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "shadowedLoop",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "shadowedLoop",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "nestedCounted",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "nestedCounted",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "nestedBranches",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "nestedBranches",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "nestedSiblings",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "nestedSiblings",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "nestedMandel",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "nestedMandel",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundReentry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundReentry",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundEscape",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundEscape",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundCounter",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundCounter",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundShortCircuit",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundShortCircuit",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundAliases",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundAliases",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundWriteOnly",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compoundBothTrees",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compoundBothTrees",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareUnequal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareUnequal",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareLess",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareLess",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareLessEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareLessEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareGreater",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareGreater",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "compareGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "compareGreaterEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "referenceCounted",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSiblings",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceReentry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEscape",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAliases",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothTrees",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandel",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOr",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedDuplicate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedInline",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_threads",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "threadedNested",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "threadedNested",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "threadedNested",
+          "marker": "thread_cancel_done_",
+          "present": true
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested_typeof",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "shadowedNested",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "shadowedNested",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "shadowedCompound",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "shadowedCompound",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_cache",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "cacheRepeated",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheRepeated",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheRepeated",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cacheFanout",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheFanout",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheFanout",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cacheLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheLate",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheLate",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cachePressureOne",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cachePressureOne",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cachePressureOne",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cacheConditionOne",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheConditionOne",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheConditionOne",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cachePressureTwo",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cachePressureTwo",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cachePressureTwo",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cacheConditionTwo",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheConditionTwo",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheConditionTwo",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cacheTies",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cacheTies",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cacheTies",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "cachePromoted",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "cachePromoted",
+          "marker": "float_loop_cache_",
+          "present": false
+        },
+        {
+          "function": "cachePromoted",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "referenceRepeated",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceFanout",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referencePressureOne",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceConditionOne",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referencePressureTwo",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceConditionTwo",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceTies",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referencePromoted",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "consumerLeft",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerLeft",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerLeft",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerLeft",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerRight",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerRight",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerRight",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerChain",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerChain",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerChain",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerChain",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerLate",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerLate",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerLate",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerLess",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerLess",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerLess",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerLess",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "float_loop_consumer_",
+          "present": false
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "float_loop_literal_",
+          "present": false
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "gc_poll_done_",
+          "present": true
+        },
+        {
+          "function": "referenceLeft",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceChain",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceFresh",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBoth",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceConditionRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLiterals",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "treeBalanced",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBalanced",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeDeep",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeDeep",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeEight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeEight",
+          "call_free_float_tree_regions": 3,
+          "actual_float_leaf_guard_regions": 3
+        },
+        {
+          "function": "treeRightNested",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeRightNested",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNumberCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNumberCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeTwoCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeWrap",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeWrap",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNaN",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNaN",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeProbe",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeProbe",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeSubnormal",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeSubnormal",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeOrder",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeOrder",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeComparisons",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeComparisons",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareRight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareRight",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLeft",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLiteral",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLiteral",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeCaughtNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCaughtNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullableComparison",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "referenceBalanced",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDeep",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRightNested",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWrap",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNaN",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceProbe",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSubnormal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceComparisons",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareRight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullable",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCall",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeErrorOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeMember",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIndex",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeGlobal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeSynchronized",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCapture",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeOptional",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLeaf",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLiteral",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeConstantSubtree",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeDivision",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "treeEight",
+          "marker": "call fn_box_float",
+          "present": true
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_tofloat",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "shadowedTree",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "shadowedComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "reference",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree_typeof",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "shadowedTree",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "shadowedTree",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "shadowedComparison",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "shadowedComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "variableFloatRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatMulRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatMulRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatSubRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatSubRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableNumberRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableNumberRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableMultiply",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableMultiply",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableSubtract",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableSubtract",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAliasJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAliasJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableLoopJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableLoopJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableChain",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableChain",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "smallMandelbrot",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "smallMandelbrot",
+          "call_free_unboxed_regions": 3,
+          "rhs_float_guard_before_child": 3
+        },
+        {
+          "function": "nullableGc",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableGc",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "referenceAdd",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMul",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSub",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCaught",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDivision",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandelbrot",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "readBeforeNumericInit",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "zeroTripRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseBothCalls",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorOrder",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMixedRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseOpaqueRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableGc",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "caughtNullableChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableConversionTag",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "fusedAddInts",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "call_free_unboxed_regions": 2
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "genericAddParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericMulParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericSubParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalParameter",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSibling",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseZeroLoop",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseLoopBack",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseConstantChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIntRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFusePlainIntChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fallibleConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedConversionError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedVoid",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "numeric_float_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "proven_check_elision",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "literalContracts",
+          "marker": "type_guard_valid_",
+          "present": false
+        },
+        {
+          "function": "literalFloatIsNotInt",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "normalizedLiteralIsNotFloat",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "localContract",
+          "marker": "type_guard_valid_",
+          "present": true
+        }
+      ]
+    }
+  ],
+  "success": true
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "case": "float_recurrence",
+    "rounds": 11,
+    "median_ms": {
+      "before": 4.1822376875,
+      "after": 3.7227495
+    },
+    "relative_iqr": {
+      "before": 0.023788536169849148,
+      "after": 0.03395099844886152
+    },
+    "comparisons": {
+      "before/after": {
+        "median_ratio": 1.127519134856019,
+        "ratios_above_one": 11,
+        "min_ratio": 1.0854022758134574,
+        "max_ratio": 1.1831768048657092,
+        "left_first_pairs": 5
+      }
+    }
+  },
+  {
+    "case": "mandelbrot",
+    "rounds": 11,
+    "median_ms": {
+      "before": 5.4868526875,
+      "after": 5.2261078125
+    },
+    "relative_iqr": {
+      "before": 0.1668933999424055,
+      "after": 0.0346381942345358
+    },
+    "comparisons": {
+      "before/after": {
+        "median_ratio": 1.0435339290302499,
+        "ratios_above_one": 10,
+        "min_ratio": 0.9959290891146377,
+        "max_ratio": 1.3951796032060646,
+        "left_first_pairs": 5
+      }
+    }
+  }
+]

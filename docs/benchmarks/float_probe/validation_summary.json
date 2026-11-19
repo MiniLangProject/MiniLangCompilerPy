@@ -1,0 +1,115 @@
+{
+  "success": true,
+  "parity_cases": 96,
+  "compared_images": 288,
+  "linux_runtime_cases": 38,
+  "groups": [
+    {
+      "group": "Linux x64",
+      "configurations": 38,
+      "compared_images": 114,
+      "runtime_cases": 38
+    },
+    {
+      "group": "Windows and MinUX x64",
+      "configurations": 42,
+      "compared_images": 126,
+      "runtime_cases": 0
+    },
+    {
+      "group": "Windows x64 concurrent GC",
+      "configurations": 16,
+      "compared_images": 48,
+      "runtime_cases": 0
+    }
+  ],
+  "all_linux_outputs_equal_baseline": true,
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  },
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "selfhost": {
+    "byte_identical": true,
+    "bytes": 66393008,
+    "sha256": "2911090e0beaf289a289fee361ee8fc4d6d771765785cef71e3cb925a32256ff"
+  },
+  "original_consumer_mxcsr": {
+    "paired_observations": 272,
+    "numeric_bits_compared": false,
+    "flags_tags_counts_controls_equal": true
+  },
+  "targeted_mxcsr": {
+    "probe_cases": 36,
+    "control_modes": 16,
+    "paired_observations": 576,
+    "observed_variants": 3,
+    "native_python_byte_identical": true,
+    "exact_numeric_payloads_equal": true,
+    "flags_tags_counts_equal": true,
+    "controls_preserved": true,
+    "masked_exceptions_only": true,
+    "normalizer_sites_checked": 17,
+    "function_coverage": {
+      "fn_user_loopCondition": 5,
+      "fn_user_loopLeft": 3,
+      "fn_user_loopRight": 3,
+      "fn_user_treeBoth": 2,
+      "fn_user_treeCompareLeft": 1,
+      "fn_user_treeCompareRight": 1,
+      "fn_user_treeLeft": 1,
+      "fn_user_treeRight": 1
+    }
+  },
+  "source_files": [
+    {
+      "repository": "MiniLangCompilerPy",
+      "files": {
+        "mlc/codegen/codegen_expr.py": "f29a42c9e81c4bc396d6ca4f3a3c39ab0a1246bb91ba1291e1bb2bd22994ecc3",
+        "tests/check_proven_check_elision.py": "fbe16523404977c4719bc4aea5bfe8ca05c5bb236aa22ce656cca65d38dc97e0"
+      }
+    },
+    {
+      "repository": "MiniLangCompilerML",
+      "files": {
+        "mlc/codegen/codegen_expr.ml": "4ba4afff7aebe1abb11ace16fe10710c9c6208f5b9d31769d31d21b37ba3b3f7",
+        "tests/check_proven_check_elision.py": "fbe16523404977c4719bc4aea5bfe8ca05c5bb236aa22ce656cca65d38dc97e0"
+      }
+    }
+  ],
+  "recorded_validation_gates": 10,
+  "limits": [
+    "Windows, MinUX and Windows concurrent-GC images are compile-only.",
+    "MXCSR tests use masked exceptions; signal delivery or exception-handler machine-state equivalence is not tested."
+  ],
+  "exact_ablation": {
+    "both_float_baseline_images_reproduced": true,
+    "current_python_native_images_identical": true,
+    "portable_public_wrapper_validated": true,
+    "details": "float_comparison/code_summary.json and helper_validation.json"
+  },
+  "benchmark_validation": {
+    "confirmation_timed_processes": 418,
+    "exploratory_timed_processes": 128,
+    "baseline_profile_processes": 96,
+    "baseline_profile_samples": 8245,
+    "primary_correctness_observations": 294,
+    "separate_minilang_correctness_observations": 36,
+    "separate_c_cpp_correctness_observations": 36,
+    "untimed_gc_observations": 20,
+    "no_timing_repeats": true,
+    "no_outlier_removal": true
+  },
+  "application_validation": {
+    "measured_processes": 28,
+    "warmup_processes": 4,
+    "all_outputs_verified": true,
+    "formatter_images_byte_identical": true,
+    "details": "application/applications.json"
+  }
+}

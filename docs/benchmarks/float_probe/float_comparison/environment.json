@@ -1,0 +1,12 @@
+{
+  "date_utc": "2026-11-19T06:49:45Z",
+  "cpu": 2,
+  "before_sha256": "3b308c32aed932fe1633800467a6c0ad14f33201cf06cf2df217025ff9551712",
+  "after_sha256": "2911090e0beaf289a289fee361ee8fc4d6d771765785cef71e3cb925a32256ff",
+  "rounds": 11,
+  "helper_sha256": "4e980c499740da2b25fd0a12ebce7a5c704e10c809be88c745301c2c1b659b1f",
+  "disabled_compiler_sha256": "906cdedc63e74d695097b772d7854a7e814313e842f88d5caf26654e9eeaf903",
+  "c_references": "Freshly reconstructed by this helper with recorded commands and source/binary hashes.",
+  "calibration_sha256": "79077add74ecbfa0ea5568237b8f73bda08f26aa2e31daed3d8f4e6973930b75",
+  "method": "Original sources; previous and current MiniLang plus freshly reconstructed GCC/G++ -O3 images. Original calibrated repeats per language; internal CLOCK_MONOTONIC, untimed full warmup, balanced eight-seed cycle. GC diagnostics are separate untimed programs. The explicit disabled-candidate compiler reproduces the frozen Phase 8 baseline; no object cache."
+}

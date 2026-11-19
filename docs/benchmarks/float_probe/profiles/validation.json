@@ -1,0 +1,11 @@
+{
+  "frozen_baseline_python_matches_profile_sources": true,
+  "processes": 96,
+  "total_samples": 8245,
+  "helper_sha256": "ae68200bff4e5c24ea4f377a424473122147a698d0e3b57ed4978c46264254e4",
+  "summary_helper_sha256": "f0296dac6fb4e3fe22c5fa6d7d77ddada4224f9f784365e769f002ceda0b9da9",
+  "integer_rejoin_sites": {
+    "float_recurrence": 3,
+    "mandelbrot": 4
+  }
+}
