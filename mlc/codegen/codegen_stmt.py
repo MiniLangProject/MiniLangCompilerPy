@@ -1574,14 +1574,58 @@ class CodegenStmt:
                 size = max(size, plan['bytes'])
         return size
 
+    def _opt_float_loop_registers(self, plan: dict[str, Any]) -> dict[int, str]:
+        """Cache fresh definitions in volatile registers unused by every tree.
+
+        XMM0-XMM3 are normalization scratch. Trees save left operands in
+        XMM4/XMM5, so their maximum pressure, including the escape comparison,
+        leaves zero, one or two registers available for whole-iteration values.
+        The committed memory bank is unchanged and remains the rollback source.
+        """
+        ml = self.ml
+        scores = [0] * len(plan['definitions'])
+
+        def visit(expr: Any, env: dict[str, tuple[int, int]]) -> int:
+            if type(expr) is ml.Var:
+                bank, index = env[str(expr.name)]
+                if bank:
+                    scores[index] += 1
+                return 0
+            if type(expr) is not ml.Bin:
+                return 0
+            left = visit(expr.left, env)
+            right = visit(expr.right, env)
+            return max(left, right + 1 if type(expr.right) is ml.Bin else 0)
+
+        pressure = 0
+        escape = plan['escape']
+        if escape is not None:
+            left = visit(escape.left, plan['escape_env'])
+            right = visit(escape.right, plan['escape_env'])
+            pressure = max(left, right + 1 if type(escape.right) is ml.Bin else 0)
+        for expr, env in plan['definitions']:
+            pressure = max(pressure, visit(expr, env))
+        for _name, definition, _node in plan['outputs']:
+            scores[definition] += 1
+
+        registers = ('xmm4', 'xmm5')[pressure:]
+        ranked = sorted(range(len(scores)), key=lambda index: (-scores[index], index))
+        return {index: register for register, index in zip(registers, ranked)
+                if scores[index] > 0}
+
     def _opt_emit_float_loop_raw(self, expr: Any, env: dict[str, tuple[int, int]],
                                  state_count: int, saved: int, slow: str,
-                                 target: str = 'xmm0') -> None:
+                                 target: str = 'xmm0',
+                                 registers: Optional[dict[int, str]] = None) -> None:
         """Evaluate one prevalidated definition using XMM0-XMM5 only."""
         ml = self.ml
         a = self.asm
         if type(expr) is ml.Var:
             bank, index = env[str(expr.name)]
+            register = (registers or {}).get(index) if bank else None
+            if register is not None:
+                a.movapd_xmm_xmm(target, register)
+                return
             slot = index + (state_count if bank else 0)
             a.movsd_xmm_membase_disp(target, 'rsp', self._float_loop_raw_base + slot * 8)
             return
@@ -1589,15 +1633,18 @@ class CodegenStmt:
             self.emit_expr(expr)
             self.emit_to_double_xmm(0 if target == 'xmm0' else 1, slow)
             return
-        self._opt_emit_float_loop_raw(expr.left, env, state_count, saved, slow)
+        self._opt_emit_float_loop_raw(expr.left, env, state_count, saved, slow,
+                                     registers=registers)
         if type(expr.right) is ml.Bin:
             left_reg = f'xmm{4 + saved}'
             a.movapd_xmm_xmm(left_reg, 'xmm0')
-            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved + 1, slow)
+            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved + 1, slow,
+                                         registers=registers)
             a.movapd_xmm_xmm('xmm1', 'xmm0')
             a.movapd_xmm_xmm('xmm0', left_reg)
         else:
-            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved, slow, 'xmm1')
+            self._opt_emit_float_loop_raw(expr.right, env, state_count, saved, slow, 'xmm1',
+                                         registers)
         if expr.op == '+':
             a.addsd_xmm_xmm('xmm0', 'xmm1')
         elif expr.op == '-':
@@ -1674,6 +1721,7 @@ class CodegenStmt:
         flag_off = work_base + len(plan['definitions']) * 8
         slots = {name: self._float_loop_raw_base + index * 8
                  for index, name in enumerate(plan['states'])}
+        registers = self._opt_float_loop_registers(plan)
 
         def compare_counter(exit_label: str) -> None:
             self.emit_expr(plan['bound'])
@@ -1698,15 +1746,17 @@ class CodegenStmt:
         def compare_escape(exit_label: str) -> None:
             escape = plan['escape']
             a.mark(f'float_loop_condition_{lid}')
-            self._opt_emit_float_loop_raw(escape.left, plan['escape_env'], state_count, 0, deopt)
+            self._opt_emit_float_loop_raw(escape.left, plan['escape_env'], state_count, 0, deopt,
+                                         registers=registers)
             if type(escape.right) is self.ml.Bin:
                 a.movapd_xmm_xmm('xmm4', 'xmm0')
-                self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 1, deopt)
+                self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 1,
+                                             deopt, registers=registers)
                 a.movapd_xmm_xmm('xmm1', 'xmm0')
                 a.movapd_xmm_xmm('xmm0', 'xmm4')
             else:
                 self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 0,
-                                              deopt, 'xmm1')
+                                              deopt, 'xmm1', registers)
             a.ucomisd_xmm_xmm('xmm0', 'xmm1')
             # NaN leaves retain ordinary unordered comparisons. Arithmetic
             # producing NaN has already taken the normalization bailout.
@@ -1756,12 +1806,22 @@ class CodegenStmt:
             self.emit_dbg_line(node)
             if definition is not None:
                 expr, env = plan['definitions'][definition]
-                self._opt_emit_float_loop_raw(expr, env, state_count, 0, deopt)
-                a.movsd_membase_disp_xmm('rsp', work_base + definition * 8, 'xmm0')
+                self._opt_emit_float_loop_raw(expr, env, state_count, 0, deopt,
+                                             registers=registers)
+                register = registers.get(definition)
+                if register is not None:
+                    a.mark(f'float_loop_cache_{lid}_{definition}_{register}')
+                    a.movapd_xmm_xmm(register, 'xmm0')
+                else:
+                    a.movsd_membase_disp_xmm('rsp', work_base + definition * 8, 'xmm0')
         a.mark(f'float_loop_commit_{lid}')
         for name, definition, _node in plan['outputs']:
-            a.movsd_xmm_membase_disp('xmm0', 'rsp', work_base + definition * 8)
-            a.movsd_membase_disp_xmm('rsp', slots[name], 'xmm0')
+            register = registers.get(definition)
+            if register is not None:
+                a.movsd_membase_disp_xmm('rsp', slots[name], register)
+            else:
+                a.movsd_xmm_membase_disp('xmm0', 'rsp', work_base + definition * 8)
+                a.movsd_membase_disp_xmm('rsp', slots[name], 'xmm0')
         self.emit_dbg_line(plan['update'])
         self.emit_load_var(plan['counter'], stmt)
         # Actual int operands plus i < invariant bound prove that +1 cannot

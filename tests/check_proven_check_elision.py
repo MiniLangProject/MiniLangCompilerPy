@@ -36,6 +36,7 @@ FIXTURES = {
     "numeric_float_nested": "NUMERIC FLOAT NESTED [OK]",
     "numeric_float_nested_typeof": "NUMERIC FLOAT NESTED TYPEOF [OK]",
     "numeric_float_nested_threads": "NUMERIC FLOAT NESTED THREADS [OK]",
+    "numeric_float_cache": "NUMERIC FLOAT CACHE [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -485,6 +486,90 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
         contains("threadedNested", "float_loop_fast_", False)
         contains("threadedNested", "gc_poll_done_", True)
         contains("threadedNested", "thread_cancel_done_", True)
+
+    if fixture == "numeric_float_cache":
+        # The fixture exercises whole-region saved-left pressure, including
+        # conditions, while preserving the established rollback/GC boundary.
+        # Counts describe source arithmetic and observable output alias groups.
+        positive = {
+            "cacheRepeated": (8, 2, 4, {"xmm4", "xmm5"}),
+            "cacheFanout": (4, 2, 2, {"xmm4", "xmm5"}),
+            "cacheLate": (10, 4, 5, {"xmm4", "xmm5"}),
+            "cachePressureOne": (6, 2, 2, {"xmm5"}),
+            "cacheConditionOne": (5, 2, 2, {"xmm5"}),
+            "cachePressureTwo": (7, 1, 1, set()),
+            "cacheConditionTwo": (10, 2, 2, set()),
+            "cacheTies": (8, 4, 4, {"xmm4", "xmm5"}),
+            "cachePromoted": (4, 1, 2, {"xmm4", "xmm5"}),
+        }
+        call_pattern = r"(?i)\bcall(?:_\w+)?(?:\s|\()"
+        for name, (operations, groups, definitions, expected_registers) in positive.items():
+            contains(name, "float_loop_fast_", not gc_concurrent)
+            if gc_concurrent:
+                contains(name, "float_loop_cache_", False)
+                contains(name, "gc_poll_done_", True)
+                continue
+            text = body(name)
+            regions = re.findall(r"(?ms)^float_loop_fast_(\d+):(.*?)"
+                                 r"^float_loop_exit_\1:", text)
+            if len(regions) != 1:
+                raise AssertionError(f"Missing cache fixture raw loop: {name}")
+            label, code = regions[0]
+            if re.search(call_pattern, code):
+                raise AssertionError(f"Cached raw values cross a call: {name}")
+            commit = f"float_loop_commit_{label}:"
+            if code.count(commit) != 1:
+                raise AssertionError(f"Missing unique cache fixture commit: {name}")
+            speculative, committed = code.split(commit)
+            normalizers = re.findall(r"(?ms)^float_tree_normalize_\d+:(.*?)"
+                                     r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
+            if len(normalizers) != operations or "float_tree_normalize_" in committed:
+                raise AssertionError(f"Cache changed normalization boundaries: {name}")
+            for normalizer in normalizers:
+                if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
+                                 + re.escape(f"float_loop_deopt_{label}") + r"\b", normalizer):
+                    raise AssertionError(f"Cache lacks integer/NaN rollback: {name}")
+            cached = list(re.finditer(r"(?m)^float_loop_cache_" + re.escape(label)
+                                      + r"_(\d+)_(xmm\d+):[^\n]*\n", speculative))
+            cache_registers = [match[2] for match in cached]
+            if (set(cache_registers) != expected_registers
+                    or len(cache_registers) != len(expected_registers)
+                    or len({match[1] for match in cached}) != len(cached)):
+                raise AssertionError(f"Cache overlaps saved-left registers or definitions: {name}")
+            for match in cached:
+                after_marker = speculative[match.end():].lstrip().splitlines()[0]
+                if not re.search(r"\bmovapd(?:_xmm_xmm)?[\s(]+" + re.escape(match[2])
+                                 + r"\s*,\s*xmm0\b", after_marker):
+                    raise AssertionError(f"Cache marker lacks its fresh value: {name}")
+            # Every uncached arithmetic definition still has one staged store;
+            # a cached definition must not also be written to a staging slot.
+            staged_stores = len(re.findall(
+                r"\bmovsd_membase_disp_xmm\(rsp,\s*\d+,\s*xmm0\)", speculative))
+            if staged_stores != definitions - len(cached):
+                raise AssertionError(f"Cached definitions retain redundant staged stores: {name}")
+            exit_path = re.search(r"(?ms)^float_loop_exit_" + re.escape(label) + r":(.*?)"
+                                  r"^float_loop_deopt_" + re.escape(label) + r":", text)
+            if (not exit_path or "float_loop_materialize_" not in exit_path[1]
+                    or len(re.findall(r"\bcall\s+fn_box_float\b", exit_path[1])) != groups):
+                raise AssertionError(f"Cache changed output alias materialization: {name}")
+            checks.append({"function": name, "call_free_raw_region": True,
+                           "normalizers_before_commit": operations,
+                           "cache_registers": sorted(cache_registers),
+                           "cached_definitions": [int(match[1]) for match in cached],
+                           "uncached_staged_stores": staged_stores,
+                           "exit_materialization_groups": groups})
+        for name in ("referenceRepeated", "referenceFanout", "referenceLate",
+                     "referencePressureOne", "referenceConditionOne",
+                     "referencePressureTwo", "referenceConditionTwo",
+                     "referenceTies", "referencePromoted"):
+            contains(name, "float_loop_fast_", False)
+        if not gc_concurrent:
+            promoted = set(re.findall(r"\bmovq_xmm_r64\((xmm(?:[6-9]|1[01])),",
+                                      body("cachePromoted")))
+            if promoted != {f"xmm{index}" for index in range(6, 12)}:
+                raise AssertionError("Cache fixture does not exercise all promoted integer homes")
+            checks.append({"function": "cachePromoted",
+                           "preserved_integer_registers": sorted(promoted)})
     return checks
 
 
@@ -533,7 +618,8 @@ def main():
                             "numeric_float_tree_typeof", "numeric_float_tree_tofloat",
                             "numeric_float_loop", "numeric_float_loop_typeof",
                             "numeric_float_loop_threads", "numeric_float_nested",
-                            "numeric_float_nested_typeof", "numeric_float_nested_threads")
+                            "numeric_float_nested_typeof", "numeric_float_nested_threads",
+                            "numeric_float_cache")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:
