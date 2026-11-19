@@ -1457,10 +1457,13 @@ class CodegenExpr:
         a.ucomisd_xmm_xmm('xmm0', 'xmm1')
         a.jcc('e', slow)
         # Both exact-f32 and boxed-f64 values unbox to the original double.
-        # Retain the normalizer's probe and its floating-point status effects.
+        # Retain both conversions for their floating-point status effects.
         a.cvtsd2ss_xmm_xmm('xmm2', 'xmm0')
         a.cvtss2sd_xmm_xmm('xmm3', 'xmm2')
-        a.ucomisd_xmm_xmm('xmm0', 'xmm3')
+        # The probe comparison's EFLAGS are dead at every raw-tree/loop caller.
+        # The first comparison already excludes NaN and reports any denormal
+        # XMM0; an f32 widened to f64 cannot be a double denormal. Consequently
+        # this final UCOMISD could add no floating-point exception status either.
 
     def _opt_emit_float_tree_raw(self, expr: Any, saved: int, slow: str, normalize: bool) -> None:
         """Emit a prevalidated tree without calls, allocation or raw spills."""

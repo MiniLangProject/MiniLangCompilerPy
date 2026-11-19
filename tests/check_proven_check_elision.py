@@ -152,7 +152,7 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                         < text.index(deopt + ":")):
                     raise AssertionError(f"Canonicalization lacks out-of-line placement: {name} {number}")
                 consumers.append(number)
-            if not re.search(r"(?s)cvtsd2ss.*?cvtss2sd.*?ucomisd",
+            if not re.search(r"(?s)cvtsd2ss.*?cvtss2sd",
                              normalizer[found.end():probe_end]):
                 raise AssertionError(f"Missing original f32 normalization probe: {name} {label}")
         if len(set(consumers)) != len(consumers):
