@@ -1,0 +1,72 @@
+[
+  {
+    "case": "float_recurrence",
+    "variant": "before",
+    "binary_sha256": "0e84971ce8d292ff375ea615e78136c224e5fe48e320c438d79985f097660fb7",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "executable_segment_bytes": 214947
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "after",
+    "binary_sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "executable_segment_bytes": 214307
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "normalization_only",
+    "binary_sha256": "10c8d72c6b87a48966e8381ce0b2f5e2bd664b8685237177dab8336c9be792b8",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "executable_segment_bytes": 215011
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "literal_only",
+    "binary_sha256": "d29553a979c459fb81c2ef1e0f90fdbdf6a805a1b651542c71f94af2f38815ee",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "executable_segment_bytes": 214243
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "disabled_both",
+    "binary_sha256": "0e84971ce8d292ff375ea615e78136c224e5fe48e320c438d79985f097660fb7",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "executable_segment_bytes": 214947
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "before",
+    "binary_sha256": "852536db735704eb9740837a610245de4172b2a9073ec9830c2db10b91fa6eeb",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "executable_segment_bytes": 77898
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "after",
+    "binary_sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "executable_segment_bytes": 77802
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "normalization_only",
+    "binary_sha256": "e57c3ee073ae8c3d3fdc4b2647fc843834b2948332d12a6a24185a3533b01228",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "executable_segment_bytes": 77962
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "literal_only",
+    "binary_sha256": "367c03e334b537f1e6fb3a1002543d3be677ed84f68bbd81d3d8ef767f636dd1",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "executable_segment_bytes": 77738
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "disabled_both",
+    "binary_sha256": "852536db735704eb9740837a610245de4172b2a9073ec9830c2db10b91fa6eeb",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "executable_segment_bytes": 77898
+  }
+]

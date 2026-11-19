@@ -1,0 +1,147 @@
+[
+  {
+    "case": "float_recurrence",
+    "samples": 3398,
+    "lost_samples": 0,
+    "category_counts": {
+      "raw_other": 936,
+      "raw_normalizer_int_guard": 1226,
+      "raw_normalizer_f32_probe": 1111,
+      "commit_counter": 121,
+      "outside_executable": 1,
+      "executable_other": 3
+    },
+    "sample_shares": {
+      "raw_other": 0.27545615067686874,
+      "raw_normalizer_int_guard": 0.36080047086521483,
+      "raw_normalizer_f32_probe": 0.32695703354914657,
+      "commit_counter": 0.03560918187168923,
+      "outside_executable": 0.0002942907592701589,
+      "executable_other": 0.0008828722778104767
+    },
+    "raw_normalizer_share": 0.6877575044143613,
+    "raw_normalizer_run_range": [
+      0.6636113657195234,
+      0.7034252297410192
+    ],
+    "other_hot_ips": [
+      {
+        "ip": "0x432520",
+        "samples": 1,
+        "nearest_label": "fn_box_float"
+      },
+      {
+        "ip": "0x401004",
+        "samples": 1,
+        "nearest_label": "_start"
+      },
+      {
+        "ip": "0x42ea9c",
+        "samples": 1,
+        "nearest_label": "fn_alloc"
+      }
+    ]
+  },
+  {
+    "case": "mandelbrot",
+    "samples": 5380,
+    "lost_samples": 0,
+    "category_counts": {
+      "bench_other": 292,
+      "raw_normalizer_f32_probe": 738,
+      "raw_other": 542,
+      "raw_normalizer_int_guard": 1184,
+      "executable_other": 1267,
+      "ordinary_other": 926,
+      "commit_counter": 134,
+      "guard": 145,
+      "ordinary_normalizer_int_guard": 73,
+      "exit_materialization": 61,
+      "deopt_materialization": 14,
+      "ordinary_normalizer_f32_probe": 3,
+      "outside_executable": 1
+    },
+    "sample_shares": {
+      "bench_other": 0.05427509293680297,
+      "raw_normalizer_f32_probe": 0.13717472118959106,
+      "raw_other": 0.10074349442379182,
+      "raw_normalizer_int_guard": 0.2200743494423792,
+      "executable_other": 0.23550185873605947,
+      "ordinary_other": 0.1721189591078067,
+      "commit_counter": 0.02490706319702602,
+      "guard": 0.02695167286245353,
+      "ordinary_normalizer_int_guard": 0.013568773234200743,
+      "exit_materialization": 0.01133828996282528,
+      "deopt_materialization": 0.0026022304832713753,
+      "ordinary_normalizer_f32_probe": 0.0005576208178438662,
+      "outside_executable": 0.0001858736059479554
+    },
+    "raw_normalizer_share": 0.35724907063197026,
+    "raw_normalizer_run_range": [
+      0.3398766124509254,
+      0.3673689897352782
+    ],
+    "other_hot_ips": [
+      {
+        "ip": "0x40eccc",
+        "samples": 153,
+        "nearest_label": "gc_coal2_loop_481"
+      },
+      {
+        "ip": "0x40ebee",
+        "samples": 121,
+        "nearest_label": "gc_sweep_loop_481"
+      },
+      {
+        "ip": "0x40ecaa",
+        "samples": 84,
+        "nearest_label": "gc_coal2_loop_481"
+      },
+      {
+        "ip": "0x40ebcc",
+        "samples": 52,
+        "nearest_label": "gc_sweep_loop_481"
+      },
+      {
+        "ip": "0x40ebf8",
+        "samples": 46,
+        "nearest_label": "gc_sweep_loop_481"
+      },
+      {
+        "ip": "0x40ecd6",
+        "samples": 45,
+        "nearest_label": "gc_coal2_loop_481"
+      },
+      {
+        "ip": "0x411224",
+        "samples": 41,
+        "nearest_label": "fn_box_float"
+      },
+      {
+        "ip": "0x40ebf2",
+        "samples": 36,
+        "nearest_label": "gc_sweep_loop_481"
+      },
+      {
+        "ip": "0x40dcbd",
+        "samples": 31,
+        "nearest_label": "alloc_slow_internal"
+      },
+      {
+        "ip": "0x40de34",
+        "samples": 28,
+        "nearest_label": "alloc_retry_479_counted"
+      },
+      {
+        "ip": "0x40def2",
+        "samples": 24,
+        "nearest_label": "alloc_free_loop_479"
+      },
+      {
+        "ip": "0x40dec9",
+        "samples": 23,
+        "nearest_label": "alloc_try_free_479_search"
+      }
+    ]
+  }
+]

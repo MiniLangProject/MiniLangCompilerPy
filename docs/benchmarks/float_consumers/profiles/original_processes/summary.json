@@ -1,0 +1,124 @@
+[
+  {
+    "case": "float_recurrence",
+    "processes": 48,
+    "calls_per_process": 16,
+    "samples": 3670,
+    "lost_samples": 0,
+    "category_counts": {
+      "outside_executable": 14,
+      "raw_normalizer_f32_probe": 1215,
+      "raw_normalizer_int_guard": 1349,
+      "raw_other": 954,
+      "commit_counter": 135,
+      "guard": 1,
+      "bench_other": 1,
+      "executable_other": 1
+    },
+    "sample_shares": {
+      "outside_executable": 0.0038147138964577656,
+      "raw_normalizer_f32_probe": 0.3310626702997275,
+      "raw_normalizer_int_guard": 0.367574931880109,
+      "raw_other": 0.25994550408719347,
+      "commit_counter": 0.03678474114441417,
+      "guard": 0.00027247956403269756,
+      "bench_other": 0.00027247956403269756,
+      "executable_other": 0.00027247956403269756
+    },
+    "raw_normalizer_share": 0.6986376021798365,
+    "period_groups": [
+      {
+        "period_ns": 997003,
+        "samples": 1284,
+        "raw_normalizer_share": 0.6985981308411215,
+        "ordinary_path_share": 0.0,
+        "executable_other_share": 0.0
+      },
+      {
+        "period_ns": 1000003,
+        "samples": 1221,
+        "raw_normalizer_share": 0.6912366912366913,
+        "ordinary_path_share": 0.0,
+        "executable_other_share": 0.0
+      },
+      {
+        "period_ns": 1009003,
+        "samples": 1165,
+        "raw_normalizer_share": 0.7064377682403433,
+        "ordinary_path_share": 0.0,
+        "executable_other_share": 0.0008583690987124463
+      }
+    ],
+    "runtime_function_samples": {
+      "fn_user_main": 1
+    }
+  },
+  {
+    "case": "mandelbrot",
+    "processes": 48,
+    "calls_per_process": 16,
+    "samples": 5467,
+    "lost_samples": 0,
+    "category_counts": {
+      "outside_executable": 16,
+      "raw_normalizer_int_guard": 1267,
+      "raw_normalizer_f32_probe": 806,
+      "ordinary_other": 905,
+      "raw_other": 502,
+      "bench_other": 296,
+      "executable_other": 1235,
+      "guard": 152,
+      "ordinary_normalizer_int_guard": 74,
+      "commit_counter": 127,
+      "exit_materialization": 72,
+      "deopt_materialization": 15
+    },
+    "sample_shares": {
+      "outside_executable": 0.0029266508139747576,
+      "raw_normalizer_int_guard": 0.23175416133162613,
+      "raw_normalizer_f32_probe": 0.14743003475397842,
+      "ordinary_other": 0.16553868666544722,
+      "raw_other": 0.09182366928845802,
+      "bench_other": 0.054143040058533015,
+      "executable_other": 0.2259008597036766,
+      "guard": 0.0278031827327602,
+      "ordinary_normalizer_int_guard": 0.013535760014633254,
+      "commit_counter": 0.02323029083592464,
+      "exit_materialization": 0.01316992866288641,
+      "deopt_materialization": 0.0027437351381013352
+    },
+    "raw_normalizer_share": 0.37918419608560455,
+    "period_groups": [
+      {
+        "period_ns": 997003,
+        "samples": 1768,
+        "raw_normalizer_share": 0.3942307692307692,
+        "ordinary_path_share": 0.16289592760180996,
+        "executable_other_share": 0.2324660633484163
+      },
+      {
+        "period_ns": 1000003,
+        "samples": 1853,
+        "raw_normalizer_share": 0.36805180787911496,
+        "ordinary_path_share": 0.19320021586616298,
+        "executable_other_share": 0.22180248246087425
+      },
+      {
+        "period_ns": 1009003,
+        "samples": 1846,
+        "raw_normalizer_share": 0.37594799566630555,
+        "ordinary_path_share": 0.18039003250270855,
+        "executable_other_share": 0.223726977248104
+      }
+    ],
+    "runtime_function_samples": {
+      "fn_gc_collect": 589,
+      "fn_alloc": 478,
+      "fn_box_float": 111,
+      "fn_toFloat": 50,
+      "fn_toNumber": 5,
+      "fn_extern_g_measurement_clock_54": 1,
+      "fn_add_string": 1
+    }
+  }
+]

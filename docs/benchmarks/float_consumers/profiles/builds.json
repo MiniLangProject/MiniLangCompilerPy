@@ -1,0 +1,30 @@
+[
+  {
+    "case": "float_recurrence",
+    "variant": "native",
+    "binary_sha256": "0e84971ce8d292ff375ea615e78136c224e5fe48e320c438d79985f097660fb7",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "phase7_image_identical": true
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "python",
+    "binary_sha256": "0e84971ce8d292ff375ea615e78136c224e5fe48e320c438d79985f097660fb7",
+    "source_sha256": "26dde420d41d050efed2a971bc1e0618ab21a346698e9f56a93dd970255f7dfb",
+    "phase7_image_identical": true
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "native",
+    "binary_sha256": "852536db735704eb9740837a610245de4172b2a9073ec9830c2db10b91fa6eeb",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "phase7_image_identical": true
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "python",
+    "binary_sha256": "852536db735704eb9740837a610245de4172b2a9073ec9830c2db10b91fa6eeb",
+    "source_sha256": "37d0b953224d92d3977655a60637128c230cedbf223b852f5b2b8e7c6ded0995",
+    "phase7_image_identical": true
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "case": "float_recurrence",
+    "baseline_reproduced": true,
+    "python_native_identical": true,
+    "before": {
+      "executable_segment_bytes": 214947,
+      "sha256": "0e84971ce8d292ff375ea615e78136c224e5fe48e320c438d79985f097660fb7",
+      "raw_regions": 1,
+      "compound_regions": 0,
+      "reentry_sites": 0,
+      "cached_definitions": 1,
+      "cache_registers": [
+        "xmm5"
+      ],
+      "raw_normalizers": 12,
+      "fallback_normalizers": 14,
+      "numeric_consumers": 0,
+      "integer_rejoin_stubs": 0,
+      "immediate_float_literals": 0,
+      "boxed_float_literals": 0,
+      "other_normalizers": 0
+    },
+    "after": {
+      "executable_segment_bytes": 214307,
+      "sha256": "9c9e02275f6890f7ee5cdd89e24fe2e1c6634eef07eb53cd67acbeb744d6aa37",
+      "raw_regions": 1,
+      "compound_regions": 0,
+      "reentry_sites": 0,
+      "cached_definitions": 1,
+      "cache_registers": [
+        "xmm5"
+      ],
+      "raw_normalizers": 12,
+      "fallback_normalizers": 14,
+      "numeric_consumers": 3,
+      "integer_rejoin_stubs": 3,
+      "immediate_float_literals": 0,
+      "boxed_float_literals": 8,
+      "other_normalizers": 0
+    },
+    "label_basis": "Python images with exact byte identity to native baseline/after"
+  },
+  {
+    "case": "mandelbrot",
+    "baseline_reproduced": true,
+    "python_native_identical": true,
+    "before": {
+      "executable_segment_bytes": 77898,
+      "sha256": "852536db735704eb9740837a610245de4172b2a9073ec9830c2db10b91fa6eeb",
+      "raw_regions": 1,
+      "compound_regions": 1,
+      "reentry_sites": 1,
+      "cached_definitions": 2,
+      "cache_registers": [
+        "xmm4",
+        "xmm5"
+      ],
+      "raw_normalizers": 8,
+      "fallback_normalizers": 5,
+      "numeric_consumers": 0,
+      "integer_rejoin_stubs": 0,
+      "immediate_float_literals": 0,
+      "boxed_float_literals": 0,
+      "other_normalizers": 0
+    },
+    "after": {
+      "executable_segment_bytes": 77802,
+      "sha256": "e161cc1e0708279fdca68a09d8c83f6d26ba7ab6275e268e90aea7c99da297dc",
+      "raw_regions": 1,
+      "compound_regions": 1,
+      "reentry_sites": 1,
+      "cached_definitions": 2,
+      "cache_registers": [
+        "xmm4",
+        "xmm5"
+      ],
+      "raw_normalizers": 8,
+      "fallback_normalizers": 5,
+      "numeric_consumers": 4,
+      "integer_rejoin_stubs": 4,
+      "immediate_float_literals": 2,
+      "boxed_float_literals": 0,
+      "other_normalizers": 0
+    },
+    "label_basis": "Python images with exact byte identity to native baseline/after"
+  }
+]

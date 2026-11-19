@@ -1,0 +1,1266 @@
+{
+  "all_probes_preserve_results_and_total_iterations": true,
+  "compared_probes": 24,
+  "invariants": [
+    "checksum",
+    "source_sha256",
+    "original_source_sha256",
+    "total_body_iterations"
+  ],
+  "rows": [
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 0,
+      "checksum": 182,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 1,
+        "after": 1
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 11,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 8,
+        "after": 8
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 12345,
+      "checksum": 187,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 1,
+        "after": 1
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 11,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 8,
+        "after": 8
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 2147483647,
+      "checksum": 212,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 1,
+        "after": 1
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 11,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 8,
+        "after": 8
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 0,
+      "checksum": 3098,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 17,
+      "raw_commits": {
+        "before": 17,
+        "after": 17
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 139,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 88,
+        "after": 88
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 12345,
+      "checksum": 3184,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 17,
+      "raw_commits": {
+        "before": 17,
+        "after": 17
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 139,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 88,
+        "after": 88
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 2147483647,
+      "checksum": 3611,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 17,
+      "raw_commits": {
+        "before": 17,
+        "after": 17
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 139,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 88,
+        "after": 88
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 0,
+      "checksum": 12210,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 67,
+      "raw_commits": {
+        "before": 67,
+        "after": 67
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 539,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 338,
+        "after": 338
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 12345,
+      "checksum": 12551,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 67,
+      "raw_commits": {
+        "before": 67,
+        "after": 67
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 539,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 338,
+        "after": 338
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 2147483647,
+      "checksum": 14234,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 67,
+      "raw_commits": {
+        "before": 67,
+        "after": 67
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 539,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 338,
+        "after": 338
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 0,
+      "checksum": 54302340,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 260986,
+      "raw_commits": {
+        "before": 260986,
+        "after": 260986
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2087891,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1304933,
+        "after": 1304933
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 12345,
+      "checksum": 55497830,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 260986,
+      "raw_commits": {
+        "before": 260986,
+        "after": 260986
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2087891,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1304933,
+        "after": 1304933
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 2147483647,
+      "checksum": 61445296,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 260986,
+      "raw_commits": {
+        "before": 260986,
+        "after": 260986
+      },
+      "ordinary_body_iterations": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2087891,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1304933,
+        "after": 1304933
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 0,
+      "checksum": 1,
+      "event_counts_unchanged": true,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 0,
+        "after": 0
+      },
+      "ordinary_body_iterations": {
+        "before": 1,
+        "after": 1
+      },
+      "raw_deopts": {
+        "before": 0,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_stores": {
+        "before": 0,
+        "after": 0
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 12345,
+      "checksum": 1,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 0,
+        "after": 1
+      },
+      "ordinary_body_iterations": {
+        "before": 1,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 1,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 1,
+          "body": 3,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 4,
+        "after": 16
+      },
+      "raw_stores": {
+        "before": 12,
+        "after": 12
+      },
+      "counter_delta": {
+        "guard_attempts": -1,
+        "raw_commits": 1,
+        "raw_deopts": -1,
+        "ordinary_entries": -1,
+        "ordinary_reentries": -1,
+        "guard_successes": -1,
+        "ordinary_body_iterations": -1,
+        "materialize_exit_calls": 1,
+        "materialize_value_groups": 4,
+        "body_normalizer_attempts": 7,
+        "body_normalizer_passes": 4,
+        "ordinary_normalizer_attempts": -3,
+        "entry_raw_stores": -6,
+        "body_raw_loads": 6,
+        "body_raw_stores": 2,
+        "commit_raw_loads": 2,
+        "commit_raw_stores": 4,
+        "materialize_exit_raw_loads": 4,
+        "raw_register_copies": 6,
+        "condition_integer_rejoins": 1,
+        "body_integer_rejoins": 3
+      },
+      "removed_raw_memory_instructions": -12
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 2147483647,
+      "checksum": 1,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 1,
+      "raw_commits": {
+        "before": 0,
+        "after": 1
+      },
+      "ordinary_body_iterations": {
+        "before": 1,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 1,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 1,
+          "body": 3,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 4,
+        "after": 16
+      },
+      "raw_stores": {
+        "before": 12,
+        "after": 12
+      },
+      "counter_delta": {
+        "guard_attempts": -1,
+        "raw_commits": 1,
+        "raw_deopts": -1,
+        "ordinary_entries": -1,
+        "ordinary_reentries": -1,
+        "guard_successes": -1,
+        "ordinary_body_iterations": -1,
+        "materialize_exit_calls": 1,
+        "materialize_value_groups": 4,
+        "body_normalizer_attempts": 7,
+        "body_normalizer_passes": 4,
+        "ordinary_normalizer_attempts": -3,
+        "entry_raw_stores": -6,
+        "body_raw_loads": 6,
+        "body_raw_stores": 2,
+        "commit_raw_loads": 2,
+        "commit_raw_stores": 4,
+        "materialize_exit_raw_loads": 4,
+        "raw_register_copies": 6,
+        "condition_integer_rejoins": 1,
+        "body_integer_rejoins": 3
+      },
+      "removed_raw_memory_instructions": -12
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 0,
+      "checksum": 5264,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 5264,
+      "raw_commits": {
+        "before": 4975,
+        "after": 5247
+      },
+      "ordinary_body_iterations": {
+        "before": 289,
+        "after": 17
+      },
+      "raw_deopts": {
+        "before": 272,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 272,
+          "body": 816,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 51774,
+        "after": 54002
+      },
+      "raw_stores": {
+        "before": 33114,
+        "after": 33114
+      },
+      "counter_delta": {
+        "guard_attempts": -272,
+        "raw_commits": 272,
+        "raw_deopts": -272,
+        "ordinary_entries": -272,
+        "ordinary_reentries": -272,
+        "guard_successes": -272,
+        "ordinary_body_iterations": -272,
+        "materialize_exit_calls": 13,
+        "materialize_value_groups": 52,
+        "body_normalizer_attempts": 1904,
+        "body_normalizer_passes": 1088,
+        "ordinary_normalizer_attempts": -816,
+        "entry_raw_stores": -1632,
+        "body_raw_loads": 1632,
+        "body_raw_stores": 544,
+        "commit_raw_loads": 544,
+        "commit_raw_stores": 1088,
+        "materialize_exit_raw_loads": 52,
+        "raw_register_copies": 1632,
+        "condition_integer_rejoins": 272,
+        "body_integer_rejoins": 816
+      },
+      "removed_raw_memory_instructions": -2228
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 12345,
+      "checksum": 5264,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 5264,
+      "raw_commits": {
+        "before": 4975,
+        "after": 5264
+      },
+      "ordinary_body_iterations": {
+        "before": 289,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 289,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 289,
+          "body": 867,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 51842,
+        "after": 54274
+      },
+      "raw_stores": {
+        "before": 33318,
+        "after": 33318
+      },
+      "counter_delta": {
+        "guard_attempts": -289,
+        "raw_commits": 289,
+        "raw_deopts": -289,
+        "ordinary_entries": -289,
+        "ordinary_reentries": -289,
+        "guard_successes": -289,
+        "ordinary_body_iterations": -289,
+        "materialize_exit_calls": 30,
+        "materialize_value_groups": 120,
+        "body_normalizer_attempts": 2023,
+        "body_normalizer_passes": 1156,
+        "ordinary_normalizer_attempts": -867,
+        "entry_raw_stores": -1734,
+        "body_raw_loads": 1734,
+        "body_raw_stores": 578,
+        "commit_raw_loads": 578,
+        "commit_raw_stores": 1156,
+        "materialize_exit_raw_loads": 120,
+        "raw_register_copies": 1734,
+        "condition_integer_rejoins": 289,
+        "body_integer_rejoins": 867
+      },
+      "removed_raw_memory_instructions": -2432
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 2147483647,
+      "checksum": 5260,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 5260,
+      "raw_commits": {
+        "before": 4971,
+        "after": 5260
+      },
+      "ordinary_body_iterations": {
+        "before": 289,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 289,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 289,
+          "body": 867,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 51802,
+        "after": 54234
+      },
+      "raw_stores": {
+        "before": 33294,
+        "after": 33294
+      },
+      "counter_delta": {
+        "guard_attempts": -289,
+        "raw_commits": 289,
+        "raw_deopts": -289,
+        "ordinary_entries": -289,
+        "ordinary_reentries": -289,
+        "guard_successes": -289,
+        "ordinary_body_iterations": -289,
+        "materialize_exit_calls": 30,
+        "materialize_value_groups": 120,
+        "body_normalizer_attempts": 2023,
+        "body_normalizer_passes": 1156,
+        "ordinary_normalizer_attempts": -867,
+        "entry_raw_stores": -1734,
+        "body_raw_loads": 1734,
+        "body_raw_stores": 578,
+        "commit_raw_loads": 578,
+        "commit_raw_stores": 1156,
+        "materialize_exit_raw_loads": 120,
+        "raw_register_copies": 1734,
+        "condition_integer_rejoins": 289,
+        "body_integer_rejoins": 867
+      },
+      "removed_raw_memory_instructions": -2432
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 0,
+      "checksum": 78568,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 78568,
+      "raw_commits": {
+        "before": 74079,
+        "after": 78501
+      },
+      "ordinary_body_iterations": {
+        "before": 4489,
+        "after": 67
+      },
+      "raw_deopts": {
+        "before": 4422,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 4422,
+          "body": 13266,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 773486,
+        "after": 810002
+      },
+      "raw_stores": {
+        "before": 497538,
+        "after": 497538
+      },
+      "counter_delta": {
+        "guard_attempts": -4422,
+        "raw_commits": 4422,
+        "raw_deopts": -4422,
+        "ordinary_entries": -4422,
+        "ordinary_reentries": -4422,
+        "guard_successes": -4422,
+        "ordinary_body_iterations": -4422,
+        "materialize_exit_calls": 285,
+        "materialize_value_groups": 1140,
+        "body_normalizer_attempts": 30954,
+        "body_normalizer_passes": 17688,
+        "ordinary_normalizer_attempts": -13266,
+        "entry_raw_stores": -26532,
+        "body_raw_loads": 26532,
+        "body_raw_stores": 8844,
+        "commit_raw_loads": 8844,
+        "commit_raw_stores": 17688,
+        "materialize_exit_raw_loads": 1140,
+        "raw_register_copies": 26532,
+        "condition_integer_rejoins": 4422,
+        "body_integer_rejoins": 13266
+      },
+      "removed_raw_memory_instructions": -36516
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 12345,
+      "checksum": 78490,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 78490,
+      "raw_commits": {
+        "before": 74001,
+        "after": 78490
+      },
+      "ordinary_body_iterations": {
+        "before": 4489,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 4489,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 4489,
+          "body": 13467,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 772974,
+        "after": 810294
+      },
+      "raw_stores": {
+        "before": 497874,
+        "after": 497874
+      },
+      "counter_delta": {
+        "guard_attempts": -4489,
+        "raw_commits": 4489,
+        "raw_deopts": -4489,
+        "ordinary_entries": -4489,
+        "ordinary_reentries": -4489,
+        "guard_successes": -4489,
+        "ordinary_body_iterations": -4489,
+        "materialize_exit_calls": 352,
+        "materialize_value_groups": 1408,
+        "body_normalizer_attempts": 31423,
+        "body_normalizer_passes": 17956,
+        "ordinary_normalizer_attempts": -13467,
+        "entry_raw_stores": -26934,
+        "body_raw_loads": 26934,
+        "body_raw_stores": 8978,
+        "commit_raw_loads": 8978,
+        "commit_raw_stores": 17956,
+        "materialize_exit_raw_loads": 1408,
+        "raw_register_copies": 26934,
+        "condition_integer_rejoins": 4489,
+        "body_integer_rejoins": 13467
+      },
+      "removed_raw_memory_instructions": -37320
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 2147483647,
+      "checksum": 78496,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 78496,
+      "raw_commits": {
+        "before": 74007,
+        "after": 78496
+      },
+      "ordinary_body_iterations": {
+        "before": 4489,
+        "after": 0
+      },
+      "raw_deopts": {
+        "before": 4489,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 4489,
+          "body": 13467,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 773034,
+        "after": 810354
+      },
+      "raw_stores": {
+        "before": 497910,
+        "after": 497910
+      },
+      "counter_delta": {
+        "guard_attempts": -4489,
+        "raw_commits": 4489,
+        "raw_deopts": -4489,
+        "ordinary_entries": -4489,
+        "ordinary_reentries": -4489,
+        "guard_successes": -4489,
+        "ordinary_body_iterations": -4489,
+        "materialize_exit_calls": 352,
+        "materialize_value_groups": 1408,
+        "body_normalizer_attempts": 31423,
+        "body_normalizer_passes": 17956,
+        "ordinary_normalizer_attempts": -13467,
+        "entry_raw_stores": -26934,
+        "body_raw_loads": 26934,
+        "body_raw_stores": 8978,
+        "commit_raw_loads": 8978,
+        "commit_raw_stores": 17956,
+        "materialize_exit_raw_loads": 1408,
+        "raw_register_copies": 26934,
+        "condition_integer_rejoins": 4489,
+        "body_integer_rejoins": 13467
+      },
+      "removed_raw_memory_instructions": -37320
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 0,
+      "checksum": 278744,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 278744,
+      "raw_commits": {
+        "before": 246952,
+        "after": 262412
+      },
+      "ordinary_body_iterations": {
+        "before": 31792,
+        "after": 16332
+      },
+      "raw_deopts": {
+        "before": 15608,
+        "after": 148
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 15129,
+          "body": 45847,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2582577,
+        "after": 2710833
+      },
+      "raw_stores": {
+        "before": 1665978,
+        "after": 1665978
+      },
+      "counter_delta": {
+        "guard_attempts": -15460,
+        "raw_commits": 15460,
+        "raw_deopts": -15460,
+        "ordinary_entries": -15460,
+        "ordinary_reentries": -15460,
+        "guard_successes": -15460,
+        "ordinary_body_iterations": -15460,
+        "materialize_exit_calls": 1117,
+        "materialize_deopt_calls": 147,
+        "materialize_value_groups": 5056,
+        "body_normalizer_attempts": 107840,
+        "body_normalizer_passes": 62324,
+        "ordinary_normalizer_attempts": -46485,
+        "ordinary_normalizer_passes": -767,
+        "entry_raw_stores": -92760,
+        "body_raw_loads": 92280,
+        "body_raw_stores": 30920,
+        "commit_raw_loads": 30920,
+        "commit_raw_stores": 61840,
+        "materialize_exit_raw_loads": 4468,
+        "materialize_deopt_raw_loads": 588,
+        "raw_register_copies": 92660,
+        "condition_integer_rejoins": 15129,
+        "body_integer_rejoins": 45847
+      },
+      "removed_raw_memory_instructions": -128256
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 12345,
+      "checksum": 278594,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 278594,
+      "raw_commits": {
+        "before": 254399,
+        "after": 269897
+      },
+      "ordinary_body_iterations": {
+        "before": 24195,
+        "after": 8697
+      },
+      "raw_deopts": {
+        "before": 15498,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 15498,
+          "body": 46494,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2658058,
+        "after": 2786638
+      },
+      "raw_stores": {
+        "before": 1712370,
+        "after": 1712370
+      },
+      "counter_delta": {
+        "guard_attempts": -15498,
+        "raw_commits": 15498,
+        "raw_deopts": -15498,
+        "ordinary_entries": -15498,
+        "ordinary_reentries": -15498,
+        "guard_successes": -15498,
+        "ordinary_body_iterations": -15498,
+        "materialize_exit_calls": 1149,
+        "materialize_value_groups": 4596,
+        "body_normalizer_attempts": 108486,
+        "body_normalizer_passes": 61992,
+        "ordinary_normalizer_attempts": -46494,
+        "entry_raw_stores": -92988,
+        "body_raw_loads": 92988,
+        "body_raw_stores": 30996,
+        "commit_raw_loads": 30996,
+        "commit_raw_stores": 61992,
+        "materialize_exit_raw_loads": 4596,
+        "raw_register_copies": 92988,
+        "condition_integer_rejoins": 15498,
+        "body_integer_rejoins": 46494
+      },
+      "removed_raw_memory_instructions": -128580
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 2147483647,
+      "checksum": 278368,
+      "event_counts_unchanged": false,
+      "total_body_iterations": 278368,
+      "raw_commits": {
+        "before": 254171,
+        "after": 269669
+      },
+      "ordinary_body_iterations": {
+        "before": 24197,
+        "after": 8699
+      },
+      "raw_deopts": {
+        "before": 15498,
+        "after": 0
+      },
+      "integer_rejoins": {
+        "before": {
+          "condition": 0,
+          "body": 0,
+          "ordinary": 0
+        },
+        "after": {
+          "condition": 15498,
+          "body": 46494,
+          "ordinary": 0
+        }
+      },
+      "raw_loads": {
+        "before": 2655782,
+        "after": 2784362
+      },
+      "raw_stores": {
+        "before": 1711002,
+        "after": 1711002
+      },
+      "counter_delta": {
+        "guard_attempts": -15498,
+        "raw_commits": 15498,
+        "raw_deopts": -15498,
+        "ordinary_entries": -15498,
+        "ordinary_reentries": -15498,
+        "guard_successes": -15498,
+        "ordinary_body_iterations": -15498,
+        "materialize_exit_calls": 1149,
+        "materialize_value_groups": 4596,
+        "body_normalizer_attempts": 108486,
+        "body_normalizer_passes": 61992,
+        "ordinary_normalizer_attempts": -46494,
+        "entry_raw_stores": -92988,
+        "body_raw_loads": 92988,
+        "body_raw_stores": 30996,
+        "commit_raw_loads": 30996,
+        "commit_raw_stores": 61992,
+        "materialize_exit_raw_loads": 4596,
+        "raw_register_copies": 92988,
+        "condition_integer_rejoins": 15498,
+        "body_integer_rejoins": 46494
+      },
+      "removed_raw_memory_instructions": -128580
+    }
+  ],
+  "limitation": "Instruction/event frequencies do not establish CPU-time shares."
+}

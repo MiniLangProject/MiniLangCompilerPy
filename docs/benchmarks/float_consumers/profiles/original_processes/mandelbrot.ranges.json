@@ -1,0 +1,209 @@
+{
+  "image_base": 4194304,
+  "bench_start": 4200400,
+  "bench_end": 4221072,
+  "major_ranges": [
+    {
+      "category": "guard",
+      "start": 4206568,
+      "end": 4207574
+    },
+    {
+      "category": "raw_other",
+      "start": 4207574,
+      "end": 4208248
+    },
+    {
+      "category": "commit_counter",
+      "start": 4208248,
+      "end": 4208371
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4208371,
+      "end": 4208633
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4208633,
+      "end": 4208890
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4208890,
+      "end": 4220469
+    }
+  ],
+  "ranges": [
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207596,
+      "end": 4207616
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207616,
+      "end": 4207628
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207877,
+      "end": 4207897
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207897,
+      "end": 4207909
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207922,
+      "end": 4207942
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207942,
+      "end": 4207954
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4207967,
+      "end": 4207987
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4207987,
+      "end": 4207999
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4208037,
+      "end": 4208057
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208057,
+      "end": 4208069
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4208082,
+      "end": 4208102
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208102,
+      "end": 4208114
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4208142,
+      "end": 4208162
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208162,
+      "end": 4208174
+    },
+    {
+      "category": "raw_normalizer_int_guard",
+      "start": 4208207,
+      "end": 4208227
+    },
+    {
+      "category": "raw_normalizer_f32_probe",
+      "start": 4208227,
+      "end": 4208239
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4209600,
+      "end": 4209620
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4209620,
+      "end": 4209632
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212415,
+      "end": 4212435
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212435,
+      "end": 4212447
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4212553,
+      "end": 4212573
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4212573,
+      "end": 4212585
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4214219,
+      "end": 4214239
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4214239,
+      "end": 4214251
+    },
+    {
+      "category": "ordinary_normalizer_int_guard",
+      "start": 4217252,
+      "end": 4217272
+    },
+    {
+      "category": "ordinary_normalizer_f32_probe",
+      "start": 4217272,
+      "end": 4217284
+    },
+    {
+      "category": "guard",
+      "start": 4206568,
+      "end": 4207574
+    },
+    {
+      "category": "raw_other",
+      "start": 4207574,
+      "end": 4208248
+    },
+    {
+      "category": "commit_counter",
+      "start": 4208248,
+      "end": 4208371
+    },
+    {
+      "category": "exit_materialization",
+      "start": 4208371,
+      "end": 4208633
+    },
+    {
+      "category": "deopt_materialization",
+      "start": 4208633,
+      "end": 4208890
+    },
+    {
+      "category": "ordinary_other",
+      "start": 4208890,
+      "end": 4220469
+    },
+    {
+      "category": "bench_other",
+      "start": 4200400,
+      "end": 4221072
+    },
+    {
+      "category": "executable_other",
+      "start": 4198400,
+      "end": 4276298
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "float_recurrence": {
+    "instrumentation": "PUSHFQ; INC qword [RIP+counter]; POPFQ",
+    "counter_order": [
+      "guard_attempts",
+      "raw_attempts",
+      "raw_conditions",
+      "raw_commits",
+      "raw_exits",
+      "raw_deopts",
+      "ordinary_entries",
+      "ordinary_reentries",
+      "guard_successes",
+      "ordinary_body_iterations",
+      "materialize_exit_calls",
+      "materialize_deopt_calls",
+      "materialize_value_groups",
+      "condition_normalizer_attempts",
+      "condition_normalizer_passes",
+      "body_normalizer_attempts",
+      "body_normalizer_passes",
+      "ordinary_normalizer_attempts",
+      "ordinary_normalizer_passes",
+      "entry_raw_loads",
+      "entry_raw_stores",
+      "condition_raw_loads",
+      "condition_raw_stores",
+      "body_raw_loads",
+      "body_raw_stores",
+      "commit_raw_loads",
+      "commit_raw_stores",
+      "materialize_exit_raw_loads",
+      "materialize_exit_raw_stores",
+      "materialize_deopt_raw_loads",
+      "materialize_deopt_raw_stores",
+      "raw_register_copies",
+      "condition_integer_rejoins",
+      "body_integer_rejoins"
+    ],
+    "instances": [
+      {
+        "static_sites": {
+          "guard_attempts": 1,
+          "entry_raw_stores": 3,
+          "guard_successes": 1,
+          "raw_attempts": 1,
+          "body_raw_loads": 6,
+          "body_normalizer_attempts": 12,
+          "body_normalizer_passes": 12,
+          "raw_register_copies": 14,
+          "body_raw_stores": 2,
+          "raw_commits": 1,
+          "commit_raw_stores": 3,
+          "commit_raw_loads": 2,
+          "raw_exits": 1,
+          "materialize_exit_calls": 1,
+          "materialize_exit_raw_loads": 3,
+          "materialize_value_groups": 6,
+          "raw_deopts": 1,
+          "materialize_deopt_calls": 1,
+          "materialize_deopt_raw_loads": 3,
+          "ordinary_entries": 1,
+          "ordinary_body_iterations": 1,
+          "ordinary_normalizer_attempts": 14,
+          "ordinary_normalizer_passes": 14
+        },
+        "loops": [
+          {
+            "state_slots": 3,
+            "definitions": 3,
+            "output_bindings": 3,
+            "distinct_output_definitions": 3,
+            "compound": false,
+            "raw_arena_bytes": 64
+          }
+        ]
+      }
+    ]
+  },
+  "mandelbrot": {
+    "instrumentation": "PUSHFQ; INC qword [RIP+counter]; POPFQ",
+    "counter_order": [
+      "guard_attempts",
+      "raw_attempts",
+      "raw_conditions",
+      "raw_commits",
+      "raw_exits",
+      "raw_deopts",
+      "ordinary_entries",
+      "ordinary_reentries",
+      "guard_successes",
+      "ordinary_body_iterations",
+      "materialize_exit_calls",
+      "materialize_deopt_calls",
+      "materialize_value_groups",
+      "condition_normalizer_attempts",
+      "condition_normalizer_passes",
+      "body_normalizer_attempts",
+      "body_normalizer_passes",
+      "ordinary_normalizer_attempts",
+      "ordinary_normalizer_passes",
+      "entry_raw_loads",
+      "entry_raw_stores",
+      "condition_raw_loads",
+      "condition_raw_stores",
+      "body_raw_loads",
+      "body_raw_stores",
+      "commit_raw_loads",
+      "commit_raw_stores",
+      "materialize_exit_raw_loads",
+      "materialize_exit_raw_stores",
+      "materialize_deopt_raw_loads",
+      "materialize_deopt_raw_stores",
+      "raw_register_copies",
+      "condition_integer_rejoins",
+      "body_integer_rejoins"
+    ],
+    "instances": [
+      {
+        "static_sites": {
+          "guard_attempts": 1,
+          "entry_raw_stores": 6,
+          "guard_successes": 1,
+          "raw_attempts": 1,
+          "raw_conditions": 1,
+          "condition_raw_loads": 2,
+          "condition_normalizer_attempts": 1,
+          "condition_normalizer_passes": 1,
+          "body_raw_loads": 6,
+          "body_normalizer_attempts": 7,
+          "body_normalizer_passes": 7,
+          "raw_register_copies": 6,
+          "body_raw_stores": 2,
+          "raw_commits": 1,
+          "commit_raw_stores": 4,
+          "commit_raw_loads": 2,
+          "raw_exits": 1,
+          "materialize_exit_calls": 1,
+          "materialize_exit_raw_loads": 4,
+          "materialize_value_groups": 8,
+          "raw_deopts": 1,
+          "materialize_deopt_calls": 1,
+          "materialize_deopt_raw_loads": 4,
+          "ordinary_entries": 1,
+          "ordinary_normalizer_attempts": 5,
+          "ordinary_normalizer_passes": 5,
+          "ordinary_body_iterations": 1,
+          "ordinary_reentries": 1
+        },
+        "loops": [
+          {
+            "state_slots": 6,
+            "definitions": 4,
+            "output_bindings": 4,
+            "distinct_output_definitions": 4,
+            "compound": true,
+            "raw_arena_bytes": 96
+          }
+        ]
+      }
+    ]
+  }
+}

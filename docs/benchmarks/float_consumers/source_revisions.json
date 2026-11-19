@@ -1,0 +1,40 @@
+{
+  "baseline": {
+    "python": "d67b64bac4cc8abe2ced18d10a6188c610d2bd30",
+    "minilang": "65d62add8bf7cc6d3c0439a0ba1d1e7e3690ad8d"
+  },
+  "measured_source": [
+    {
+      "repository": "MiniLangProject/MiniLangCompilerPy",
+      "commit": "f53fdace586b3d1bacf6726d9bf0850f890dd91f",
+      "tree": "0133e422890b81cafa129193774dfd898aac3be2",
+      "parent": "d67b64bac4cc8abe2ced18d10a6188c610d2bd30"
+    },
+    {
+      "repository": "MiniLangProject/MiniLangCompilerML",
+      "commit": "f4f89844372d397348b6d93a950285148c1122b3",
+      "tree": "f764fa3d824bc072c066b610cb23eceab0ce3a74",
+      "parent": "65d62add8bf7cc6d3c0439a0ba1d1e7e3690ad8d"
+    }
+  ],
+  "measured_source_files": [
+    {
+      "repository": "MiniLangCompilerPy",
+      "files": {
+        "mlc/codegen/codegen_stmt.py": "06b5c7825a3bed16f60c7dcd8b5c13dd98a176d735673eb0140422067b5f759b",
+        "tests/check_proven_check_elision.py": "d9bb7d9493aa90d43abf7946c752391828530c133d5288d75e4feb21cca3b9db",
+        "tests/numeric_float_consumer.ml": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+        "tests/run_tests.py": "27876364401b1e801c7b056ea36ab347ec0e438dd4a681bf530ae8f5042fbcb8"
+      }
+    },
+    {
+      "repository": "MiniLangCompilerML",
+      "files": {
+        "mlc/codegen/codegen_stmt.ml": "6537e54af862fb6a3549957971ba0fa5f2ce8f86cc878a0af4943454fdfc87b5",
+        "tests/check_proven_check_elision.py": "d9bb7d9493aa90d43abf7946c752391828530c133d5288d75e4feb21cca3b9db",
+        "tests/numeric_float_consumer.ml": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+        "tests/runtests.ml": "bf68eccb637a9f8d47fa167315a84c9a8ef3c5169ec39b92b8ea3335db60a278"
+      }
+    }
+  ]
+}

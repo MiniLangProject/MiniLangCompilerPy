@@ -1,0 +1,80 @@
+{
+  "success": true,
+  "parity_cases": 96,
+  "compared_images": 288,
+  "linux_runtime_cases": 38,
+  "compared_platforms": {
+    "linux_x64": {
+      "parity_cases": 38,
+      "compared_images": 114,
+      "runtime_cases": 38,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 0
+    },
+    "windows_x64": {
+      "parity_cases": 37,
+      "compared_images": 111,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 16,
+      "concurrent_gc_images": 48,
+      "compile_only_cases": 37
+    },
+    "minux_x64": {
+      "parity_cases": 21,
+      "compared_images": 63,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 21
+    }
+  },
+  "all_linux_outputs_equal_baseline": true,
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  },
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "bootstrap_selfhost_identical": true,
+  "native_compiler_bytes": 66393008,
+  "native_compiler_sha256": "3b308c32aed932fe1633800467a6c0ad14f33201cf06cf2df217025ff9551712",
+  "disabled_both_hooks_reproduce_baseline_images": true,
+  "float_comparison_pair_orders_balanced": true,
+  "primary_correctness_runs": 294,
+  "primary_full_size_correctness_runs": 30,
+  "float_comparison_correctness_runs": 36,
+  "c_cpp_correctness_runs": 36,
+  "gc_diagnostic_runs": 20,
+  "ablation_correctness_runs": 80,
+  "primary_timed_runs": 330,
+  "float_comparison_timed_runs": 88,
+  "ablation_timed_runs": 56,
+  "all_timed_checksums_and_warmups_valid": true,
+  "unchanged_primary_images": 13,
+  "residual_compared_probes": 24,
+  "residual_instrumented_runs": 48,
+  "residual_uninstrumented_control_runs": 48,
+  "residual_results_and_total_iterations_unchanged": true,
+  "new_fixture_optimized_functions": 15,
+  "baseline_profile_processes": 96,
+  "baseline_profile_samples": 9137,
+  "extended_profile_pilot_processes": 6,
+  "extended_profile_pilot_samples": 8778,
+  "mxcsr_paired_observations": 272,
+  "final_gates_passed": 24,
+  "fixture_whitespace_followup": {
+    "reason": "One redundant EOF newline removed after the initial Linux matrix captured the fixture. Compiler sources and benchmark images were unchanged.",
+    "initial_source_sha256": "bdcdbe090577df2a2a0a0312233420e564a9157f3f83d1a88fe2101cc258befa",
+    "published_source_sha256": "30cc5ed6d20f8c4080a9c08cfef1b505058030bf0280c4269f3760341f5fbecd",
+    "parity_cases": 1,
+    "compared_images": 3,
+    "runtime_cases": 1,
+    "images_identical_to_initial_matrix": true,
+    "excluded_from_unique_matrix_totals": true
+  }
+}

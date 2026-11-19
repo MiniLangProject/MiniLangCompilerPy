@@ -1,0 +1,27 @@
+{
+  "method": "Sample original MiniLang float kernels with Linux user CPU-clock events.\n\nThis x86-64-only diagnostic leaves program bytes untouched. Sampled instruction\npointers are attributed to verified ELF/label ranges. Software-clock sampling\nhas arbitrary interrupt skid: these are approximate sampled user-time shares,\nnot exclusive instruction costs, hardware cycles, or removable CPU fractions.\nSampling covers startup, full untimed warmup, timed calls and printing. Calls\noutside bench are separate; no causal caller attribution is claimed.\n",
+  "helper_sha256": "ff032ac6669ddafae12e497068c9bc2483e9c302ef3d0c93c71b4f7cebd6fcb5",
+  "periods_ns": [
+    997003,
+    1000003,
+    1009003
+  ],
+  "reps": 16,
+  "processes_per_period": 16,
+  "seed_cycle": [
+    12345,
+    12346,
+    12347,
+    12348,
+    12349,
+    12350,
+    12351,
+    12352
+  ],
+  "warmup_seed": 77881,
+  "hardware_cycles_available": false,
+  "software_cpu_clock_available": true,
+  "no_program_instrumentation": true,
+  "no_callchain_attribution": true,
+  "precision": "Approximate sampled user CPU shares; arbitrary interrupt skid and correlated samples. Includes startup and one full warmup; runtime callees remain executable_other. Do not interpret as exclusive instruction cost or realizable speedup."
+}
