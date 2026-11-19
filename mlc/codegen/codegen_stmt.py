@@ -1613,10 +1613,44 @@ class CodegenStmt:
         return {index: register for register, index in zip(registers, ranked)
                 if scores[index] > 0}
 
+    def _opt_float_loop_double_consumer(self, other: Any) -> bool:
+        """Prove that a primitive sibling keeps its parent on double arithmetic.
+
+        Entry guards establish actual floats for committed leaves, and strict
+        assignment-root normalization establishes floats for fresh definitions.
+        An arithmetic sibling can normalize to int, so it is not such a proof.
+        """
+        return (type(other) is self.ml.Var
+                or (type(other) is self.ml.Num and type(other.value) is float))
+
+    def _opt_emit_float_loop_literal(self, expr: Any, target: str) -> bool:
+        """Decode the float literal just emitted into RAX without tag dispatch.
+
+        Keep the original encoded literal and its exact f32-to-f64 conversion,
+        including floating-point status effects. Boxed literals retain their
+        original read-only object; only their already-proven tag test is absent.
+        """
+        if type(expr) is not self.ml.Num or type(expr.value) is not float:
+            return False
+        a = self.asm
+        lid = self.new_label_id()
+        if isinstance(try_enc_float_immediate(float(expr.value)), int):
+            a.mark(f'float_loop_literal_immf_{lid}')
+            a.mov_r64_r64('rcx', 'rax')
+            a.shr_r64_imm8('rcx', 3)
+            a.movq_xmm_r64(target, 'rcx')
+            a.cvtss2sd_xmm_xmm(target, target)
+        else:
+            a.mark(f'float_loop_literal_boxed_{lid}')
+            a.movsd_xmm_membase_disp(target, 'rax', 8)
+        return True
+
     def _opt_emit_float_loop_raw(self, expr: Any, env: dict[str, tuple[int, int]],
                                  state_count: int, saved: int, slow: str,
                                  target: str = 'xmm0',
-                                 registers: Optional[dict[int, str]] = None) -> None:
+                                 registers: Optional[dict[int, str]] = None,
+                                 integer_rejoins: Optional[list[tuple[str, str]]] = None,
+                                 double_consumer: bool = False) -> None:
         """Evaluate one prevalidated definition using XMM0-XMM5 only."""
         ml = self.ml
         a = self.asm
@@ -1631,28 +1665,44 @@ class CodegenStmt:
             return
         if type(expr) is ml.Num:
             self.emit_expr(expr)
-            self.emit_to_double_xmm(0 if target == 'xmm0' else 1, slow)
+            if not self._opt_emit_float_loop_literal(expr, target):
+                self.emit_to_double_xmm(0 if target == 'xmm0' else 1, slow)
             return
         self._opt_emit_float_loop_raw(expr.left, env, state_count, saved, slow,
-                                     registers=registers)
+                                     registers=registers, integer_rejoins=integer_rejoins,
+                                     double_consumer=self._opt_float_loop_double_consumer(expr.right))
         if type(expr.right) is ml.Bin:
             left_reg = f'xmm{4 + saved}'
             a.movapd_xmm_xmm(left_reg, 'xmm0')
             self._opt_emit_float_loop_raw(expr.right, env, state_count, saved + 1, slow,
-                                         registers=registers)
+                                         registers=registers, integer_rejoins=integer_rejoins,
+                                         double_consumer=self._opt_float_loop_double_consumer(expr.left))
             a.movapd_xmm_xmm('xmm1', 'xmm0')
             a.movapd_xmm_xmm('xmm0', left_reg)
         else:
             self._opt_emit_float_loop_raw(expr.right, env, state_count, saved, slow, 'xmm1',
-                                         registers)
+                                         registers, integer_rejoins)
         if expr.op == '+':
             a.addsd_xmm_xmm('xmm0', 'xmm1')
         elif expr.op == '-':
             a.subsd_xmm_xmm('xmm0', 'xmm1')
         else:
             a.mulsd_xmm_xmm('xmm0', 'xmm1')
-        # Assignment roots need the same integer/NaN bailout as intermediates.
-        self._opt_emit_float_tree_normalize(slow)
+        if double_consumer and integer_rejoins is not None:
+            # The proven-float sibling makes the next operation a double
+            # consumer even when this child normalizes to int. Keep the float
+            # path unchanged; integer/NaN canonicalization rejoins out of line.
+            lid = self.new_label_id()
+            canonical = f'float_loop_consumer_int_{lid}'
+            resume = f'float_loop_consumer_resume_{lid}'
+            a.mark(f'float_loop_consumer_{lid}')
+            integer_rejoins.append((canonical, resume))
+            self._opt_emit_float_tree_normalize(canonical)
+            a.mark(resume)
+        else:
+            # Assignment roots and children without a proven-float sibling
+            # retain the integer/NaN bailout and the committed rollback state.
+            self._opt_emit_float_tree_normalize(slow)
 
     def _opt_emit_float_loop(self, stmt: Any) -> bool:
         """Keep a pure counted loop's float state unboxed until exit/deopt.
@@ -1722,6 +1772,7 @@ class CodegenStmt:
         slots = {name: self._float_loop_raw_base + index * 8
                  for index, name in enumerate(plan['states'])}
         registers = self._opt_float_loop_registers(plan)
+        integer_rejoins: list[tuple[str, str]] = []
 
         def compare_counter(exit_label: str) -> None:
             self.emit_expr(plan['bound'])
@@ -1747,19 +1798,21 @@ class CodegenStmt:
             escape = plan['escape']
             a.mark(f'float_loop_condition_{lid}')
             self._opt_emit_float_loop_raw(escape.left, plan['escape_env'], state_count, 0, deopt,
-                                         registers=registers)
+                                         registers=registers, integer_rejoins=integer_rejoins,
+                                         double_consumer=self._opt_float_loop_double_consumer(escape.right))
             if type(escape.right) is self.ml.Bin:
                 a.movapd_xmm_xmm('xmm4', 'xmm0')
                 self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 1,
-                                             deopt, registers=registers)
+                                             deopt, registers=registers, integer_rejoins=integer_rejoins,
+                                             double_consumer=self._opt_float_loop_double_consumer(escape.left))
                 a.movapd_xmm_xmm('xmm1', 'xmm0')
                 a.movapd_xmm_xmm('xmm0', 'xmm4')
             else:
                 self._opt_emit_float_loop_raw(escape.right, plan['escape_env'], state_count, 0,
-                                              deopt, 'xmm1', registers)
+                                              deopt, 'xmm1', registers, integer_rejoins)
             a.ucomisd_xmm_xmm('xmm0', 'xmm1')
-            # NaN leaves retain ordinary unordered comparisons. Arithmetic
-            # producing NaN has already taken the normalization bailout.
+            # NaN leaves retain ordinary unordered comparisons. Arithmetic NaNs
+            # are canonicalized like ordinary values or take the strict bailout.
             if escape.op == '!=':
                 accepted = f'float_loop_condition_true_{lid}'
                 a.jcc('p', accepted)
@@ -1807,7 +1860,7 @@ class CodegenStmt:
             if definition is not None:
                 expr, env = plan['definitions'][definition]
                 self._opt_emit_float_loop_raw(expr, env, state_count, 0, deopt,
-                                             registers=registers)
+                                             registers=registers, integer_rejoins=integer_rejoins)
                 register = registers.get(definition)
                 if register is not None:
                     a.mark(f'float_loop_cache_{lid}_{definition}_{register}')
@@ -1840,6 +1893,17 @@ class CodegenStmt:
             a.jcc('e', done)
         materialize()
         a.jmp(done)
+
+        for canonical, resume in integer_rejoins:
+            a.mark(canonical)
+            # RAX still holds CVTTSD2SI's result. Reproduce ordinary tagged-int
+            # signed61 wrapping, including its unordered/equal NaN branch, then
+            # supply the immediate double consumer. No raw state is committed.
+            a.shl_rax_imm8(3)
+            a.or_rax_imm8(TAG_INT)
+            a.sar_rax_imm8(3)
+            a.cvtsi2sd_xmm_r64('xmm0', 'rax')
+            a.jmp(resume)
 
         a.mark(deopt)
         a.mov_r64_membase_disp('rax', 'rsp', flag_off)

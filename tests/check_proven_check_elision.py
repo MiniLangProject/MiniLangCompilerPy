@@ -37,6 +37,7 @@ FIXTURES = {
     "numeric_float_nested_typeof": "NUMERIC FLOAT NESTED TYPEOF [OK]",
     "numeric_float_nested_threads": "NUMERIC FLOAT NESTED THREADS [OK]",
     "numeric_float_cache": "NUMERIC FLOAT CACHE [OK]",
+    "numeric_float_consumer": "NUMERIC FLOAT CONSUMER [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -102,6 +103,71 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
             raise AssertionError(f"Incorrect emission: {fixture} {name}: "
                                  f"{marker} expected={expected}")
         checks.append({"function": name, "marker": marker, "present": expected})
+
+    def loop_normalizers(name, text, label, speculative, normalizers):
+        """Keep strict roots while validating complete bounded continuations.
+
+        Every node retains its conversion/comparison and f32 probe. A permitted
+        child may branch to an out-of-line canonicalization continuation; a
+        stored definition must still branch to the committed-state bailout.
+        """
+        branch = re.compile(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+(\w+)")
+        deopt = f"float_loop_deopt_{label}"
+        consumers = []
+        for normalizer in normalizers:
+            found = branch.search(normalizer)
+            if not found:
+                raise AssertionError(f"Missing integer/NaN normalization branch: {name} {label}")
+            target = found[1]
+            consumer = re.fullmatch(r"float_loop_consumer_int_(\d+)", target)
+            if target != deopt and consumer is None:
+                raise AssertionError(f"Unvalidated normalization target: {name} {target}")
+            probe_end = len(normalizer)
+            if consumer is not None:
+                number = consumer[1]
+                start = f"float_loop_consumer_{number}"
+                resume = f"float_loop_consumer_resume_{number}"
+                if not re.search(r"(?m)^" + re.escape(start) + r":[^\n]*\n"
+                                 r"float_tree_normalize_\d+:", speculative):
+                    raise AssertionError(f"Consumer does not begin at a normalizer: {name} {number}")
+                resumed = re.search(r"(?m)^" + re.escape(resume) + r":", normalizer)
+                if not resumed:
+                    raise AssertionError(f"Missing local consumer continuation: {name} {number}")
+                probe_end = resumed.start()
+                stub = re.search(r"(?ms)^" + re.escape(target) + r":(.*?)"
+                                 r"(?=^[A-Za-z_]\w*:|\Z)", text)
+                if not stub:
+                    raise AssertionError(f"Missing canonicalization code: {name} {number}")
+                sequence = (
+                    r"(?s)\bshl(?:_r64_imm8)?[\s(]+rax\s*,\s*3\b.*?"
+                    r"\bor(?:_r64_imm)?[\s(]+rax\s*,\s*1\b.*?"
+                    r"\bsar(?:_r64_imm8)?[\s(]+rax\s*,\s*3\b.*?"
+                    r"\bcvtsi2sd(?:_xmm_r64)?[\s(]+xmm0\s*,\s*rax\b.*?"
+                    r"\bjmp\s+" + re.escape(resume) + r"\b")
+                if (not re.search(sequence, stub[1])
+                        or len(re.findall(r"(?m)^[0-9A-Fa-f]{8,16}\s", stub[1])) != 5
+                        or re.search(r"\bxmm(?:[1-9]|1[0-5])\b", stub[1])):
+                    raise AssertionError(f"Canonicalization changes scratch/state: {name} {number}")
+                if not (text.index(f"float_loop_exit_{label}:") < stub.start()
+                        < text.index(deopt + ":")):
+                    raise AssertionError(f"Canonicalization lacks out-of-line placement: {name} {number}")
+                consumers.append(number)
+            if not re.search(r"(?s)cvtsd2ss.*?cvtss2sd.*?ucomisd",
+                             normalizer[found.end():probe_end]):
+                raise AssertionError(f"Missing original f32 normalization probe: {name} {label}")
+        if len(set(consumers)) != len(consumers):
+            raise AssertionError(f"Duplicate normalization continuation: {name} {label}")
+        normalizer_starts = [m.start() for m in re.finditer(
+            r"(?m)^float_tree_normalize_\d+:", speculative)]
+        writes = re.finditer(
+            r"(?m)^float_loop_cache_" + re.escape(label) + r"_\d+_xmm\d+:"
+            r"|\bmovsd_membase_disp_xmm\(rsp,\s*\d+,\s*xmm0\)", speculative)
+        for write in writes:
+            prior = [start for start in normalizer_starts if start < write.start()]
+            found = branch.search(speculative[prior[-1]:write.start()]) if prior else None
+            if not found or found[1] != deopt:
+                raise AssertionError(f"Stored definition root bypasses rollback: {name} {label}")
+        return consumers
 
     if fixture == "proven_check_elision":
         for name, guarded in (("literalContracts", False),
@@ -336,11 +402,7 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                     r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
                 if len(normalizers) != operations or "float_tree_normalize_" in committed:
                     raise AssertionError(f"Arithmetic normalization after/missing commit: {name} {label}")
-                for normalizer in normalizers:
-                    if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
-                                     + re.escape(f"float_loop_deopt_{label}") + r"\b",
-                                     normalizer):
-                        raise AssertionError(f"Missing integer/NaN rollback guard: {name} {label}")
+                loop_normalizers(name, text, label, speculative, normalizers)
                 # Peephole lowering may combine jge exit; jmp fast into jl fast.
                 if not re.search(r"\b(?:jmp|jl)\s+" + re.escape(f"float_loop_fast_{label}")
                                  + r"\b", committed):
@@ -430,10 +492,7 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                                          r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
                 if len(normalizers) != operations or "float_tree_normalize_" in committed:
                     raise AssertionError(f"Incorrect nested normalization boundaries: {name} {label}")
-                for normalizer in normalizers:
-                    if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
-                                     + re.escape(f"float_loop_deopt_{label}") + r"\b", normalizer):
-                        raise AssertionError(f"Missing nested integer/NaN bailout: {name} {label}")
+                loop_normalizers(name, text, label, speculative, normalizers)
                 if not re.search(r"\b(?:jmp|jl)\s+" + re.escape(f"float_loop_fast_{label}")
                                  + r"\b", committed):
                     raise AssertionError(f"Missing nested committed backedge: {name} {label}")
@@ -525,10 +584,7 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                                      r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
             if len(normalizers) != operations or "float_tree_normalize_" in committed:
                 raise AssertionError(f"Cache changed normalization boundaries: {name}")
-            for normalizer in normalizers:
-                if not re.search(r"(?s)cvttsd2si.*?cvtsi2sd.*?ucomisd.*?\bje\s+"
-                                 + re.escape(f"float_loop_deopt_{label}") + r"\b", normalizer):
-                    raise AssertionError(f"Cache lacks integer/NaN rollback: {name}")
+            loop_normalizers(name, text, label, speculative, normalizers)
             cached = list(re.finditer(r"(?m)^float_loop_cache_" + re.escape(label)
                                       + r"_(\d+)_(xmm\d+):[^\n]*\n", speculative))
             cache_registers = [match[2] for match in cached]
@@ -570,6 +626,88 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                 raise AssertionError("Cache fixture does not exercise all promoted integer homes")
             checks.append({"function": "cachePromoted",
                            "preserved_integer_registers": sorted(promoted)})
+    if fixture == "numeric_float_consumer":
+        # (arithmetic nodes, permitted numeric continuations, output groups).
+        # The both-tree cases enforce the boundary that preserves int/int work.
+        positive = {
+            "consumerLeft": (2, 1, 1),
+            "consumerRight": (2, 1, 1),
+            "consumerChain": (3, 2, 1),
+            "consumerFresh": (4, 2, 2),
+            "consumerBoth": (3, 0, 1),
+            "consumerBothCondition": (4, 1, 1),
+            "consumerLate": (7, 4, 3),
+            "consumerEqual": (3, 2, 1),
+            "consumerUnequal": (3, 2, 1),
+            "consumerLess": (3, 2, 1),
+            "consumerLessEqual": (3, 2, 1),
+            "consumerGreater": (3, 2, 1),
+            "consumerGreaterEqual": (3, 2, 1),
+            "consumerConditionRight": (3, 2, 1),
+            "consumerLiterals": (4, 2, 1),
+        }
+        call_pattern = r"(?i)\bcall(?:_\w+)?(?:\s|\()"
+        for name, (operations, expected_consumers, groups) in positive.items():
+            contains(name, "float_loop_fast_", not gc_concurrent)
+            if gc_concurrent:
+                contains(name, "float_loop_consumer_", False)
+                contains(name, "float_loop_literal_", False)
+                contains(name, "gc_poll_done_", True)
+                continue
+            text = body(name)
+            regions = re.findall(r"(?ms)^float_loop_fast_(\d+):(.*?)"
+                                 r"^float_loop_exit_\1:", text)
+            if len(regions) != 1:
+                raise AssertionError(f"Missing consumer fixture raw loop: {name}")
+            label, code = regions[0]
+            if re.search(call_pattern, code):
+                raise AssertionError(f"Consumer raw state crosses a call: {name}")
+            commit = f"float_loop_commit_{label}:"
+            if code.count(commit) != 1:
+                raise AssertionError(f"Missing unique consumer iteration commit: {name}")
+            speculative, committed = code.split(commit)
+            normalizers = re.findall(r"(?ms)^float_tree_normalize_\d+:(.*?)"
+                                     r"(?=^float_tree_normalize_\d+:|\Z)", speculative)
+            if len(normalizers) != operations or "float_tree_normalize_" in committed:
+                raise AssertionError(f"Consumer changed normalization boundaries: {name}")
+            consumers = loop_normalizers(name, text, label, speculative, normalizers)
+            if len(consumers) != expected_consumers:
+                raise AssertionError(f"Consumer crossed float-sibling proof boundary: {name}")
+            if len(re.findall(r"(?m)^float_loop_consumer_\d+:", speculative)) != len(consumers):
+                raise AssertionError(f"Unmatched numeric consumer marker: {name}")
+            exit_path = re.search(r"(?ms)^float_loop_exit_" + re.escape(label) + r":(.*?)"
+                                  r"^float_loop_deopt_" + re.escape(label) + r":", text)
+            if (not exit_path or "float_loop_materialize_" not in exit_path[1]
+                    or len(re.findall(r"\bcall\s+fn_box_float\b", exit_path[1])) != groups):
+                raise AssertionError(f"Consumer changed output alias materialization: {name}")
+            if name == "consumerFresh":
+                caches = re.findall(r"(?m)^float_loop_cache_" + re.escape(label)
+                                    + r"_(\d+)_(xmm\d+):", speculative)
+                if caches != [("0", "xmm5")]:
+                    raise AssertionError("Fresh float consumer lacks cached/saved-left coexistence")
+            if name == "consumerLiterals":
+                kinds = re.findall(r"(?m)^float_loop_literal_(immf|boxed)_\d+:", speculative)
+                if kinds.count("immf") != 2 or kinds.count("boxed") != 1:
+                    raise AssertionError("Literal fixture lacks both known representations")
+                for kind, literal_code in re.findall(
+                        r"(?ms)^float_loop_literal_(immf|boxed)_\d+:(.*?)"
+                        r"(?=^[A-Za-z_]\w*:|\Z)", speculative):
+                    if kind == "immf":
+                        if not re.search(r"(?s)shr.*?movq.*?cvtss2sd", literal_code):
+                            raise AssertionError("Immediate literal loses original f32 conversion")
+                    elif not re.search(r"\bmovsd_membase_disp_xmm|\bmovsd_xmm_membase_disp",
+                                       literal_code):
+                        raise AssertionError("Boxed literal lacks its direct double load")
+            checks.append({"function": name, "call_free_raw_region": True,
+                           "normalizers_before_commit": operations,
+                           "numeric_consumer_continuations": len(consumers),
+                           "strict_integer_nan_bailouts": operations - len(consumers),
+                           "exit_materialization_groups": groups})
+        for name in ("referenceLeft", "referenceRight", "referenceChain",
+                     "referenceFresh", "referenceBoth", "referenceBothCondition",
+                     "referenceLate", "referenceCompare", "referenceConditionRight",
+                     "referenceLiterals"):
+            contains(name, "float_loop_fast_", False)
     return checks
 
 
@@ -619,7 +757,7 @@ def main():
                             "numeric_float_loop", "numeric_float_loop_typeof",
                             "numeric_float_loop_threads", "numeric_float_nested",
                             "numeric_float_nested_typeof", "numeric_float_nested_threads",
-                            "numeric_float_cache")
+                            "numeric_float_cache", "numeric_float_consumer")
                         invocation = [*command, str(source), str(output), "-I", str(root),
                                       "--target", target, pipeline, *flags]
                         if inspect_paths:

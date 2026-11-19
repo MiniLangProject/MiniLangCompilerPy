@@ -5165,7 +5165,9 @@ def main() -> int:
             ("numeric_float_nested_threads", "NUMERIC FLOAT NESTED THREADS [OK]",
              "nested float loops retain threaded polls"),
             ("numeric_float_cache", "NUMERIC FLOAT CACHE [OK]",
-             "float loop caches preserve scratch, rollback and promoted values")):
+             "float loop caches preserve scratch, rollback and promoted values"),
+            ("numeric_float_consumer", "NUMERIC FLOAT CONSUMER [OK]",
+             "float loop consumers preserve canonicalization and strict roots")):
         tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(
             name="codegen: " + title,
             mlc_runner=mlc_runner, ml_path=tests_root / (fixture + ".ml"),
