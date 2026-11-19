@@ -1,0 +1,64 @@
+{
+  "parity_cases": 92,
+  "compared_images": 276,
+  "linux_runtime_cases": 37,
+  "compared_platforms": {
+    "linux_x64": {
+      "parity_cases": 37,
+      "compared_images": 111,
+      "runtime_cases": 37,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 0
+    },
+    "windows_x64": {
+      "parity_cases": 35,
+      "compared_images": 105,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 15,
+      "concurrent_gc_images": 45,
+      "compile_only_cases": 35
+    },
+    "minux_x64": {
+      "parity_cases": 20,
+      "compared_images": 60,
+      "runtime_cases": 0,
+      "concurrent_gc_parity_cases": 0,
+      "concurrent_gc_images": 0,
+      "compile_only_cases": 20
+    }
+  },
+  "all_linux_outputs_equal_baseline": true,
+  "executed_platforms": {
+    "linux_x64": true,
+    "windows_x64": false,
+    "minux_x64": false
+  },
+  "success": true,
+  "python_unittest": {
+    "tests": 61,
+    "passed": 58,
+    "skipped": 3
+  },
+  "bootstrap_selfhost_identical": true,
+  "native_compiler_bytes": 66323360,
+  "native_compiler_sha256": "9034a6d2138d174a225a63920c6ae58cb7e8675a06490a0d3b95a8481d1c9324",
+  "disabled_cache_hook_reproduces_baseline_images": true,
+  "float_comparison_pair_orders_balanced": true,
+  "primary_correctness_runs": 294,
+  "primary_full_size_correctness_runs": 30,
+  "float_comparison_correctness_runs": 36,
+  "c_cpp_correctness_runs": 36,
+  "gc_diagnostic_runs": 20,
+  "primary_timed_runs": 330,
+  "float_comparison_timed_runs": 88,
+  "all_timed_checksums_and_warmups_valid": true,
+  "unchanged_primary_images": 13,
+  "residual_compared_probes": 24,
+  "residual_instrumented_runs": 48,
+  "residual_uninstrumented_control_runs": 48,
+  "residual_semantic_event_counts_unchanged": true,
+  "new_fixture_optimized_functions": 9,
+  "new_fixture_forced_gc_iterations": 12,
+  "final_gates_passed": 15
+}

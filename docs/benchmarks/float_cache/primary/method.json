@@ -1,0 +1,11 @@
+{
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "cpu": 2,
+  "before_sha256": "7377be03b68607963f41b1a08c0f726e55e8fad81424763130894706a7897af6",
+  "after_sha256": "9034a6d2138d174a225a63920c6ae58cb7e8675a06490a0d3b95a8481d1c9324",
+  "date_utc": "2026-11-19T04:21:14Z",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "rounds": 11,
+  "calibration_sha256": "79077add74ecbfa0ea5568237b8f73bda08f26aa2e31daed3d8f4e6973930b75",
+  "methodology": "Fixed original inputs and repeat counts; common warmup, balanced eight-seed cycle; paired alternating AB/BA; shuffled cases; default GC; no instrumented allocations. Linux shared VM. Internal runtime timings only; no RSS claims."
+}

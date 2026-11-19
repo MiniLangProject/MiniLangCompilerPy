@@ -1,0 +1,550 @@
+{
+  "all_probes_preserve_semantic_event_counts": true,
+  "compared_probes": 24,
+  "invariants": [
+    "guard_attempts",
+    "raw_attempts",
+    "raw_conditions",
+    "raw_commits",
+    "raw_exits",
+    "raw_deopts",
+    "ordinary_entries",
+    "ordinary_reentries",
+    "guard_successes",
+    "ordinary_body_iterations",
+    "materialize_exit_calls",
+    "materialize_deopt_calls",
+    "materialize_value_groups",
+    "condition_normalizer_attempts",
+    "condition_normalizer_passes",
+    "body_normalizer_attempts",
+    "body_normalizer_passes",
+    "ordinary_normalizer_attempts",
+    "ordinary_normalizer_passes",
+    "entry_raw_loads",
+    "entry_raw_stores",
+    "condition_raw_loads",
+    "condition_raw_stores",
+    "commit_raw_stores",
+    "materialize_exit_raw_loads",
+    "materialize_exit_raw_stores",
+    "materialize_deopt_raw_loads",
+    "materialize_deopt_raw_stores"
+  ],
+  "rows": [
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 0,
+      "checksum": 182,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 13,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 9,
+        "after": 8
+      },
+      "counter_delta": {
+        "body_raw_loads": -1,
+        "body_raw_stores": -1,
+        "commit_raw_loads": -1,
+        "raw_register_copies": 2
+      },
+      "removed_raw_memory_instructions": 3
+    },
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 12345,
+      "checksum": 187,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 13,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 9,
+        "after": 8
+      },
+      "counter_delta": {
+        "body_raw_loads": -1,
+        "body_raw_stores": -1,
+        "commit_raw_loads": -1,
+        "raw_register_copies": 2
+      },
+      "removed_raw_memory_instructions": 3
+    },
+    {
+      "case": "float_recurrence",
+      "n": 1,
+      "seed": 2147483647,
+      "checksum": 212,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 13,
+        "after": 11
+      },
+      "raw_stores": {
+        "before": 9,
+        "after": 8
+      },
+      "counter_delta": {
+        "body_raw_loads": -1,
+        "body_raw_stores": -1,
+        "commit_raw_loads": -1,
+        "raw_register_copies": 2
+      },
+      "removed_raw_memory_instructions": 3
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 0,
+      "checksum": 3098,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 173,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 105,
+        "after": 88
+      },
+      "counter_delta": {
+        "body_raw_loads": -17,
+        "body_raw_stores": -17,
+        "commit_raw_loads": -17,
+        "raw_register_copies": 34
+      },
+      "removed_raw_memory_instructions": 51
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 12345,
+      "checksum": 3184,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 173,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 105,
+        "after": 88
+      },
+      "counter_delta": {
+        "body_raw_loads": -17,
+        "body_raw_stores": -17,
+        "commit_raw_loads": -17,
+        "raw_register_copies": 34
+      },
+      "removed_raw_memory_instructions": 51
+    },
+    {
+      "case": "float_recurrence",
+      "n": 17,
+      "seed": 2147483647,
+      "checksum": 3611,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 173,
+        "after": 139
+      },
+      "raw_stores": {
+        "before": 105,
+        "after": 88
+      },
+      "counter_delta": {
+        "body_raw_loads": -17,
+        "body_raw_stores": -17,
+        "commit_raw_loads": -17,
+        "raw_register_copies": 34
+      },
+      "removed_raw_memory_instructions": 51
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 0,
+      "checksum": 12210,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 673,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 405,
+        "after": 338
+      },
+      "counter_delta": {
+        "body_raw_loads": -67,
+        "body_raw_stores": -67,
+        "commit_raw_loads": -67,
+        "raw_register_copies": 134
+      },
+      "removed_raw_memory_instructions": 201
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 12345,
+      "checksum": 12551,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 673,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 405,
+        "after": 338
+      },
+      "counter_delta": {
+        "body_raw_loads": -67,
+        "body_raw_stores": -67,
+        "commit_raw_loads": -67,
+        "raw_register_copies": 134
+      },
+      "removed_raw_memory_instructions": 201
+    },
+    {
+      "case": "float_recurrence",
+      "n": 67,
+      "seed": 2147483647,
+      "checksum": 14234,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 673,
+        "after": 539
+      },
+      "raw_stores": {
+        "before": 405,
+        "after": 338
+      },
+      "counter_delta": {
+        "body_raw_loads": -67,
+        "body_raw_stores": -67,
+        "commit_raw_loads": -67,
+        "raw_register_copies": 134
+      },
+      "removed_raw_memory_instructions": 201
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 0,
+      "checksum": 54302340,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 2609863,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1565919,
+        "after": 1304933
+      },
+      "counter_delta": {
+        "body_raw_loads": -260986,
+        "body_raw_stores": -260986,
+        "commit_raw_loads": -260986,
+        "raw_register_copies": 521972
+      },
+      "removed_raw_memory_instructions": 782958
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 12345,
+      "checksum": 55497830,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 2609863,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1565919,
+        "after": 1304933
+      },
+      "counter_delta": {
+        "body_raw_loads": -260986,
+        "body_raw_stores": -260986,
+        "commit_raw_loads": -260986,
+        "raw_register_copies": 521972
+      },
+      "removed_raw_memory_instructions": 782958
+    },
+    {
+      "case": "float_recurrence",
+      "n": 260986,
+      "seed": 2147483647,
+      "checksum": 61445296,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 2609863,
+        "after": 2087891
+      },
+      "raw_stores": {
+        "before": 1565919,
+        "after": 1304933
+      },
+      "counter_delta": {
+        "body_raw_loads": -260986,
+        "body_raw_stores": -260986,
+        "commit_raw_loads": -260986,
+        "raw_register_copies": 521972
+      },
+      "removed_raw_memory_instructions": 782958
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 0,
+      "checksum": 1,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 0,
+        "after": 0
+      },
+      "raw_stores": {
+        "before": 0,
+        "after": 0
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 12345,
+      "checksum": 1,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 4,
+        "after": 4
+      },
+      "raw_stores": {
+        "before": 12,
+        "after": 12
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "mandelbrot",
+      "n": 1,
+      "seed": 2147483647,
+      "checksum": 1,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 4,
+        "after": 4
+      },
+      "raw_stores": {
+        "before": 12,
+        "after": 12
+      },
+      "counter_delta": {},
+      "removed_raw_memory_instructions": 0
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 0,
+      "checksum": 5264,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 81624,
+        "after": 51774
+      },
+      "raw_stores": {
+        "before": 43064,
+        "after": 33114
+      },
+      "counter_delta": {
+        "body_raw_loads": -19900,
+        "body_raw_stores": -9950,
+        "commit_raw_loads": -9950,
+        "raw_register_copies": 29850
+      },
+      "removed_raw_memory_instructions": 39800
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 12345,
+      "checksum": 5264,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 81692,
+        "after": 51842
+      },
+      "raw_stores": {
+        "before": 43268,
+        "after": 33318
+      },
+      "counter_delta": {
+        "body_raw_loads": -19900,
+        "body_raw_stores": -9950,
+        "commit_raw_loads": -9950,
+        "raw_register_copies": 29850
+      },
+      "removed_raw_memory_instructions": 39800
+    },
+    {
+      "case": "mandelbrot",
+      "n": 17,
+      "seed": 2147483647,
+      "checksum": 5260,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 81628,
+        "after": 51802
+      },
+      "raw_stores": {
+        "before": 43236,
+        "after": 33294
+      },
+      "counter_delta": {
+        "body_raw_loads": -19884,
+        "body_raw_stores": -9942,
+        "commit_raw_loads": -9942,
+        "raw_register_copies": 29826
+      },
+      "removed_raw_memory_instructions": 39768
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 0,
+      "checksum": 78568,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 1217960,
+        "after": 773486
+      },
+      "raw_stores": {
+        "before": 645696,
+        "after": 497538
+      },
+      "counter_delta": {
+        "body_raw_loads": -296316,
+        "body_raw_stores": -148158,
+        "commit_raw_loads": -148158,
+        "raw_register_copies": 444474
+      },
+      "removed_raw_memory_instructions": 592632
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 12345,
+      "checksum": 78490,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 1216980,
+        "after": 772974
+      },
+      "raw_stores": {
+        "before": 645876,
+        "after": 497874
+      },
+      "counter_delta": {
+        "body_raw_loads": -296004,
+        "body_raw_stores": -148002,
+        "commit_raw_loads": -148002,
+        "raw_register_copies": 444006
+      },
+      "removed_raw_memory_instructions": 592008
+    },
+    {
+      "case": "mandelbrot",
+      "n": 67,
+      "seed": 2147483647,
+      "checksum": 78496,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 1217076,
+        "after": 773034
+      },
+      "raw_stores": {
+        "before": 645924,
+        "after": 497910
+      },
+      "counter_delta": {
+        "body_raw_loads": -296028,
+        "body_raw_stores": -148014,
+        "commit_raw_loads": -148014,
+        "raw_register_copies": 444042
+      },
+      "removed_raw_memory_instructions": 592056
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 0,
+      "checksum": 278744,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 4064289,
+        "after": 2582577
+      },
+      "raw_stores": {
+        "before": 2159991,
+        "after": 1665978
+      },
+      "counter_delta": {
+        "body_raw_loads": -987808,
+        "body_raw_stores": -494013,
+        "commit_raw_loads": -493904,
+        "raw_register_copies": 1481821
+      },
+      "removed_raw_memory_instructions": 1975725
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 12345,
+      "checksum": 278594,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 4184452,
+        "after": 2658058
+      },
+      "raw_stores": {
+        "before": 2221168,
+        "after": 1712370
+      },
+      "counter_delta": {
+        "body_raw_loads": -1017596,
+        "body_raw_stores": -508798,
+        "commit_raw_loads": -508798,
+        "raw_register_copies": 1526394
+      },
+      "removed_raw_memory_instructions": 2035192
+    },
+    {
+      "case": "mandelbrot",
+      "n": 126,
+      "seed": 2147483647,
+      "checksum": 278368,
+      "event_counts_unchanged": true,
+      "raw_loads": {
+        "before": 4180808,
+        "after": 2655782
+      },
+      "raw_stores": {
+        "before": 2219344,
+        "after": 1711002
+      },
+      "counter_delta": {
+        "body_raw_loads": -1016684,
+        "body_raw_stores": -508342,
+        "commit_raw_loads": -508342,
+        "raw_register_copies": 1525026
+      },
+      "removed_raw_memory_instructions": 2033368
+    }
+  ],
+  "limitation": "Instruction/event frequencies do not establish CPU-time shares."
+}

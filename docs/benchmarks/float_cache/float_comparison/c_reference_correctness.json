@@ -1,0 +1,362 @@
+[
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 1456,
+    "warmup_checksum": 182,
+    "n": 1,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 1456,
+    "warmup_checksum": 182,
+    "n": 1,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 1496,
+    "warmup_checksum": 187,
+    "n": 1,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 1496,
+    "warmup_checksum": 187,
+    "n": 1,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 1486,
+    "warmup_checksum": 209,
+    "n": 1,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 1486,
+    "warmup_checksum": 209,
+    "n": 1,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 24784,
+    "warmup_checksum": 3098,
+    "n": 17,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 24784,
+    "warmup_checksum": 3098,
+    "n": 17,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 25472,
+    "warmup_checksum": 3184,
+    "n": 17,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 25472,
+    "warmup_checksum": 3184,
+    "n": 17,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 25297,
+    "warmup_checksum": 3556,
+    "n": 17,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 25297,
+    "warmup_checksum": 3556,
+    "n": 17,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 97686,
+    "warmup_checksum": 12211,
+    "n": 67,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 97686,
+    "warmup_checksum": 12211,
+    "n": 67,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 100408,
+    "warmup_checksum": 12552,
+    "n": 67,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 100408,
+    "warmup_checksum": 12552,
+    "n": 67,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 99709,
+    "warmup_checksum": 14018,
+    "n": 67,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "float_recurrence",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 99709,
+    "warmup_checksum": 14018,
+    "n": 67,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 8,
+    "warmup_checksum": 1,
+    "n": 1,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 42112,
+    "warmup_checksum": 5264,
+    "n": 17,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 42112,
+    "warmup_checksum": 5264,
+    "n": 17,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 42112,
+    "warmup_checksum": 5264,
+    "n": 17,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 42112,
+    "warmup_checksum": 5264,
+    "n": 17,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 42108,
+    "warmup_checksum": 5260,
+    "n": 17,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 42108,
+    "warmup_checksum": 5260,
+    "n": 17,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 628758,
+    "warmup_checksum": 78568,
+    "n": 67,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 628758,
+    "warmup_checksum": 78568,
+    "n": 67,
+    "reps": 8,
+    "seed": 0
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 628020,
+    "warmup_checksum": 78490,
+    "n": 67,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 628020,
+    "warmup_checksum": 78490,
+    "n": 67,
+    "reps": 8,
+    "seed": 12345
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "c_o3",
+    "correct": true,
+    "checksum": 628676,
+    "warmup_checksum": 78496,
+    "n": 67,
+    "reps": 8,
+    "seed": 2147483647
+  },
+  {
+    "case": "mandelbrot",
+    "variant": "cpp_o3",
+    "correct": true,
+    "checksum": 628676,
+    "warmup_checksum": 78496,
+    "n": 67,
+    "reps": 8,
+    "seed": 2147483647
+  }
+]

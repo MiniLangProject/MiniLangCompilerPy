@@ -1,0 +1,11 @@
+{
+  "date_utc": "2026-11-19T04:21:13Z",
+  "cpu": 2,
+  "before_sha256": "7377be03b68607963f41b1a08c0f726e55e8fad81424763130894706a7897af6",
+  "after_sha256": "9034a6d2138d174a225a63920c6ae58cb7e8675a06490a0d3b95a8481d1c9324",
+  "rounds": 11,
+  "calibration_sha256": "79077add74ecbfa0ea5568237b8f73bda08f26aa2e31daed3d8f4e6973930b75",
+  "method": "Original sources; previous and current MiniLang plus freshly reconstructed GCC/G++ -O3 images. Original calibrated repeats per language; internal CLOCK_MONOTONIC, untimed full warmup, balanced eight-seed cycle. GC diagnostics are separate untimed programs. Disabled register-cache hook reproduces the frozen Phase 6 baseline; no object cache.",
+  "helper_sha256": "5d8080d896b2acbedc3bf7c0450f86638b8ba6aba50dc666774a3b81841753c2",
+  "c_references": "Freshly reconstructed by this helper with recorded commands and source/binary hashes."
+}
