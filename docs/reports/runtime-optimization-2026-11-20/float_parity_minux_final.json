@@ -1,0 +1,259 @@
+{
+  "host": "Windows-10-10.0.26300-SP0",
+  "flags": [],
+  "images": [
+    {
+      "fixture": "numeric_float_loop",
+      "target": "minux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d21387965d6843bd1ea2dad220a73079d533eee7e12972af85ba94ff8c987976",
+      "source_sha256": "147fcafa23b5444b67d92e3d2b02108ba7c6139839e36c69c2a9a6b84e79e188",
+      "bytes": 424016,
+      "command": [
+        "C:\\Users\\nilsk\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\mlc_win64.py",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\tests\\numeric_float_loop.ml",
+        "C:\\Users\\nilsk\\AppData\\Local\\Temp\\ml_proven_checks_q67f6ewd\\minux-x64-numeric_float_loop-python.exe",
+        "-I",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy",
+        "--target",
+        "minux-x64",
+        "--no-object-pipeline",
+        "--asm",
+        "--asm-out",
+        "C:\\Users\\nilsk\\AppData\\Local\\Temp\\ml_proven_checks_q67f6ewd\\minux-x64-numeric_float_loop.asm"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "minux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "d21387965d6843bd1ea2dad220a73079d533eee7e12972af85ba94ff8c987976",
+      "source_sha256": "147fcafa23b5444b67d92e3d2b02108ba7c6139839e36c69c2a9a6b84e79e188",
+      "bytes": 424016,
+      "command": [
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\runtime-opt-20261120\\mlc_candidate2.exe",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\tests\\numeric_float_loop.ml",
+        "C:\\Users\\nilsk\\AppData\\Local\\Temp\\ml_proven_checks_q67f6ewd\\minux-x64-numeric_float_loop-native.exe",
+        "-I",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy",
+        "--target",
+        "minux-x64",
+        "--no-object-pipeline"
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "minux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "d21387965d6843bd1ea2dad220a73079d533eee7e12972af85ba94ff8c987976",
+      "source_sha256": "147fcafa23b5444b67d92e3d2b02108ba7c6139839e36c69c2a9a6b84e79e188",
+      "bytes": 424016,
+      "command": [
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerML\\build\\runtime-opt-20261120\\mlc_candidate2.exe",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\tests\\numeric_float_loop.ml",
+        "C:\\Users\\nilsk\\AppData\\Local\\Temp\\ml_proven_checks_q67f6ewd\\minux-x64-numeric_float_loop-native-mlo.exe",
+        "-I",
+        "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy",
+        "--target",
+        "minux-x64",
+        "--object-pipeline"
+      ]
+    }
+  ],
+  "runtime_checks": [],
+  "emission_checks": [
+    {
+      "fixture": "numeric_float_loop",
+      "target": "minux-x64",
+      "checks": [
+        {
+          "function": "loopLong",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "referenceLong",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopRecurrence",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopRecurrence",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 12,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopAlias",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopAlias",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopWriteOnly",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopLate",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopLate",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopNumericEntry",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 2
+        },
+        {
+          "function": "loopCounter",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopCounter",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopSpecial",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopSpecial",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "referenceRecurrence",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSpecial",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopError",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopSynchronized",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopContract",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopControl",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopReturn",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopStep",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopBodyTypeof",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    }
+  ],
+  "success": true
+}

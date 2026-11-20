@@ -286,3 +286,20 @@ and applications for timing. The strict growth assertion belongs to
 `tests/gc_concurrent_reuse.ml`; this benchmark intentionally also runs the old,
 regressing executable. See the
 [evaluation](../docs/reports/CONCURRENT_GC_REUSE_2026-10-10.md).
+
+## Generated-program runtime and memory candidates (November 2026)
+
+`runtime_codegen.ml` includes `float-long` (13-statement pure float loop) and
+`wide-struct-local` (nonescaping nine-field record) as bounded runtime and
+allocation probes. Compile the identical fixture with a preserved baseline
+compiler and the current compiler, then alternate the resulting images:
+
+```text
+python benchmarks/compare_runtime_codegen.py BEFORE AFTER --runs 11 --cases float-long wide-struct-local dynamic-index local-register --output results.json
+```
+
+The runner validates per-target checksums, records each process's workload time,
+heap-frontier delta and peak RSS, and retains all raw samples. Run Linux images
+from a native Linux filesystem. These cases are eligibility probes; they do not
+predict whole-application speedups. The [evaluation](../docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md)
+records accepted changes, rejected array/GC trials, image parity and raw data.

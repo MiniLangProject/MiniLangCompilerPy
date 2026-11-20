@@ -379,6 +379,8 @@ def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
                     "noLoopSynchronized", "noLoopCapture", "noLoopContract",
                     "noLoopControl", "noLoopReturn", "noLoopChangingBound",
                     "noLoopStep", "noLoopOldAlias", "noLoopBodyTypeof")
+        contains("loopLong", "float_loop_fast_", not gc_concurrent)
+        contains("referenceLong", "float_loop_fast_", False)
         for name, (operations, materializations) in positive.items():
             contains(name, "float_loop_fast_", not gc_concurrent)
             if gc_concurrent:

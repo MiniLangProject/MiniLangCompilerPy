@@ -1452,7 +1452,7 @@ class CodegenStmt:
               or not -(1 << 60) <= bound.value < (1 << 60)):
             return None
         body = list(getattr(loop, 'body', []) or [])
-        if not 2 <= len(body) <= 12:
+        if not 2 <= len(body) <= 13:
             return None
         update = body[-1]
         if (type(update) is not ml.Assign or str(update.name) != counter

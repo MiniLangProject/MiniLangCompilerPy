@@ -1,0 +1,729 @@
+{
+  "platform": "Windows-10-10.0.26300-SP0",
+  "runs": 11,
+  "cpu": null,
+  "summary": {
+    "small-churn": {
+      "before": {
+        "wall_ms": 79.4979,
+        "ms": 67.3651,
+        "bytes": 33554432,
+        "checksum": 624993160,
+        "peak_rss_bytes": 16670720
+      },
+      "after": {
+        "wall_ms": 81.8278,
+        "ms": 68.3958,
+        "bytes": 33554432,
+        "checksum": 624993160,
+        "peak_rss_bytes": 25190400
+      }
+    },
+    "large-live": {
+      "before": {
+        "wall_ms": 285.9316,
+        "ms": 229.4245,
+        "bytes": 100663296,
+        "checksum": 625393159,
+        "peak_rss_bytes": 104747008
+      },
+      "after": {
+        "wall_ms": 295.9444,
+        "ms": 244.4511,
+        "bytes": 100663296,
+        "checksum": 625393159,
+        "peak_rss_bytes": 103112704
+      }
+    },
+    "fragmented": {
+      "before": {
+        "wall_ms": 14.5797,
+        "ms": 3.2556,
+        "bytes": 50331648,
+        "checksum": 498322,
+        "peak_rss_bytes": 42717184
+      },
+      "after": {
+        "wall_ms": 13.4118,
+        "ms": 2.465,
+        "bytes": 33554432,
+        "checksum": 498322,
+        "peak_rss_bytes": 28336128
+      }
+    }
+  },
+  "samples": [
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 85.6193,
+      "ms": 67.1196,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 79.7172,
+      "ms": 67.5474,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25190400
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 79.5881,
+      "ms": 66.9666,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25194496
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 78.0655,
+      "ms": 67.0071,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 79.9144,
+      "ms": 68.6694,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16674816
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 79.5423,
+      "ms": 67.4423,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25194496
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 84.4033,
+      "ms": 71.9288,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25128960
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 78.8948,
+      "ms": 67.2784,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16674816
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 80.4325,
+      "ms": 68.2274,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 85.7159,
+      "ms": 73.5212,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25190400
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 83.4569,
+      "ms": 70.6871,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25190400
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 82.6529,
+      "ms": 70.7509,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 79.1571,
+      "ms": 67.3651,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 92.8968,
+      "ms": 80.4247,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25194496
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 7,
+      "wall_ms": 87.755,
+      "ms": 74.574,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25194496
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 7,
+      "wall_ms": 79.4842,
+      "ms": 67.4659,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 8,
+      "wall_ms": 80.4941,
+      "ms": 67.7379,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16670720
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 8,
+      "wall_ms": 81.8278,
+      "ms": 68.3958,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25190400
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 9,
+      "wall_ms": 79.9487,
+      "ms": 67.5625,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25198592
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 9,
+      "wall_ms": 79.4979,
+      "ms": 66.6255,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16674816
+    },
+    {
+      "case": "small-churn",
+      "version": "before",
+      "run": 10,
+      "wall_ms": 77.4274,
+      "ms": 66.2928,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 16678912
+    },
+    {
+      "case": "small-churn",
+      "version": "after",
+      "run": 10,
+      "wall_ms": 77.7972,
+      "ms": 66.3226,
+      "bytes": 33554432,
+      "checksum": 624993160,
+      "peak_rss_bytes": 25190400
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 284.533,
+      "ms": 227.9689,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104751104
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 293.9876,
+      "ms": 244.4511,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103108608
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 289.7622,
+      "ms": 241.1172,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 282.6409,
+      "ms": 226.0518,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104755200
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 279.0094,
+      "ms": 222.3413,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104751104
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 338.8872,
+      "ms": 288.8366,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 304.2372,
+      "ms": 250.7967,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 281.9642,
+      "ms": 224.6543,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 281.2192,
+      "ms": 224.7032,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 287.7751,
+      "ms": 238.2847,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 322.3249,
+      "ms": 270.6224,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 304.618,
+      "ms": 244.5445,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 295.6006,
+      "ms": 235.1645,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 290.9747,
+      "ms": 240.7873,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 7,
+      "wall_ms": 287.2012,
+      "ms": 237.6306,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 7,
+      "wall_ms": 317.8015,
+      "ms": 258.647,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104751104
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 8,
+      "wall_ms": 299.028,
+      "ms": 237.4804,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 8,
+      "wall_ms": 295.9444,
+      "ms": 243.8993,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 9,
+      "wall_ms": 325.1441,
+      "ms": 275.6493,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103108608
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 9,
+      "wall_ms": 290.5855,
+      "ms": 231.3969,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "before",
+      "run": 10,
+      "wall_ms": 285.9316,
+      "ms": 229.4245,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 104747008
+    },
+    {
+      "case": "large-live",
+      "version": "after",
+      "run": 10,
+      "wall_ms": 303.1457,
+      "ms": 252.2324,
+      "bytes": 100663296,
+      "checksum": 625393159,
+      "peak_rss_bytes": 103112704
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 0,
+      "wall_ms": 14.6441,
+      "ms": 3.2379,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42721280
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 0,
+      "wall_ms": 12.5779,
+      "ms": 2.465,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 1,
+      "wall_ms": 14.5425,
+      "ms": 2.2479,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28340224
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 1,
+      "wall_ms": 13.6236,
+      "ms": 3.2556,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 2,
+      "wall_ms": 13.7579,
+      "ms": 3.2524,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42721280
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 2,
+      "wall_ms": 14.178,
+      "ms": 2.4846,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28340224
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 3,
+      "wall_ms": 13.4118,
+      "ms": 2.4512,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 3,
+      "wall_ms": 14.6529,
+      "ms": 3.2469,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 4,
+      "wall_ms": 14.2234,
+      "ms": 3.1957,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42721280
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 4,
+      "wall_ms": 12.7976,
+      "ms": 2.4735,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28340224
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 5,
+      "wall_ms": 13.2071,
+      "ms": 2.314,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 5,
+      "wall_ms": 14.3931,
+      "ms": 3.1688,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 6,
+      "wall_ms": 14.2148,
+      "ms": 3.3091,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42721280
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 6,
+      "wall_ms": 13.8081,
+      "ms": 2.5844,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 7,
+      "wall_ms": 13.1035,
+      "ms": 2.408,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 7,
+      "wall_ms": 15.108,
+      "ms": 3.3476,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 8,
+      "wall_ms": 14.5797,
+      "ms": 3.3254,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 8,
+      "wall_ms": 13.3619,
+      "ms": 2.5473,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28340224
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 9,
+      "wall_ms": 14.2234,
+      "ms": 2.725,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 9,
+      "wall_ms": 14.8498,
+      "ms": 3.39,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42721280
+    },
+    {
+      "case": "fragmented",
+      "version": "before",
+      "run": 10,
+      "wall_ms": 15.2986,
+      "ms": 3.3322,
+      "bytes": 50331648,
+      "checksum": 498322,
+      "peak_rss_bytes": 42717184
+    },
+    {
+      "case": "fragmented",
+      "version": "after",
+      "run": 10,
+      "wall_ms": 13.5933,
+      "ms": 2.4599,
+      "bytes": 33554432,
+      "checksum": 498322,
+      "peak_rss_bytes": 28336128
+    }
+  ],
+  "images": {
+    "before": {
+      "path": "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\build\\runtime-opt-20261120\\memory_py.exe",
+      "size": 152576,
+      "sha256": "531e6f28dfcbe021a0ffd65df3fe59a3f85d2efa8169c0eaddc72a5a99222fde"
+    },
+    "after": {
+      "path": "K:\\KI-Projekte\\Anwendungsentwicklung mit KI\\MiniLangCompilerOptimization\\MiniLangCompilerPy\\build\\runtime-opt-20261120\\memory_limit16.exe",
+      "size": 152576,
+      "sha256": "ece0d29534af63c19a18c36c7ac3bdeadff8347700749139a2ecd9d4eec1bb7c"
+    }
+  }
+}

@@ -272,6 +272,25 @@ end function
 function checkAdvancedCodegen()
   global visits
   checkEq(typedLocal(7), 17, "typed local scalar replacement")
+  checkEq(wideLocal(7), 24, "nine-field scalar replacement")
+  wideBefore = heap_bytes_used()
+  wideSum = 0
+  for wideSample = 0 to 99
+    wideSum += wideLocal(wideSample)
+  end for
+  checkEq(heap_bytes_used() - wideBefore, 0, "nine-field local allocates no heap")
+  checkEq(wideSum, 10900, "nine-field checksum")
+  checkEq(twelveLocal(7), 27, "twelve-field scalar bound")
+  twelveBefore = heap_bytes_used()
+  twelveSum = 0
+  for twelveSample = 0 to 99
+    twelveSum += twelveLocal(twelveSample)
+  end for
+  checkEq(heap_bytes_used() - twelveBefore, 0, "twelve-field local allocates no heap")
+  checkEq(twelveSum, 11200, "twelve-field checksum")
+  escapedWide = wideEscapes(7)
+  gc_collect()
+  checkEq(escapedWide.i, 15, "escaping wide struct survives GC")
   checkEq(boundedEight("a", "b", "c", "d", "e", "f", "g"), "pabcdefg", "bounded fused concat")
   checkEq(projectedPair(4, 7), 21, "temporary struct projection")
   visits = 0
@@ -333,4 +352,50 @@ end function
 function boundedEight(a, b, c, d, e, f, g)
   prefix = "p"
   return prefix + a + b + c + d + e + f + g
+end function
+
+/// Nine fields cross the former scalar replacement bound without escaping.
+struct WideLocal
+  a
+  b
+  c
+  d
+  e
+  f
+  g
+  h
+  i
+end struct
+
+function wideLocal(value as int)
+  item = WideLocal(value, value + 1, value + 2, value + 3, value + 4, value + 5, value + 6, value + 7, value + 8)
+  item.i = item.i + 2
+  return item.a + item.i
+end function
+
+/// Returning the object must retain its allocation and GC-visible identity.
+function wideEscapes(value as int)
+  return WideLocal(value, value + 1, value + 2, value + 3, value + 4, value + 5, value + 6, value + 7, value + 8)
+end function
+
+/// Exercise the exact upper bound of the rooted scalar field bank.
+struct TwelveLocal
+  a
+  b
+  c
+  d
+  e
+  f
+  g
+  h
+  i
+  j
+  k
+  l
+end struct
+
+function twelveLocal(value as int)
+  item = TwelveLocal(value, value + 1, value + 2, value + 3, value + 4, value + 5, value + 6, value + 7, value + 8, value + 9, value + 10, value + 11)
+  item.l = item.l + 2
+  return item.a + item.l
 end function

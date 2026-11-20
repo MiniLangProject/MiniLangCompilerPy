@@ -60,6 +60,17 @@ function main(args)
   before = heap_bytes_used()
   started = ticks(timer)
   checksum = 0
+  if mode == "float-long" then
+    for repeat = 0 to 31
+      checksum += len(str(floatLong(100000, 0.173, 0.291, 0.037)))
+    end for
+  end if
+  if mode == "wide-struct-local" then
+    gc_set_limit(0)
+    for wideIndex = 0 to 499999
+      checksum += wideLocal(wideIndex)
+    end for
+  end if
   if mode == "typed-struct-local" then
     for i = 0 to 499999
       checksum += localTypedPair(i)
@@ -298,4 +309,45 @@ end function
 function eightStrings(a, b, c, d, e, f, g)
   prefix = "p"
   return prefix + a + b + c + d + e + f + g
+end function
+
+/// Thirteen pure statements expose delayed float materialization.
+function floatLong(n as int, x as float, y as float, accumulated as float)
+  i as int = 0
+  copy = accumulated
+  while i < n
+    a = x * 0.9999991 + y * 0.0000003 + 0.0000007
+    b = y * 0.9999989 + x * 0.0000002 + 0.0000005
+    c = a * 0.9 + b * 0.1
+    d = b * 0.8 + c * 0.2
+    e = c * 0.7 + d * 0.3
+    f = d * 0.6 + e * 0.4
+    g = e * 0.5 + f * 0.5
+    h = f * 0.4 + g * 0.6
+    x = a
+    y = b
+    accumulated = h
+    copy = accumulated
+    i = i + 1
+  end while
+  return copy
+end function
+
+/// A nine-field local must allocate only when it escapes.
+struct WideLocal
+  a
+  b
+  c
+  d
+  e
+  f
+  g
+  h
+  i
+end struct
+
+function wideLocal(value as int)
+  item = WideLocal(value, value + 1, value + 2, value + 3, value + 4, value + 5, value + 6, value + 7, value + 8)
+  item.i = item.i + 2
+  return item.a + item.i
 end function

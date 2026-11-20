@@ -133,7 +133,7 @@ def scalar_candidates(cg, fn):
             continue
         qname = cg._qualify_identifier(raw, call, kind='struct')
         fields = cg.struct_fields.get(qname, [])
-        if qname == 'error' or not 1 <= len(fields) <= 8 or len(call.args) != len(fields):
+        if qname == 'error' or not 1 <= len(fields) <= 12 or len(call.args) != len(fields):
             continue
         if any(n not in (None, '') for n in (getattr(call, 'arg_names', []) or [])):
             continue

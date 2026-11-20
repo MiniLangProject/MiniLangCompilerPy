@@ -18,11 +18,11 @@ class Probe(CodegenExpr):
         self.visits = 0
         self.budget = budget
 
-    def _opt_expr_known_type(self, expr):
+    def _opt_expr_known_type(self, expr, extended=False):
         self.visits += 1
         if self.visits > self.budget:
             raise AssertionError("type inference exceeded its linear visit budget")
-        return super()._opt_expr_known_type(expr)
+        return super()._opt_expr_known_type(expr, extended)
 
 
 def main():

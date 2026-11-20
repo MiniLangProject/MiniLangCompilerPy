@@ -374,8 +374,55 @@ function noLoopBodyTypeof(n as int, x as float)
   return [x, i]
 end function
 
+// Thirteen statements exercise the extended bounded raw loop, including
+// chained definitions, aliases, zero trips and transaction replay.
+function loopLong(n as int, x as float, y as float, accumulated as float)
+  i as int = 0
+  copy = accumulated
+  while i < n
+    a = x * 0.9999991 + y * 0.0000003 + 0.0000007
+    b = y * 0.9999989 + x * 0.0000002 + 0.0000005
+    c = a * 0.9 + b * 0.1
+    d = b * 0.8 + c * 0.2
+    e = c * 0.7 + d * 0.3
+    f = d * 0.6 + e * 0.4
+    g = e * 0.5 + f * 0.5
+    h = f * 0.4 + g * 0.6
+    x = a
+    y = b
+    accumulated = h
+    copy = accumulated
+    i = i + 1
+  end while
+  return [x, y, accumulated, copy, i, nativeRawValue(copy) == nativeRawValue(accumulated)]
+end function
+
+function referenceLong(n, x, y, accumulated)
+  i = 0
+  copy = accumulated
+  while i < n
+    a = referenceAdd(referenceAdd(referenceMul(x, 0.9999991), referenceMul(y, 0.0000003)), 0.0000007)
+    b = referenceAdd(referenceAdd(referenceMul(y, 0.9999989), referenceMul(x, 0.0000002)), 0.0000005)
+    c = referenceAdd(referenceMul(a, 0.9), referenceMul(b, 0.1))
+    d = referenceAdd(referenceMul(b, 0.8), referenceMul(c, 0.2))
+    e = referenceAdd(referenceMul(c, 0.7), referenceMul(d, 0.3))
+    f = referenceAdd(referenceMul(d, 0.6), referenceMul(e, 0.4))
+    g = referenceAdd(referenceMul(e, 0.5), referenceMul(f, 0.5))
+    h = referenceAdd(referenceMul(f, 0.4), referenceMul(g, 0.6))
+    x = a
+    y = b
+    accumulated = h
+    copy = accumulated
+    i = i + 1
+  end while
+  return [x, y, accumulated, copy, i, nativeRawValue(copy) == nativeRawValue(accumulated)]
+end function
 function main(args)
   global failures, effects
+  for each n in [0, 1, 2, 7]
+    sameState(loopLong(n, 0.173, 0.291, 0.037), referenceLong(n, 0.173, 0.291, 0.037), "thirteen-statement float loop " + n)
+  end for
+  sameState(loopLong(2, 0.0, 0.0, 0.0), referenceLong(2, 0.0, 0.0, 0.0), "thirteen-statement normalization fallback")
   for each n in [0, 1, 2, 7]
     sameState(loopRecurrence(n, 0.123456789012345, 0.987654321098765, 0.0), referenceRecurrence(n, 0.123456789012345, 0.987654321098765, 0.0), "recurrence " + n)
     sameState(loopAlias(n, 0.123456789012345), referenceAlias(n, 0.123456789012345), "outer aliases " + n)
@@ -446,6 +493,7 @@ function main(args)
   end for
   retained = array(8)
   collectionsBefore = gc_stat(0)
+  concurrentBefore = gc_stat(16)
   gc_set_limit(1)
   iteration as int = 0
   while iteration < 24
@@ -457,8 +505,13 @@ function main(args)
     iteration = iteration + 1
   end while
   gc_set_limit(0)
-  check(gc_stat(0) > collectionsBefore, "stress actually collected")
-  gc_collect()
+  if typeof(concurrentBefore) == "int" then
+    gc_collect()
+    check(gc_stat(16) > concurrentBefore or gc_stat(0) > collectionsBefore, "concurrent collection completed")
+  else
+    check(gc_stat(0) > collectionsBefore, "stress actually collected")
+    gc_collect()
+  end if
   for each record in retained
     sameState(record[0], expected, "retained state survives collection")
     sameState(record[1], aliasExpected, "retained aliases survive collection")

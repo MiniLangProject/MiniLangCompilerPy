@@ -135,6 +135,7 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Language syntax, standard library and FFI | [Language reference](docs/LANGUAGE_REFERENCE.md) |
 | Incremental builds | [Guide](docs/INCREMENTAL_BUILDS.md) |
 | Compiler optimization measurements | [Allocation and emission](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md), [bounded concat, typed scalar replacement, and metadata](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md) |
+| Generated-program runtime and memory | [Measured codegen and GC experiments](docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md) |
 | Typed inline assembly | [Guide](docs/INLINE_ASM.md) |
 | Native crypto, checksums and CPU features | [Native primitives](docs/NATIVE_PRIMITIVES.md) |
 | Compression and platform services | [Platform services](docs/PLATFORM_SERVICES.md) |
