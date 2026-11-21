@@ -3569,6 +3569,19 @@ class CodegenStmt:
             return
 
         if isinstance(s, ml.Assign):
+            # Resolve global aliases using the same binding as the store.
+            contracts = self._global_binding_contracts
+            global_name = None
+            if contracts and self.in_function:
+                destination = self.resolve_binding_for_write(s.name)
+                global_name = destination.name if destination and destination.kind == 'global' else None
+            elif contracts:
+                destination = self.resolve_binding_for_write(s.name)
+                global_name = s.name if destination is None or destination.depth == 0 else None
+            contract = contracts.get(global_name)
+            if contract is not None:
+                ml._guard_binding_write(s, contract, qualify=self.in_function, fail=self.error)
+            self._validate_binding_literal(s.expr)
             for declaration, _binding, _fields, offsets, contracts in getattr(self, '_scalar_structs', []):
                 if s is declaration:
                     # Publish the ordinary binding as void; only its field slots
@@ -4668,41 +4681,17 @@ class CodegenStmt:
                 field = getattr(s, 'name', None)
             field = str(field)
 
-            def _dotted_name(e):
-                if isinstance(e, ml.Var):
-                    return getattr(e, 'name', None)
-                if isinstance(e, ml.Member):
-                    left = _dotted_name(getattr(e, 'target', None))
-                    if not isinstance(left, str) or not left:
-                        return None
-                    return left + '.' + str(getattr(e, 'name', None))
-                return None
-
-            qobj = _dotted_name(obj_expr)
-            if isinstance(qobj, str) and qobj:
-                root = qobj.split('.', 1)[0]
-                bound = False
-                try:
-                    bound = (self.resolve_binding(root) is not None)
-                    if not bound:
-                        # A package/namespace global is also a runtime object;
-                        # resolve it like a read before treating its field as a
-                        # namespace-qualified global write (matching ML).
-                        qualified_root = self._qualify_identifier(root, s)
-                        bound = (self.resolve_binding(qualified_root) is not None)
-                except Exception:
-                    bound = False
-                if not bound:
-                    full = qobj + '.' + field
-                    if hasattr(self, '_apply_import_alias'):
-                        full = self._apply_import_alias(full)
-                    # Evaluate RHS -> RAX and store directly into existing global.
-                    self.emit_expr(getattr(s, 'expr', None))
-                    if hasattr(self, 'emit_store_existing_global'):
-                        self.emit_store_existing_global(full, s)
-                    else:
-                        raise self.error('Internal compiler error: missing emit_store_existing_global (Step 5).', s)
-                    return
+            full = self._qualified_global_write_name(s, obj_expr, field)
+            if full:
+                value = s.expr
+                contract = self._global_binding_contracts.get(full)
+                if contract is not None:
+                    _, optional, name = contract
+                    value = ml._copy_source_pos(ml.TypeGuard(value, name, optional, 2), s)
+                    self._validate_binding_literal(value)
+                self.emit_expr(value)
+                self.emit_store_existing_global(full, s)
+                return
 
             known_struct = self._opt_expr_known_type(obj_expr)
             if isinstance(known_struct, str) and known_struct.startswith('struct:'):
@@ -5397,6 +5386,79 @@ class CodegenStmt:
 
         return walk(program)
 
+    def _qualified_global_write_name(self, stmt: Any, obj: Any, field: str) -> str:
+        """Identify namespace storage without redirecting real object members."""
+        parts = [field]
+        while isinstance(obj, self.ml.Member):
+            parts.append(obj.name)
+            obj = obj.target
+        if not isinstance(obj, self.ml.Var):
+            return ''
+        root = obj.name
+        if (self.resolve_binding(root) is not None
+                or self.resolve_binding(self._qualify_identifier(root, stmt)) is not None):
+            return ''
+        parts.append(root)
+        return self._apply_import_alias('.'.join(reversed(parts)))
+
+    def _validate_binding_literal(self, guard: Any) -> None:
+        """Diagnose an unambiguous literal mismatch at the assignment site."""
+        ml = self.ml
+        if not isinstance(guard, ml.TypeGuard) or not guard.binding_write:
+            return
+        expected = ml._binding_type_key(guard.type_name)
+        if expected not in ('int', 'float', 'bool', 'string', 'array', 'bytes',
+                            'function', 'struct', 'enum', 'error', 'thread', 'void'):
+            return
+        value = guard.expr
+        if isinstance(value, ml.Num):
+            actual = 'int' if type(value.value) is int else 'float'
+        elif isinstance(value, ml.Bool):
+            actual = 'bool'
+        elif isinstance(value, ml.Str):
+            actual = 'string'
+        elif isinstance(value, ml.VoidLit):
+            actual = 'void'
+        else:
+            return
+        if actual == expected or (actual == 'void' and guard.optional):
+            return
+        suffix = '?' if guard.optional else ''
+        raise self.error(f"Cannot assign {actual} to binding of type {guard.type_name}{suffix}", guard)
+
+    def _prepare_binding_contracts(self, program: List[Any]) -> None:
+        """Lower local writes before inlining and collect module slot contracts."""
+        ml = self.ml
+        self._global_binding_contracts = {}
+        if not ml.has_typed_binding_declarations():
+            return
+        seen = set()
+        for st in program:
+            if not isinstance(st, (ml.Assign, ml.ConstDecl)):
+                continue
+            fixed = ml._declares_binding_type(st)
+            if st.name in seen:
+                if fixed:
+                    raise self.error(f"Typed binding '{st.name}' requires a new variable", st)
+                continue
+            seen.add(st.name)
+            if not fixed:
+                continue
+            raw = st.declared_type
+            qualified = self._apply_import_alias(raw)
+            if '.' not in qualified:
+                prefix = st.name.rpartition('.')[0]
+                package = self.file_prefix_map.get(getattr(st, '_filename', ''), '').rstrip('.')
+                for candidate in (f'{prefix}.{qualified}', f'{package}.{qualified}'):
+                    if candidate in self.struct_fields or candidate in self.enum_id or candidate in self.interface_names:
+                        qualified = candidate
+                        break
+            self._global_binding_contracts[st.name] = (raw, st.declared_optional, qualified)
+        for fn in self.user_functions.values():
+            ml.apply_local_binding_contracts(fn, fail=self.error)
+        ml.apply_local_binding_contracts(
+            ml.FunctionDef('', [], program), fail=self.error, module=True)
+
     def emit_program(self, program: List[Any]) -> None:
         """Plan and emit a complete closed MiniLang program."""
 
@@ -5946,6 +6008,7 @@ class CodegenStmt:
 
         # Step 6.1: analyze nested functions + captures (closures preparation)
         nested_fns = self._closure_analyze_program()
+        self._prepare_binding_contracts(program)
 
         # Step 6.2a/6.2b: register nested functions and assign stable codegen names.
         # Nested function defs are emitted as runtime statements; their bodies are emitted as
@@ -6369,7 +6432,46 @@ class CodegenStmt:
                             or not isinstance(getattr(guard, 'expr', None), self.ml.TypeGuard)):
                         simple_expression_body = False
                         break
-            auto_inline = (simple_expression_body
+            # A one-temporary integer body is still cheap to inline. The
+            # ordinary inline emitter preserves parameter and return contracts;
+            # this removes the call and lets the caller's numeric lowering
+            # see the straight-line expression. Keep the shape narrow so code
+            # growth stays within the existing per-callee byte budget.
+            typed_numeric = (str(getattr(fn, 'return_type', '') or '') == 'int'
+                             and not bool(getattr(self, 'operator_overloads_present', False))
+                             and len(params) > 0 and len(param_types) >= len(params)
+                             and all(param_types[i] == 'int' for i in range(len(params)))
+                             and not any(bool(x) for x in (getattr(fn, 'param_optional', []) or []))
+                             and not bool(getattr(fn, 'return_optional', False)))
+            prefix = len(params)
+            temp = body[prefix] if len(body) == prefix + 2 else None
+            def numeric_bin(expr, names):
+                if isinstance(expr, self.ml.TypeGuard):
+                    if expr.type_name != 'int' or bool(expr.optional):
+                        return False
+                    expr = expr.expr
+                if not isinstance(expr, self.ml.Bin) or expr.op not in ('+', '-', '*'):
+                    return False
+                return all((isinstance(leaf, self.ml.Num) and type(leaf.value) is int)
+                           or (isinstance(leaf, self.ml.Var) and leaf.name in names)
+                           for leaf in (expr.left, expr.right))
+
+            returned = getattr(body[-1], 'expr', None) if body else None
+            if isinstance(returned, self.ml.TypeGuard):
+                returned = returned.expr
+            numeric_temp_body = (typed_numeric and variadic_index < 0
+                                 and all(isinstance(body[i], self.ml.Assign)
+                                         and body[i].name == params[i]
+                                         and isinstance(body[i].expr, self.ml.TypeGuard)
+                                         for i in range(min(prefix, len(body))))
+                                 and isinstance(temp, self.ml.Assign)
+                                 and temp.name not in params
+                                 and temp.name not in (getattr(fn, '_ml_globals_declared', set()) or set())
+                                 and numeric_bin(temp.expr, set(params))
+                                 and numeric_bin(returned, set(params) | {temp.name}))
+            float_temp_body = (variadic_index < 0
+                               and self._opt_float_temporary_return(fn) is not None)
+            auto_inline = ((simple_expression_body or numeric_temp_body or float_temp_body)
                            and ((fully_typed and variadic_index < 0)
                                 or generated_lambda))
             if not (explicit_inline or auto_inline):
@@ -7300,7 +7402,8 @@ class CodegenStmt:
                     continue
                 # struct member write: obj.field = expr
                 if hasattr(ml, 'SetMember') and isinstance(st, ml.SetMember):
-                    analyze_expr(getattr(st, 'obj', getattr(st, 'target', None)))
+                    if not self._qualified_global_write_name(st, st.obj, st.field):
+                        analyze_expr(st.obj)
                     analyze_expr(getattr(st, 'expr', None))
                     continue
                 if isinstance(st, ml.SetIndex):

@@ -2,6 +2,18 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.10 - 2026-11-21
+
+- Add fixed variable types through `var name as Type = expression`, including
+  optional types, checked writes and compile diagnostics for incompatible
+  primitive literals. Keep single-assignment annotations and function
+  boundary contracts compatible with previous programs.
+- Extend bounded native code generation for typed integer and float helpers,
+  remove proven redundant checks, and fuse short float expressions.
+- Improve guarded runtime code generation for integer loops and array
+  construction. Keep module type contracts in the object and incremental
+  pipelines.
+
 ## 1.3.9 - 2026-11-15
 
 - Add `minux-x64`: native MinUX ELF output, shared SysV FFI marshalling,

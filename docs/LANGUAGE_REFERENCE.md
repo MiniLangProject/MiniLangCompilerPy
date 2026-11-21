@@ -710,6 +710,42 @@ print sum(second = 2, first = 1)
 print sum(1, 2, 3, 4)
 ```
 
+### Fixed variable types
+
+Declare a new binding with `var name as Type = expression` to keep its type
+for the lifetime of that binding. The initializer and subsequent writes,
+including compound assignments and writes through a closure or `global`,
+must satisfy the contract. The declaration may appear in a lexical block or
+at module scope. A `for` or `for each` counter creates its own binding.
+
+```ml
+function addScore(score as int, bonus) returns int
+  var total as int = score
+  total += bonus
+  return total
+end function
+
+var selectedName as string? = void
+selectedName = "MiniLang"
+selectedName = void
+```
+
+`Type?` also allows `void`. MiniLang checks the value's actual type without an
+implicit conversion or a call to a user-defined `typeof`. A visibly
+incompatible primitive literal at a write site is a compile error. A
+dynamic mismatch returns error `1308` before changing the variable and can
+be caught with `try(...)` around a call that performs the write. Assigning a
+value caught with `try(...)` to `var name as error` or `error?` stores it.
+
+Use `var` on the first write to a new variable. The existing syntax
+`name as Type = expression` checks that assignment, and function parameter
+and return annotations check the function boundary. Those forms keep their
+previous semantics. Field annotations still apply to constructor values.
+
+Both compilers remove redundant checks for proven primitive copies and
+supported integer expressions. Other writes are checked before storing their
+value. Fixed bindings use the normal MiniLang Value representation.
+
 The optional marker follows the type (`Person?`). `void` is accepted only by
 an optional contract. Default and named arguments are available for directly
 resolved MiniLang functions and methods; struct constructors accept field names.
@@ -933,9 +969,19 @@ end function
 
 For an eligible **direct** call such as `clamp01(v)`, the compiler expands the
 callee body at the call site (no call/ret overhead). `inline` is a bounded
-optimization request, not a guarantee. Small fully typed expression functions
-and generated expression lambdas are also eligible automatically; explicit
-`inline` remains useful for larger hand-selected bodies.
+optimization request, not a guarantee. Small fully typed expression functions, generated expression lambdas,
+and short typed integer helpers with one local arithmetic temporary are also
+eligible automatically; explicit `inline` remains useful for larger hand-selected
+bodies. The integer helper form accepts only pure two-operand `+`, `-` and `*`
+expressions, non-optional `int` parameters and an `int` return. A local
+initializer written as `value as int = parameter + 1` can omit its repeated
+runtime check after the parameter guard succeeds, provided the builtin
+operator and `typeof` are in use. User-defined `typeof` retains its observable
+calls. The normal callable body and runtime type contracts remain available
+for indirect calls. A pure, unobserved float temporary in the same short
+function shape can be fused into the existing guarded float-tree emitter.
+When its intermediate value normalizes to an integer, the generated code
+replays the ordinary Value operations to preserve the result.
 
 Current behavior / limits:
 - Only supported for **top-level functions** and **struct methods** (`function inline ...`).
@@ -2723,6 +2769,7 @@ Statements are separated by newlines or `;`.
   - `<ident> = ...`
   - `<expr>.<field> = ...`
   - `<expr>[<index>] = ...` (multiline indexing allowed)
+- `var <ident> as <Type>[?] = <expr>` (fixed variable type)
 - compound variable assignment: `x += value`, `x -= value`, `x *= value`, `x /= value`, `x %= value`, `x &= value`, `x |= value`, `x ^= value`, `x <<= value`, or `x >>= value`
 - `function name(a,b) ... end function` (multiline params allowed, trailing comma optional)
 - `function name(a as int, b as string? = void, rest...) returns int ... end function`

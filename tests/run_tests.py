@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.9"
+    expected = "MiniLang Compiler 1.3.10"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4288,7 +4288,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.9", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.10", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -4398,12 +4398,22 @@ def main() -> int:
         ("typeof_literal_checks.ml", "[OK] 1012 direct typeof"),
         ("type_query_resolution.ml", "[OK] qualified and shadowed type queries"),
         ("typeof_declared_call.ml", "[OK] declared typeof calls"),
+        ("language_typed_bindings.ml", "TYPED BINDINGS [OK]"),
+        ("language_typed_binding_typeof.ml", "TYPED BINDING TYPEOF [OK]"),
         ("inline_error_boundaries.ml", "[OK] inline error boundaries"),
         ("oop_monomorphic_dispatch.ml", "[OK] monomorphic dispatch"),
     ):
         tests.append(lambda fixture=fixture, marker=marker: test_program_no_fail(
             name=fixture, mlc_runner=mlc_runner, ml_path=tests_root / fixture,
             must_contain=[marker], timeout_compile_s=180, timeout_run_s=30))
+
+    for fixture, diagnostic in (
+        ("language_typed_binding_mismatch.ml", "Cannot assign string to binding of type int"),
+        ("language_typed_binding_redeclare.ml", "Cannot change the type of 'counter'"),
+    ):
+        tests.append(lambda fixture=fixture, diagnostic=diagnostic: test_compile_expected_fail(
+            name=fixture, mlc_runner=mlc_runner, entry_ml=tests_root / fixture,
+            must_contain_err=diagnostic))
 
     if language_extensions_ml is not None:
         tests.append(lambda: test_program_no_fail(
@@ -5134,6 +5144,14 @@ def main() -> int:
         must_contain=["PROVEN CHECK TYPEOF [OK]"],
         timeout_compile_s=120, timeout_run_s=120))
     for fixture, marker, title in (
+            ("typed_numeric_temporary_inline", "TYPED NUMERIC TEMPORARY INLINE [OK]",
+             "typed numeric temporary inlining preserves public call contracts"),
+            ("typed_local_custom_typeof", "TYPED LOCAL CUSTOM TYPEOF [OK]",
+             "typed local guard preserves custom typeof effects"),
+            ("typed_float_temporary_inline", "TYPED FLOAT TEMPORARY INLINE [OK]",
+             "typed float temporary fusion preserves normalization and contracts"),
+            ("typed_float_temporary_typeof", "TYPED FLOAT TEMPORARY TYPEOF [OK]",
+             "typed float fusion preserves custom typeof effects"),
             ("numeric_typeflow_boxing", "NUMERIC TYPEFLOW BOXING [OK]",
              "numeric type flow and bounded float boxing"),
             ("numeric_typeflow_typeof", "NUMERIC TYPEFLOW TYPEOF [OK]",

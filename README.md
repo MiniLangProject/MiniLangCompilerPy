@@ -8,9 +8,10 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.9.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.10.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.9 adds native MinUX output, packing and compiler selfhosting,
+Version 1.3.10 adds fixed variable types and expands typed numeric code generation.
+Native MinUX output, packing and compiler selfhosting arrived in 1.3.9,
 including MinUX standard-library, TLS/crypto, file, terminal and media adapters.
 See the [MinUX guide](docs/MINUX.md) for setup, verified capabilities and limits.
 
@@ -125,7 +126,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.9 verification matrix](docs/reports/release-1.3.9-version-matrix.json).
+[1.3.10 verification matrix](docs/reports/release-1.3.10-version-matrix.json).
 
 ## Documentation and development
 
@@ -136,6 +137,8 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Incremental builds | [Guide](docs/INCREMENTAL_BUILDS.md) |
 | Compiler optimization measurements | [Allocation and emission](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md), [bounded concat, typed scalar replacement, and metadata](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md) |
 | Generated-program runtime and memory | [Measured codegen and GC experiments](docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md) |
+| Typed numeric helper calls | [Inlining A/B evaluation](docs/reports/TYPED_NUMERIC_CALL_OPTIMIZATION_2026-11-20.md) |
+| Fixed variable types | [Type contracts and measured check elision](docs/reports/TYPED_BINDINGS_2026-11-21.md) |
 | Typed inline assembly | [Guide](docs/INLINE_ASM.md) |
 | Native crypto, checksums and CPU features | [Native primitives](docs/NATIVE_PRIMITIVES.md) |
 | Compression and platform services | [Platform services](docs/PLATFORM_SERVICES.md) |

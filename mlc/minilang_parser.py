@@ -249,6 +249,8 @@ class TypeGuard(Expr):
     expr: Expr
     type_name: str
     optional: bool = False
+    # 1 marks a fixed declaration; 2 marks a subsequent checked write.
+    binding_write: int = 0
 
 
 @dataclass
@@ -2043,6 +2045,17 @@ class Parser:
 
         # Assignment or call statement.
         if t.kind == "IDENT":
+            if t.value == "var" and self.peek2().kind == "IDENT":
+                global _typed_binding_declarations_seen
+                _typed_binding_declarations_seen = True
+                self.advance()
+                name = self.expect("IDENT").value
+                self.expect("KW", "as")
+                ty, optional = self.parse_type_ref()
+                self.expect("OP", "=")
+                value = self.parse_expr()
+                guard = self._attach_pos(TypeGuard(value, ty, optional, 1), start_pos)
+                return self._attach_pos(Assign(name, guard, ty, optional), start_pos)
             expr = self.parse_postfix()
 
             declared_type: Optional[str] = None
@@ -2508,6 +2521,140 @@ def _copy_source_pos(dst: Any, src: Any) -> Any:
     return dst
 
 
+_typed_binding_declarations_seen = False
+
+
+def has_typed_binding_declarations() -> bool:
+    """Avoid walking untyped programs a second time."""
+    return _typed_binding_declarations_seen
+
+
+def _binding_type_key(name: str) -> str:
+    """Normalize primitive spellings while preserving qualified type names."""
+    if '.' in name:
+        return name
+    lower = name.lower()
+    return {'integer': 'int', 'boolean': 'bool', 'str': 'string'}.get(
+        lower, lower if lower in (
+            'int', 'float', 'bool', 'string', 'array', 'bytes', 'function',
+            'struct', 'enum', 'error', 'thread', 'void', 'unknown') else name)
+
+
+def _guard_binding_write(st: Stmt, contract: tuple[str, bool, str],
+                         *, qualify: bool = False, fail=None) -> None:
+    """Keep a binding's established contract on a write before its store."""
+    name, optional, qualified = contract
+    declared = getattr(st, 'declared_type', None)
+    if declared:
+        if ((_binding_type_key(declared) != _binding_type_key(name)
+             and _binding_type_key(declared) != _binding_type_key(qualified))
+                or bool(st.declared_optional) != optional):
+            message = f"Cannot change the type of '{st.name}'"
+            if fail is not None:
+                raise fail(message, st)
+            raise ParseError(message, st._pos)
+        if st.expr.binding_write == 0:
+            st.expr.binding_write = 2
+        return
+    if qualify:
+        name = qualified
+    if (isinstance(st.expr, TypeGuard) and st.expr.type_name == name
+            and st.expr.optional == optional):
+        if st.expr.binding_write == 0:
+            st.expr.binding_write = 2
+        return
+    st.expr = _copy_source_pos(TypeGuard(st.expr, name, optional, 2), st)
+
+
+def _declares_binding_type(st: Any) -> bool:
+    return (isinstance(st, Assign) and bool(st.declared_type)
+            and isinstance(st.expr, TypeGuard) and st.expr.binding_write == 1)
+
+
+def apply_local_binding_contracts(fn: FunctionDef, inherited=(), *, fail=None,
+                                  consume_declarations=False, module=False) -> None:
+    """Lower writes in lexical order, following the backend's capture owners."""
+    params = dict.fromkeys(fn.params)
+    captures = {}
+    for name, depth in getattr(fn, '_ml_capture_depth', {}).items():
+        if depth > len(inherited):
+            continue
+        for frame in inherited[depth - 1]:
+            if name in frame:
+                captures[name] = frame[name]
+                break
+    declared_globals = set(getattr(fn, '_ml_globals_declared', ()))
+    nested = []
+
+    def walk(body, frames):
+        for st in body:
+            if isinstance(st, GlobalDecl):
+                declared_globals.update(st.names)
+            elif isinstance(st, Assign):
+                fixed = _declares_binding_type(st)
+                if not module and (st.name in declared_globals or '.' in st.name):
+                    if fixed:
+                        message = f"Declare the type of global '{st.name}' at module scope"
+                        if fail is not None:
+                            raise fail(message, st)
+                        raise ParseError(message, st._pos)
+                    continue
+                contract = None
+                if fixed:
+                    contract = (st.declared_type, st.declared_optional, st.declared_type)
+                for frame in frames:
+                    if st.name not in frame:
+                        continue
+                    previous = frame[st.name]
+                    if fixed:
+                        message = f"Typed binding '{st.name}' requires a new variable"
+                        if fail is not None:
+                            raise fail(message, st)
+                        raise ParseError(message, st._pos)
+                    if previous is not None:
+                        _guard_binding_write(st, previous, fail=fail)
+                    break
+                else:
+                    frames[0][st.name] = contract
+                    if fixed and consume_declarations:
+                        st.expr.binding_write = 2
+            elif isinstance(st, FunctionDef):
+                if module:
+                    continue
+                for frame in frames:
+                    if st.name not in frame:
+                        continue
+                    if frame[st.name] is not None:
+                        message = f"Function declaration would overwrite typed binding '{st.name}'"
+                        if fail is not None:
+                            raise fail(message, st)
+                        raise ParseError(message, st._pos)
+                    break
+                else:
+                    frames[0][st.name] = None
+                nested.append((st, frames))
+            elif isinstance(st, ConstDecl):
+                frames[0].setdefault(st.name, None)
+            elif isinstance(st, If):
+                walk(st.then_body, ({}, *frames))
+                for _, body in st.elifs:
+                    walk(body, ({}, *frames))
+                walk(st.else_body, ({}, *frames))
+            elif isinstance(st, Switch):
+                for case in st.cases:
+                    walk(case.body, ({}, *frames))
+                walk(st.default_body, ({}, *frames))
+            elif isinstance(st, (For, ForEach)):
+                walk(st.body, ({st.var: None}, *frames))
+            elif isinstance(st, (While, DoWhile, SynchronizedBlock)):
+                walk(st.body, ({}, *frames))
+
+    walk(fn.body, (params, captures))
+    for child, frames in nested:
+        apply_local_binding_contracts(child, (frames, *inherited), fail=fail,
+                                      consume_declarations=consume_declarations)
+
+
 class _LanguageLowerer:
     """Lower closures, generators and async sugar to the stable core AST."""
 
@@ -2749,6 +2896,10 @@ class _LanguageLowerer:
 
         state_name = self.fresh("lazy_state")
         next_name = self.fresh("lazy_next")
+        # The state machine puts successive writes in separate switch cases.
+        # Resolve their source bindings before introducing those scopes.
+        if has_typed_binding_declarations():
+            apply_local_binding_contracts(fn, consume_declarations=True)
         blocks: List[List[Stmt]] = []
         persistent: set[str] = {state_name}
         globals_declared: set[str] = set()
@@ -3531,7 +3682,7 @@ _COMPILE_PREDEFINED = {
     "TARGET_ABI": "win64",
     "TARGET_FORMAT": "pe",
     "POINTER_SIZE": 8,
-    "MINILANG_VERSION": "1.3.9",
+    "MINILANG_VERSION": "1.3.10",
 }
 _compile_external_defines: dict[str, bool | int | str] = {}
 

@@ -3171,6 +3171,67 @@ class CodegenExpr:
     # Inline functions (function inline ...)
     # ------------------------------------------------------------
 
+    def _opt_float_temporary_return(self, fn: Any) -> Any:
+        """Fuse a private float temporary into a bounded inline return tree.
+
+        The existing float-tree emitter checks actual operand tags and replays
+        the ordinary Value operations whenever intermediate normalization can
+        change the result. No local store is observable in this pure shape.
+        """
+        ml = self.ml
+        params = list(getattr(fn, 'params', []) or [])
+        types = list(getattr(fn, 'param_types', []) or [])
+        optional = list(getattr(fn, 'param_optional', []) or [])
+        body = list(getattr(fn, 'body', []) or [])
+        if (bool(getattr(self, 'operator_overloads_present', False))
+                or str(getattr(fn, 'return_type', '') or '') != 'float'
+                or bool(getattr(fn, 'return_optional', False))
+                or not params or len(body) != len(params) + 2
+                or len(types) < len(params)
+                or any(types[i] != 'float' or (i < len(optional) and optional[i])
+                       for i in range(len(params)))):
+            return None
+        if any(not isinstance(body[i], ml.Assign) or body[i].name != params[i]
+               or not isinstance(body[i].expr, ml.TypeGuard)
+               for i in range(len(params))):
+            return None
+        temporary = body[len(params)]
+        returned = body[-1]
+        if (not isinstance(temporary, ml.Assign) or temporary.name in params
+                or temporary.name in (getattr(fn, '_ml_globals_declared', set()) or set())
+                or not isinstance(returned, ml.Return)
+                or not isinstance(returned.expr, ml.TypeGuard)
+                or returned.expr.type_name != 'float' or returned.expr.optional):
+            return None
+
+        def leaf(value, names):
+            return ((isinstance(value, ml.Num) and type(value.value) is float)
+                    or (isinstance(value, ml.Var) and value.name in names))
+
+        first = temporary.expr
+        second = returned.expr.expr
+        if (not isinstance(first, ml.Bin) or first.op not in ('+', '-', '*')
+                or not leaf(first.left, params) or not leaf(first.right, params)
+                or not isinstance(second, ml.Bin) or second.op not in ('+', '-', '*')):
+            return None
+        temp_name = temporary.name
+        left_is_temp = isinstance(second.left, ml.Var) and second.left.name == temp_name
+        right_is_temp = isinstance(second.right, ml.Var) and second.right.name == temp_name
+        if left_is_temp == right_is_temp:
+            return None
+        other = second.right if left_is_temp else second.left
+        if not leaf(other, params):
+            return None
+        fused = ml.Bin(first if left_is_temp else other, second.op,
+                       other if left_is_temp else first)
+        guard = ml.TypeGuard(fused, 'float', False)
+        result = ml.Return(guard)
+        for source, target in ((second, fused), (returned.expr, guard), (returned, result)):
+            for attr in ('_pos', '_filename'):
+                if hasattr(source, attr):
+                    setattr(target, attr, getattr(source, attr))
+        return result
+
     def _emit_inline_call(self, e: Any, callee_name: str) -> None:
         """Emit a direct expansion of an inline function call (full body inlining).
 
@@ -3359,6 +3420,28 @@ class CodegenExpr:
                     except Exception:
                         fact = 'struct:' + raw
                 self._known_value_types[str(name)] = fact
+            # A guarded, pure integer temporary still has an exact integer
+            # value after its initializer succeeds. Mirror the native body's
+            # type-flow fact so inlining does not introduce an extra return
+            # contract call when a user-defined typeof has side effects.
+            if (not bool(getattr(self, 'operator_overloads_present', False))
+                    and str(getattr(fn, 'return_type', '') or '') == 'int'
+                    and len(params) > 0 and len(body) == len(params) + 2
+                    and all(i < len(declared_types) and declared_types[i] == 'int'
+                            and not (i < len(declared_optional) and declared_optional[i])
+                            for i in range(len(params)))):
+                temporary = body[len(params)]
+                guarded = getattr(temporary, 'expr', None)
+                if (isinstance(temporary, ml.Assign)
+                        and temporary.name not in params
+                        and isinstance(guarded, ml.TypeGuard)
+                        and guarded.type_name == 'int' and not guarded.optional
+                        and isinstance(guarded.expr, ml.Bin)
+                        and guarded.expr.op in ('+', '-', '*')
+                        and all((isinstance(leaf, ml.Num) and type(leaf.value) is int)
+                                or (isinstance(leaf, ml.Var) and leaf.name in params)
+                                for leaf in (guarded.expr.left, guarded.expr.right))):
+                    self._known_value_types[str(temporary.name)] = 'int'
             self._known_int_names = {
                 name for name, fact in self._known_value_types.items()
                 if self._opt_value_type_base(fact) == 'int'
@@ -3394,8 +3477,19 @@ class CodegenExpr:
 
             stk.append(callee_name)
             try:
-                for st in body:
-                    self.emit_stmt(st)
+                fused_return = self._opt_float_temporary_return(fn)
+                if fused_return is not None:
+                    for st in body[:len(params)]:
+                        self.emit_stmt(st)
+                    # Extended facts are runtime-guarded candidates. Seed them
+                    # only after the entry contracts; a custom typeof may have
+                    # accepted a non-float and the float tree must then replay
+                    # the ordinary Value operations.
+                    self._known_numeric_value_types = {str(p): 'float' for p in params}
+                    self.emit_stmt(fused_return)
+                else:
+                    for st in body:
+                        self.emit_stmt(st)
             finally:
                 stk.pop()
 
@@ -3772,11 +3866,60 @@ class CodegenExpr:
         canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
         if not value_type or canonical != value_type:
             return False
+        if getattr(e, 'binding_write', 0):
+            return True
         # Match the existing guard's direct typeof/tag-check resolution. A user
         # declaration of typeof can have effects or return a different label.
         probe_arg = self.ml.DeferredCapture(0)
         probe = self.ml.Call(self.ml.Var('typeof'), [probe_arg])
         return self._typeof_fold_arg(probe) is probe_arg
+
+    def _opt_proven_int_bin_guard_is_redundant(self, guard: Any) -> bool:
+        """Prove a pure integer result from checked parameters or locals.
+
+        Parameter-entry guards are bare variables, so this cannot remove them.
+        Only pure builtin integer arithmetic is accepted; a user-defined
+        typeof or operator must still run at the declared assignment.
+        """
+        ml = self.ml
+        if (not self.in_function or bool(getattr(guard, 'optional', False))
+                or str(getattr(guard, 'type_name', '') or '') != 'int'
+                or bool(getattr(self, 'operator_overloads_present', False))):
+            return False
+        expr = getattr(guard, 'expr', None)
+        if not isinstance(expr, ml.Bin) or expr.op not in ('+', '-', '*'):
+            return False
+        params = getattr(self, 'func_param_offsets', {}) or {}
+        for leaf in (expr.left, expr.right):
+            if isinstance(leaf, ml.Num) and type(leaf.value) is int:
+                continue
+            if not isinstance(leaf, ml.Var):
+                return False
+            binding = self.resolve_binding(leaf.name)
+            if binding is None:
+                return False
+            parameter = binding.kind == 'param' and leaf.name in params
+            if (not parameter and (binding.kind != 'local' or not guard.binding_write)
+                    or self._opt_value_type_base(self._opt_expr_known_type(leaf, not parameter)) != 'int'):
+                return False
+        probe_arg = ml.DeferredCapture(0)
+        probe = ml.Call(ml.Var('typeof'), [probe_arg])
+        return self._typeof_fold_arg(probe) is probe_arg
+
+    def _opt_fixed_binding_copy_is_redundant(self, guard: Any) -> bool:
+        """Reuse the checked declaration of an already visible local."""
+        if not guard.binding_write or not isinstance(guard.expr, self.ml.Var):
+            return False
+        expected = self.ml._binding_type_key(guard.type_name)
+        if expected not in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread'):
+            return False
+        binding = self.resolve_binding(guard.expr.name)
+        if binding is None or binding.kind != 'local' or binding.boxed:
+            return False
+        decl = binding.decl_node
+        return (self.ml._declares_binding_type(decl)
+                and (not decl.declared_optional or guard.optional)
+                and self.ml._binding_type_key(decl.declared_type) == expected)
 
     def _emit_typeof_literal_check(self, arg: Any, lit: str) -> None:
         """Emit a direct `typeof(<arg>) == "<lit>"` check: value tag and, for pointer types, object-type checks replace the fn_typeof call and the generic equality cascade."""
@@ -3941,10 +4084,12 @@ class CodegenExpr:
             return
 
         if hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard):
-            if self._opt_literal_guard_is_redundant(e):
-                # The same ordinary emitter retains folding and exact numeric
-                # normalization. A proven primitive constant cannot be Error or
-                # allocate, so no guard temp/root or error boundary is needed.
+            if (self._opt_literal_guard_is_redundant(e)
+                    or self._opt_fixed_binding_copy_is_redundant(e)
+                    or self._opt_proven_int_bin_guard_is_redundant(e)):
+                # Ordinary emission keeps exact numeric normalization. The
+                # proof excludes effects, allocation and error results, so
+                # this guard needs no temp root or error continuation.
                 self.emit_expr(e.expr)
                 return
             lid = self.new_label_id()
@@ -3963,14 +4108,33 @@ class CodegenExpr:
             loaded = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else e.expr
             primitives = {'int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'struct',
                           'enum', 'error', 'thread', 'void', 'unknown'}
-            if canonical in primitives:
+            if e.binding_write and canonical in primitives:
+                if canonical in ('error', 'unknown'):
+                    self.emit_expr(loaded)
+                    a.mov_r64_r64('rcx', 'rax')
+                    a.call('fn_typeof')
+                    a.lea_rdx_rip('obj_type_' + canonical)
+                    a.cmp_r64_r64('rax', 'rdx')
+                    a.setcc_al('e')
+                    a.movzx_eax_al()
+                    a.shl_rax_imm8(3)
+                    a.or_rax_imm8(TAG_BOOL)
+                else:
+                    self._emit_typeof_literal_check(loaded, canonical)
+            elif canonical in primitives:
                 check = ml.Bin(ml.Call(ml.Var('typeof'), [loaded]), '==', ml.Str(canonical))
+                self.emit_expr(check)
             else:
                 check = ml.IsType(loaded, raw_type, False)
-            self.emit_expr(check)
+                self.emit_expr(check)
             a.cmp_rax_imm8(enc_bool(True))
             a.jcc('e', l_valid)
             self._emit_make_error_const(ERR_TYPE_GUARD, f"Expected value of type {raw_type}{'?' if bool(getattr(e, 'optional', False)) else ''}")
+            stores_error = bool(e.binding_write and canonical == 'error')
+            if stores_error:
+                # An explicitly caught Error is a valid payload here. Only
+                # the guard's mismatch propagates automatically.
+                self._emit_auto_errprop()
             a.jmp(l_done)
             a.mark(l_valid)
             a.mov_rax_rsp_disp32(off)
@@ -3978,7 +4142,8 @@ class CodegenExpr:
             self.free_expr_temps(8)
             # Type contracts are ordinary MiniLang error boundaries. Propagate
             # a failed guard unless the expression is explicitly wrapped in try().
-            self._emit_auto_errprop()
+            if not stores_error:
+                self._emit_auto_errprop()
             return
 
         # Internal operand used by the defer epilogue.  It deliberately bypasses

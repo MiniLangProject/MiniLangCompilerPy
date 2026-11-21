@@ -1,0 +1,70 @@
+{
+  "version": "1.3.10",
+  "date": "2026-11-21",
+  "buildOptions": {
+    "windows/linux": "--heap-reserve 8g --heap-commit 512m --heap-shrink --heap-shrink-min 16m --gc-limit 1536m",
+    "minux": "--target minux-x64 --pack",
+    "nativePipeline": "--object-pipeline"
+  },
+  "compilerImages": [
+    {
+      "target": "windows-x64",
+      "bytes": 67020800,
+      "sha256": "d58437fc45cf01bfbbf3a69fa129cca57db1fbb2b5429fb8c58c67200a864abe",
+      "byteIdentical": true,
+      "methods": [
+        "Python compiler",
+        "Self-hosted compiler on Windows x64, MLO pipeline"
+      ]
+    },
+    {
+      "target": "linux-x64",
+      "bytes": 67044416,
+      "sha256": "8f877a387918f0d349dc94e7cfa04cde1329355a978390da77c83ab417027caf",
+      "byteIdentical": true,
+      "methods": [
+        "Python compiler",
+        "Self-hosted compiler on Linux x64 (WSL), MLO pipeline"
+      ]
+    },
+    {
+      "target": "minux-x64",
+      "bytes": 15005650,
+      "sha256": "dcc56f6df560bdbba94a7513d9dbe959960d30786f0a2cf9a77ea851b0535b88",
+      "byteIdentical": true,
+      "methods": [
+        "Python compiler",
+        "Self-hosted compiler on Windows x64, MLO pipeline"
+      ]
+    }
+  ],
+  "checks": {
+    "pythonIntegration": {
+      "passed": 257,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativeHarness": {
+      "passed": 173,
+      "failed": 0
+    },
+    "nativePlatformAndLibraryRunnerPassed": true,
+    "sharedStdSourceModules": 55,
+    "sharedStdSourceMismatches": 0,
+    "fixtureImagesPerTarget": {
+      "windows-x64": 21,
+      "linux-x64": 21,
+      "minux-x64": 15
+    },
+    "fixtureMatrixByteIdentical": true,
+    "windowsFixtureRuns": 7,
+    "linuxReleaseCompilerRanFixedBindingFixture": true,
+    "minuxGuest": {
+      "versionAndCompileTimeVersionPassed": true,
+      "directAndObjectProgramBuildsAndRunsPassed": true,
+      "typedBindingFixturesPassed": 2,
+      "testedFromTree": "abf618378c633535d2a6e09eca05b2d6957902e4",
+      "packedCompilerLoaderLimitBytes": 16777216
+    }
+  }
+}

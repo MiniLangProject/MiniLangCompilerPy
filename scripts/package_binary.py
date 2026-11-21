@@ -18,7 +18,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', required=True, type=Path)
     parser.add_argument('--platform', required=True, choices=['windows-x64', 'linux-x64', 'minux-x64'])
-    parser.add_argument('--version', default='1.3.9')
+    parser.add_argument('--version', default='1.3.10')
     parser.add_argument('--third-party', action='append', default=[], type=Path)
     parser.add_argument('--runtime-dir', type=Path, help='verified MinUX runtime output, including its manifest and licenses')
     args = parser.parse_args()
@@ -78,8 +78,11 @@ def main() -> int:
         for filename in ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'README-BINARY.md', 'CHANGELOG.md', f'RELEASE_NOTES_{args.version}.md']:
             shutil.copy2(root / filename, package / filename)
         for document in ('EXECUTABLE_PACKING.md', 'INCREMENTAL_BUILDS.md',
+                         'LANGUAGE_REFERENCE.md',
                          'MINUX.md',
                          'PLATFORM_SERVICES.md', 'OOP.md',
+                         'reports/TYPED_BINDINGS_2026-11-21.md',
+                         'reports/TYPED_NUMERIC_CALL_OPTIMIZATION_2026-11-20.md',
                          'reports/NATIVE_PACKING_2026-11-14.md',
                          'reports/STDLIB_OOP_2026-11-14.md',
                          'reports/OOP_DISPATCH_2026-11-14.md',
@@ -104,6 +107,10 @@ def main() -> int:
             destination = package / 'docs' / document
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(root / 'docs' / document, destination)
+        benchmarks = package / 'benchmarks'
+        benchmarks.mkdir()
+        for benchmark in (root / 'benchmarks').glob('typed_*.ml'):
+            shutil.copy2(benchmark, benchmarks / benchmark.name)
         example = package / 'examples' / 'hello.ml'
         example.parent.mkdir()
         example.write_text('import std.string_builder as sb\n\nfunction main(args)\n'

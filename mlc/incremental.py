@@ -191,6 +191,7 @@ class FunctionCache:
             getattr(cg, "_dead_functions", set()), cg.native_threads_possible,
             getattr(cg, "mutable_user_functions", set()),
             getattr(cg, "_max_inline_call_args_global", 0),
+            cg._global_binding_contracts,
             _view(cg._scope_stack[0])))
         initial = []
         for owner, field in self._section_dicts:
