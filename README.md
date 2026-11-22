@@ -137,8 +137,10 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Incremental builds | [Guide](docs/INCREMENTAL_BUILDS.md) |
 | Compiler optimization measurements | [Allocation and emission](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md), [bounded concat, typed scalar replacement, and metadata](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md) |
 | Generated-program runtime and memory | [Measured codegen and GC experiments](docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md) |
+| Dynamic index code generation | [Bounds-check optimization and A/B measurements](docs/reports/INDEX_BOUNDS_CODEGEN_2026-11-22.md) |
 | Typed numeric helper calls | [Inlining A/B evaluation](docs/reports/TYPED_NUMERIC_CALL_OPTIMIZATION_2026-11-20.md) |
 | Fixed variable types | [Type contracts and measured check elision](docs/reports/TYPED_BINDINGS_2026-11-21.md) |
+| Typed fields, typed arrays and strict checking | [Syntax and behavior](docs/LANGUAGE_REFERENCE.md#typed-fields) · [Verification and benchmarks](docs/reports/TYPE_CONTRACTS_AND_ARRAYS_2026-11-22.md) · [Packed array access](docs/reports/PACKED_I32_ACCESS_2026-11-22.md) |
 | Typed inline assembly | [Guide](docs/INLINE_ASM.md) |
 | Native crypto, checksums and CPU features | [Native primitives](docs/NATIVE_PRIMITIVES.md) |
 | Compression and platform services | [Platform services](docs/PLATFORM_SERVICES.md) |

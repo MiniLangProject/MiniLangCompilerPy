@@ -1022,14 +1022,13 @@ class CodegenExpr:
         if not bounds_proven:
             a.mov_r32_membase_disp('edx', 'r11', 4)
             l_nonnegative = f'idx_fast_nonnegative_{lid}'
-            a.cmp_r32_imm('ecx', 0)
+            a.cmp_r64_imm('rcx', 0)
             a.jcc('ge', l_nonnegative)
-            a.add_r32_r32('ecx', 'edx')
+            a.add_r64_r64('rcx', 'rdx')
             a.mark(l_nonnegative)
-            a.cmp_r32_imm('ecx', 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32('ecx', 'edx')
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64('rcx', 'rdx')
+            # The unsigned comparison rejects a still-negative index too.
+            a.jcc('ae', l_oob)
 
         if kind == 'array':
             a.mov_r64_mem_bis('rax', 'r11', 'rcx', 8, 8)
@@ -3911,7 +3910,8 @@ class CodegenExpr:
         if not guard.binding_write or not isinstance(guard.expr, self.ml.Var):
             return False
         expected = self.ml._binding_type_key(guard.type_name)
-        if expected not in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread'):
+        if (expected not in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread')
+                and not self.ml.typed_array_code(expected)):
             return False
         binding = self.resolve_binding(guard.expr.name)
         if binding is None or binding.kind != 'local' or binding.boxed:
@@ -3920,6 +3920,353 @@ class CodegenExpr:
         return (self.ml._declares_binding_type(decl)
                 and (not decl.declared_optional or guard.optional)
                 and self.ml._binding_type_key(decl.declared_type) == expected)
+
+    def _proved_contract_type(self, value: Any, follow_call: bool = True) -> str:
+        """Prove a concrete type without evaluating a source expression."""
+        ml = self.ml
+        if isinstance(value, ml.Num):
+            return 'int' if type(value.value) is int else 'float'
+        if isinstance(value, ml.Bool):
+            return 'bool'
+        if isinstance(value, ml.Str):
+            return 'string'
+        if isinstance(value, ml.VoidLit):
+            return 'void'
+        if isinstance(value, ml.ArrayLit):
+            return 'array'
+        if isinstance(value, ml.TypeGuard) and value.binding_write == 3:
+            return value.type_name
+        if isinstance(value, ml.Var):
+            binding = self.resolve_binding(value.name)
+            decl = binding.decl_node if binding and binding.kind == 'local' and not binding.boxed else None
+            if ml._declares_binding_type(decl) and not decl.declared_optional:
+                return ml._binding_type_key(decl.declared_type)
+        if follow_call and isinstance(value, ml.Call):
+            name = self._opt_static_user_fn(value.callee)
+            return self._proved_direct_leaf_type(self.user_functions.get(name))
+        return ''
+
+    def _proved_direct_leaf_type(self, fn: Any) -> str:
+        """Summarize the successful return of a literal leaf function."""
+        ml = self.ml
+        if not fn or not fn.body or not isinstance(fn.body[-1], ml.Return):
+            return ''
+        # Parameter guards can abort, but branches and calls can change the result.
+        if not all(isinstance(st, ml.Assign) and st.name in fn.params
+                   and isinstance(st.expr, ml.TypeGuard) for st in fn.body[:-1]):
+            return ''
+        result = fn.body[-1].expr
+        if isinstance(result, ml.TypeGuard) and result.binding_write != 3:
+            result = result.expr
+        if isinstance(result, (ml.Num, ml.Bool, ml.Str, ml.VoidLit, ml.ArrayLit)):
+            return self._proved_contract_type(result, False)
+        return ''
+
+    def _strict_contract_check(self, value: Any, expected: str, optional: bool,
+                               description: str, node: Any) -> None:
+        if not self.heap_config.get('strict_types'):
+            return
+        ml = self.ml
+        expected_key = ml._binding_type_key(expected)
+        actual = self._proved_contract_type(value)
+        primitives = ('int', 'float', 'bool', 'string', 'array', 'bytes', 'void')
+        if not ((actual in primitives or ml.typed_array_code(actual))
+                and (expected_key in primitives or ml.typed_array_code(expected_key))):
+            return
+        if (actual == expected_key or (actual == 'void' and optional)
+                or (expected_key == 'array' and ml.typed_array_code(actual))):
+            return
+        suffix = '?' if optional else ''
+        raise self.error(f"{description} expects {expected}{suffix}, got {actual}", node)
+
+    def _strict_check_call(self, call: Any, fn: Any, args: list, implicit: int) -> None:
+        if not self.heap_config.get('strict_types'):
+            return
+        for index, value in enumerate(args, start=implicit):
+            if index < len(fn.param_types) and fn.param_types[index]:
+                optional = index < len(fn.param_optional) and fn.param_optional[index]
+                self._strict_contract_check(
+                    value, fn.param_types[index], optional,
+                    f"Argument '{fn.params[index]}' of {fn.name}", call)
+
+    def _typed_store_plan(self, stmt: Any) -> tuple[bool, bool]:
+        """Return whether to check the element and whether the store is immediate-only."""
+        if not self.ml.has_typed_arrays():
+            return False, False
+        typ = self._proved_contract_type(stmt.target, False)
+        if not self.ml.typed_array_code(typ):
+            return True, False
+        element = typ[6:-1]
+        optional = element.endswith('?')
+        element = element.rstrip('?')
+        self._strict_contract_check(stmt.expr, element, optional, "Array element", stmt)
+        actual = self._proved_contract_type(stmt.expr, False)
+        proven = actual == element or (optional and actual == 'void')
+        return not proven, proven and element in ('int', 'bool')
+
+    @staticmethod
+    def _typed_array_header(code: int) -> int:
+        # Immediate-only element contracts never need reference scanning.
+        kind = OBJ_ARRAY_IMM if code & 127 in (1, 3) else OBJ_ARRAY
+        return kind | (code << 8)
+
+    def _emit_packed_i32_access(self, args: list, store: bool) -> None:
+        """Access a signed cell only after checking its complete byte range."""
+        a = self.asm
+        lid = self.new_label_id()
+        bad_type = f"packed_i32_type_{lid}"
+        bad_index = f"packed_i32_index_{lid}"
+        bad_value = f"packed_i32_value_{lid}"
+        done = f"packed_i32_done_{lid}"
+        size = len(args) * 8
+        base = self.alloc_expr_temps(size)
+        for i, arg in enumerate(args):
+            self.emit_expr(arg)
+            a.mov_rsp_disp32_rax(base + i * 8)
+
+        # Reload the rooted buffer after all argument expressions have run.
+        a.mov_r64_membase_disp("r11", "rsp", base)
+        a.test_r64_r64("r11", "r11")
+        a.jcc("e", bad_type)
+        a.mov_r64_r64("r10", "r11")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_PTR)
+        a.jcc("ne", bad_type)
+        a.mov_r32_membase_disp("edx", "r11", 0)
+        a.cmp_r32_imm("edx", OBJ_BYTES)
+        a.jcc("ne", bad_type)
+        a.mov_r64_membase_disp("rcx", "rsp", base + 8)
+        a.mov_r64_r64("r10", "rcx")
+        a.and_r64_imm("r10", 7)
+        a.cmp_r64_imm("r10", TAG_INT)
+        a.jcc("ne", bad_type)
+        if store:
+            a.mov_r64_membase_disp("r8", "rsp", base + 16)
+            a.mov_r64_r64("r10", "r8")
+            a.and_r64_imm("r10", 7)
+            a.cmp_r64_imm("r10", TAG_INT)
+            a.jcc("ne", bad_type)
+        a.sar_r64_imm8("rcx", 3)
+        a.mov_r32_membase_disp("edx", "r11", 4)
+        a.shr_r64_imm8("rdx", 2)
+        a.test_r64_r64("rcx", "rcx")
+        nonnegative = f"packed_i32_nonnegative_{lid}"
+        a.jcc("ge", nonnegative)
+        a.add_r64_r64("rcx", "rdx")
+        a.mark(nonnegative)
+        # An unsigned comparison rejects both a still-negative index and
+        # any index at or beyond the count, with no 32-bit truncation.
+        a.cmp_r64_r64("rcx", "rdx")
+        a.jcc("ae", bad_index)
+        if store:
+            a.sar_r64_imm8("r8", 3)
+            a.cmp_r64_imm("r8", -2147483648)
+            a.jcc("l", bad_value)
+            a.cmp_r64_imm("r8", 2147483647)
+            a.jcc("g", bad_value)
+            a.mov_mem_bis_r32("r11", "rcx", 4, 8, "r8d")
+            a.mov_rax_imm64(enc_void())
+        else:
+            a.mov_r32_mem_bis("eax", "r11", "rcx", 4, 8)
+            # Sign-extend the dword and shift it into tagged-int position.
+            a.shl_rax_imm8(32)
+            a.sar_rax_imm8(29)
+            a.or_rax_imm8(TAG_INT)
+        a.jmp(done)
+        a.mark(bad_type)
+        self._emit_make_error_const(ERR_TYPE_GUARD, "Int32Array access requires bytes and integer arguments")
+        self._emit_auto_errprop()
+        a.jmp(done)
+        a.mark(bad_index)
+        self._emit_make_error_const(ERR_INDEX_OOB, "Int32Array index out of bounds")
+        self._emit_auto_errprop()
+        if store:
+            a.jmp(done)
+            a.mark(bad_value)
+            self._emit_make_error_const(ERR_TYPE_GUARD, "Int32Array element requires a signed 32-bit integer")
+            self._emit_auto_errprop()
+        a.mark(done)
+        self.free_expr_temps(size)
+
+    def _emit_typed_array_test(self, value: Any, code: int, negated: bool = False) -> None:
+        """Test the invariant element contract stored in the object's header."""
+        a = self.asm
+        lid = self.new_label_id()
+        miss, done = f"typed_array_miss_{lid}", f"typed_array_test_done_{lid}"
+        self.emit_expr(value)
+        a.mov_r64_r64('r10', 'rax')
+        a.and_r64_imm('r10', 7)
+        a.cmp_r64_imm('r10', TAG_PTR)
+        a.jcc('ne', miss)
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', miss)
+        a.mov_r32_membase_disp('r10d', 'rax', 0)
+        a.cmp_r32_imm('r10d', self._typed_array_header(code))
+        a.jcc('ne', miss)
+        a.mov_rax_imm64(enc_bool(not negated))
+        a.jmp(done)
+        a.mark(miss)
+        a.mov_rax_imm64(enc_bool(negated))
+        a.mark(done)
+
+    def _emit_typed_array_copy(self, value: Any, code: int, typ: str) -> None:
+        """Copy a source array into an independently checked typed array."""
+        a = self.asm
+        lid = self.new_label_id()
+        bad, valid = f"typed_copy_bad_{lid}", f"typed_copy_ok_{lid}"
+        loop, finish, done = (f"typed_copy_{name}_{lid}" for name in ('loop', 'finish', 'done'))
+        self.emit_expr(value)
+        source = self.alloc_expr_temps(8)
+        a.mov_rsp_disp32_rax(source)
+        a.mov_r64_r64('r10', 'rax')
+        a.and_r64_imm('r10', 7)
+        a.cmp_r64_imm('r10', TAG_PTR)
+        a.jcc('ne', bad)
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', bad)
+        a.movzx_r32_membase_disp('edx', 'rax', 0)
+        a.cmp_r32_imm('edx', OBJ_ARRAY)
+        a.jcc('e', valid)
+        a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
+        a.jcc('ne', bad)
+        a.mark(valid)
+        a.mov_r32_membase_disp('ecx', 'rax', 4)
+        a.shl_r64_imm8('rcx', 3)
+        a.add_r64_imm('rcx', 8)
+        a.call('fn_alloc')
+        a.mov_r64_r64('r12', 'rax')
+        a.mov_r64_membase_disp('r11', 'rsp', source)
+        header = self._typed_array_header(code)
+        a.mov_membase_disp_imm32('r12', 0, header, qword=False)
+        a.mov_r32_membase_disp('edx', 'r11', 4)
+        a.mov_membase_disp_r32('r12', 4, 'edx')
+        a.xor_r32_r32('ecx', 'ecx')
+        a.mark(loop)
+        a.mov_r32_membase_disp('edx', 'r11', 4)
+        a.cmp_r32_r32('ecx', 'edx')
+        a.jcc('ge', finish)
+        a.mov_r64_mem_bis('r10', 'r11', 'rcx', 8, 8)
+        a.mov_r32_imm32('edx', header)
+        a.call('fn_typed_array_element')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', bad)
+        a.mov_mem_bis_r64('r12', 'rcx', 8, 8, 'r10')
+        a.inc_r32('ecx')
+        a.jmp(loop)
+        a.mark(finish)
+        a.mov_r64_r64('rax', 'r12')
+        a.jmp(done)
+        a.mark(bad)
+        self._emit_make_error_const(ERR_TYPE_GUARD, f"Cannot construct {typ} from the supplied value")
+        a.mark(done)
+        self.free_expr_temps(8)
+        self._emit_auto_errprop()
+
+    def _emit_indirect_struct_guards(self, arity: int, base: int, failure: str, node: Any) -> None:
+        """Validate the arguments of a first-class struct constructor."""
+        contracts = self._indirect_struct_contracts.get(arity)
+        if not contracts:
+            return
+        a, ml = self.asm, self.ml
+        lid = self.new_label_id()
+        done = f"icall_field_guards_done_{lid}"
+        a.mov_r32_membase_disp('r10d', 'r11', 8)
+        for sid, _ in contracts:
+            a.cmp_r32_imm('r10d', sid)
+            a.jcc('e', f"icall_field_guards_{lid}_{sid}")
+        a.jmp(done)
+        for sid, entries in contracts:
+            a.mark(f"icall_field_guards_{lid}_{sid}")
+            for index, typ, optional in entries:
+                value = ml.DeferredCapture(base + (index + 1) * 8)
+                self._emit_type_guard(ml._copy_source_pos(
+                    ml.TypeGuard(value, typ, optional, 2), node), failure)
+            a.jmp(done)
+        a.mark(done)
+
+    def _emit_type_guard(self, e: Any, failure: str = '') -> None:
+        """Emit a type contract, optionally skipping a pending store on mismatch."""
+        ml, a = self.ml, self.asm
+        array_code = ml.typed_array_code(e.type_name)
+        if e.binding_write == 3:
+            self._emit_typed_array_copy(e.expr, array_code, e.type_name)
+            return
+        if (not failure and array_code and isinstance(e.expr, ml.TypeGuard) and e.expr.binding_write == 3
+                and e.expr.type_name == e.type_name and not getattr(self, '_errprop_suppression', 0)):
+            self.emit_expr(e.expr)
+            return
+        self._strict_contract_check(e.expr, e.type_name, e.optional, "Type contract", e)
+        literal_call = (e.binding_write in (1, 2)
+                        and isinstance(e.expr, ml.Call)
+                        and not getattr(self, '_errprop_suppression', 0)
+                        and ml._binding_type_key(e.type_name) in ('int', 'float', 'bool', 'string')
+                        and self._proved_contract_type(e.expr) == ml._binding_type_key(e.type_name))
+        if (literal_call or self._opt_literal_guard_is_redundant(e)
+                or self._opt_fixed_binding_copy_is_redundant(e)
+                or self._opt_proven_int_bin_guard_is_redundant(e)):
+            # Ordinary emission keeps exact numeric normalization. The
+            # proof excludes effects, allocation and error results, so
+            # this guard needs no temp root or error continuation.
+            self.emit_expr(e.expr)
+            return
+        lid = self.new_label_id()
+        l_valid = f"type_guard_valid_{lid}"
+        l_done = f"type_guard_done_{lid}"
+        off = self.alloc_expr_temps(8)
+        self.emit_expr(e.expr)
+        a.mov_rsp_disp32_rax(off)
+        if bool(getattr(e, 'optional', False)):
+            a.cmp_rax_imm8(enc_void())
+            a.jcc('e', l_valid)
+
+        raw_type = str(getattr(e, 'type_name', '') or '')
+        aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+        canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
+        loaded = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else e.expr
+        primitives = {'int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'struct',
+                      'enum', 'error', 'thread', 'void', 'unknown'}
+        if array_code:
+            self._emit_typed_array_test(loaded, array_code)
+        elif e.binding_write and canonical in primitives:
+            if canonical in ('error', 'unknown'):
+                self.emit_expr(loaded)
+                a.mov_r64_r64('rcx', 'rax')
+                a.call('fn_typeof')
+                a.lea_rdx_rip('obj_type_' + canonical)
+                a.cmp_r64_r64('rax', 'rdx')
+                a.setcc_al('e')
+                a.movzx_eax_al()
+                a.shl_rax_imm8(3)
+                a.or_rax_imm8(TAG_BOOL)
+            else:
+                self._emit_typeof_literal_check(loaded, canonical)
+        elif canonical in primitives:
+            check = ml.Bin(ml.Call(ml.Var('typeof'), [loaded]), '==', ml.Str(canonical))
+            self.emit_expr(check)
+        else:
+            check = ml.IsType(loaded, raw_type, False)
+            self.emit_expr(check)
+        a.cmp_rax_imm8(enc_bool(True))
+        a.jcc('e', l_valid)
+        self._emit_make_error_const(ERR_TYPE_GUARD, f"Expected value of type {raw_type}{'?' if bool(getattr(e, 'optional', False)) else ''}")
+        stores_error = bool(e.binding_write and canonical == 'error')
+        if failure:
+            a.mov_membase_disp_imm32('rsp', off, enc_void(), qword=True)
+            a.jmp(failure)
+        elif stores_error:
+            # An explicitly caught Error is a valid payload here. Only
+            # the guard's mismatch propagates automatically.
+            self._emit_auto_errprop()
+        a.jmp(l_done)
+        a.mark(l_valid)
+        a.mov_rax_rsp_disp32(off)
+        a.mark(l_done)
+        self.free_expr_temps(8)
+        # Type contracts are ordinary MiniLang error boundaries. Propagate
+        # a failed guard unless the expression is explicitly wrapped in try().
+        if not stores_error and not failure:
+            self._emit_auto_errprop()
+        return
 
     def _emit_typeof_literal_check(self, arg: Any, lit: str) -> None:
         """Emit a direct `typeof(<arg>) == "<lit>"` check: value tag and, for pointer types, object-type checks replace the fn_typeof call and the generic equality cascade."""
@@ -3959,7 +4306,7 @@ class CodegenExpr:
         else:
             a.cmp_r64_imm('r10', TAG_PTR)
             a.jcc('ne', l_false)
-            a.mov_r32_membase_disp('edx', 'rax', 0)
+            a.movzx_r32_membase_disp('edx', 'rax', 0)
             if lit == 'string':
                 a.cmp_r32_imm('edx', OBJ_STRING)
                 a.setcc_al('e')
@@ -4084,66 +4431,7 @@ class CodegenExpr:
             return
 
         if hasattr(ml, 'TypeGuard') and isinstance(e, ml.TypeGuard):
-            if (self._opt_literal_guard_is_redundant(e)
-                    or self._opt_fixed_binding_copy_is_redundant(e)
-                    or self._opt_proven_int_bin_guard_is_redundant(e)):
-                # Ordinary emission keeps exact numeric normalization. The
-                # proof excludes effects, allocation and error results, so
-                # this guard needs no temp root or error continuation.
-                self.emit_expr(e.expr)
-                return
-            lid = self.new_label_id()
-            l_valid = f"type_guard_valid_{lid}"
-            l_done = f"type_guard_done_{lid}"
-            off = self.alloc_expr_temps(8)
-            self.emit_expr(e.expr)
-            a.mov_rsp_disp32_rax(off)
-            if bool(getattr(e, 'optional', False)):
-                a.cmp_rax_imm8(enc_void())
-                a.jcc('e', l_valid)
-
-            raw_type = str(getattr(e, 'type_name', '') or '')
-            aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
-            canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
-            loaded = ml.DeferredCapture(off) if hasattr(ml, 'DeferredCapture') else e.expr
-            primitives = {'int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'struct',
-                          'enum', 'error', 'thread', 'void', 'unknown'}
-            if e.binding_write and canonical in primitives:
-                if canonical in ('error', 'unknown'):
-                    self.emit_expr(loaded)
-                    a.mov_r64_r64('rcx', 'rax')
-                    a.call('fn_typeof')
-                    a.lea_rdx_rip('obj_type_' + canonical)
-                    a.cmp_r64_r64('rax', 'rdx')
-                    a.setcc_al('e')
-                    a.movzx_eax_al()
-                    a.shl_rax_imm8(3)
-                    a.or_rax_imm8(TAG_BOOL)
-                else:
-                    self._emit_typeof_literal_check(loaded, canonical)
-            elif canonical in primitives:
-                check = ml.Bin(ml.Call(ml.Var('typeof'), [loaded]), '==', ml.Str(canonical))
-                self.emit_expr(check)
-            else:
-                check = ml.IsType(loaded, raw_type, False)
-                self.emit_expr(check)
-            a.cmp_rax_imm8(enc_bool(True))
-            a.jcc('e', l_valid)
-            self._emit_make_error_const(ERR_TYPE_GUARD, f"Expected value of type {raw_type}{'?' if bool(getattr(e, 'optional', False)) else ''}")
-            stores_error = bool(e.binding_write and canonical == 'error')
-            if stores_error:
-                # An explicitly caught Error is a valid payload here. Only
-                # the guard's mismatch propagates automatically.
-                self._emit_auto_errprop()
-            a.jmp(l_done)
-            a.mark(l_valid)
-            a.mov_rax_rsp_disp32(off)
-            a.mark(l_done)
-            self.free_expr_temps(8)
-            # Type contracts are ordinary MiniLang error boundaries. Propagate
-            # a failed guard unless the expression is explicitly wrapped in try().
-            if not stores_error:
-                self._emit_auto_errprop()
+            self._emit_type_guard(e)
             return
 
         # Internal operand used by the defer epilogue.  It deliberately bypasses
@@ -4192,6 +4480,10 @@ class CodegenExpr:
         if hasattr(ml, 'IsType') and isinstance(e, ml.IsType):
             ty_raw = str(getattr(e, 'type_name', '') or '')
             neg = bool(getattr(e, 'negated', False))
+            array_code = ml.typed_array_code(ty_raw)
+            if array_code:
+                self._emit_typed_array_test(e.expr, array_code, neg)
+                return
 
             # Resolve qualified name similar to identifiers (package/namespace + import aliases)
             ty_q = ty_raw
@@ -5503,7 +5795,7 @@ class CodegenExpr:
                 a.cmp_rax_imm8(TAG_PTR)
                 a.jcc('ne', l_str)
                 a.mov_rax_r10()
-                a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
+                a.movzx_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
                 a.cmp_r32_imm("edx", OBJ_ARRAY)
                 a.jcc('e', l_arr_ok1)
                 a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
@@ -5516,7 +5808,7 @@ class CodegenExpr:
                 a.cmp_rax_imm8(TAG_PTR)
                 a.jcc('ne', l_str)
                 a.mov_rax_r11()
-                a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
+                a.movzx_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
                 a.cmp_r32_imm("edx", OBJ_ARRAY)
                 a.jcc('e', l_arr_ok2)
                 a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
@@ -6147,7 +6439,7 @@ class CodegenExpr:
             a.jcc("e", l_bad_target)
 
             # dispatch by obj type
-            a.mov_r32_membase_disp("edx", "r11", 0)  # type
+            a.movzx_r32_membase_disp("edx", "r11", 0)  # type
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             a.jcc('e', l_arr)
             a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
@@ -6163,15 +6455,14 @@ class CodegenExpr:
             a.mov_r32_membase_disp("edx", "r11", 4)  # len
             # support negative indices: if idx < 0 => idx += len
             l_a_ok = f"idx_a_ok_{lid}"
-            a.cmp_r32_imm("ecx", 0)
+            a.cmp_r64_imm("rcx", 0)
             a.jcc('ge', l_a_ok)
-            a.add_r32_r32("ecx", "edx")
+            a.add_r64_r64("rcx", "rdx")
             a.mark(l_a_ok)
             # bounds check after normalization
-            a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64("rcx", "rdx")
+            # A still-negative index is unsigned-above every valid length.
+            a.jcc('ae', l_oob)
             a.mov_r64_mem_bis("rax", "r11", "rcx", 8, 8)
             a.jmp(l_done)
 
@@ -6180,15 +6471,13 @@ class CodegenExpr:
             a.mov_r32_membase_disp("edx", "r11", 4)  # len
             # support negative indices: if idx < 0 => idx += len
             l_b_ok = f"idx_b_ok_{lid}"
-            a.cmp_r32_imm("ecx", 0)
+            a.cmp_r64_imm("rcx", 0)
             a.jcc('ge', l_b_ok)
-            a.add_r32_r32("ecx", "edx")
+            a.add_r64_r64("rcx", "rdx")
             a.mark(l_b_ok)
             # bounds check after normalization
-            a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64("rcx", "rdx")
+            a.jcc('ae', l_oob)
 
             # addr = r11 + 8 + i
             a.mov_r64_r64("rax", "r11")
@@ -6207,15 +6496,13 @@ class CodegenExpr:
             a.mov_r32_membase_disp("edx", "r11", 4)  # len
             # support negative indices: if idx < 0 => idx += len
             l_s_ok = f"idx_s_ok_{lid}"
-            a.cmp_r32_imm("ecx", 0)
+            a.cmp_r64_imm("rcx", 0)
             a.jcc('ge', l_s_ok)
-            a.add_r32_r32("ecx", "edx")
+            a.add_r64_r64("rcx", "rdx")
             a.mark(l_s_ok)
             # bounds check after normalization
-            a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64("rcx", "rdx")
+            a.jcc('ae', l_oob)
 
             a.mov_r64_r64("rax", "r11")
             a.add_r64_r64("rax", "rcx")
@@ -6378,6 +6665,7 @@ class CodegenExpr:
                                  if known_method is not None else None)
                     if known_def is not None:
                         args = self._normalize_declared_call_args(e, known_def, implicit=1)
+                        self._strict_check_call(e, known_def, args, 1)
                         setattr(e, 'args', args)
                         if hasattr(e, 'arg_names'):
                             setattr(e, 'arg_names', [None] * len(args))
@@ -6625,6 +6913,8 @@ class CodegenExpr:
                         and not self._is_declared_instance_method(str(callee_name))):
                     declared_fn = self.user_functions.get(callee_name)
                     call_args = self._normalize_declared_call_args(e, declared_fn)
+                    if callee_name not in self.mutable_user_functions:
+                        self._strict_check_call(e, declared_fn, call_args, 0)
                     setattr(e, 'args', call_args)
                     if hasattr(e, 'arg_names'):
                         setattr(e, 'arg_names', [None] * len(call_args))
@@ -7341,6 +7631,13 @@ class CodegenExpr:
                 self.free_expr_temps(16)
                 return
 
+            if callee_name in ('__ml_packed_i32_get', '__ml_packed_i32_set'):
+                store = callee_name == '__ml_packed_i32_set'
+                if len(call_args) != (3 if store else 2):
+                    raise self.error(f"{callee_name} received the wrong number of arguments", e)
+                self._emit_packed_i32_access(call_args, store)
+                return
+
             # Builtin slice(bytes, off, len) -> bytes (copy)
             if callee_name == 'slice':
                 if len(e.args) != 3:
@@ -7810,7 +8107,7 @@ class CodegenExpr:
 
                 a.mark(l_ptr)
                 # dispatch on obj type
-                a.mov_r32_membase_disp("edx", "rax", 0)
+                a.movzx_r32_membase_disp("edx", "rax", 0)
                 a.cmp_r32_imm("edx", OBJ_STRING)
                 a.jcc("e", l_str)
                 a.cmp_r32_imm("edx", OBJ_BYTES)
@@ -8464,16 +8761,18 @@ class CodegenExpr:
                 sid = self.struct_id.get(sname, 0)
                 a.mov_membase_disp_imm32("r11", 4, sid, qword=False)
 
+                field_contracts = self.struct_field_types.get(sname, [])
+                field_failure = (f"struct_fields_done_{self.new_label_id()}"
+                                 if any(ty for ty, _ in field_contracts) else '')
                 # fill fields in order
                 for i, arg in enumerate(e.args):
-                    field_contracts = (getattr(self, 'struct_field_types', {}) or {}).get(sname, [])
                     if i < len(field_contracts) and field_contracts[i][0]:
                         field_ty, field_optional = field_contracts[i]
-                        guarded_arg = ml.TypeGuard(arg, str(field_ty), bool(field_optional))
+                        guarded_arg = ml.TypeGuard(arg, str(field_ty), bool(field_optional), 2)
                         for attr in ('_pos', '_filename'):
                             if hasattr(arg, attr):
                                 setattr(guarded_arg, attr, getattr(arg, attr))
-                        self.emit_expr(guarded_arg)
+                        self._emit_type_guard(guarded_arg, field_failure)
                     else:
                         self.emit_expr(arg)
                     # restore base pointer into r11 (do NOT clobber rax)
@@ -8499,7 +8798,11 @@ class CodegenExpr:
                     a.call(f'fn_user_{init_method}')
                     self._emit_auto_errprop()
                 a.mov_rax_rsp_disp32(base_off)
+                if field_failure:
+                    a.mark(field_failure)
                 self.free_expr_temps(8)
+                if field_failure:
+                    self._emit_auto_errprop()
                 return
             # If the callee is a known user function (by qualified name), enforce arity at compile time.
             # This keeps "foo expects N args" as a compile-time error for direct calls like foo(...),
@@ -8872,6 +9175,8 @@ class CodegenExpr:
 
                 a.mark(l_stt_normal)
 
+            # The type object selected at runtime owns the field contracts.
+            self._emit_indirect_struct_guards(nargs, base, l_done, e)
             # Allocate struct instance (payload 8 + nargs * 8 bytes)
             a.mov_rcx_imm32(8 + nargs * 8)
             a.call("fn_alloc")

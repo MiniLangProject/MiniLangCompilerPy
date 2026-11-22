@@ -4399,6 +4399,11 @@ def main() -> int:
         ("type_query_resolution.ml", "[OK] qualified and shadowed type queries"),
         ("typeof_declared_call.ml", "[OK] declared typeof calls"),
         ("language_typed_bindings.ml", "TYPED BINDINGS [OK]"),
+        ("language_typed_fields.ml", "TYPED FIELDS [OK]"),
+        ("language_typed_arrays.ml", "TYPED ARRAYS [OK]"),
+        ("language_index_bounds_fast.ml", "FAST INDEX BOUNDS [OK]"),
+        ("language_packed_array.ml", "PACKED ARRAY [OK]"),
+        ("language_strict_types.ml", "STRICT TYPES RUNTIME FALLBACK [OK]"),
         ("language_typed_binding_typeof.ml", "TYPED BINDING TYPEOF [OK]"),
         ("inline_error_boundaries.ml", "[OK] inline error boundaries"),
         ("oop_monomorphic_dispatch.ml", "[OK] monomorphic dispatch"),
@@ -4414,6 +4419,16 @@ def main() -> int:
         tests.append(lambda fixture=fixture, diagnostic=diagnostic: test_compile_expected_fail(
             name=fixture, mlc_runner=mlc_runner, entry_ml=tests_root / fixture,
             must_contain_err=diagnostic))
+
+    tests.append(lambda: test_compile_expected_fail(
+        name="strict direct call type diagnostics", mlc_runner=mlc_runner,
+        entry_ml=tests_root / "language_strict_types.ml",
+        must_contain_err="Argument 'value' of consume expects int, got string",
+        extra_args=["--strict-types"]))
+    tests.append(lambda: test_compile_expected_fail(
+        name="static field write type diagnostics", mlc_runner=mlc_runner,
+        entry_ml=tests_root / "language_typed_field_mismatch.ml",
+        must_contain_err="Cannot assign string to binding of type int"))
 
     if language_extensions_ml is not None:
         tests.append(lambda: test_program_no_fail(

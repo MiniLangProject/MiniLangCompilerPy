@@ -249,7 +249,7 @@ class TypeGuard(Expr):
     expr: Expr
     type_name: str
     optional: bool = False
-    # 1 marks a fixed declaration; 2 marks a subsequent checked write.
+    # 1 is a fixed declaration, 2 a checked write, 3 a typed-array copy.
     binding_write: int = 0
 
 
@@ -795,8 +795,22 @@ class Parser:
         parts = [self.advance().value]
         while self.match("DOT"):
             parts.append(self.expect("IDENT").value)
-        optional = self.match("QMARK")
-        return ".".join(parts), optional
+        name = self._parse_array_type_suffix(".".join(parts))
+        return name, self.match("QMARK")
+
+    def _parse_array_type_suffix(self, name: str) -> str:
+        """Parse the element contract without consuming an outer optional marker."""
+        if name.lower() != 'array' or not self.match('OP', '<'):
+            return name
+        token = self.advance()
+        key = _binding_type_key(str(token.value))
+        if token.kind not in ('IDENT', 'KW') or key not in _TYPED_ARRAY_ELEMENTS:
+            raise ParseError("Expected int, float, bool, string or bytes as array element type", token.pos)
+        optional = '?' if self.match('QMARK') else ''
+        self.expect('OP', '>')
+        global _typed_array_syntax_seen
+        _typed_array_syntax_seen = True
+        return f'array<{key}{optional}>'
 
     def parse_parameter(self) -> tuple[str, Optional[str], bool, Optional[Expr], bool]:
         """Parse one user-function parameter and its gradual-type metadata."""
@@ -2209,7 +2223,7 @@ class Parser:
                     parts.append(str(seg.value))
                     self.advance()
 
-                ty_raw = ".".join(parts)
+                ty_raw = self._parse_array_type_suffix(".".join(parts))
                 ty_l = ty_raw.lower()
                 _aliases = {"integer": "int", "boolean": "bool", "str": "string"}
                 # Only apply aliases / canonicalization for non-qualified primitive names
@@ -2347,6 +2361,19 @@ class Parser:
     def parse_primary(self) -> Expr:
         """Parse primary expressions: literals, identifiers, parenthesized expressions, arrays."""
         t = self.peek()
+
+        # The closing angle bracket must be followed by a call. Ordinary
+        # comparisons and a user variable named array keep their grammar.
+        if t.kind == 'IDENT' and t.value == 'array' and self.peek2().value == '<':
+            suffix = [token.value for token in self.tokens[self.i + 2:self.i + 6]]
+            close = 2 if len(suffix) > 1 and suffix[1] == '?' else 1
+            if suffix[close:close + 2] == ['>', '(']:
+                self.advance()
+                name = self._parse_array_type_suffix('array')
+                self.expect('LPAREN')
+                value = self.parse_expr()
+                self.expect('RPAREN')
+                return self._attach_pos(TypeGuard(value, name, False, 3), t.pos)
 
         if t.kind == "IDENT" and t.value == "asm" and self.peek2().value in ("x64", "unsafe"):
             return self.parse_asm_expr()
@@ -2522,6 +2549,21 @@ def _copy_source_pos(dst: Any, src: Any) -> Any:
 
 
 _typed_binding_declarations_seen = False
+_typed_array_syntax_seen = False
+_TYPED_ARRAY_ELEMENTS = {'int': 1, 'float': 2, 'bool': 3, 'string': 4, 'bytes': 5}
+
+
+def typed_array_code(name: str) -> int:
+    """Return the header's element contract byte, or zero for ordinary types."""
+    if not name.startswith('array<') or not name.endswith('>'):
+        return 0
+    element = name[6:-1]
+    code = _TYPED_ARRAY_ELEMENTS.get(element.rstrip('?'), 0)
+    return code | 128 if code and element.endswith('?') else code
+
+
+def has_typed_arrays() -> bool:
+    return _typed_array_syntax_seen
 
 
 def has_typed_binding_declarations() -> bool:

@@ -1108,7 +1108,7 @@ Returns:
         # --- ptr cases: string / float / array ---
         a.mark(l_ptr)
         # edx = [rax] (obj type)
-        a.mov_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
+        a.movzx_r32_membase_disp("edx", "rax", 0)  # mov edx,[rax]
         # if OBJ_STRING => return as-is
         a.cmp_r32_imm("edx", OBJ_STRING)
         a.jcc('e', l_done)
@@ -2756,7 +2756,7 @@ Returns:
         a.and_r64_imm("rax", 7)
         a.cmp_r64_imm("rax", TAG_PTR)
         a.jcc("ne", l_fail)
-        a.mov_r32_membase_disp("eax", "r8", 0)
+        a.movzx_r32_membase_disp("eax", "r8", 0)
         a.cmp_r32_imm("eax", OBJ_ARRAY)
         a.jcc("e", l_done + "_arr_ok")
         a.cmp_r32_imm("eax", OBJ_ARRAY_IMM)
@@ -2939,10 +2939,10 @@ Returns:
         lid = self.new_label_id()
         l_store_out_type = f"addarr_store_out_type_{lid}"
         a.mov_r32_imm32("eax", OBJ_ARRAY)
-        a.mov_r32_membase_disp("r10d", "rcx", 0)
+        a.movzx_r32_membase_disp("r10d", "rcx", 0)
         a.cmp_r32_imm("r10d", OBJ_ARRAY_IMM)
         a.jcc("ne", l_store_out_type)
-        a.mov_r32_membase_disp("r10d", "rdx", 0)
+        a.movzx_r32_membase_disp("r10d", "rdx", 0)
         a.cmp_r32_imm("r10d", OBJ_ARRAY_IMM)
         a.jcc("ne", l_store_out_type)
         a.mov_r32_imm32("eax", OBJ_ARRAY_IMM)

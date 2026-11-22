@@ -156,12 +156,15 @@ def scalar_candidates(cg, fn):
     return plans
 
 
-def scalar_slot(cg, target, field):
+def scalar_slot(cg, target, field, *, with_contract=False):
     """Resolve only the original binding, never an inline parameter shadow."""
     if type(target).__name__ != 'Var' or getattr(cg, '_inline_call_stack', []):
         return None
     binding = cg.resolve_binding(target.name)
-    for _, original, fields, offsets, _contracts in getattr(cg, '_scalar_structs', []):
+    for _, original, fields, offsets, contracts in getattr(cg, '_scalar_structs', []):
         if binding is original and field in fields:
-            return offsets[fields.index(field)]
+            index = fields.index(field)
+            if with_contract:
+                return offsets[index], contracts[index] if index < len(contracts) else (None, False)
+            return offsets[index]
     return None

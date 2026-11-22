@@ -2044,6 +2044,8 @@ def main(argv: List[str]) -> int:
     parser.add_argument('input', help='input .ml file')
     parser.add_argument('output', help='output native image path')
     parser.add_argument('--pack', action='store_true', help='pack the compiled image without external tools')
+    parser.add_argument('--strict-types', action='store_true',
+                        help='reject provable type mismatches at direct calls and typed returns')
     parser.add_argument('--upx', metavar='PATH', help='optional legacy UPX executable')
     parser.epilog = 'Standalone: --pack-exe INPUT OUTPUT; --unpack-exe INPUT OUTPUT. Use --pack=upx --upx PATH for legacy UPX packing.'
     object_pipeline_group = parser.add_mutually_exclusive_group()
@@ -2173,6 +2175,8 @@ def main(argv: List[str]) -> int:
 
 
     heap_config: Dict[str, Any] = {}
+    if args.strict_types:
+        heap_config['strict_types'] = True
     if args.pgo_profile:
         try:
             with open(args.pgo_profile, 'r', encoding='utf-8') as profile_file:

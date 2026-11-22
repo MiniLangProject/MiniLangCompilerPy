@@ -10,6 +10,31 @@ import sys
 import tempfile
 
 
+def check_changed_return(root, backend, command, flags, repo, target):
+    """A body-only change invalidates diagnostics inferred from a direct call."""
+    project = root / f"changed-return-{backend}"
+    project.mkdir()
+    source = project / "main.ml"
+    provider = project / "provider.ml"
+    source.write_text(
+        'import "provider.ml" as provider\n'
+        'function consume(value as int)\n  print value\nend function\n'
+        'function main(args)\n  consume(provider.value())\n  return 0\nend function\n',
+        encoding="utf-8",
+    )
+    build = [*command, str(source), str(project / "program.exe"), "--target", target,
+             "--strict-types", "--incremental-cache", str(project / "cache"), *flags]
+    provider.write_text("package provider\nfunction value()\n  return 7\nend function\n", encoding="utf-8")
+    first = subprocess.run(build, cwd=repo, capture_output=True, text=True, timeout=300)
+    assert first.returncode == 0, (backend, first.stdout, first.stderr)
+    provider.write_text('package provider\nfunction value()\n  return "wrong"\nend function\n', encoding="utf-8")
+    changed = subprocess.run(build, cwd=repo, capture_output=True, text=True, timeout=300)
+    assert changed.returncode != 0 and "expects int, got string" in changed.stdout + changed.stderr, (
+        backend, changed.stdout, changed.stderr,
+    )
+    print(f"PASS {backend}: changed imported return invalidates strict type proof", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--ml-compiler", required=True, type=Path)
@@ -25,13 +50,16 @@ def main():
     fixtures = ["optimizer_safety", "codegen_optimizations", "language_performance_features",
                 "defer_features", "language_lambda", "language_default_lambda", "language_variadic",
                 "variadic_escape_lifetime", "language_optional", "language_match", "operator_overloading",
-                "thread_features", "threading_stdlib", "thread_pool", "ordered_comparison"]
+                "thread_features", "threading_stdlib", "thread_pool", "ordered_comparison",
+                "language_typed_fields", "language_typed_arrays", "language_packed_array"]
     if args.target == "windows-x64":
         fixtures += ["language_suite", "gc_concurrent_dead_function"]
     rows = []
     (repo / "build").mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="incremental-regressions-", dir=repo / "build") as tmp:
         root = Path(tmp)
+        for backend, command, flags in backends:
+            check_changed_return(root, backend, command, flags, repo, args.target)
         for fixture in fixtures:
             source = pyrepo / "tests" / (fixture + ".ml")
             options = ["--gc-concurrent"] if fixture == "gc_concurrent_dead_function" else []

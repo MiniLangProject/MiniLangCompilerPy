@@ -183,7 +183,7 @@ class FunctionCache:
             # This body-derived fact affects allocation in callers even when
             # the callee is not inline. Force the proof before making a key.
             safe = cg._variadic_param_stack_safe(fn)
-            contracts.append((name, safe, _view(fn, interface=True)))
+            contracts.append((name, safe, cg._proved_direct_leaf_type(fn), _view(fn, interface=True)))
         self.context = _digest((self.compiler_id, self.options, self.interface,
             contracts, _view(getattr(cg, "inline_functions", {})),
             [(name, self.files[getattr(fn, "_filename", cg.filename)])
@@ -192,6 +192,7 @@ class FunctionCache:
             getattr(cg, "mutable_user_functions", set()),
             getattr(cg, "_max_inline_call_args_global", 0),
             cg._global_binding_contracts,
+            cg.ml.has_typed_arrays(),
             _view(cg._scope_stack[0])))
         initial = []
         for owner, field in self._section_dicts:

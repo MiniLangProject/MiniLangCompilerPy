@@ -691,8 +691,7 @@ end function
 ### Modern language extensions
 
 MiniLang remains dynamically typed, but declarations may add runtime-checked
-contracts. A failed parameter, return, annotated initializer or typed
-struct-constructor field
+contracts. A failed parameter, return, annotated initializer or typed field
 contract produces error `1308` and propagates like every other MiniLang error;
 wrap an operation in `try(...)` when the error is expected.
 
@@ -740,11 +739,57 @@ value caught with `try(...)` to `var name as error` or `error?` stores it.
 Use `var` on the first write to a new variable. The existing syntax
 `name as Type = expression` checks that assignment, and function parameter
 and return annotations check the function boundary. Those forms keep their
-previous semantics. Field annotations still apply to constructor values.
+previous semantics.
 
 Both compilers remove redundant checks for proven primitive copies and
 supported integer expressions. Other writes are checked before storing their
 value. Fixed bindings use the normal MiniLang Value representation.
+
+### Typed fields
+
+An annotation such as `count as int` on a struct or class field applies
+both in the constructor and on later writes. The actual receiver determines
+the contract when a write or constructor call goes through an alias.
+A failed dynamic write leaves the field unchanged and raises error `1308`.
+A statically known field assignment with an incompatible primitive literal
+is a compile error. Optional fields accept `void`.
+
+### Typed arrays
+
+`array<T>(source)` creates a new array and validates every copied element.
+The supported element types are `int`, `float`, `bool`, `string` and
+`bytes`. An element type such as `string?` also accepts `void`.
+
+```ml
+var scores as array<int> = array<int>([8, 13])
+scores[0] = 21
+print scores is array<int>
+```
+
+`array<T>` in a variable, field or function signature checks that the
+supplied array has the exact element contract. Use the explicit constructor
+to convert an ordinary array. The contract belongs to the object, so an
+ordinary alias also checks indexed writes. `typeof` reports `"array"`.
+Concatenation produces an ordinary array. `copyArray` into a typed destination
+requires the same contract on the source, and an incompatible source leaves
+the destination unchanged.
+
+Use `std.ds.packed_array.Int32Array(size)` after
+`import std.ds.packed_array` for compact signed 32-bit storage. Its
+`get(index)`, `set(index, value)` and `len()` methods expose the fixed-size
+sequence. It stores four bytes per cell in a private buffer. The methods
+check bounds and the signed 32-bit value range before accessing the buffer.
+Both compilers can inline the checked load or store for a statically known
+receiver. Dynamic calls use the same checked operation in the method body.
+
+### Checking types at compile time
+
+Pass `--strict-types` to report provable mismatches in arguments of known
+direct calls, typed returns and indexed writes to a known typed array. The
+compiler recognizes literals, fixed local bindings, typed array constructors
+and small direct functions whose successful result is a known literal. Named
+and default arguments are checked after resolving their parameter positions.
+Calls or values with an unknown type continue to use the runtime contracts.
 
 The optional marker follows the type (`Person?`). `void` is accepted only by
 an optional contract. Default and named arguments are available for directly

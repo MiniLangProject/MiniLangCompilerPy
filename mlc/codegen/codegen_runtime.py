@@ -2370,7 +2370,7 @@ class CodegenRuntime:
 
         a.mark(l_ptr)
         # edx = [rax] (object type)
-        a.mov_r32_membase_disp("edx", "rax", 0)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
 
         a.cmp_r32_imm("edx", OBJ_STRING)
         a.jcc('e', l_str)
@@ -2537,7 +2537,7 @@ class CodegenRuntime:
 
         a.mark(l_ptr)
         # edx = [rax] (object type)
-        a.mov_r32_membase_disp("edx", "rax", 0)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
 
         a.cmp_r32_imm("edx", OBJ_STRING)
         a.jcc('e', l_str)
@@ -2966,8 +2966,8 @@ class CodegenRuntime:
         # ---- pointer path ----
         a.mark(l_ptr)
         # type1 in eax, type2 in edx
-        a.mov_r32_membase_disp("eax", "r10", 0)  # mov eax,[r10]
-        a.mov_r32_membase_disp("edx", "r11", 0)  # mov edx,[r11]
+        a.movzx_r32_membase_disp("eax", "r10", 0)  # mov eax,[r10]
+        a.movzx_r32_membase_disp("edx", "r11", 0)  # mov edx,[r11]
 
         # if type == OBJ_STRING
         a.cmp_r32_imm("eax", OBJ_STRING)  # cmp eax,imm8
@@ -3444,7 +3444,7 @@ class CodegenRuntime:
         a.jcc('ne', l_ret0)
 
         # edx = [rax] (object type)
-        a.mov_r32_membase_disp('edx', 'rax', 0)
+        a.movzx_r32_membase_disp('edx', 'rax', 0)
         a.cmp_r32_imm('edx', OBJ_STRING)
         a.jcc('e', l_ok)
         a.cmp_r32_imm('edx', OBJ_ARRAY)
@@ -3641,6 +3641,68 @@ class CodegenRuntime:
         a.mov_rax_imm64(enc_void())
         a.ret()
 
+    def emit_typed_array_element_function(self) -> None:
+        """Check R10 against the contract byte in EDX, preserving store inputs."""
+        a = self.asm
+        a.mark('fn_typed_array_element')
+        lid = self.new_label_id()
+        hit, miss = f"tarray_element_ok_{lid}", f"tarray_element_bad_{lid}"
+        other, flt, boolean, pointer, byte = (
+            f"tarray_element_{name}_{lid}" for name in ('other', 'float', 'bool', 'ptr', 'bytes'))
+        a.mov_r32_r32('r8d', 'edx')
+        a.shr_r32_imm8('r8d', 8)
+        a.cmp_r32_imm('r8d', 128)
+        a.jcc('b', other)
+        a.cmp_r64_imm('r10', enc_void())
+        a.jcc('e', hit)
+        a.and_r32_imm('r8d', 127)
+        a.mark(other)
+        a.mov_r32_r32('r9d', 'r10d')
+        a.and_r32_imm('r9d', 7)
+        a.cmp_r32_imm('r8d', 1)
+        a.jcc('ne', flt)
+        a.cmp_r32_imm('r9d', TAG_INT)
+        a.jcc('e', hit)
+        a.jmp(miss)
+        a.mark(flt)
+        a.cmp_r32_imm('r8d', 2)
+        a.jcc('ne', boolean)
+        a.cmp_r32_imm('r9d', TAG_FLOAT)
+        a.jcc('e', hit)
+        a.jmp(pointer)
+        a.mark(boolean)
+        a.cmp_r32_imm('r8d', 3)
+        a.jcc('ne', pointer)
+        a.cmp_r32_imm('r9d', TAG_BOOL)
+        a.jcc('e', hit)
+        a.jmp(miss)
+        a.mark(pointer)
+        a.cmp_r32_imm('r9d', TAG_PTR)
+        a.jcc('ne', miss)
+        a.test_r64_r64('r10', 'r10')
+        a.jcc('e', miss)
+        a.movzx_r32_membase_disp('eax', 'r10', 0)
+        a.cmp_r32_imm('r8d', 2)
+        a.jcc('ne', byte)
+        a.cmp_r32_imm('eax', OBJ_FLOAT)
+        a.jcc('e', hit)
+        a.jmp(miss)
+        a.mark(byte)
+        a.cmp_r32_imm('r8d', 4)
+        a.jcc('ne', f"tarray_element_bytes_only_{lid}")
+        a.cmp_r32_imm('eax', OBJ_STRING)
+        a.jcc('e', hit)
+        a.jmp(miss)
+        a.mark(f"tarray_element_bytes_only_{lid}")
+        a.cmp_r32_imm('eax', OBJ_BYTES)
+        a.jcc('e', hit)
+        a.mark(miss)
+        a.xor_r32_r32('eax', 'eax')
+        a.ret()
+        a.mark(hit)
+        a.mov_r32_imm32('eax', 1)
+        a.ret()
+
     def emit_builtin_copyArray_function(self) -> None:
         """Emit copyArray(dst, dstOff, src, srcOff, len).
 
@@ -3671,11 +3733,16 @@ class CodegenRuntime:
         a.and_r64_imm('r9', 7)
         a.cmp_r64_imm('r9', TAG_PTR)
         a.jcc('ne', l_ret_void)
-        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.movzx_r32_membase_disp('eax', 'r11', 0)
         a.cmp_r32_imm('eax', OBJ_ARRAY)
         a.jcc('e', l_dst_type_ok)
         a.cmp_r32_imm('eax', OBJ_ARRAY_IMM)
         a.jcc('ne', l_ret_void)
+        # A typed immediate destination must keep its contract and its scan
+        # policy. The source contract is checked before copying any cells.
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', OBJ_ARRAY_IMM)
+        a.jcc('ne', l_dst_type_ok)
         a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
         a.mark(l_dst_type_ok)
 
@@ -3698,12 +3765,20 @@ class CodegenRuntime:
         a.and_r64_imm('rcx', 7)
         a.cmp_r64_imm('rcx', TAG_PTR)
         a.jcc('ne', l_ret_void)
-        a.mov_r32_membase_disp('eax', 'r10', 0)
+        a.movzx_r32_membase_disp('eax', 'r10', 0)
         a.cmp_r32_imm('eax', OBJ_ARRAY)
         a.jcc('e', l_src_type_ok)
         a.cmp_r32_imm('eax', OBJ_ARRAY_IMM)
         a.jcc('ne', l_ret_void)
         a.mark(l_src_type_ok)
+        l_compatible = f"acopy_contract_ok_{lid}"
+        a.mov_r32_membase_disp('eax', 'r11', 0)
+        a.cmp_r32_imm('eax', 255)
+        a.jcc('be', l_compatible)
+        a.mov_r32_membase_disp('ecx', 'r10', 0)
+        a.cmp_r32_r32('eax', 'ecx')
+        a.jcc('ne', l_ret_void)
+        a.mark(l_compatible)
 
         # srcOff -> r8d
         a.mov_r64_r64('rax', 'r8')

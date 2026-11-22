@@ -15,7 +15,7 @@ from ..constants import (TAG_PTR, TAG_INT, TAG_VOID, TAG_ENUM, TAG_FLOAT, OBJ_ST
                          OBJ_FLOAT, OBJ_STRUCT, OBJ_STRUCTTYPE, OBJ_BUILTIN, OBJ_ENV, OBJ_BOX, OBJ_CLOSURE,
                           OBJ_ENV_LOCAL, ERROR_STRUCT_ID,
                           ERR_VOID_OP, ERR_INDEX_OOB, ERR_INDEX_TYPE, ERR_INDEX_TARGET_TYPE,
-                          ERR_PRINT_UNSUPPORTED, ERR_METHOD_NOT_FOUND, )
+                          ERR_PRINT_UNSUPPORTED, ERR_METHOD_NOT_FOUND, ERR_TYPE_GUARD, )
 from ..context import BreakableCtx
 from ..tools import align_up, enc_int, enc_bool, enc_void, align_to_mod, try_enc_float_immediate, wrap_i61
 
@@ -1129,6 +1129,8 @@ class CodegenStmt:
                     return None
                 raw_type = str(getattr(expr, 'type_name', '') or '')
                 aliases = {'integer': 'int', 'boolean': 'bool', 'str': 'string'}
+                if ml.typed_array_code(raw_type):
+                    return 'array'
                 canonical = aliases.get(raw_type.lower(), raw_type.lower()) if '.' not in raw_type else raw_type
                 if canonical in ('int', 'float', 'bool', 'string', 'array', 'bytes', 'function', 'thread', 'error'):
                     return canonical if primitive_guards_known else None
@@ -2088,6 +2090,18 @@ class CodegenStmt:
         return (isinstance(expr, self.ml.Num) and type(expr.value) is int
                 and 0 <= expr.value <= 255)
 
+    def _emit_typed_array_store_check(self, bad: str, lid: int) -> None:
+        """Keep typed contracts on writes through all array aliases."""
+        a = self.asm
+        allowed = f"seti_element_ok_{lid}"
+        a.mov_r32_membase_disp('edx', 'r11', 0)
+        a.cmp_r32_imm('edx', 255)
+        a.jcc('be', allowed)
+        a.call('fn_typed_array_element')
+        a.test_r32_r32('eax', 'eax')
+        a.jcc('e', bad)
+        a.mark(allowed)
+
     def _opt_emit_known_setindex(self, stmt: Any, plan: dict[str, Any]) -> None:
         """Emit a fixed-layout array/bytes store using local type-flow facts."""
         a = self.asm
@@ -2100,6 +2114,8 @@ class CodegenStmt:
         l_oob = f'seti_fast_oob_{lid}'
         l_bad_target = f'seti_fast_bad_target_{lid}'
         l_bad_byte = f'seti_fast_bad_byte_{lid}'
+        l_bad_value = f'seti_bad_value_{lid}'
+        check_element, immediate_only = self._typed_store_plan(stmt) if kind == 'array' else (False, False)
         l_done = f'seti_fast_done_{lid}'
         a.mark(f'seti_fast_{kind}_{lid}')
         if bounds_proven:
@@ -2138,27 +2154,29 @@ class CodegenStmt:
         if not bounds_proven:
             a.mov_r32_membase_disp('edx', 'r11', 4)
             l_nonnegative = f'seti_fast_nonnegative_{lid}'
-            a.cmp_r32_imm('ecx', 0)
+            a.cmp_r64_imm('rcx', 0)
             a.jcc('ge', l_nonnegative)
-            a.add_r32_r32('ecx', 'edx')
+            a.add_r64_r64('rcx', 'rdx')
             a.mark(l_nonnegative)
-            a.cmp_r32_imm('ecx', 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32('ecx', 'edx')
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64('rcx', 'rdx')
+            # A remaining negative index compares above every valid length.
+            a.jcc('ae', l_oob)
 
         if kind == 'array':
-            l_store = f'seti_fast_array_store_{lid}'
-            a.mov_r32_membase_disp('edx', 'r11', 0)
-            a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
-            a.jcc('ne', l_store)
-            a.mov_r64_r64('r8', 'r10')
-            a.and_r64_imm('r8', 7)
-            a.cmp_r64_imm('r8', TAG_PTR)
-            a.jcc('ne', l_store)
-            a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
-            a.mark(l_store)
-            self.emit_gc_write_barrier_index('r11', 'rcx', 8)
+            if check_element:
+                self._emit_typed_array_store_check(l_bad_value, lid)
+            if not immediate_only:
+                l_store = f'seti_fast_array_store_{lid}'
+                a.movzx_r32_membase_disp('edx', 'r11', 0)
+                a.cmp_r32_imm('edx', OBJ_ARRAY_IMM)
+                a.jcc('ne', l_store)
+                a.mov_r64_r64('r8', 'r10')
+                a.and_r64_imm('r8', 7)
+                a.cmp_r64_imm('r8', TAG_PTR)
+                a.jcc('ne', l_store)
+                a.mov_membase_disp_imm32('r11', 0, OBJ_ARRAY, qword=False)
+                a.mark(l_store)
+                self.emit_gc_write_barrier_index('r11', 'rcx', 8)
             a.mov_mem_bis_r64('r11', 'rcx', 8, 8, 'r10')
             a.jmp(l_done)
         else:
@@ -2202,6 +2220,11 @@ class CodegenStmt:
             self._emit_make_error_const(ERR_VOID_OP, 'Byte value must be an int in range 0..255')
             self._emit_auto_errprop()
 
+        if check_element:
+            a.mark(l_bad_value)
+            self.emit_dbg_line(stmt)
+            self._emit_make_error_const(ERR_TYPE_GUARD, "Value violates the array element type")
+            self._emit_auto_errprop()
         a.mark(l_done)
 
     def _inline_collect_expr_stats(self, expr: Any, stats: Dict[str, Any]) -> int:
@@ -3593,7 +3616,7 @@ class CodegenStmt:
                         # field contracts, their order, or their source position.
                         if index < len(contracts) and contracts[index][0]:
                             field_ty, optional = contracts[index][:2]
-                            guarded = ml.TypeGuard(arg, str(field_ty), bool(optional))
+                            guarded = ml.TypeGuard(arg, str(field_ty), bool(optional), 2)
                             for key in ('_pos', '_filename'):
                                 if hasattr(arg, key):
                                     setattr(guarded, key, getattr(arg, key))
@@ -3715,7 +3738,7 @@ class CodegenStmt:
             # ---- ptr print (boxed string / array) ----
             a.mark(lbl_ptr)
             # edx = [rax] (obj type)
-            a.mov_r32_membase_disp("edx", "rax", 0)
+            a.movzx_r32_membase_disp("edx", "rax", 0)
             lbl_ptr_str = f"print_ptr_str_{a.pos}"
             lbl_ptr_arr = f"print_ptr_arr_{a.pos}"
             lbl_ptr_flt = f"print_ptr_flt_{a.pos}"
@@ -3896,7 +3919,7 @@ class CodegenStmt:
 
             a.mark(el_ptr)
             # edx = [rax] type
-            a.mov_r32_membase_disp("edx", "rax", 0)
+            a.movzx_r32_membase_disp("edx", "rax", 0)
             # string?
             a.cmp_r32_imm("edx", OBJ_STRING)
             l_el_str = f"arr_el_str_{elem_id}"
@@ -4665,9 +4688,10 @@ class CodegenStmt:
             return
 
         if hasattr(ml, 'SetMember') and isinstance(s, ml.SetMember):
-            scalar_offset = codegen_opt.scalar_slot(self, s.obj, s.field)
-            if scalar_offset is not None:
-                self.emit_expr(s.expr)
+            slot = codegen_opt.scalar_slot(self, s.obj, s.field, with_contract=True)
+            if slot is not None:
+                scalar_offset, contract = slot
+                self.emit_expr(self._checked_field_value(s.expr, contract, s))
                 a.mov_rsp_disp32_rax(scalar_offset)
                 return
             # obj.field = expr
@@ -4702,12 +4726,14 @@ class CodegenStmt:
                     self.emit_expr(obj_expr)
                     target_fast_off = self.alloc_expr_temps(8)
                     a.mov_rsp_disp32_rax(target_fast_off)
-                    self.emit_expr(getattr(s, 'expr', None))
+                    index = fields_fast.index(field)
+                    contract = self.struct_field_types.get(struct_qname, [(None, False)] * len(fields_fast))[index]
+                    self.emit_expr(self._checked_field_value(s.expr, contract, s))
                     a.mov_r64_r64('r13', 'rax')
                     a.mov_r64_membase_disp('r12', 'rsp', target_fast_off)
                     self.free_expr_temps(8)
-                    self.emit_gc_write_barrier('r12', 8 + fields_fast.index(field) * 8)
-                    a.mov_membase_disp_r64('r12', 8 + fields_fast.index(field) * 8, 'r13')
+                    self.emit_gc_write_barrier('r12', 8 + index * 8)
+                    a.mov_membase_disp_r64('r12', 8 + index * 8, 'r13')
                     return
 
             # Struct field write fallback (runtime checked).
@@ -4721,14 +4747,19 @@ class CodegenStmt:
             target_off = self.alloc_expr_temps(8)
             a.mov_rsp_disp32_rax(target_off)
 
-            # Evaluate value, keep in non-volatile reg r13
+            contracts = self._field_write_contracts.get(field, [])
+            # Evaluate value once. Typed arms reload it from a rooted slot.
             self.emit_expr(getattr(s, 'expr', None))
             a.mov_r64_r64("r13", "rax")
+            if contracts:
+                value_off = self.alloc_expr_temps(8)
+                a.mov_rsp_disp32_rax(value_off)
 
             # No allocating operation follows: restore the target and shrink
             # the published temporary-root range before the checked store.
             a.mov_r64_membase_disp("r12", "rsp", target_off)
-            self.free_expr_temps(8)
+            if not contracts:
+                self.free_expr_temps(8)
 
             fid = self.new_label_id()
             l_fail = f"setm_fail_{fid}"
@@ -4758,6 +4789,21 @@ class CodegenStmt:
             self.emit_struct_field_index_dispatch(field, 'edx', 'ecx', l_ok, l_fail, tag=f"setm_{fid}")
 
             a.mark(l_ok)
+            if contracts:
+                store = f"setm_store_{fid}"
+                for sid, _, _ in contracts:
+                    a.cmp_r32_imm('edx', sid)
+                    a.jcc('e', f"setm_check_{fid}_{sid}")
+                a.jmp(store)
+                for sid, index, contract in contracts:
+                    a.mark(f"setm_check_{fid}_{sid}")
+                    self.emit_expr(self._checked_field_value(
+                        ml.DeferredCapture(value_off), contract, s))
+                    a.mov_r64_r64('r13', 'rax')
+                    a.mov_r64_membase_disp('r12', 'rsp', target_off)
+                    a.mov_r32_imm32('ecx', index)
+                    a.jmp(store)
+                a.mark(store)
             # store value: [obj + 8 + rcx*8] = r13
             self.emit_gc_write_barrier_index('r12', 'rcx', 8)
             a.mov_mem_bis_r64('r12', 'rcx', 8, 8, 'r13')
@@ -4766,6 +4812,8 @@ class CodegenStmt:
             a.mark(l_fail)
             # no-op on failure
             a.mark(l_done)
+            if contracts:
+                self.free_expr_temps(16)
             return
 
         if isinstance(s, ml.SetIndex):
@@ -4783,6 +4831,8 @@ class CodegenStmt:
             l_bad_index = f"seti_bad_index_{lid}"
             l_oob = f"seti_oob_{lid}"
             l_bad_byte = f"seti_bad_byte_{lid}"
+            l_bad_value = f"seti_bad_value_{lid}"
+            check_element, immediate_only = self._typed_store_plan(s)
             l_done = f"seti_done_{lid}"
 
             # --- eval target (spill so index/expr can't clobber) ---
@@ -4815,7 +4865,7 @@ class CodegenStmt:
             a.jcc('e', l_bad_target)
 
             # target type must be OBJ_ARRAY / OBJ_ARRAY_IMM or OBJ_BYTES
-            a.mov_r32_membase_disp("edx", "r11", 0)
+            a.movzx_r32_membase_disp("edx", "r11", 0)
             l_type_ok = f"seti_type_ok_{lid}"
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             a.jcc('e', l_type_ok)
@@ -4841,14 +4891,13 @@ class CodegenStmt:
             #   then require 0 <= idx < len
             a.mov_r32_membase_disp("edx", "r11", 4)  # len
             l_ok = f"seti_ok_{lid}"
-            a.cmp_r32_imm("ecx", 0)
+            a.cmp_r64_imm("rcx", 0)
             a.jcc('ge', l_ok)
-            a.add_r32_r32("ecx", "edx")
+            a.add_r64_r64("rcx", "rdx")
             a.mark(l_ok)
-            a.cmp_r32_imm("ecx", 0)
-            a.jcc('l', l_oob)
-            a.cmp_r32_r32("ecx", "edx")
-            a.jcc('ge', l_oob)
+            a.cmp_r64_r64("rcx", "rdx")
+            # The unsigned comparison also rejects an index below -len.
+            a.jcc('ae', l_oob)
 
             # store:
             # - array:  [r11 + rcx*8 + 8] = r10
@@ -4856,21 +4905,25 @@ class CodegenStmt:
             l_store_bytes = f"seti_store_bytes_{lid}"
             # IMPORTANT: EDX currently holds the *length* (loaded from [r11+4]).
             # Reload the object type before deciding the store mode.
-            a.mov_r32_membase_disp("edx", "r11", 0)
+            a.movzx_r32_membase_disp("edx", "r11", 0)
             a.cmp_r32_imm("edx", OBJ_BYTES)
             a.jcc('e', l_store_bytes)
 
             # array store
             l_store_array = f"seti_store_array_{lid}"
-            a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
-            a.jcc('ne', l_store_array)
-            a.mov_r64_r64("r8", "r10")
-            a.and_r64_imm("r8", 7)
-            a.cmp_r64_imm("r8", TAG_PTR)
-            a.jcc('ne', l_store_array)
-            a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
-            a.mark(l_store_array)
-            self.emit_gc_write_barrier_index('r11', 'rcx', 8)
+            if check_element:
+                self._emit_typed_array_store_check(l_bad_value, lid)
+                a.movzx_r32_membase_disp("edx", "r11", 0)
+            if not immediate_only:
+                a.cmp_r32_imm("edx", OBJ_ARRAY_IMM)
+                a.jcc('ne', l_store_array)
+                a.mov_r64_r64("r8", "r10")
+                a.and_r64_imm("r8", 7)
+                a.cmp_r64_imm("r8", TAG_PTR)
+                a.jcc('ne', l_store_array)
+                a.mov_membase_disp_imm32("r11", 0, OBJ_ARRAY, qword=False)
+                a.mark(l_store_array)
+                self.emit_gc_write_barrier_index('r11', 'rcx', 8)
             a.mov_mem_bis_r64("r11", "rcx", 8, 8, "r10")
             a.jmp(l_done)
 
@@ -4945,6 +4998,12 @@ class CodegenStmt:
             self._emit_make_error_const(ERR_VOID_OP, "Byte value must be an int in range 0..255")
             self._emit_auto_errprop()
 
+            if check_element:
+                a.jmp(l_done)
+                a.mark(l_bad_value)
+                self.emit_dbg_line(s)
+                self._emit_make_error_const(ERR_TYPE_GUARD, "Value violates the array element type")
+                self._emit_auto_errprop()
             a.mark(l_done)
             return
 
@@ -5057,7 +5116,7 @@ class CodegenStmt:
             a.mov_r64_r64("r14", "rax")  # mov r14,rax
 
             # edx = [r14] (obj type)
-            a.mov_r32_membase_disp("edx", "r14", 0)  # mov edx,[r14]
+            a.movzx_r32_membase_disp("edx", "r14", 0)  # mov edx,[r14]
             # if array
             a.cmp_r32_imm("edx", OBJ_ARRAY)
             a.jcc('e', l_arr)
@@ -5385,6 +5444,54 @@ class CodegenStmt:
             return False
 
         return walk(program)
+
+    def _checked_field_value(self, value: Any, contract: tuple, stmt: Any) -> Any:
+        """Check a typed field before modifying either its object or scalar slot."""
+        typ, optional = contract
+        if not typ:
+            return value
+        guard = self.ml._copy_source_pos(self.ml.TypeGuard(value, typ, optional, 2), stmt)
+        self._validate_binding_literal(guard)
+        return guard
+
+    def _prepare_field_contracts(self) -> None:
+        """Index checked stores by member name and indirect construction by arity."""
+        self._field_write_contracts = {}
+        self._indirect_struct_contracts = {}
+        for name, fields in self.struct_fields.items():
+            contracts = self.struct_field_types.get(name, [])
+            entries = []
+            for index, (raw, optional) in enumerate(contracts):
+                if not raw:
+                    continue
+                owner = next((base for base in reversed(self.class_ancestors.get(name, []))
+                              if index < len(self.struct_fields[base])), name)
+                typ = self._qualify_field_contract(owner, raw)
+                contracts[index] = (typ, optional)
+                sid = self.struct_id[name]
+                self._field_write_contracts.setdefault(fields[index], []).append(
+                    (sid, index, contracts[index]))
+                entries.append((index, typ, optional))
+            if entries and name not in self.class_constructor_arities:
+                self._indirect_struct_contracts.setdefault(len(fields), []).append(
+                    (self.struct_id[name], entries))
+
+    def _qualify_field_contract(self, owner: str, raw: str) -> str:
+        """Resolve named field types in the namespace that declared the field."""
+        if self.ml._binding_type_key(raw) in (
+                'int', 'float', 'bool', 'string', 'array', 'bytes', 'function',
+                'struct', 'enum', 'error', 'thread', 'void', 'unknown'):
+            return raw
+        name = self._apply_import_alias(raw)
+        if '.' in name:
+            return name
+        prefix = owner.rpartition('.')[0]
+        while prefix:
+            candidate = prefix + '.' + name
+            if candidate in self.struct_id or candidate in self.enum_id or candidate in self.interface_names:
+                return candidate
+            prefix = prefix.rpartition('.')[0]
+        return name
 
     def _qualified_global_write_name(self, stmt: Any, obj: Any, field: str) -> str:
         """Identify namespace storage without redirecting real object members."""
@@ -6174,6 +6281,7 @@ class CodegenStmt:
                 self.rdata.add_abs64_patch(int(off) + 8, f"fn_user_{nm}")
             self.function_static_obj_labels[nm] = obj_lbl
 
+        self._prepare_field_contracts()
         self.struct_static_obj_labels: Dict[str, str] = {}
         for nm, fields in self.struct_fields.items():
             obj_lbl = f"obj_structtype_static_{len(self.rdata.labels)}"
@@ -7144,7 +7252,7 @@ class CodegenStmt:
             "decode16Z", "hex", "fromHex", "slice", "bytesHash", "stringHash", "bytesStartsWith", "bytesEndsWith", "bytesIndexOf", "bytesLastIndexOf", "bytesCompare", "str", "stringSlice", "stringIndexOf", "stringLastIndexOf", "stringStartsWith", "stringEndsWith",
             "stringRepeat", "stringTrimLeftAscii", "stringTrimRightAscii", "stringTrimAscii", "stringIsBlankAscii",
             "stringReverse", "stringToLowerAscii", "stringToUpperAscii", "stringEqualsIgnoreCaseAscii", "stringJoin",
-            "copyStringBytes",
+            "copyStringBytes", "__ml_packed_i32_get", "__ml_packed_i32_set",
             "nativeCrc32c", "nativeCrc32", "bytesConstantTimeEquals",
             "runtimeCpuFeatures", "runtimeCpuActiveFeatures", "runtimeCpuSetMask",
             "nativeBytesPtr", "nativeRawValue", "nativeValueFromRaw", "nativeCallback",

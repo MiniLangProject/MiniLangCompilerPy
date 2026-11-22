@@ -1887,7 +1887,7 @@ class CodegenMemory:
         a.jcc("b", L_MARK_VALUE_RET)
         a.mov_mem_bis_r64("rsi", "r9", 8, 0, "r10")
         # Only pointer-bearing objects need worklist entries; leaves remain marked.
-        a.mov_r32_membase_disp("ecx", "r11", 0)
+        a.movzx_r32_membase_disp("ecx", "r11", 0)
         a.cmp_r32_imm("ecx", OBJ_ARRAY)
         a.jcc("e", L_MARK_VALUE + "_push")
         a.cmp_r32_imm("ecx", OBJ_STRUCT)
@@ -2099,7 +2099,7 @@ class CodegenMemory:
         a.mov_r64_mem_bis("r11", "r12", "r10", 8, 0)
         a.mov_r64_r64("rax", "r11")
 
-        a.mov_r32_membase_disp("ecx", "rax", 0)
+        a.movzx_r32_membase_disp("ecx", "rax", 0)
         a.cmp_r32_imm("ecx", OBJ_ARRAY)
         a.jcc("e", L_SCAN_ARRAY)
         a.cmp_r32_imm("ecx", OBJ_STRUCT)

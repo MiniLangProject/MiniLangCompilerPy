@@ -1278,7 +1278,7 @@ class CodegenCore:
         # --- ptr case (boxed string / array) ---
         a.mark(l_ptr)
         # edx = [rax] (obj type)
-        a.mov_r32_membase_disp("edx", "rax", 0)
+        a.movzx_r32_membase_disp("edx", "rax", 0)
         l_checklen = f"truthy_checklen_{lid}"
         l_float = f"truthy_float_{lid}"
 
@@ -1529,6 +1529,7 @@ class CodegenCore:
             'fn_builtin_input': getattr(self, 'emit_builtin_input_function', None),
             'fn_builtin_copyBytes': getattr(self, 'emit_builtin_copyBytes_function', None),
             'fn_builtin_copyArray': getattr(self, 'emit_builtin_copyArray_function', None),
+            'fn_typed_array_element': getattr(self, 'emit_typed_array_element_function', None),
             'fn_builtin_copyStringBytes': getattr(self, 'emit_builtin_copyStringBytes_function', None),
             'fn_builtin_fillBytes': getattr(self, 'emit_builtin_fillBytes_function', None),
             'fn_builtin_gc_collect': getattr(self, 'emit_builtin_gc_collect_function', None),
@@ -1554,7 +1555,7 @@ class CodegenCore:
             'fn_string_to_upper_ascii', 'fn_string_eq_ignore_case_ascii', 'fn_string_join', 'fn_bytes_eq', 'fn_add_string', 'fn_add_array',
             'fn_add_bytes', 'fn_value_to_string', 'fn_box_float', 'fn_toNumber', 'fn_toFloat', 'fn_typeof', 'fn_typeName',
             'fn_int_to_dec', 'fn_strlen', 'fn_decode', 'fn_decode_slice', 'fn_decodeZ', 'fn_decode16Z', 'fn_hex', 'fn_fromHex',
-            'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_copyArray', 'fn_builtin_copyStringBytes', 'fn_builtin_fillBytes',
+            'fn_slice', 'fn_builtin_len', 'fn_builtin_input', 'fn_builtin_copyBytes', 'fn_builtin_copyArray', 'fn_typed_array_element', 'fn_builtin_copyStringBytes', 'fn_builtin_fillBytes',
             'fn_builtin_gc_collect', 'fn_builtin_gc_set_limit', 'fn_build_args', 'fn_init_argvw', 'fn_incref',
             'fn_decref', 'fn_callStats', 'fn_heap_count', 'fn_heap_bytes_used', 'fn_heap_bytes_committed',
             'fn_heap_bytes_reserved', 'fn_heap_free_bytes', 'fn_heap_free_blocks', 'fn_unhandled_error_exit', 'fn_make_error_const', 'fn_gc_stat', ]
