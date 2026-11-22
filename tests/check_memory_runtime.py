@@ -2,6 +2,7 @@
 import argparse
 from pathlib import Path
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -11,6 +12,26 @@ def run(args):
     if result.returncode:
         raise AssertionError(f"{args}: exit {result.returncode}\n{result.stdout}\n{result.stderr}")
     return result.stdout
+
+def check_long_churn(output, target):
+    """Detect progressive retention after repeated mixed-size allocations."""
+    rows = []
+    for line in output.splitlines():
+        if line.startswith("cycle="):
+            rows.append({name: int(value) for name, value in
+                         re.findall(r"(\w+)=(\d+)", line)})
+    assert [row["cycle"] for row in rows] == list(range(25)), rows
+    baseline = rows[0]["live"]
+    for row in rows[1:]:
+        assert row["live"] <= baseline + 1024 * 1024, row
+        assert row["reclaimed"] >= 20 * 1024 * 1024, row
+        assert row["committed"] <= 2 * 1024 * 1024, row
+        assert row["frontier"] <= 2 * 1024 * 1024, row
+    if target == "windows-x64":
+        private = [row["private"] for row in rows[4:]]
+        assert max(private) - min(private) <= 2 * 1024 * 1024, private
+    assert "MEMORY LONG CHURN [OK]" in output, output
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -35,6 +56,7 @@ def main():
         ("gc_thread_lifetime.ml", [], [], "GC THREAD LIFETIME [OK]"),
         ("gc_handoff_lifetime.ml", [], [], "GC HANDOFF LIFETIME [OK]"),
         ("memory_gc_metadata.ml", ["--heap-shrink", "--heap-shrink-min", "1m"], [], "GC METADATA [OK]"),
+        ("memory_long_churn.ml", ["--heap-reserve", "256m", "--heap-commit", "16m", "--heap-shrink", "--heap-shrink-min", "1m", "--no-gc-periodic"], [], "MEMORY LONG CHURN [OK]"),
         ("memory_fragmentation_cursor.ml", [], [], "MEMORY CURSOR [OK]"),
         ("gc_bitmap_words.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"], [], "GC BITMAP WORDS [OK]"),
         ("ffi_cstr_return.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"], [], "FFI CSTR RETURN [OK]"),
@@ -69,6 +91,8 @@ def main():
                         negative = subprocess.run(negative_command, capture_output=True, text=True, timeout=120)
                         assert negative.returncode == 1 and "heap exhausted" in negative.stderr, negative
                     assert marker in output, output
+                    if fixture == "memory_long_churn.ml":
+                        check_long_churn(output, target)
                 assert images[0] == images[1], f"Pipeline mismatch: {target} {fixture}"
                 print(f"[OK] {target}: {fixture} {flags}, normal/object parity")
     print("MEMORY MATRIX [OK]")

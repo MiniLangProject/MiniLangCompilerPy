@@ -59,6 +59,7 @@ def main():
         ("gc_thread_lifetime.ml", []),
         ("gc_handoff_lifetime.ml", []),
         ("memory_gc_metadata.ml", ["--heap-shrink", "--heap-shrink-min", "1m"]),
+        ("memory_long_churn.ml", ["--heap-reserve", "256m", "--heap-commit", "16m", "--heap-shrink", "--heap-shrink-min", "1m", "--no-gc-periodic"]),
         ("memory_fragmentation_cursor.ml", []),
         ("gc_bitmap_words.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"]),
         ("ffi_cstr_return.ml", ["--heap-shrink", "--heap-shrink-min", "64k", "--gc-limit", "1m"]),

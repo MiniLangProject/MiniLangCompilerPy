@@ -136,7 +136,7 @@ see the [parity guide](COMPILER_PARITY.md) and
 | Language syntax, standard library and FFI | [Language reference](docs/LANGUAGE_REFERENCE.md) |
 | Incremental builds | [Guide](docs/INCREMENTAL_BUILDS.md) |
 | Compiler optimization measurements | [Allocation and emission](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-04.md), [bounded concat, typed scalar replacement, and metadata](docs/reports/COMPILER_OPTIMIZATIONS_2026-11-06.md) |
-| Generated-program runtime and memory | [Measured codegen and GC experiments](docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md) |
+| Generated-program runtime and memory | [Measured codegen and GC experiments](docs/reports/GENERATED_RUNTIME_OPTIMIZATIONS_2026-11-20.md) · [Allocation and GC audit](docs/reports/MEMORY_AUDIT_2026-11-22.md) |
 | Dynamic index code generation | [Bounds-check optimization and A/B measurements](docs/reports/INDEX_BOUNDS_CODEGEN_2026-11-22.md) |
 | Typed numeric helper calls | [Inlining A/B evaluation](docs/reports/TYPED_NUMERIC_CALL_OPTIMIZATION_2026-11-20.md) |
 | Fixed variable types | [Type contracts and measured check elision](docs/reports/TYPED_BINDINGS_2026-11-21.md) |
