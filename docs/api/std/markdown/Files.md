@@ -32,6 +32,7 @@
 | [std/ds/concurrent_list.ml](File-std-ds-concurrent-list-ml-291130726.md) | `std.ds.concurrent_list` | no | 32 |
 | [std/ds/hashmap.ml](File-std-ds-hashmap-ml-1269372918.md) | `std.ds.hashmap` | no | 31 |
 | [std/ds/list.ml](File-std-ds-list-ml-2070188142.md) | `std.ds.list` | no | 26 |
+| [std/ds/packed_array.ml](File-std-ds-packed-array-ml-1828875008.md) | `(global)` | no | 7 |
 | [std/ds/queue.ml](File-std-ds-queue-ml-1555253413.md) | `std.ds.queue` | no | 18 |
 | [std/ds/set.ml](File-std-ds-set-ml-1393232564.md) | `std.ds.set` | no | 11 |
 | [std/ds/stack.ml](File-std-ds-stack-ml-117945432.md) | `std.ds.stack` | no | 22 |

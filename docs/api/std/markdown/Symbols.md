@@ -518,6 +518,13 @@
 | [std.ds.list.List.size](Type-std-ds-list-list-472810057.md#field-field-std-ds-list-list-size-size-std-ds-list-ml-188290370) | `field` | `size` |
 | [std.ds.list.List.toArray](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-toarray-function-toarray-std-ds-list-ml-679354234) | `method` | `function toArray()` |
 | [std.ds.list.List.withCapacity](Type-std-ds-list-list-472810057.md#static_method-static-method-std-ds-list-list-withcapacity-static-function-withcapacity-mincap-std-ds-list-ml-1912842597) | `static_method` | `static function withCapacity(minCap)` |
+| [std.ds.packed_array](File-std-ds-packed-array-ml-1828875008.md#namespace-namespace-std-ds-packed-array-namespace-std-ds-packed-array-std-ds-packed-array-ml-1428602286) | `namespace` | `namespace std.ds.packed_array` |
+| [std.ds.packed_array.Int32Array](Type-std-ds-packed-array-int32array-504427002.md) | `class` | `class Int32Array` |
+| [std.ds.packed_array.Int32Array.data](Type-std-ds-packed-array-int32array-504427002.md#field-field-std-ds-packed-array-int32array-data-private-data-as-bytes-bytes-0-std-ds-packed-array-ml-1551396478) | `field` | `private data as bytes = bytes(0)` |
+| [std.ds.packed_array.Int32Array.get](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-get-inline-function-get-index-as-int-returns-int-std-ds-packed-array-ml-921663975) | `method` | `inline function get(index as int) returns int` |
+| [std.ds.packed_array.Int32Array.init](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-init-function-init-size-as-int-std-ds-packed-array-ml-1912951731) | `method` | `function init(size as int)` |
+| [std.ds.packed_array.Int32Array.len](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-len-function-len-returns-int-std-ds-packed-array-ml-1594219535) | `method` | `function len() returns int` |
+| [std.ds.packed_array.Int32Array.set](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-set-inline-function-set-index-as-int-value-as-int-std-ds-packed-array-ml-1023025283) | `method` | `inline function set(index as int, value as int)` |
 | [std.ds.queue.Queue](Type-std-ds-queue-queue-1012616181.md) | `struct` | `struct Queue` |
 | [std.ds.queue.Queue.buf](Type-std-ds-queue-queue-1012616181.md#field-field-std-ds-queue-queue-buf-buf-std-ds-queue-ml-448813111) | `field` | `buf` |
 | [std.ds.queue.Queue.cap](Type-std-ds-queue-queue-1012616181.md#field-field-std-ds-queue-queue-cap-cap-std-ds-queue-ml-1429216467) | `field` | `cap` |

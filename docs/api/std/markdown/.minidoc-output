@@ -28,6 +28,7 @@ File-std-ds-concurrent-hashmap-ml-1798836270.md
 File-std-ds-concurrent-list-ml-291130726.md
 File-std-ds-hashmap-ml-1269372918.md
 File-std-ds-list-ml-2070188142.md
+File-std-ds-packed-array-ml-1828875008.md
 File-std-ds-queue-ml-1555253413.md
 File-std-ds-set-ml-1393232564.md
 File-std-ds-stack-ml-117945432.md
@@ -60,6 +61,7 @@ Files.md
 Graph-Calls.md
 Graph-Imports.md
 Metrics.md
+Package-global-1952375359.md
 Package-std-array-1432837065.md
 Package-std-assert-1056679750.md
 Package-std-audio-501224270.md
@@ -141,6 +143,7 @@ Type-std-ds-concurrent-list-threadsafelist-78742376.md
 Type-std-ds-hashmap-entry-960747527.md
 Type-std-ds-hashmap-hashmap-1326830721.md
 Type-std-ds-list-list-472810057.md
+Type-std-ds-packed-array-int32array-504427002.md
 Type-std-ds-queue-queue-1012616181.md
 Type-std-ds-set-hashset-1613617709.md
 Type-std-ds-stack-stack-2051682853.md

@@ -2,6 +2,7 @@
 
 [Home](README.md)
 
+- [(global)](Package-global-1952375359.md)
 - [std._linux_fs](Package-std-linux-fs-2121796381.md)
 - [std.array](Package-std-array-1432837065.md)
 - [std.assert](Package-std-assert-1056679750.md)

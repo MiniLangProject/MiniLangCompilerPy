@@ -8,19 +8,19 @@ Static metrics are calculated from target-specific preprocessed MiniLang files i
 
 | Metric | Value |
 | --- | ---: |
-| Blank lines | 3572 |
+| Blank lines | 3578 |
 | Clone groups | 161 |
-| Cognitive complexity | 3652 (maximum per function: 116) |
-| Comment lines | 4736 |
-| Cyclomatic complexity | 4091 (average: 3.66, maximum: 34) |
-| Documentation coverage | 98.15% (2119 of 2159 documentation items) |
-| Duplicated lines | 1014 (8.59%) |
-| Files | 55 |
-| Functions | 1119 |
-| Maintainability index | 7.96 / 100 |
-| Physical lines | 20113 |
-| Source lines | 11808 |
-| Statements | 8345 |
+| Cognitive complexity | 3654 (maximum per function: 116) |
+| Comment lines | 4750 |
+| Cyclomatic complexity | 4097 (average: 3.65, maximum: 34) |
+| Documentation coverage | 98.11% (2128 of 2169 documentation items) |
+| Duplicated lines | 1014 (8.57%) |
+| Files | 56 |
+| Functions | 1123 |
+| Maintainability index | 8.03 / 100 |
+| Physical lines | 20154 |
+| Source lines | 11829 |
+| Statements | 8352 |
 
 ## Documentation coverage
 
@@ -28,19 +28,19 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 
 | Category | Documented | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| API declarations | 850 | 850 | 100% |
+| API declarations | 855 | 855 | 100% |
 | Constants | 136 | 136 | 100% |
 | Enum variants | 22 | 62 | 35.48% |
-| Fields | 218 | 218 | 100% |
+| Fields | 218 | 219 | 99.54% |
 | Globals | 1 | 1 | 100% |
-| Overall | 2119 | 2159 | 98.15% |
-| Parameters | 892 | 892 | 100% |
+| Overall | 2128 | 2169 | 98.11% |
+| Parameters | 896 | 896 | 100% |
 
 ## Halstead metrics
 
 | Distinct operators | Distinct operands | Total operators | Total operands | Vocabulary | Length | Volume | Difficulty | Effort | Estimated defects |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 57 | 3531 | 49162 | 34150 | 3588 | 83312 | 983828.42 | 275.64 | 271179724.93 | 327.94 |
+| 60 | 3539 | 49238 | 34201 | 3599 | 83439 | 985696.65 | 289.92 | 285774040.63 | 328.57 |
 
 ## Files
 
@@ -74,6 +74,7 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std/ds/concurrent_list.ml`](File-std-ds-concurrent-list-ml-291130726.md) | 229 | 25 | 82 / 3.28 / 7 | 57 / 6 | 38 (16.59%) | 9370.4 | 9.68 |
 | [`std/ds/hashmap.ml`](File-std-ds-hashmap-ml-1269372918.md) | 249 | 21 | 70 / 3.33 / 12 | 65 / 22 | 29 (11.65%) | 9347.39 | 10.51 |
 | [`std/ds/list.ml`](File-std-ds-list-ml-2070188142.md) | 216 | 22 | 61 / 2.77 / 8 | 42 / 8 | 41 (18.98%) | 6999.78 | 13.95 |
+| [`std/ds/packed_array.ml`](File-std-ds-packed-array-ml-1828875008.md) | 21 | 4 | 6 / 1.5 / 3 | 2 / 2 | 0 (0%) | 705.43 | 50.41 |
 | [`std/ds/queue.ml`](File-std-ds-queue-ml-1555253413.md) | 105 | 12 | 28 / 2.33 / 4 | 19 / 5 | 22 (20.95%) | 3720.09 | 27.14 |
 | [`std/ds/set.ml`](File-std-ds-set-ml-1393232564.md) | 32 | 9 | 9 / 1 / 1 | 0 / 0 | 0 (0%) | 786.93 | 45.68 |
 | [`std/ds/stack.ml`](File-std-ds-stack-ml-117945432.md) | 209 | 19 | 49 / 2.58 / 11 | 30 / 10 | 28 (13.4%) | 6566.39 | 16.07 |
@@ -437,6 +438,10 @@ Coverage is split by documentation contract so strong API summaries cannot hide 
 | [`std.ds.list.List.set`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-set-function-set-index-value-std-ds-list-ml-1817091431) | `std/ds/list.ml:189` | 10 | 6 | 4 | 3 | 1 | 218.72 | 61.26 |
 | [`std.ds.list.List.toArray`](Type-std-ds-list-list-472810057.md#method-method-std-ds-list-list-toarray-function-toarray-std-ds-list-ml-679354234) | `std/ds/list.ml:300` | 8 | 5 | 2 | 1 | 1 | 182.66 | 64.19 |
 | [`std.ds.list.List.withCapacity`](Type-std-ds-list-list-472810057.md#static_method-static-method-std-ds-list-list-withcapacity-static-function-withcapacity-mincap-std-ds-list-ml-1912842597) | `std/ds/list.ml:74` | 5 | 3 | 1 | 0 | 0 | 124 | 69.96 |
+| [`std.ds.packed_array.Int32Array.get`](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-get-inline-function-get-index-as-int-returns-int-std-ds-packed-array-ml-921663975) | `std/ds/packed_array.ml:30` | 3 | 1 | 1 | 0 | 0 | 84 | 75.98 |
+| [`std.ds.packed_array.Int32Array.init`](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-init-function-init-size-as-int-std-ds-packed-array-ml-1912951731) | `std/ds/packed_array.ml:13` | 7 | 4 | 3 | 2 | 1 | 208.89 | 64.92 |
+| [`std.ds.packed_array.Int32Array.len`](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-len-function-len-returns-int-std-ds-packed-array-ml-1594219535) | `std/ds/packed_array.ml:23` | 3 | 1 | 1 | 0 | 0 | 62.91 | 76.86 |
+| [`std.ds.packed_array.Int32Array.set`](Type-std-ds-packed-array-int32array-504427002.md#method-method-std-ds-packed-array-int32array-set-inline-function-set-index-as-int-value-as-int-std-ds-packed-array-ml-1023025283) | `std/ds/packed_array.ml:37` | 3 | 1 | 1 | 0 | 0 | 100 | 75.45 |
 | [`std.ds.queue.Queue.clear`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-clear-function-clear-std-ds-queue-ml-519280311) | `std/ds/queue.ml:94` | 11 | 7 | 3 | 3 | 2 | 318.58 | 59.35 |
 | [`std.ds.queue.Queue.dequeue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-dequeue-function-dequeue-std-ds-queue-ml-517233613) | `std/ds/queue.ml:148` | 10 | 7 | 2 | 1 | 1 | 302.61 | 60.55 |
 | [`std.ds.queue.Queue.enqueue`](Type-std-ds-queue-queue-1012616181.md#method-method-std-ds-queue-queue-enqueue-function-enqueue-v-std-ds-queue-ml-1746933747) | `std/ds/queue.ml:129` | 8 | 5 | 2 | 1 | 1 | 302.61 | 62.66 |

@@ -19,12 +19,14 @@ namespace std.ds.packed_array
     end function
 
     /// Return the number of elements.
+    /// @returns Number of cells in the sequence.
     function len() returns int
       return len(this.data) >> 2
     end function
 
     /// Read a signed integer from a checked index.
     /// @param index Zero-based index, or an index relative to the end when negative.
+    /// @returns The signed integer stored at the checked index.
     function inline get(index as int) returns int
       return __ml_packed_i32_get(this.data, index)
     end function
