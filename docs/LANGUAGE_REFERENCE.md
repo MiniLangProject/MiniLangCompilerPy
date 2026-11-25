@@ -2007,12 +2007,16 @@ case on a bounded test thread.
 ### Builtins: basics
 
 #### len(x)
-Length of arrays, strings, or bytes.
+Returns the element count of an array or the byte count of a string or byte
+buffer. Native strings use UTF-8: `len(string)` counts encoded bytes, not Unicode
+code points or displayed characters. Constants, variables, function arguments,
+and array elements follow the same rule.
 
 ```ml
 print len([1,2,3]) // 3
 print len("abc")   // 3
 print len(bytes(4)) // 4
+print len("Grüße 🌍") // 12 UTF-8 bytes
 ```
 
 Current runtime behavior: unsupported types return `0`.
@@ -2242,7 +2246,9 @@ Rules:
 - The effective copy length is clamped to the remaining tail room of both buffers:
   `min(len, len(dst) - dstOff, len(src) - srcOff)`.
 - If an offset is already at or past the end of its buffer, or any argument is invalid, the call is a no-op and still returns `void`.
-- Treat source/destination ranges as non-overlapping; overlap behavior is not guaranteed.
+- Overlapping ranges in the same buffer are supported. The result is as if the
+  source range were saved before any destination bytes were changed (`memmove`
+  semantics); no temporary buffer is allocated.
 
 ```ml
 src = fromHex("00 11 22 33 44")
@@ -2261,8 +2267,9 @@ Rules:
 - `dstOff`, `srcOff`, and `len` must be non-negative integers.
 - The effective length is clamped to the remaining tail room of both arrays.
 - Invalid arguments or offsets at/past an array end are a no-op.
-- Treat source and destination ranges as non-overlapping; overlap behavior is
-  not guaranteed.
+- Overlapping ranges in the same array are supported, with the same result as
+  copying from a snapshot of the source range. The copy remains shallow and
+  preserves the garbage collector's write barrier.
 
 ```ml
 src = [10, "twenty", true]

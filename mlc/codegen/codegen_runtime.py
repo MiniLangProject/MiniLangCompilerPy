@@ -1776,6 +1776,101 @@ class CodegenRuntime:
         a.mark(l_ret)
         a.ret()
 
+    def emit_move_bytes_function(self) -> None:
+        """Move RCX/RDX/R8D bytes safely across overlapping source/destination.
+
+        Keep the optimized copy helper for disjoint intervals. Overlapping
+        ranges use directional qword copies followed by a bounded byte tail.
+        Array payloads are qword-aligned and sized, so their tagged cells are
+        never torn into separate byte stores while concurrent GC scans them.
+        """
+        a = self.asm
+        a.mark('fn_move_bytes')
+        # Tail jumps do not participate in the assembler's call tracking.
+        self.used_helpers.add('fn_copy_bytes')
+        lid = self.new_label_id()
+        l_ret = f"move_ret_{lid}"
+        l_lower = f"move_lower_{lid}"
+        l_copy = f"move_copy_{lid}"
+        l_backward = f"move_backward_{lid}"
+        l_backward_bytes = f"move_backward_bytes_{lid}"
+        l_backward_byte_loop = f"move_backward_byte_loop_{lid}"
+        l_forward = f"move_forward_{lid}"
+        l_forward_bytes = f"move_forward_bytes_{lid}"
+        l_forward_byte_loop = f"move_forward_byte_loop_{lid}"
+
+        a.test_r32_r32('r8d', 'r8d')
+        a.jcc('e', l_ret)
+        a.cmp_r64_r64('rcx', 'rdx')
+        a.jcc('e', l_ret)
+        a.mov_r32_r32('r8d', 'r8d')
+        a.mov_r64_r64('r9', 'rcx')
+        a.mov_r64_r64('r10', 'rdx')
+        a.mov_r32_r32('r11d', 'r8d')
+        a.cmp_r64_r64('rcx', 'rdx')
+        a.jcc('b', l_lower)
+
+        # dst > src: use the pointer distance to avoid end-address overflow.
+        a.mov_r64_r64('rax', 'rcx')
+        a.sub_r64_r64('rax', 'rdx')
+        a.cmp_r64_r64('rax', 'r8')
+        a.jcc('ae', l_copy)
+        a.add_r64_r64('r9', 'r8')
+        a.add_r64_r64('r10', 'r8')
+        a.mark(l_backward)
+        a.cmp_r32_imm('r11d', 8)
+        a.jcc('b', l_backward_bytes)
+        a.sub_r64_imm('r9', 8)
+        a.sub_r64_imm('r10', 8)
+        a.mov_r64_membase_disp('rax', 'r10', 0)
+        a.mov_membase_disp_r64('r9', 0, 'rax')
+        a.sub_r32_imm('r11d', 8)
+        a.jmp(l_backward)
+
+        a.mark(l_backward_bytes)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_ret)
+        a.mark(l_backward_byte_loop)
+        a.dec_r64('r9')
+        a.dec_r64('r10')
+        a.mov_r8_membase_disp('al', 'r10', 0)
+        a.mov_membase_disp_r8('r9', 0, 'al')
+        a.dec_r32('r11d')
+        a.jcc('ne', l_backward_byte_loop)
+        a.jmp(l_ret)
+
+        # dst < src: forward copies preserve unread source bytes.
+        a.mark(l_lower)
+        a.mov_r64_r64('rax', 'rdx')
+        a.sub_r64_r64('rax', 'rcx')
+        a.cmp_r64_r64('rax', 'r8')
+        a.jcc('ae', l_copy)
+        a.mark(l_forward)
+        a.cmp_r32_imm('r11d', 8)
+        a.jcc('b', l_forward_bytes)
+        a.mov_r64_membase_disp('rax', 'r10', 0)
+        a.mov_membase_disp_r64('r9', 0, 'rax')
+        a.add_r64_imm('r9', 8)
+        a.add_r64_imm('r10', 8)
+        a.sub_r32_imm('r11d', 8)
+        a.jmp(l_forward)
+
+        a.mark(l_forward_bytes)
+        a.test_r32_r32('r11d', 'r11d')
+        a.jcc('e', l_ret)
+        a.mark(l_forward_byte_loop)
+        a.mov_r8_membase_disp('al', 'r10', 0)
+        a.mov_membase_disp_r8('r9', 0, 'al')
+        a.inc_r64('r9')
+        a.inc_r64('r10')
+        a.dec_r32('r11d')
+        a.jcc('ne', l_forward_byte_loop)
+        a.mark(l_ret)
+        a.ret()
+
+        a.mark(l_copy)
+        a.jmp('fn_copy_bytes')
+
     def emit_fill_bytes_function(self) -> None:
         """Bounded SIMD fills through 256 bytes; the established REP path above."""
         a = self.asm
@@ -3635,7 +3730,7 @@ class CodegenRuntime:
         a.lea_r64_membase_disp('rdx', 'r10', 8)
         a.add_r64_r64('rdx', 'r8')
         a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
-        a.call('fn_copy_bytes')
+        a.call('fn_move_bytes')
 
         a.mark(l_ret_void)
         a.mov_rax_imm64(enc_void())
@@ -3839,7 +3934,7 @@ class CodegenRuntime:
         a.mov_r32_membase_disp('r8d', 'rsp', 0x20)
         a.shl_r64_imm8('r8', 3)
         self.emit_gc_write_barrier_range()
-        a.call('fn_copy_bytes')
+        a.call('fn_move_bytes')
 
         a.mark(l_ret_void)
         a.mov_rax_imm64(enc_void())

@@ -130,8 +130,15 @@ unconditionally select short REP: it was slower for unaligned short copies on
 the evaluation CPU. Fill helpers use SIMD through 256 bytes and retain the
 established `REP STOSB` path above that, bypassing redundant vector setup.
 FSRM is a MOVSB capability, not a guarantee about STOSB. Baseline x64 remains
-supported; no new minimum CPU requirement is introduced. Copy ranges must
-remain non-overlapping, as already required by `copyBytes` and `copyArray`.
+supported; no new minimum CPU requirement is introduced. The internal fast
+copy helper requires non-overlapping ranges. Public `copyBytes` and `copyArray`
+operations use an overlap-safe move helper: disjoint ranges use the fast copy,
+while overlapping ranges are copied in a safe direction without allocating a
+temporary buffer. Identical source and destination ranges are a no-op. Array
+copies remain shallow and retain the GC write barrier.
+
+The shared overlap, UTF-8 byte-length and compiler-parity regressions are
+documented in the [native copy and length validation](reports/NATIVE_COPY_AND_LENGTH_2026-11-25.md).
 
 The focused suites are `tests/isa_runtime.ml`, `tests/checksum_runtime.ml`,
 `tests/crypto_cng.ml`, `tests/ecdsa_p256.ml`, and `tests/simd_search.ml`. Reproducible diagnostic

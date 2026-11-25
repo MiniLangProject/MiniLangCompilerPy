@@ -2,6 +2,19 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Make `copyBytes` and `copyArray` safe for overlapping source and destination
+  ranges, including indirect calls, while retaining the optimized disjoint-copy
+  path and the array GC write barrier.
+- Fold constant string lengths as UTF-8 byte counts, matching native runtime
+  strings and the self-hosted compiler. Keep byte-based string indexing and
+  standard-library buffer sizing consistent.
+- Add shared native regressions for overlapping copies, Unicode byte lengths,
+  initializer scope, and Boolean/integer equality.
+- Restore the documentation check and make the MinUX public-library import
+  test use valid bare imports for namespace-only modules.
+
 ## 1.3.10 - 2026-11-21
 
 - Add fixed variable types through `var name as Type = expression`, including

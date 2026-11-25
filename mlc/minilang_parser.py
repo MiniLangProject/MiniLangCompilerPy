@@ -2563,6 +2563,7 @@ def typed_array_code(name: str) -> int:
 
 
 def has_typed_arrays() -> bool:
+    """Report whether parsed source contains typed-array syntax."""
     return _typed_array_syntax_seen
 
 

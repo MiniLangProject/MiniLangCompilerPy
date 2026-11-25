@@ -72,6 +72,52 @@ class NativeISATests(unittest.TestCase):
                     expected = b'Z' * start + b'\xA5' * size + b'Z' * (len(source) - start - size)
                     self.assertEqual(dst.raw, expected, ('fill', mask, size, alignment))
 
+    def test_move_overlapping_ranges_and_disjoint_controls(self):
+        """Use an independent snapshot model across alignments and dispatch masks."""
+        move = self.runtime.call('fn_move_bytes', 3)
+        sizes = list(range(65)) + [127, 128, 129, 255, 256, 257, 511, 512,
+                                  513, 4095, 4096, 4097, 65535, 65536, 65537]
+        for mask in (0, 1, -1):
+            self.runtime.mask(mask)
+            move(0, 0, 0)
+            for size in sizes:
+                original = bytes((i * 37 + i // 251 + 19) % 251 for i in range(size * 2 + 192))
+                buffer = ctypes.create_string_buffer(original, len(original))
+                address = ctypes.addressof(buffer)
+                for alignment in (0, 1, 7):
+                    source = 64 + alignment
+                    # +/-size are just-disjoint; small offsets include both overlap directions.
+                    for displacement in (-33, -17, -9, -1, 0, 1, 9, 17, 33, size, size + 1):
+                        destination = source + displacement
+                        expected = bytearray(original)
+                        expected[destination:destination + size] = original[source:source + size]
+                        ctypes.memmove(address, original, len(original))
+                        move(address + destination, address + source, size)
+                        self.assertEqual(buffer.raw, bytes(expected),
+                                         ('move', mask, size, alignment, displacement))
+
+    def test_move_overlap_at_guard_pages(self):
+        """Neither direction may read or write beyond either end of the payload."""
+        page = GuardedPage(32)
+        self.addCleanup(page.close)
+        move = self.runtime.call('fn_move_bytes', 3)
+        original = random.Random(20261125).randbytes(page.size)
+        sizes = list(range(1, 66)) + [127, 128, 129, 4095, 4096, 4097,
+                                     65535, 65536, 65537, page.size - 1]
+        for mask in (0, 1, -1):
+            self.runtime.mask(mask)
+            move(page.address + page.size, page.address + page.size, 0)
+            for size in sizes:
+                for destination, source in ((0, 1), (1, 0),
+                                            (page.size - size, page.size - size - 1),
+                                            (page.size - size - 1, page.size - size)):
+                    expected = bytearray(original)
+                    expected[destination:destination + size] = original[source:source + size]
+                    ctypes.memmove(page.address, original, len(original))
+                    move(page.address + destination, page.address + source, size)
+                    self.assertEqual(ctypes.string_at(page.address, page.size), bytes(expected),
+                                     ('guarded move', mask, size, destination, source))
+
     def test_crc_seeded_random_ranges_and_incremental_splits(self):
         crc = self.runtime.call('fn_crc32_update_raw', 3)
         rng = random.Random(20261020)

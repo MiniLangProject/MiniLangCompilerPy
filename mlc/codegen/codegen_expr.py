@@ -7243,7 +7243,9 @@ class CodegenExpr:
                 const_len = None
                 v = self._opt_try_const_value(arg)
                 if isinstance(v, str):
-                    const_len = len(v)
+                    # Native strings expose UTF-8 bytes, matching their runtime
+                    # length, indexing and byte-copy operations.
+                    const_len = len(v.encode('utf-8'))
                 else:
                     const_len = self._opt_try_pure_const_array_len(arg)
                 if isinstance(const_len, int):
@@ -7741,7 +7743,7 @@ class CodegenExpr:
                 a.jcc("g", l_fail)
                 a.mov_membase_disp_r64("rsp", tmp_off + 32, "rax")
 
-                # Clamp len to dst/src tail room and dispatch to fn_copy_bytes.
+                # Clamp len to dst/src tail room and move safely across overlaps.
                 a.mov_r64_membase_disp("r11", "rsp", tmp_off)
                 a.mov_r64_membase_disp("r10", "rsp", tmp_off + 16)
 
@@ -7777,7 +7779,7 @@ class CodegenExpr:
                 a.mov_r32_membase_disp("eax", "rsp", tmp_off + 24)
                 a.add_r64_r64("rdx", "rax")
                 a.mov_r32_r32("r8d", "r9d")
-                a.call("fn_copy_bytes")
+                a.call("fn_move_bytes")
                 a.jmp(l_done)
 
                 a.mark(l_fail)

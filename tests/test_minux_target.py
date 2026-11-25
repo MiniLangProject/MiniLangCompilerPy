@@ -1,5 +1,6 @@
 """Cross-target contract, loader metadata and unsupported-import regressions."""
 from pathlib import Path
+import re
 import struct
 import subprocess
 import sys
@@ -49,14 +50,19 @@ print "hello"
         self.assertNotIn(b'libdl.so.2\0', data)
 
     def test_all_public_stdlib_packages_accept_minux(self):
-        packages = []
+        imports = []
         for source in sorted((ROOT/'std').rglob('*.ml')):
             if any(part.startswith('_') for part in source.relative_to(ROOT).parts):
                 continue  # Private platform providers are selected by public modules.
-            packages.append('.'.join(source.relative_to(ROOT).with_suffix('').parts))
-        self.assertGreater(len(packages), 30)
-        imports = '\n'.join(f'import {package} as probe{i}' for i, package in enumerate(packages))
-        result, output = self.compile(imports + '\nprint "public stdlib imports accepted"\n')
+            module = '.'.join(source.relative_to(ROOT).with_suffix('').parts)
+            statement = f'import {module}'
+            # Aliases require package metadata. Namespace-only modules are also
+            # valid public modules and must be covered through their bare import.
+            if re.search(r'(?m)^\s*package\s+', source.read_text(encoding='utf-8')):
+                statement += f' as probe{len(imports)}'
+            imports.append(statement)
+        self.assertGreater(len(imports), 30)
+        result, output = self.compile('\n'.join(imports) + '\nprint "public stdlib imports accepted"\n')
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertTrue(output.is_file())
         data = output.read_bytes()

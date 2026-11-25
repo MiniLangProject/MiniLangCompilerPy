@@ -4240,6 +4240,7 @@ def main() -> int:
     std_test_ml = find_file_by_name(tests_root, "stdlib_unit_tests.ml")
     checksum_runtime_ml = find_file_by_name(tests_root, "checksum_runtime.ml")
     isa_runtime_ml = find_file_by_name(tests_root, "isa_runtime.ml")
+    native_semantics_regression_ml = find_file_by_name(tests_root, "native_semantics_regression.ml")
     simd_search_ml = find_file_by_name(tests_root, "simd_search.ml")
     crypto_cng_ml = find_file_by_name(tests_root, "crypto_cng.ml")
     random_auto_seeded_ml = find_file_by_name(tests_root, "random_auto_seeded.ml")
@@ -4581,6 +4582,8 @@ def main() -> int:
     for test_name, test_path, marker in [
         ("checksum_runtime.ml (CRC vectors and dispatch)", checksum_runtime_ml, "[OK] checksum runtime"),
         ("isa_runtime.ml (copy/fill/CRC dispatch boundaries)", isa_runtime_ml, "[OK] ISA runtime"),
+        ("native_semantics_regression.ml (overlap, Unicode byte lengths and scalar parity)",
+         native_semantics_regression_ml, "[OK] Native semantics regressions"),
         ("simd_search.ml (scalar/SSE2/AVX2 differential)", simd_search_ml, "[OK] SIMD search"),
         ("crypto_cng.ml (platform crypto vectors and authentication)", crypto_cng_ml, "[OK] platform crypto"),
         ("random_auto_seeded.ml (secure seeding, errors and independent state)", random_auto_seeded_ml, "[OK] auto-seeded random"),

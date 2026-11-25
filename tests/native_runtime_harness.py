@@ -20,6 +20,7 @@ from mlc.codegen.codegen_runtime import CodegenRuntime
 class Harness(CodegenRuntime):
     def __init__(self):
         self.asm, self.rdata, self.sequence = Asm(), DataBuilder(), 0
+        self.used_helpers = set()
 
     def new_label_id(self):
         self.sequence += 1
@@ -29,7 +30,7 @@ class Harness(CodegenRuntime):
 def emit_image():
     h = Harness()
     a = h.asm
-    for name in ('cpu_init', 'copy_bytes', 'fill_bytes', 'crc32_update_raw', 'crc32c_update_raw'):
+    for name in ('cpu_init', 'copy_bytes', 'move_bytes', 'fill_bytes', 'crc32_update_raw', 'crc32c_update_raw'):
         getattr(h, 'emit_' + name + '_function')()
     for operation in ('bsf', 'bsr'):
         a.mark('fn_' + operation)
