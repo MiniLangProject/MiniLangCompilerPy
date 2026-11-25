@@ -1,0 +1,399 @@
+{
+  "version": "1.3.11",
+  "date": "2026-11-25",
+  "scope": "Compiler-source build and regression verification. Final archive and tagged-source verification is reported separately after packaging.",
+  "host": {
+    "distribution": "Debian",
+    "distributionVersion": "13.7",
+    "architecture": "x86_64",
+    "glibc": "2.41"
+  },
+  "compilerImages": [
+    {
+      "target": "linux-x64",
+      "bytes": 68044016,
+      "sha256": "7a61fe5447d0e81d700c834c7f02dce2259c0bd2418050b056653bea742b8c67",
+      "buildOptions": [
+        "--target",
+        "linux-x64",
+        "--heap-reserve",
+        "8g",
+        "--heap-commit",
+        "512m",
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "16m",
+        "--gc-limit",
+        "1536m",
+        "--object-pipeline"
+      ],
+      "producers": [
+        {
+          "compiler": "Python reference 1.3.11",
+          "host": "linux-x64",
+          "pipeline": "monolithic"
+        },
+        {
+          "compiler": "MiniLang self-hosted 1.3.11",
+          "host": "linux-x64",
+          "pipeline": "object"
+        }
+      ],
+      "byteIdentical": true,
+      "executionStatus": "passed on Linux",
+      "inputSourceVersion": "1.3.11"
+    },
+    {
+      "target": "windows-x64",
+      "bytes": 68022272,
+      "sha256": "cadacd2b4d2425d492fea2e94b4d4db48b54cb07b3ae810b3247bcf42b9b1efc",
+      "buildOptions": [
+        "--target",
+        "windows-x64",
+        "--heap-reserve",
+        "8g",
+        "--heap-commit",
+        "512m",
+        "--heap-shrink",
+        "--heap-shrink-min",
+        "16m",
+        "--gc-limit",
+        "1536m",
+        "--object-pipeline"
+      ],
+      "producers": [
+        {
+          "compiler": "Python reference 1.3.11",
+          "host": "linux-x64",
+          "pipeline": "monolithic"
+        },
+        {
+          "compiler": "MiniLang self-hosted 1.3.10 development bootstrap with the native copy fixes",
+          "host": "linux-x64",
+          "pipeline": "object",
+          "sourceRevision": "217e467b7bd9c0407e0bdda46c2c12f1be06f73a",
+          "compilerSha256": "1d9eeea2259b9b3c61f47061344dff03a1c35541122e43c859ab119e5cb12920",
+          "inputSourceVersion": "1.3.11"
+        }
+      ],
+      "byteIdentical": true,
+      "executionStatus": "not executed; cross-compilation and byte comparison only",
+      "inputSourceVersion": "1.3.11"
+    },
+    {
+      "target": "minux-x64",
+      "bytes": 15240011,
+      "sha256": "65dd1c354b2d8e1a4e8b163f27466ab603522dc64465b6f00fa1eb0c85276e1c",
+      "buildOptions": [
+        "--target",
+        "minux-x64",
+        "--pack",
+        "--object-pipeline"
+      ],
+      "producers": [
+        {
+          "compiler": "Python reference 1.3.11",
+          "host": "linux-x64",
+          "pipeline": "monolithic"
+        },
+        {
+          "compiler": "MiniLang self-hosted 1.3.10 development bootstrap with the native copy fixes",
+          "host": "linux-x64",
+          "pipeline": "object",
+          "sourceRevision": "217e467b7bd9c0407e0bdda46c2c12f1be06f73a",
+          "compilerSha256": "1d9eeea2259b9b3c61f47061344dff03a1c35541122e43c859ab119e5cb12920",
+          "inputSourceVersion": "1.3.11"
+        }
+      ],
+      "byteIdentical": true,
+      "executionStatus": "not executed; cross-compilation and byte comparison only",
+      "inputSourceVersion": "1.3.11"
+    }
+  ],
+  "linuxSelfHosting": {
+    "passed": true,
+    "bootstrapCompiler": "Python reference 1.3.11",
+    "selfBuildCompiler": "Linux self-hosted 1.3.11",
+    "selfBuildPipeline": "object",
+    "bootstrapAndSelfBuildByteIdentical": true,
+    "bytes": 68044016,
+    "sha256": "7a61fe5447d0e81d700c834c7f02dce2259c0bd2418050b056653bea742b8c67",
+    "rebuiltCompilerVersionOutput": "MiniLang Compiler 1.3.11",
+    "rebuiltCompilerVersionExitCode": 0,
+    "scope": "Byte-identical bootstrap/self-build fixed point for the recorded Linux build options."
+  },
+  "minuxPacking": {
+    "unpackCheckPassed": true,
+    "packedBytes": 15240011,
+    "loaderLimitBytes": 16777216,
+    "withinLoaderLimit": true,
+    "unpackedBytes": 68025936,
+    "unpackedSha256": "896c62d0717812095906e761dcbd483ca2e63a80765bd8886cd5e928d530488c",
+    "guestExecutionPerformed": false
+  },
+  "checks": {
+    "cliVersion": {
+      "compilers": [
+        "Python reference 1.3.11",
+        "Linux self-hosted 1.3.11"
+      ],
+      "flags": [
+        "-version",
+        "--version"
+      ],
+      "checks": 4,
+      "expectedOutput": "MiniLang Compiler 1.3.11",
+      "passed": true
+    },
+    "compileTimeVersionAndTargets": {
+      "compilers": [
+        "Python reference 1.3.11",
+        "Linux self-hosted 1.3.11"
+      ],
+      "pipelineFlags": [
+        "--no-object-pipeline",
+        "--object-pipeline"
+      ],
+      "pythonPipelineNote": "The Python compiler accepts both flags and emits its monolithic implementation.",
+      "assertionMethod": "Compilation rejects any mismatch in the expected predefined constants; Linux images also print a checked target-specific success marker.",
+      "totalImages": 12,
+      "totalExecutions": 4,
+      "cases": [
+        {
+          "target": "linux-x64",
+          "expected": {
+            "TARGET_OS": "linux",
+            "TARGET_ARCH": "x64",
+            "TARGET_ABI": "sysv",
+            "TARGET_FORMAT": "elf",
+            "POINTER_SIZE": 8,
+            "MINILANG_VERSION": "1.3.11"
+          },
+          "images": 4,
+          "bytesPerImage": 87840,
+          "sha256PerImage": "2349d24f3a48fe285a9b252e0e69772dc8ad0870e07d47d4b74de0c0a658df08",
+          "byteIdentical": true,
+          "executions": 4,
+          "executionStatus": "passed"
+        },
+        {
+          "target": "windows-x64",
+          "expected": {
+            "TARGET_OS": "windows",
+            "TARGET_ARCH": "x64",
+            "TARGET_ABI": "win64",
+            "TARGET_FORMAT": "pe",
+            "POINTER_SIZE": 8,
+            "MINILANG_VERSION": "1.3.11"
+          },
+          "images": 4,
+          "bytesPerImage": 77312,
+          "sha256PerImage": "d0a17a37d3012db3ea8a1c3e0f0af8fd95104f197beb6bbabfe71628078e23d1",
+          "byteIdentical": true,
+          "executions": 0,
+          "executionStatus": "not executed; cross-compilation only"
+        },
+        {
+          "target": "minux-x64",
+          "expected": {
+            "TARGET_OS": "minux",
+            "TARGET_ARCH": "x64",
+            "TARGET_ABI": "sysv",
+            "TARGET_FORMAT": "elf",
+            "POINTER_SIZE": 8,
+            "MINILANG_VERSION": "1.3.11"
+          },
+          "images": 4,
+          "bytesPerImage": 87808,
+          "sha256PerImage": "606961afd534c94718d24cdcb8bcf8b3a836fb25e1db624bf7939c75ae05d91d",
+          "byteIdentical": true,
+          "executions": 0,
+          "executionStatus": "not executed; cross-compilation only"
+        }
+      ]
+    },
+    "nativeSemantics": {
+      "fixture": "tests/native_semantics_regression.ml",
+      "expectedOutput": "tests/native_semantics_regression.expected.txt",
+      "runner": "tests/check_native_semantics.py",
+      "compilers": [
+        "Python reference 1.3.11",
+        "Linux self-hosted 1.3.11"
+      ],
+      "pipelineFlags": [
+        "--no-object-pipeline",
+        "--object-pipeline"
+      ],
+      "totalImages": 16,
+      "totalExecutions": 4,
+      "copyCasesPerExecution": 1446,
+      "additionalCoverage": [
+        "UTF-8 byte lengths and embedded NULs",
+        "StringBuilder byte sizing",
+        "initializer scope",
+        "Boolean/integer equality",
+        "copied references surviving collection"
+      ],
+      "cases": [
+        {
+          "name": "linux-x64",
+          "target": "linux-x64",
+          "flags": [],
+          "images": 4,
+          "bytesPerImage": 301184,
+          "sha256PerImage": "6158946e1dd2b6e60ebea286b031520fd18b03246d87e7de60249f01470371f7",
+          "byteIdentical": true,
+          "executions": 4,
+          "executionStatus": "passed"
+        },
+        {
+          "name": "windows-x64",
+          "target": "windows-x64",
+          "flags": [],
+          "images": 4,
+          "bytesPerImage": 296448,
+          "sha256PerImage": "66e5793454d77f95efc5308a7445096ee9588f87336473599b58c91192c2ecd0",
+          "byteIdentical": true,
+          "executions": 0,
+          "executionStatus": "not executed; cross-compilation only"
+        },
+        {
+          "name": "minux-x64",
+          "target": "minux-x64",
+          "flags": [],
+          "images": 4,
+          "bytesPerImage": 301136,
+          "sha256PerImage": "46c6b549acaff80e452c03d3d51857b16a8f205b3b9e67122ed3136c044a25f0",
+          "byteIdentical": true,
+          "executions": 0,
+          "executionStatus": "not executed; cross-compilation only"
+        },
+        {
+          "name": "windows-concurrent",
+          "target": "windows-x64",
+          "flags": [
+            "--gc-concurrent"
+          ],
+          "images": 4,
+          "bytesPerImage": 316416,
+          "sha256PerImage": "4fa91805f59a5279827a723532da1103aa07a8f080917752f200c9262a509141",
+          "byteIdentical": true,
+          "executions": 0,
+          "executionStatus": "not executed; cross-compilation only"
+        }
+      ]
+    },
+    "pythonUnitTests": {
+      "command": "python -m unittest discover -s tests -p test_*.py -v",
+      "total": 63,
+      "passed": 60,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "exitCode": 0,
+      "seconds": 9.232,
+      "skipReasons": [
+        "Native Windows x64 flag-equivalence test",
+        "Native Windows x64 snapshot-helper checks",
+        "Optional NASM verification was not enabled"
+      ]
+    },
+    "standardLibrarySourceParity": {
+      "repositories": [
+        "MiniLangCompilerPy",
+        "MiniLangCompilerML"
+      ],
+      "sourceModulesPerRepository": 56,
+      "sourceMismatches": 0,
+      "byteIdentical": true,
+      "aggregateSha256": "586a8d31055d1a1e3e5b806fce0a0e9abef004594489e8894f9b695199646463",
+      "aggregateEncoding": "SHA-256 of UTF-8 compact JSON mapping sorted relative std/*.ml paths to their SHA-256 hashes."
+    }
+  },
+  "historicalImplementationValidation": {
+    "report": "docs/reports/NATIVE_COPY_AND_LENGTH_2026-11-25.md",
+    "phase": "Before the 1.3.11 version bump",
+    "nativeHelperComparisons": 8820,
+    "guardPageCasesIncluded": 900,
+    "countedAsAdditionalReleaseRuns": false
+  },
+  "runtimeProvenance": {
+    "sourceRepository": "MiniLangProject/MiniLangCompilerML",
+    "sourceRelease": "v1.3.10",
+    "sourceReleaseCommit": "d0b1a4f658395f72b376a988d241d0e11ea02684",
+    "runtimeSourceUnchanged": true,
+    "sourceComparisonCheckedAtCommit": "217e467b7bd9c0407e0bdda46c2c12f1be06f73a",
+    "reuseScope": "Unchanged prebuilt native-video and MinUX runtime libraries from the official previous release; compiler executables are newly built from 1.3.11 sources.",
+    "verification": "Whole archive SHA256 matched authenticated GitHub release-asset digest; native runtime SHA256 matched release BUILD_INFO; MinUX libraries additionally matched runtime-manifest SHA256 and bytes.",
+    "platforms": {
+      "windows-x64": {
+        "sourceArchive": "MiniLangCompilerML-1.3.10-windows-x64.zip",
+        "sourceArchiveSha256": "e2cbc9a4d312bfbb1369d947c5f815786acde8c2b857aa094b5f0c87a6d7ca0f",
+        "sourceUrl": "https://github.com/MiniLangProject/MiniLangCompilerML/releases/download/v1.3.10/MiniLangCompilerML-1.3.10-windows-x64.zip",
+        "verifiedSourceFiles": {
+          "minilang_video.dll": {
+            "bytes": 190976,
+            "sha256": "37e6c0c17b91e2fe9c9571b7d80c38f01f2b98ebb1e9610e616866db7e9b5558"
+          }
+        }
+      },
+      "linux-x64": {
+        "sourceArchive": "MiniLangCompilerML-1.3.10-linux-x64.tar.gz",
+        "sourceArchiveSha256": "c965cec010c726b06ef6934e3f8b244cad60e366c9846bcf31400f1a4dd326b6",
+        "sourceUrl": "https://github.com/MiniLangProject/MiniLangCompilerML/releases/download/v1.3.10/MiniLangCompilerML-1.3.10-linux-x64.tar.gz",
+        "verifiedSourceFiles": {
+          "libminilang_video.so": {
+            "bytes": 21696,
+            "sha256": "1af3a2a2cf599707177757353a105c842998502382b968a2268aa24f04a983e2"
+          }
+        }
+      },
+      "minux-x64": {
+        "sourceArchive": "MiniLangCompilerML-1.3.10-minux-x64.tar.gz",
+        "sourceArchiveSha256": "a28bb264c46aac439ef5ffa352b003961a2c178f248e6b1536490f9fafe0759e",
+        "sourceUrl": "https://github.com/MiniLangProject/MiniLangCompilerML/releases/download/v1.3.10/MiniLangCompilerML-1.3.10-minux-x64.tar.gz",
+        "verifiedSourceFiles": {
+          "ca-certificates.crt": {
+            "bytes": 188900,
+            "sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
+          },
+          "libminigui_minux.so": {
+            "bytes": 42672,
+            "sha256": "f5702c0038a4cad6c3d7af38f36c5a1170d550b6a4ee23d556906268fb6d9419"
+          },
+          "libminilang_minux.so": {
+            "bytes": 1048312,
+            "sha256": "c362af10637dec83423ba26b3d8a6b26069511f1b3ca623f55e803b443bece5e"
+          },
+          "libminilang_video.so": {
+            "bytes": 28544,
+            "sha256": "c87dca57dd11b77f125a1d0333ed632235a59b4850729d17abe8ded5701a57df"
+          },
+          "licenses/Mbed-TLS-3.6.5-LICENSE": {
+            "bytes": 29852,
+            "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+          },
+          "runtime-manifest.json": {
+            "bytes": 1523,
+            "sha256": "2d9c2dafc53ac068a586dc8e7be0ce769cca4abe3af87d000beef85cfd4ab33b"
+          }
+        }
+      }
+    }
+  },
+  "packageVerification": {
+    "includedInThisMatrix": false,
+    "phase": "After the final source commit and archive creation",
+    "releaseAsset": "release-1.3.11-package-verification.json",
+    "reportLocations": [
+      "https://github.com/MiniLangProject/MiniLangCompilerPy/releases/tag/v1.3.11",
+      "https://github.com/MiniLangProject/MiniLangCompilerML/releases/tag/v1.3.11"
+    ],
+    "note": "Final archive, manifest, executable, runtime and tagged-source checks are recorded in that separate release asset; this source matrix makes no claim that packaging checks have already run."
+  },
+  "executionLimitations": [
+    "Windows compiler and generated programs were not executed in this verification.",
+    "MinUX compiler and generated programs were not executed in a MinUX guest.",
+    "Linux execution was verified on the recorded Debian/glibc host; other Linux environments were not tested."
+  ]
+}

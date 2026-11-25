@@ -8,9 +8,12 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.10.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.11.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.10 adds fixed variable types and expands typed numeric code generation.
+Version 1.3.11 makes `copyBytes` and `copyArray` safe for overlapping ranges and
+fixes constant string lengths to match the native UTF-8 byte-length contract.
+Shared regressions cover both compilers and their compilation pipelines.
+Version 1.3.10 introduced fixed variable types and expanded typed numeric code generation.
 Native MinUX output, packing and compiler selfhosting arrived in 1.3.9,
 including MinUX standard-library, TLS/crypto, file, terminal and media adapters.
 See the [MinUX guide](docs/MINUX.md) for setup, verified capabilities and limits.
@@ -126,7 +129,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.10 verification matrix](docs/reports/release-1.3.10-version-matrix.json).
+[1.3.11 verification matrix](docs/reports/release-1.3.11-version-matrix.json).
 
 ## Documentation and development
 

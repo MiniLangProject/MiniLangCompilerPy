@@ -2,7 +2,7 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
-## Unreleased
+## 1.3.11 - 2026-11-25
 
 - Make `copyBytes` and `copyArray` safe for overlapping source and destination
   ranges, including indirect calls, while retaining the optimized disjoint-copy
