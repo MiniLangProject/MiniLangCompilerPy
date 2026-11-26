@@ -439,6 +439,25 @@ If `fill` is omitted, elements are initialized with `void`.
 Invalid `size` (non-int, negative, or too large) returns a runtime `error`
 (catchable via `try(...)`).
 
+### Structural equality
+
+`==` and `!=` compare arrays by length and corresponding values, recursively for
+nested arrays. Equal contents do not require the same objects or alias pattern.
+Typed and ordinary arrays follow the same structural comparison rules.
+
+Cyclic arrays compare by their unfolded values. A repeated ordered array pair
+is checked once; all remaining siblings still have to match. Consequently,
+different cycle lengths can compare equal when their branching and values are
+equal. The same array object retains the existing identity fast path.
+
+Flat arrays require constant comparison workspace. Nested graphs use inline
+storage for the first 32 distinct array pairs and grow a traced managed workspace
+as needed. The previous 256-pending-element failure is removed. Deep comparison
+can allocate and collect, and memory exhaustion follows the normal fatal
+allocator path. Shared read-only comparisons are supported; unsynchronized
+concurrent mutation remains a data race. See the [1.3.13 source notes](../RELEASE_NOTES_1.3.13.md)
+for semantics, costs and validation limits.
+
 ### Multiline literals + trailing commas
 
 ```ml

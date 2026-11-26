@@ -1,0 +1,1376 @@
+{
+  "purpose": "Streaming array equality correctness and byte parity",
+  "host": "linux",
+  "limitations": [
+    "Concurrent GC is supported only on windows-x64; other targets use the stop-the-world collector.",
+    "Cross-built Windows/MinUX executables are not runtime tests on a Linux host."
+  ],
+  "native_compiler_sha256": "eaea43889f091e82a74fa634e654f6f4bd9a1e6375195a81abada04628b6aa07",
+  "versions": {
+    "python": "MiniLang Compiler 1.3.13",
+    "native": "MiniLang Compiler 1.3.13"
+  },
+  "images": [
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "python",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "5160d5fe41d59963eb2452553347f679baa958997e9f965ad9d7b4ea92ed0a9a",
+      "bytes": 251872,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-m3trjln_/python",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-m3trjln_/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY checks=82 failures=0\nARRAY EQUALITY [OK]\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "5160d5fe41d59963eb2452553347f679baa958997e9f965ad9d7b4ea92ed0a9a",
+      "bytes": 251872,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-m3trjln_/native-direct",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-m3trjln_/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY checks=82 failures=0\nARRAY EQUALITY [OK]\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "5160d5fe41d59963eb2452553347f679baa958997e9f965ad9d7b4ea92ed0a9a",
+      "bytes": 251872,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-m3trjln_/native-mlo",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml\n[obj] output=/tmp/ml-array-equality-m3trjln_/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-m3trjln_/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/000_array_equality.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-m3trjln_/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-m3trjln_/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-m3trjln_/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/000_array_equality.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-m3trjln_/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-m3trjln_/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY checks=82 failures=0\nARRAY EQUALITY [OK]\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "54066d72dc6afe3ae5c727bf5aa90dd2f4f97bc7d298e976fa1b0fbbb1c78ed8",
+      "bytes": 244736,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-2idbb6ee/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-2idbb6ee/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "54066d72dc6afe3ae5c727bf5aa90dd2f4f97bc7d298e976fa1b0fbbb1c78ed8",
+      "bytes": 244736,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-2idbb6ee/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-2idbb6ee/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "54066d72dc6afe3ae5c727bf5aa90dd2f4f97bc7d298e976fa1b0fbbb1c78ed8",
+      "bytes": 244736,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-2idbb6ee/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml\n[obj] output=/tmp/ml-array-equality-2idbb6ee/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-2idbb6ee/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/000_array_equality.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-2idbb6ee/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-2idbb6ee/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/000_array_equality.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-2idbb6ee/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-2idbb6ee/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-2idbb6ee/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "python",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "6be43f1d6c5f6d722a32cd746118fb7d4b98277717bffd41a3a1ad4ba74a5834",
+      "bytes": 251824,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-v6vl9r7m/python",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-v6vl9r7m/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "6be43f1d6c5f6d722a32cd746118fb7d4b98277717bffd41a3a1ad4ba74a5834",
+      "bytes": 251824,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-v6vl9r7m/native-direct",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-v6vl9r7m/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 0,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "6be43f1d6c5f6d722a32cd746118fb7d4b98277717bffd41a3a1ad4ba74a5834",
+      "bytes": 251824,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-v6vl9r7m/native-mlo",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml\n[obj] output=/tmp/ml-array-equality-v6vl9r7m/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/000_array_equality.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-v6vl9r7m/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/000_array_equality.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-v6vl9r7m/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-v6vl9r7m/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "python",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "61bf272505202301e69edef4e5c04cd6308733a7a610de34bb237735f08ecc1f",
+      "bytes": 112576,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-s1jrulmw/python",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-s1jrulmw/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY THREADS [OK] workers=4 comparisons=129\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "61bf272505202301e69edef4e5c04cd6308733a7a610de34bb237735f08ecc1f",
+      "bytes": 112576,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-s1jrulmw/native-direct",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-s1jrulmw/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY THREADS [OK] workers=4 comparisons=129\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "61bf272505202301e69edef4e5c04cd6308733a7a610de34bb237735f08ecc1f",
+      "bytes": 112576,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-s1jrulmw/native-mlo",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": true,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml\n[obj] output=/tmp/ml-array-equality-s1jrulmw/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-s1jrulmw/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/000_array_equality_threads.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-s1jrulmw/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-s1jrulmw/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/000_array_equality_threads.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-s1jrulmw/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-s1jrulmw/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY THREADS [OK] workers=4 comparisons=129\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "dc177bca84bb0f72ce74e1046442b91c054b82b70e52a82e465f8d4083690e5c",
+      "bytes": 106496,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-vlzikdvq/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-vlzikdvq/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "dc177bca84bb0f72ce74e1046442b91c054b82b70e52a82e465f8d4083690e5c",
+      "bytes": 106496,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-vlzikdvq/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-vlzikdvq/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "dc177bca84bb0f72ce74e1046442b91c054b82b70e52a82e465f8d4083690e5c",
+      "bytes": 106496,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-vlzikdvq/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml\n[obj] output=/tmp/ml-array-equality-vlzikdvq/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-vlzikdvq/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/000_array_equality_threads.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-vlzikdvq/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-vlzikdvq/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/000_array_equality_threads.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-vlzikdvq/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-vlzikdvq/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-vlzikdvq/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "python",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "a2032e89729b351bea009226a4d1b572983f97b7c7b48fc31351e10998cf2df3",
+      "bytes": 112528,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-hqrwzrjo/python",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-hqrwzrjo/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "a2032e89729b351bea009226a4d1b572983f97b7c7b48fc31351e10998cf2df3",
+      "bytes": 112528,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-hqrwzrjo/native-direct",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-hqrwzrjo/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 1,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "target": "minux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "a2032e89729b351bea009226a4d1b572983f97b7c7b48fc31351e10998cf2df3",
+      "bytes": 112528,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-hqrwzrjo/native-mlo",
+        "--target",
+        "minux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "8m",
+        "--heap-commit",
+        "8m"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml\n[obj] output=/tmp/ml-array-equality-hqrwzrjo/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/000_array_equality_threads.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-hqrwzrjo/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/000_array_equality_threads.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-hqrwzrjo/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-hqrwzrjo/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "python",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "37e6844c0cdaef2123c9243c2ad8e8c238dc5e7a31e843a260e6a7541431fd3f",
+      "bytes": 100288,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-mx63wdmm/python",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-mx63wdmm/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY SEMANTICS comparisons=484 true=46 checksum=339253559\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "37e6844c0cdaef2123c9243c2ad8e8c238dc5e7a31e843a260e6a7541431fd3f",
+      "bytes": 100288,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-mx63wdmm/native-direct",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-mx63wdmm/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY SEMANTICS comparisons=484 true=46 checksum=339253559\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "37e6844c0cdaef2123c9243c2ad8e8c238dc5e7a31e843a260e6a7541431fd3f",
+      "bytes": 100288,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-mx63wdmm/native-mlo",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline"
+      ],
+      "executed": true,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml\n[obj] output=/tmp/ml-array-equality-mx63wdmm/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-mx63wdmm/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/000_array_equality_semantics.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/1_main.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-mx63wdmm/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-mx63wdmm/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/000_array_equality_semantics.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/1_main.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-mx63wdmm/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-mx63wdmm/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n",
+      "exit_code": 0,
+      "stdout": "ARRAY EQUALITY SEMANTICS comparisons=484 true=46 checksum=339253559\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "bad0d5a91eda13bdedd2aa8193f9b905d5e7a31ea9be417c79a1eb21f164edb0",
+      "bytes": 93696,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-4qtndg0w/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-4qtndg0w/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "bad0d5a91eda13bdedd2aa8193f9b905d5e7a31ea9be417c79a1eb21f164edb0",
+      "bytes": 93696,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-4qtndg0w/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-4qtndg0w/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 2,
+      "fixture": "array_equality_semantics.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "0be2661e72c123b7e2382726a2511a9e4cfb0333586f8c36018801a8bd8d4db9",
+      "sha256": "bad0d5a91eda13bdedd2aa8193f9b905d5e7a31ea9be417c79a1eb21f164edb0",
+      "bytes": 93696,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml",
+        "/tmp/ml-array-equality-4qtndg0w/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_semantics.ml\n[obj] output=/tmp/ml-array-equality-4qtndg0w/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-4qtndg0w/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/000_array_equality_semantics.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/1_main.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-4qtndg0w/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-4qtndg0w/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/000_array_equality_semantics.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/1_main.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-4qtndg0w/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-4qtndg0w/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-4qtndg0w/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "python",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "d329f7e3f75a3ab755b80f0702ebbb7a8e955202d954155588e445c90fdcb615",
+      "bytes": 182320,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-27bxw7yd/python",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-27bxw7yd/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "NUMERIC NAN NORMALIZATION [OK]\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "d329f7e3f75a3ab755b80f0702ebbb7a8e955202d954155588e445c90fdcb615",
+      "bytes": 182320,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-27bxw7yd/native-direct",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-27bxw7yd/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n",
+      "exit_code": 0,
+      "stdout": "NUMERIC NAN NORMALIZATION [OK]\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "linux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "d329f7e3f75a3ab755b80f0702ebbb7a8e955202d954155588e445c90fdcb615",
+      "bytes": 182320,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-27bxw7yd/native-mlo",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline"
+      ],
+      "executed": true,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml\n[obj] output=/tmp/ml-array-equality-27bxw7yd/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-27bxw7yd/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/000_numeric_nan_normalization.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/1_check.mlo\n[obj] wrote /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/2_genericMod.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/3_support.mlo\n[phase] object emission complete\n[obj] objects=4\nOK: wrote 4 canonical object files to /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-27bxw7yd/tmp/native-mlo\n[phase] linking\n[link] objects=4 output=/tmp/ml-array-equality-27bxw7yd/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/4: /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/000_numeric_nan_normalization.mlo\n[link] scan object 2/4: /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/1_check.mlo\n[link] scan object 3/4: /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/2_genericMod.mlo\n[link] scan object 4/4: /tmp/ml-array-equality-27bxw7yd/tmp/native-mlo/3_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-27bxw7yd/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n",
+      "exit_code": 0,
+      "stdout": "NUMERIC NAN NORMALIZATION [OK]\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "88af7d22791214ce11d693b1f61b769012b2ead6487ebb1f432f646984d40a42",
+      "bytes": 171008,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-6dsjtbiz/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-6dsjtbiz/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "88af7d22791214ce11d693b1f61b769012b2ead6487ebb1f432f646984d40a42",
+      "bytes": 171008,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-6dsjtbiz/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-6dsjtbiz/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 3,
+      "fixture": "numeric_nan_normalization.ml",
+      "flags": [],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "sha256": "88af7d22791214ce11d693b1f61b769012b2ead6487ebb1f432f646984d40a42",
+      "bytes": 171008,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml",
+        "/tmp/ml-array-equality-6dsjtbiz/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/numeric_nan_normalization.ml\n[obj] output=/tmp/ml-array-equality-6dsjtbiz/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/000_numeric_nan_normalization.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/1_check.mlo\n[obj] wrote /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/2_genericMod.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/3_support.mlo\n[phase] object emission complete\n[obj] objects=4\nOK: wrote 4 canonical object files to /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo\n[phase] linking\n[link] objects=4 output=/tmp/ml-array-equality-6dsjtbiz/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/4: /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/000_numeric_nan_normalization.mlo\n[link] scan object 2/4: /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/1_check.mlo\n[link] scan object 3/4: /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/2_genericMod.mlo\n[link] scan object 4/4: /tmp/ml-array-equality-6dsjtbiz/tmp/native-mlo/3_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-6dsjtbiz/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-6dsjtbiz/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 4,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "f57f132c5fbd08789dea53ef52749adc1fb5e470213c3d5d2c1589ce70c00499",
+      "bytes": 258048,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-guwiy2re/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-guwiy2re/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 4,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "f57f132c5fbd08789dea53ef52749adc1fb5e470213c3d5d2c1589ce70c00499",
+      "bytes": 258048,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-guwiy2re/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-guwiy2re/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 4,
+      "fixture": "array_equality.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "47372e986468f49e818122608a572524186766d1b733bb27bc02d5d71dc6be92",
+      "sha256": "f57f132c5fbd08789dea53ef52749adc1fb5e470213c3d5d2c1589ce70c00499",
+      "bytes": 258048,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml",
+        "/tmp/ml-array-equality-guwiy2re/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality.ml\n[obj] output=/tmp/ml-array-equality-guwiy2re/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-guwiy2re/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/000_array_equality.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-guwiy2re/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-guwiy2re/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-guwiy2re/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/000_array_equality.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-guwiy2re/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-guwiy2re/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-guwiy2re/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 5,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "6c80e083e163c517d90300f166d250819616cfe0b39187b750a5f5ec95cf2e2b",
+      "bytes": 111616,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-j63q00x5/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-j63q00x5/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 5,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "6c80e083e163c517d90300f166d250819616cfe0b39187b750a5f5ec95cf2e2b",
+      "bytes": 111616,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-j63q00x5/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-j63q00x5/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 5,
+      "fixture": "array_equality_threads.ml",
+      "flags": [
+        "--gc-concurrent"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "152687d29c2df5ed51b5ebc731ff29ca56c341269849cee4a2c2760547f24efa",
+      "sha256": "6c80e083e163c517d90300f166d250819616cfe0b39187b750a5f5ec95cf2e2b",
+      "bytes": 111616,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml",
+        "/tmp/ml-array-equality-j63q00x5/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--gc-concurrent"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_threads.ml\n[obj] output=/tmp/ml-array-equality-j63q00x5/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-j63q00x5/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/000_array_equality_threads.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-j63q00x5/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-j63q00x5/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-j63q00x5/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/000_array_equality_threads.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-j63q00x5/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-j63q00x5/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-j63q00x5/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "linux-x64",
+      "compiler": "python",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "bc806b1e0f1c9ef7c5014fc5059e4d6158f7f6ccbff706875cd2c21e48cff5e5",
+      "bytes": 100256,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-1r4pz4i3/python",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-1r4pz4i3/python (native x64 ELF, MiniLang Python compiler 1.3.13)\n",
+      "exit_code": 1,
+      "stdout": "ARRAY EQUALITY entering exhausted workspace\nERROR: out of memory (MiniLang heap exhausted)\nrequested=4104\nreserved=1048576\ncommitted=1048576\nused=1048464\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-direct",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "bc806b1e0f1c9ef7c5014fc5059e4d6158f7f6ccbff706875cd2c21e48cff5e5",
+      "bytes": 100256,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-1r4pz4i3/native-direct",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": true,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-1r4pz4i3/native-direct (native x64 ELF, MiniLang self-hosted compiler 1.3.13)\n",
+      "exit_code": 1,
+      "stdout": "ARRAY EQUALITY entering exhausted workspace\nERROR: out of memory (MiniLang heap exhausted)\nrequested=4104\nreserved=1048576\ncommitted=1048576\nused=1048464\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "linux-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "bc806b1e0f1c9ef7c5014fc5059e4d6158f7f6ccbff706875cd2c21e48cff5e5",
+      "bytes": 100256,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-1r4pz4i3/native-mlo",
+        "--target",
+        "linux-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": true,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml\n[obj] output=/tmp/ml-array-equality-1r4pz4i3/native-mlo\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/000_array_equality_exhaustion.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-1r4pz4i3/native-mlo\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/000_array_equality_exhaustion.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-1r4pz4i3/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\nOK: wrote /tmp/ml-array-equality-1r4pz4i3/native-mlo (native x64 ELF, MiniLang self-hosted compiler 1.3.13, MLO pipeline)\n",
+      "exit_code": 1,
+      "stdout": "ARRAY EQUALITY entering exhausted workspace\nERROR: out of memory (MiniLang heap exhausted)\nrequested=4104\nreserved=1048576\ncommitted=1048576\nused=1048464\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "windows-x64",
+      "compiler": "python",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "76d50572a95cb5582babdfbfb190a50273cec276cc84653980b651440d88527e",
+      "bytes": 91136,
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/mlc_win64.py",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-xq_owhf2/python.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-xq_owhf2/python.exe (native x64 PE, MiniLang Python compiler 1.3.13)\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-direct",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "76d50572a95cb5582babdfbfb190a50273cec276cc84653980b651440d88527e",
+      "bytes": 91136,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-xq_owhf2/native-direct.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--no-object-pipeline",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": false,
+      "compile_log": "OK: wrote /tmp/ml-array-equality-xq_owhf2/native-direct.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    },
+    {
+      "case": 6,
+      "fixture": "array_equality_exhaustion.ml",
+      "flags": [
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "target": "windows-x64",
+      "compiler": "native-mlo",
+      "source_sha256": "853cb4ec99340ef0dd102fc399d8fbb29664a93c12ec773cb6cba6ba24df38bf",
+      "sha256": "76d50572a95cb5582babdfbfb190a50273cec276cc84653980b651440d88527e",
+      "bytes": 91136,
+      "command": [
+        "/tmp/wusel-array-compiler-final",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml",
+        "/tmp/ml-array-equality-xq_owhf2/native-mlo.exe",
+        "--target",
+        "windows-x64",
+        "-I",
+        "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy",
+        "--object-pipeline",
+        "--heap-reserve",
+        "1m",
+        "--heap-commit",
+        "1m",
+        "--no-gc-periodic"
+      ],
+      "executed": false,
+      "compile_log": "[phase] emitting objects in fresh compiler process\n[phase] compile\n[obj] input=/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy/tests/array_equality_exhaustion.ml\n[obj] output=/tmp/ml-array-equality-xq_owhf2/native-mlo.exe\n[phase] loading modules\n[phase] collecting extern declarations\n[phase] initializing code generator\n[phase] planning object pipeline\n[obj] object dir=/tmp/ml-array-equality-xq_owhf2/tmp/native-mlo\n[phase] emitting canonical entry object\n[obj] wrote /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/000_array_equality_exhaustion.mlo\n[phase] emitting canonical function objects\n[obj] wrote /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/1_chain.mlo\n[phase] emitting canonical support tail\n[phase] emitting canonical extern stubs\n[phase] emitting canonical runtime helpers\n[phase] serializing canonical support tail\n[obj] wrote /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/2_support.mlo\n[phase] object emission complete\n[obj] objects=3\nOK: wrote 3 canonical object files to /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo\n[phase] link object directory\n[link] object dir=/tmp/ml-array-equality-xq_owhf2/tmp/native-mlo\n[phase] linking\n[link] objects=3 output=/tmp/ml-array-equality-xq_owhf2/native-mlo.exe\n[link] scanning section sizes, labels and imports\n[link] scan object 1/3: /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/000_array_equality_exhaustion.mlo\n[link] scan object 2/3: /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/1_chain.mlo\n[link] scan object 3/3: /tmp/ml-array-equality-xq_owhf2/tmp/native-mlo/2_support.mlo\n[link] allocating final section buffers\n[link] PE layout ready\n[link] labels resolved\n[link] applying patches\n[link] patches applied\n[link] writing executable /tmp/ml-array-equality-xq_owhf2/native-mlo.exe\nOK: wrote /tmp/ml-array-equality-xq_owhf2/native-mlo.exe (native x64 PE, MiniLang self-hosted compiler 1.3.13)\n"
+    }
+  ],
+  "baseline_semantics": {
+    "compiler": "/workspace/scratch/41e2ea78be25/runtime-deps/MiniLangCompilerPy-lod-baseline/mlc_win64.py",
+    "stdout": "ARRAY EQUALITY SEMANTICS comparisons=484 true=46 checksum=339253559\n",
+    "version": "MiniLang Compiler 1.3.12"
+  },
+  "status": "passed",
+  "executed_images": 15,
+  "post_upstream_integration_recheck": {
+    "purpose": "Preserve concurrent upstream default-argument stack fix and verify equality images are unchanged",
+    "python_parent": "9c7fe12428124c97f16dfbab430ffaa1f143a1cb",
+    "python_codegen_stmt_sha256": "bcc2f6f7536b9949e6bbab9cada671ddd5ffa94c9773d598b122a37673c1c72e",
+    "equality_emitter_sha256": "5aa4610e47665754ff7b2f325b3b387c2e5895a416439c7ee1919fca85a349b3",
+    "checks": [
+      {
+        "fixture": "array_equality.ml",
+        "target": "linux-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "5160d5fe41d59963eb2452553347f679baa958997e9f965ad9d7b4ea92ed0a9a",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality.ml",
+        "target": "windows-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "54066d72dc6afe3ae5c727bf5aa90dd2f4f97bc7d298e976fa1b0fbbb1c78ed8",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality.ml",
+        "target": "minux-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "6be43f1d6c5f6d722a32cd746118fb7d4b98277717bffd41a3a1ad4ba74a5834",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_threads.ml",
+        "target": "linux-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "61bf272505202301e69edef4e5c04cd6308733a7a610de34bb237735f08ecc1f",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_threads.ml",
+        "target": "windows-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "dc177bca84bb0f72ce74e1046442b91c054b82b70e52a82e465f8d4083690e5c",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_threads.ml",
+        "target": "minux-x64",
+        "flags": [
+          "--heap-reserve",
+          "8m",
+          "--heap-commit",
+          "8m"
+        ],
+        "sha256": "a2032e89729b351bea009226a4d1b572983f97b7c7b48fc31351e10998cf2df3",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_semantics.ml",
+        "target": "linux-x64",
+        "flags": [],
+        "sha256": "37e6844c0cdaef2123c9243c2ad8e8c238dc5e7a31e843a260e6a7541431fd3f",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_semantics.ml",
+        "target": "windows-x64",
+        "flags": [],
+        "sha256": "bad0d5a91eda13bdedd2aa8193f9b905d5e7a31ea9be417c79a1eb21f164edb0",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "numeric_nan_normalization.ml",
+        "target": "linux-x64",
+        "flags": [],
+        "sha256": "d329f7e3f75a3ab755b80f0702ebbb7a8e955202d954155588e445c90fdcb615",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "numeric_nan_normalization.ml",
+        "target": "windows-x64",
+        "flags": [],
+        "sha256": "88af7d22791214ce11d693b1f61b769012b2ead6487ebb1f432f646984d40a42",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality.ml",
+        "target": "windows-x64",
+        "flags": [
+          "--gc-concurrent"
+        ],
+        "sha256": "f57f132c5fbd08789dea53ef52749adc1fb5e470213c3d5d2c1589ce70c00499",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_threads.ml",
+        "target": "windows-x64",
+        "flags": [
+          "--gc-concurrent"
+        ],
+        "sha256": "6c80e083e163c517d90300f166d250819616cfe0b39187b750a5f5ec95cf2e2b",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_exhaustion.ml",
+        "target": "linux-x64",
+        "flags": [
+          "--heap-reserve",
+          "1m",
+          "--heap-commit",
+          "1m",
+          "--no-gc-periodic"
+        ],
+        "sha256": "bc806b1e0f1c9ef7c5014fc5059e4d6158f7f6ccbff706875cd2c21e48cff5e5",
+        "byte_identical_to_validated_matrix": true
+      },
+      {
+        "fixture": "array_equality_exhaustion.ml",
+        "target": "windows-x64",
+        "flags": [
+          "--heap-reserve",
+          "1m",
+          "--heap-commit",
+          "1m",
+          "--no-gc-periodic"
+        ],
+        "sha256": "76d50572a95cb5582babdfbfb190a50273cec276cc84653980b651440d88527e",
+        "byte_identical_to_validated_matrix": true
+      }
+    ],
+    "elapsed_seconds": 2.1205387115478516,
+    "status": "passed"
+  }
+}

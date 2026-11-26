@@ -2975,9 +2975,12 @@ class CodegenRuntime:
         - arrays compare by length and element-wise equality (deep, supports nesting)
         - other heap objects fall back to identity (already handled by fast-path)
 
-        Implementation note:
-        We implement deep array equality *iteratively* using an explicit pair-stack in the
-        function's stack frame to avoid recursion pitfalls and to be robust for nested arrays.
+        Array continuations stream one element at a time. A collision-checked
+        pair memo prevents both cyclic loops and repeated shared-subgraph work.
+        The first 32 array pairs use inline storage; larger traversals grow a
+        rooted managed array containing continuations and a half-full hash
+        table. Every stored index is tagged and every visited node is traced.
+        Storage is O(distinct array pairs), not O(array width) for flat values.
         """
         a = self.asm
         a.mark('fn_val_eq')
@@ -2991,47 +2994,58 @@ class CodegenRuntime:
         a.push_r14()
         a.push_r15()
 
-        # Frame: shadow(0x20) + align(0x8) + pair stack (0x1000)
-        PAIR_STACK_BYTES = 0x1000
-        FRAME_BYTES = 0x28 + PAIR_STACK_BYTES
+        self.used_helpers.add('fn_alloc')
+        # Seven pushes align RSP to 16 bytes. Keep shadow space separate from
+        # the spill-only GC record and five rooted values at +0x30..+0x50.
+        # Continuations contain array1, array2, next index and length (32 bytes).
+        INLINE_BYTES = 32 * 32
+        FRAME_BYTES = 0xA0 + 2 * INLINE_BYTES
         a.sub_rsp_imm32(FRAME_BYTES)
-
-        # r14 = pair_stack_base = rsp + 0x28
-        a.lea_r64_membase_disp("r14", "rsp", 40)  # lea r14,[rsp+0x28]
-        # r13 = pair_stack_top = r14
-        a.mov_r64_r64("r13", "r14")  # mov r13,r14
-        # r15 = pair_stack_end = r14 + PAIR_STACK_BYTES
-        a.mov_r64_r64("r15", "r14")  # mov r15,r14
-        a.add_r64_imm("r15", PAIR_STACK_BYTES)  # add r15, imm32
-
-        # push initial pair (RCX, RDX) onto stack
-        a.mov_membase_disp_r64("r13", 0, "rcx")  # mov [r13+0],rcx
-        a.mov_membase_disp_r64("r13", 8, "rdx")  # mov [r13+8],rdx
-        a.add_r64_imm("r13", 16)  # add r13,16
+        a.mov_membase_disp_imm32("rsp", 0x20, 0, qword=True)
+        a.mov_membase_disp_imm32("rsp", 0x28, 0, qword=True)
+        a.mov_membase_disp_r64("rsp", 0x40, "rcx")
+        a.mov_membase_disp_r64("rsp", 0x48, "rdx")
+        a.mov_membase_disp_imm32("rsp", 0x50, enc_void(), qword=True)
+        a.mov_membase_disp_imm32("rsp", 0x58, 0, qword=True)
+        a.lea_r64_membase_disp("r14", "rsp", 0xA0)
+        a.mov_r64_r64("r13", "r14")
+        a.lea_r64_membase_disp("r15", "r14", INLINE_BYTES)
+        a.mov_r64_r64("r10", "rcx")
+        a.mov_r64_r64("r11", "rdx")
 
         lid = self.new_label_id()
         l_loop = f"vale_it_loop_{lid}"
-        l_pop = f"vale_it_pop_{lid}"
+        l_pair = f"vale_it_pair_{lid}"
         l_false = f"vale_it_false_{lid}"
         l_true = f"vale_it_true_{lid}"
         l_done = f"vale_it_done_{lid}"
         l_ptr = f"vale_it_ptr_{lid}"
         l_num = f"vale_it_num_{lid}"
-        l_arr_push = f"vale_it_arr_push_{lid}"
-        l_cont = f"vale_it_cont_{lid}"
         l_enum = f"vale_it_enum_{lid}"
 
+        a.jmp(l_pair)
         a.mark(l_loop)
-        # while top != base
-        a.cmp_r64_r64("r13", "r14")  # cmp r13,r14
+        # Resume the innermost array. Its index advances before visiting a
+        # child, retaining the ancestor pair until all siblings were checked.
+        a.cmp_r64_r64("r13", "r14")
         a.jcc('e', l_true)
+        a.mov_r64_membase_disp("rcx", "r13", -16)
+        a.mov_r64_membase_disp("rax", "r13", -8)
+        a.cmp_r64_r64("rcx", "rax")
+        a.jcc('b', f"vale_it_element_{lid}")
+        a.sub_r64_imm("r13", 32)
+        a.jmp(l_loop)
+        a.mark(f"vale_it_element_{lid}")
+        a.mov_r64_membase_disp("rsi", "r13", -32)
+        a.mov_r64_membase_disp("rdi", "r13", -24)
+        # Encoded index i*8+TAG_INT addresses element i with displacement 7;
+        # it remains a valid non-pointer if collection scans a spilled frame.
+        a.mov_r64_mem_bis("r10", "rsi", "rcx", 1, 8 - TAG_INT)
+        a.mov_r64_mem_bis("r11", "rdi", "rcx", 1, 8 - TAG_INT)
+        a.add_r64_imm("rcx", 8)
+        a.mov_membase_disp_r64("r13", -16, "rcx")
 
-        a.mark(l_pop)
-        a.sub_r64_imm("r13", 16)  # sub r13,16
-        # r10 = v1, r11 = v2
-        a.mov_r64_membase_disp("r10", "r13", 0)  # mov r10,[r13+0]
-        a.mov_r64_membase_disp("r11", "r13", 8)  # mov r11,[r13+8]
-
+        a.mark(l_pair)
         # Fast path: identical tagged values -> continue
         a.cmp_r64_r64("r10", "r11")  # cmp r10,r11
         a.jcc('e', l_loop)
@@ -3106,41 +3120,180 @@ class CodegenRuntime:
         a.test_r32_r32("ebx", "ebx")  # test ebx,ebx
         a.jcc('e', l_loop)
 
-        # rsi = base1, rdi = base2
-        a.lea_r64_membase_disp("rsi", "r10", 8)  # lea rsi,[r10+8]
-        a.lea_r64_membase_disp("rdi", "r11", 8)  # lea rdi,[r11+8]
-        # r9d = i = 0
-        # NOTE: rsp/r12 cannot be used as SIB index (index field == 4 encodes "no index").
-        # Use r9 for the loop index to allow base+index*8 addressing.
-        a.xor_r32_r32("r9d", "r9d")  # xor r9d,r9d
+        # A flat array needs neither a hash initialization nor allocation.
+        # Initialize the pair memo lazily on the first distinct nested pair.
+        a.mov_r64_membase_disp("rax", "rsp", 0x58)
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ne', f"vale_it_memo_{lid}")
+        a.mov_membase_disp_imm32("rsp", 0x58, 1, qword=True)
+        a.jmp(f"vale_it_push_{lid}")
+        a.mark(f"vale_it_memo_{lid}")
+        a.mov_r64_membase_disp("rax", "rsp", 0x20)
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ne', f"vale_it_lookup_{lid}")
+        a.mov_membase_disp_r64("rsp", 0x30, "r10")
+        a.mov_membase_disp_r64("rsp", 0x38, "r11")
+        a.mov_r64_r64("rdi", "r15")
+        a.mov_r64_r64("rcx", "r15")
+        a.sub_r64_r64("rcx", "r14")
+        a.lea_r64_membase_disp("r8", "rcx", -16)
+        a.mov_membase_disp_r64("rsp", 0x78, "r8")
+        a.shr_r64_imm8("rcx", 3)
+        a.mov_rax_imm64(enc_void())
+        a.rep_stosq()
+        a.mov_r64_membase_disp("r10", "r14", 0)
+        a.mov_r64_membase_disp("r11", "r14", 8)
+        a.call(f"vale_it_hash_{lid}")
+        a.mov_mem_bis_r64("r15", "r9", 1, 0, "r10")
+        a.mov_mem_bis_r64("r15", "r9", 1, 8, "r11")
+        a.mov_membase_disp_imm32("rsp", 0x20, 1, qword=True)
+        a.mov_r64_membase_disp("r10", "rsp", 0x30)
+        a.mov_r64_membase_disp("r11", "rsp", 0x38)
 
-        l_ap_loop = f"vale_it_ap_loop_{lid}"
-        l_ap_done = f"vale_it_ap_done_{lid}"
-        a.mark(l_ap_loop)
-        a.cmp_r32_r32("r9d", "ebx")  # cmp r9d,ebx
-        a.jcc('ge', l_ap_done)
+        # Every collision checks both pointers. Completed pairs remain memoized
+        # too: any later mismatch aborts the entire comparison, and retaining
+        # these pairs prevents exponential work on diamond-shaped shared DAGs.
+        a.mark(f"vale_it_lookup_{lid}")
+        a.mov_r64_membase_disp("r8", "rsp", 0x78)
+        a.call(f"vale_it_hash_{lid}")
+        a.mark(f"vale_it_probe_{lid}")
+        a.mov_r64_mem_bis("rax", "r15", "r9", 1, 0)
+        a.cmp_r64_imm("rax", enc_void())
+        a.jcc('e', f"vale_it_capacity_{lid}")
+        a.cmp_r64_r64("rax", "r10")
+        a.jcc('ne', f"vale_it_collision_{lid}")
+        a.mov_r64_mem_bis("rax", "r15", "r9", 1, 8)
+        a.cmp_r64_r64("rax", "r11")
+        a.jcc('e', l_loop)
+        a.mark(f"vale_it_collision_{lid}")
+        a.add_r64_imm("r9", 16)
+        a.and_r64_r64("r9", "r8")
+        a.jmp(f"vale_it_probe_{lid}")
 
-        # Check stack capacity: if top+16 > end -> false
-        a.mov_r64_r64("rax", "r13")  # mov rax,r13
-        a.add_r64_imm("rax", 16)  # add rax,16
-        a.cmp_r64_r64("rax", "r15")  # cmp rax,r15
-        # Addresses should be compared as *unsigned*.
-        a.jcc('a', l_false)
-
-        # load elements into rax (v1) and rdx (v2)
-        # NOTE: must use SIB addressing (base + index*scale) for array element access.
-        a.mov_r64_mem_bis("rax", "rsi", "r9", 8, 0)  # mov rax,[rsi+r9*8]
-        a.mov_r64_mem_bis("rdx", "rdi", "r9", 8, 0)  # mov rdx,[rdi+r9*8]
-
-        # push pair (rax, rdx)
-        a.mov_membase_disp_r64("r13", 0, "rax")  # mov [r13+0],rax
-        a.mov_membase_disp_r64("r13", 8, "rdx")  # mov [r13+8],rdx
-        a.add_r64_imm("r13", 16)  # add r13,16
-
-        a.inc_r32("r9d")  # inc r9d
-        a.jmp(l_ap_loop)
-
-        a.mark(l_ap_done)
+        # Capacity is measured in distinct pairs, keeping the memo at <= 50%
+        # load. Active continuation depth can never exceed the pair count.
+        a.mark(f"vale_it_capacity_{lid}")
+        a.mov_r64_membase_disp("rax", "rsp", 0x58)
+        a.shl_rax_imm8(5)
+        a.mov_r64_r64("rcx", "r15")
+        a.sub_r64_r64("rcx", "r14")
+        a.cmp_r64_r64("rax", "rcx")
+        a.jcc('b', f"vale_it_insert_{lid}")
+        a.mov_membase_disp_r64("rsp", 0x30, "r10")
+        a.mov_membase_disp_r64("rsp", 0x38, "r11")
+        a.mov_membase_disp_r64("rsp", 0x98, "rbx")
+        a.mov_r64_membase_disp("rax", "rsp", 0x28)
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ne', f"vale_it_rooted_{lid}")
+        # On the first spill, publish all initialized inline pairs as precise
+        # roots. Unused continuation slots are cleared before the record is
+        # linked; raw indices in record/hash metadata never become GC values.
+        a.mov_r64_r64("rdi", "r13")
+        a.mov_r64_r64("rcx", "r15")
+        a.sub_r64_r64("rcx", "r13")
+        a.shr_r64_imm8("rcx", 3)
+        a.mov_rax_imm64(enc_void())
+        a.rep_stosq()
+        self.emit_gc_push_root_frame(0x60, 0x30, 0x58)
+        self.emit_gc_push_root_frame(0x80, 0xA0, 0xA0 + 2 * INLINE_BYTES)
+        a.mov_membase_disp_imm32("rsp", 0x28, 1, qword=True)
+        a.mark(f"vale_it_rooted_{lid}")
+        # Double both banks. The workspace is a real traced array: all visited
+        # arrays are independently retained, even after their frame completes.
+        a.mov_r64_r64("rcx", "r15")
+        a.sub_r64_r64("rcx", "r14")
+        a.add_r64_r64("rcx", "rcx")
+        a.jcc('b', f"vale_it_exhausted_{lid}")
+        a.add_r64_r64("rcx", "rcx")
+        a.jcc('b', f"vale_it_exhausted_{lid}")
+        # OBJ_ARRAY's length field is u32; refuse an unrepresentable workspace
+        # through the fatal resource path rather than truncate its root span.
+        a.mov_r64_r64("rax", "rcx")
+        a.shr_r64_imm8("rax", 35)
+        a.test_r64_r64("rax", "rax")
+        a.jcc('ne', f"vale_it_exhausted_{lid}")
+        a.add_r64_imm("rcx", 8)
+        a.jcc('b', f"vale_it_exhausted_{lid}")
+        a.call('fn_alloc')
+        a.mov_membase_disp_imm32("rax", 0, OBJ_ARRAY, qword=False)
+        a.mov_membase_disp_imm32("rax", 4, 0, qword=False)
+        a.lea_r64_membase_disp("r12", "rax", 8)
+        a.mov_r64_r64("rdi", "r12")
+        a.mov_r64_r64("rcx", "r15")
+        a.sub_r64_r64("rcx", "r14")
+        a.shr_r64_imm8("rcx", 1)
+        a.mov_rax_imm64(enc_void())
+        a.rep_stosq()
+        # Use the 64-bit REP count directly. The generic byte-copy helper has
+        # a u32 byte-count contract, smaller than a representable workspace.
+        a.mov_r64_r64("rdi", "r12")
+        a.mov_r64_r64("rsi", "r14")
+        a.mov_r64_r64("rcx", "r13")
+        a.sub_r64_r64("rcx", "r14")
+        a.shr_r64_imm8("rcx", 3)
+        a.rep_movsq()
+        # Rehash into the larger bank; copying bucket offsets would silently
+        # break collision chains when the mask changes.
+        a.mov_r64_r64("rbx", "r15")
+        a.sub_r64_r64("rbx", "r14")
+        a.add_r64_r64("rbx", "rbx")
+        a.lea_r64_membase_disp("r8", "rbx", -16)
+        a.mov_membase_disp_r64("rsp", 0x78, "r8")
+        a.add_r64_r64("rbx", "r12")
+        a.mov_r64_r64("rsi", "r15")
+        a.mov_r64_r64("rdi", "r15")
+        a.sub_r64_r64("rdi", "r14")
+        a.add_r64_r64("rdi", "r15")
+        a.mark(f"vale_it_rehash_{lid}")
+        a.cmp_r64_r64("rsi", "rdi")
+        a.jcc('ae', f"vale_it_rehashed_{lid}")
+        a.mov_r64_membase_disp("r10", "rsi", 0)
+        a.cmp_r64_imm("r10", enc_void())
+        a.jcc('e', f"vale_it_rehash_next_{lid}")
+        a.mov_r64_membase_disp("r11", "rsi", 8)
+        a.call(f"vale_it_hash_{lid}")
+        a.mark(f"vale_it_rehash_probe_{lid}")
+        a.mov_r64_mem_bis("rax", "rbx", "r9", 1, 0)
+        a.cmp_r64_imm("rax", enc_void())
+        a.jcc('e', f"vale_it_rehash_store_{lid}")
+        a.add_r64_imm("r9", 16)
+        a.and_r64_r64("r9", "r8")
+        a.jmp(f"vale_it_rehash_probe_{lid}")
+        a.mark(f"vale_it_rehash_store_{lid}")
+        a.mov_mem_bis_r64("rbx", "r9", 1, 0, "r10")
+        a.mov_mem_bis_r64("rbx", "r9", 1, 8, "r11")
+        a.mark(f"vale_it_rehash_next_{lid}")
+        a.add_r64_imm("rsi", 16)
+        a.jmp(f"vale_it_rehash_{lid}")
+        a.mark(f"vale_it_rehashed_{lid}")
+        a.sub_r64_r64("r13", "r14")
+        a.add_r64_r64("r13", "r12")
+        a.mov_r64_r64("r15", "rbx")
+        a.mov_r64_r64("r14", "r12")
+        a.mov_r64_r64("rax", "r15")
+        a.sub_r64_r64("rax", "r14")
+        a.shr_r64_imm8("rax", 2)
+        a.mov_membase_disp_r32("r12", -4, "eax")
+        a.lea_r64_membase_disp("rax", "r12", -8)
+        a.mov_membase_disp_r64("rsp", 0x50, "rax")
+        a.mov_r64_membase_disp("rbx", "rsp", 0x98)
+        a.mov_r64_membase_disp("r10", "rsp", 0x30)
+        a.mov_r64_membase_disp("r11", "rsp", 0x38)
+        a.jmp(f"vale_it_lookup_{lid}")
+        a.mark(f"vale_it_insert_{lid}")
+        a.mov_mem_bis_r64("r15", "r9", 1, 0, "r10")
+        a.mov_mem_bis_r64("r15", "r9", 1, 8, "r11")
+        a.mov_r64_membase_disp("rax", "rsp", 0x58)
+        a.inc_r64("rax")
+        a.mov_membase_disp_r64("rsp", 0x58, "rax")
+        a.mark(f"vale_it_push_{lid}")
+        a.mov_membase_disp_r64("r13", 0, "r10")
+        a.mov_membase_disp_r64("r13", 8, "r11")
+        a.mov_membase_disp_imm32("r13", 16, enc_int(0), qword=True)
+        a.shl_r64_imm8("rbx", 3)
+        a.or_r64_imm("rbx", TAG_INT)
+        a.mov_membase_disp_r64("r13", 24, "rbx")
+        a.add_r64_imm("r13", 32)
         a.jmp(l_loop)
 
         # if type == OBJ_FLOAT
@@ -3254,6 +3407,12 @@ class CodegenRuntime:
         a.mov_rax_imm64(enc_bool(False))
 
         a.mark(l_done)
+        a.mov_r64_membase_disp("rcx", "rsp", 0x28)
+        a.test_r64_r64("rcx", "rcx")
+        a.jcc('e', f"vale_it_unrooted_{lid}")
+        self.emit_gc_pop_root_frame(0x80)
+        self.emit_gc_pop_root_frame(0x60)
+        a.mark(f"vale_it_unrooted_{lid}")
         a.add_rsp_imm32(FRAME_BYTES)
         a.pop_r15()
         a.pop_r14()
@@ -3263,6 +3422,36 @@ class CodegenRuntime:
         a.pop_reg("rsi")  # pop rsi
         a.pop_rbx()
         a.ret()
+
+        # Local non-allocating leaf: R10/R11 are an ordered pointer pair,
+        # R8 is a byte-offset mask, R9 receives a bucket offset. Mixing both
+        # pointers before masking avoids aligned/adjacent allocator clusters.
+        a.mark(f"vale_it_hash_{lid}")
+        a.mov_r64_r64("rax", "r10")
+        a.shr_r64_imm8("rax", 3)
+        a.imul_r64_r64_imm("rax", "rax", 0x45D9F3B)
+        a.mov_r64_r64("rdx", "r11")
+        a.shr_r64_imm8("rdx", 3)
+        a.xor_r64_r64("rax", "rdx")
+        a.mov_r64_r64("rdx", "rax")
+        a.shr_r64_imm8("rdx", 16)
+        a.xor_r64_r64("rax", "rdx")
+        a.imul_r64_r64_imm("rax", "rax", 0x45D9F3B)
+        a.mov_r64_r64("rdx", "rax")
+        a.shr_r64_imm8("rdx", 16)
+        a.xor_r64_r64("rax", "rdx")
+        a.shl_rax_imm8(4)
+        a.and_r64_r64("rax", "r8")
+        a.mov_r64_r64("r9", "rax")
+        a.ret()
+
+        # Resource exhaustion must not masquerade as a legitimate inequality.
+        # Normal exhaustion uses fn_alloc's diagnostic/fatal path; this guard
+        # covers an impossible-to-represent doubled workspace size.
+        a.mark(f"vale_it_exhausted_{lid}")
+        a.mov_rcx_imm32(1)
+        a.call_rip_qword('iat_ExitProcess')
+        a.emit(bytes.fromhex('0f0b'))
 
     # ------------------------------------------------------------------
     # Program arguments (main(args))

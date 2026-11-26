@@ -18,6 +18,18 @@ All notable changes to the MiniLang compiler are documented here.
   idempotence and unchanged program output; run native Linux checks even when
   Wine is unavailable.
 
+## 1.3.13 - 2026-11-26
+
+- Replace the fixed 256-pair equality stack with streaming array continuations
+  and a collision-checked pair memo. Flat arrays have constant workspace and
+  no comparison allocation; nested graphs grow traced storage as needed.
+- Terminate cyclic structural equality and avoid repeated shared-subgraph work.
+  Preserve existing scalar/string/object-identity semantics and late mismatches.
+- Publish all inline and spilled references across collection, including worker
+  comparisons, and retain the allocator's fatal OOM behavior on exhaustion.
+- Add width/depth/alias/cycle/GC regressions, bounded leaf-semantics parity,
+  cross-compiler target-byte checks and explicit deep-graph performance costs.
+
 ## 1.3.12 - 2026-11-26
 
 - Preserve the self-hosted compiler's native-thread safety paths when `Thread`

@@ -620,6 +620,8 @@ def test_linux_x64_target(*, name: str, mlc_runner: Path, tests_root: Path) -> T
         (tests_root / "decode_slice_fusion.ml", ["[OK] decode/slice fusion"], []),
         (tests_root / "decode_slice_threads.ml", ["[OK] decode/slice worker GC roots"], []),
         (tests_root / "ordered_comparison.ml", ["[OK] dynamic ordered comparisons"], []),
+        (tests_root / "array_equality.ml", ["ARRAY EQUALITY [OK]"], []),
+        (tests_root / "array_equality_threads.ml", ["ARRAY EQUALITY THREADS [OK]"], []),
         (tests_root / "native_packing_workload.ml", ["native pack 17"], []),
         (tests_root / "memory_management.ml", ["MEMORY MANAGEMENT [OK]"], []),
         (tests_root / "memory_heap_ceiling.ml", ["MEMORY CEILING [OK]"], [],

@@ -19,6 +19,9 @@ import tempfile
 
 
 FIXTURES = {
+    "array_equality": "ARRAY EQUALITY [OK]",
+    "array_equality_threads": "ARRAY EQUALITY THREADS [OK]",
+    "array_equality_semantics": "comparisons=484 true=46 checksum=339253559",
     "proven_check_elision": "PROVEN CHECK ELISION [OK]",
     "proven_check_elision_typeof": "PROVEN CHECK TYPEOF [OK]",
     "typed_numeric_temporary_inline": "TYPED NUMERIC TEMPORARY INLINE [OK]",

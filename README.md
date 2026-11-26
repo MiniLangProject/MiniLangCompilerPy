@@ -8,7 +8,12 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[source release notes](RELEASE_NOTES_1.3.12.md) and [changelog](CHANGELOG.md).
+[source release notes](RELEASE_NOTES_1.3.13.md) and [changelog](CHANGELOG.md).
+
+Version 1.3.13 fixes large-array equality, terminates cyclic comparisons and
+memoizes shared subgraphs with safely growing GC-traced storage. Flat arrays
+remain allocation-free; the source notes document the additional cost for deep
+graphs and the exact validation scope.
 
 Version 1.3.12 preserves NaN through optimized arithmetic and adds complete
 allocation/full-stop GC diagnostics. Rebuild the self-hosted compiler to use the
