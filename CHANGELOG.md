@@ -4,6 +4,8 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+## 1.3.14 - 2026-11-26
+
 - Resolve unqualified constructors and other symbols in their defining
   namespace/package before falling back to unrelated entry-module declarations.
   Preserve local, parameter and captured callable bindings, including stored

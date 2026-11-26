@@ -8,16 +8,19 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[source release notes](RELEASE_NOTES_1.3.13.md) and [changelog](CHANGELOG.md).
+[release notes](RELEASE_NOTES_1.3.14.md) and [changelog](CHANGELOG.md).
 
-Version 1.3.13 fixes large-array equality, terminates cyclic comparisons and
-memoizes shared subgraphs with safely growing GC-traced storage. Flat arrays
-remain allocation-free; the source notes document the additional cost for deep
-graphs and the exact validation scope.
+Version 1.3.14 fixes struct and function namespace identity, declaration-context
+defaults and outgoing argument frames. It also preserves resolved names through
+native builtin lowering and repairs formatter spacing, indentation and multiline
+literal preservation. The [namespace audit](docs/reports/STRUCT_NAMESPACE_IDENTITY_2026-11-26.md)
+documents the reproducer, silent field-layout failure and regression coverage.
 
-Version 1.3.12 preserves NaN through optimized arithmetic and adds complete
-allocation/full-stop GC diagnostics. Rebuild the self-hosted compiler to use the
-new source changes; previously published binary archives keep their recorded versions.
+This release also includes the source changes from 1.3.12 and 1.3.13: NaN-safe
+numeric normalization, complete allocation counts and full-stop GC diagnostics,
+native-thread reachability through defaults, and scalable, cycle-safe array equality.
+See the [1.3.14 release notes](RELEASE_NOTES_1.3.14.md) for behavior and validation
+scope; deep array comparisons have documented memory and performance costs.
 
 Version 1.3.11 makes `copyBytes` and `copyArray` safe for overlapping ranges and
 fixes constant string lengths to match the native UTF-8 byte-length contract.
@@ -138,7 +141,7 @@ also emit and link `.mlo` objects. Both compiler implementations are expected
 to produce identical target bytes for the same supported inputs, options and
 target. Version 1.3.2 restored this parity for the OOP regression programs;
 see the [parity guide](COMPILER_PARITY.md) and
-[1.3.11 verification matrix](docs/reports/release-1.3.11-version-matrix.json).
+[1.3.14 verification matrix](docs/reports/release-1.3.14-version-matrix.json).
 
 ## Documentation and development
 
