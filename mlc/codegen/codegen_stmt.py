@@ -407,6 +407,106 @@ class CodegenStmt:
     _FOR_UNROLL_MAX_TRIPS = 6
     _FOR_UNROLL_MAX_BODY_STMTS = 12
 
+    def _max_call_frame_arity(self, expr: Any, owner: Any = None, seen_defaults=None) -> int:
+        """Size calls before emission expands named/default argument lists.
+
+        Both targets use four register arguments for MiniLang calls. Reserving
+        only the source argument count lets later stack-argument stores (and
+        cleanup) overwrite caller locals. This scan must not mutate the AST or
+        depend on the previous function's lexical/codegen context.
+        """
+        if expr is None:
+            return 0
+        ml = self.ml
+        if seen_defaults is None:
+            seen_defaults = set()
+
+        def scan(child):
+            return self._max_call_frame_arity(child, owner, seen_defaults)
+
+        maximum = 0
+        if isinstance(expr, ml.Call):
+            maximum = len(expr.args)
+            functions = getattr(self, 'user_functions', {}) or {}
+            externs = getattr(self, 'extern_sigs', {}) or {}
+            structs = getattr(self, 'struct_fields', {}) or {}
+            declarations = {}
+            raw = _expr_to_qualname(ml, expr.callee)
+            if raw:
+                raw = self._apply_import_alias(raw)
+                owner_name = str(getattr(owner, 'name', '') or '')
+                qprefix = owner_name.rsplit('.', 1)[0] + '.' if '.' in owner_name else ''
+                filename = getattr(owner, '_filename', None) or getattr(expr, '_filename', None)
+                fprefix = (getattr(self, 'file_prefix_map', {}) or {}).get(filename, '')
+                candidates = {raw, qprefix + raw, fprefix + raw}
+                # Match the package suffix fallback used by name resolution.
+                # Module initializers/inline scans have no function owner, so
+                # conservatively retain matching namespace declarations too.
+                if '.' not in raw:
+                    prefix = fprefix or qprefix
+                    if prefix or owner is None:
+                        for pool in (functions, externs, structs):
+                            candidates.update(name for name in pool
+                                              if name.startswith(prefix) and name.endswith('.' + raw))
+                for name in candidates:
+                    declaration = functions.get(name)
+                    if declaration is not None:
+                        declarations[id(declaration)] = declaration
+                    signature = externs.get(name)
+                    if isinstance(signature, dict):
+                        maximum = max(maximum, len(signature.get('params', []) or []))
+                    ctor = (getattr(self, 'class_constructor_arities', {}) or {}).get(name)
+                    if ctor is not None:
+                        declaration = functions.get(f'__ml_ctor${name}${ctor[1]}')
+                        if declaration is not None:
+                            declarations[id(declaration)] = declaration
+                    # Ordinary struct defaults are also evaluated in the
+                    # caller, though struct fields themselves aren't ABI args.
+                    if name in structs:
+                        for default in (getattr(self, 'struct_field_defaults', {}) or {}).get(name, []):
+                            if default is not None and id(default) not in seen_defaults:
+                                seen_defaults.add(id(default))
+                                maximum = max(maximum, scan(default))
+                    if '.' in name:
+                        type_name, method_name = name.rsplit('.', 1)
+                        static_name = (getattr(self, 'struct_static_methods', {}) or {}).get(type_name, {}).get(method_name)
+                        declaration = functions.get(static_name)
+                        if declaration is not None:
+                            declarations[id(declaration)] = declaration
+            if isinstance(expr.callee, ml.Member):
+                # Receiver types are not yet flow-analyzed. Reserve the
+                # largest matching signature, which already includes `this`.
+                method_name = expr.callee.name
+                for methods in (getattr(self, 'struct_methods', {}) or {}).values():
+                    method = (methods or {}).get(method_name)
+                    if method is not None:
+                        maximum = max(maximum, len(expr.args) + 1)
+                        declaration = functions.get(method)
+                        if declaration is not None:
+                            declarations[id(declaration)] = declaration
+            for declaration in declarations.values():
+                maximum = max(maximum, len(declaration.params))
+                # Defaults are expanded/evaluated at the call site: keep the
+                # caller's resolution context for hidden calls as emission does.
+                # A visited set prevents cycles in recursive default graphs.
+                for default in getattr(declaration, 'param_defaults', []) or []:
+                    if default is not None and id(default) not in seen_defaults:
+                        seen_defaults.add(id(default))
+                        maximum = max(maximum, scan(default))
+            maximum = max(maximum, scan(expr.callee))
+
+        # Include wrappers introduced by lowering (e.g. TypeGuard), not just
+        # parser-level binary/index expressions. Nested function bodies are
+        # separate frames and are deliberately absent from these child lists.
+        for attr in ('left', 'right', 'expr', 'target', 'index', 'start', 'end', 'obj'):
+            child = getattr(expr, attr, None)
+            if child is not None and child is not expr:
+                maximum = max(maximum, scan(child))
+        for attr in ('args', 'items', 'values'):
+            for child in getattr(expr, attr, []) or []:
+                maximum = max(maximum, scan(child))
+        return maximum
+
     # ------------------------------------------------------------
     # Optimizer Step 4 helpers
     # ------------------------------------------------------------
@@ -6407,53 +6507,7 @@ class CodegenStmt:
         # We size the main stack frame dynamically based on maximum call arity.
 
         def max_calls_expr(e: Any) -> int:
-            m = 0
-            if isinstance(e, self.ml.Call):
-                call_arity = len(e.args)
-                try:
-                    ext_qn = _expr_to_qualname(ml, e.callee)
-                    if isinstance(ext_qn, str):
-                        ext_qn = self._apply_import_alias(ext_qn)
-                    ext_sig = (getattr(self, 'extern_sigs', {}) or {}).get(ext_qn)
-                    if isinstance(ext_sig, dict):
-                        call_arity = max(call_arity, len(list(ext_sig.get('params', []) or [])))
-                except Exception:
-                    pass
-                try:
-                    cal = e.callee
-                    if isinstance(cal, self.ml.Member):
-                        mname = getattr(cal, 'name', None)
-                        if isinstance(mname, str):
-                            for _s, _md in (getattr(self, 'struct_methods', {}) or {}).items():
-                                if mname in (_md or {}):
-                                    call_arity += 1
-                                    break
-                except Exception:
-                    pass
-                m = max(m, call_arity)
-                m = max(m, max_calls_expr(e.callee))
-                for aa in e.args:
-                    m = max(m, max_calls_expr(aa))
-                return m
-            if isinstance(e, self.ml.Unary):
-                return max_calls_expr(e.right)
-            if isinstance(e, self.ml.Bin):
-                return max(max_calls_expr(e.left), max_calls_expr(e.right))
-            if isinstance(e, self.ml.Index):
-                return max(max_calls_expr(e.target), max_calls_expr(e.index))
-            if isinstance(e, self.ml.ArrayLit):
-                for it in e.items:
-                    m = max(m, max_calls_expr(it))
-                return m
-            if isinstance(e, self.ml.Member):
-
-                t = getattr(e, 'target', None)
-
-                if t is None:
-                    t = getattr(e, 'obj', None)
-
-                return max_calls_expr(t)
-            return 0
+            return self._max_call_frame_arity(e)
 
         def max_calls_stmts(stmts: List[Any]) -> int:
             m = 0
@@ -7106,58 +7160,7 @@ class CodegenStmt:
 
         # ---- maximum call arity inside this function ----
         def max_calls_expr(e):
-            m = 0
-            if e is None:
-                return 0
-
-            if isinstance(e, ml.Call):
-                call_arity = len(e.args)
-                try:
-                    ext_qn = _expr_to_qualname(ml, e.callee)
-                    if isinstance(ext_qn, str):
-                        ext_qn = self._apply_import_alias(ext_qn)
-                    ext_sig = (getattr(self, 'extern_sigs', {}) or {}).get(ext_qn)
-                    if isinstance(ext_sig, dict):
-                        call_arity = max(call_arity, len(list(ext_sig.get('params', []) or [])))
-                except Exception:
-                    pass
-                try:
-                    cal = e.callee
-                    if hasattr(ml, 'Member') and isinstance(cal, ml.Member):
-                        mname = getattr(cal, 'name', None)
-                        if isinstance(mname, str):
-                            for _s, _md in (getattr(self, 'struct_methods', {}) or {}).items():
-                                if mname in (_md or {}):
-                                    call_arity += 1
-                                    break
-                except Exception:
-                    pass
-                m = max(m, call_arity)
-                m = max(m, max_calls_expr(e.callee))
-                for aa in e.args:
-                    m = max(m, max_calls_expr(aa))
-                return m
-            if isinstance(e, ml.Unary):
-                return max_calls_expr(e.right)
-            if isinstance(e, ml.Bin):
-                return max(max_calls_expr(e.left), max_calls_expr(e.right))
-            if isinstance(e, ml.ArrayLit):
-                for it in e.items:
-                    m = max(m, max_calls_expr(it))
-                return m
-            if isinstance(e, ml.Index):
-                return max(max_calls_expr(e.target), max_calls_expr(e.index))
-            if hasattr(ml, 'Member') and isinstance(e, ml.Member):
-                target = getattr(e, 'target', None)
-                if target is None:
-                    target = getattr(e, 'obj', None)
-                return max_calls_expr(target)
-            if isinstance(e, getattr(ml, 'StructInit', ())):
-                for v in e.values:
-                    m = max(m, max_calls_expr(v))
-                return m
-            # literals / vars
-            return 0
+            return self._max_call_frame_arity(e, fn)
 
         def max_calls_stmts(stmts):
             m = 0

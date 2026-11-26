@@ -4,6 +4,11 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Reserve the full outgoing call area before expanding default arguments,
+  including method receivers, constructors and calls hidden in defaults.
+  This prevents omitted stack arguments from overwriting caller locals on
+  both native targets. Add direct/object-pipeline and import-alias regressions.
+
 - Preserve multiline string contents in `mlfmt`, including whitespace, blank
   lines and literal line endings. Lines touching those strings remain verbatim;
   block tracking still formats the surrounding source correctly.
