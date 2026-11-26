@@ -9,6 +9,11 @@ All notable changes to the MiniLang compiler are documented here.
   This prevents omitted stack arguments from overwriting caller locals on
   both native targets. Add direct/object-pipeline and import-alias regressions.
 
+- Normalize `mlfmt` spacing around grouped expressions, array literals and
+  word operators; keep unary signs attached to their operands and preserve
+  compact function calls, indexing and operator declaration names.
+- Add a shared spacing regression with exact golden output, idempotence,
+  before/after executable comparisons and native runtime checks.
 - Preserve multiline string contents in `mlfmt`, including whitespace, blank
   lines and literal line endings. Lines touching those strings remain verbatim;
   block tracking still formats the surrounding source correctly.

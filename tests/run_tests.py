@@ -4148,7 +4148,7 @@ def main() -> int:
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
-        name="formatter: modern syntax, literal preservation and Windows/Linux parity",
+        name="formatter: syntax, spacing, literal preservation and Windows/Linux parity",
         mlc_runner=mlc_runner, tests_root=tests_root))
     tests.append(lambda: test_mltest_cli(
         name="std.test: tagged discovery, reports and Windows/Linux runtime",

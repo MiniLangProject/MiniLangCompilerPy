@@ -508,14 +508,21 @@ end function
 // ------------------------------------------------------------
 // Code-Formatter for ONE Code part (without // comment)
 // ------------------------------------------------------------
-function _isControlKw(w)
-  return w == "if" or w == "while" or w == "for" or w == "switch" or w == "match" or w == "return"
+// These keywords introduce an expression (or an inline statement), so their
+// following '(' or '[' starts an operand rather than a call or index suffix.
+function _isExpressionPrefixKw(w)
+  return w == "if" or w == "while" or w == "for" or w == "switch" or w == "match" or w == "case" or w == "return" or w == "print" or w == "yield" or w == "await" or w == "defer" or w == "to" or w == "in" or w == "then" or w == "else"
 end function
 
 function emit_formatted_code(bb, code)
   i = 0
-  prevCat = 0 // 0 none, 1 id/kw, 2 num, 3 str, 4 op, 5 dot, 6 open, 7 close
+  // 0 none, 1 id/kw, 2 num, 3 str, 4 binary/word op, 5 dot, 6 open,
+  // 7 close, 8 symbolic prefix, 9 comma. Prefixes stay glued to their operand;
+  // commas require a separating space and start a new operand.
+  prevCat = 0
   prevWord = ""
+  prevIntroducesOperand = false
+  operatorParametersPending = false
   pendingSpace = false
 
   code2 = _trimRightBytes(_trimLeftBytes(code))
@@ -571,6 +578,10 @@ function emit_formatted_code(bb, code)
       tok = slice(code2, st, i - st)
       w = decode(tok)
 
+      // Operator names are followed by a declaration parameter list, not a
+      // grouped binary operand: `operator inline +(left, right)` stays tight.
+      if w == "operator" and prevWord != "end" then operatorParametersPending = true end if
+
       // Treat word-based operators like symbolic binary/unary operators.
       if w == "and" or w == "or" or w == "not" or w == "div" then
         if prevCat != 0 and prevCat != 6 and prevCat != 5 then
@@ -593,6 +604,7 @@ function emit_formatted_code(bb, code)
       end if
 
       bb = bb_pushBytes(bb, tok)
+      prevIntroducesOperand = prevCat != 5 and _isExpressionPrefixKw(w)
       prevCat = 1
       prevWord = w
       continue
@@ -710,17 +722,17 @@ function emit_formatted_code(bb, code)
 
     // single-char tokens
     if ch == 40 or ch == 91 then
-      // '(' or '['
-      if pendingSpace then
-        if prevCat == 1 and _isControlKw(prevWord) then
-          bb = bb_pushByte(bb, 32)
-        end if
-        pendingSpace = false
+      // Pending whitespace belongs to an operator/comma before a grouped or
+      // array operand. Calls/indexes after values have no pending whitespace,
+      // while a symbolic prefix deliberately stays attached: `-(value)`.
+      if ch == 40 and operatorParametersPending then
+        operatorParametersPending = false
       else
-        if prevCat == 1 and _isControlKw(prevWord) then
+        if pendingSpace or (prevCat == 1 and prevIntroducesOperand) then
           bb = bb_pushByte(bb, 32)
         end if
       end if
+      pendingSpace = false
 
       bb = bb_pushByte(bb, ch)
       prevCat = 6
@@ -757,7 +769,7 @@ function emit_formatted_code(bb, code)
       bb = bb_trimRightSpaces(bb)
       bb = bb_pushByte(bb, 44)
       pendingSpace = true
-      prevCat = 7
+      prevCat = 9
       prevWord = ""
       i = i + 1
       continue
@@ -805,7 +817,7 @@ function emit_formatted_code(bb, code)
     if isOp then
       unary = false
       if ch == 43 or ch == 45 or ch == 126 then
-        if prevCat == 0 or prevCat == 4 or prevCat == 6 then
+        if prevCat == 0 or prevCat == 4 or prevCat == 6 or prevCat == 8 or prevCat == 9 or (prevCat == 1 and prevIntroducesOperand) then
           unary = true
         end if
       end if
@@ -820,7 +832,7 @@ function emit_formatted_code(bb, code)
           end if
         end if
         bb = bb_pushByte(bb, ch)
-        prevCat = 4
+        prevCat = 8
         prevWord = ""
         i = i + 1
         continue

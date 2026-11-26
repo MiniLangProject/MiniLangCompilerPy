@@ -47,6 +47,8 @@ def fixture_cases() -> list[tuple[str, bytes, bytes, list[str], bytes]]:
     # Normalize checkout EOL conversion before generating deliberate CRLF bytes.
     modern = (TESTS / "formatter_modern_input.ml").read_bytes().replace(b"\r\n", b"\n")
     modern_expected = (TESTS / "formatter_modern_expected.ml").read_bytes().replace(b"\r\n", b"\n")
+    spacing = (TESTS / "formatter_spacing_input.ml").read_bytes().replace(b"\r\n", b"\n")
+    spacing_expected = (TESTS / "formatter_spacing_expected.ml").read_bytes().replace(b"\r\n", b"\n")
     edges = (TESTS / "formatter_edges_input.ml").read_bytes().replace(b"\r\n", b"\n")
     edges_expected = (TESTS / "formatter_edges_expected.ml").read_bytes().replace(b"\r\n", b"\n")
     # Convert only the known literal-bearing region. Golden source comparison
@@ -68,6 +70,7 @@ def fixture_cases() -> list[tuple[str, bytes, bytes, list[str], bytes]]:
                       b'  print "[OK] formatter blank lines"\n  return 0\nend function\n')
     return [
         ("modern", modern, modern_expected, [], b"[OK] formatter modern syntax"),
+        ("spacing", spacing, spacing_expected, [], b"[OK] formatter spacing"),
         ("edges", edges, edges_expected, [], b"[OK] formatter lexical edges"),
         ("literal-crlf", edges_crlf, expected_crlf, [], b"[OK] formatter lexical edges"),
         ("max-blank-zero", blank_input, blank_expected, ["--max-blank", "0"],
