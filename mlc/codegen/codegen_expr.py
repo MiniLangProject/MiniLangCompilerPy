@@ -325,11 +325,7 @@ class CodegenExpr:
                     return self._OPT_NO
                 if isinstance(rv, (int, float)):
                     r = -rv
-                    # Match the native result normalizer: its unordered
-                    # comparison takes the tagged-int path and wraps to zero.
-                    # Raw literals and const-binding values remain untouched.
-                    if isinstance(r, float) and r != r:
-                        return 0
+                    # NaN remains a float, matching native normalization.
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -385,8 +381,6 @@ class CodegenExpr:
             if op == '+':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv + rv
-                    if isinstance(r, float) and r != r:
-                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -396,8 +390,6 @@ class CodegenExpr:
             if op == '-':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv - rv
-                    if isinstance(r, float) and r != r:
-                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -405,8 +397,6 @@ class CodegenExpr:
             if op == '*':
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
                     r = lv * rv
-                    if isinstance(r, float) and r != r:
-                        return 0
                     if isinstance(r, float) and r.is_integer():
                         return wrap_i61(int(r))
                     return wrap_i61(r) if isinstance(r, int) else r
@@ -415,11 +405,9 @@ class CodegenExpr:
                 # Runtime division normalizes exact ints; but also returns void on div-by-0.
                 # We keep folding conservative: only fold when divisor is non-zero.
                 if isinstance(lv, (int, float)) and isinstance(rv, (int, float)) and not isinstance(lv, bool) and not isinstance(rv, bool):
-                    if float(rv) == 0.0:
+                    if float(rv) == 0.0 or float(rv) != float(rv):
                         return self._OPT_NO
                     r = float(lv) / float(rv)
-                    if r != r:
-                        return 0
                     if r.is_integer():
                         return wrap_i61(int(r))
                     return float(r)
@@ -1445,22 +1433,26 @@ class CodegenExpr:
     def _opt_emit_float_tree_normalize(self, slow: str) -> None:
         """Keep only a result that the ordinary normalizer would keep float.
 
-        Exact integers and unordered values run the complete original tree.
+        Exact integers run the complete original tree; NaN remains a float.
         This retains integer/integer precision and signed61 wrapping without
         placing an integer result in the raw-double representation.
         """
         a = self.asm
-        a.mark(f'float_tree_normalize_{self.new_label_id()}')
+        lid = self.new_label_id()
+        l_float = f'float_tree_float_{lid}'
+        a.mark(f'float_tree_normalize_{lid}')
         a.cvttsd2si_r64_xmm('rax', 'xmm0')
         a.cvtsi2sd_xmm_r64('xmm1', 'rax')
         a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+        a.jcc('p', l_float)
         a.jcc('e', slow)
+        a.mark(l_float)
         # Both exact-f32 and boxed-f64 values unbox to the original double.
         # Retain both conversions for their floating-point status effects.
         a.cvtsd2ss_xmm_xmm('xmm2', 'xmm0')
         a.cvtss2sd_xmm_xmm('xmm3', 'xmm2')
         # The probe comparison's EFLAGS are dead at every raw-tree/loop caller.
-        # The first comparison already excludes NaN and reports any denormal
+        # The first comparison already reports unordered values and any denormal
         # XMM0; an f32 widened to f64 cannot be a double denormal. Consequently
         # this final UCOMISD could add no floating-point exception status either.
 

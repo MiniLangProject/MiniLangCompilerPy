@@ -2,6 +2,20 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## 1.3.12 - 2026-11-26
+
+- Preserve NaN as an unordered float in scalar arithmetic, unboxed numeric
+  consumers, fused expressions and counted float loops. Ordered exact integers
+  retain signed-61 normalization and wrapping.
+- Add native-FFI NaN regressions and update both compilers' shared numeric
+  suites to check propagation rather than the former accidental conversion to zero.
+- Add allocation and full-stop GC diagnostics that cover fast bump/TLAB paths;
+  existing central-allocation counters keep their original meaning and indices.
+  See the release notes for units and supported collection modes.
+- Fix statistics reachability: builtin hoisting no longer enables diagnostic
+  writes and collector clocks in programs that never reference `gc_stat`.
+  First-class references, including default arguments, still enable diagnostics.
+
 ## 1.3.11 - 2026-11-25
 
 - Make `copyBytes` and `copyArray` safe for overlapping source and destination

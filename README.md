@@ -8,7 +8,11 @@ and reference compiler. The [self-hosted compiler](https://github.com/MiniLangPr
 is written in MiniLang and provides ready-to-run compiler packages.
 
 The reference compiler is distributed as source. See the [latest release](https://github.com/MiniLangProject/MiniLangCompilerPy/releases/latest),
-[release notes](RELEASE_NOTES_1.3.11.md) and [changelog](CHANGELOG.md).
+[source release notes](RELEASE_NOTES_1.3.12.md) and [changelog](CHANGELOG.md).
+
+Version 1.3.12 preserves NaN through optimized arithmetic and adds complete
+allocation/full-stop GC diagnostics. Rebuild the self-hosted compiler to use the
+new source changes; previously published binary archives keep their recorded versions.
 
 Version 1.3.11 makes `copyBytes` and `copyArray` safe for overlapping ranges and
 fixes constant string lengths to match the native UTF-8 byte-length contract.

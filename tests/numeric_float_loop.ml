@@ -17,6 +17,9 @@ function check(condition, label)
 end function
 
 function same(actual, expected, label)
+  if typeof(actual) == "float" and actual != actual then
+    return check(typeof(expected) == "float" and expected != expected, label + " NaN")
+  end if
   if not check(typeof(actual) == typeof(expected), label + " tag") then return false end if
   if typeof(actual) == "void" then return true end if
   if typeof(actual) == "error" then
@@ -452,8 +455,9 @@ function main(args)
     special = nativeValueFromRaw((bits << 3) | 5)
     sameState(loopSpecial(2, special, 0.25), referenceSpecial(2, special, 0.25), "special float loop")
   end for
+  nan = nativeValueFromRaw((2143289344 << 3) | 5)
   infinity = nativeValueFromRaw((2139095040 << 3) | 5)
-  sameState(loopSpecial(1, infinity, infinity), [0.5, 1], "NaN normalizes before remaining arithmetic")
+  sameState(loopSpecial(1, infinity, infinity), [nan, 1], "NaN propagates through remaining arithmetic")
   expectError(try(loopRecurrence(1, "wrong", 0.2, 0.0)), 1308, "entry contract retained")
 
   effects = 0

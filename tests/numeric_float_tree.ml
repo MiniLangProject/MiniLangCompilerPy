@@ -22,6 +22,9 @@ function check(condition, label)
 end function
 
 function same(actual, expected, label)
+  if typeof(actual) == "float" and actual != actual then
+    return check(typeof(expected) == "float" and expected != expected, label + " NaN")
+  end if
   check(typeof(actual) == typeof(expected), label + " tag")
   if typeof(actual) == "error" and typeof(expected) == "error" then
     check(actual.code == expected.code, label + " code")
@@ -355,11 +358,12 @@ function main(args)
     sameComparisons(treeCompareRight(0.1, 0.2, special), referenceCompareRight(0.1, 0.2, special), "unordered or special right comparison leaf")
     sameComparisons(treeCompareLeft(special, 0.1, 0.2), referenceCompareLeft(special, 0.1, 0.2), "unordered or special left comparison leaf")
   end for
+  nan = nativeValueFromRaw((2143289344 << 3) | 5)
   infinity = nativeValueFromRaw((2139095040 << 3) | 5)
   negativeInfinity = nativeValueFromRaw((4286578688 << 3) | 5)
-  same(treeNaN(infinity, infinity), 0.5, "inner NaN normalizes before remaining arithmetic")
+  same(treeNaN(infinity, infinity), nan, "inner NaN propagates through arithmetic")
   same(treeNaN(infinity, infinity), referenceNaN(infinity, infinity), "inner NaN reference")
-  same(treeBalanced(infinity, 0.5, negativeInfinity, 0.5), 0, "root NaN retains ordinary normalization")
+  same(treeBalanced(infinity, 0.5, negativeInfinity, 0.5), nan, "root NaN remains a float")
   tiny = nativeValueFromRaw(13)
   same(treeSubnormal(tiny), referenceSubnormal(tiny), "two binary64 subnormal intermediates")
   same(treeSubnormal(tiny), tiny * 3.0, "subnormal intermediates are not rounded to float32")

@@ -1,0 +1,4015 @@
+{
+  "host": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "flags": [],
+  "images": [
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a5314f2d4148250d5be235ab3ee22357b6eda396a9ca5a4d6612661ab545bfe3",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 502128
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "a5314f2d4148250d5be235ab3ee22357b6eda396a9ca5a4d6612661ab545bfe3",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 502128
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "a5314f2d4148250d5be235ab3ee22357b6eda396a9ca5a4d6612661ab545bfe3",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 502128
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "90559d79df5e8f27dee183a72ab0b8b87ca0c9327cb20e7f80a8f0a49a379134",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 428256
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "90559d79df5e8f27dee183a72ab0b8b87ca0c9327cb20e7f80a8f0a49a379134",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 428256
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "90559d79df5e8f27dee183a72ab0b8b87ca0c9327cb20e7f80a8f0a49a379134",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 428256
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "042114e69e619d3399acd023820a2a6c5799313b9c1d68c96f89473938d5e5e8",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 395424
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "042114e69e619d3399acd023820a2a6c5799313b9c1d68c96f89473938d5e5e8",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 395424
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "042114e69e619d3399acd023820a2a6c5799313b9c1d68c96f89473938d5e5e8",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 395424
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1d345d4e8061a981bedcce4cf4082ded604c8bb22e2b76b4927db25cfe267a66",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 555296
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1d345d4e8061a981bedcce4cf4082ded604c8bb22e2b76b4927db25cfe267a66",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 555296
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "1d345d4e8061a981bedcce4cf4082ded604c8bb22e2b76b4927db25cfe267a66",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 555296
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "55fbff039780d420544a585f678cb4d37b8a878f1bef71c5a88e3aa1edf86b23",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 432432
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "55fbff039780d420544a585f678cb4d37b8a878f1bef71c5a88e3aa1edf86b23",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 432432
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "55fbff039780d420544a585f678cb4d37b8a878f1bef71c5a88e3aa1edf86b23",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 432432
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "b614b94a55fda0767b822ae283699f606cebe7dd5b6753b68f6bd8cc76cd9b81",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 370992
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "b614b94a55fda0767b822ae283699f606cebe7dd5b6753b68f6bd8cc76cd9b81",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 370992
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "b614b94a55fda0767b822ae283699f606cebe7dd5b6753b68f6bd8cc76cd9b81",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 370992
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "05ba007766d68731f5e787bb8c3adfedac049f5b1deaa4d7a7ce52b65c9b62ef",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 161728
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "05ba007766d68731f5e787bb8c3adfedac049f5b1deaa4d7a7ce52b65c9b62ef",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 161728
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "05ba007766d68731f5e787bb8c3adfedac049f5b1deaa4d7a7ce52b65c9b62ef",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 161728
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32faff373f11407ca7a43519953f585db1259ace24371440fbdb5e10f4d2e2eb",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 128944
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "32faff373f11407ca7a43519953f585db1259ace24371440fbdb5e10f4d2e2eb",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 128944
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "32faff373f11407ca7a43519953f585db1259ace24371440fbdb5e10f4d2e2eb",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 128944
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "7556c58a4b17ca5e4e6a7fc05474eab3a131b4874fc265f63c4c6cea79774e9c",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 493056
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "7556c58a4b17ca5e4e6a7fc05474eab3a131b4874fc265f63c4c6cea79774e9c",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 493056
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "7556c58a4b17ca5e4e6a7fc05474eab3a131b4874fc265f63c4c6cea79774e9c",
+      "source_sha256": "eafbfe0b23343fc602baff920d881a637707e207934354a17f50e03012942583",
+      "bytes": 493056
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "894c2f378149972af94fb11f91bae11e332915ac4df1fbd89a14cea9ccbdd2b2",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 422912
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "894c2f378149972af94fb11f91bae11e332915ac4df1fbd89a14cea9ccbdd2b2",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 422912
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "894c2f378149972af94fb11f91bae11e332915ac4df1fbd89a14cea9ccbdd2b2",
+      "source_sha256": "f4ad75b4a2f1b65a5ffc475db7910c4a509073fbdce6159b5319624f178e85dd",
+      "bytes": 422912
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cc3d1ae308c357c280881366bb907ff1e57dbd70e42fa9adc27f314ae29887a4",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 388608
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "cc3d1ae308c357c280881366bb907ff1e57dbd70e42fa9adc27f314ae29887a4",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 388608
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "cc3d1ae308c357c280881366bb907ff1e57dbd70e42fa9adc27f314ae29887a4",
+      "source_sha256": "07ecfc0f09ffd14270b8661d8f30c32ad3477be3da962cdef138ca58ea1fa3c8",
+      "bytes": 388608
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "aa60cec535efe1361a93341c5991d29ef1869a0ad929d9001892a39e5bf1dd21",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 551424
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "aa60cec535efe1361a93341c5991d29ef1869a0ad929d9001892a39e5bf1dd21",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 551424
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "aa60cec535efe1361a93341c5991d29ef1869a0ad929d9001892a39e5bf1dd21",
+      "source_sha256": "890b1167beaf7b559b912fd632b22cfc089429a8688f35bc19b7735f9cf6d9f0",
+      "bytes": 551424
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6478e286423a3f9d9cb2cac2001870b0179b34c4b9872328130c5b644328d33e",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 423936
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "6478e286423a3f9d9cb2cac2001870b0179b34c4b9872328130c5b644328d33e",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 423936
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "6478e286423a3f9d9cb2cac2001870b0179b34c4b9872328130c5b644328d33e",
+      "source_sha256": "67a1e5ffb85dcbb209a21ec71525faa43015f5998dfb25b5b54c45d012e36efd",
+      "bytes": 423936
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "16ede152940b278330df47c9a71a642e9e3def390c83a2b33136c77d8bc570e8",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 363520
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "16ede152940b278330df47c9a71a642e9e3def390c83a2b33136c77d8bc570e8",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 363520
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "16ede152940b278330df47c9a71a642e9e3def390c83a2b33136c77d8bc570e8",
+      "source_sha256": "dc861f570089581ac388abc8269484ac08615ecc6e453a85de3a5e35112d3b4c",
+      "bytes": 363520
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1d2bed5ba784406b9b69cf71b47abbc390fddf1ccac172108d0feac5589af4c8",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 157184
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "1d2bed5ba784406b9b69cf71b47abbc390fddf1ccac172108d0feac5589af4c8",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 157184
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "1d2bed5ba784406b9b69cf71b47abbc390fddf1ccac172108d0feac5589af4c8",
+      "source_sha256": "b33fa02a9c34aa8bf01cf55345615a0d16b789572486a5822251f630e7646a3f",
+      "bytes": 157184
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5046e5caf2f3d5f5ac903f8c86889aacbca8dffb693b1fa193517b3fddf4d944",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 124416
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5046e5caf2f3d5f5ac903f8c86889aacbca8dffb693b1fa193517b3fddf4d944",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 124416
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "5046e5caf2f3d5f5ac903f8c86889aacbca8dffb693b1fa193517b3fddf4d944",
+      "source_sha256": "87910ef21c036e4dee3d3d4cd45e8153d9c951490f5a60a22b919fa484e49e6c",
+      "bytes": 124416
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    }
+  ],
+  "runtime_checks": [
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "stdout": "NUMERIC NAN NORMALIZATION [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "linux-x64",
+      "stdout": "NUMERIC FLOAT TREE [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "linux-x64",
+      "stdout": "NUMERIC FLOAT LOOP [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "linux-x64",
+      "stdout": "NUMERIC FLOAT CONSUMER [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "linux-x64",
+      "stdout": "NUMERIC FLOAT NESTED [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "linux-x64",
+      "stdout": "NUMERIC NULLABLE BOXING [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "linux-x64",
+      "stdout": "NUMERIC TYPEFLOW BOXING [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "gc_allocation_totals",
+      "target": "linux-x64",
+      "stdout": "GC TOTALS checks=15 failures=0\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "gc_allocation_totals_threads",
+      "target": "linux-x64",
+      "stdout": "GC TOTALS THREADS [OK] objects=80000 bytes=1920000\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "stdout": "GC DEFAULT REFERENCE [OK]\n",
+      "stderr": ""
+    }
+  ],
+  "emission_checks": [
+    {
+      "fixture": "numeric_float_tree",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "treeBalanced",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBalanced",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeDeep",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeDeep",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeEight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeEight",
+          "call_free_float_tree_regions": 3,
+          "actual_float_leaf_guard_regions": 3
+        },
+        {
+          "function": "treeRightNested",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeRightNested",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNumberCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNumberCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeTwoCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeWrap",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeWrap",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNaN",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNaN",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeProbe",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeProbe",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeSubnormal",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeSubnormal",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeOrder",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeOrder",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeComparisons",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeComparisons",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareRight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareRight",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLeft",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLiteral",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLiteral",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeCaughtNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCaughtNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullableComparison",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "referenceBalanced",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDeep",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRightNested",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWrap",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNaN",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceProbe",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSubnormal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceComparisons",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareRight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullable",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCall",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeErrorOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeMember",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIndex",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeGlobal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeSynchronized",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCapture",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeOptional",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLeaf",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLiteral",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeConstantSubtree",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeDivision",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "treeEight",
+          "marker": "call fn_box_float",
+          "present": true
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "loopLong",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "referenceLong",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopRecurrence",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopRecurrence",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 12,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopAlias",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopAlias",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopWriteOnly",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopLate",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopLate",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopNumericEntry",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 2
+        },
+        {
+          "function": "loopCounter",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopCounter",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopSpecial",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopSpecial",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "referenceRecurrence",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSpecial",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopError",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopSynchronized",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopContract",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopControl",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopReturn",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopStep",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopBodyTypeof",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "consumerLeft",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLeft",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerRight",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerRight",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerChain",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerChain",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerFresh",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 2,
+          "exit_materialization_groups": 2
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerBoth",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 0,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerBothCondition",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLate",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLate",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 7,
+          "numeric_consumer_continuations": 4,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerUnequal",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLess",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLess",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLessEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerGreater",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerConditionRight",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLiterals",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "referenceLeft",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceChain",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceFresh",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBoth",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceConditionRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLiterals",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "nestedCounted",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedCounted",
+          "loop_label": "2651",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedBranches",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedBranches",
+          "loop_label": "2570",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedBranches",
+          "loop_label": "2604",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedSiblings",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedSiblings",
+          "loop_label": "2897",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "nestedSiblings",
+          "loop_label": "2987",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "nestedMandel",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedMandel",
+          "loop_label": "2738",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 8,
+          "exit_materialization_groups": 4,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundReentry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundReentry",
+          "loop_label": "976",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "exit_materialization_groups": 3,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundEscape",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundEscape",
+          "loop_label": "694",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundCounter",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundCounter",
+          "loop_label": "634",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "loop_label": "784",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "loop_label": "873",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundShortCircuit",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundShortCircuit",
+          "loop_label": "1048",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundAliases",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundAliases",
+          "loop_label": "423",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundWriteOnly",
+          "loop_label": "1125",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundBothTrees",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundBothTrees",
+          "loop_label": "499",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 8,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareEqual",
+          "loop_label": "63",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareUnequal",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareUnequal",
+          "loop_label": "368",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareLess",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareLess",
+          "loop_label": "246",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareLessEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareLessEqual",
+          "loop_label": "307",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareGreater",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareGreater",
+          "loop_label": "124",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareGreaterEqual",
+          "loop_label": "185",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "referenceCounted",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSiblings",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceReentry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEscape",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAliases",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothTrees",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandel",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOr",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedDuplicate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedInline",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "variableFloatRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatMulRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatMulRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatSubRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatSubRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableNumberRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableNumberRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableMultiply",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableMultiply",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableSubtract",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableSubtract",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAliasJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAliasJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableLoopJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableLoopJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableChain",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableChain",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "smallMandelbrot",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "smallMandelbrot",
+          "call_free_unboxed_regions": 3,
+          "rhs_float_guard_before_child": 3
+        },
+        {
+          "function": "nullableGc",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableGc",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "referenceAdd",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMul",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSub",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCaught",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDivision",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandelbrot",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "readBeforeNumericInit",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "zeroTripRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseBothCalls",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorOrder",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMixedRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseOpaqueRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableGc",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "caughtNullableChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableConversionTag",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "linux-x64",
+      "checks": [
+        {
+          "function": "fusedAddInts",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "call_free_unboxed_regions": 2
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "genericAddParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericMulParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericSubParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalParameter",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSibling",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseZeroLoop",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseLoopBack",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseConstantChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIntRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFusePlainIntChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fallibleConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedConversionError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedVoid",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "numeric_float_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_tree",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "treeBalanced",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBalanced",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeDeep",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeDeep",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeEight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeEight",
+          "call_free_float_tree_regions": 3,
+          "actual_float_leaf_guard_regions": 3
+        },
+        {
+          "function": "treeRightNested",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeRightNested",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNumberCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNumberCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeTwoCancellation",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeWrap",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeWrap",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeNaN",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNaN",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeProbe",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeProbe",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeSubnormal",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeSubnormal",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeOrder",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeOrder",
+          "call_free_float_tree_regions": 2,
+          "actual_float_leaf_guard_regions": 2
+        },
+        {
+          "function": "treeComparisons",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeComparisons",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareRight",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareRight",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLeft",
+          "call_free_float_tree_regions": 6,
+          "actual_float_leaf_guard_regions": 6
+        },
+        {
+          "function": "treeCompareLiteral",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCompareLiteral",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeCaughtNullable",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeCaughtNullable",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeNullableComparison",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "marker": "float_tree_fast_",
+          "present": true
+        },
+        {
+          "function": "treeBuiltinConverted",
+          "call_free_float_tree_regions": 1,
+          "actual_float_leaf_guard_regions": 1
+        },
+        {
+          "function": "referenceBalanced",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDeep",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRightNested",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceTwoCancellation",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWrap",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNaN",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceProbe",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSubnormal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceComparisons",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareRight",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompareLeft",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullable",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNullableComparison",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCall",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeErrorOrder",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeMember",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIndex",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeGlobal",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeSynchronized",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeCapture",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeOptional",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLeaf",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeIntegerLiteral",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeConstantSubtree",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "noTreeDivision",
+          "marker": "float_tree_fast_",
+          "present": false
+        },
+        {
+          "function": "treeEight",
+          "marker": "call fn_box_float",
+          "present": true
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_loop",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "loopLong",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "referenceLong",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "loopRecurrence",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopRecurrence",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 12,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopAlias",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopAlias",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopWriteOnly",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopLate",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopLate",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "loopNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopNumericEntry",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 2
+        },
+        {
+          "function": "loopCounter",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopCounter",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "loopSpecial",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "loopSpecial",
+          "call_free_float_loops": 1,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "referenceRecurrence",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNumericEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSpecial",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopError",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopSynchronized",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopContract",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopControl",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopReturn",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopStep",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noLoopBodyTypeof",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_consumer",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "consumerLeft",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLeft",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerRight",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerRight",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerChain",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerChain",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerFresh",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerFresh",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 2,
+          "exit_materialization_groups": 2
+        },
+        {
+          "function": "consumerBoth",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerBoth",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 0,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerBothCondition",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerBothCondition",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 1,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLate",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLate",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 7,
+          "numeric_consumer_continuations": 4,
+          "strict_integer_nan_bailouts": 3,
+          "exit_materialization_groups": 3
+        },
+        {
+          "function": "consumerEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerUnequal",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerUnequal",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLess",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLess",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLessEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLessEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerGreater",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerGreater",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerGreaterEqual",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerConditionRight",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerConditionRight",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 1,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "consumerLiterals",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "consumerLiterals",
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "numeric_consumer_continuations": 2,
+          "strict_integer_nan_bailouts": 2,
+          "exit_materialization_groups": 1
+        },
+        {
+          "function": "referenceLeft",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceChain",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceFresh",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBoth",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceConditionRight",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceLiterals",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_float_nested",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "nestedCounted",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedCounted",
+          "loop_label": "2651",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedBranches",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedBranches",
+          "loop_label": "2570",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedBranches",
+          "loop_label": "2604",
+          "compound_condition": false,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": false
+        },
+        {
+          "function": "nestedSiblings",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedSiblings",
+          "loop_label": "2897",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "nestedSiblings",
+          "loop_label": "2987",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "nestedMandel",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "nestedMandel",
+          "loop_label": "2738",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 8,
+          "exit_materialization_groups": 4,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundReentry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundReentry",
+          "loop_label": "976",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "exit_materialization_groups": 3,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundEscape",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundEscape",
+          "loop_label": "694",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 4,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundCounter",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundCounter",
+          "loop_label": "634",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundIntegerEntry",
+          "loop_label": "784",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundNormalizeCondition",
+          "loop_label": "873",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 5,
+          "exit_materialization_groups": 2,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundShortCircuit",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundShortCircuit",
+          "loop_label": "1048",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 3,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundAliases",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundAliases",
+          "loop_label": "423",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundWriteOnly",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundWriteOnly",
+          "loop_label": "1125",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compoundBothTrees",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compoundBothTrees",
+          "loop_label": "499",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 8,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareEqual",
+          "loop_label": "63",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareUnequal",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareUnequal",
+          "loop_label": "368",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareLess",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareLess",
+          "loop_label": "246",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareLessEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareLessEqual",
+          "loop_label": "307",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareGreater",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareGreater",
+          "loop_label": "124",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "compareGreaterEqual",
+          "marker": "float_loop_fast_",
+          "present": true
+        },
+        {
+          "function": "compareGreaterEqual",
+          "loop_label": "185",
+          "compound_condition": true,
+          "call_free_raw_region": true,
+          "normalizers_before_commit": 2,
+          "exit_materialization_groups": 1,
+          "ordinary_iteration_reentry": true
+        },
+        {
+          "function": "referenceCounted",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSiblings",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceReentry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceEscape",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceIntegerEntry",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceNormalizeCondition",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceAliases",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceBothTrees",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCompare",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandel",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCall",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedGlobal",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedCapture",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOldAlias",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedChangingBound",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedOr",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedDuplicate",
+          "marker": "float_loop_fast_",
+          "present": false
+        },
+        {
+          "function": "noNestedInline",
+          "marker": "float_loop_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_nullable_boxing",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "variableFloatRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatMulRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatMulRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableFloatSubRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableFloatSubRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "variableNumberRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "variableNumberRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableMultiply",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableMultiply",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableSubtract",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableSubtract",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableFloatDivisor",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableRight",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableRight",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "caughtNullableAdd",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "caughtNullableAdd",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableAliasJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableAliasJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableLoopJoin",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableLoopJoin",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "nullableChain",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableChain",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "smallMandelbrot",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "smallMandelbrot",
+          "call_free_unboxed_regions": 3,
+          "rhs_float_guard_before_child": 3
+        },
+        {
+          "function": "nullableGc",
+          "marker": "float_parent_nobox_rhs_fast_",
+          "present": true
+        },
+        {
+          "function": "nullableGc",
+          "call_free_unboxed_regions": 1,
+          "rhs_float_guard_before_child": 1
+        },
+        {
+          "function": "referenceAdd",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMul",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceSub",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceCaught",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceDivision",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "referenceMandelbrot",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "readBeforeNumericInit",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "zeroTripRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseBothCalls",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorOrder",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseRightCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMixedRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseOpaqueRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseErrorRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableGc",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "caughtNullableChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "nullableConversionTag",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        }
+      ]
+    },
+    {
+      "fixture": "numeric_typeflow_boxing",
+      "target": "windows-x64",
+      "checks": [
+        {
+          "function": "fusedAddInts",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddInts",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedAddFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedMulFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedSubFloats",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "fusedDepthTwo",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "builtinConverted",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "branchTemporary",
+          "call_free_unboxed_regions": 2
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "loopTemporary",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterIntToFloat",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "float_parent_nobox_fast_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "parameterFloatToInt",
+          "call_free_unboxed_regions": 1
+        },
+        {
+          "function": "genericAddParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericMulParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "genericSubParent",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "optionalParameter",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSibling",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseZeroLoop",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseLoopBack",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCall",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseMember",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIndex",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseGlobal",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseSynchronized",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseCapture",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseConstantChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFuseIntRight",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "noFusePlainIntChild",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fallibleConverted",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedConversionError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedVoid",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "capturedError",
+          "marker": "float_parent_nobox_fast_",
+          "present": false
+        },
+        {
+          "function": "fusedAddFloats",
+          "marker": "call fn_box_float",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "type_guard_valid_",
+          "present": true
+        },
+        {
+          "function": "reassignedCall",
+          "marker": "numeric_float_fast_",
+          "present": false
+        }
+      ]
+    }
+  ],
+  "success": true
+}

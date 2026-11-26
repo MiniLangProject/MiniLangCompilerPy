@@ -1081,6 +1081,8 @@ class CodegenCore:
         a.cvtsi2sd_xmm_r64("xmm1", "rax")  # cvtsi2sd xmm1,rax
         # compare xmm0,xmm1
         a.ucomisd_xmm_xmm("xmm0", "xmm1")  # ucomisd xmm0,xmm1
+        # UCOMISD sets ZF as well as PF for NaN: test unordered first.
+        a.jcc('p', l_try_immf)
         a.jcc('e', l_int)
         a.jmp(l_try_immf)
         # exact integer -> tagged int
@@ -1108,7 +1110,7 @@ class CodegenCore:
 
         This is not ordinary double arithmetic: exact integer results are first
         retagged to reproduce signed-61 wrap, then converted back to double. Keep
-        the normalizer's unordered/equal branch and float32 probe unchanged;
+        the normalizer's ordered-integer branch and float32 probe unchanged;
         only the intermediate representation and allocation are unnecessary.
         The caller must not keep this raw XMM0 across a call or a safepoint.
         """
@@ -1120,6 +1122,7 @@ class CodegenCore:
         a.cvttsd2si_r64_xmm('rax', 'xmm0')
         a.cvtsi2sd_xmm_r64('xmm1', 'rax')
         a.ucomisd_xmm_xmm('xmm0', 'xmm1')
+        a.jcc('p', l_float)
         a.jcc('e', l_int)
         a.jmp(l_float)
         a.mark(l_int)

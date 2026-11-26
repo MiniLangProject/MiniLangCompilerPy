@@ -22,6 +22,9 @@ function check(condition, label)
 end function
 
 function same(actual, expected, label)
+  if typeof(actual) == "float" and actual != actual then
+    return check(typeof(expected) == "float" and expected != expected, label + " NaN")
+  end if
   check(typeof(actual) == typeof(expected), label + " tag")
   if typeof(actual) == "error" and typeof(expected) == "error" then
     check(actual.code == expected.code, label + " error code")

@@ -600,7 +600,7 @@ function main(args)
       sameState(comparators[op](3, pair[0], pair[1], 0.123456789012345), referenceCompare(3, pair[0], pair[1], 0.123456789012345, op), "comparison " + op)
     end for
   end for
-  sameState(compoundNormalizeCondition(3, positiveInfinity, negativeInfinity), referenceNormalizeCondition(3, positiveInfinity, negativeInfinity), "condition NaN normalizes to int before comparison")
+  sameState(compoundNormalizeCondition(3, positiveInfinity, negativeInfinity), referenceNormalizeCondition(3, positiveInfinity, negativeInfinity), "condition NaN remains unordered before comparison")
   sameState(compoundAliases(3, nan), referenceAliases(3, nan), "leaf NaN is unordered and preserves zero-trip Value")
   for each n in [1, 3, 5, 17]
     same(nestedMandel(n, 12345), referenceMandel(n, 12345), "original Mandelbrot shape " + n)

@@ -18,7 +18,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', required=True, type=Path)
     parser.add_argument('--platform', required=True, choices=['windows-x64', 'linux-x64', 'minux-x64'])
-    parser.add_argument('--version', default='1.3.11')
+    parser.add_argument('--version', default='1.3.12')
     parser.add_argument('--third-party', action='append', default=[], type=Path)
     parser.add_argument('--runtime-dir', type=Path, help='verified MinUX runtime output, including its manifest and licenses')
     args = parser.parse_args()

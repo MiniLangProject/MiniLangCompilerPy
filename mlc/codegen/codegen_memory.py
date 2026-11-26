@@ -98,6 +98,8 @@ class CodegenMemory:
 
     def _uses_gc_stats(self) -> bool:
         """Application calls/addresses are tracked before the shared helper tail."""
+        if 'gc_stats_requested' in self.heap_config:
+            return bool(self.heap_config['gc_stats_requested'])
         return 'fn_gc_stat' in getattr(self, 'used_helpers', set())
 
     # ------------------------------------------------------------------
@@ -547,6 +549,15 @@ class CodegenMemory:
             self.ensure_concurrent_gc_data()
             self.used_helpers.update(["fn_gc_free_take", "fn_gc_free_push"])
         a.mark("fn_alloc")
+        if self._uses_gc_stats():
+            # Count public object requests once, including bump/TLAB hits.
+            # Internal TLAB refills and retry jumps bypass this entry.
+            a.lea_r64_membase_disp("r10", "rcx", GC_HEADER_SIZE + 7)
+            a.and_r64_imm("r10", -8)
+            a.lea_rax_rip("gc_object_requests")
+            a.emit(bytes.fromhex("f0 48 ff 00" if threaded_heap else "48 ff 00"))
+            a.lea_rax_rip("gc_object_requested_bytes")
+            a.emit(bytes.fromhex("f0 4c 01 10" if threaded_heap else "4c 01 10"))
         # Closed single-threaded programs deliberately do not initialize the
         # GS allocation context.  Bypass TLAB code at compile time instead of
         # treating Windows' otherwise arbitrary TEB user-pointer slot as ours.
@@ -1503,6 +1514,9 @@ class CodegenMemory:
             if name not in d.labels:
                 value = int(not periodic_disabled and configured_limit is None) if name == 'gc_adaptive' else 0
                 d.add_u64(name, value)
+        for name in ('gc_pause_started', 'gc_pause_clock_value', 'gc_pause_frequency'):
+            if name not in d.labels:
+                d.add_u64(name, 0)
         if 'gc_free_miss_size' not in d.labels:
             d.add_u64('gc_free_miss_size', 0)
 
@@ -1567,10 +1581,83 @@ class CodegenMemory:
             self.asm._before_call = callback
 
     def _gc_stat_labels(self):
-        """Keep the default diagnostics layout unchanged when SATB is disabled."""
+        """Reserve all indices, including disabled collector-specific metrics."""
         extra = ('gc_concurrent_completed', 'gc_concurrent_phase', 'gc_concurrent_pause_ticks',
                  'gc_concurrent_pause_max', 'gc_concurrent_overflows', 'gc_concurrent_marked')
-        return GC_STAT_LABELS + (extra if self.heap_config.get('gc_concurrent') else ())
+        totals = ('gc_object_requests', 'gc_object_requested_bytes', 'gc_pause_total_ns',
+                  'gc_pause_max_ns', 'gc_pause_last_ns')
+        return GC_STAT_LABELS + extra + totals
+
+    def emit_gc_pause_clock(self, prefix):
+        """Read a monotonic clock without managed allocation; collector regs are saved."""
+        a = self.asm
+        failed, done = prefix + '_failed', prefix + '_done'
+        if self.is_elf_target:
+            # Linux x86-64 clock_gettime(CLOCK_MONOTONIC, stack timespec).
+            a.mov_r32_imm32('edi', 1)
+            a.lea_r64_membase_disp('rsi', 'rsp', 8)
+            a.mov_rax_imm64(228)
+            a.emit(bytes.fromhex('0f 05'))
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('ne', failed)
+            a.mov_r64_membase_disp('rax', 'rsp', 8)
+            a.imul_r64_r64_imm('rax', 'rax', 1000000000)
+            a.mov_r64_membase_disp('r10', 'rsp', 16)
+            a.add_r64_r64('rax', 'r10')
+        else:
+            a.mov_rax_rip_qword('gc_pause_frequency')
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('ne', prefix + '_frequency_ready')
+            a.lea_r64_rip('rcx', 'gc_pause_frequency')
+            a.mov_rax_rip_qword('iat_QueryPerformanceFrequency')
+            a.call_rax()
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('e', failed)
+            a.mark(prefix + '_frequency_ready')
+            a.lea_r64_rip('rcx', 'gc_pause_clock_value')
+            a.mov_rax_rip_qword('iat_QueryPerformanceCounter')
+            a.call_rax()
+            a.test_r64_r64('rax', 'rax')
+            a.jcc('e', failed)
+            a.mov_rax_rip_qword('gc_pause_clock_value')
+        a.jmp(done)
+        a.mark(failed)
+        a.xor_r32_r32('eax', 'eax')
+        a.mark(done)
+
+    def emit_gc_pause_finish(self):
+        """Record collector work after rendezvous and before mutators resume."""
+        a = self.asm
+        self.emit_gc_pause_clock('gc_pause_end_clock')
+        a.mov_r64_r64('r10', 'rax')
+        a.mov_rax_rip_qword('gc_pause_started')
+        a.test_r64_r64('rax', 'rax')
+        a.jcc('e', 'gc_pause_record_done')
+        a.cmp_r64_r64('r10', 'rax')
+        a.jcc('b', 'gc_pause_record_done')
+        a.sub_r64_r64('r10', 'rax')
+        a.mov_r64_r64('rax', 'r10')
+        if not self.is_elf_target:
+            # Convert the elapsed interval, not absolute QPC uptime. The wide
+            # product avoids overflow even for unusually long collections.
+            a.lea_r11_rip('gc_pause_frequency')
+            a.mov_r64_membase_disp('r10', 'r11', 0)
+            a.test_r64_r64('r10', 'r10')
+            a.jcc('e', 'gc_pause_record_done')
+            a.mov_rcx_imm32(1000000000)
+            a.mul_r64('rcx')
+            a.div_r64('r10')
+        a.mov_rip_qword_rax('gc_pause_last_ns')
+        a.mov_r64_r64('rdx', 'rax')
+        a.mov_rax_rip_qword('gc_pause_total_ns')
+        a.add_r64_r64('rax', 'rdx')
+        a.mov_rip_qword_rax('gc_pause_total_ns')
+        a.mov_rax_rip_qword('gc_pause_max_ns')
+        a.cmp_r64_r64('rax', 'rdx')
+        a.jcc('ae', 'gc_pause_record_done')
+        a.mov_r64_r64('rax', 'rdx')
+        a.mov_rip_qword_rax('gc_pause_max_ns')
+        a.mark('gc_pause_record_done')
 
     def emit_gc_write_barrier(self, base, displacement):
         """Log one overwritten tagged field while preserving registers and FLAGS."""
@@ -1696,6 +1783,10 @@ class CodegenMemory:
                 self.rdata.add_str("gc_ms_overflow", "ERROR: GC mark stack overflow\n", add_newline=False)
         threaded_gc = self.native_threads_possible
         concurrent_gc = bool(self.heap_config.get("gc_concurrent", False))
+        measure_pause = self._uses_gc_stats() and not concurrent_gc and self.target in ("linux-x64", "windows-x64")
+        if measure_pause and not self.is_elf_target:
+            self.add_import_symbol('kernel32.dll', 'QueryPerformanceCounter')
+            self.add_import_symbol('kernel32.dll', 'QueryPerformanceFrequency')
         collector_label = "fn_gc_collect"
         sweep_frontier_label = "heap_ptr"
         free_head_label = "gc_free_head"
@@ -1733,6 +1824,10 @@ class CodegenMemory:
                 self.emit_gc_concurrent_pause_begin()
             else:
                 a.call("fn_gc_world_stop")
+
+        if measure_pause:
+            self.emit_gc_pause_clock('gc_pause_begin_clock')
+            a.mov_rip_qword_rax('gc_pause_started')
 
         lid = self.new_label_id()
         L_MARK_VALUE = "gc_mark_value_" + str(lid)
@@ -2756,6 +2851,8 @@ class CodegenMemory:
         a.mov_rip_qword_rax("gc_young_bytes_limit")
         a.mark(L_MARK_DONE + "_adaptive_done")
 
+        if measure_pause:
+            self.emit_gc_pause_finish()
         if concurrent_gc:
             a.mov_rax_rip_qword("gc_concurrent_completed")
             a.inc_r64("rax")
@@ -2976,6 +3073,10 @@ class CodegenMemory:
         a.jcc("ne", invalid)
         a.sar_r64_imm8("rcx", 3)
         for index, name in enumerate(self._gc_stat_labels()):
+            if 16 <= index <= 21 and not self.heap_config.get('gc_concurrent'):
+                continue
+            if index >= 24 and (self.heap_config.get('gc_concurrent') or self.target not in ('linux-x64', 'windows-x64')):
+                continue
             next_label = f"gc_stat_next_{lid}_{index}"
             a.cmp_r64_imm("rcx", index)
             a.jcc("ne", next_label)

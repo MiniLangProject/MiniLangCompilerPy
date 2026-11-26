@@ -1,5 +1,5 @@
 // Float consumers must receive the canonical numeric result of a child,
-// including signed61 wrap and the ordinary NaN-to-integer normalization.
+// including signed61 wrap and the NaN propagation.
 // Untyped helper calls keep the references on the preceding scalar path.
 failures = 0
 
@@ -32,7 +32,7 @@ end function
 function referenceAdd(a, b) return a + b end function
 function referenceMul(a, b) return a * b end function
 
-// An integer/NaN child has an actual-float sibling. Its canonical wrapped
+// An integer child has an actual-float sibling. Its canonical wrapped
 // numeric value can be consumed without abandoning the current raw iteration.
 function consumerLeft(n as int, x as float, y as float, scale as float)
   i as int = 0
@@ -363,8 +363,8 @@ function main(args)
   end for
   sameState(consumerChain(1, positive61, 0.0, 0.000000000000000001, 0.125), [0.125, 1], "positive61 wraps to zero before float parent")
   sameState(consumerChain(1, negative63, 0.0, 0.000000000000000001, 0.125), [0.125, 1], "negative63 wraps to zero before float parent")
-  sameState(consumerChain(1, infinity, negativeInfinity, 0.5, 0.125), [0.125, 1], "NaN child normalizes to zero")
-  sameState(consumerChain(1, nan, 0.25, 0.5, 0.125), [0.125, 1], "NaN leaf produces canonical child")
+  sameState(consumerChain(1, infinity, negativeInfinity, 0.5, 0.125), [nan, 1], "NaN child remains unordered")
+  sameState(consumerChain(1, nan, 0.25, 0.5, 0.125), [nan, 1], "NaN leaf propagates through its child")
   exact = consumerBoth(1, 9007199254740992.0, 1.0, 1.0, 1.0, seed)
   sameState(exact, [9007199254740993, 1], "two integer children keep precision above 2^53")
 

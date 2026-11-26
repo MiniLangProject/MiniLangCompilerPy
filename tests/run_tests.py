@@ -370,7 +370,7 @@ def test_codegen_structure(*, name: str, tests_root: Path, mlc_runner: Path) -> 
 
 def test_compiler_version_cli(*, name: str, mlc_runner: Path) -> TestResult:
     """Both documented version switches must print the stable release version."""
-    expected = "MiniLang Compiler 1.3.11"
+    expected = "MiniLang Compiler 1.3.12"
     outputs: list[str] = []
     for flag in ("-version", "--version"):
         result = run_cmd([sys.executable, str(mlc_runner), flag], cwd=mlc_runner.parent)
@@ -4289,7 +4289,7 @@ def main() -> int:
     tests: list[Callable[[], TestResult]] = []
 
     tests.append(lambda: test_compiler_version_cli(
-        name="compiler CLI reports version 1.3.11", mlc_runner=mlc_runner))
+        name="compiler CLI reports version 1.3.12", mlc_runner=mlc_runner))
     tests.append(lambda: test_object_pipeline_compat_cli(
         name="Python --object-pipeline compatibility flag preserves target bytes", mlc_runner=mlc_runner))
     tests.append(lambda: test_formatter_cli(
@@ -5202,6 +5202,14 @@ def main() -> int:
              "nested float loops retain threaded polls"),
             ("numeric_float_cache", "NUMERIC FLOAT CACHE [OK]",
              "float loop caches preserve scratch, rollback and promoted values"),
+            ("gc_allocation_totals", "GC TOTALS checks=15 failures=0",
+             "all allocation paths and full-stop collector timing"),
+            ("gc_allocation_totals_threads", "GC TOTALS THREADS [OK]",
+             "atomic totals across concurrent TLAB allocations"),
+            ("gc_stats_default_reference", "GC DEFAULT REFERENCE [OK]",
+             "default-only first-class references retain GC statistics"),
+            ("numeric_nan_normalization", "NUMERIC NAN NORMALIZATION [OK]",
+             "NaN remains unordered through all numeric normalizers"),
             ("numeric_float_consumer", "NUMERIC FLOAT CONSUMER [OK]",
              "float loop consumers preserve canonicalization and strict roots")):
         tests.append(lambda fixture=fixture, marker=marker, title=title: test_program_no_fail(

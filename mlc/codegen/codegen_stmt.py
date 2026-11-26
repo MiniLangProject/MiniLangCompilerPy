@@ -1693,7 +1693,7 @@ class CodegenStmt:
         if double_consumer and integer_rejoins is not None:
             # The proven-float sibling makes the next operation a double
             # consumer even when this child normalizes to int. Keep the float
-            # path unchanged; integer/NaN canonicalization rejoins out of line.
+            # path unchanged; integer canonicalization rejoins out of line.
             lid = self.new_label_id()
             canonical = f'float_loop_consumer_int_{lid}'
             resume = f'float_loop_consumer_resume_{lid}'
@@ -1703,7 +1703,7 @@ class CodegenStmt:
             a.mark(resume)
         else:
             # Assignment roots and children without a proven-float sibling
-            # retain the integer/NaN bailout and the committed rollback state.
+            # retain the integer bailout and the committed rollback state.
             self._opt_emit_float_tree_normalize(slow)
 
     def _opt_emit_float_loop(self, stmt: Any) -> bool:
@@ -5407,7 +5407,7 @@ class CodegenStmt:
 
     # ---------- program ----------
 
-    def _program_uses_native_threads(self, program: List[Any]) -> bool:
+    def _program_uses_native_threads(self, program: List[Any], identifier: str = "Thread") -> bool:
         """Conservatively detect whether this closed program can create a Thread.
 
         Imported modules are already part of ``program``. Merely using
@@ -5430,7 +5430,7 @@ class CodegenStmt:
             kind = value.__class__.__name__
             if kind in ('Var', 'Member'):
                 name = str(getattr(value, 'name', '') or '')
-                if name == 'Thread' or name.endswith('.Thread'):
+                if name == identifier or name.endswith('.' + identifier):
                     return True
             try:
                 fields = vars(value)
@@ -5575,6 +5575,9 @@ class CodegenStmt:
         # Whole-program feature gating keeps TLS/GC polling and allocator
         # synchronization out of binaries that cannot create a native thread.
         self.native_threads_possible = self._program_uses_native_threads(program) or bool(self.heap_config.get('gc_concurrent'))
+        # Static callable objects include every builtin. Their relocations are
+        # not evidence that application code requested runtime diagnostics.
+        self.heap_config['gc_stats_requested'] = self._program_uses_native_threads(program, 'gc_stat')
         # Step 10: value-enum storage (EnumName -> {Member -> Expr})
         self.value_enum_values = {}
 

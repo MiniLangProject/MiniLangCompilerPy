@@ -204,7 +204,10 @@ class RDataBuilder:
           u32 pad  = 0
           f64 value
         """
-        f64 = struct.pack("<d", float(value))
+        # Match the self-hosted constant pool's canonical quiet NaN. Runtime
+        # arithmetic keeps its native payload; compile-time values are pooled.
+        numeric = float(value)
+        f64 = bytes.fromhex("000000000000f87f") if numeric != numeric else struct.pack("<d", numeric)
 
         # Pool boxed floats by their exact IEEE-754 bit-pattern.
         hit = self._pool_obj_float.get(f64)
