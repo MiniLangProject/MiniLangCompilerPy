@@ -1,0 +1,4 @@
+# Formatter fixtures have byte-sensitive golden output.
+tests/formatter_*_*.ml text eol=lf
+# Trailing spaces inside multiline strings are deliberate regression inputs.
+tests/formatter_edges_*.ml whitespace=-blank-at-eol

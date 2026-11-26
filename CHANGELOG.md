@@ -2,6 +2,17 @@
 
 All notable changes to the MiniLang compiler are documented here.
 
+## Unreleased
+
+- Preserve multiline string contents in `mlfmt`, including whitespace, blank
+  lines and literal line endings. Lines touching those strings remain verbatim;
+  block tracking still formats the surrounding source correctly.
+- Keep block indentation correct when headers contain block comments or an
+  `else` branch closes its `if` on the same line.
+- Add shared formatter regressions for literal preservation, canonical layout,
+  idempotence and unchanged program output; run native Linux checks even when
+  Wine is unavailable.
+
 ## 1.3.12 - 2026-11-26
 
 - Preserve the self-hosted compiler's native-thread safety paths when `Thread`

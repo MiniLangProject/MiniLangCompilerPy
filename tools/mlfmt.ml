@@ -87,35 +87,6 @@ function bb_toBytes(bb)
   return slice(bb.buf, 0, bb.n)
 end function
 
-// clamp consecutive blank lines by limiting consecutive \n
-function _clampNewlines(b, maxBlankLines)
-  if maxBlankLines < 0 then
-    return b
-  end if
-
-  maxRun = maxBlankLines + 1
-  if maxRun < 1 then
-    maxRun = 1
-  end if
-
-  bb = bb_new(len(b) + 8)
-  run = 0
-  for i = 0 to len(b) - 1
-    ch = b[i]
-    if ch == 10 then
-      run = run + 1
-      if run <= maxRun then
-        bb = bb_pushByte(bb, 10)
-      end if
-    else
-      run = 0
-      bb = bb_pushByte(bb, ch)
-    end if
-  end for
-
-  return bb_toBytes(bb)
-end function
-
 // ------------------------------------------------------------
 // small helper classes (Bytes/Char-classes)
 // ------------------------------------------------------------
@@ -205,38 +176,76 @@ function _parseIntOrDefault(s, defv)
 end function
 
 // ------------------------------------------------------------
-// comment finder (//) outside of Strings
+// Stateful lexical scan for layout decisions
 // ------------------------------------------------------------
-function _findLineCommentIdx(b)
+// Keep a separate executable projection: comments are replaced by spaces and
+// each string by an empty quoted token. Source bytes are still emitted from
+// the original line. In particular, comment text must never open/close blocks.
+struct LayoutLine
+  code
+  inString
+  inBlockComment
+  hasBlockComment
+  lineCommentAt
+end struct
+
+function _scanLayoutLine(b, inString, inBlockComment)
+  code = bb_new(len(b) + 8)
+  hasBlockComment = inBlockComment
+  lineCommentAt = -1
   i = 0
-  inStr = false
   while i < len(b)
     ch = b[i]
-    if inStr then
+
+    if inBlockComment then
+      if ch == 42 and i + 1 < len(b) and b[i + 1] == 47 then
+        inBlockComment = false
+        code = bb_pushByte(code, 32)
+        i = i + 2
+      else
+        i = i + 1
+      end if
+      continue
+    end if
+
+    if inString then
       if ch == 92 then
+        // An escape consumes the next byte, including a physical line ending.
+        // Never carry an escape over that ending to the next line's quote.
         i = i + 2
         continue
       end if
-      if ch == 34 then
-        inStr = false
-      end if
+      if ch == 34 then inString = false end if
       i = i + 1
       continue
     end if
 
     if ch == 34 then
-      inStr = true
+      code = bb_pushByte(code, 34)
+      code = bb_pushByte(code, 34)
+      inString = true
       i = i + 1
       continue
     end if
 
-    if ch == 47 and(i + 1) < len(b) and b[i + 1] == 47 then
-      return i
+    if ch == 47 and i + 1 < len(b) then
+      if b[i + 1] == 47 then
+        lineCommentAt = i
+        break
+      end if
+      if b[i + 1] == 42 then
+        code = bb_pushByte(code, 32)
+        inBlockComment = true
+        hasBlockComment = true
+        i = i + 2
+        continue
+      end if
     end if
 
+    code = bb_pushByte(code, ch)
     i = i + 1
   end while
-  return -1
+  return LayoutLine(bb_toBytes(code), inString, inBlockComment, hasBlockComment, lineCommentAt)
 end function
 
 // normalize "//   foo" -> "// foo" (only if there is whitespace after //)
@@ -270,56 +279,6 @@ function _normalizeLineComment(c)
 
   // build: "// " + rest
   return bytes("// " + decode(slice(c, i, len(c) - i)))
-end function
-
-// Find a two-byte marker at or after start. This is used only while already
-// inside a block comment, where string and line-comment rules do not apply.
-function _findSubseqFrom(b, start, a, c)
-  if len(b) < 2 or start >= len(b) - 1 then
-    return -1
-  end if
-  i = start
-  if i < 0 then i = 0 end if
-  while i < len(b) - 1
-    if b[i] == a and b[i + 1] == c then
-      return i
-    end if
-    i = i + 1
-  end while
-  return -1
-end function
-
-// Locate /* in executable text. Markers inside strings or after // are data,
-// not comments; treating them as comments used to corrupt following indents.
-function _findBlockCommentOpenIdx(b)
-  if len(b) < 2 then
-    return -1
-  end if
-
-  i = 0
-  inStr = false
-  while i < len(b) - 1
-    ch = b[i]
-    if inStr then
-      if ch == 92 then
-        i = i + 2
-        continue
-      end if
-      if ch == 34 then inStr = false end if
-      i = i + 1
-      continue
-    end if
-
-    if ch == 34 then
-      inStr = true
-      i = i + 1
-      continue
-    end if
-    if ch == 47 and b[i + 1] == 47 then return -1 end if
-    if ch == 47 and b[i + 1] == 42 then return i end if
-    i = i + 1
-  end while
-  return -1
 end function
 
 // ------------------------------------------------------------
@@ -397,6 +356,44 @@ function _containsEndOf(code, kind)
   return false
 end function
 
+// An inline `end if` may close a nested conditional inside the else body.
+// Only a closure with no such nested opener closes the surrounding branch;
+// `else if` continues its existing conditional instead of opening a new one.
+function _elseClosesInlineIf(code)
+  i = 0
+  inString = false
+  previous = ""
+  nested = 0
+  while i < len(code)
+    ch = code[i]
+    if inString then
+      if ch == 92 then i = i + 2 continue end if
+      if ch == 34 then inString = false end if
+      i = i + 1
+      continue
+    end if
+    if ch == 34 then inString = true i = i + 1 continue end if
+    if _isIdentStart(ch) then
+      start = i
+      i = i + 1
+      while i < len(code) and _isIdentPart(code[i]) i = i + 1 end while
+      word = decode(slice(code, start, i - start))
+      if word == "if" then
+        if previous == "end" then
+          if nested == 0 then return true end if
+          nested = nested - 1
+        else
+          if previous != "else" then nested = nested + 1 end if
+        end if
+      end if
+      previous = word
+      continue
+    end if
+    i = i + 1
+  end while
+  return false
+end function
+
 // ------------------------------------------------------------
 // First two words at line beginning (for Indent-Logic)
 // ------------------------------------------------------------
@@ -449,25 +446,12 @@ function _nextLineIsEndLoop(source, start)
     while lineEnd < len(source) and source[lineEnd] != 10
       lineEnd = lineEnd + 1
     end while
-    line = _trimLeftBytes(_trimRightBytes(slice(source, pos, lineEnd - pos)))
-
-    if inComment then
-      closeAt = _findSubseqFrom(line, 0, 42, 47)
-      if closeAt >= 0 then inComment = false end if
-    else
-      if len(line) > 0 then
-        if len(line) >= 2 and line[0] == 47 and line[1] == 47 then
-          // Skip a line comment.
-        else
-          if len(line) >= 2 and line[0] == 47 and line[1] == 42 then
-            closeAt = _findSubseqFrom(line, 2, 42, 47)
-            if closeAt < 0 then inComment = true end if
-          else
-            words = _firstTwoWords(line)
-            return words.w0 == "end" and words.w1 == "loop"
-          end if
-        end if
-      end if
+    line = slice(source, pos, lineEnd - pos)
+    layout = _scanLayoutLine(line, false, inComment)
+    inComment = layout.inBlockComment
+    if not _isBlankLine(layout.code) then
+      words = _firstTwoWords(layout.code)
+      return words.w0 == "end" and words.w1 == "loop"
     end if
 
     if lineEnd >= len(source) then return false end if
@@ -891,6 +875,8 @@ function format_source(src, indentSize, maxBlankLines)
   interfaceDepth = 0
   pendingLoopFooterEnds = 0
   inBlockComment = false
+  inString = false
+  literalLayout = bb_new(64)
   blankRun = 0
 
   lineStart = 0
@@ -904,7 +890,34 @@ function format_source(src, indentSize, maxBlankLines)
       j = j + 1
     end while
 
-    line = slice(b, lineStart, j - lineStart)
+    rawLine = slice(b, lineStart, j - lineStart)
+    wasInString = inString
+    layout = _scanLayoutLine(rawLine, inString, inBlockComment)
+    inString = layout.inString
+    inBlockComment = layout.inBlockComment
+    preserveLine = wasInString or inString
+    layoutCode = layout.code
+
+    // A physical newline, CR, indentation or blank line inside a literal is
+    // program data. Preserve every byte of lines touching a multiline string,
+    // including its opening/closing line, rather than guessing which spaces
+    // belong to layout. Accumulate only their executable projection so an
+    // inline block spanning that literal is counted once it is complete.
+    if preserveLine then
+      bb = bb_pushBytes(bb, rawLine)
+      if j < len(b) then bb = bb_pushByte(bb, 10) end if
+      blankRun = 0
+      literalLayout = bb_pushBytes(literalLayout, layoutCode)
+      if inString then
+        if j >= len(b) then break end if
+        lineStart = j + 1
+        continue
+      end if
+      layoutCode = bb_toBytes(literalLayout)
+      literalLayout = bb_new(64)
+    end if
+
+    line = rawLine
     // trim trailing '\r'
     if len(line) > 0 and line[len(line) - 1] == 13 then
       line = slice(line, 0, len(line) - 1)
@@ -913,7 +926,7 @@ function format_source(src, indentSize, maxBlankLines)
     lineR = _trimRightBytes(line)
 
     // blank line -> keep (clamped)
-    if _isBlankLine(lineR) then
+    if not preserveLine and _isBlankLine(lineR) then
       blankRun = blankRun + 1
       if maxBlankLines < 0 then
         // unlimited
@@ -932,36 +945,8 @@ function format_source(src, indentSize, maxBlankLines)
     end if
 
     blankRun = 0
-    // block comment handling (simple)
-    if inBlockComment then
-      bb = _emitIndent(bb, indent, indentSize)
-      commentLine = _trimLeftBytes(lineR)
-      if len(commentLine) > 0 and commentLine[0] == 42 then bb = bb_pushByte(bb, 32) end if
-      bb = bb_pushBytes(bb, commentLine)
-      bb = bb_pushByte(bb, 10)
-      if _findSubseqFrom(lineR, 0, 42, 47) >= 0 then
-        inBlockComment = false
-      end if
-      if j >= len(b) then break end if
-      lineStart = j + 1
-      continue
-    end if
-
-    blockOpen = _findBlockCommentOpenIdx(lineR)
-    if blockOpen >= 0 then
-      bb = _emitIndent(bb, indent, indentSize)
-      bb = bb_pushBytes(bb, _trimLeftBytes(lineR))
-      bb = bb_pushByte(bb, 10)
-      if _findSubseqFrom(lineR, blockOpen + 2, 42, 47) < 0 then
-        inBlockComment = true
-      end if
-      if j >= len(b) then break end if
-      lineStart = j + 1
-      continue
-    end if
-
     // split // comment (outside strings)
-    cidx = _findLineCommentIdx(lineR)
+    cidx = layout.lineCommentAt
     code = lineR
     comment = bytes(0)
     if cidx >= 0 then
@@ -971,15 +956,16 @@ function format_source(src, indentSize, maxBlankLines)
 
     code = _trimRightBytes(code)
     codeTL = _trimLeftBytes(code)
-    w = _firstTwoWords(codeTL)
+    layoutTL = _trimLeftBytes(layoutCode)
+    w = _firstTwoWords(layoutTL)
     w0 = w.w0
     w1 = w.w1
 
     // Conditional-compilation directives have their own expression grammar.
     // Preserve their spelling exactly instead of feeding them through the
     // runtime-token formatter (which historically removed spaces after ':').
-    isDirective = len(codeTL) > 0 and codeTL[0] == 35
-    inlineLoopFooter = w0 == "while" and _containsEndOf(codeTL, "loop")
+    isDirective = len(layoutTL) > 0 and layoutTL[0] == 35
+    inlineLoopFooter = w0 == "while" and _containsEndOf(layoutTL, "loop")
     isLoopFooter = inlineLoopFooter or (w0 == "while" and _nextLineIsEndLoop(b, j + 1))
 
     // pre-indent adjustments
@@ -1015,32 +1001,36 @@ function format_source(src, indentSize, maxBlankLines)
       end if
     end if
 
-    // Keep preprocessor directives at column zero. Their selected runtime
-    // statements still use the surrounding language-block indentation.
-    if not isDirective then bb = _emitIndent(bb, indent, indentSize) end if
+    if not preserveLine then
+      // Keep directives at column zero. Statements selected by them still use
+      // the surrounding language-block indentation.
+      if not isDirective then bb = _emitIndent(bb, indent, indentSize) end if
 
-    // emit formatted code + comment
-    if len(codeTL) > 0 and isDirective then
-      bb = bb_pushBytes(bb, codeTL)
-    else
-      if len(codeTL) > 0 then
-        bb = emit_formatted_code(bb, codeTL)
+      if layout.hasBlockComment then
+        // Preserve comment/code spelling, but still apply the block changes
+        // discovered in layoutTL. This includes executable text after `*/`.
+        commentLine = _trimLeftBytes(lineR)
+        if len(commentLine) > 0 and commentLine[0] == 42 then bb = bb_pushByte(bb, 32) end if
+        bb = bb_pushBytes(bb, commentLine)
+      else
+        if len(codeTL) > 0 and isDirective then
+          bb = bb_pushBytes(bb, codeTL)
+        else
+          if len(codeTL) > 0 then bb = emit_formatted_code(bb, codeTL) end if
+        end if
+
+        if len(comment) > 0 then
+          c2 = _normalizeLineComment(_trimLeftBytes(comment))
+          if len(codeTL) > 0 then bb = bb_pushByte(bb, 32) end if
+          bb = bb_pushBytes(bb, c2)
+        end if
       end if
+      bb = bb_pushByte(bb, 10)
     end if
-
-    if len(comment) > 0 then
-      c2 = _normalizeLineComment(_trimLeftBytes(comment))
-      if len(codeTL) > 0 then
-        bb = bb_pushByte(bb, 32)
-      end if
-      bb = bb_pushBytes(bb, c2)
-    end if
-
-    bb = bb_pushByte(bb, 10)
 
     // post-indent adjustments
     if w0 == "else" then
-      indent = indent + 1
+      if not _elseClosesInlineIf(layoutTL) then indent = indent + 1 end if
     else
       if (w0 == "case" or w0 == "default") and not sb_isEmpty(branchBases) then
         base2 = sb_top(branchBases)
@@ -1068,7 +1058,7 @@ function format_source(src, indentSize, maxBlankLines)
         if w0 == "override" and w1 == "final" then opener = "function" end if
         if (w0 == "private" or w0 == "protected" or w0 == "public") and (w1 == "function" or w1 == "static" or w1 == "override" or w1 == "final") then opener = "function" end if
         if w0 == "operator" then opener = "operator" end if
-        if opener == "" and _hasInlineAsmHeader(codeTL) then opener = "asm" end if
+        if opener == "" and _hasInlineAsmHeader(layoutTL) then opener = "asm" end if
         if isLoopFooter then opener = "" end if
 
         // Fine-grained synchronization is a block only in call form;
@@ -1082,7 +1072,7 @@ function format_source(src, indentSize, maxBlankLines)
 
         if opener != "" then
           // avoid indenting inline blocks like: if .. then .. end if
-          if not _containsEndOf(codeTL, opener) then
+          if not _containsEndOf(layoutTL, opener) then
             indent = indent + 1
             if w0 == "switch" or w0 == "match" then
               // indent is now the case-header base
@@ -1104,9 +1094,9 @@ function format_source(src, indentSize, maxBlankLines)
     lineStart = j + 1
   end while
 
-  output = bb_toBytes(bb)
-  output = _clampNewlines(output, maxBlankLines)
-  return decode(output)
+  // Blank lines were clamped only while outside string literals. A final
+  // byte-level newline pass would silently change multiline string values.
+  return decode(bb_toBytes(bb))
 end function
 
 // ------------------------------------------------------------
@@ -1351,6 +1341,8 @@ function _usage()
   print "Notes:"
   print "  - If <path> is a directory, mlfmt formats all *.ml files recursively IN-PLACE."
   print "  - [output.ml] is only valid when <path> is a single file."
+  print "  - Lines touching a multiline string are preserved verbatim, including their code."
+  print "  - --max-blank never changes blank lines inside multiline strings."
   print ""
   print "Defaults:"
   print "  --indent 2"
