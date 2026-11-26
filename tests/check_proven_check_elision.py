@@ -46,6 +46,7 @@ FIXTURES = {
     "gc_allocation_totals": "GC TOTALS checks=15 failures=0",
     "gc_allocation_totals_threads": "GC TOTALS THREADS [OK]",
     "gc_stats_default_reference": "GC DEFAULT REFERENCE [OK]",
+    "thread_default_reference": "THREAD DEFAULT REFERENCE [OK]",
     "type_checks": "[OK] exhaustive public is-type categories",
     "language_type_guard_object": "[OK] typed struct field guards",
     "type_query_resolution": "[OK] qualified and shadowed type queries",
@@ -104,6 +105,13 @@ def executable_target():
 def inspect_assembly(fixture, assembly, *, gc_concurrent=False):
     """Prove that the intended paths are exercised, and exclusions remain."""
     checks = []
+    if fixture == "thread_default_reference":
+        start = assembly.index("fn_alloc:")
+        stop = assembly.find("\nfn_", start + 1)
+        allocator = assembly[start:stop if stop >= 0 else len(assembly)]
+        if "tlab_refill_" not in allocator or "alloc_single_slow" in allocator:
+            raise AssertionError("Default-only Thread constructor lost threaded allocation")
+        checks.append({"threaded_allocator_from_default_only_constructor": True})
 
     def body(name):
         found = re.search(r"(?ms)^fn_user_" + re.escape(name) +

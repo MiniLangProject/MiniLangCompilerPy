@@ -5206,6 +5206,8 @@ def main() -> int:
              "all allocation paths and full-stop collector timing"),
             ("gc_allocation_totals_threads", "GC TOTALS THREADS [OK]",
              "atomic totals across concurrent TLAB allocations"),
+            ("thread_default_reference", "THREAD DEFAULT REFERENCE [OK]",
+             "default-only thread factory retains TLS and allocator synchronization"),
             ("gc_stats_default_reference", "GC DEFAULT REFERENCE [OK]",
              "default-only first-class references retain GC statistics"),
             ("numeric_nan_normalization", "NUMERIC NAN NORMALIZATION [OK]",

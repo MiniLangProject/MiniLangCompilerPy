@@ -47,6 +47,23 @@ in both monolithic and object-pipeline builds; read-only builtin helpers can
 still be emitted by existing hoisting.
 
 
+## Native-thread reachability
+
+The self-hosted compiler now uses the same complete AST traversal for `Thread`
+and `gc_stat` references. A `Thread` constructor used only in a parameter
+default previously escaped the narrower thread scan, incorrectly enabling the
+single-thread allocator and omitting synchronization/TLS setup. Defaults,
+struct field initializers, lock expressions and expression wrappers are now
+covered. The Python compiler already scans these positions conservatively.
+The new default-only constructor regression starts four workers and checks 80,000
+exact allocation requests plus the returned objects after join. The
+[follow-up matrix](docs/reports/release-1.3.12-thread-references.json) records
+18 identical Python/native/MLO images for the thread default, GC default and NaN
+fixtures across Linux and Windows; all three Linux runtime cases passed.
+Thread-present/absent allocator path checks and the six GC-stat gate cases also
+passed. The Python implementation is unchanged in this follow-up; its matching
+fixtures and validation report are retained for both compilers.
+
 ## Validation
 
 The [runtime matrix](docs/reports/release-1.3.12-runtime-matrix.json) records

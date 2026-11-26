@@ -4,6 +4,10 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## 1.3.12 - 2026-11-26
 
+- Preserve the self-hosted compiler's native-thread safety paths when `Thread`
+  appears only in a default argument, struct field default, lock expression or
+  expression wrapper; reuse the complete builtin-reference scan.
+
 - Preserve NaN as an unordered float in scalar arithmetic, unboxed numeric
   consumers, fused expressions and counted float loops. Ordered exact integers
   retain signed-61 normalization and wrapping.

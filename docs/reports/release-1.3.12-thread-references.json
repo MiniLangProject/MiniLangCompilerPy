@@ -1,0 +1,198 @@
+{
+  "host": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "flags": [],
+  "images": [
+    {
+      "fixture": "thread_default_reference",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5e8752132fffa032ab1365f7602536b5973e36da2f61a3e8fb299588e1c1d54f",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 133056
+    },
+    {
+      "fixture": "thread_default_reference",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "5e8752132fffa032ab1365f7602536b5973e36da2f61a3e8fb299588e1c1d54f",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 133056
+    },
+    {
+      "fixture": "thread_default_reference",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "5e8752132fffa032ab1365f7602536b5973e36da2f61a3e8fb299588e1c1d54f",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 133056
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "102ad0a54369b120d1b306e2ee2fb304d1359d201a9a005b191faf6200397d9f",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 100256
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "93dbf9f18f9e250e9307a1f68a1f8f44a952bea9c42d78741bf923bf7755da3f",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 182320
+    },
+    {
+      "fixture": "thread_default_reference",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "708cfb7052e164ff36d5515c35d9d664edc70da4c9aa824033b6c133af9e6dae",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 127488
+    },
+    {
+      "fixture": "thread_default_reference",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "708cfb7052e164ff36d5515c35d9d664edc70da4c9aa824033b6c133af9e6dae",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 127488
+    },
+    {
+      "fixture": "thread_default_reference",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "708cfb7052e164ff36d5515c35d9d664edc70da4c9aa824033b6c133af9e6dae",
+      "source_sha256": "49d067ad98d74e2c1b555eb90b1e94c3d7fbeeb6bcab31ca4e6fdc4fdc8182b6",
+      "bytes": 127488
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "058143282c629c254dc41f91b34af8cfd2ab6a46820a714a19f660a66da1eade",
+      "source_sha256": "cbfa882d1824c3c29ba498685692e2e0349382ec78c021bdf697a26383de1e39",
+      "bytes": 92160
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "python",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "native",
+      "pipeline": "--no-object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "windows-x64",
+      "host": "native-mlo",
+      "pipeline": "--object-pipeline",
+      "sha256": "467ac986990529b33e1b11d57e136bd947312ea6dbb4065e2b6bd30c59ee12dc",
+      "source_sha256": "c308e19799a79b50cb83d57d010eb7124b2290156f5b3ddb20bab0cc7d0558d5",
+      "bytes": 170496
+    }
+  ],
+  "runtime_checks": [
+    {
+      "fixture": "thread_default_reference",
+      "target": "linux-x64",
+      "stdout": "THREAD DEFAULT REFERENCE [OK] objects=80000 bytes=1920000\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "gc_stats_default_reference",
+      "target": "linux-x64",
+      "stdout": "GC DEFAULT REFERENCE [OK]\n",
+      "stderr": ""
+    },
+    {
+      "fixture": "numeric_nan_normalization",
+      "target": "linux-x64",
+      "stdout": "NUMERIC NAN NORMALIZATION [OK]\n",
+      "stderr": ""
+    }
+  ],
+  "emission_checks": [],
+  "success": true,
+  "source_gate_checks": [
+    "[OK] absent --object-pipeline",
+    "[OK] absent --no-object-pipeline",
+    "[OK] direct --object-pipeline",
+    "[OK] direct --no-object-pipeline",
+    "[OK] default_reference --object-pipeline",
+    "[OK] default_reference --no-object-pipeline"
+  ]
+}

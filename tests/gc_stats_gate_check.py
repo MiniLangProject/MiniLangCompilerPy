@@ -48,6 +48,7 @@ def main():
                 start=text.index("fn_alloc:")
                 stop=text.find("\nfn_",start+1)
                 allocator=text[start:stop if stop>=0 else len(text)]
+                assert "alloc_single_slow" in allocator, (name,mode,"single-thread fast path")
                 assert ("gc_object_requests" in allocator)==expected, (name,mode,"request writes")
                 assert ("gc_pause_begin_clock" in text)==expected, (name,mode,"collector clock")
                 print("[OK]",name,mode)
