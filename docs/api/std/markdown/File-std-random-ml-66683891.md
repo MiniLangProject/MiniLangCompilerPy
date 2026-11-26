@@ -101,11 +101,11 @@ Std.random Simple deterministic PRNG (xorshift32). - Deterministic across runs. 
 
 Source: `std/random.ml:23`
 
-<a id="constant-constant-std-random-u32-range-float-const-u32-range-float-4294967296-std-random-ml-1703609829"></a>
+<a id="constant-constant-std-random-u32-range-float-const-u32-range-float-4294967296-std-random-ml-219419969"></a>
 ### U32_RANGE_FLOAT
 
 ```ml
-const U32_RANGE_FLOAT = 4294967296.
+const U32_RANGE_FLOAT = 4294967296
 ```
 
 Track the u32 range float value used by this standard-library module.

@@ -31,7 +31,7 @@ Assert approximate numeric equality.
 | `actual` | `dynamic` | — | Observed numeric value. |
 | `expected` | `dynamic` | — | Required numeric value. |
 | `epsilon` | `dynamic` | — | Maximum absolute difference. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:167`
@@ -49,7 +49,7 @@ Assert that a string or array contains a requested value.
 | --- | --- | --- | --- |
 | `container` | `dynamic` | — | String or array to search. |
 | `expected` | `dynamic` | — | Requested substring or element. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:143`
@@ -67,7 +67,7 @@ Assert value equality using MiniLang's ordinary equality semantics.
 | --- | --- | --- | --- |
 | `actual` | `dynamic` | — | Observed value. |
 | `expected` | `dynamic` | — | Required value. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:79`
@@ -84,7 +84,7 @@ Assert that invoking a zero-argument callback produces an error value.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `callback` | `dynamic` | — | Operation expected to fail. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:183`
@@ -102,7 +102,7 @@ Assert that invoking a callback produces an error with a requested code.
 | --- | --- | --- | --- |
 | `callback` | `dynamic` | — | Operation expected to fail. |
 | `expected_code` | `dynamic` | — | Required MiniLang error code. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:196`
@@ -119,7 +119,7 @@ Assert that a value is false.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `condition` | `dynamic` | — | Condition expected to be false. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:69`
@@ -149,7 +149,7 @@ Assert that two values are different.
 | --- | --- | --- | --- |
 | `actual` | `dynamic` | — | Observed value. |
 | `unexpected` | `dynamic` | — | Value which must not be observed. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:90`
@@ -166,7 +166,7 @@ Assert that a value is not void.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `dynamic` | — | Observed value. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:121`
@@ -183,7 +183,7 @@ Assert that a value is void.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `dynamic` | — | Observed value. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:111`
@@ -201,7 +201,7 @@ Assert managed-object or callable identity rather than structural equality.
 | --- | --- | --- | --- |
 | `actual` | `dynamic` | — | Observed value. |
 | `expected` | `dynamic` | — | Required identical value. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:101`
@@ -218,7 +218,7 @@ Assert that a value is truthy.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `condition` | `dynamic` | — | Condition expected to be true. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:60`
@@ -236,7 +236,7 @@ Assert the public runtime category returned by `typeof`.
 | --- | --- | --- | --- |
 | `value` | `dynamic` | — | Observed value. |
 | `expected_type` | `dynamic` | — | Expected runtime category. |
-| `message` | `dynamic` | `""` | Optional diagnostic label. |
+| `message` | `dynamic` | <code>&#34;&#34;</code> | Optional diagnostic label. |
 
 
 Source: `std/test.ml:131`
@@ -281,7 +281,7 @@ Fail the current test immediately.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
-| `message` | `dynamic` | `"test failed"` | Failure detail. |
+| `message` | `dynamic` | <code>&#34;test failed&#34;</code> | Failure detail. |
 
 
 Source: `std/test.ml:212`
@@ -330,7 +330,7 @@ Execute suites, render the selected report, and return a process exit code.
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `suites` | `dynamic` | — | Array of Suite values. |
-| `args` | `dynamic` | `[]` | Runner command-line switches. |
+| `args` | `dynamic` | <code>&#91;&#93;</code> | Runner command-line switches. |
 
 
 Source: `std/test.ml:765`

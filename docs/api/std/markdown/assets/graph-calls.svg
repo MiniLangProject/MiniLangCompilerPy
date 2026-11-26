@@ -37,8 +37,8 @@
 <path d="M 150 455 C 150 608, 710 608, 710 761" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
 <path d="M 150 455 C 150 536, 1270 536, 1270 617" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 430 473 C 430 536, 990 536, 990 599" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M 710 491. C 710 482, 430 482, 430 473" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M 710 491. C 710 509, 1270 509, 1270 527" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 710 491 C 710 482, 430 482, 430 473" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 710 491 C 710 509, 1270 509, 1270 527" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 1270 527 C 1270 536, 150 536, 150 545" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 430 563 C 430 662, 710 662, 710 761" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
 <path d="M 990 599 C 990 680, 710 680, 710 761" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
@@ -51,8 +51,8 @@
 <path d="M 150 635 C 150 554, 430 554, 430 473" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 710 671 C 710 563, 150 563, 150 455" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 710 671 C 710 635, 990 635, 990 599" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M 1270 707 C 1270 608, 990 608, 990 509." fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-<path d="M 1270 707 C 1270 599, 710 599, 710 491." fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1270 707 C 1270 608, 990 608, 990 509" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 1270 707 C 1270 599, 710 599, 710 491" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 990 689 C 990 725, 710 725, 710 761" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
 <path d="M 990 689 C 990 698, 1270 698, 1270 707" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M 150 725 C 150 581, 1270 581, 1270 437" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -81,8 +81,8 @@
 <g><rect x="1140" y="407" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="1152" y="442" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.encoding.hex</text></g>
 <g><rect x="20" y="425" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="32" y="460" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.fmt</text></g>
 <g><rect x="300" y="443" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="312" y="478" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.fs</text></g>
-<g><rect x="580" y="461." width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="592" y="496." font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.io.file</text></g>
-<g><rect x="860" y="479." width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="872" y="514" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.net</text></g>
+<g><rect x="580" y="461" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="592" y="496" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.io.file</text></g>
+<g><rect x="860" y="479" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="872" y="514" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.net</text></g>
 <g><rect x="1140" y="497" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="1152" y="532" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.path</text></g>
 <g><rect x="20" y="515" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="32" y="550" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.platform</text></g>
 <g><rect x="300" y="533" width="260" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/><text x="312" y="568" font-family="ui-monospace,monospace" font-size="12" fill="#0f172a">std.random</text></g>

@@ -104,7 +104,7 @@ Open a local path or URI without beginning playback. Attach a native child-windo
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `source` | `dynamic` | — | Local filename, file URI, or explicitly enabled network URI. |
-| `options` | `dynamic` | `void` | PlayerOptions, or void for defaults. |
+| `options` | `dynamic` | <code>void</code> | PlayerOptions, or void for defaults. |
 
 
 Source: `std/video.ml:378`

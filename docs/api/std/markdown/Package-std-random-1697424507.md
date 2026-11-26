@@ -15,4 +15,4 @@
 - [`std.random.seeded`](File-std-random-ml-66683891.md#function-function-std-random-seeded-function-seeded-seed-std-random-ml-2021080487) — function
 - [`std.random.shuffleInPlace`](File-std-random-ml-66683891.md#function-function-std-random-shuffleinplace-function-shuffleinplace-rng-xs-std-random-ml-2030459042) — function
 - [`std.random.U32_MASK`](File-std-random-ml-66683891.md#constant-constant-std-random-u32-mask-const-u32-mask-4294967295-std-random-ml-450705152) — constant
-- [`std.random.U32_RANGE_FLOAT`](File-std-random-ml-66683891.md#constant-constant-std-random-u32-range-float-const-u32-range-float-4294967296-std-random-ml-1703609829) — constant
+- [`std.random.U32_RANGE_FLOAT`](File-std-random-ml-66683891.md#constant-constant-std-random-u32-range-float-const-u32-range-float-4294967296-std-random-ml-219419969) — constant
