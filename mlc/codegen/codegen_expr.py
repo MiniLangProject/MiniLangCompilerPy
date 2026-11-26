@@ -20,6 +20,18 @@ from ..tools import (align_up, enc_int, enc_bool, enc_void, enc_enum,
 _F64_POS_HALF_BITS = int.from_bytes(struct.pack('<d', 0.5), 'little')
 
 
+class DeclaredDefault:
+    """Compiler-only expression evaluated in a declaration's lexical context."""
+
+    kind = 'DeclaredDefault'
+
+    def __init__(self, expr: Any, qname: str, filename: str) -> None:
+        self.expr = expr
+        self.name = qname
+        self._filename = filename
+        self._pos = getattr(expr, '_pos', None)
+
+
 class CodegenExpr:
     """Lower MiniLang expressions, calls, constants and native interop to x64."""
 
@@ -36,6 +48,39 @@ class CodegenExpr:
     # - We match runtime "truthiness" used by emit_jmp_if_false_rax.
 
     _OPT_NO = object()
+
+    def _declared_default_expr(self, expr: Any, qname: str, filename=None) -> Any:
+        """Keep inserted defaults independent of the caller's local bindings."""
+        value = copy.deepcopy(expr)
+        if isinstance(value, (self.ml.Num, self.ml.Bool, self.ml.Str, self.ml.VoidLit)):
+            return value
+        return DeclaredDefault(value, str(qname), str(filename or getattr(expr, '_filename', '') or ''))
+
+    def _emit_declared_default(self, default: DeclaredDefault) -> None:
+        """Borrow the caller's frame and error boundary, but not its name scope."""
+        replacements = {
+            '_scope_stack': [(getattr(self, '_scope_stack', []) or [{}])[0], {}],
+            '_scope_declared': [[], []],
+            '_func_globals': set(), '_func_global_map': {},
+            '_known_value_types': {}, '_known_numeric_value_types': {},
+            '_known_int_names': set(), '_loop_index_fast_stack': [],
+            '_inline_param_stack': [], 'func_param_offsets': {}, '_scalar_structs': [],
+            '_current_fn_qname': default.name, '_current_fn_file': default._filename,
+            'current_qname_prefix': default.name.rpartition('.')[0] + '.' if '.' in default.name else '',
+            'current_file_prefix': (getattr(self, '_file_prefix_map', {}) or {}).get(default._filename, ''),
+        }
+        missing = object()
+        saved = {name: getattr(self, name, missing) for name in replacements}
+        try:
+            for name, value in replacements.items():
+                setattr(self, name, value)
+            self.emit_expr(default.expr)
+        finally:
+            for name, value in saved.items():
+                if value is missing:
+                    delattr(self, name)
+                else:
+                    setattr(self, name, value)
 
     def _normalize_declared_call_args(self, call: Any, fn: Any, *, implicit: int = 0) -> List[Any]:
         """Map positional/named/default/variadic arguments to the function ABI."""
@@ -88,7 +133,7 @@ class CodegenExpr:
                 default = defaults[i] if i < len(defaults) else None
                 if default is None:
                     raise self.error(f"Missing required argument '{params[i]}' for {getattr(fn, 'name', '<function>')}", call)
-                slots[i] = default
+                slots[i] = self._declared_default_expr(default, getattr(fn, 'name', ''), getattr(fn, '_filename', None))
         if variadic >= 0:
             tail = ml.ArrayLit(extras)
             if implicit == 0 and self._variadic_param_stack_safe(fn):
@@ -584,7 +629,7 @@ class CodegenExpr:
         return value if value >= 0 else None
 
     def _operator_declared_type_fact(self, raw_type: Any, owner_qname: str, node: Any) -> Optional[str]:
-        """Canonicalize an operator signature type to the local type-flow lattice."""
+        """Canonicalize a signature type in its declaration's namespace."""
         if not isinstance(raw_type, str) or not raw_type:
             return None
         raw = raw_type.strip()
@@ -600,15 +645,35 @@ class CodegenExpr:
             aliased = self._apply_import_alias(raw)
         except Exception:
             aliased = raw
-        candidates = [aliased]
-        if owner_qname and owner_qname.rsplit('.', 1)[-1] == raw.rsplit('.', 1)[-1]:
-            candidates.insert(0, owner_qname)
-        if '.' not in aliased and '.' in owner_qname:
-            candidates.append(owner_qname.rsplit('.', 1)[0] + '.' + aliased)
-        try:
-            candidates.append(self._qualify_identifier(aliased, node, kind='struct'))
-        except Exception:
-            pass
+        candidates: list[str] = []
+        if '.' not in aliased:
+            if owner_qname and owner_qname.rsplit('.', 1)[-1] == aliased:
+                candidates.append(owner_qname)
+            if '.' in owner_qname:
+                candidates.append(owner_qname.rsplit('.', 1)[0] + '.' + aliased)
+
+            # Return contracts and inline parameter facts are often queried
+            # while compiling a caller in another package. Never resolve the
+            # callee's bare type name against the caller's declarations.
+            fn_name = str(getattr(node, 'name', '') or '')
+            if '.' in fn_name:
+                prefix = fn_name.rsplit('.', 1)[0]
+                if prefix.endswith('.__static__'):
+                    prefix = prefix.rsplit('.', 1)[0]
+                if prefix in structs:
+                    prefix = prefix.rpartition('.')[0]
+                if prefix:
+                    candidates.append(prefix + '.' + aliased)
+            fn_file = getattr(node, '_filename', None)
+            file_prefix = (getattr(self, '_file_prefix_map', {}) or {}).get(fn_file, '')
+            if file_prefix:
+                candidates.append(str(file_prefix) + aliased)
+            if not fn_name:
+                try:
+                    candidates.append(self._qualify_identifier(aliased, node, kind='struct'))
+                except Exception:
+                    pass
+        candidates.append(aliased)
         for candidate in candidates:
             if candidate in structs:
                 return 'struct:' + str(candidate)
@@ -878,6 +943,10 @@ class CodegenExpr:
                 parts.append(str(getattr(current, 'name', '') or ''))
                 current = getattr(current, 'target', None)
             if isinstance(current, getattr(ml, 'Var', ())):
+                root_name = str(getattr(current, 'name', '') or '').split('.', 1)[0]
+                binding = self.resolve_binding(root_name)
+                if binding is not None and getattr(binding, 'kind', None) != 'global':
+                    return None
                 parts.append(str(getattr(current, 'name', '') or ''))
                 raw = '.'.join(reversed(parts))
                 try:
@@ -3406,10 +3475,12 @@ class CodegenExpr:
                 if canonical in primitive:
                     fact = canonical
                 else:
-                    try:
-                        fact = 'struct:' + str(self._qualify_identifier(raw, fn, kind='struct'))
-                    except Exception:
-                        fact = 'struct:' + raw
+                    fact = self._operator_declared_type_fact(raw, '', fn)
+                    if fact is None:
+                        try:
+                            fact = 'struct:' + str(self._qualify_identifier(raw, fn, kind='struct'))
+                        except Exception:
+                            fact = 'struct:' + raw
                 self._known_value_types[str(name)] = fact
             # A guarded, pure integer temporary still has an exact integer
             # value after its initializer succeeds. Mirror the native body's
@@ -4357,6 +4428,10 @@ class CodegenExpr:
         """Emit code so that RAX contains the Value."""
         ml = self.ml
         a = self.asm
+
+        if isinstance(e, DeclaredDefault):
+            self._emit_declared_default(e)
+            return
 
         if hasattr(ml, 'AsmExpr') and isinstance(e, ml.AsmExpr):
             from .codegen_inline_asm import emit_inline_asm
@@ -6876,6 +6951,12 @@ class CodegenExpr:
             callee_name = self._qname_of(callee_expr) if callee_expr is not None else None
             if callee_name is not None:
                 callee_name = self._apply_import_alias(str(callee_name))
+                if callee_name in self.struct_fields:
+                    binding = self.resolve_binding(callee_name)
+                    if binding is not None and getattr(binding, 'kind', None) != 'global':
+                        # A parameter/local/capture can have the same spelling
+                        # as a root constructor. Its value decides the call.
+                        callee_name = None
 
             # --- Type-qualified helper calls for struct instance methods (no `this` usage) ---
             # Allow calling an instance method through the struct type name without passing a
@@ -6939,7 +7020,7 @@ class CodegenExpr:
                     defaults = list((getattr(self, 'struct_field_defaults', {}) or {}).get(callee_name, []) or [])
                     for i, value in enumerate(values):
                         if value is None and i < len(defaults) and defaults[i] is not None:
-                            values[i] = copy.deepcopy(defaults[i])
+                            values[i] = self._declared_default_expr(defaults[i], callee_name + '.__default__')
                     missing = [fields[i] for i, value in enumerate(values) if value is None]
                     if missing:
                         raise self.error(f"Missing field argument '{missing[0]}' for struct {callee_name}", e)
@@ -8738,7 +8819,7 @@ class CodegenExpr:
                         default = defaults[index] if index < len(defaults) else None
                         if default is None:
                             raise self.error(f"Missing field argument '{fields[index]}' for struct {sname}", e)
-                        completed.append(copy.deepcopy(default))
+                        completed.append(self._declared_default_expr(default, sname + '.__default__'))
                     e.args = completed
 
                 size = 8 + n * 8

@@ -65,6 +65,8 @@ def main() -> int:
     parser.add_argument("--compiler-arg", action="append", default=[],
                         help="additional compiler argument; use --compiler-arg=--flag for switches")
     parser.add_argument("--output-dir", type=Path, help="keep generated test executables in this directory")
+    parser.add_argument("--fixture", type=Path, action="append",
+                        help="source with adjacent .expected.txt; repeat to check several shared fixtures")
     args = parser.parse_args()
     if args.python_compiler is None and not args.native_compiler and (root / "mlc_win64.py").is_file():
         args.python_compiler = root / "mlc_win64.py"
@@ -76,39 +78,43 @@ def main() -> int:
     if not compilers:
         parser.error("specify --python-compiler or --native-compiler")
     pipelines = ("legacy", "object") if args.pipeline == "both" else (args.pipeline,)
-    source = root / "tests" / "native_semantics_regression.ml"
-    expected = source.with_suffix(".expected.txt").read_text(encoding="utf-8").splitlines()
+    fixtures = args.fixture or [root / "tests" / "native_semantics_regression.ml"]
     executions = 0
     with tempfile.TemporaryDirectory(prefix="minilang-native-semantics-") as temporary:
         output = args.output_dir.resolve() if args.output_dir else Path(temporary)
         output.mkdir(parents=True, exist_ok=True)
-        all_digests: list[str] = []
-        for pipeline in pipelines:
-            hashes: list[str] = []
-            flag = "--object-pipeline" if pipeline == "object" else "--no-object-pipeline"
-            for name, compiler in compilers:
-                extension = ".exe" if args.target == "windows-x64" else ""
-                image = output / f"{name}-{args.target}-{pipeline}{extension}"
-                command = [*compiler, str(source), str(image), "-I", str(root),
-                           "--target", args.target, flag, *args.compiler_arg]
-                run(command, cwd=root, timeout=300)
-                digest = hashlib.sha256(image.read_bytes()).hexdigest()
-                hashes.append(digest)
-                all_digests.append(digest)
-                if args.compile_only:
-                    print(f"[COMPILED] {name} {args.target} {pipeline} sha256={digest}")
-                    continue
-                result = run(executable_command(image, args.target), cwd=output, timeout=180)
-                if result.stdout.splitlines() != expected:
-                    raise AssertionError(f"Unexpected output from {name} {pipeline}:\n{result.stdout}\n"
-                                         f"Expected: {expected!r}\n{result.stderr}")
-                executions += 1
-                print(f"[OK] {name} {args.target} {pipeline}: native semantics; sha256={digest}")
-            if len(set(hashes)) != 1:
-                raise AssertionError(f"Compiler image mismatch: {args.target} {pipeline}")
-        if len(set(all_digests)) != 1:
-            raise AssertionError(f"Pipeline image mismatch: {args.target}")
-    print(f"NATIVE SEMANTICS [OK]: {len(compilers) * len(pipelines)} images, "
+        for fixture_index, fixture in enumerate(fixtures):
+            source = fixture.resolve(strict=True)
+            expected = source.with_suffix(".expected.txt").read_text(encoding="utf-8").splitlines()
+            prefix = f"{fixture_index}-{source.stem}-" if args.fixture else ""
+            case_label = source.name + ": " if args.fixture else ""
+            all_digests: list[str] = []
+            for pipeline in pipelines:
+                hashes: list[str] = []
+                flag = "--object-pipeline" if pipeline == "object" else "--no-object-pipeline"
+                for name, compiler in compilers:
+                    extension = ".exe" if args.target == "windows-x64" else ""
+                    image = output / f"{prefix}{name}-{args.target}-{pipeline}{extension}"
+                    command = [*compiler, str(source), str(image), "-I", str(root),
+                               "--target", args.target, flag, *args.compiler_arg]
+                    run(command, cwd=root, timeout=300)
+                    digest = hashlib.sha256(image.read_bytes()).hexdigest()
+                    hashes.append(digest)
+                    all_digests.append(digest)
+                    if args.compile_only:
+                        print(f"[COMPILED] {name} {args.target} {pipeline} {case_label}sha256={digest}")
+                        continue
+                    result = run(executable_command(image, args.target), cwd=output, timeout=180)
+                    if result.stdout.splitlines() != expected:
+                        raise AssertionError(f"Unexpected output from {name} {pipeline} {source.name}:\n{result.stdout}\n"
+                                             f"Expected: {expected!r}\n{result.stderr}")
+                    executions += 1
+                    print(f"[OK] {name} {args.target} {pipeline}: {case_label}native semantics; sha256={digest}")
+                if len(set(hashes)) != 1:
+                    raise AssertionError(f"Compiler image mismatch: {args.target} {pipeline} {source.name}")
+            if len(set(all_digests)) != 1:
+                raise AssertionError(f"Pipeline image mismatch: {args.target} {source.name}")
+    print(f"NATIVE SEMANTICS [OK]: {len(fixtures) * len(compilers) * len(pipelines)} images, "
           f"{executions} executions, exact byte parity")
     return 0
 

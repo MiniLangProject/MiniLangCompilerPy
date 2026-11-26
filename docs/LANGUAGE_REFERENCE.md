@@ -1693,6 +1693,22 @@ How to use it:
 - Calls / constructors can be qualified: `geom.add(1,2)`, `geom.Point(1,2)`.
 - In the native compiler, namespaces are **not runtime objects**; they are only used to qualify symbol names.
 
+Unqualified calls and constructor values inside a function resolve in that
+function's defining namespace/package before falling back to the root scope.
+A same-named struct in the entry module therefore does not replace an imported
+module's own struct. Local variables, parameters and captured callable values
+retain their lexical meaning; explicit qualified names and import aliases
+retain their declared target. Methods use the namespace containing their owner
+for ordinary names, so an instance method named `len` does not hide the builtin
+`len(...)` used by another method.
+
+Type annotations on function signatures are resolved in the declaration's
+context, including when the function is inlined. Omitted function arguments
+and struct-field defaults are evaluated at each call in the declaration's
+namespace, with global bindings from that context. They do not capture local
+variables or parameters from the caller. Explicit arguments are evaluated in
+the caller's context as usual.
+
 ### import (top-level only)
 
 ```ml

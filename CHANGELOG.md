@@ -4,6 +4,19 @@ All notable changes to the MiniLang compiler are documented here.
 
 ## Unreleased
 
+- Resolve unqualified constructors and other symbols in their defining
+  namespace/package before falling back to unrelated entry-module declarations.
+  Preserve local, parameter and captured callable bindings, including stored
+  and returned constructor values.
+- Resolve inferred struct layouts and omitted argument/field defaults in the
+  declaration's context. Caller locals cannot capture an imported default;
+  explicitly supplied arguments retain the caller's context.
+- Add shared regressions for constructor-name collisions, reordered fields,
+  typed returns, methods, dynamic callables, builtin-name collisions and defaults.
+- Give nested constant `while`/`do-while` loops distinct assembler labels even
+  when their headers emit no instructions. Add a shared regression covering
+  nested exits and continue targets.
+
 - Reserve the full outgoing call area before expanding default arguments,
   including method receivers, constructors and calls hidden in defaults.
   This prevents omitted stack arguments from overwriting caller locals on

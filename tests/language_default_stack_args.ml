@@ -107,19 +107,19 @@ namespace DefaultProvider
     return value
   end function
 
-  function scopedValues(a, b, c)
-    return [a, b, c]
+  function scopedValues(a, b, c, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10)
+    return [a, b, c, d, e, f, g, h, i, j]
   end function
 end namespace
 
 namespace DefaultCaller
-  function scopedValues(a, b, c, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10)
-    return [a, b, c, d, e, f, g, h, i, j]
+  function scopedValues(a, b, c)
+    return [a, b, c]
   end function
 
   function preservesDefaultContext()
     marker = Marker([801, 802])
-    // Match the existing call-site resolution of expanded default expressions.
+    // Reserve the hidden call's outgoing area in its declaring namespace.
     result = DefaultProvider.result()
     if typeof(marker) != "struct" then return 81 end if
     if marker.values[0] != 801 or marker.values[1] != 802 then return 82 end if

@@ -420,6 +420,8 @@ class CodegenStmt:
         ml = self.ml
         if seen_defaults is None:
             seen_defaults = set()
+        if getattr(expr, 'kind', None) == 'DeclaredDefault':
+            return self._max_call_frame_arity(expr.expr, expr, seen_defaults)
 
         def scan(child):
             return self._max_call_frame_arity(child, owner, seen_defaults)
@@ -434,7 +436,7 @@ class CodegenStmt:
             raw = _expr_to_qualname(ml, expr.callee)
             if raw:
                 raw = self._apply_import_alias(raw)
-                owner_name = str(getattr(owner, 'name', '') or '')
+                owner_name = owner if isinstance(owner, str) else str(getattr(owner, 'name', '') or '')
                 qprefix = owner_name.rsplit('.', 1)[0] + '.' if '.' in owner_name else ''
                 filename = getattr(owner, '_filename', None) or getattr(expr, '_filename', None)
                 fprefix = (getattr(self, 'file_prefix_map', {}) or {}).get(filename, '')
@@ -466,7 +468,8 @@ class CodegenStmt:
                         for default in (getattr(self, 'struct_field_defaults', {}) or {}).get(name, []):
                             if default is not None and id(default) not in seen_defaults:
                                 seen_defaults.add(id(default))
-                                maximum = max(maximum, scan(default))
+                                maximum = max(maximum, self._max_call_frame_arity(
+                                    default, name + '.__default__', seen_defaults))
                     if '.' in name:
                         type_name, method_name = name.rsplit('.', 1)
                         static_name = (getattr(self, 'struct_static_methods', {}) or {}).get(type_name, {}).get(method_name)
@@ -486,13 +489,13 @@ class CodegenStmt:
                             declarations[id(declaration)] = declaration
             for declaration in declarations.values():
                 maximum = max(maximum, len(declaration.params))
-                # Defaults are expanded/evaluated at the call site: keep the
-                # caller's resolution context for hidden calls as emission does.
+                # Defaults use the caller's frame but the declaration's name
+                # context, including calls hidden inside imported defaults.
                 # A visited set prevents cycles in recursive default graphs.
                 for default in getattr(declaration, 'param_defaults', []) or []:
                     if default is not None and id(default) not in seen_defaults:
                         seen_defaults.add(id(default))
-                        maximum = max(maximum, scan(default))
+                        maximum = max(maximum, self._max_call_frame_arity(default, declaration, seen_defaults))
             maximum = max(maximum, scan(expr.callee))
 
         # Include wrappers introduced by lowering (e.g. TypeGuard), not just
@@ -1192,13 +1195,13 @@ class CodegenStmt:
                 return None
             if not raw:
                 return None
+            if raw.split('.', 1)[0] in call_shadows:
+                return None
             try:
                 aliased = self._apply_import_alias(raw)
             except Exception:
                 aliased = raw
             pools = getattr(self, 'struct_fields', {}) or {}
-            if aliased in pools:
-                return aliased
             try:
                 qualified = self._qualify_identifier(aliased, expr, kind='struct')
             except Exception:
@@ -1339,8 +1342,10 @@ class CodegenStmt:
                 if declared is not None and not bool(getattr(declared, 'return_optional', False)):
                     return_type = getattr(declared, 'return_type', None)
                     if return_type:
-                        guarded = ml.TypeGuard(expr, str(return_type), False)
-                        result = infer_expr(guarded, known)
+                        result = self._operator_declared_type_fact(return_type, '', declared)
+                        if not (isinstance(result, str) and result.startswith('struct:')):
+                            guarded = ml.TypeGuard(expr, str(return_type), False)
+                            result = infer_expr(guarded, known)
                         # An annotation alone does not cover implicit void
                         # fallthrough or another namespace's custom typeof.
                         if extended and self._value_type_base(result) in ('int', 'float', 'number'):
@@ -4482,8 +4487,11 @@ class CodegenStmt:
             if self._opt_emit_float_loop(s):
                 return
 
-            top = f"while_top_{a.pos}"
-            end = f"while_end_{a.pos}"
+            # Constant nested loops can begin at the same code position when
+            # thread/GC polls emit no bytes. Labels need their own identity.
+            loop_id = self.new_label_id()
+            top = f"while_top_{loop_id}"
+            end = f"while_end_{loop_id}"
 
             depth_before = self.scope_depth
             self.break_stack.append(
@@ -4504,7 +4512,7 @@ class CodegenStmt:
                     a.jcc('e', end)
                 else:
                     # Strict-void: using `void` as condition must raise an error.
-                    l_wcond_ok = f"while_cond_ok_{a.pos}"
+                    l_wcond_ok = f"while_cond_ok_{loop_id}"
                     a.mov_r64_r64("r10", "rax")
                     a.and_r64_imm("r10", 7)
                     a.cmp_r64_imm("r10", TAG_VOID)
@@ -4529,9 +4537,10 @@ class CodegenStmt:
         if isinstance(s, ml.DoWhile):
             tv = self._opt_try_truthy(getattr(s, 'cond', None))
 
-            top = f"dowhile_top_{a.pos}"
-            check = f"dowhile_check_{a.pos}"
-            end = f"dowhile_end_{a.pos}"
+            loop_id = self.new_label_id()
+            top = f"dowhile_top_{loop_id}"
+            check = f"dowhile_check_{loop_id}"
+            end = f"dowhile_end_{loop_id}"
 
             # In do-while, the body runs at least once, and continue jumps to the condition check.
             depth_before = self.scope_depth
@@ -4562,7 +4571,7 @@ class CodegenStmt:
                     a.jcc('e', end)
                 else:
                     # Strict-void: using `void` as condition must raise an error.
-                    l_dwcond_ok = f"dowhile_cond_ok_{a.pos}"
+                    l_dwcond_ok = f"dowhile_cond_ok_{loop_id}"
                     a.mov_r64_r64("r10", "rax")
                     a.and_r64_imm("r10", 7)
                     a.cmp_r64_imm("r10", TAG_VOID)

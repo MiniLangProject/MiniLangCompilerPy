@@ -1,0 +1,1 @@
+[OK] struct namespace default declaration context

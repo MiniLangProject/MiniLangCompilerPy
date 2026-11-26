@@ -1,0 +1,1 @@
+[OK] namespace functions with builtin names

@@ -785,10 +785,11 @@ class CodegenCore:
         unqualified within the same file/package (`Sleep(10)`).
 
         For names without a dot:
-          1) Try exact name
+          1) Honor lexical locals, parameters and captures
           2) Try current function prefix: <fn_prefix><name>
           3) Try current file package prefix: <pkg_prefix><name>
-          4) If still not found and pkg_prefix exists, try a UNIQUE suffix match
+          4) Try the root/global name
+          5) If still not found and pkg_prefix exists, try a UNIQUE suffix match
              within that package: exactly one of {functions, externs, structs, enums}
              startswith pkg_prefix and endswith '.'+name.
 
@@ -804,21 +805,42 @@ class CodegenCore:
         fn_prefix = self._current_function_prefix()
         pkg_prefix = self._current_file_package_prefix() or fn_prefix
 
-        cands: list[str] = [name_s]
+        # Hoisted constructors are global bindings. A root constructor must not
+        # shadow an equally named declaration in the function's own package.
+        # Only a true lexical value binding takes precedence over that package.
+        if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+            try:
+                binding = self.resolve_binding(name_s)
+                if binding is not None and getattr(binding, 'kind', None) != 'global':
+                    return name_s
+            except Exception:
+                pass
+
+        cands: list[str] = []
+        method_candidate = None
         if fn_prefix:
-            cands.append(fn_prefix + name_s)
+            # Hoisted methods add the owner (and sometimes __static__) to the
+            # function prefix. Their bare type names still belong to the
+            # namespace containing that owner.
+            owner = fn_prefix.rstrip('.')
+            if owner.endswith('.__static__'):
+                owner = owner.rsplit('.', 1)[0]
+            if owner in (getattr(self, 'struct_fields', {}) or {}):
+                method_candidate = fn_prefix + name_s
+                owner_prefix = owner.rpartition('.')[0]
+                owner_name = owner_prefix + '.' + name_s if owner_prefix else name_s
+                if owner_name not in cands:
+                    cands.append(owner_name)
+            else:
+                cands.append(fn_prefix + name_s)
         if pkg_prefix and (pkg_prefix + name_s) not in cands:
             cands.append(pkg_prefix + name_s)
-
-        # Lexical shadowing first: if any candidate is already a visible binding
-        # (local/param/global), prefer that and do NOT redirect to a package-level decl.
-        if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
-            for cand in cands:
-                try:
-                    if self.resolve_binding(cand) is not None:
-                        return cand
-                except Exception:
-                    continue
+        if name_s not in cands:
+            cands.append(name_s)
+        if method_candidate and method_candidate not in cands:
+            # A method called len must not capture the builtin len(...) used
+            # by a sibling method. Preserve bare sibling lookup as a fallback.
+            cands.append(method_candidate)
 
         pools: list[object] = []
         try:
@@ -833,8 +855,15 @@ class CodegenCore:
         except Exception:
             pools = []
 
-        # Direct hit for candidates
+        # Resolve each namespace completely before falling back to the next.
+        # A root value binding must not outrank a package-local static symbol.
         for cand in cands:
+            if hasattr(self, 'resolve_binding') and callable(getattr(self, 'resolve_binding')):
+                try:
+                    if self.resolve_binding(cand) is not None:
+                        return cand
+                except Exception:
+                    pass
             for pool in pools:
                 try:
                     if cand in pool:

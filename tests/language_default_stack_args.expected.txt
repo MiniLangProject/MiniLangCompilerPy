@@ -1,0 +1,1 @@
+[OK] default stack arguments preserve caller locals

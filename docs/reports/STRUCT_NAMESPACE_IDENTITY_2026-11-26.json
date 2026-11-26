@@ -1,0 +1,852 @@
+{
+  "date": "2026-11-26",
+  "purpose": "Struct namespace identity and related default-call fixes",
+  "sourceManifest": {
+    "MiniLangCompilerPy": {
+      "baseCommit": "4699eb578d8fe485ec2285ff4489099e30bfc359",
+      "sourceSha256": {
+        "mlc/codegen/codegen_core.py": "dacac667cf31ee0b243c274f5ca9c63c2e8b1911178c0ca5b7d08ed6c4d2924b",
+        "mlc/codegen/codegen_expr.py": "27f0b953bd5c011251af18b9ac197ea73a8a79311403ea8fb8d31905d10d14fe",
+        "mlc/codegen/codegen_stmt.py": "0e2263f8e6f28ce0ff1e5103413f9e15e229e6ceb7ddcaeee6406ba444992b60"
+      }
+    },
+    "MiniLangCompilerML": {
+      "baseCommit": "1245c4303d1e5bb5d3d7ba60e428da1cb0888656",
+      "sourceSha256": {
+        "mlc/codegen/codegen_expr.ml": "473de12304718fc48b46db529227a8e424d7958814eb7f5a5083807f727d1ebd",
+        "mlc/codegen/codegen_stmt.ml": "d6a9d9c3e64b482e8787d21bed76e2d80b9a0d289dd808684cd6aafb299770e2"
+      }
+    }
+  },
+  "baseline": {
+    "pythonCommit": "0150d5a57b288847386282d1216763e5f1686549",
+    "nativeCommit": "2b06138140b22c3a37cd314d00abcbfb90d36b3e",
+    "version": "1.3.12",
+    "observations": [
+      {
+        "case": "Two-field imported Record versus three-field entry Record",
+        "compilers": [
+          "python",
+          "native"
+        ],
+        "pipelines": [
+          "legacy",
+          "object"
+        ],
+        "compileExit": 2,
+        "diagnostic": "Missing field argument 'extra' for struct Record"
+      },
+      {
+        "case": "Same-arity entry Record with reversed fields",
+        "compilers": [
+          "python",
+          "native"
+        ],
+        "compileExit": 0,
+        "executionExit": 0,
+        "actualStdout": "11\n",
+        "expectedStdout": "22\n"
+      },
+      {
+        "case": "Original MiniQuake3 contract without struct-renaming workaround",
+        "compiler": "python",
+        "target": "windows-x64",
+        "compileExit": 2,
+        "diagnostic": "Missing field argument 'surfaceName' for struct ShadowTriangle"
+      },
+      {
+        "case": "Nested constant loops",
+        "compiler": "python",
+        "pipelines": [
+          "legacy",
+          "object"
+        ],
+        "compileExit": 2,
+        "diagnostic": "Label already defined: while_top_* / dowhile_top_*"
+      },
+      {
+        "case": "Expanded default stack arguments",
+        "compiler": "native",
+        "target": "linux-x64",
+        "compileExit": 0,
+        "executionExit": -11,
+        "signal": 11
+      }
+    ]
+  },
+  "compiler": {
+    "version": "1.3.13",
+    "target": "linux-x64",
+    "sha256": "19779cf9753c8fb0a6149879ee7b1d16a252742cb276fafd36a65d3da6f6cae1",
+    "bytes": 69031328
+  },
+  "selfHosting": {
+    "bootstrapExit": 0,
+    "selfBuildExit": 0,
+    "bootstrapSeconds": 95,
+    "selfBuildSeconds": 102,
+    "bootstrapSha256": "19779cf9753c8fb0a6149879ee7b1d16a252742cb276fafd36a65d3da6f6cae1",
+    "selfBuildSha256": "19779cf9753c8fb0a6149879ee7b1d16a252742cb276fafd36a65d3da6f6cae1",
+    "byteIdentical": true,
+    "smokeChecks": [
+      "version",
+      "direct Linux compilation/execution",
+      "object-pipeline compilation/execution",
+      "direct/object byte identity",
+      "project manifest with parent path normalization",
+      "project/direct byte identity"
+    ],
+    "options": [
+      "--target",
+      "linux-x64",
+      "--heap-reserve",
+      "8g",
+      "--heap-commit",
+      "512m",
+      "--heap-shrink",
+      "--heap-shrink-min",
+      "16m",
+      "--gc-limit",
+      "1536m",
+      "--object-pipeline"
+    ]
+  },
+  "namespaceMatrix": {
+    "fixtures": 11,
+    "images": 132,
+    "linuxExecutions": 44,
+    "groups": [
+      {
+        "fixture": "struct_namespace_identity/arity_collision.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 96192,
+        "imageSha256": "ca8e8aeff5e33221baf267251cccd5a35ab163c5e70c8c479730fb8eb03d67cb",
+        "expectedStdoutLines": [
+          "22"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/field_order.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 96192,
+        "imageSha256": "50aaba7d9c1af69d270552381e34403f7cfa61e9632511edcab44cb08350bd91",
+        "expectedStdoutLines": [
+          "22"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/typed_returns.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104416,
+        "imageSha256": "a8820ba61c74b83eaf8a37e3e6c523093e223e5f193f748a0a8567ce23857425",
+        "expectedStdoutLines": [
+          "[OK] struct namespace declared type context"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/lexical_bindings.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 190640,
+        "imageSha256": "38d20279adc4a1dd9bd666380dc124abb684b71558e2adc29fcee17018e09a0f",
+        "expectedStdoutLines": [
+          "[OK] struct namespace lexical identity"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/global_fallback.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 100288,
+        "imageSha256": "dbf79411f0738745d789d74a2f8f51b1fcdad6f72f290b23a140734e51faab92",
+        "expectedStdoutLines": [
+          "[OK] struct namespace entry fallback"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/default_context.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 161824,
+        "imageSha256": "ac93bbd14e4219fa6a5b127a6f9604ab15e5d396c226c5535be1a6f28f372112",
+        "expectedStdoutLines": [
+          "[OK] struct namespace default declaration context"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/builtin_methods.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104432,
+        "imageSha256": "691a63c2fcf21c54a242dea8fbeae96ee4857b3924721cb7c16e092e22eba464",
+        "expectedStdoutLines": [
+          "[OK] struct namespace builtin and method precedence"
+        ]
+      },
+      {
+        "fixture": "native_semantics_regression.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 305392,
+        "imageSha256": "339f7c54486c56fa67990eb9972689fa7e4d55d8556493c922543e7e035a4790",
+        "expectedStdoutLines": [
+          "[OK] Native semantics regressions"
+        ]
+      },
+      {
+        "fixture": "nested_constant_loops.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 92064,
+        "imageSha256": "06188a9cfe198f0bf1d772fcfcbeba9f40923b12d02f0b59e56c1b6e1c48d1ca",
+        "expectedStdoutLines": [
+          "[OK] nested constant loops"
+        ]
+      },
+      {
+        "fixture": "language_default_stack_args.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 215184,
+        "imageSha256": "daaf0630be91e78466cd9561a0efbc648776d694ccb64c76ffe0f82f84175540",
+        "expectedStdoutLines": [
+          "[OK] default stack arguments preserve caller locals"
+        ]
+      },
+      {
+        "fixture": "namespace_builtins.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 198672,
+        "imageSha256": "6e4b74624d63c219b1b7d3cc56adad355080ae6aec61806f6588be7a7036b33d",
+        "expectedStdoutLines": [
+          "[OK] namespace functions with builtin names"
+        ]
+      },
+      {
+        "fixture": "struct_namespace_identity/arity_collision.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 88576,
+        "imageSha256": "d0b674fd0a1104d966bd013cf539a73bfac11628aafa6c58f2aa1a8368397790",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/field_order.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 88576,
+        "imageSha256": "d1ee38ac2a22eef82fe2e8ba7d5e5397451200350f13a8ef355940eb2140742d",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/typed_returns.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 98816,
+        "imageSha256": "eee6afe5dbae8cfe8ed6371f62991fb9e4b87c56927fe74f4c6e237a2fa728cc",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/lexical_bindings.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 180736,
+        "imageSha256": "285032272b9daa580221be6e0cf208fb1fe98cd0c4754f677099f1888cb568bc",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/global_fallback.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 92672,
+        "imageSha256": "90efb9e14f616a6aafebead9e0e245b71a89b32fa4b4356eb855aa7eb9fe2917",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/default_context.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 152064,
+        "imageSha256": "bce8b2dc0f40017b21d745f6fcae119db49e38206187ab4936f3022f45da561b",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/builtin_methods.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 97792,
+        "imageSha256": "2d3c94202edbe0529d9c575b45c17e91955d073b78aca9df717bccab78233758",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "native_semantics_regression.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 297472,
+        "imageSha256": "e0d2fc78a185aa9736c272e7aa923d90740a619b0fabd09a1d78a432ff7fd0b7",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "nested_constant_loops.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 81408,
+        "imageSha256": "ccec6f62cdc60b758c01bb49f6fded59785a98c2a2b26baaa00e6634dc692167",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "language_default_stack_args.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 204800,
+        "imageSha256": "1146fe37a07d50b6d2d3599a518f760f82a6b6787e8de6302b6fd3ba9cb73d8d",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "namespace_builtins.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 192000,
+        "imageSha256": "fb9e2851781ee5e1e4f8483ba931fb5a0e01d3f1fd3804754d184b07dd42cb46",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/arity_collision.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 96160,
+        "imageSha256": "c3c0deb7bddc201fdea359dd6cc862056b9d09e45c330764be4984225507c941",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/field_order.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 96160,
+        "imageSha256": "e6e27a6b3a888b15c5d1d6555b8c8f53bf52e3401669276b3398237d8951636b",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/typed_returns.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104368,
+        "imageSha256": "e561d64c00133b6a7756114b350993145870e4160b7f858513827a82bb8b2edb",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/lexical_bindings.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 190608,
+        "imageSha256": "0515eeb3c07f9f074e036283b5725f1d49156b8ae397c18f148bc269b1b60853",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/global_fallback.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 100256,
+        "imageSha256": "7b12bb0b1cf165a9bc8e90daee15a3b10d20f95d4e1d7d4cafd360df367e9013",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/default_context.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 161792,
+        "imageSha256": "628ff192cd1184b345ff5a03df1d478c4f43fed898888e09ec92b50ec9f0b3d0",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "struct_namespace_identity/builtin_methods.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104384,
+        "imageSha256": "711f526899c4d4d7c6df2d727ac1a08da5d03934c86fee3f408e7fad835f4122",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "native_semantics_regression.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 305344,
+        "imageSha256": "6bdb37772ed225d710621345222b5c3139fc77081b42455768ca524ce3db3618",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "nested_constant_loops.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 92016,
+        "imageSha256": "35f8cf0975807d2cdb45dd008c8f79ab6a1ff41354e1509b535753970e2bc81f",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "language_default_stack_args.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 215152,
+        "imageSha256": "5e35ceeda82a7519b5bd1371c27b191d8b94fbd500c32e634939d02de5353af4",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "namespace_builtins.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 198624,
+        "imageSha256": "05dc67660eb417eee18a1358d744f5da0765124640a7b42326be9339eccdeb6e",
+        "expectedStdoutLines": null
+      }
+    ]
+  },
+  "compatibilityMatrix": {
+    "fixtures": 8,
+    "images": 96,
+    "linuxExecutions": 32,
+    "groups": [
+      {
+        "fixture": "package_global_resolution/main.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 161936,
+        "imageSha256": "b3f645e67b6fc5b88580262d63f3fe30d7fdedf15fcb5c8f5fb2207f9a358132",
+        "expectedStdoutLines": [
+          "package global resolution [OK]"
+        ]
+      },
+      {
+        "fixture": "method_globals.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104448,
+        "imageSha256": "ad5bf51f6c304705cb9d8105edc195f4cd38a10ea1810cdcf090f8234b19deca",
+        "expectedStdoutLines": [
+          "[OK] method globals"
+        ]
+      },
+      {
+        "fixture": "type_query_resolution.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 124928,
+        "imageSha256": "f00897fc9f59ccd5c98f1fdc9447f4020f4470bcfdd55b950e6447cdac57dc80",
+        "expectedStdoutLines": [
+          "[OK] qualified and shadowed type queries"
+        ]
+      },
+      {
+        "fixture": "type_checks.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 153584,
+        "imageSha256": "03629ef7b539e88647bdf366d4b0357fe5aea4949d2feb94e24288fff5a1cfe4",
+        "expectedStdoutLines": [
+          "[OK] exhaustive public is-type categories"
+        ]
+      },
+      {
+        "fixture": "type_flow_context.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 100304,
+        "imageSha256": "0efd369a01bd15f8ac7b566aaf2a2102b5a0ec69c1d25bc3ff8c97789bb05066",
+        "expectedStdoutLines": [
+          "[OK] type-flow function context"
+        ]
+      },
+      {
+        "fixture": "type_flow_rebinding.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 108560,
+        "imageSha256": "b640418ec8962e02be0cf405777c46bb2d64375cbdcca257ead1acbaaadd76da",
+        "expectedStdoutLines": [
+          "[OK] callable rebinding type flow"
+        ]
+      },
+      {
+        "fixture": "language_class_qualified_static.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 92096,
+        "imageSha256": "7ede9e26627a3eddd3eccd4847e35fa212d89622877b0c51c4b1aa733b0c696f",
+        "expectedStdoutLines": [
+          "[OK] qualified private static call"
+        ]
+      },
+      {
+        "fixture": "operator_overloading.ml",
+        "target": "linux-x64",
+        "images": 4,
+        "executions": 4,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 235632,
+        "imageSha256": "8dabea1a79691b73ab1cab6a0a5a2b68817684060da8c7114ae93b6df1921d6e",
+        "expectedStdoutLines": [
+          "[OK] operator overloading"
+        ]
+      },
+      {
+        "fixture": "package_global_resolution/main.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 154624,
+        "imageSha256": "a3a178b23589c88853242e36063bae5ed090a368295301cdb7b6fb0ce0096f4c",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "method_globals.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 98816,
+        "imageSha256": "5a613ef9f405121ac5b89fcd2a5adf243e107b7591cbc65104e1c718e1a5ebf6",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_query_resolution.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 118272,
+        "imageSha256": "2484f28e35a8a6a411c4ed0ec8bff6a8fb88c53718f26a2900ce442d754261c6",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_checks.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 147968,
+        "imageSha256": "1e4d5ee2ee706d42e0c0e21d108c4a3236bb87b480b26601baff7fcc6bb5847a",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_flow_context.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 91136,
+        "imageSha256": "b750290d9af18fbca67f10993c4f83e93d6b276bc70d58db72bb6d72321bf595",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_flow_rebinding.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 102912,
+        "imageSha256": "3fac9961fa31e60618ddd7e350388ec0fc2810e78c449b15c84941fa8e4e96a4",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "language_class_qualified_static.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 83968,
+        "imageSha256": "d8820f2da47d884ddd32d5d5f02d1cdc933a126151b9a0a22d9dfbc759615b74",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "operator_overloading.ml",
+        "target": "windows-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 227328,
+        "imageSha256": "2062f9223769e38b12c5bd499cc4f6fe9705540906c2cca3eb95b57be9f088ee",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "package_global_resolution/main.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 161904,
+        "imageSha256": "e74d7fdccbbb8ce5e5a469f24f367091727f22cd560b409041ea01f3397e5e98",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "method_globals.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 104400,
+        "imageSha256": "263f0281b41e743c27273e715bf5bff315dac6527f57b7cb529ef87b888e0e21",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_query_resolution.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 124896,
+        "imageSha256": "c9f0cfe6960bed2a70d3b27d70ca4923d2c2cae2ac5a82d62af02c7c79ee5212",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_checks.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 153536,
+        "imageSha256": "645a7d5085ad8c778d6c4b0fa028a6599bff6841105ba8afdb25646869d1d7fe",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_flow_context.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 100272,
+        "imageSha256": "ef449685e8ea9eab1e4a666e5d854b6b00c5728e00d07eb0664b840f2a3e4ac1",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "type_flow_rebinding.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 108512,
+        "imageSha256": "f25130d105f00a92803a8f5deeef1f70bf1bc11f917c533c9ffdb20d6790f451",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "language_class_qualified_static.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 92048,
+        "imageSha256": "6b89aa3925d9cc8083ca699f7fee914c7439ccb9b7a4db8c363e051e21ca2215",
+        "expectedStdoutLines": null
+      },
+      {
+        "fixture": "operator_overloading.ml",
+        "target": "minux-x64",
+        "images": 4,
+        "executions": 0,
+        "exitCode": 0,
+        "byteIdentical": true,
+        "imageBytes": 235584,
+        "imageSha256": "826ce7c15640670b2d5fc23b7aa850af45583444e5e93c2681010b5b20759b1e",
+        "expectedStdoutLines": null
+      }
+    ]
+  },
+  "miniQuake3": {
+    "source": "tests/qvm_scene_materials_contracts.ml",
+    "sourceCommit": "f241b3408f4e63d9eee970d58e0dd57bb132a40e",
+    "sourceSha256WithoutWorkaround": "5274227043bd04d1df87ec660f8867af0793738cffc486443cf371a563906c38",
+    "target": "windows-x64",
+    "execution": "not run: the test requires miniquake3_abi.dll; no Wine is installed",
+    "byteIdentical": true,
+    "images": [
+      {
+        "compiler": "python",
+        "pipeline": "legacy",
+        "exitCode": 0,
+        "bytes": 9651712,
+        "sha256": "11364c459c10a71ad453237446484bc0bb7dbb215f0a358ad43a71dc1f0c1075"
+      },
+      {
+        "compiler": "python",
+        "pipeline": "object",
+        "exitCode": 0,
+        "bytes": 9651712,
+        "sha256": "11364c459c10a71ad453237446484bc0bb7dbb215f0a358ad43a71dc1f0c1075"
+      },
+      {
+        "compiler": "native",
+        "pipeline": "legacy",
+        "exitCode": 0,
+        "bytes": 9651712,
+        "sha256": "11364c459c10a71ad453237446484bc0bb7dbb215f0a358ad43a71dc1f0c1075"
+      },
+      {
+        "compiler": "native",
+        "pipeline": "object",
+        "exitCode": 0,
+        "bytes": 9651712,
+        "sha256": "11364c459c10a71ad453237446484bc0bb7dbb215f0a358ad43a71dc1f0c1075"
+      }
+    ]
+  },
+  "pythonUnitTests": {
+    "run": 65,
+    "passed": 62,
+    "skipped": 3,
+    "failures": 0,
+    "skipDetails": [
+      "Execute old/new instructions and compare full results plus defined flags. ... skipped 'native Windows x64 flag equivalence test'",
+      "test_optional_nasm_verification (test_asm_opcodes.TestAsmOpcodeVectors.test_optional_nasm_verification) ... skipped 'MINILANG_ASM_VERIFY_NASM not enabled'",
+      "Execute emitted helpers against an independent bitmap/range model. ... skipped 'native Windows x64 snapshot helper checks'"
+    ]
+  },
+  "scope": {
+    "linux-x64": "compiled and executed",
+    "windows-x64": "cross-compiled and byte-compared; not executed",
+    "minux-x64": "cross-compiled and byte-compared; not executed"
+  },
+  "totals": {
+    "matrixImages": 228,
+    "matrixLinuxExecutions": 76,
+    "miniQuake3WindowsImages": 4
+  }
+}
